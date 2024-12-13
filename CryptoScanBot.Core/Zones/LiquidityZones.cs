@@ -1,9 +1,9 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Zones;
 
-namespace CryptoScanBot.ZoneVisualisation.Zones;
+namespace CryptoScanBot.Core.Zones;
 
 public class LiquidityZones
 {

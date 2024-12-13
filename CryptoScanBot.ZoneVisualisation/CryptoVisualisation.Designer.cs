@@ -61,7 +61,6 @@ partial class CryptoVisualisation
         EditShowPositions = new CheckBox();
         EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        button1 = new Button();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         panel1.SuspendLayout();
@@ -96,7 +95,6 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(PanelPlayBack);
         flowLayoutPanel1.Controls.Add(EditShowPositions);
         flowLayoutPanel1.Controls.Add(EditUseBatchProcess);
-        flowLayoutPanel1.Controls.Add(button1);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -411,16 +409,6 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // button1
-        // 
-        button1.Location = new Point(6, 712);
-        button1.Name = "button1";
-        button1.Size = new Size(75, 23);
-        button1.TabIndex = 32;
-        button1.Text = "button1";
-        button1.UseVisualStyleBackColor = true;
-        button1.Click += SaveSituationForDebug;
-        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -477,5 +465,4 @@ partial class CryptoVisualisation
     private CheckBox EditShowSignals;
     private CheckBox EditShowPositions;
     private Button ButtonRefresh;
-    private Button button1;
 }

@@ -1,5 +1,6 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Enums;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;

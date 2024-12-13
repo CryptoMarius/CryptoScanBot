@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Trader;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
+using CryptoScanBot.Core.Account;
 
 namespace CryptoScanBot.Core.Intern;
 

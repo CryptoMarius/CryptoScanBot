@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.ZoneVisualisation.Zones;
+using CryptoScanBot.Core.Zones;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -163,7 +163,7 @@ public class CryptoCharting
                 };
                 while (symbolInterval1m.CandleList.TryGetValue(x, out CryptoCandle? c))
                 {
-                    if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate)
+                    if (c.OpenTime >= session.MinDate && c.OpenTime <= session.MaxDate + symbolInterval.Interval.Duration)
                     {
                         if (newCandle.OpenTime == 0)
                         {

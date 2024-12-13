@@ -3,6 +3,7 @@
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+
 using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.BackTest;

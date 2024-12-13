@@ -5,7 +5,7 @@ using CryptoScanBot.Core.Model;
 
 using System.Text.Json;
 
-namespace CryptoScanBot.ZoneVisualisation.Zones;
+namespace CryptoScanBot.Core.Zones;
 
 [Serializable]
 public class CryptoZoneSession

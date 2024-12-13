@@ -3,11 +3,12 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 
 using System.Text;
 using System.Text.Json;
 
-namespace CryptoScanBot.ZoneVisualisation.Zones;
+namespace CryptoScanBot.Core.Zones;
 
 public class CandleEngine
 {

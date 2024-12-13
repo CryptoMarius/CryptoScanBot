@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -70,12 +71,12 @@ public class DominantLevelLong : SignalCreateBase
                 decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                 if (CandleLast.Low <= alarmPrice)
                 {
-                    if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
+                    if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(0))
                     {
                         result = true;
                         changed = true;
                         zone.AlarmDate = CandleLast.Date;
-                        ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})";
+                        ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id}  {CandleLast.Low})";
                     }
                 }
 
@@ -83,6 +84,7 @@ public class DominantLevelLong : SignalCreateBase
                 if (CandleLast.Low < zone.Top) // || CandleLast.Close <= zone.Top || CandleLast.Close <= zone.Top
                 {
                     changed = true;
+                    ExtraText += "....";
                     zone.CloseTime = CandleLast.OpenTime;
                     GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
                 }

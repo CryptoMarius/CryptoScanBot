@@ -8,6 +8,7 @@ using Dapper.Contrib.Extensions;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Trend;
+using CryptoScanBot.Core.Account;
 
 namespace CryptoScanBot.Core.Intern;
 

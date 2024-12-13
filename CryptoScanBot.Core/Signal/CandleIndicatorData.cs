@@ -3,9 +3,9 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Intern;
 using Skender.Stock.Indicators;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Signal;
 
-public class CandleIndicatorData: CryptoData
+public class CandleIndicatorData : CryptoData
 {
     private const int SlopeCount = 2;
 
@@ -165,7 +165,7 @@ public class CandleIndicatorData: CryptoData
         if (candle.CandleData != null)
             return;
 
-        List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
+        List<TemaResult> temaList = (List<TemaResult>)history.GetTema(5);
 
         List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
@@ -183,9 +183,9 @@ public class CandleIndicatorData: CryptoData
 #endif
 
         //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
-        List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
+        List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
-        List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
+        List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
 
         // GetSlope looks buggy? (specially with sma(200) and count <> 200)
@@ -276,7 +276,7 @@ public class CandleIndicatorData: CryptoData
                     candleData.SlopeSma50 = slopeSma50List[index].Slope;
                 if (slopeSma100List != null && index < slopeSma100List.Count)
                     candleData.SlopeSma100 = slopeSma100List[index].Slope;
-                if (slopeSma200List != null && index < slopeSma200List.Count) 
+                if (slopeSma200List != null && index < slopeSma200List.Count)
                     candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
@@ -304,12 +304,12 @@ public class CandleIndicatorData: CryptoData
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;
                 candleData.SlopeStoch = slopeStochList[index].Slope;
-                
+
 
                 double? BollingerBandsLowerBand = bollingerBandsList[index].LowerBand;
                 double? BollingerBandsUpperBand = bollingerBandsList[index].UpperBand;
                 candleData.BollingerBandsDeviation = 0.5 * (BollingerBandsUpperBand - BollingerBandsLowerBand);
-                candleData.BollingerBandsPercentage = 100 * ((BollingerBandsUpperBand / BollingerBandsLowerBand) - 1);
+                candleData.BollingerBandsPercentage = 100 * (BollingerBandsUpperBand / BollingerBandsLowerBand - 1);
 
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
@@ -366,7 +366,7 @@ public class CandleIndicatorData: CryptoData
     }
 
 
-    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, 
+    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval,
         CryptoCandle candle, out string reaction, int fillMax = 61)
     {
         if (candle.CandleData == null)

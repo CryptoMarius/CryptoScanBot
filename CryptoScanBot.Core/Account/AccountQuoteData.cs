@@ -1,7 +1,8 @@
 ﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Account;
 
 public class AccountQuoteData
 {

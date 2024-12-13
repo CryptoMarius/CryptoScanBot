@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 
 namespace CryptoScanBot.Core.Emulator;
 

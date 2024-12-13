@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Account;
 
 public class AccountSymbolIntervalData
 {

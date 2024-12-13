@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;

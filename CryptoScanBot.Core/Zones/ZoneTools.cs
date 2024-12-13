@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
@@ -8,6 +9,7 @@ using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Zones;
+
 public class ZoneTools
 {
     public static void LoadAllZones()

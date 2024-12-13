@@ -2,6 +2,8 @@
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Barometer;

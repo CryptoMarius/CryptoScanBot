@@ -4,7 +4,8 @@ using CryptoScanBot.Core.Model;
 
 using Dapper;
 
-namespace CryptoScanBot.ZoneVisualisation.Zones;
+namespace CryptoScanBot.Core.Zones;
+
 public class ExtraData
 {
 

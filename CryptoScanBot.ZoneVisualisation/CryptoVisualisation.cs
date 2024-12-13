@@ -1,11 +1,11 @@
+using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Zones;
-using CryptoScanBot.ZoneVisualisation.Zones;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -13,7 +13,6 @@ using OxyPlot.Axes;
 
 using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 
 namespace CryptoScanBot.ZoneVisualisation;
 
@@ -82,7 +81,6 @@ public partial class CryptoVisualisation : Form
         ButtonCalculateClick(null, EventArgs.Empty);
     }
 
-#if DEBUGZIGZAG
     public void InitIntervalItems()
     {
         foreach (var interval in GlobalData.IntervalList)
@@ -91,7 +89,6 @@ public partial class CryptoVisualisation : Form
                 EditIntervalName.Items.Add(interval.Name);
         }
     }
-#endif
 
     private void InitQuoteItems()
     {
@@ -145,8 +142,8 @@ public partial class CryptoVisualisation : Form
     {
         EditSymbolBase.Text = Session.SymbolBase;
         EditSymbolQuote.Text = Session.SymbolQuote;
-#if DEBUGZIGZAG
         EditIntervalName.Text = Session.IntervalName;
+#if DEBUGZIGZAG
         EditShowPositions.Checked = Session.ShowPositions;
         EditUseBatchProcess.Checked = Session.UseBatchProcess;
 #else
@@ -518,12 +515,12 @@ public partial class CryptoVisualisation : Form
     {
         Session.SymbolBase = EditSymbolBase.Text.ToUpper().Trim();
         Session.SymbolQuote = EditSymbolQuote.Text.ToUpper().Trim();
-#if DEBUGZIGZAG
         Session.IntervalName = EditIntervalName.Text.ToLower().Trim();
+#if DEBUGZIGZAG
         Session.ShowPositions = EditShowPositions.Checked;
         Session.UseBatchProcess = EditUseBatchProcess.Checked;
 #else
-        Session.IntervalName = "1h";
+        //Session.IntervalName = "1h";
         Session.ShowPositions = false;
         Session.UseBatchProcess = true;
 #endif
@@ -749,19 +746,5 @@ public partial class CryptoVisualisation : Form
             }
         }
     }
-
-    private void SaveSituationForDebug(object? sender, EventArgs e)
-    {
-        if (Data != null)
-        {
-            string filename = $"{GlobalData.AppName}-pivots.json";
-            string fullName = GlobalData.GetBaseDir() + filename;
-            // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-            string text = JsonSerializer.Serialize(Data.Indicator.ZigZagList, JsonTools.JsonSerializerIndented);
-            File.WriteAllText(fullName, text);
-        }
-
-    }
-
 
 }

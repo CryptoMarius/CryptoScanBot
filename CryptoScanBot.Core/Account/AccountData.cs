@@ -1,8 +1,9 @@
 ﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Account;
 
 public class AccountData
 {
@@ -49,7 +50,7 @@ public class AccountData
     {
         if (!QuoteDataList.TryGetValue(quoteName, out AccountQuoteData? quoteData))
         {
-            quoteData = new() { QuoteName = quoteName};
+            quoteData = new() { QuoteName = quoteName };
             QuoteDataList.TryAdd(quoteName, quoteData);
         }
         return quoteData;

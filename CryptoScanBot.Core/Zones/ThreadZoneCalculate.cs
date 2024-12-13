@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.ZoneVisualisation.Zones;
 
 using System.Collections.Concurrent;
 

@@ -1,9 +1,10 @@
 ﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Account;
 
 public class AccountSymbolData
 {
