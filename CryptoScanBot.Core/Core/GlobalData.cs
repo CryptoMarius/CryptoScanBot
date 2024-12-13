@@ -13,7 +13,7 @@ using Dapper.Contrib.Extensions;
 using System.Globalization;
 using System.Text.Json;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 
 /// <summary>
@@ -56,8 +56,11 @@ static public class GlobalData
     }
 
     private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;
-    public static CryptoApplicationStatus ApplicationStatus { get { return _applicationStatus; } 
-        set { _applicationStatus = value; GlobalData.StatusesHaveChangedEvent?.Invoke(""); } }
+    public static CryptoApplicationStatus ApplicationStatus
+    {
+        get { return _applicationStatus; }
+        set { _applicationStatus = value; StatusesHaveChangedEvent?.Invoke(""); }
+    }
 
     public static int CreatedSignalCount { get; set; } // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
 
@@ -75,7 +78,7 @@ static public class GlobalData
     /// Altrady API settings
     /// </summary>
     public static SettingsAltradyApi AltradyApi { get; set; } = new();
-    
+
     /// <summary>
     /// Settings for visability and widths of columns + window coordinates
     /// </summary>
@@ -120,7 +123,7 @@ static public class GlobalData
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
-    
+
 
     // All possible account (overkill)
     public static readonly SortedList<int, CryptoAccount> TradeAccountList = [];
@@ -186,13 +189,13 @@ static public class GlobalData
             // There are 3 accounts per exchange
             if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
             {
-                if (GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
+                if (BackTest && tradeAccount.AccountType == CryptoAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.PaperTrade && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.PaperTrade)
+                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.PaperTrade && Settings.Trading.TradeVia == CryptoAccountType.PaperTrade)
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.RealTrading && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.RealTrading)
+                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.RealTrading && Settings.Trading.TradeVia == CryptoAccountType.RealTrading)
                     ActiveAccount = tradeAccount;
-                if (!GlobalData.BackTest && tradeAccount.AccountType == CryptoAccountType.Altrady && GlobalData.Settings.Trading.TradeVia == CryptoAccountType.Altrady)
+                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.Altrady && Settings.Trading.TradeVia == CryptoAccountType.Altrady)
                     ActiveAccount = tradeAccount;
             }
         }
@@ -396,7 +399,7 @@ static public class GlobalData
     {
         try
         {
-            string filename = GetBaseDir() + $"{GlobalData.AppName}-settings.json";
+            string filename = GetBaseDir() + $"{AppName}-settings.json";
             if (File.Exists(filename))
             {
                 //using (FileStream readStream = new FileStream(filename, FileMode.Open))
@@ -431,7 +434,7 @@ static public class GlobalData
 
     static public void LoadLinkSettings()
     {
-        string filename = $"{GlobalData.AppName}-weblinks.json";
+        string filename = $"{AppName}-weblinks.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -467,7 +470,7 @@ static public class GlobalData
     /// </summary>
     static public void LoadUserSettings()
     {
-        string filename = $"{GlobalData.AppName}-user.json";
+        string filename = $"{AppName}-user.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -490,7 +493,7 @@ static public class GlobalData
 
     static public void LoadTelegramSettings()
     {
-        string filename = $"{GlobalData.AppName}-telegram.json";
+        string filename = $"{AppName}-telegram.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -513,7 +516,7 @@ static public class GlobalData
 
     static public void LoadExchangeSettings()
     {
-        string filename = $"{GlobalData.AppName}-exchange.json";
+        string filename = $"{AppName}-exchange.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -534,7 +537,7 @@ static public class GlobalData
         }
 
 
-        filename = $"{GlobalData.AppName}-altrady.json";
+        filename = $"{AppName}-altrady.json";
         try
         {
             string fullName = GetBaseDir() + filename;
@@ -605,7 +608,7 @@ static public class GlobalData
     {
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
-        var filename = baseFolder + $"{GlobalData.AppName}-user.json";
+        var filename = baseFolder + $"{AppName}-user.json";
         string text = JsonSerializer.Serialize(SettingsUser, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
@@ -622,19 +625,19 @@ static public class GlobalData
         //    writeStream.Close();
         //}
 
-        string filename = baseFolder + $"{GlobalData.AppName}-settings.json";
+        string filename = baseFolder + $"{AppName}-settings.json";
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{GlobalData.AppName}-telegram.json";
+        filename = baseFolder + $"{AppName}-telegram.json";
         text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{GlobalData.AppName}-exchange.json";
+        filename = baseFolder + $"{AppName}-exchange.json";
         text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{GlobalData.AppName}-altrady.json";
+        filename = baseFolder + $"{AppName}-altrady.json";
         text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
@@ -683,7 +686,7 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text)
     {
-        if (!GlobalData.BackTest)
+        if (!BackTest)
         {
             try
             {
@@ -699,7 +702,7 @@ static public class GlobalData
 
     static public void AddTextToTelegram(string text, CryptoPosition position)
     {
-        if (!GlobalData.BackTest)
+        if (!BackTest)
         {
             if (LogToTelegram is null)
                 return;
@@ -708,7 +711,7 @@ static public class GlobalData
                 if (position is not null)
                 {
                     string symbol = position.Symbol.Name.ToUpper();
-                    (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval!);
+                    (string Url, CryptoExternalUrlType Execute) = ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, position.Symbol, position.Interval!);
                     if (Url != "")
                     {
                         string x = $"<a href='{Url}'>{symbol}</a>";
@@ -766,8 +769,8 @@ static public class GlobalData
         if (string.IsNullOrEmpty(AppDataFolder))
         {
             ApplicationParams.InitApplicationOptions();
-            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-                ApplicationParams.Options?.AppDataFolder ?? GlobalData.AppName);
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                ApplicationParams.Options?.AppDataFolder ?? AppName);
             Directory.CreateDirectory(AppDataFolder);
             AppDataFolder += @"\";
         }
@@ -796,20 +799,20 @@ static public class GlobalData
 
             // People forget to use the right casing
             exchangeName = exchangeName.Trim().ToLower();
-            string? found = GlobalData.ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
+            string? found = ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
             if (found != null)
                 exchangeName = found;
 
             // New exchange
-            GlobalData.Settings.General.ExchangeName = exchangeName;
+            Settings.General.ExchangeName = exchangeName;
         }
 
 
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
+        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out var exchange))
         {
-            GlobalData.Settings.General.Exchange = exchange;
-            GlobalData.Settings.General.ExchangeId = exchange.Id;
-            GlobalData.Settings.General.ExchangeName = exchange.Name;
+            Settings.General.Exchange = exchange;
+            Settings.General.ExchangeId = exchange.Id;
+            Settings.General.ExchangeName = exchange.Name;
         }
         else throw new Exception($"Exchange {exchangeName} bestaat niet");
     }

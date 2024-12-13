@@ -1,6 +1,6 @@
 A 10 dollar limit order
 
-2024-06-16 12:48:46.0083|DEBUG|CryptoScanBot.Core.Intern.ScannerLog|APRSUSDT UserTicker Buy New order=1709589298862654464 quantity=17.25 price=0.5797 value=0.000000 
+2024-06-16 12:48:46.0083|DEBUG|CryptoScanBot.Core.Core.ScannerLog|APRSUSDT UserTicker Buy New order=1709589298862654464 quantity=17.25 price=0.5797 value=0.000000 
 
 json={
   "Category": 2,

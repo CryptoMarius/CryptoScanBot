@@ -2,8 +2,9 @@
 using Bybit.Net.Enums;
 
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 

@@ -1,6 +1,6 @@
-﻿using CryptoScanBot.Core.Intern;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Signal.Momentum;
 

@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -6,7 +7,7 @@ using Dapper.Contrib.Extensions;
 
 using System.Collections.Concurrent;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 // The database Sqlite is not the best when working with heavy multithreaded applications.
 // There is basicly only one 1 write transaction allowed, that is not sufficient.

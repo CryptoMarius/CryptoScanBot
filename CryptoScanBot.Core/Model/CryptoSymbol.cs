@@ -1,14 +1,9 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;
-
-static public class Constants
-{
-    public const string SymbolNameBarometerPrice = "$BMP";
-    //public const string SymbolNameBarometerVolume = "$BMV"; // an experiment, needs to be continued someday
-}
 
 [Table("Symbol")]
 public class CryptoSymbol

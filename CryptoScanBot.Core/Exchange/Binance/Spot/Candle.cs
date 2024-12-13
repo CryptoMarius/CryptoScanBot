@@ -3,8 +3,9 @@ using Binance.Net.Enums;
 using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Spot;
 
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;

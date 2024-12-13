@@ -1,8 +1,10 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+
 using System.Collections.Concurrent;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public class ThreadMonitorCandle
 {

@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
 
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
@@ -12,7 +13,7 @@ using Kraken.Net.Enums;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
-    public class Symbol() : SymbolBase(), ISymbol
+public class Symbol() : SymbolBase(), ISymbol
     {
         public async Task GetSymbolsAsync()
         {

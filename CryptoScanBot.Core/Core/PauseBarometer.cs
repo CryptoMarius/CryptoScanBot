@@ -1,4 +1,4 @@
-﻿namespace CryptoScanBot.Core.Intern;
+﻿namespace CryptoScanBot.Core.Core;
 
 /// Data of pause trading if barometer is out of boundaries
 public class PauseBarometer

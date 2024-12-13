@@ -2,8 +2,9 @@
 using System.Text;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Core;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public static class Helper
 {

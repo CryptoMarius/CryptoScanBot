@@ -1,7 +1,9 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Const;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using Skender.Stock.Indicators;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Signal;
 
@@ -331,8 +333,7 @@ public class CandleIndicatorData : CryptoData
 
     // We need 1 day + X hours because of the barometr calculation (we show ~5 hours in the display)
     // As soon as the barometer has been calculated it will be lowered to 1 day + 10 candles..
-    private const int barometerGraphHours = 5;
-    private static long InitialCandleCountFetch = (24 + barometerGraphHours) * 60;
+    private static long InitialCandleCountFetch = (24 + Constants.BarometerGraphHours) * 60;
 
 
     public static void SetInitialCandleCountFetch(long value)
@@ -350,7 +351,7 @@ public class CandleIndicatorData : CryptoData
         long startFetchUnix;
         // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
         if (symbol.IsBarometerSymbol())
-            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - barometerGraphHours * 60 * GlobalData.IntervalList[0].Duration;
+            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - Constants.BarometerGraphHours * 60 * GlobalData.IntervalList[0].Duration;
         else
         {
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)

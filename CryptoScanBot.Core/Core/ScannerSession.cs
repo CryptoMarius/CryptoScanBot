@@ -1,11 +1,12 @@
 ﻿using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Zones;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 
 // Een betere opzet (maar het moet nog beter)

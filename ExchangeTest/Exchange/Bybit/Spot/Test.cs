@@ -6,11 +6,11 @@ using Bybit.Net.Objects.Models.V5;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Core;
 
 namespace ExchangeTest.Exchange.Bybit.Spot;
 

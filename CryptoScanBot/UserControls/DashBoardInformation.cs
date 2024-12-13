@@ -1,11 +1,13 @@
 ﻿using System.Drawing.Drawing2D;
+using CryptoScanBot.Core.Const;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.TradingView;
 
@@ -213,7 +215,7 @@ public partial class DashBoardInformation : UserControl
 
     public void CreateBarometerBitmap(Core.Model.CryptoExchange exchange, CryptoQuoteData quoteData, CryptoInterval interval)
     {
-        float blocks = 6;
+        float blocks = Constants.BarometerGraphHours;
 
         // pixel dimensies van het plaatje
         int intWidth = pictureBox1.Width;

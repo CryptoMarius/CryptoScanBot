@@ -1,6 +1,7 @@
 ﻿using System.Text;
 
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 

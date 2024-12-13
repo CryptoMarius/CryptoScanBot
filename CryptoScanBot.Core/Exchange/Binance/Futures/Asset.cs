@@ -4,7 +4,8 @@ using Binance.Net.Objects.Models.Futures;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;

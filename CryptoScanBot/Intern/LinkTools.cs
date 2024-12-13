@@ -1,6 +1,7 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+
 using Microsoft.Web.WebView2.Core;
 
 namespace CryptoScanBot.Intern;

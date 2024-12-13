@@ -1,13 +1,14 @@
 ﻿using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 

@@ -22,7 +22,7 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Zones;
@@ -30,6 +30,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using CryptoScanBot.Core.Json;
 using System.Text.Json.Serialization;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot;
 

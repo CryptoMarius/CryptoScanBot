@@ -147,7 +147,7 @@ partial class DashBoardInformation
         panelLeft.Dock = DockStyle.Left;
         panelLeft.Location = new Point(0, 0);
         panelLeft.Name = "panelLeft";
-        panelLeft.Size = new Size(158, 103);
+        panelLeft.Size = new Size(169, 103);
         panelLeft.TabIndex = 132;
         // 
         // pictureBoxTrader
@@ -178,30 +178,31 @@ partial class DashBoardInformation
         // 
         // labelBm4h
         // 
-        labelBm4h.AutoSize = true;
-        labelBm4h.Location = new Point(115, 27);
+        labelBm4h.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        labelBm4h.Location = new Point(111, 25);
         labelBm4h.Margin = new Padding(4, 0, 4, 0);
         labelBm4h.Name = "labelBm4h";
-        labelBm4h.Size = new Size(20, 15);
+        labelBm4h.Size = new Size(51, 15);
         labelBm4h.TabIndex = 126;
         labelBm4h.Text = "4h";
         labelBm4h.TextAlign = ContentAlignment.MiddleRight;
         // 
         // labelBm1d
         // 
-        labelBm1d.AutoSize = true;
-        labelBm1d.Location = new Point(115, 47);
+        labelBm1d.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        labelBm1d.Location = new Point(111, 45);
         labelBm1d.Margin = new Padding(4, 0, 4, 0);
         labelBm1d.Name = "labelBm1d";
-        labelBm1d.Size = new Size(20, 15);
+        labelBm1d.Size = new Size(51, 15);
         labelBm1d.TabIndex = 125;
         labelBm1d.Text = "1d";
         labelBm1d.TextAlign = ContentAlignment.MiddleRight;
         // 
         // labelBmTime
         // 
+        labelBmTime.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         labelBmTime.AutoSize = true;
-        labelBmTime.Location = new Point(123, 70);
+        labelBmTime.Location = new Point(132, 70);
         labelBmTime.Margin = new Padding(4, 0, 4, 0);
         labelBmTime.Name = "labelBmTime";
         labelBmTime.Size = new Size(31, 15);
@@ -211,11 +212,11 @@ partial class DashBoardInformation
         // 
         // labelBm1h
         // 
-        labelBm1h.AutoSize = true;
-        labelBm1h.Location = new Point(115, 7);
+        labelBm1h.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        labelBm1h.Location = new Point(111, 4);
         labelBm1h.Margin = new Padding(4, 0, 4, 0);
         labelBm1h.Name = "labelBm1h";
-        labelBm1h.Size = new Size(20, 15);
+        labelBm1h.Size = new Size(51, 15);
         labelBm1h.TabIndex = 123;
         labelBm1h.Text = "1h";
         labelBm1h.TextAlign = ContentAlignment.MiddleRight;
@@ -261,7 +262,7 @@ partial class DashBoardInformation
         // pictureBox1
         // 
         pictureBox1.Dock = DockStyle.Left;
-        pictureBox1.Location = new Point(158, 0);
+        pictureBox1.Location = new Point(169, 0);
         pictureBox1.Name = "pictureBox1";
         pictureBox1.Size = new Size(403, 103);
         pictureBox1.TabIndex = 133;
@@ -306,9 +307,9 @@ partial class DashBoardInformation
         panel1.Controls.Add(label32);
         panel1.Controls.Add(label31);
         panel1.Dock = DockStyle.Fill;
-        panel1.Location = new Point(561, 0);
+        panel1.Location = new Point(572, 0);
         panel1.Name = "panel1";
-        panel1.Size = new Size(1076, 103);
+        panel1.Size = new Size(1065, 103);
         panel1.TabIndex = 134;
         // 
         // label30

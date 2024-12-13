@@ -1,5 +1,5 @@
 ﻿using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper;
@@ -17,7 +17,7 @@ public class ExtraData
         using var database = new CryptoDatabase();
         foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { SymbolId = data.Symbol.Id, eventTime = from }))
         {
-            if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Core.Model.CryptoExchange? exchange2))
+            if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
             {
                 signal.Exchange = exchange2;
 

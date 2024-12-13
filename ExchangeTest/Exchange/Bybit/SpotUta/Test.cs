@@ -2,7 +2,7 @@
 
 using CryptoExchange.Net.Authentication;
 
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 
 namespace ExchangeTest.Exchange.Bybit.SpotUta;
 internal class Test

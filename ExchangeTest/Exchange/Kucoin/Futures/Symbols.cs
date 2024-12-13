@@ -1,9 +1,13 @@
 ﻿using System.Text.Json;
+
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
 using Dapper.Contrib.Extensions;
+
 using Kucoin.Net.Clients;
 
 namespace ExchangeTest.Exchange.Kucoin.Futures;

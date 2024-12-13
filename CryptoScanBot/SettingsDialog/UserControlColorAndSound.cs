@@ -1,4 +1,4 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.SettingsDialog;
 public partial class UserControlColorAndSound : UserControl

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public static class ListHelper
 {

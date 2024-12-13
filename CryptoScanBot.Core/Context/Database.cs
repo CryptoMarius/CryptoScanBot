@@ -1,8 +1,11 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
+
 using Dapper;
 using Dapper.Contrib.Extensions;
+
 using Microsoft.Data.Sqlite;
 
 namespace CryptoScanBot.Core.Context;

@@ -1,6 +1,8 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Const;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
@@ -213,7 +215,7 @@ public class BarometerTools
     }
 
 
-    public void CalculatePriceBarometerForAllQuotes()
+    public static void CalculatePriceBarometerForAllQuotes()
     {
         // Bereken de (prijs en volume) barometers voor de aangevinkte basismunten
         //GlobalData.AddTextToLogTab("Calculating barometer for all quotes");

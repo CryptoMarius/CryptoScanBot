@@ -1,9 +1,11 @@
 ﻿using System.Collections.Concurrent;
+
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public class ThreadMonitorOrder
 {

@@ -9,8 +9,9 @@ using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Core;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public class PositionMonitor : IDisposable
 {

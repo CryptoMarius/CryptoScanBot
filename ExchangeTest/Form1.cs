@@ -1,7 +1,7 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Barometer;
@@ -11,6 +11,7 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Experiment.Exchange.Altrady;
 
 using Mexc.Net.Clients;
+using CryptoScanBot.Core.Core;
 
 
 namespace CryptoScanBot.Experiment;

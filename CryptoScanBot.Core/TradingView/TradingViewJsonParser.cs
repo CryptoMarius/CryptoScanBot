@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.TradingView;
 

@@ -1,6 +1,8 @@
-﻿using NLog;
+﻿using CryptoScanBot.Core.Core;
 
-namespace CryptoScanBot.Core.Intern;
+using NLog;
+
+namespace CryptoScanBot.Core.Core;
 
 public class ScannerLog
 {

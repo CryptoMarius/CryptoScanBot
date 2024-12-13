@@ -1,5 +1,5 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal.Momentum;
 

@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Intern;
+﻿using CryptoScanBot.Core.Core;
+
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.HSSF.Util;

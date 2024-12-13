@@ -1,6 +1,6 @@
 ﻿using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public class IntervalTools
 {

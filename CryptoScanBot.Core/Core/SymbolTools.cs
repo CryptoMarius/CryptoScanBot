@@ -1,10 +1,11 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Const;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public class SymbolTools
 {

@@ -1,6 +1,6 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -8,6 +8,7 @@ using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects;
 using Kucoin.Net.Objects.Models.Spot;
+using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 

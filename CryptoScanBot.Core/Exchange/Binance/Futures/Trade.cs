@@ -5,7 +5,8 @@ using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Futures;
 
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 

@@ -7,8 +7,9 @@ using CryptoScanBot.Core.Trader;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Core;
 
-namespace CryptoScanBot.Core.Intern;
+namespace CryptoScanBot.Core.Core;
 
 public static class PositionTools
 {

@@ -2,7 +2,7 @@
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Intern;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;

@@ -1,4 +1,4 @@
-﻿namespace CryptoScanBot.Core.Intern;
+﻿namespace CryptoScanBot.Core.Core;
 
 /// Data of pause trading rulez or barometer if the price drops
 public class PauseTradingRule
