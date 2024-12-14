@@ -66,7 +66,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 //break;
                 //_ => throw new NotImplementedException(),
                 case ColumnsForGrid.Distance:
-                    CreateColumn("Distance", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
+                    CreateColumn("Distance", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75).Visible = false;
                     break;
                 //case ColumnsForGrid.MarketTrend:
                 //    CreateColumn("M.Trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);

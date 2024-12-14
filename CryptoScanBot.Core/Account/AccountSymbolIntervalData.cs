@@ -22,8 +22,8 @@ public class AccountSymbolIntervalData
 
     // Administration liquidity zones calculation?? How?
     public long? TimeLastSwingPoint { get; set; }
-    public decimal? BestLongZone { get; internal set; }
-    public decimal? BestShortZone { get; internal set; }
+    public decimal? BestLongZone { get; internal set; } = 100m;
+    public decimal? BestShortZone { get; internal set; } = 100m;
 
     //public bool? NeedsZoneCalculation { get; set; } = true;
 
