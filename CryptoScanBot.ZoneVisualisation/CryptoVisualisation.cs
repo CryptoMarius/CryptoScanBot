@@ -44,6 +44,9 @@ public partial class CryptoVisualisation : Form
 
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
+        //Shown += FrmShown;
+        Load += FrmMain_Load;
+
         if (GlobalData.IntervalList.Count == 0)
         {
             StandAlone = true;
@@ -76,10 +79,31 @@ public partial class CryptoVisualisation : Form
             ButtonRefreshClick(null, EventArgs.Empty);
     }
 
+    private void FrmMain_Load(object? sender, EventArgs? e)
+    {
+        Move -= FrmMain_Resize;
+        Resize -= FrmMain_Resize;
+        ApplicationTools.WindowLocationRestore(this, GlobalData.SettingsUser.ChartForm);
+        Move += FrmMain_Resize;
+        Resize += FrmMain_Resize;
+    }
+
+
+    private void FrmMain_Resize(object? sender, EventArgs? e)
+    {
+        if (GlobalData.ApplicationIsClosing || !GlobalData.ApplicationIsShowed)
+            return;
+
+        ApplicationTools.SaveWindowLocation(this, GlobalData.SettingsUser.ChartForm);
+        GlobalData.SaveUserSettings();
+    }
+
+
     private void ButtonRefreshClick(object? sender, EventArgs e)
     {
         ButtonCalculateClick(null, EventArgs.Empty);
     }
+
 
     public void InitIntervalItems()
     {
@@ -148,8 +172,6 @@ public partial class CryptoVisualisation : Form
         EditUseBatchProcess.Checked = Session.UseBatchProcess;
 #else
         PanelPlayBack.Visible = false;
-        labelInterval2.Visible = false;
-        EditIntervalName.Visible = false;
         EditShowPositions.Visible = false;
         EditUseBatchProcess.Visible = false;
 #endif

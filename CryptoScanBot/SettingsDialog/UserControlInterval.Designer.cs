@@ -43,7 +43,7 @@ partial class UserControlInterval
         EditGroupBox.Size = new Size(108, 151);
         EditGroupBox.TabIndex = 0;
         EditGroupBox.TabStop = false;
-        EditGroupBox.Text = "Interval";
+        EditGroupBox.Text = "Intervals";
         // 
         // flowLayoutPanel1
         // 

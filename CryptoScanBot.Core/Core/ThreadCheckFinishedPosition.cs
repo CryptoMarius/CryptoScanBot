@@ -12,7 +12,7 @@ public class ThreadCheckFinishedPosition
 {
     private readonly SemaphoreSlim QueueSemaphore = new(1);
     private readonly CancellationTokenSource cancellationToken = new();
-    private readonly Dictionary<string, (CryptoPosition position, string orderId, CryptoOrderStatus? status)> Queue = [];
+    private readonly Dictionary<string, (CryptoPosition position, string? orderId, CryptoOrderStatus? status)> Queue = [];
 
 
     public void Stop()
@@ -305,7 +305,7 @@ public class ThreadCheckFinishedPosition
                 continue;
             }
 
-            (CryptoPosition position, string orderId, CryptoOrderStatus? status)? item = null;
+            (CryptoPosition position, string? orderId, CryptoOrderStatus? status)? item = null;
             await QueueSemaphore.WaitAsync();
             try
             {

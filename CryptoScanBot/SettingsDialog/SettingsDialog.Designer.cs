@@ -298,7 +298,6 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        toolTip1 = new ToolTip(components);
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -439,7 +438,7 @@ partial class FrmSettings
         buttonGotoAppDataFolder.Name = "buttonGotoAppDataFolder";
         buttonGotoAppDataFolder.Size = new Size(117, 27);
         buttonGotoAppDataFolder.TabIndex = 190;
-        buttonGotoAppDataFolder.Text = "Naar data folder";
+        buttonGotoAppDataFolder.Text = "Open data folder";
         buttonGotoAppDataFolder.UseVisualStyleBackColor = true;
         // 
         // buttonReset
@@ -523,7 +522,7 @@ partial class FrmSettings
         tabGeneral.Padding = new Padding(4, 3, 4, 3);
         tabGeneral.Size = new Size(1142, 615);
         tabGeneral.TabIndex = 6;
-        tabGeneral.Text = "Algemeen";
+        tabGeneral.Text = "Common";
         tabGeneral.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanel5
@@ -576,7 +575,7 @@ partial class FrmSettings
         groupBox1.Size = new Size(631, 474);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Algemeen";
+        groupBox1.Text = "Common";
         // 
         // label42
         // 
@@ -586,14 +585,14 @@ partial class FrmSettings
         label42.Name = "label42";
         label42.Size = new Size(91, 15);
         label42.TabIndex = 297;
-        label42.Text = "Dubbelklik actie";
+        label42.Text = "Double click action";
         // 
         // EditDoubleClickAction
         // 
         EditDoubleClickAction.DropDownStyle = ComboBoxStyle.DropDownList;
         EditDoubleClickAction.FormattingEnabled = true;
-        EditDoubleClickAction.Items.AddRange(new object[] { "Toon trading app", "Toon chart formulier" });
-        EditDoubleClickAction.Location = new Point(153, 176);
+        EditDoubleClickAction.Items.AddRange(new object[] { "Show trading app", "Show chart form" });
+        EditDoubleClickAction.Location = new Point(171, 176);
         EditDoubleClickAction.Margin = new Padding(4, 3, 4, 3);
         EditDoubleClickAction.Name = "EditDoubleClickAction";
         EditDoubleClickAction.Size = new Size(190, 23);
@@ -607,7 +606,7 @@ partial class FrmSettings
         EditHideSelectedRow.Name = "EditHideSelectedRow";
         EditHideSelectedRow.Size = new Size(145, 19);
         EditHideSelectedRow.TabIndex = 295;
-        EditHideSelectedRow.Text = "Verberg selectie in grid";
+        EditHideSelectedRow.Text = "Hide selection in grid";
         EditHideSelectedRow.UseVisualStyleBackColor = true;
         // 
         // groupBox7
@@ -629,7 +628,7 @@ partial class FrmSettings
         label22.Name = "label22";
         label22.Size = new Size(104, 15);
         label22.TabIndex = 290;
-        label22.Text = "Standaard deviatie";
+        label22.Text = "Standard deviation";
         // 
         // EditBbStdDeviation
         // 
@@ -647,16 +646,16 @@ partial class FrmSettings
         label15.Location = new Point(5, 152);
         label15.Margin = new Padding(4, 0, 4, 0);
         label15.Name = "label15";
-        label15.Size = new Size(139, 15);
+        label15.Size = new Size(152, 15);
         label15.TabIndex = 287;
-        label15.Text = "Intern of extern activeren";
+        label15.Text = "Activate Internal or external";
         // 
         // EditTradingAppInternExtern
         // 
         EditTradingAppInternExtern.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingAppInternExtern.FormattingEnabled = true;
         EditTradingAppInternExtern.Items.AddRange(new object[] { "Internal browser", "External browser" });
-        EditTradingAppInternExtern.Location = new Point(153, 147);
+        EditTradingAppInternExtern.Location = new Point(171, 147);
         EditTradingAppInternExtern.Margin = new Padding(4, 3, 4, 3);
         EditTradingAppInternExtern.Name = "EditTradingAppInternExtern";
         EditTradingAppInternExtern.Size = new Size(190, 23);
@@ -770,7 +769,7 @@ partial class FrmSettings
         // 
         // EditExtraCaption
         // 
-        EditExtraCaption.Location = new Point(153, 31);
+        EditExtraCaption.Location = new Point(171, 31);
         EditExtraCaption.Margin = new Padding(4, 3, 4, 3);
         EditExtraCaption.Name = "EditExtraCaption";
         EditExtraCaption.Size = new Size(193, 23);
@@ -784,7 +783,7 @@ partial class FrmSettings
         label74.Name = "label74";
         label74.Size = new Size(130, 15);
         label74.TabIndex = 283;
-        label74.Text = "Extra applicatie caption";
+        label74.Text = "Extra application caption";
         // 
         // EditHideSymbolsOnTheLeft
         // 
@@ -794,7 +793,7 @@ partial class FrmSettings
         EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
         EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
         EditHideSymbolsOnTheLeft.TabIndex = 281;
-        EditHideSymbolsOnTheLeft.Text = "Verberg de lijst met symbolen";
+        EditHideSymbolsOnTheLeft.Text = "Hide the symbol list";
         EditHideSymbolsOnTheLeft.UseVisualStyleBackColor = true;
         // 
         // label58
@@ -805,13 +804,13 @@ partial class FrmSettings
         label58.Name = "label58";
         label58.Size = new Size(104, 15);
         label58.TabIndex = 280;
-        label58.Text = "Activeer exchange";
+        label58.Text = "Activate exchange";
         // 
         // EditActivateExchange
         // 
         EditActivateExchange.DropDownStyle = ComboBoxStyle.DropDownList;
         EditActivateExchange.FormattingEnabled = true;
-        EditActivateExchange.Location = new Point(153, 89);
+        EditActivateExchange.Location = new Point(171, 89);
         EditActivateExchange.Margin = new Padding(4, 3, 4, 3);
         EditActivateExchange.Name = "EditActivateExchange";
         EditActivateExchange.Size = new Size(190, 23);
@@ -825,7 +824,7 @@ partial class FrmSettings
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
         EditShowInvalidSignals.Size = new Size(175, 19);
         EditShowInvalidSignals.TabIndex = 278;
-        EditShowInvalidSignals.Text = "Laat ongeldige signalen zien";
+        EditShowInvalidSignals.Text = "Show invalid signals";
         EditShowInvalidSignals.UseVisualStyleBackColor = true;
         // 
         // label84
@@ -836,13 +835,13 @@ partial class FrmSettings
         label84.Name = "label84";
         label84.Size = new Size(100, 15);
         label84.TabIndex = 277;
-        label84.Text = "Actieve exchange";
+        label84.Text = "Active exchange";
         // 
         // EditExchange
         // 
         EditExchange.DropDownStyle = ComboBoxStyle.DropDownList;
         EditExchange.FormattingEnabled = true;
-        EditExchange.Location = new Point(153, 60);
+        EditExchange.Location = new Point(171, 60);
         EditExchange.Margin = new Padding(4, 3, 4, 3);
         EditExchange.Name = "EditExchange";
         EditExchange.Size = new Size(190, 23);
@@ -856,11 +855,11 @@ partial class FrmSettings
         label16.Name = "label16";
         label16.Size = new Size(263, 15);
         label16.TabIndex = 274;
-        label16.Text = "Iedere x minuten controleren op nieuwe munten";
+        label16.Text = "Check every x minutes for new symbols";
         // 
         // EditGetCandleInterval
         // 
-        EditGetCandleInterval.Location = new Point(286, 268);
+        EditGetCandleInterval.Location = new Point(304, 268);
         EditGetCandleInterval.Margin = new Padding(4, 3, 4, 3);
         EditGetCandleInterval.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
         EditGetCandleInterval.Minimum = new decimal(new int[] { 30, 0, 0, 0 });
@@ -877,18 +876,17 @@ partial class FrmSettings
         label6.Name = "label6";
         label6.Size = new Size(186, 15);
         label6.TabIndex = 272;
-        label6.Text = "Verwijder de signalen na x candles";
+        label6.Text = "Remove signals after x candles";
         // 
         // EditGlobalDataRemoveSignalAfterxCandles
         // 
-        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(286, 242);
+        EditGlobalDataRemoveSignalAfterxCandles.Location = new Point(304, 242);
         EditGlobalDataRemoveSignalAfterxCandles.Margin = new Padding(4, 3, 4, 3);
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditGlobalDataRemoveSignalAfterxCandles.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
         EditGlobalDataRemoveSignalAfterxCandles.Name = "EditGlobalDataRemoveSignalAfterxCandles";
         EditGlobalDataRemoveSignalAfterxCandles.Size = new Size(57, 23);
         EditGlobalDataRemoveSignalAfterxCandles.TabIndex = 273;
-        toolTip1.SetToolTip(EditGlobalDataRemoveSignalAfterxCandles, "Kunnen filteren op de 24 uur volume percentage.");
         EditGlobalDataRemoveSignalAfterxCandles.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // EditBlackTheming
@@ -909,7 +907,7 @@ partial class FrmSettings
         buttonFontDialog.Name = "buttonFontDialog";
         buttonFontDialog.Size = new Size(139, 27);
         buttonFontDialog.TabIndex = 270;
-        buttonFontDialog.Text = "Lettertype";
+        buttonFontDialog.Text = "Fonttype";
         buttonFontDialog.UseVisualStyleBackColor = true;
         // 
         // label18
@@ -920,11 +918,11 @@ partial class FrmSettings
         label18.Name = "label18";
         label18.Size = new Size(257, 15);
         label18.TabIndex = 268;
-        label18.Text = "Iedere x minuten een heart beat geluid afspelen";
+        label18.Text = "Play heart beat sound every x minutes";
         // 
         // EditSoundHeartBeatMinutes
         // 
-        EditSoundHeartBeatMinutes.Location = new Point(286, 216);
+        EditSoundHeartBeatMinutes.Location = new Point(304, 216);
         EditSoundHeartBeatMinutes.Margin = new Padding(4, 3, 4, 3);
         EditSoundHeartBeatMinutes.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
         EditSoundHeartBeatMinutes.Name = "EditSoundHeartBeatMinutes";
@@ -946,12 +944,13 @@ partial class FrmSettings
         // 
         EditTradingApp.DropDownStyle = ComboBoxStyle.DropDownList;
         EditTradingApp.FormattingEnabled = true;
-        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange", "Charting form" });
-        EditTradingApp.Location = new Point(153, 118);
+        EditTradingApp.Items.AddRange(new object[] { "Altrady", "Hypertrader", "TradingView", "Via de exchange" });
+        EditTradingApp.Location = new Point(171, 118);
         EditTradingApp.Margin = new Padding(4, 3, 4, 3);
         EditTradingApp.Name = "EditTradingApp";
         EditTradingApp.Size = new Size(190, 23);
         EditTradingApp.TabIndex = 266;
+        EditTradingApp.SelectionChangeCommitted += EditTradingApp_SelectionChangeCommitted;
         // 
         // UserControlTelegram
         // 
@@ -972,7 +971,7 @@ partial class FrmSettings
         tabBasecoin.Padding = new Padding(4, 3, 4, 3);
         tabBasecoin.Size = new Size(1142, 615);
         tabBasecoin.TabIndex = 0;
-        tabBasecoin.Text = "Basismunten";
+        tabBasecoin.Text = "Basecoins";
         tabBasecoin.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanelQuotes
@@ -1008,7 +1007,7 @@ partial class FrmSettings
         tabSignal.Padding = new Padding(4, 3, 4, 3);
         tabSignal.Size = new Size(1142, 615);
         tabSignal.TabIndex = 10;
-        tabSignal.Text = "Signalen";
+        tabSignal.Text = "Signals";
         tabSignal.UseVisualStyleBackColor = true;
         // 
         // tabControlSignals
@@ -1058,7 +1057,7 @@ partial class FrmSettings
         tabSignalsGeneral.Padding = new Padding(3);
         tabSignalsGeneral.Size = new Size(1126, 578);
         tabSignalsGeneral.TabIndex = 0;
-        tabSignalsGeneral.Text = "Signalen algemeen";
+        tabSignalsGeneral.Text = "Signals common";
         tabSignalsGeneral.UseVisualStyleBackColor = true;
         // 
         // groupBox10
@@ -1075,7 +1074,7 @@ partial class FrmSettings
         groupBox10.Size = new Size(284, 119);
         groupBox10.TabIndex = 292;
         groupBox10.TabStop = false;
-        groupBox10.Text = "Check volume over multiple day's";
+        groupBox10.Text = "Check volume multiple days";
         // 
         // label46
         // 
@@ -1124,9 +1123,9 @@ partial class FrmSettings
         EditCheckVolumeOverPeriod.Location = new Point(17, 26);
         EditCheckVolumeOverPeriod.Margin = new Padding(4, 3, 4, 3);
         EditCheckVolumeOverPeriod.Name = "EditCheckVolumeOverPeriod";
-        EditCheckVolumeOverPeriod.Size = new Size(260, 19);
+        EditCheckVolumeOverPeriod.Size = new Size(202, 19);
         EditCheckVolumeOverPeriod.TabIndex = 285;
-        EditCheckVolumeOverPeriod.Text = "Controleer het volume over meerdere dagen";
+        EditCheckVolumeOverPeriod.Text = "Check volume over multiple days";
         EditCheckVolumeOverPeriod.UseVisualStyleBackColor = true;
         // 
         // groupBox9
@@ -1152,7 +1151,6 @@ partial class FrmSettings
         EditAnalysisMinChangePercentage.Name = "EditAnalysisMinChangePercentage";
         EditAnalysisMinChangePercentage.Size = new Size(57, 23);
         EditAnalysisMinChangePercentage.TabIndex = 264;
-        toolTip1.SetToolTip(EditAnalysisMinChangePercentage, "Kunnen filteren op de 24 uur volume percentage.");
         // 
         // EditAnalysisMaxChangePercentage
         // 
@@ -1162,7 +1160,6 @@ partial class FrmSettings
         EditAnalysisMaxChangePercentage.Name = "EditAnalysisMaxChangePercentage";
         EditAnalysisMaxChangePercentage.Size = new Size(57, 23);
         EditAnalysisMaxChangePercentage.TabIndex = 265;
-        toolTip1.SetToolTip(EditAnalysisMaxChangePercentage, "Kunnen filteren op de 24 uur volume percentage.");
         EditAnalysisMaxChangePercentage.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // label53
@@ -1263,7 +1260,6 @@ partial class FrmSettings
         EditAnalysisEffectivePercentage.Name = "EditAnalysisEffectivePercentage";
         EditAnalysisEffectivePercentage.Size = new Size(57, 23);
         EditAnalysisEffectivePercentage.TabIndex = 306;
-        toolTip1.SetToolTip(EditAnalysisEffectivePercentage, "Kunnen filteren op de 24 uur volume percentage.");
         EditAnalysisEffectivePercentage.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // EditAnalysisMaxEffectiveLog
@@ -1285,7 +1281,7 @@ partial class FrmSettings
         label79.Name = "label79";
         label79.Size = new Size(176, 15);
         label79.TabIndex = 275;
-        label79.Text = "Kleiner dan dit getal is een nogo";
+        label79.Text = "Smaller is a nogo";
         // 
         // label48
         // 
@@ -1295,7 +1291,7 @@ partial class FrmSettings
         label48.Name = "label48";
         label48.Size = new Size(176, 15);
         label48.TabIndex = 274;
-        label48.Text = "Kleiner dan dit getal is een nogo";
+        label48.Text = "Smaller is a nogo";
         // 
         // label38
         // 
@@ -1305,7 +1301,7 @@ partial class FrmSettings
         label38.Name = "label38";
         label38.Size = new Size(173, 15);
         label38.TabIndex = 273;
-        label38.Text = "Groter dan dit getal is een nogo";
+        label38.Text = "Larger is a nogo";
         // 
         // label37
         // 
@@ -1315,7 +1311,7 @@ partial class FrmSettings
         label37.Name = "label37";
         label37.Size = new Size(173, 15);
         label37.TabIndex = 272;
-        label37.Text = "Groter dan dit getal is een nogo";
+        label37.Text = "Larger is a nogo";
         // 
         // label10
         // 
@@ -1325,7 +1321,7 @@ partial class FrmSettings
         label10.Name = "label10";
         label10.Size = new Size(186, 15);
         label10.TabIndex = 271;
-        label10.Text = "Controles op de laatste 60 candles";
+        label10.Text = "Check the last 60 candles";
         // 
         // EditCandlesWithFlatPriceCheck
         // 
@@ -1335,7 +1331,7 @@ partial class FrmSettings
         EditCandlesWithFlatPriceCheck.Name = "EditCandlesWithFlatPriceCheck";
         EditCandlesWithFlatPriceCheck.Size = new Size(213, 19);
         EditCandlesWithFlatPriceCheck.TabIndex = 270;
-        EditCandlesWithFlatPriceCheck.Text = "Controleer het aantal platte candles";
+        EditCandlesWithFlatPriceCheck.Text = "Check the number of flat candles";
         EditCandlesWithFlatPriceCheck.UseVisualStyleBackColor = true;
         // 
         // EditCandlesWithZeroVolumeCheck
@@ -1346,7 +1342,7 @@ partial class FrmSettings
         EditCandlesWithZeroVolumeCheck.Name = "EditCandlesWithZeroVolumeCheck";
         EditCandlesWithZeroVolumeCheck.Size = new Size(262, 19);
         EditCandlesWithZeroVolumeCheck.TabIndex = 269;
-        EditCandlesWithZeroVolumeCheck.Text = "Controleer het aantal candles zonder volume";
+        EditCandlesWithZeroVolumeCheck.Text = "Check the number of candles without any volume";
         EditCandlesWithZeroVolumeCheck.UseVisualStyleBackColor = true;
         // 
         // EditMinimumAboveBollingerBandsSmaCheck
@@ -1357,7 +1353,7 @@ partial class FrmSettings
         EditMinimumAboveBollingerBandsSmaCheck.Name = "EditMinimumAboveBollingerBandsSmaCheck";
         EditMinimumAboveBollingerBandsSmaCheck.Size = new Size(211, 19);
         EditMinimumAboveBollingerBandsSmaCheck.TabIndex = 268;
-        EditMinimumAboveBollingerBandsSmaCheck.Text = "Controleer aantal boven de bb.sma";
+        EditMinimumAboveBollingerBandsSmaCheck.Text = "Check if candles are above bb.center";
         EditMinimumAboveBollingerBandsSmaCheck.UseVisualStyleBackColor = true;
         // 
         // EditMinimumAboveBollingerBandsUpperCheck
@@ -1368,7 +1364,7 @@ partial class FrmSettings
         EditMinimumAboveBollingerBandsUpperCheck.Name = "EditMinimumAboveBollingerBandsUpperCheck";
         EditMinimumAboveBollingerBandsUpperCheck.Size = new Size(220, 19);
         EditMinimumAboveBollingerBandsUpperCheck.TabIndex = 267;
-        EditMinimumAboveBollingerBandsUpperCheck.Text = "Controleer aantal boven de bb.upper";
+        EditMinimumAboveBollingerBandsUpperCheck.Text = "Check number of candles above bb.upper";
         EditMinimumAboveBollingerBandsUpperCheck.UseVisualStyleBackColor = true;
         // 
         // EditCandlesWithZeroVolume
@@ -1413,9 +1409,9 @@ partial class FrmSettings
         EditLogMinimumTickPercentage.Location = new Point(307, 294);
         EditLogMinimumTickPercentage.Margin = new Padding(4, 3, 4, 3);
         EditLogMinimumTickPercentage.Name = "EditLogMinimumTickPercentage";
-        EditLogMinimumTickPercentage.Size = new Size(165, 19);
+        EditLogMinimumTickPercentage.Size = new Size(128, 19);
         EditLogMinimumTickPercentage.TabIndex = 257;
-        EditLogMinimumTickPercentage.Text = "Log als dit niet het geval is";
+        EditLogMinimumTickPercentage.Text = "Log if its above this";
         EditLogMinimumTickPercentage.UseVisualStyleBackColor = true;
         // 
         // EditMinimumTickPercentage
@@ -1427,7 +1423,6 @@ partial class FrmSettings
         EditMinimumTickPercentage.Name = "EditMinimumTickPercentage";
         EditMinimumTickPercentage.Size = new Size(75, 23);
         EditMinimumTickPercentage.TabIndex = 256;
-        toolTip1.SetToolTip(EditMinimumTickPercentage, "Soms heb je van die munten die of een barcode streepjes patroon hebben of die per tick een enorme afstand overbruggen. Via deze instelling kun je die markeren in het overzicht");
         EditMinimumTickPercentage.Value = new decimal(new int[] { 1, 0, 0, 0 });
         // 
         // label61
@@ -1446,9 +1441,9 @@ partial class FrmSettings
         EditLogSymbolMustExistsDays.Location = new Point(307, 265);
         EditLogSymbolMustExistsDays.Margin = new Padding(4, 3, 4, 3);
         EditLogSymbolMustExistsDays.Name = "EditLogSymbolMustExistsDays";
-        EditLogSymbolMustExistsDays.Size = new Size(208, 19);
+        EditLogSymbolMustExistsDays.Size = new Size(137, 19);
         EditLogSymbolMustExistsDays.TabIndex = 254;
-        EditLogSymbolMustExistsDays.Text = "Log minimale dagen nieuwe munt";
+        EditLogSymbolMustExistsDays.Text = "Log if it is a new coin";
         EditLogSymbolMustExistsDays.UseVisualStyleBackColor = true;
         // 
         // EditSymbolMustExistsDays
@@ -1458,7 +1453,6 @@ partial class FrmSettings
         EditSymbolMustExistsDays.Name = "EditSymbolMustExistsDays";
         EditSymbolMustExistsDays.Size = new Size(75, 23);
         EditSymbolMustExistsDays.TabIndex = 253;
-        toolTip1.SetToolTip(EditSymbolMustExistsDays, "Negeer munten die korten dan x dagen bestaan");
         EditSymbolMustExistsDays.Value = new decimal(new int[] { 15, 0, 0, 0 });
         // 
         // label25
@@ -1467,9 +1461,9 @@ partial class FrmSettings
         label25.Location = new Point(23, 269);
         label25.Margin = new Padding(4, 0, 4, 0);
         label25.Name = "label25";
-        label25.Size = new Size(115, 15);
+        label25.Size = new Size(155, 15);
         label25.TabIndex = 252;
-        label25.Text = "Nieuwe munt dagen";
+        label25.Text = "Symbol exists at least x days";
         // 
         // tabSignalsLong
         // 
@@ -1479,7 +1473,7 @@ partial class FrmSettings
         tabSignalsLong.Padding = new Padding(3);
         tabSignalsLong.Size = new Size(1126, 578);
         tabSignalsLong.TabIndex = 1;
-        tabSignalsLong.Text = "Signalen long";
+        tabSignalsLong.Text = "Signals long";
         tabSignalsLong.UseVisualStyleBackColor = true;
         // 
         // UserControlSignalLong
@@ -1500,7 +1494,7 @@ partial class FrmSettings
         tabSignalsShort.Padding = new Padding(3);
         tabSignalsShort.Size = new Size(1126, 578);
         tabSignalsShort.TabIndex = 2;
-        tabSignalsShort.Text = "Signalen short";
+        tabSignalsShort.Text = "Signals short";
         tabSignalsShort.UseVisualStyleBackColor = true;
         // 
         // UserControlSignalShort
@@ -1571,7 +1565,7 @@ partial class FrmSettings
         groupBox2.Size = new Size(433, 291);
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
-        groupBox2.Text = "Instellingen";
+        groupBox2.Text = "Settings";
         // 
         // EditStobOnlyIfPreviousStobb
         // 
@@ -1581,7 +1575,7 @@ partial class FrmSettings
         EditStobOnlyIfPreviousStobb.Name = "EditStobOnlyIfPreviousStobb";
         EditStobOnlyIfPreviousStobb.Size = new Size(222, 19);
         EditStobOnlyIfPreviousStobb.TabIndex = 167;
-        EditStobOnlyIfPreviousStobb.Text = "Alleen als er een voorgaand signaal is";
+        EditStobOnlyIfPreviousStobb.Text = "Only if a previous signal exists";
         EditStobOnlyIfPreviousStobb.UseVisualStyleBackColor = true;
         // 
         // label1
@@ -1602,7 +1596,6 @@ partial class FrmSettings
         EditStobbBBMinPercentage.Name = "EditStobbBBMinPercentage";
         EditStobbBBMinPercentage.Size = new Size(65, 23);
         EditStobbBBMinPercentage.TabIndex = 165;
-        toolTip1.SetToolTip(EditStobbBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStobbBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
         // 
         // EditStobbBBMaxPercentage
@@ -1613,7 +1606,6 @@ partial class FrmSettings
         EditStobbBBMaxPercentage.Name = "EditStobbBBMaxPercentage";
         EditStobbBBMaxPercentage.Size = new Size(65, 23);
         EditStobbBBMaxPercentage.TabIndex = 166;
-        toolTip1.SetToolTip(EditStobbBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStobbBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
         // 
         // label85
@@ -1624,7 +1616,7 @@ partial class FrmSettings
         label85.Name = "label85";
         label85.Size = new Size(118, 15);
         label85.TabIndex = 162;
-        label85.Text = "Minimale trend short";
+        label85.Text = "Minimal trend short";
         // 
         // EditStobTrendShort
         // 
@@ -1646,7 +1638,7 @@ partial class FrmSettings
         label66.Name = "label66";
         label66.Size = new Size(115, 15);
         label66.TabIndex = 160;
-        label66.Text = "Minimale trend long";
+        label66.Text = "Minimal trend long";
         // 
         // EditStobTrendLong
         // 
@@ -1668,7 +1660,7 @@ partial class FrmSettings
         EditStobIncludeSbmPercAndCrossing.Name = "EditStobIncludeSbmPercAndCrossing";
         EditStobIncludeSbmPercAndCrossing.Size = new Size(252, 19);
         EditStobIncludeSbmPercAndCrossing.TabIndex = 159;
-        EditStobIncludeSbmPercAndCrossing.Text = "Met SBM condities percentages/kruisingen";
+        EditStobIncludeSbmPercAndCrossing.Text = "With SBM conditiions percentages/crossings";
         EditStobIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
         // 
         // EditStobIncludeSbmMaLines
@@ -1679,7 +1671,7 @@ partial class FrmSettings
         EditStobIncludeSbmMaLines.Name = "EditStobIncludeSbmMaLines";
         EditStobIncludeSbmMaLines.Size = new Size(181, 19);
         EditStobIncludeSbmMaLines.TabIndex = 158;
-        EditStobIncludeSbmMaLines.Text = "Met SBM condities MA-lijnen";
+        EditStobIncludeSbmMaLines.Text = "With SBM conditions MA-lines";
         EditStobIncludeSbmMaLines.UseVisualStyleBackColor = true;
         // 
         // EditStobIncludeRsi
@@ -1690,7 +1682,7 @@ partial class FrmSettings
         EditStobIncludeRsi.Name = "EditStobIncludeRsi";
         EditStobIncludeRsi.Size = new Size(232, 19);
         EditStobIncludeRsi.TabIndex = 157;
-        EditStobIncludeRsi.Text = "Met RSI oversold/overbought condities";
+        EditStobIncludeRsi.Text = "With RSI oversold/overbought conditions";
         EditStobIncludeRsi.UseVisualStyleBackColor = true;
         // 
         // EditStobbUseLowHigh
@@ -1701,7 +1693,7 @@ partial class FrmSettings
         EditStobbUseLowHigh.Name = "EditStobbUseLowHigh";
         EditStobbUseLowHigh.Size = new Size(398, 19);
         EditStobbUseLowHigh.TabIndex = 156;
-        EditStobbUseLowHigh.Text = "Bereken de BB oversold/overbought via de low/high ipv de open/close";
+        EditStobbUseLowHigh.Text = "Calculate BB oversold/overbought via low/high instead of open/close";
         EditStobbUseLowHigh.UseVisualStyleBackColor = true;
         // 
         // tabSignalSbm
@@ -1776,7 +1768,7 @@ partial class FrmSettings
         groupBox3.Size = new Size(327, 350);
         groupBox3.TabIndex = 160;
         groupBox3.TabStop = false;
-        groupBox3.Text = "Instellingen";
+        groupBox3.Text = "Settings";
         // 
         // EditSbmUseLowHigh
         // 
@@ -1786,7 +1778,7 @@ partial class FrmSettings
         EditSbmUseLowHigh.Name = "EditSbmUseLowHigh";
         EditSbmUseLowHigh.Size = new Size(265, 19);
         EditSbmUseLowHigh.TabIndex = 168;
-        EditSbmUseLowHigh.Text = "Gebruik daarvoor de low/high ipv open/close";
+        EditSbmUseLowHigh.Text = "Use low/high instead of open/close";
         EditSbmUseLowHigh.UseVisualStyleBackColor = true;
         // 
         // EditSbm2UseLowHigh
@@ -1797,7 +1789,7 @@ partial class FrmSettings
         EditSbm2UseLowHigh.Name = "EditSbm2UseLowHigh";
         EditSbm2UseLowHigh.Size = new Size(281, 19);
         EditSbm2UseLowHigh.TabIndex = 167;
-        EditSbm2UseLowHigh.Text = "Gebruik daarvoor de high/low ipv de open/close";
+        EditSbm2UseLowHigh.Text = "Use low/high instead of open/close";
         EditSbm2UseLowHigh.UseVisualStyleBackColor = true;
         // 
         // label21
@@ -1862,7 +1854,7 @@ partial class FrmSettings
         label12.Name = "label12";
         label12.Size = new Size(224, 15);
         label12.TabIndex = 159;
-        label12.Text = "Percentage ten opzichte van de BB bands";
+        label12.Text = "Percentage in relation to the BB bands";
         // 
         // EditSbm2BbPercentage
         // 
@@ -1904,7 +1896,7 @@ partial class FrmSettings
         label14.Name = "label14";
         label14.Size = new Size(139, 15);
         label14.TabIndex = 155;
-        label14.Text = "Percentage oprekking BB";
+        label14.Text = "Percentage BB stretching";
         // 
         // EditSbm3CandlesForBBRecoveryPercentage
         // 
@@ -1964,7 +1956,7 @@ partial class FrmSettings
         groupBox4.Size = new Size(509, 318);
         groupBox4.TabIndex = 161;
         groupBox4.TabStop = false;
-        groupBox4.Text = "Instellingen voor alle SBM methodes";
+        groupBox4.Text = "Settings for SBM methods";
         // 
         // label39
         // 
@@ -1974,7 +1966,7 @@ partial class FrmSettings
         label39.Name = "label39";
         label39.Size = new Size(180, 15);
         label39.TabIndex = 159;
-        label39.Text = "Het aantal MACD herstel candles";
+        label39.Text = "MACD recovery candles";
         // 
         // EditSbmCandlesForMacdRecovery
         // 
@@ -2004,7 +1996,6 @@ partial class FrmSettings
         EditSbmBBMinPercentage.Name = "EditSbmBBMinPercentage";
         EditSbmBBMinPercentage.Size = new Size(65, 23);
         EditSbmBBMinPercentage.TabIndex = 157;
-        toolTip1.SetToolTip(EditSbmBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditSbmBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
         // 
         // EditSbmBBMaxPercentage
@@ -2015,7 +2006,6 @@ partial class FrmSettings
         EditSbmBBMaxPercentage.Name = "EditSbmBBMaxPercentage";
         EditSbmBBMaxPercentage.Size = new Size(65, 23);
         EditSbmBBMaxPercentage.TabIndex = 158;
-        toolTip1.SetToolTip(EditSbmBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditSbmBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
         // 
         // label4
@@ -2026,7 +2016,7 @@ partial class FrmSettings
         label4.Name = "label4";
         label4.Size = new Size(372, 15);
         label4.TabIndex = 153;
-        label4.Text = "Het minimaal percentage wat tussen de ma200 en ma20  moet liggen";
+        label4.Text = "Minimal percentage between ma200 and ma20";
         // 
         // EditSbmMa200AndMa20Percentage
         // 
@@ -2047,7 +2037,7 @@ partial class FrmSettings
         label8.Name = "label8";
         label8.Size = new Size(363, 15);
         label8.TabIndex = 151;
-        label8.Text = "Het minimaal percentage wat tussen de ma50 en ma20 moet liggen";
+        label8.Text = "Minimal percentage between ma50 and ma20";
         // 
         // EditSbmMa50AndMa20Percentage
         // 
@@ -2068,7 +2058,7 @@ partial class FrmSettings
         label7.Name = "label7";
         label7.Size = new Size(369, 15);
         label7.TabIndex = 149;
-        label7.Text = "Het minimaal percentage wat tussen de ma200 en ma50 moet liggen";
+        label7.Text = "Minimal percentage between ma200 and ma50";
         // 
         // EditSbmMa200AndMa50Percentage
         // 
@@ -2079,7 +2069,6 @@ partial class FrmSettings
         EditSbmMa200AndMa50Percentage.Name = "EditSbmMa200AndMa50Percentage";
         EditSbmMa200AndMa50Percentage.Size = new Size(57, 23);
         EditSbmMa200AndMa50Percentage.TabIndex = 150;
-        toolTip1.SetToolTip(EditSbmMa200AndMa50Percentage, "Percentage tussen de ma200 en ma50");
         EditSbmMa200AndMa50Percentage.Value = new decimal(new int[] { 3, 0, 0, 65536 });
         // 
         // EditSbmMa50AndMa20Lookback
@@ -2101,7 +2090,7 @@ partial class FrmSettings
         EditSbmMa50AndMa20Crossing.Name = "EditSbmMa50AndMa20Crossing";
         EditSbmMa50AndMa20Crossing.Size = new Size(402, 19);
         EditSbmMa50AndMa20Crossing.TabIndex = 147;
-        EditSbmMa50AndMa20Crossing.Text = "Controleer op een kruising van de ma50 en ma20 in de laatste x candles";
+        EditSbmMa50AndMa20Crossing.Text = "Check for a crossing of the ma50 and ma20 in the last x candles";
         EditSbmMa50AndMa20Crossing.UseVisualStyleBackColor = true;
         // 
         // EditSbmMa200AndMa50Lookback
@@ -2123,7 +2112,7 @@ partial class FrmSettings
         EditSbmMa200AndMa50Crossing.Name = "EditSbmMa200AndMa50Crossing";
         EditSbmMa200AndMa50Crossing.Size = new Size(408, 19);
         EditSbmMa200AndMa50Crossing.TabIndex = 145;
-        EditSbmMa200AndMa50Crossing.Text = "Controleer op een kruising van de ma200 en ma50 in de laatste x candles";
+        EditSbmMa200AndMa50Crossing.Text = "Check for a crossing of the ma200 and ma50 in the last x candles";
         EditSbmMa200AndMa50Crossing.UseVisualStyleBackColor = true;
         // 
         // EditSbmMa200AndMa20Lookback
@@ -2145,7 +2134,7 @@ partial class FrmSettings
         EditSbmMa200AndMa20Crossing.Name = "EditSbmMa200AndMa20Crossing";
         EditSbmMa200AndMa20Crossing.Size = new Size(408, 19);
         EditSbmMa200AndMa20Crossing.TabIndex = 143;
-        EditSbmMa200AndMa20Crossing.Text = "Controleer op een kruising van de ma200 en ma20 in de laatste x candles";
+        EditSbmMa200AndMa20Crossing.Text = "Check for a crossing of the ma200 and ma20 in the last x candles";
         EditSbmMa200AndMa20Crossing.UseVisualStyleBackColor = true;
         // 
         // tabSignalStoRsi
@@ -2202,7 +2191,7 @@ partial class FrmSettings
         groupBox6.Size = new Size(291, 198);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
-        groupBox6.Text = "Instellingen";
+        groupBox6.Text = "Settings";
         // 
         // label28
         // 
@@ -2222,7 +2211,6 @@ partial class FrmSettings
         EditStorsiBBMinPercentage.Name = "EditStorsiBBMinPercentage";
         EditStorsiBBMinPercentage.Size = new Size(65, 23);
         EditStorsiBBMinPercentage.TabIndex = 172;
-        toolTip1.SetToolTip(EditStorsiBBMinPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStorsiBBMinPercentage.Value = new decimal(new int[] { 150, 0, 0, 131072 });
         // 
         // EditStorsiBBMaxPercentage
@@ -2233,7 +2221,6 @@ partial class FrmSettings
         EditStorsiBBMaxPercentage.Name = "EditStorsiBBMaxPercentage";
         EditStorsiBBMaxPercentage.Size = new Size(65, 23);
         EditStorsiBBMaxPercentage.TabIndex = 173;
-        toolTip1.SetToolTip(EditStorsiBBMaxPercentage, "Een BB heeft een bepaalde breedte, je kunt hier filteren waardoor op de minimale en maximale breedte kan worden gefilterd.");
         EditStorsiBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
         // 
         // EditSkipFirstSignal
@@ -2244,7 +2231,7 @@ partial class FrmSettings
         EditSkipFirstSignal.Name = "EditSkipFirstSignal";
         EditSkipFirstSignal.Size = new Size(213, 19);
         EditSkipFirstSignal.TabIndex = 170;
-        EditSkipFirstSignal.Text = "Alleen als er een voorgaand storsi is";
+        EditSkipFirstSignal.Text = "Only if there is a previous storsi sigal";
         EditSkipFirstSignal.UseVisualStyleBackColor = true;
         // 
         // EditCheckBollingerBandsCondition
@@ -2255,7 +2242,7 @@ partial class FrmSettings
         EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
         EditCheckBollingerBandsCondition.Size = new Size(261, 19);
         EditCheckBollingerBandsCondition.TabIndex = 169;
-        EditCheckBollingerBandsCondition.Text = "Controleer of de prijs buiten de BB banden is";
+        EditCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
         EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
         // 
         // label24
@@ -2266,7 +2253,7 @@ partial class FrmSettings
         label24.Name = "label24";
         label24.Size = new Size(95, 15);
         label24.TabIndex = 127;
-        label24.Text = "Correctie STOCH";
+        label24.Text = "Correction STOCH";
         // 
         // EditStorsiAddStochAmount
         // 
@@ -2285,7 +2272,7 @@ partial class FrmSettings
         label26.Name = "label26";
         label26.Size = new Size(74, 15);
         label26.TabIndex = 125;
-        label26.Text = "Correctie RSI";
+        label26.Text = "Correction RSI";
         // 
         // EditStorsiAddRsiAmount
         // 
@@ -2347,7 +2334,7 @@ partial class FrmSettings
         groupBox5.Size = new Size(285, 151);
         groupBox5.TabIndex = 159;
         groupBox5.TabStop = false;
-        groupBox5.Text = "Instellingen";
+        groupBox5.Text = "Settings";
         // 
         // label5
         // 
@@ -2378,7 +2365,7 @@ partial class FrmSettings
         EditJumpUseLowHighCalculation.Name = "EditJumpUseLowHighCalculation";
         EditJumpUseLowHighCalculation.Size = new Size(250, 19);
         EditJumpUseLowHighCalculation.TabIndex = 127;
-        EditJumpUseLowHighCalculation.Text = "Bereken via de high/low ipv de open/close";
+        EditJumpUseLowHighCalculation.Text = "Use High/Low instead of Open/Close";
         EditJumpUseLowHighCalculation.UseVisualStyleBackColor = true;
         // 
         // label3
@@ -2752,7 +2739,7 @@ partial class FrmSettings
         tabTradingGeneral.Padding = new Padding(3);
         tabTradingGeneral.Size = new Size(1126, 578);
         tabTradingGeneral.TabIndex = 0;
-        tabTradingGeneral.Text = "Trading algemeen";
+        tabTradingGeneral.Text = "Trading common";
         tabTradingGeneral.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanel1
@@ -2881,7 +2868,7 @@ partial class FrmSettings
         groupBoxInstap.Size = new Size(234, 230);
         groupBoxInstap.TabIndex = 346;
         groupBoxInstap.TabStop = false;
-        groupBoxInstap.Text = "Instap condities";
+        groupBoxInstap.Text = "Entry condities";
         // 
         // EditCheckFurtherPriceMove
         // 
@@ -2891,7 +2878,7 @@ partial class FrmSettings
         EditCheckFurtherPriceMove.Name = "EditCheckFurtherPriceMove";
         EditCheckFurtherPriceMove.Size = new Size(184, 19);
         EditCheckFurtherPriceMove.TabIndex = 278;
-        EditCheckFurtherPriceMove.Text = "Controleer prijsdaling/stijging";
+        EditCheckFurtherPriceMove.Text = "Check price decrease/increase";
         EditCheckFurtherPriceMove.UseVisualStyleBackColor = true;
         // 
         // EditCheckIncreasingMacd
@@ -2902,7 +2889,7 @@ partial class FrmSettings
         EditCheckIncreasingMacd.Name = "EditCheckIncreasingMacd";
         EditCheckIncreasingMacd.Size = new Size(184, 19);
         EditCheckIncreasingMacd.TabIndex = 277;
-        EditCheckIncreasingMacd.Text = "MACD moet oplopen/aflopen";
+        EditCheckIncreasingMacd.Text = "MACD must be increasing/decreasing";
         EditCheckIncreasingMacd.UseVisualStyleBackColor = true;
         // 
         // EditCheckIncreasingStoch
@@ -2913,7 +2900,7 @@ partial class FrmSettings
         EditCheckIncreasingStoch.Name = "EditCheckIncreasingStoch";
         EditCheckIncreasingStoch.Size = new Size(199, 19);
         EditCheckIncreasingStoch.TabIndex = 276;
-        EditCheckIncreasingStoch.Text = "Stoch moet in niemandsland zijn";
+        EditCheckIncreasingStoch.Text = "Stoch not overbought/oversold";
         EditCheckIncreasingStoch.UseVisualStyleBackColor = true;
         // 
         // EditCheckIncreasingRsi
@@ -2924,7 +2911,7 @@ partial class FrmSettings
         EditCheckIncreasingRsi.Name = "EditCheckIncreasingRsi";
         EditCheckIncreasingRsi.Size = new Size(165, 19);
         EditCheckIncreasingRsi.TabIndex = 275;
-        EditCheckIncreasingRsi.Text = "RSI moet oplopen/aflopen";
+        EditCheckIncreasingRsi.Text = "RSI must be increasing/decreasing";
         EditCheckIncreasingRsi.UseVisualStyleBackColor = true;
         // 
         // groupBoxSlots
@@ -3041,7 +3028,7 @@ partial class FrmSettings
         EditLogCanceledOrders.Name = "EditLogCanceledOrders";
         EditLogCanceledOrders.Size = new Size(157, 19);
         EditLogCanceledOrders.TabIndex = 340;
-        EditLogCanceledOrders.Text = "Log geannuleerde orders";
+        EditLogCanceledOrders.Text = "Log cancelled orders";
         EditLogCanceledOrders.UseVisualStyleBackColor = true;
         // 
         // EditSoundTradeNotification
@@ -3052,7 +3039,7 @@ partial class FrmSettings
         EditSoundTradeNotification.Name = "EditSoundTradeNotification";
         EditSoundTradeNotification.Size = new Size(186, 19);
         EditSoundTradeNotification.TabIndex = 339;
-        EditSoundTradeNotification.Text = "Geluid voor een trade afspelen";
+        EditSoundTradeNotification.Text = "Play sound for a trade";
         EditSoundTradeNotification.UseVisualStyleBackColor = true;
         // 
         // EditDisableNewPositions
@@ -3063,7 +3050,7 @@ partial class FrmSettings
         EditDisableNewPositions.Name = "EditDisableNewPositions";
         EditDisableNewPositions.Size = new Size(187, 19);
         EditDisableNewPositions.TabIndex = 338;
-        EditDisableNewPositions.Text = "Geen nieuwe posities innemen";
+        EditDisableNewPositions.Text = "Dont open new positions";
         EditDisableNewPositions.UseVisualStyleBackColor = true;
         // 
         // tabTradingLong
@@ -3140,7 +3127,7 @@ partial class FrmSettings
         label59.Name = "label59";
         label59.Size = new Size(97, 15);
         label59.TabIndex = 271;
-        label59.Text = "Instap condities:";
+        label59.Text = "Entry conditions";
         // 
         // tabApi
         // 
@@ -3250,7 +3237,7 @@ partial class FrmSettings
         label55.Name = "label55";
         label55.Size = new Size(308, 15);
         label55.TabIndex = 222;
-        label55.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabLongBlackList
         // 
@@ -3292,7 +3279,7 @@ partial class FrmSettings
         label51.Name = "label51";
         label51.Size = new Size(308, 15);
         label51.TabIndex = 222;
-        label51.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabShortWhiteList
         // 
@@ -3334,7 +3321,7 @@ partial class FrmSettings
         label29.Name = "label29";
         label29.Size = new Size(308, 15);
         label29.TabIndex = 221;
-        label29.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabShortBlackList
         // 
@@ -3376,7 +3363,7 @@ partial class FrmSettings
         label49.Name = "label49";
         label49.Size = new Size(308, 15);
         label49.TabIndex = 222;
-        label49.Text = "(1 munt per regel met een optionele opmerking erachter)";
+        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabPageOptions
         // 
@@ -3426,7 +3413,7 @@ partial class FrmSettings
         EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
         EditDebugTrendCalculation.Size = new Size(325, 19);
         EditDebugTrendCalculation.TabIndex = 302;
-        EditDebugTrendCalculation.Text = "Show more information during TrendCalculation  (in file)";
+        EditDebugTrendCalculation.Text = "Show more information during TrendCalculation (in file)";
         EditDebugTrendCalculation.UseVisualStyleBackColor = true;
         // 
         // EditDebugSymbol
@@ -3491,7 +3478,7 @@ partial class FrmSettings
         Controls.Add(panelButtons);
         Margin = new Padding(4, 3, 4, 3);
         Name = "FrmSettings";
-        Text = "Instellingen";
+        Text = "Settings";
         panelButtons.ResumeLayout(false);
         panelFill.ResumeLayout(false);
         tabControlMain.ResumeLayout(false);
@@ -3672,7 +3659,6 @@ partial class FrmSettings
     private Button buttonCancel;
     private Button buttonOk;
     private Panel panelFill;
-    private ToolTip toolTip1;
     private Button buttonTestSpeech;
     private Button buttonReset;
     private Button buttonGotoAppDataFolder;

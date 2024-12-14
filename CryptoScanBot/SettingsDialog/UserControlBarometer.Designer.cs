@@ -53,7 +53,7 @@ partial class UserControlBarometer
         EditGroupBox.Size = new Size(370, 207);
         EditGroupBox.TabIndex = 286;
         EditGroupBox.TabStop = false;
-        EditGroupBox.Text = "Barometer";
+        EditGroupBox.Text = "Barometer filter";
         // 
         // UserControlBarometer1d
         // 
@@ -101,9 +101,9 @@ partial class UserControlBarometer
         EditBarometerLog.Location = new Point(17, 163);
         EditBarometerLog.Margin = new Padding(4, 3, 4, 3);
         EditBarometerLog.Name = "EditBarometerLog";
-        EditBarometerLog.Size = new Size(180, 19);
+        EditBarometerLog.Size = new Size(160, 19);
         EditBarometerLog.TabIndex = 255;
-        EditBarometerLog.Text = "Log indien buiten de grenzen";
+        EditBarometerLog.Text = "Log if outside boundaries";
         EditBarometerLog.UseVisualStyleBackColor = true;
         // 
         // UserControlBarometer

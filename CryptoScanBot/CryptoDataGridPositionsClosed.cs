@@ -2,9 +2,7 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Trend;
 

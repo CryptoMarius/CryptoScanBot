@@ -7,7 +7,6 @@ using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.TradingView;
 
@@ -653,7 +652,7 @@ public partial class DashBoardInformation : UserControl
                             }
                         }
                         text = $"({GlobalData.Settings.Trading.SlotsMaximalLong}/{GlobalData.Settings.Trading.SlotsMaximalShort}) {positionCount}";
-                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Openstaande posities", text);
+                        ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "Open positions", text);
                     }
                     else
                         ShowSymbolPrice(SymbolHistList[4], InformationRowList[4], exchange, quoteData, symbol, "", "");

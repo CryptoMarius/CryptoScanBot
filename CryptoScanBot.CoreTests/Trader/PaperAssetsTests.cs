@@ -5,7 +5,6 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
 using CryptoScanBot.CoreTests;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Trader.Tests;
 

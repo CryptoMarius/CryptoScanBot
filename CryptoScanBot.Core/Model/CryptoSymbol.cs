@@ -68,7 +68,7 @@ public class CryptoSymbol
 
     // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
     // Wat het inhoud weet ik niet maar toegevoegde waarde is er voor het traden wel.
-    // https://bybit-exchange.github.io/docs/v5/market/history-fund-rate
+    // https://bybit-exchange.github.io/docs/v5/market/History-fund-rate
     public decimal FundingRate { get; set; }
     // (minute)
     public decimal FundingInterval { get; set; }

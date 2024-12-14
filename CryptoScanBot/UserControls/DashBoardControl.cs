@@ -4,7 +4,6 @@ using System.Windows.Forms.DataVisualization.Charting;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper;
@@ -74,6 +73,7 @@ public partial class DashBoardControl : UserControl
     private Chart ChartInvestedReturnedPerDay;
     private Chart ChartDoorlooptijden;
 
+    // TODO: Split up per chart, this is too big..
 
     public DashBoardControl()
     {

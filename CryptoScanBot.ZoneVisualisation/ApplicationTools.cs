@@ -1,16 +1,16 @@
-﻿using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Settings;
 
-namespace CryptoScanBot;
+namespace CryptoScanBot.ZoneVisualisation;
 
-static class ApplicationTools
+public static class ApplicationTools
 {
 
-    public static void SaveWindowLocation(Form form)
+    public static void SaveWindowLocation(Form form, FormDimensions settings)
     {
-        GlobalData.SettingsUser.WindowPosition = form.DesktopBounds;
+        settings.WindowPosition = form.DesktopBounds;
 
         // only save the WindowState if Normal or Maximized
-        GlobalData.SettingsUser.WindowState = form.WindowState switch
+        settings.WindowState = form.WindowState switch
         {
             FormWindowState.Normal => 0,
             FormWindowState.Maximized => 2,
@@ -18,22 +18,22 @@ static class ApplicationTools
         };
     }
 
-    public static void WindowLocationRestore(Form form)
+    public static void WindowLocationRestore(Form form, FormDimensions settings)
     {
         // this is the default
         form.WindowState = FormWindowState.Normal;
         form.StartPosition = FormStartPosition.WindowsDefaultBounds;
 
-        
+
         // check if the saved bounds are nonzero and visible on any screen
-        if (GlobalData.SettingsUser.WindowPosition != Rectangle.Empty && IsVisibleOnAnyScreen(GlobalData.SettingsUser.WindowPosition))
+        if (settings.WindowPosition != Rectangle.Empty && IsVisibleOnAnyScreen(settings.WindowPosition))
         {
             // first set the bounds
             form.StartPosition = FormStartPosition.Manual;
-            form.DesktopBounds = GlobalData.SettingsUser.WindowPosition;
+            form.DesktopBounds = settings.WindowPosition;
 
             // afterwards set the window state to the saved value (which could be Maximized)
-            form.WindowState = (FormWindowState)GlobalData.SettingsUser.WindowState;
+            form.WindowState = (FormWindowState)settings.WindowState;
         }
         else
         {
@@ -42,14 +42,14 @@ static class ApplicationTools
 
             // we can still apply the saved size
             // msorens: added gatekeeper, otherwise first time appears as just a title bar!
-            if (GlobalData.SettingsUser.WindowPosition != Rectangle.Empty)
+            if (settings.WindowPosition != Rectangle.Empty)
             {
-                form.Size = GlobalData.SettingsUser.WindowPosition.Size;
+                form.Size = settings.WindowPosition.Size;
             }
         }
 
         // Sometime the height or width becomes zero, not sure why..
-        if (form.DesktopBounds.Size.Width == 0 || form.DesktopBounds.Size.Height == 0 || (form.DesktopBounds.Size.Width < 350 && form.DesktopBounds.Size.Height < 350))
+        if (form.DesktopBounds.Size.Width == 0 || form.DesktopBounds.Size.Height == 0 || form.DesktopBounds.Size.Width < 350 && form.DesktopBounds.Size.Height < 350)
         {
             form.StartPosition = FormStartPosition.CenterScreen;
             form.DesktopBounds = new Rectangle(150, 150, 1000, 800);
@@ -61,6 +61,6 @@ static class ApplicationTools
     {
         return Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(rect));
     }
-    
+
 
 }

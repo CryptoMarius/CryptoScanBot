@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
@@ -37,6 +36,9 @@ public class DominantLevelShort : SignalCreateBase
 
 
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(GlobalData.Settings.Signal.Zones.Interval);
+        symbolIntervalData.BestShortZone = 100m;
         if (symbolData.ZoneListShort.Count == 0)
             return false;
 
@@ -60,56 +62,62 @@ public class DominantLevelShort : SignalCreateBase
         //if (indexHigh >= symbolData.ZoneListShort.Count)
         //    indexHigh = symbolData.ZoneListShort.Count - 1;
 
+
+        decimal? distance = null;
         //for (int index = indexLow; index < indexHigh; index++)
         foreach (var zone in symbolData.ZoneListShort.Values)
         {
             //var zone = symbolData.ZoneListShort.Values[index];
             if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
             {
-                if (zone.CloseTime == null)
+                bool changed = false;
+                decimal alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                if (CandleLast.High >= alarmPrice)
                 {
-                    bool changed = false;
-                    decimal alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    if (CandleLast.High >= alarmPrice)
+                    if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
                     {
-                        if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(0))
-                        {
-                            result = true;
-                            changed = true;
-                            zone.AlarmDate = CandleLast.Date;
-                            ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})  {CandleLast.High}";
-                        }
-                    }
-
-                    // todo, delete the zone somewhere else?
-                    if (CandleLast.High > zone.Bottom) // || CandleLast.Close >= zone.Bottom || CandleLast.Open >= zone.Bottom
-                    {
+                        result = true;
                         changed = true;
-                        ExtraText += "....";
-                        zone.CloseTime = CandleLast.OpenTime;
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
+                        zone.AlarmDate = CandleLast.Date;
+                        ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id})  {CandleLast.High}";
                     }
-
-                    if (changed)
-                    {
-                        try
-                        {
-                            using var database = new CryptoDatabase();
-                            database.Connection.Update(zone);
-                        }
-                        catch (Exception error)
-                        {
-                            ScannerLog.Logger.Error(error, "");
-                            GlobalData.AddTextToLogTab(error.ToString());
-                        }
-                    }
-
-                    // How about multiple zones overlapping?
-                    if (result)
-                        break;
                 }
+
+                // todo, delete the zone somewhere else?
+                if (CandleLast.High > zone.Bottom) // || CandleLast.Close >= zone.Bottom || CandleLast.Open >= zone.Bottom
+                {
+                    changed = true;
+                    ExtraText += "....";
+                    zone.CloseTime = CandleLast.OpenTime;
+                    GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
+                }
+                else
+                {
+                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close; 
+                    if (distance == null || dist < distance)
+                        distance = dist;
+                }
+
+                if (changed)
+                {
+                    try
+                    {
+                        using var database = new CryptoDatabase();
+                        database.Connection.Update(zone);
+                    }
+                    catch (Exception error)
+                    {
+                        ScannerLog.Logger.Error(error, "");
+                        GlobalData.AddTextToLogTab(error.ToString());
+                    }
+                }
+
+                // How about multiple zones overlapping?
+                if (result)
+                    break;
             }
         }
+        symbolIntervalData.BestShortZone = distance;
 
         //// close lower short zones (they should not be there)
         ////for (int index = 0; index <= indexLow; index++)

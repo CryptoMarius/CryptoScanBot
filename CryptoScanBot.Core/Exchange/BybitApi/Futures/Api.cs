@@ -11,7 +11,6 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Json;
-using CryptoScanBot.Core.Core;
 
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;

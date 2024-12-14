@@ -1,8 +1,8 @@
 ﻿using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Zones;
 
@@ -164,6 +164,7 @@ public class LiquidityZones
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
                 await CalculateZones(sender, symbol);
+                //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
             }
         }
     }

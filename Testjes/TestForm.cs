@@ -16,6 +16,7 @@ using Dapper;
 using Skender.Stock.Indicators;
 
 using Font = System.Drawing.Font;
+using CryptoScanBot.Core.Const;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Exchange;
@@ -30,7 +31,6 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using CryptoScanBot.Core.Json;
 using System.Text.Json.Serialization;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot;
 
@@ -1478,7 +1478,7 @@ public partial class TestForm : Form
         var exchange = GlobalData.Settings.General.Exchange;
         if (exchange != null)
         {
-            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
+            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
             {
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 CryptoCandleList candleList = symbolPeriod.CandleList;
@@ -1718,7 +1718,7 @@ public partial class TestForm : Form
         var exchange = GlobalData.Settings.General.Exchange;
         if (exchange != null)
         {
-            if (exchange.SymbolListName.TryGetValue(Core.Model.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
+            if (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
             {
                 DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
                 DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);

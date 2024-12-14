@@ -33,7 +33,7 @@ public class SecureStringConverter : JsonConverter<string>
     {
         if (reader.TokenType is JsonTokenType.String)
         {
-            string text = reader.GetString();
+            string? text = reader.GetString();
             if (!string.IsNullOrEmpty(text))
             {
                 if (text.StartsWith(prefix))

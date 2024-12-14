@@ -1759,6 +1759,8 @@ public class PositionMonitor : IDisposable
             {
                 if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
                     GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
+                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                    GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
                 ClearSignals();
                 return [];
             }

@@ -10,7 +10,7 @@ namespace CryptoScanBot.Core.Telegram;
 
 public class TelegramShowTrend
 {
-    public static void ShowTrend(string arguments, StringBuilder stringbuilder)
+    public static async Task ShowTrendAsync(string arguments, StringBuilder stringbuilder)
     {
         string symbolName = "";
         string[] parameters = arguments.Split(' ');
@@ -23,7 +23,7 @@ public class TelegramShowTrend
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount, symbol, 0, 0);
+                await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
 
                 AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
                 foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)

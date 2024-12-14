@@ -75,32 +75,32 @@ public class BackTest
         if (candle.CandleData != null)
             return;
 
-        //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(history, 5);
+        //List<TemaResult> temaList = (List<TemaResult>)Indicator.GetTema(History, 5);
 
         // Dit werkt niet voor de EMA (en psar)!
-        //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-        //List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        //List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
-        //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
-        //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+        //List<EmaResult> emaList8 = (List<EmaResult>)History.GetEma(8);
+        //List<EmaResult> emaList20 = (List<EmaResult>)History.GetEma(20);
+        //List<EmaResult> emaList50 = (List<EmaResult>)History.GetEma(50);
+        //List<EmaResult> emaList100 = (List<EmaResult>)History.GetEma(100);
+        //List<EmaResult> emaList200 = (List<EmaResult>)History.GetEma(200);
         //List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(3);
         //List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(3);
 
-        //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
-        //List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(history, 20);
+        //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(History, 8);
+        //List<SmaResult> smaList20 = (List<SmaResult>)Indicator.GetSma(History, 20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
-        //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(history, 100);
+        //List<SmaResult> smaList100 = (List<SmaResult>)Indicator.GetSma(History, 100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
         //List<SlopeResult> slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(3);
         //List<SlopeResult> slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(3);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(History, 20, 1);
 
-        //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
+        //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
-        //List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
+        //List<MacdResult> macdLtList = (List<MacdResult>)History.GetMacd(34, 144);
 
         //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSma(25).GetSlope(3);
 
@@ -170,7 +170,7 @@ public class BackTest
                 GlobalData.AddTextToLogTab("error indicators");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
-                //GlobalData.AddTextToLogTab(history.ToString());
+                //GlobalData.AddTextToLogTab(History.ToString());
                 throw;
             }
         }
@@ -256,7 +256,7 @@ public class BackTest
     //    //Signal.Ema20 = (decimal)LastCandle.CandleData.Ema20.Ema.Value;
 
     //    //CalculateTrendStuff(); tijd intersief, alleen bij een signaal doen
-    //    //CalculateAdditionalAlarmProperties(Signal, history, 60);
+    //    //CalculateAdditionalAlarmProperties(Signal, History, 60);
     //    return signal;
     //}
 

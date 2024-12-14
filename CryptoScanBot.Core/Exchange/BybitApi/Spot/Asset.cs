@@ -4,7 +4,6 @@ using Bybit.Net.Objects.Models.V5;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;

@@ -68,7 +68,7 @@ public class SymbolTools
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren
         //In principe is dit bij de CC signals al gedaan, maar een tweede keer kan geen kwaad
-        if (!symbol.CheckValidMinimalVolume(candleStart, candleDuration, out string text))
+        if (!symbol.CheckValidMinimalVolume(false, candleStart, candleDuration, out string text))
         {
             reaction = text;
             return false;
@@ -127,6 +127,12 @@ public class SymbolTools
     public static bool CheckMinimumTickPercentage(CryptoSymbol symbol, out string reaction)
     {
         // Munten waarvan de ticksize percentage groot is (barcode charts)
+        if (symbol.LastPrice == null)
+        {
+            // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
+            reaction = $"{symbol.Name} No lastPrice";
+            return false;
+        }
 
         decimal barcodePercentage = 100 * symbol.PriceTickSize / symbol.LastPrice.Value;
         if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)

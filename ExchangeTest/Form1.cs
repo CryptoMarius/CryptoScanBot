@@ -8,10 +8,9 @@ using CryptoScanBot.Core.Barometer;
 using System.Text.Json;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Experiment.Exchange.Altrady;
 
 using Mexc.Net.Clients;
-using CryptoScanBot.Core.Core;
+using ExchangeTest.Exchange.Altrady;
 
 
 namespace CryptoScanBot.Experiment;

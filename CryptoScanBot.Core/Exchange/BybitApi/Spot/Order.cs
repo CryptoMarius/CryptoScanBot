@@ -4,7 +4,6 @@ using Bybit.Net.Enums;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
@@ -227,7 +226,7 @@ public class Order() : OrderBase(), IOrder
     //    Deze routine is internal, kom ik niet bij voor zover ik dat kan zien..
 
     //    return await client.V5Api.Trading.SendRequestAsync<BybitResponse<Bybit.Net.Objects.Models.V5.BybitOrder>>(
-    //        client.V5Api.Trading.GetUrl("v5/order/history"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+    //        client.V5Api.Trading.GetUrl("v5/order/History"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
 
     //    // private readonly BybitRestClientApi _baseClient;
     //}

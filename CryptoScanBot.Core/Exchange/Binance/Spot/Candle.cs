@@ -5,7 +5,6 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
@@ -102,7 +101,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             }
             else
             {
-                // New coins dont have history, we appearently asking for a period with no activity, skip that period
+                // New coins dont have History, we appearently asking for a period with no activity, skip that period
                 if (maxTime > maxFetch)
                     fetchedUpTo = maxFetch;
                 else

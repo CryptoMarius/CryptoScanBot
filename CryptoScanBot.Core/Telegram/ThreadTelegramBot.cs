@@ -4,7 +4,6 @@ using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 
@@ -92,7 +91,7 @@ public static class ThreadTelegramBot
 public class ThreadTelegramBotInstance
 {
     private static int offset;
-    private TelegramBotClient bot;
+    private TelegramBotClient? bot;
     public CancellationTokenSource cancellationToken = new();
 
     //public static string Token { get; set; }
@@ -662,7 +661,7 @@ public class ThreadTelegramBotInstance
                                             Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
                                         }
                                         else if (command == "TREND")
-                                            TelegramShowTrend.ShowTrend(arguments, stringBuilder);
+                                            await TelegramShowTrend.ShowTrendAsync(arguments, stringBuilder);
                                         else if (command == "HELP")
                                             TelegramShowHelp.ShowHelp(stringBuilder);
                                         else if (command == "CHATID")

@@ -1,6 +1,6 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
 
 using System.Collections.Concurrent;
 
@@ -41,6 +41,7 @@ public class ThreadZoneCalculate
             foreach (CryptoSymbol symbol in Queue.GetConsumingEnumerable(cancellationToken.Token))
             {
                 await LiquidityZones.CalculateZones(null, symbol);
+                //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
             }
         }
         catch (OperationCanceledException)

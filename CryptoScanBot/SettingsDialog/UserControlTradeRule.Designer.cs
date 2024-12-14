@@ -82,7 +82,7 @@ partial class UserControlTradeRule
         ButtonTradeRuleDel.Name = "ButtonTradeRuleDel";
         ButtonTradeRuleDel.Size = new Size(125, 23);
         ButtonTradeRuleDel.TabIndex = 338;
-        ButtonTradeRuleDel.Text = "Verwijder regel";
+        ButtonTradeRuleDel.Text = "Remove rule";
         ButtonTradeRuleDel.UseVisualStyleBackColor = true;
         ButtonTradeRuleDel.Click += ButtonDcaDelClick;
         // 
@@ -92,7 +92,7 @@ partial class UserControlTradeRule
         ButtonTradeRuleAdd.Name = "ButtonTradeRuleAdd";
         ButtonTradeRuleAdd.Size = new Size(125, 23);
         ButtonTradeRuleAdd.TabIndex = 337;
-        ButtonTradeRuleAdd.Text = "Toevoegen regel";
+        ButtonTradeRuleAdd.Text = "Add rule";
         ButtonTradeRuleAdd.UseVisualStyleBackColor = true;
         ButtonTradeRuleAdd.Click += ButtonDcaAddClick;
         // 

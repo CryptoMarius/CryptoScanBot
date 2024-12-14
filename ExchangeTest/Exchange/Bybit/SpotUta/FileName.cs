@@ -9,7 +9,6 @@ using Bybit.Net.Objects.Options;
 using CryptoExchange.Net.Authentication;
 
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
@@ -21,7 +20,7 @@ namespace ExchangeTest.Bybit.SpotUta;
 
 internal class FileName
 {
-    internal static LoggerFactory LogFactory;
+    //internal static LoggerFactory? LogFactory = null;
 
     internal static BybitRestClient CreateRestClient()
     {
@@ -50,7 +49,7 @@ internal class FileName
         if (GlobalData.TradingApi.Key != "")
             options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
 
-        BybitRestClient client = new(null, LogFactory, Options.Create(options));
+        BybitRestClient client = new(null, null, Options.Create(options));
         return client;
     }
 

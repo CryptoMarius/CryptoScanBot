@@ -53,12 +53,12 @@ public class CryptoCandleList : SortedList<long, CryptoCandle>
 //    var newLine = string.Format("{0};{1};{2};{3};{4};{5};{6};{7}", "OpenTime", "IntervalId", "Open", "High", "Low", "Close", "Volume");
 //    csv.AppendLine(newLine);
 
-//    Monitor.Enter(history);
+//    Monitor.Enter(History);
 //    try
 //    {
-//        for (int i = 0; i < history.Count; i++)
+//        for (int i = 0; i < History.Count; i++)
 //        {
-//            CryptoCandle candle = history[i];
+//            CryptoCandle candle = History[i];
 
 //            newLine = string.Format("{0};{1};{2};{3};{4};{5};{6}",
 //            candle.Date.ToString(),
@@ -74,7 +74,7 @@ public class CryptoCandleList : SortedList<long, CryptoCandle>
 //    }
 //    finally
 //    {
-//        Monitor.Exit(history);
+//        Monitor.Exit(History);
 //    }
 //    string filename = System.IO.Path.GetDirectoryName((System.Reflection.Assembly.GetEntryAssembly().Location));
 //    filename = filename + @"\data\" + Symbol.Exchange.Name + @"\Candles\" + Interval.Name + @"\";

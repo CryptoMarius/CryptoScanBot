@@ -6,7 +6,6 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.CoreTests;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Intern.Tests;
 

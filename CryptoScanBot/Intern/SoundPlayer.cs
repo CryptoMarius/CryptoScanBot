@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Intern;
 

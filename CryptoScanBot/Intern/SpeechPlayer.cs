@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 
 using System.Collections.Concurrent;
 using System.Speech.Synthesis;

@@ -5,8 +5,6 @@ using CryptoExchange.Net.Objects.Sockets;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using Binance.Net.Interfaces;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 

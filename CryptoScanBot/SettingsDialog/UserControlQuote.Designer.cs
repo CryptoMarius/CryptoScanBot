@@ -107,7 +107,7 @@ partial class UserControlQuote
         ButtonColor.Name = "ButtonColor";
         ButtonColor.Size = new Size(97, 23);
         ButtonColor.TabIndex = 6;
-        ButtonColor.Text = "Achtergrond";
+        ButtonColor.Text = "Background";
         ButtonColor.UseVisualStyleBackColor = true;
         ButtonColor.Click += ButtonColor_Click;
         // 

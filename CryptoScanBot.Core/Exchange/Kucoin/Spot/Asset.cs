@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;

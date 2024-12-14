@@ -223,6 +223,7 @@ public class ThreadLoadData
                 // Check the (internal) barometer symbols
                 BarometerTools.InitBarometerSymbols();
 
+                ZoneTools.LoadAllZones();
 
                 GlobalData.AddTextToLogTab("Reading candle information");
                 DataStore.LoadCandles();
@@ -311,7 +312,6 @@ public class ThreadLoadData
                 _ = Task.Run(async () => { await GlobalData.ThreadCheckPosition!.ExecuteAsync(); });
 
                 await TradeTools.CheckOpenPositions();
-                ZoneTools.LoadAllZones();
 
 
 

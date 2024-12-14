@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
@@ -37,6 +36,9 @@ public class DominantLevelLong : SignalCreateBase
 
 
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(GlobalData.Settings.Signal.Zones.Interval);
+        symbolIntervalData.BestLongZone = 100m;
         if (symbolData.ZoneListLong.Count == 0)
             return false;
 
@@ -60,19 +62,19 @@ public class DominantLevelLong : SignalCreateBase
         //if (indexHigh >= symbolData.ZoneListLong.Count)
         //    indexHigh = symbolData.ZoneListLong.Count - 1;
 
+
+        decimal? distance = null;
         //for (int index = indexLow; index < indexHigh; index++)
         foreach (var zone in symbolData.ZoneListLong.Values)
         {
             //var zone = symbolData.ZoneListLong.Values[index];
-
-            if (zone.CloseTime == null)
+            if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
             {
-
                 bool changed = false;
                 decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                 if (CandleLast.Low <= alarmPrice)
                 {
-                    if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(0))
+                    if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))
                     {
                         result = true;
                         changed = true;
@@ -89,6 +91,12 @@ public class DominantLevelLong : SignalCreateBase
                     zone.CloseTime = CandleLast.OpenTime;
                     GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
                 }
+                else
+                {
+                    decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close; 
+                    if (distance == null || dist < distance)
+                        distance = dist;
+                }
 
                 if (changed)
                 {
@@ -103,11 +111,13 @@ public class DominantLevelLong : SignalCreateBase
                         GlobalData.AddTextToLogTab(error.ToString());
                     }
                 }
+
+                // How about multiple zones overlapping?
                 if (result)
                     break;
             }
         }
-
+        symbolIntervalData.BestLongZone = distance;
 
         //// close higher long zones (they should not be there)
         ////for (int index = indexLow; index < symbolData.ZoneListLong.Count; index++)
@@ -117,7 +127,6 @@ public class DominantLevelLong : SignalCreateBase
         //    if (zone.CloseTime == null && CandleLast.Low < zone.Top)
         //    {
         //        zone.CloseTime = CandleLast.OpenTime;
-
         //        try
         //        {
         //            using var database = new CryptoDatabase();
@@ -131,6 +140,7 @@ public class DominantLevelLong : SignalCreateBase
         //        }
         //    }
         //}
+
 
         return result;
     }

@@ -4,13 +4,11 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
-using Kraken.Net.Objects.Models;
 using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
@@ -42,6 +40,8 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
         {
             foreach (var data in dataList.Data)
             {
+                if (data.Symbol == null)
+                    continue;
                 string symbolName = data.Symbol;
                 symbolName = symbolName.Replace("/", "");
 

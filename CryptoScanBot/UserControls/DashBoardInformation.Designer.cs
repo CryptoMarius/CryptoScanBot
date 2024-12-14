@@ -77,17 +77,19 @@ partial class DashBoardInformation
         labelSymbol3Name = new Label();
         labelSymbol2Name = new Label();
         labelSymbol1Name = new Label();
+        panel2 = new Panel();
         panelLeft.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBoxTrader).BeginInit();
         ((System.ComponentModel.ISupportInitialize)pictureBoxScanner).BeginInit();
         ((System.ComponentModel.ISupportInitialize)pictureBoxRulez).BeginInit();
         ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
         panel1.SuspendLayout();
+        panel2.SuspendLayout();
         SuspendLayout();
         // 
         // label31
         // 
-        label31.Location = new Point(640, 4);
+        label31.Location = new Point(670, 4);
         label31.Name = "label31";
         label31.Size = new Size(60, 15);
         label31.TabIndex = 109;
@@ -96,7 +98,7 @@ partial class DashBoardInformation
         // 
         // label32
         // 
-        label32.Location = new Point(640, 24);
+        label32.Location = new Point(670, 24);
         label32.Name = "label32";
         label32.Size = new Size(60, 15);
         label32.TabIndex = 110;
@@ -105,7 +107,7 @@ partial class DashBoardInformation
         // 
         // label33
         // 
-        label33.Location = new Point(640, 44);
+        label33.Location = new Point(670, 44);
         label33.Name = "label33";
         label33.Size = new Size(60, 15);
         label33.TabIndex = 111;
@@ -114,7 +116,7 @@ partial class DashBoardInformation
         // 
         // label34
         // 
-        label34.Location = new Point(640, 64);
+        label34.Location = new Point(670, 64);
         label34.Name = "label34";
         label34.Size = new Size(60, 15);
         label34.TabIndex = 112;
@@ -123,7 +125,7 @@ partial class DashBoardInformation
         // 
         // label35
         // 
-        label35.Location = new Point(640, 84);
+        label35.Location = new Point(670, 84);
         label35.Name = "label35";
         label35.Size = new Size(60, 15);
         label35.TabIndex = 113;
@@ -133,6 +135,7 @@ partial class DashBoardInformation
         // panelLeft
         // 
         panelLeft.AutoSize = true;
+        panelLeft.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         panelLeft.Controls.Add(pictureBoxTrader);
         panelLeft.Controls.Add(pictureBoxScanner);
         panelLeft.Controls.Add(labelAppicationStatus);
@@ -147,7 +150,7 @@ partial class DashBoardInformation
         panelLeft.Dock = DockStyle.Left;
         panelLeft.Location = new Point(0, 0);
         panelLeft.Name = "panelLeft";
-        panelLeft.Size = new Size(169, 103);
+        panelLeft.Size = new Size(169, 102);
         panelLeft.TabIndex = 132;
         // 
         // pictureBoxTrader
@@ -261,16 +264,18 @@ partial class DashBoardInformation
         // 
         // pictureBox1
         // 
-        pictureBox1.Dock = DockStyle.Left;
-        pictureBox1.Location = new Point(169, 0);
+        pictureBox1.Dock = DockStyle.Fill;
+        pictureBox1.Location = new Point(0, 0);
         pictureBox1.Name = "pictureBox1";
-        pictureBox1.Size = new Size(403, 103);
+        pictureBox1.Size = new Size(380, 102);
+        pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
         pictureBox1.TabIndex = 133;
         pictureBox1.TabStop = false;
         // 
         // panel1
         // 
         panel1.AutoSize = true;
+        panel1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         panel1.Controls.Add(label30);
         panel1.Controls.Add(label29);
         panel1.Controls.Add(label28);
@@ -307,9 +312,9 @@ partial class DashBoardInformation
         panel1.Controls.Add(label32);
         panel1.Controls.Add(label31);
         panel1.Dock = DockStyle.Fill;
-        panel1.Location = new Point(572, 0);
+        panel1.Location = new Point(549, 0);
         panel1.Name = "panel1";
-        panel1.Size = new Size(1065, 103);
+        panel1.Size = new Size(733, 102);
         panel1.TabIndex = 134;
         // 
         // label30
@@ -582,15 +587,30 @@ partial class DashBoardInformation
         labelSymbol1Name.TabIndex = 109;
         labelSymbol1Name.Text = "label1";
         // 
+        // panel2
+        // 
+        panel2.AutoSize = true;
+        panel2.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        panel2.Controls.Add(pictureBox1);
+        panel2.Dock = DockStyle.Left;
+        panel2.Location = new Point(169, 0);
+        panel2.MinimumSize = new Size(380, 0);
+        panel2.Name = "panel2";
+        panel2.Size = new Size(380, 102);
+        panel2.TabIndex = 135;
+        // 
         // DashBoardInformation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
         Controls.Add(panel1);
-        Controls.Add(pictureBox1);
+        Controls.Add(panel2);
         Controls.Add(panelLeft);
+        MinimumSize = new Size(0, 102);
         Name = "DashBoardInformation";
-        Size = new Size(1637, 103);
+        Size = new Size(1282, 102);
         panelLeft.ResumeLayout(false);
         panelLeft.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)pictureBoxTrader).EndInit();
@@ -599,6 +619,7 @@ partial class DashBoardInformation
         ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
+        panel2.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
@@ -653,4 +674,5 @@ partial class DashBoardInformation
     private Label labelSymbol3Name;
     private Label labelSymbol2Name;
     private Label labelSymbol1Name;
+    private Panel panel2;
 }

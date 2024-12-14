@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using System.Text;
@@ -199,10 +198,10 @@ public class TrendInterval
             ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (date period problem)");
             return;
         }
-#if DEBUG
-        DateTime candleIntervalStartDebug = CandleTools.GetUnixDate(minDate);
-        DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(maxDate);
-#endif
+//#if DEBUG
+//        DateTime candleIntervalStartDebug = CandleTools.GetUnixDate(minDate);
+//        DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(maxDate);
+//#endif
 
         // We cache the ZigZag indicator and we create a lot of them with different deviations
         TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, candleList);
@@ -230,9 +229,9 @@ public class TrendInterval
             //$"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
             string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
             $"zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
-#if DEBUG
-             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
-#endif
+//#if DEBUG
+//             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
+//#endif
             ;
             log?.AppendLine(text);
             ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);

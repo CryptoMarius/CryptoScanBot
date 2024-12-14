@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Momentum;
@@ -198,10 +197,10 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
 
     //            if (lastCandle.CandleData == null)
     //            {
-    //                List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
-    //                if (history == null)
+    //                List<CryptoCandle>? History = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+    //                if (History == null)
     //                    return false;
-    //                CandleIndicatorData.CalculateIndicators(history);
+    //                CandleIndicatorData.CalculateIndicators(History);
     //            }
 
     //            if (!IndicatorsOkay(lastCandle!) || !IndicatorsOkay(prevCandle!))

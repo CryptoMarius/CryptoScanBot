@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Commands;
+using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
@@ -16,6 +17,8 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         Symbol,
         Volume,
         //Price
+        Distance,
+        //MarketTrend, to much cpu needed
     }
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
@@ -58,10 +61,16 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 case ColumnsForGrid.Volume:
                     CreateColumn("Volume", typeof(decimal), "#,##0", DataGridViewContentAlignment.MiddleRight, 75);
                     break;
-                    //case ColumnsForGrid.Price :
-                    //CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70);
-                    //break;
-                    //_ => throw new NotImplementedException(),
+                //case ColumnsForGrid.Price :
+                //CreateColumn("Price", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70);
+                //break;
+                //_ => throw new NotImplementedException(),
+                case ColumnsForGrid.Distance:
+                    CreateColumn("Distance", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
+                    break;
+                //case ColumnsForGrid.MarketTrend:
+                //    CreateColumn("M.Trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
+                //    break;
             }
         }
 
@@ -76,6 +85,9 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
             ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Name, b.Name),
             ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
             //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
+            ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneDistance(a), ZoneDistance(b)),
+            //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
+            
             _ => 0
         };
 
@@ -110,18 +122,44 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
 
         CryptoSymbol? symbol = GetCellObject(e.RowIndex);
         if (symbol != null)
-        {           
+        {
             e.Value = (ColumnsForGrid)e.ColumnIndex switch
             {
                 ColumnsForGrid.Id => symbol.Id,
                 ColumnsForGrid.Symbol => symbol.Name,
                 ColumnsForGrid.Volume => symbol.Volume.ToString("N0"),
                 //ColumnsForGrid.Price => symbol.LastPrice?.ToString(symbol.PriceDisplayFormat),
+                ColumnsForGrid.Distance => ZoneDistance(symbol),
+                //ColumnsForGrid.MarketTrend => MarketTrend(symbol),                
                 _ => '?',
             };
         }
     }
 
+    private static decimal? ZoneDistance(CryptoSymbol symbol)
+    {
+        // Set the date of the last swing point for the automatic zone calculation
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(GlobalData.Settings.Signal.Zones.Interval);
+        
+        if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
+            return null;
+        if (symbolIntervalData.BestLongZone == null)
+            return symbolIntervalData.BestShortZone;
+        if (symbolIntervalData.BestShortZone == null)
+            return symbolIntervalData.BestLongZone;
+
+        return Math.Min(symbolIntervalData.BestLongZone.Value, symbolIntervalData.BestShortZone.Value);
+    }
+    
+
+    //private static float? MarketTrend(CryptoSymbol symbol)
+    //{
+    //    // Set the date of the last swing point for the automatic zone calculation
+    //    AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+    //    AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(GlobalData.Settings.Signal.Zones.Interval);
+    //    return symbolData.MarketTrendPercentage;
+    //}
 
     public override void CellFormattingEvent(object? sender, DataGridViewCellFormattingEventArgs e)
     {

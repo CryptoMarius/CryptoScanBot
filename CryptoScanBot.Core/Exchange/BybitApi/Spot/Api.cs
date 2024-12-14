@@ -1,6 +1,5 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
-using Bybit.Net.Objects;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
@@ -9,9 +8,6 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using System.Text.Json;
-using Bybit.Net;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
@@ -27,7 +23,7 @@ public class Api : ExchangeBase
         Candle = new Candle(this);
         Symbol = new Symbol();
         Order = new Order();
-        Trade = new Trade(this);
+        Trade = new Trade();
     }
 
 

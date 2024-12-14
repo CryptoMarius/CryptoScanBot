@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Emulator;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace ExchangeTest;

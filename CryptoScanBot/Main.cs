@@ -9,6 +9,7 @@ using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
+using CryptoScanBot.ZoneVisualisation;
 
 using Microsoft.Win32;
 
@@ -17,8 +18,6 @@ using Nito.AsyncEx;
 using System.Text;
 using System.Text.Json;
 using CryptoScanBot.Core.Json;
-using System.Reflection;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot;
 
@@ -171,14 +170,13 @@ public partial class FrmMain : Form
     {
         GlobalData.ApplicationIsClosing = true;
         AsyncContext.Run(ScannerSession.StopAsync);
-        //await ScannerSession.StopAsync();
     }
 
     private void FrmMain_Shown(object? sender, EventArgs? e)
     {
         // This does not work in the Load, so moved to the Show..
-        if (GlobalData.SettingsUser.SplitterDistance > 0)
-            splitContainer1.SplitterDistance = GlobalData.SettingsUser.SplitterDistance;
+        if (GlobalData.SettingsUser.MainForm.SplitterDistance > 0)
+            splitContainer1.SplitterDistance = GlobalData.SettingsUser.MainForm.SplitterDistance;
         GlobalData.ApplicationIsShowed = true;
         // This event also reacts on the form resize, so manually..
         splitContainer1.SplitterMoved += SplitContainerSplitterMoved;
@@ -193,14 +191,14 @@ public partial class FrmMain : Form
         if (GlobalData.ApplicationIsClosing || !GlobalData.ApplicationIsShowed)
             return;
 
-        ApplicationTools.SaveWindowLocation(this);
+        ApplicationTools.SaveWindowLocation(this, GlobalData.SettingsUser.MainForm);
         GlobalData.SaveUserSettings();
     }
 
 
     private void FrmMain_Load(object? sender, EventArgs? e)
     {
-        ApplicationTools.WindowLocationRestore(this);
+        ApplicationTools.WindowLocationRestore(this, GlobalData.SettingsUser.MainForm);
 
         GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
         GlobalData.LoadAccounts();
@@ -1200,9 +1198,9 @@ public partial class FrmMain : Form
     private void SplitContainerSplitterMoved(object? sender, SplitterEventArgs e)
     {
         // save SplitterDistance to user settings
-        if (GlobalData.SettingsUser.SplitterDistance != splitContainer1.SplitterDistance)
+        if (GlobalData.SettingsUser.MainForm.SplitterDistance != splitContainer1.SplitterDistance)
         {
-            GlobalData.SettingsUser.SplitterDistance = splitContainer1.SplitterDistance;
+            GlobalData.SettingsUser.MainForm.SplitterDistance = splitContainer1.SplitterDistance;
             GlobalData.SaveUserSettings();
         }
     }

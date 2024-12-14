@@ -6,7 +6,6 @@ using Bybit.Net.Objects.Models.V5;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
@@ -14,7 +13,7 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
-public class Trade(ExchangeBase api) : TradeBase(), ITrade
+public class Trade() : TradeBase(), ITrade
 {
     static public void PickupTradeV3(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
     {

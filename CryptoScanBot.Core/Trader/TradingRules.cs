@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trader;
@@ -111,6 +110,7 @@ public static class TradingRules
     /// Check barometer(s) and cache that value
     public static bool CheckBarometerConditions(CryptoAccount tradeAccount, string quoteName, CryptoTradeSide side, long candleUnixDate, uint candleDuration, out string reaction)
     {
+        reaction = "";
         PauseBarometer? pause = tradeAccount.Data.GetPauseRule(quoteName, side);
 
         // Ongeveer iedere minuut c.q. candle berekenen
@@ -125,7 +125,6 @@ public static class TradingRules
 
             if (!BarometerHelper.ValidBarometerConditions(tradeAccount, quoteName, TradingConfig.Trading[side].Barometer, out reaction))
                 pause.Text = reaction;
-
             if (pause.Text != "")
             {
                 pause.Until = lastCandle1mCloseTime.AddMinutes(5);
@@ -137,7 +136,8 @@ public static class TradingRules
         // Is al gepauseerd
         if (pause.Until.HasValue && pause.Until >= lastCandle1mCloseTime)
         {
-            reaction = pause.Text;
+            if (pause.Text != null)
+                reaction = pause.Text;
             if (reaction == "")
                 reaction = "Barometer low?";
             return false;

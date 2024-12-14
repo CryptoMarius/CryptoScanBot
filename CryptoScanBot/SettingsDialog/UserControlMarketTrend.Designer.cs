@@ -46,16 +46,16 @@ partial class UserControlMarketTrend
         groupBox1.Size = new Size(374, 105);
         groupBox1.TabIndex = 0;
         groupBox1.TabStop = false;
-        groupBox1.Text = "Markt trend";
+        groupBox1.Text = "Markt trend filter";
         // 
         // EditLog
         // 
         EditLog.AutoSize = true;
         EditLog.Location = new Point(19, 57);
         EditLog.Name = "EditLog";
-        EditLog.Size = new Size(46, 19);
+        EditLog.Size = new Size(160, 19);
         EditLog.TabIndex = 1;
-        EditLog.Text = "Log";
+        EditLog.Text = "Log if outside boundaries";
         EditLog.UseVisualStyleBackColor = true;
         // 
         // UserControlTrendRange

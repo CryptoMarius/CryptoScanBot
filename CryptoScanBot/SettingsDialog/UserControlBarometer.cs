@@ -9,11 +9,6 @@ public partial class UserControlBarometer : UserControl
         InitializeComponent();
     }
 
-    public void InitControls(string caption)
-    {
-        EditGroupBox.Text = caption;
-    }
-
     public void LoadConfig(SettingsTextualBarometer settings)
     {
         UserControlBarometer15m.SetChecked("15m", settings.List);

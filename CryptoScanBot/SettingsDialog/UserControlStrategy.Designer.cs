@@ -43,7 +43,7 @@ partial class UserControlStrategy
         EditGroupBox.Size = new Size(125, 128);
         EditGroupBox.TabIndex = 0;
         EditGroupBox.TabStop = false;
-        EditGroupBox.Text = "Strategie";
+        EditGroupBox.Text = "Strategies";
         // 
         // flowLayoutPanel1
         // 

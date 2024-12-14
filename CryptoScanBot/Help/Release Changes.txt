@@ -1,5 +1,12 @@
 CryptoScanBot release historie:
 
+14-09-2024 1.9.5.1214
+- Scanner - Symbols, een nieuwe kolom geintroduceerd met daarin het percentage tot de dichtbijzijnde zone (van afgelopen minuut)
+            Dit wordt 1x per minuut berekend mits de leeftijd van de symbol, het volume en prijs voldoen aan de regels (dus wat laggy)
+- Scanner - Instellingen, teksten of in het engels of in het nederlands maar in hetzelfde kopje niet alles door elkaar
+- Scanner - Dominante zones: Hergebruik van het chart formulier (na een pooje heb je 10 formulieren open staan)
+- Scanner - Dominante zones: Coordinaten bewaren zodat het formulier op dezelfde plek en grootte terugkomt
+
 12-09-2024 1.9.5.1212
 - Scanner/Trader - Een status/indicator die de status van de scanner, trader en rulez aangeeft.
 - Scanner - In de 4 grids kun je niet meer met DEL een rij weggooien

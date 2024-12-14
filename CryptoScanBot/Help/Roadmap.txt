@@ -7,7 +7,9 @@ Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
 - dogeusdt, zone intro "filter" lijkt de verkeerde candle te hebben! Wellicht toch de zones gebruiken ipv zigzag objecten?
-- Instellingen, teksten of in ht engels of in het nederlands maar in hetzelfde kopje niet alles door elkaar
+- De laatste candle in het visualitie scherm klopt niet, zit soms ruimte tussen
+- De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de chart library de fout in?
+- De candle van de lagere timeframes inladen als je inzoomt..
 
 Scanner:
 - Scanner - Altcoin season index toevoegen https://www.blockchaincenter.net/en/altcoin-season-index/, maar die site heeft geen api?

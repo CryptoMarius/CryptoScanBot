@@ -1,16 +1,10 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 
-using Newtonsoft.Json.Linq;
-
 using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
 
-namespace CryptoScanBot.Experiment.Exchange.Altrady;
+namespace ExchangeTest.Exchange.Altrady;
 
 public class AltradyWebhook
 {
@@ -183,7 +177,7 @@ public class AltradyWebhook
                 GlobalData.AddTextToLogTab(json);
             }
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
-            
+
 
             var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
             using StreamReader streamReader = new(httpResponse.GetResponseStream());
@@ -192,7 +186,7 @@ public class AltradyWebhook
             // log response
             //text = JsonSerializer.Serialize(result., JsonTools.JsonSerializerIndented);
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval.Name} result Altrady webhook {result}");
-            
+
         }
         catch (Exception error)
         {

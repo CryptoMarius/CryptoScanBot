@@ -3,15 +3,11 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Trader;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Core.Excel;
 using CryptoScanBot.Core.Trend;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot;
 

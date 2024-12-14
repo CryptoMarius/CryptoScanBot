@@ -70,7 +70,7 @@ public static class Helper
         }
         if (candle.IsDuplicated)
         {
-            s = s + " DUPLICATED";
+            s += " DUPLICATED";
         }
         return s;
     }
@@ -169,8 +169,7 @@ public static class Helper
             throw new ArgumentOutOfRangeException(nameof(maxValue));
         else if (value < 0)
             throw new ArgumentOutOfRangeException(nameof(value));
-        else if (minValue > maxValue)
-            throw new ArgumentOutOfRangeException(nameof(minValue));
+        else ArgumentOutOfRangeException.ThrowIfGreaterThan(minValue, maxValue, nameof(minValue));
 
         if (stepSize.HasValue)
         {
@@ -197,7 +196,7 @@ public static class Helper
     }
 
 
-    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, int candleDuration, out string text)
+    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, bool zones, long candleStart, int candleDuration, out string text)
     {
         if (symbol.QuoteData!.MinimalVolume > 0)
         {
@@ -216,7 +215,7 @@ public static class Helper
             }
 
             // Check the volume of multiple day's (so we know its not just a stupid temporary spike in volume)
-            if (GlobalData.Settings.Signal.CheckVolumeOverPeriod) // Need setting?
+            if (!zones && GlobalData.Settings.Signal.CheckVolumeOverPeriod) // Need setting?
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
                 if (symbolInterval.CandleList.Count > 0)

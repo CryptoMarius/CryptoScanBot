@@ -8,7 +8,6 @@ using CryptoScanBot.Core.Model;
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 

@@ -98,7 +98,7 @@ public partial class FrmSettings : Form
         try { EditTradingApp.SelectedIndex = (int)settings.General.TradingApp; } catch { }
         try { EditTradingAppInternExtern.SelectedIndex = (int)settings.General.TradingAppInternExtern; } catch { }
         try { EditDoubleClickAction.SelectedIndex = (int)settings.General.DoubleClickAction; } catch { }
-        
+
         EditSoundHeartBeatMinutes.Value = settings.General.SoundHeartBeatMinutes;
         EditGetCandleInterval.Value = settings.General.GetCandleInterval;
 
@@ -633,6 +633,11 @@ public partial class FrmSettings : Form
     {
         string folder = GlobalData.GetBaseDir();
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });
+    }
+
+    private void EditTradingApp_SelectionChangeCommitted(object sender, EventArgs e)
+    {
+        EditTradingAppInternExtern.Enabled = EditTradingApp.SelectedIndex < 2;
     }
 
 }

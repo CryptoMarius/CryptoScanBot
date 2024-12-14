@@ -119,7 +119,7 @@ partial class UserControlTradeDca
         ButtonDcaDel.Name = "ButtonDcaDel";
         ButtonDcaDel.Size = new Size(125, 23);
         ButtonDcaDel.TabIndex = 338;
-        ButtonDcaDel.Text = "Verwijder DCA";
+        ButtonDcaDel.Text = "Remove DCA";
         ButtonDcaDel.UseVisualStyleBackColor = true;
         ButtonDcaDel.Click += ButtonDcaDelClick;
         // 
@@ -129,7 +129,7 @@ partial class UserControlTradeDca
         ButtonDcaAdd.Name = "ButtonDcaAdd";
         ButtonDcaAdd.Size = new Size(125, 23);
         ButtonDcaAdd.TabIndex = 337;
-        ButtonDcaAdd.Text = "Toevoegen DCA";
+        ButtonDcaAdd.Text = "Add DCA";
         ButtonDcaAdd.UseVisualStyleBackColor = true;
         ButtonDcaAdd.Click += ButtonDcaAddClick;
         // 

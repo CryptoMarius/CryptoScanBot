@@ -16,12 +16,15 @@ public class AccountSymbolIntervalData
 
     // Caching ZigZag indicator because of emulator speed
     public long? ZigZagLastCandleAdded { get; set; }
-    public List<ZigZagIndicator9>? ZigZagIndicators { get; set; } = null;
-    public ZigZagIndicator9? BestZigZagIndicator { get; set; } = null;
-    //public ZigZagIndicator9? FibIndicator { get; set; } = null;
+    public List<ZigZagIndicator9>? ZigZagIndicators { get; set; }
+    public ZigZagIndicator9? BestZigZagIndicator { get; set; }
+    //public ZigZagIndicator9? FibIndicator { get; set; }
 
     // Administration liquidity zones calculation?? How?
-    public long? TimeLastSwingPoint { get; set; } = null;
+    public long? TimeLastSwingPoint { get; set; }
+    public decimal? BestLongZone { get; internal set; }
+    public decimal? BestShortZone { get; internal set; }
+
     //public bool? NeedsZoneCalculation { get; set; } = true;
 
 

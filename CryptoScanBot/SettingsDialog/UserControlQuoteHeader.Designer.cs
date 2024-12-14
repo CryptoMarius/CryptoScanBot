@@ -41,9 +41,9 @@ partial class UserControlQuoteHeader
         label1.AutoSize = true;
         label1.Location = new Point(17, 5);
         label1.Name = "label1";
-        label1.Size = new Size(81, 15);
+        label1.Size = new Size(40, 15);
         label1.TabIndex = 0;
-        label1.Text = "Candles halen";
+        label1.Text = "Active";
         // 
         // label2
         // 
@@ -59,18 +59,18 @@ partial class UserControlQuoteHeader
         label3.AutoSize = true;
         label3.Location = new Point(371, 5);
         label3.Name = "label3";
-        label3.Size = new Size(73, 15);
+        label3.Size = new Size(51, 15);
         label3.TabIndex = 2;
-        label3.Text = "Hoeveelheid";
+        label3.Text = "Amount";
         // 
         // label4
         // 
         label4.AutoSize = true;
         label4.Location = new Point(245, 5);
         label4.Name = "label4";
-        label4.Size = new Size(56, 15);
+        label4.Size = new Size(60, 15);
         label4.TabIndex = 3;
-        label4.Text = "Min. prijs";
+        label4.Text = "Min. price";
         // 
         // label5
         // 
@@ -86,9 +86,9 @@ partial class UserControlQuoteHeader
         label6.AutoSize = true;
         label6.Location = new Point(581, 5);
         label6.Name = "label6";
-        label6.Size = new Size(34, 15);
+        label6.Size = new Size(36, 15);
         label6.TabIndex = 5;
-        label6.Text = "Kleur";
+        label6.Text = "Color";
         // 
         // UserControlQuoteHeader
         // 
@@ -105,7 +105,7 @@ partial class UserControlQuoteHeader
         Margin = new Padding(0);
         Name = "UserControlQuoteHeader";
         Padding = new Padding(0, 0, 0, 3);
-        Size = new Size(618, 23);
+        Size = new Size(620, 23);
         ResumeLayout(false);
         PerformLayout();
     }

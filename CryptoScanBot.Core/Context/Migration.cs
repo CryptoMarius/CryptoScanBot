@@ -34,7 +34,7 @@ public class Migration
                 // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
                 // Wat het inhoud weet ik nog niet (toegevoegde waarde, voor trading is er waarschijnlijk wel)
                 // Het type is waarschijnlijk ook niet goed ingesteld, maar met text kom je een heel eind
-                // https://bybit-exchange.github.io/docs/v5/market/history-fund-rate
+                // https://bybit-exchange.github.io/docs/v5/market/History-fund-rate
                 database.Connection.Execute("alter table symbol add FundingRate TEXT", transaction);
                 database.Connection.Execute("alter table symbol add FundingInterval TEXT", transaction);
 

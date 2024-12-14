@@ -3,7 +3,6 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Core;
 using Skender.Stock.Indicators;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Signal;
 
@@ -123,7 +122,7 @@ public class CandleIndicatorData : CryptoData
 
         // Mhh, blijkbaar waren er gewoon niet goed candles
         // Kan ook omdat de exchange geen volume had voor die candle
-        // (nu wellicht overbodig doordat we hieboven dummy candles in de history erbij zetten)
+        // (nu wellicht overbodig doordat we hieboven dummy candles in de History erbij zetten)
 
 
         if (candlesForHistory.Count < maxCandles)
@@ -152,7 +151,7 @@ public class CandleIndicatorData : CryptoData
 
         // Convert the list to a input kind the stupid indicators are using
         errorstr = "";
-        //List<CryptoCandle> history = candlesForHistory.Values.ToList();
+        //List<CryptoCandle> History = candlesForHistory.Values.ToList();
         return candlesForHistory;
     }
 
@@ -184,7 +183,7 @@ public class CandleIndicatorData : CryptoData
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
-        //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(history, 8);
+        //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(History, 8);
         List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
@@ -211,13 +210,13 @@ public class CandleIndicatorData : CryptoData
         List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(History, 20, 1);
 
-        //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(history);
+        //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
         List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
-        //List<VwapResult> vwapList = (List<VwapResult>)history.GetVwap();
+        //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
 #if EXTRASTRATEGIES
         List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 #endif
@@ -324,7 +323,7 @@ public class CandleIndicatorData : CryptoData
                 GlobalData.AddTextToLogTab("error indicators");
                 GlobalData.AddTextToLogTab(error.ToString());
                 GlobalData.AddTextToLogTab("");
-                //GlobalData.AddTextToLogTab(history.ToString());
+                //GlobalData.AddTextToLogTab(History.ToString());
                 throw;
             }
 

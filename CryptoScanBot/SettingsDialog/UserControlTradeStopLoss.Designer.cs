@@ -54,7 +54,7 @@ partial class UserControlTradeStopLoss
         groupBox.Size = new Size(274, 102);
         groupBox.TabIndex = 0;
         groupBox.TabStop = false;
-        groupBox.Text = "Stop loss (werkt niet!!!)";
+        groupBox.Text = "Stop loss (not working!!)";
         // 
         // EditStopLimitPercentage
         // 
