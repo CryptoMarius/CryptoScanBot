@@ -147,13 +147,23 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
                 PivotList.Add(new() { PointType = 'H', Candle = candle, Value = candleValue, PivotIndex = PivotList.Count });
             if (CanAddNewHigh(candleValue))
             {
-                if (LastSwingHigh != null && GetLowFromBuffer(LastSwingHigh.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult ? swing))
+                // The new high should be higher than the last low, if not ignore the point
+                if (LastSwingLow != null && candleValue < LastSwingLow.Value) //ShowSecondary && 
                 {
-                    if (ShowSecondary || (!ShowSecondary && GetLowValue(swing!.Candle!) < LastSwingHigh.Value))
-                        LastSwingLow = AddZigZagPoint(swing!.Candle!, 'L', dummy, swing.PivotIndex);
+                    // so ignore it completely..
+                    return false;
                 }
-                LastSwingHigh = AddZigZagPoint(candle, 'H', dummy, PivotList.Count - 1);
-                return true;
+                else
+                {
+                    // Create a new inbetween low calculated from the buffer
+                    if (LastSwingHigh != null && GetLowFromBuffer(LastSwingHigh.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult? swing))
+                    {
+                        if (ShowSecondary || (!ShowSecondary && GetLowValue(swing!.Candle!) < LastSwingHigh.Value))
+                            LastSwingLow = AddZigZagPoint(swing!.Candle!, 'L', dummy, swing.PivotIndex);
+                    }
+                    LastSwingHigh = AddZigZagPoint(candle, 'H', dummy, PivotList.Count - 1);
+                    return true;
+                }
             }
             return false;
         }
@@ -190,13 +200,23 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
                 PivotList.Add(new() { PointType = 'L', Candle = candle, Value = candleValue, PivotIndex = PivotList.Count });
             if (CanAddNewLow(candleValue))
             {
-                if (LastSwingLow != null && GetHighFromBuffer(LastSwingLow.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult? swing))
+                // The new low should be lower than the last high, if not ignore the point
+                if (LastSwingHigh != null && candleValue > LastSwingHigh.Value) // ShowSecondary && 
                 {
-                    if (ShowSecondary || (!ShowSecondary && GetHighValue(swing!.Candle) > LastSwingLow.Value))
-                        LastSwingHigh = AddZigZagPoint(swing!.Candle!, 'H', dummy, swing.PivotIndex);
+                    // so ignore it completely..
+                    return false;
                 }
-                LastSwingLow = AddZigZagPoint(candle, 'L', dummy, PivotList.Count - 1);
-                return true;
+                else
+                {
+                    // Create a new inbetween high calculated from the buffer
+                    if (LastSwingLow != null && GetHighFromBuffer(LastSwingLow.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult? swing))
+                    {
+                        if (ShowSecondary || (!ShowSecondary && GetHighValue(swing!.Candle) > LastSwingLow.Value))
+                            LastSwingHigh = AddZigZagPoint(swing!.Candle!, 'H', dummy, swing.PivotIndex);
+                    }
+                    LastSwingLow = AddZigZagPoint(candle, 'L', dummy, PivotList.Count - 1);
+                    return true;
+                }
             }
             return false;
         }
