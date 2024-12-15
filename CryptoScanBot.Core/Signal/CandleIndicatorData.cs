@@ -166,9 +166,9 @@ public class CandleIndicatorData : CryptoData
         if (candle.CandleData != null)
             return;
 
-        List<TemaResult> temaList = (List<TemaResult>)history.GetTema(5);
+        //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(5);
 
-        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
@@ -189,25 +189,25 @@ public class CandleIndicatorData : CryptoData
         List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
 
-        // GetSlope looks buggy? (specially with sma(200) and count <> 200)
-        List<SlopeResult>? slopeSma20List = null;
-        List<SlopeResult>? slopeSma50List = null;
-        List<SlopeResult>? slopeSma100List = null;
-        List<SlopeResult>? slopeSma200List = null;
-        try
-        {
-            slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
-            slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(SlopeCount);
-            slopeSma100List = (List<SlopeResult>)smaList100.GetSlope(SlopeCount);
-            slopeSma200List = (List<SlopeResult>)smaList200.GetSlope(SlopeCount);
-        }
-        catch (Exception)
-        {
-            //ignore
-        }
+        //// GetSlope looks buggy? (specially with sma(200) and count <> 200)
+        //List<SlopeResult>? slopeSma20List = null;
+        //List<SlopeResult>? slopeSma50List = null;
+        //List<SlopeResult>? slopeSma100List = null;
+        //List<SlopeResult>? slopeSma200List = null;
+        //try
+        //{
+        //    slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
+        //    slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(SlopeCount);
+        //    slopeSma100List = (List<SlopeResult>)smaList100.GetSlope(SlopeCount);
+        //    slopeSma200List = (List<SlopeResult>)smaList200.GetSlope(SlopeCount);
+        //}
+        //catch (Exception)
+        //{
+        //    //ignore
+        //}
 
 
-        List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
+        //List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
 
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
         //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(History, 20, 1);
@@ -215,17 +215,17 @@ public class CandleIndicatorData : CryptoData
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
-        List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
+        //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
 #if EXTRASTRATEGIES
         List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
 #endif
 
-        List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
+        //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
         List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
-        List<SlopeResult> slopeStochList = (List<SlopeResult>)stochList.GetSlope(SlopeCount);
+        //List<SlopeResult> slopeStochList = (List<SlopeResult>)stochList.GetSlope(SlopeCount);
 
         List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)history.GetParabolicSar();
 
@@ -271,28 +271,28 @@ public class CandleIndicatorData : CryptoData
                 candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
 
-                if (slopeSma20List != null && index < slopeSma20List.Count)
-                    candleData.SlopeSma20 = slopeSma20List[index].Slope;
-                if (slopeSma50List != null && index < slopeSma50List.Count)
-                    candleData.SlopeSma50 = slopeSma50List[index].Slope;
-                if (slopeSma100List != null && index < slopeSma100List.Count)
-                    candleData.SlopeSma100 = slopeSma100List[index].Slope;
-                if (slopeSma200List != null && index < slopeSma200List.Count)
-                    candleData.SlopeSma200 = slopeSma200List[index].Slope;
+                //if (slopeSma20List != null && index < slopeSma20List.Count)
+                //    candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                //if (slopeSma50List != null && index < slopeSma50List.Count)
+                //    candleData.SlopeSma50 = slopeSma50List[index].Slope;
+                //if (slopeSma100List != null && index < slopeSma100List.Count)
+                //    candleData.SlopeSma100 = slopeSma100List[index].Slope;
+                //if (slopeSma200List != null && index < slopeSma200List.Count)
+                //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
                 candleData.Rsi = rsiList[index].Rsi;
-                if (slopeRsiList != null && index < slopeRsiList.Count)
-                    candleData.SlopeRsi = slopeRsiList[index].Slope;
+                //if (slopeRsiList != null && index < slopeRsiList.Count)
+                //    candleData.SlopeRsi = slopeRsiList[index].Slope;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
-                candleData.SlopeMacd = slopeMacdList[index].Slope;
+                //candleData.SlopeMacd = slopeMacdList[index].Slope;
 
                 // Test
-                candleData.Ema9 = emaList9[index].Ema;
-                candleData.Tema = temaList[index].Tema;
-                candleData.Wma30 = wmaList30[index].Wma;
+                //candleData.Ema9 = emaList9[index].Ema;
+                //candleData.Tema = temaList[index].Tema;
+                //candleData.Wma30 = wmaList30[index].Wma;
 
                 //candleData.Vwap = vwapList[index].Vwap;
 
@@ -304,7 +304,7 @@ public class CandleIndicatorData : CryptoData
 
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;
-                candleData.SlopeStoch = slopeStochList[index].Slope;
+                //candleData.SlopeStoch = slopeStochList[index].Slope;
 
 
                 double? BollingerBandsLowerBand = bollingerBandsList[index].LowerBand;
