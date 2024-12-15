@@ -1,6 +1,5 @@
 using CryptoScanBot;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Core;
 
 using System.Reflection;
 
