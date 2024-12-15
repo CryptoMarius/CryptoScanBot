@@ -50,7 +50,7 @@ static public class GlobalData
     public static DateTime GetCurrentDateTime(CryptoAccount account)
     {
         if (account.AccountType == CryptoAccountType.BackTest)
-            return BackTestDateTime; // or BackTestCandle.Date + 1 minute
+            return BackTestDateTime; // or BackTestCandle.OpenTime + 1 minute
         else
             return DateTime.UtcNow;
     }
@@ -337,7 +337,11 @@ static public class GlobalData
         // Test with limits anount of symbols for debugging purposes
         if (
             symbol.Name.Equals("BTCUSDT") ||
-            //symbol.Name.Equals("TRXUSDT") ||
+            symbol.Name.Equals("ETHUSDT") ||
+            symbol.Name.Equals("SOLUSDT") ||
+            symbol.Name.Equals("TRXUSDT") ||
+            symbol.Name.Equals("ENAUSDT") ||
+            symbol.Name.Equals("APEXUSDT") ||
             symbol.Name.StartsWith("$BMP")
           )
 #endif
