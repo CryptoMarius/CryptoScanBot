@@ -223,8 +223,8 @@ public static class ScannerSession
 
     private static async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
-        GlobalData.AddTextToLogTab("Debug: ScannerSession.Restart");
-        GlobalData.AddTextToTelegram("Debug: ScannerSession.Restart");
+        GlobalData.AddTextToLogTab("ScannerSession.Restart");
+        GlobalData.AddTextToTelegram("ScannerSession.Restart");
 
         TimerRestartStreams.Enabled = false;
         TimerCheckDataStream.Enabled = false;
@@ -265,7 +265,7 @@ public static class ScannerSession
         {
             if (ExchangeBase.KLineTicker.NeedsRestart())
             {
-                GlobalData.AddTextToLogTab($"Debug: Een van de {ExchangeBase.KLineTicker.TickerType} tickers is gestopt!");
+                GlobalData.AddTextToLogTab($"One of {ExchangeBase.KLineTicker.TickerType} tickers has stopped");
 
                 // Schedule a restart of the streams in 1m max
                 if (!TimerRestartStreams.Enabled || TimerRestartStreams.Interval > 60 * 1000)
