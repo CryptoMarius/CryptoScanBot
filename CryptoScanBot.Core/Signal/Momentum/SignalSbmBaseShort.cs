@@ -154,34 +154,6 @@ public class SignalSbmBaseShort(CryptoAccount account, CryptoSymbol symbol, Cryp
     }
 
 
-    protected bool IsInUpperPartOfBollingerBands(int candleCount, decimal percentage)
-    {
-        // Is de prijs onlangs dicht bij de bovenste bb geweest?
-
-        CryptoCandle? last = CandleLast;
-        while (candleCount > 0)
-        {
-            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
-            value -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
-
-            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
-            {
-                if (last.High >= value)
-                    return true;
-            }
-            else
-            {
-                if (last.Open >= value || last.Close >= value)
-                    return true;
-            }
-
-            if (!GetPrevCandle(last, out last))
-                return false;
-            candleCount--;
-        }
-
-        return false;
-    }
 
     //protected bool HadIncreasingVolume(out string reaction)
     //{

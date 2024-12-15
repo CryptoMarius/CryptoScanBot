@@ -145,7 +145,7 @@ public class SignalCreateBase
     }
 
 
-    public CryptoCandle? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    protected CryptoCandle? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle? candle = CandleLast;
@@ -183,7 +183,7 @@ public class SignalCreateBase
     /// Is de RSI oplopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public bool IsRsiIncreasingInTheLast(int candleCount, int allowedDown)
+    protected bool IsRsiIncreasingInTheLast(int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;
@@ -216,7 +216,7 @@ public class SignalCreateBase
     /// Is de RSI aflopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public bool IsRsiDecreasingInTheLast(int candleCount, int allowedDown)
+    protected bool IsRsiDecreasingInTheLast(int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;
@@ -245,7 +245,7 @@ public class SignalCreateBase
         return true;
     }
 
-    public CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    protected CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle? candle = CandleLast;
@@ -276,6 +276,66 @@ public class SignalCreateBase
         }
 
         return null;
+    }
+
+
+    protected bool IsInLowerPartOfBollingerBands(int candleCount, decimal percentage)
+    {
+        // Is de prijs onlangs dicht bij de onderste bb geweest?
+
+        CryptoCandle? last = CandleLast;
+        while (candleCount > 0)
+        {
+            decimal? value = (decimal?)last?.CandleData?.BollingerBandsLowerBand;
+            value += (decimal?)last?.CandleData?.BollingerBandsDeviation * percentage / 100m;
+
+            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
+            {
+                if (last?.Low <= value)
+                    return true;
+            }
+            else
+            {
+                if (last?.Open <= value || last?.Close <= value)
+                    return true;
+            }
+
+            if (!GetPrevCandle(last, out last))
+                return false;
+            candleCount--;
+        }
+
+        return false;
+    }
+
+
+    protected bool IsInUpperPartOfBollingerBands(int candleCount, decimal percentage)
+    {
+        // Is de prijs onlangs dicht bij de bovenste bb geweest?
+
+        CryptoCandle? last = CandleLast;
+        while (candleCount > 0)
+        {
+            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
+            value -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
+
+            if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
+            {
+                if (last.High >= value)
+                    return true;
+            }
+            else
+            {
+                if (last.Open >= value || last.Close >= value)
+                    return true;
+            }
+
+            if (!GetPrevCandle(last, out last))
+                return false;
+            candleCount--;
+        }
+
+        return false;
     }
 
 }
