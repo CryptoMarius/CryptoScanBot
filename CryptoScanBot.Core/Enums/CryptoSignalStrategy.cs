@@ -18,6 +18,7 @@ public enum CryptoSignalStrategy
     StoRsi3 = 13, // = STORSI, 2, but different
 
     BbRsiEngulfing = 50,
+    SignalSma50Sma20Price = 52,
 
     DominantLevel = 1000, // = STORSI, 2, but different
 }

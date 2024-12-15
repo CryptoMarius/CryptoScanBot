@@ -370,7 +370,7 @@ public class SignalSbmBaseLong(CryptoAccount account, CryptoSymbol symbol, Crypt
     {
         //// ********************************************************************
         //// Als BTC snel gedaald is dan stoppen (NB: houdt geen rekening met closedate!)
-        //if (GlobalData.PauseTrading.Until >= CandleLast.Date)
+        //if (GlobalData.PauseTrading.Until >= CandleLast.OpenTime)
         //{
         //    ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
         //    return true;

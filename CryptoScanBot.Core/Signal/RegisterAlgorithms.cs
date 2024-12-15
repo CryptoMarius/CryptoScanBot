@@ -133,9 +133,17 @@ public static class RegisterAlgorithms
         });
 
 
-        ////***************************************************
-        //// Test
-        ////***************************************************
+        //***************************************************
+        // Test
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "sma50sma20",
+            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
+            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
+            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
+        });
+
         //Register(new AlgorithmDefinition()
         //{
         //    Name = "BbRsiEngulf",
@@ -144,7 +152,7 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
         //});
 
-       
+
     }
 
 
