@@ -390,7 +390,7 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    private void ButtonMinusClick(object? sender, EventArgs e)
+    private async void ButtonMinusClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null && Session.ActiveInterval > CryptoIntervalPeriod.interval1m)
         {
@@ -405,13 +405,26 @@ public partial class CryptoVisualisation : Form
                 }
             }
 
-            CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            //CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            Data.Symbol.CalculatingZones = true;
+            try
+            {
+                CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
+                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval, symbolInterval.CandleList);
+                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            }
+            finally
+            {
+                await CandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
+                Data.Symbol.CalculatingZones = false;
+            }
+
             plotModel?.InvalidatePlot(true);
         }
     }
 
 
-    private void ButtonPlusClick(object? sender, EventArgs e)
+    private async void ButtonPlusClick(object? sender, EventArgs e)
     {
         if (Data != null && plotModel != null && Session.ActiveInterval < CryptoIntervalPeriod.interval1d)
         {
@@ -425,7 +438,20 @@ public partial class CryptoVisualisation : Form
                 }
             }
 
-            CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            //CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            Data.Symbol.CalculatingZones = true;
+            try
+            {
+                CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
+                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval, symbolInterval.CandleList);
+                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            }
+            finally
+            {
+                await CandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
+                Data.Symbol.CalculatingZones = false;
+            }
+
             labelInterval.Text = Session.ActiveInterval.ToString();
             plotModel?.InvalidatePlot(true);
         }
@@ -628,7 +654,18 @@ public partial class CryptoVisualisation : Form
                 $"{trend} dev={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
 
 
-                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                // avoid candles being removed...
+                Data.Symbol.CalculatingZones = true;
+                try
+                {
+                    await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval, Data.SymbolInterval.CandleList);
+                    CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                }
+                finally
+                {
+                    await CandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
+                    Data.Symbol.CalculatingZones = false;
+                }
                 //if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
                 //    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
