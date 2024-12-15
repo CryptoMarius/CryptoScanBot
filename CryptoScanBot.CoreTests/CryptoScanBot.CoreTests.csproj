@@ -21,12 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Trend\ETHUSDT\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Trend\ETHUSDT\ETHUSDT-1h.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Trend\STETHUSDT\STETHUSDT-1h.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
