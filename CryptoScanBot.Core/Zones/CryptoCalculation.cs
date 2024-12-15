@@ -381,38 +381,56 @@ public class CryptoCalculation
         // Determine if a liq. box/zone has an interesting intro
         if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
         {
+            ZigZagResult? previous = null;
             foreach (var zigZag in data.Indicator.ZigZagList)
             {
-                if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all zones (also the closed ones)
+                if (previous != null) 
                 {
-                    decimal minPrice = decimal.MaxValue;
-                    decimal maxPrice = decimal.MinValue;
-                    long max = zigZag.Candle.OpenTime;
-                    long min = max - GlobalData.Settings.Signal.Zones.ZoneStartCandleCount * data.Interval.Duration;
-                    while (min <= max)
+                    if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all zones (also the closed ones)
                     {
-                        if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle? candle))
+                        decimal? price = null;
+                        long max = zigZag.Candle.OpenTime;
+                        long min = max - GlobalData.Settings.Signal.Zones.ZoneStartCandleCount * data.Interval.Duration;
+                        if (min < previous.Candle.OpenTime)
+                            min = previous.Candle.OpenTime;
+                        while (min < max)
                         {
-                            if (candle.Low < minPrice)
-                                minPrice = candle.Low;
-                            if (candle.High > maxPrice)
-                                maxPrice = candle.High;
+                            if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle? candle))
+                            {
+                                if (zigZag.PointType == 'L')
+                                {
+                                    if (candle.High > zigZag.Value)
+                                    {
+                                        if (price == null || candle.High > price)
+                                            price = candle.High;
+                                    }
+                                }
+                                else
+                                {
+                                    if (candle.Low < zigZag.Value)
+                                    {
+                                        if (price == null || candle.Low < price)
+                                            price = candle.Low;
+                                    }
+                                }
+                            }
+                            min += data.SymbolInterval.Interval.Duration;
                         }
-                        min += data.SymbolInterval.Interval.Duration;
-                    }
 
-                    if (minPrice != decimal.MaxValue)
-                    {
-                        decimal diff = maxPrice - minPrice;
-                        decimal perc = 100 * diff / minPrice;
-                        if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                        if (price != null)
                         {
-                            zigZag.NiceIntro = $"{perc:N2}";
+                            decimal diff = Math.Abs(zigZag.Value - price.Value);
+                            decimal perc = 100 * diff / zigZag.Value;
+                            if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                            {
+                                zigZag.NiceIntro = $"{perc:N2} !!!";
+                            }
+                            else
+                                zigZag.NiceIntro = $"{perc:N2}";
                         }
-                        else
-                            zigZag.NiceIntro = "";
                     }
                 }
+                previous = zigZag;
             }
         }   
     }
