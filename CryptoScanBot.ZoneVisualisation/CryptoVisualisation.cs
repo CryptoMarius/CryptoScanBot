@@ -30,9 +30,7 @@ public partial class CryptoVisualisation : Form
 
     private string OldSymbolBase = "";
     private string OldSymbolQuote = "";
-#if DEBUGZIGZAG
     private string OldIntervalName = "";
-#endif
 
     public static GetNextSymbol? GetNextSymbol = null;
 
@@ -71,9 +69,7 @@ public partial class CryptoVisualisation : Form
         KeyDown += new KeyEventHandler(FormKeyDown);
 
         InitQuoteItems();
-#if DEBUGZIGZAG
         InitIntervalItems();
-#endif
 
         if (StandAlone)
             ButtonRefreshClick(null, EventArgs.Empty);
@@ -457,7 +453,6 @@ public partial class CryptoVisualisation : Form
         ScannerLog.Logger.Info($"Symbol {symbol.Name}");
 
 
-#if DEBUGZIGZAG
         // Is the Interval supported by this tool?
         var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
         if (interval == null)
@@ -475,9 +470,6 @@ public partial class CryptoVisualisation : Form
             ScannerLog.Logger.Info($"{reason}");
             return false;
         }
-#else
-        var interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
-#endif
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         Data = new()
@@ -492,17 +484,13 @@ public partial class CryptoVisualisation : Form
         };
 
 
-        if (OldSymbolBase != Session.SymbolBase || OldSymbolQuote != Session.SymbolQuote
-#if DEBUGZIGZAG
-            || OldIntervalName != Session.IntervalName
-#endif
-            )
+        // reset dates
+        if (OldSymbolBase != Session.SymbolBase || OldSymbolQuote != Session.SymbolQuote || OldIntervalName != Session.IntervalName)
         {
             OldSymbolBase = Session.SymbolBase;
             OldSymbolQuote = Session.SymbolQuote;
-#if DEBUGZIGZAG
             OldIntervalName = Session.IntervalName;
-#endif
+
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
             Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
