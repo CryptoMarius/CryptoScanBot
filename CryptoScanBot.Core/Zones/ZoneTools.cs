@@ -112,9 +112,7 @@ public class ZoneTools
                 }
 
                 // mark the zone as interesting because of a large move into the zone
-                string description = $"{interval.Name}: {zigZag.Percentage:N2}%";
-                if (zigZag.NiceIntro != "")
-                    description += " !!! " + zigZag.NiceIntro;
+                string description = $"{interval.Name}: {zigZag.Percentage:N2}% {zigZag.NiceIntro}";
                 if (!zigZag.IsValid)
                     description += " not valid";
                 if (description != zone.Description)
