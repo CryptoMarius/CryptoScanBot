@@ -1,8 +1,11 @@
 ﻿using CryptoScanBot.Core.Const;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Barometer;
 
@@ -43,7 +46,21 @@ public class BarometerTools
                     Status = 1,
                 };
 
-                GlobalData.ThreadSaveObjects!.AddToQueue(symbol);
+                using CryptoDatabase databaseThread = new();
+                databaseThread.Open();
+                var transaction = databaseThread.BeginTransaction();
+                try
+                {
+                    databaseThread.Connection.Insert(symbol, transaction);
+                    transaction.Commit();
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error.ToString());
+                    transaction.Rollback();
+                    throw;
+                }
+
                 GlobalData.AddSymbol(symbol);
                 GlobalData.AddTextToLogTab($"Created barometer {symbol.Name}");
             }
