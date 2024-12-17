@@ -12,7 +12,7 @@ namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 /// </summary>
 public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
-    public async Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval, long minFetch, long maxFetch)
+    public async Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long minFetch, long maxFetch)
     {
         // Remarks:
         // The maximum is 1000 candles per GetKlinesAsync call.
@@ -26,6 +26,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         else
             throw new Exception("Expected KucoinRestClient");
 
+        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
         if (exchangeInterval == null)
