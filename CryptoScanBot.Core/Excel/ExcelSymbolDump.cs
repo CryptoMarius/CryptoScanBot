@@ -218,49 +218,49 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
     }
 
 
-    private void DumpZigZagInterval(AccountSymbolIntervalData data)
-    {
-        ISheet sheet = Book.CreateSheet("Zigzag" + data.Interval?.Name);
-        int row = 0;
+    //private void DumpZigZagInterval(AccountSymbolIntervalData data)
+    //{
+    //    ISheet sheet = Book.CreateSheet("Zigzag" + data.Interval?.Name);
+    //    int row = 0;
 
-        //var indicator = data.Indicator;
-        foreach (var indicator in data.ZigZagIndicators!)
-        //if (indicator != null)
-        {
-            //DumpZigZagInterval(trendDataList.Interval, indicator);
-            //+ 
-            WriteCell(sheet, 0, row, "Deviation");
-            WriteCell(sheet, 1, row, indicator.Deviation.ToString(), CellStyleDecimalNormal);
-            WriteCell(sheet, 1, row, "Auto");
+    //    //var indicator = data.Indicator;
+    //    foreach (var indicator in data.ZigZagIndicators!)
+    //    //if (indicator != null)
+    //    {
+    //        //DumpZigZagInterval(trendDataList.Interval, indicator);
+    //        //+ 
+    //        WriteCell(sheet, 0, row, "Deviation");
+    //        WriteCell(sheet, 1, row, indicator.Deviation.ToString(), CellStyleDecimalNormal);
+    //        WriteCell(sheet, 1, row, "Auto");
 
 
-            // Columns...
-            row++;
-            row++;
-            int columns = 0;
-            WriteCell(sheet, columns++, row, "OpenTime");
-            WriteCell(sheet, columns++, row, "Type");
-            WriteCell(sheet, columns++, row, "Value");
+    //        // Columns...
+    //        row++;
+    //        row++;
+    //        int columns = 0;
+    //        WriteCell(sheet, columns++, row, "OpenTime");
+    //        WriteCell(sheet, columns++, row, "Type");
+    //        WriteCell(sheet, columns++, row, "Value");
 
-            if (indicator.ZigZagList != null)
-            {
-                foreach (ZigZagResult zigZag in indicator.ZigZagList)
-                {
-                    row++;
-                    int column = 0;
+    //        if (indicator.ZigZagList != null)
+    //        {
+    //            foreach (ZigZagResult zigZag in indicator.ZigZagList)
+    //            {
+    //                row++;
+    //                int column = 0;
 
-                    WriteCell(sheet, column++, row, zigZag.Candle.DateLocal, CellStyleDate);
-                    WriteCell(sheet, column++, row, zigZag.PointType);
-                    WriteCell(sheet, column++, row, zigZag.Value, CellStyleDecimalNormal);
-                }
-            }
-            row++;
-            row++;
-            row++;
-        }
+    //                WriteCell(sheet, column++, row, zigZag.Candle.DateLocal, CellStyleDate);
+    //                WriteCell(sheet, column++, row, zigZag.PointType);
+    //                WriteCell(sheet, column++, row, zigZag.Value, CellStyleDecimalNormal);
+    //            }
+    //        }
+    //        row++;
+    //        row++;
+    //        row++;
+    //    }
 
-        AutoSize(sheet, 3);
-    }
+    //    AutoSize(sheet, 3);
+    //}
 
 
 
@@ -274,15 +274,15 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
                 DumpInterval(symbolInterval);
 
-            AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-            foreach (var trendDataList in accountSymbolData.SymbolTrendDataList)
-            {
-                if (trendDataList.ZigZagIndicators != null)
-                {
-                    DumpZigZagInterval(trendDataList);
-                }
-                //DumpZigZagInterval(trendDataList);
-            }
+            //AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+            //foreach (var trendDataList in accountSymbolData.SymbolTrendDataList)
+            //{
+            //    if (trendDataList.ZigZagIndicators != null)
+            //    {
+            //        DumpZigZagInterval(trendDataList);
+            //    }
+            //    //DumpZigZagInterval(trendDataList);
+            //}
             StartExcell("Candles", Symbol.Name);
         }
         catch (Exception error)
