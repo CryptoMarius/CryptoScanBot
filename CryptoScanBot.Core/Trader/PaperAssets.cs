@@ -28,7 +28,7 @@ public class PaperAssets
 
             foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
             {
-                tradeAccount.Data.AssetList.Add(asset.Name, asset);
+                tradeAccount.Data.AssetList.TryAdd(asset.Name, asset);
             }
 
             CreateAsset(tradeAccount, "BTC", 10);
