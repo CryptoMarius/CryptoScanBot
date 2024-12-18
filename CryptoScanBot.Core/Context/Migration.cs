@@ -968,9 +968,9 @@ public class Migration
             try { database.Connection.Execute("alter table Zone drop column CloseDate", transaction); } catch { } // ignore
 
             // Barometer problem, clean symbols without a name and dump the price and volume barometer
-            database.Connection.Execute("delete from symbol where name = ''", transaction);
-            database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction);
-            database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction);
+            try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -991,6 +991,11 @@ public class Migration
             // set the feerates of futures to 0
             try { database.Connection.Execute("update table exchange set feerate=0 where TradingType=1", transaction); } catch { }
 
+            // Barometer problem, clean symbols without a name and dump the price and volume barometer
+            try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
+
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1005,6 +1010,20 @@ public class Migration
 
             // if the zone is valid
             try { database.Connection.Execute("alter table Zone add IsValid integer", transaction); } catch { }
+
+            // Barometer problem, clean symbols without a name and dump the price and volume barometer
+            try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
+            try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
+
+            //delete
+            //from Symbol
+            //where(symbol.id NOT IN(select distinct(symbolid) from signal))
+            //and(symbol.id NOT IN(select distinct symbolid from position))
+            //and(symbol.id NOT IN(select distinct symbolid from[order]))
+            //and(symbol.id NOT IN(select distinct symbolid from[trade]))
+            //and(symbol.id NOT IN(select distinct symbolid from[zone]))
+            //update exchange set lasttimefetched = null
 
             // update version
             version.Version += 1;
