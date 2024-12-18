@@ -38,9 +38,21 @@ public class CryptoDatabase : IDisposable
 
     public void Dispose()
     {
-        //Dispose(true);
-        Connection.Dispose();
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (Connection != null)
+            {
+                Connection.Close();
+                Connection.Dispose();
+                //Connection = null;
+            }
+        }
     }
 
     public void Open()
