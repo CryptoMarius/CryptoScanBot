@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CryptoScanBot.Core\CryptoScanBot.Core.csproj" />
     <ProjectReference Include="..\CryptoScanBot.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj" />
   </ItemGroup>
