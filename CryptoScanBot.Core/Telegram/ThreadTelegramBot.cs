@@ -197,7 +197,7 @@ public class ThreadTelegramBotInstance
         {
             StringBuilder builder = new();
             builder.Append(signal.Symbol.Name + " " + signal.Interval.Name + " ");
-            builder.Append(CandleTools.GetUnixDate(signal.Candle?.OpenTime).ToLocalTime().ToString("dd MMM HH:mm"));
+            builder.Append(signal.OpenDate.ToLocalTime().ToString("dd MMM HH:mm"));
             builder.Append(" " + signal.StrategyText + "");
             //builder.Append(" " + signal.SideText + " ");
 
