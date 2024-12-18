@@ -85,7 +85,7 @@ public class AccountData
     public AccountSymbolIntervalData GetSymbolTrendData(string symbolName, CryptoIntervalPeriod intervalPeriod)
     {
         AccountSymbolData symbolData = GetSymbolData(symbolName);
-        return symbolData.GetAccountSymbolIntervalData(intervalPeriod);
+        return symbolData.GetAccountSymbolInterval(intervalPeriod);
     }
 
 

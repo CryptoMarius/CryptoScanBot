@@ -9,38 +9,34 @@ public class AccountSymbolIntervalData
     public required virtual CryptoInterval Interval { get; set; }
     public required CryptoIntervalPeriod IntervalPeriod { get; set; }
 
-    // The last calculated trend & generated date
+    // Trend: Last calculated trend & date
     public long? TrendInfoUnix { get; set; }
     public DateTime? TrendInfoDate { get; set; }
     public CryptoTrendIndicator TrendIndicator { get; set; }
 
-    // Caching ZigZag indicator because of emulator speed
-    public long? ZigZagLastCandleAdded { get; set; }
-    public List<ZigZagIndicator9>? ZigZagIndicators { get; set; }
-    public ZigZagIndicator9? BestZigZagIndicator { get; set; }
-    //public ZigZagIndicator9? FibIndicator { get; set; }
 
+    // Zones: Primary trend, recalculated if outside
     // Administration liquidity zones calculation?? How?
     public long? TimeLastSwingPoint { get; set; }
-    public decimal? BestLongZone { get; internal set; } = 100m;
-    public decimal? BestShortZone { get; internal set; } = 100m;
 
-    //public bool? NeedsZoneCalculation { get; set; } = true;
+    public decimal? BestLongZone { get; internal set; } = 100m; // distance%
+    public decimal? LastSwingHigh { get; internal set; } = null;
+
+    public decimal? BestShortZone { get; internal set; } = 100m; // distance%
+    public decimal? LastSwingLow { get; internal set; } = null;
 
 
-    public void Reset()
+    public void ResetZoneData()
+    {
+        LastSwingLow = null;
+        LastSwingHigh = null;
+        TimeLastSwingPoint = null;
+    }
+
+    public void ResetTrendData()
     {
         TrendInfoUnix = null;
         TrendInfoDate = null;
         TrendIndicator = CryptoTrendIndicator.Sideways;
-
-        ZigZagLastCandleAdded = null;
-        ZigZagIndicators = null;
-        BestZigZagIndicator = null;
-        //FibIndicator = null;
-
-        //TimeLastSwingPoint = null;
-        //NeedsZoneCalculation = true;
     }
-
 }

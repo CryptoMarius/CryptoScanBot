@@ -37,7 +37,7 @@ public class DominantLevelLong : SignalCreateBase
 
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(GlobalData.Settings.Signal.Zones.Interval);
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
         symbolIntervalData.BestLongZone = 100m;
         if (symbolData.ZoneListLong.Count == 0)
             return false;

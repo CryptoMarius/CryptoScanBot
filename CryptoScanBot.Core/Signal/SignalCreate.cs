@@ -11,13 +11,13 @@ namespace CryptoScanBot.Core.Signal;
 
 public delegate void AnalyseEvent(CryptoSignal signal);
 
-public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
+public class SignalCreate
 {
-    private CryptoAccount TradeAccount { get; set; } = tradeAccount;
-    private CryptoSymbol Symbol { get; set; } = symbol;
-    private CryptoInterval Interval { get; set; } = interval;
-    private CryptoTradeSide Side { get; set; } = side;
-    private long LastCandle1mCloseTime { get; set; } = lastCandle1mCloseTime;
+    private CryptoAccount TradeAccount { get; set; }
+    private CryptoSymbol Symbol { get; set; }
+    private CryptoInterval Interval { get; set; }
+    private CryptoTradeSide Side { get; set; }
+    private long LastCandle1mCloseTime { get; set; }
 
     private CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? History { get; set; }
@@ -26,6 +26,15 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     bool hasOpenPosistion = false;
     bool hasOpenPosistionCalculated = false;
+
+    public SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
+    {
+        TradeAccount = tradeAccount;
+        Symbol = symbol;
+        Interval = interval;
+        Side = side;
+        LastCandle1mCloseTime = lastCandle1mCloseTime;
+    }
 
     private bool HasOpenPosition()
     {
@@ -179,18 +188,19 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
     }
 
 
-    private double CalculateLastPeriodsInInterval(CryptoCandle candle, long interval)
+    private double CalculateLastPeriodsInInterval(long interval)
     {
         //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
         //(om de berekeningen allemaal wat sneller te maken)
 
         // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
         //CryptoCandle candle = signal.Candle; // Symbol.CandleList.Values.Last();
-        long openTime = CandleTools.GetUnixTime(candle.Date, 60);
-        if (!Symbol.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
-            candlePrev = Symbol.CandleList.Values.First(); // niet helemaal okay maar beter dan 0
+        long openTime = Candle!.OpenTime;
+        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        if (!symbolInterval.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
+            candlePrev = symbolInterval.CandleList.Values.First(); // better than zero of null (approx)
 
-        double closeLast = (double)candle.Close;
+        double closeLast = (double)Candle!.Close;
         double closePrev = (double)candlePrev.Close;
         double diff = closeLast - closePrev;
 
@@ -283,31 +293,31 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
         }
 
         // Barometers
-        BarometerData barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval15m);
+        BarometerData barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval15m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer15m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer15m = null;
 
-        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval30m);
+        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval30m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer30m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer30m = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1h);
+        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer1h = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval4h);
+        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval4h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer4h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer4h = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(symbol.Quote, CryptoIntervalPeriod.interval1d);
+        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1d);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1d = barometerData.PriceBarometer.Value;
         else
@@ -315,34 +325,18 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // de 24 change moet in een bepaald interval zitten
-        if (signal.Candle != null)
+        signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
+        if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
-            signal.Last24HoursChange = CalculateLastPeriodsInInterval(signal.Candle, 24 * 60 * 60);
-            if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+            if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {
-                if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
-                {
-                    string text = string.Format("Analyse {0} 1d change {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
-                    GlobalData.AddTextToLogTab(text);
-                }
-                eventText.Add("1d change% to high");
-                signal.IsInvalid = true;
+                string text = string.Format("Analyse {0} 1d change {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursChange.ToString("N2"), GlobalData.Settings.Signal.AnalysisMinChangePercentage.ToString(), GlobalData.Settings.Signal.AnalysisMaxChangePercentage.ToString());
+                GlobalData.AddTextToLogTab(text);
             }
+            eventText.Add("1d change% to high");
+            signal.IsInvalid = true;
         }
 
-        //// de 1 * 1d effectief moet in een bepaald interval zitten
-        //signal.Last24HoursEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval15m, 1 * 96); // 1 * 24 / 15 = 96
-        //if (!HasOpenPosition() && !signal.Last24HoursEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage))
-        //{
-        //    if (GlobalData.Settings.Signal.LogAnalysisMinMaxEffectivePercentage)
-        //    {
-        //        string text = string.Format("Analyse {0} 1d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last24HoursEffective.ToString("N2"), 
-        //            "0", GlobalData.Settings.Signal.AnalysisMaxEffectivePercentage.ToString());
-        //        GlobalData.AddTextToLogTab(text);
-        //    }
-        //    eventText.Add("1d effective% to high");
-        //    signal.IsInvalid = true;
-        //}
 
         // Check effictive over multiple day's
         int countInInterval6H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
@@ -389,23 +383,23 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        await MarketTrend.CalculateMarketTrendAsync(tradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
-        AccountSymbolData accountSymbolData = tradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
+        await MarketTrend.CalculateMarketTrendAsync(TradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
+        AccountSymbolData accountSymbolData = TradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
         if (accountSymbolData.MarketTrendPercentage.HasValue) // Kucoin causes a problem
         {
             signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
 
-            AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(signal.Interval.IntervalPeriod);
+            AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(signal.Interval.IntervalPeriod);
             signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval15m);
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval15m);
             signal.Trend15m = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval30m);
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval30m);
             signal.Trend30m = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval1h);
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1h);
             signal.Trend1h = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval4h);
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval4h);
             signal.Trend4h = accountSymbolIntervalData.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolIntervalData(CryptoIntervalPeriod.interval1d);
+            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1d);
             signal.Trend1d = accountSymbolIntervalData.TrendIndicator;
         }
 
@@ -513,7 +507,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
             PriceMaxPerc = 0, // statistics
 #endif
             SignalVolume = Symbol.Volume,
-            EventTime = candle.OpenTime,
+            EventTime = candle.OpenTime + Interval.Duration, // close of the candle
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
             Side = CryptoTradeSide.Long,  // gets modified later
             Strategy = CryptoSignalStrategy.Jump,  // gets modified later
@@ -530,7 +524,7 @@ public class SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, Crypt
 
     private async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle);
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle!);
         if (algorithm != null)
         {
             if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))

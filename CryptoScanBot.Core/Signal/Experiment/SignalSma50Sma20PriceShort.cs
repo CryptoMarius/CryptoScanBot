@@ -27,6 +27,14 @@ public class SignalSma50Sma20PriceShort : SignalCreateBase
     }
 
 
+    private static bool IsInUpperPartOfBollingerBands(CryptoCandle candle, decimal percentage)
+    {
+        decimal value = (decimal)candle!.CandleData?.BollingerBandsUpperBand!;
+        value -= (decimal)candle!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
+        if (candle.Close >= value)
+            return true;
+        return false;
+    }
 
     public override bool IsSignal()
     {
@@ -61,7 +69,9 @@ public class SignalSma50Sma20PriceShort : SignalCreateBase
                 CandleIndicatorData.CalculateIndicators(history);
             }
 
-            if (IndicatorsOkay(candle!) && !IsInUpperPartOfBollingerBands(1, 50))
+            if (!IndicatorsOkay(candle))
+                return false;
+            if (!IsInUpperPartOfBollingerBands(candle, 20))
                 return false;
         }
 

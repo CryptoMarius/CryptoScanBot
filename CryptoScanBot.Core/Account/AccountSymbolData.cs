@@ -45,7 +45,7 @@ public class AccountSymbolData
     }
 
 
-    public AccountSymbolIntervalData GetAccountSymbolIntervalData(CryptoIntervalPeriod intervalPeriod)
+    public AccountSymbolIntervalData GetAccountSymbolInterval(CryptoIntervalPeriod intervalPeriod)
     {
         return SymbolTrendDataList[(int)intervalPeriod];
     }
@@ -56,10 +56,8 @@ public class AccountSymbolData
         ZoneListLong.Clear();
         ZoneListShort.Clear();
 
-        foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
-        {
-            accountSymbolIntervalData.TimeLastSwingPoint = null;
-        }
+        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolTrendDataList)
+            accountSymbolInterval.ResetZoneData();
     }
 
     public void ResetTrendData()
@@ -67,17 +65,14 @@ public class AccountSymbolData
         // Does this work (for the reset every hour)
         MarketTrendDate = null;
         MarketTrendPercentage = null;
+
+        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolTrendDataList)
+            accountSymbolInterval.ResetTrendData();
     }
 
     public void Reset()
     {
         ResetZoneData();
-
         ResetTrendData();
-
-        foreach (AccountSymbolIntervalData accountSymbolIntervalData in SymbolTrendDataList)
-        {
-            accountSymbolIntervalData.Reset();
-        }
     }
 }
