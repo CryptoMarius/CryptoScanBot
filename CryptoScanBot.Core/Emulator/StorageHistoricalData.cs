@@ -69,7 +69,7 @@ public class StorageHistoricalData
             try
             {
                 string text = File.ReadAllText(filename);
-                List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text, JsonTools.JsonSerializerIndented);
+                List<CryptoCandle>? candleList = JsonSerializer.Deserialize<List<CryptoCandle>>(text);
                 if (candleList != null)
                 {
                     CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
