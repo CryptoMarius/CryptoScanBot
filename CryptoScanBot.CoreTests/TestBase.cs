@@ -167,7 +167,7 @@ public class TestBase
             throw new Exception($"File {fileName} not found");
 
         string text = File.ReadAllText(fileName);
-        var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.JsonSerializerIndented)
+        var list = JsonSerializer.Deserialize<CryptoCandleList>(text)
             ?? throw new Exception($"Unable to load candles from {fileName}");
 
         // Clear list so we not have unexpected stuff..
