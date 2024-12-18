@@ -238,9 +238,7 @@ static public class GlobalData
         // De symbols uit de database lezen (ook van andere exchanges)
         // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
         //AddTextToLogTab("Reading symbol information");
-        //string sql = $"select * from symbol where exchangeid={exchange.Id}";
         string sql = "select * from symbol";
-
         using var database = new CryptoDatabase();
         foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql))
             AddSymbol(symbol);
@@ -350,6 +348,13 @@ static public class GlobalData
         {
             symbol.Exchange = exchange;
 
+            if (symbol.Name == "" || exchange.SymbolListId.ContainsKey(symbol.Id))
+            {
+                //TODO: Delete the symbol? (first report all of them.......)
+                AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
+            }
+            
+            
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
 
@@ -413,7 +418,7 @@ static public class GlobalData
                 //    readStream.Close();
                 //}
                 string text = File.ReadAllText(filename);
-                var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.JsonSerializerIndented);
+                var value = JsonSerializer.Deserialize<SettingsBasic>(text);
                 if (value != null)
                     Settings = value;
                 else
