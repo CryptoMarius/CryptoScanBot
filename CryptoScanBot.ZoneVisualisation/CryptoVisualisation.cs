@@ -42,9 +42,6 @@ public partial class CryptoVisualisation : Form
 
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
-        //Shown += FrmShown;
-        Load += FrmMain_Load;
-
         if (GlobalData.IntervalList.Count == 0)
         {
             StandAlone = true;
@@ -58,15 +55,18 @@ public partial class CryptoVisualisation : Form
 
         labelInterval.Text = "";
         labelMaxTime.Text = "";
+
+        // Subscribe
+        Load += FrmMain_Load;
         Closing += Form1Closing;
         ButtonRefresh.Click += ButtonRefreshClick;
         ButtonCalculate.Click += ButtonCalculateClick;
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
         EditDeviation.Click += ButtonFocusLastCandlesClick;
         EditTransparant.Click += TransparentClick;
-
+        plotView.MouseMove += PlotView_MouseMove;
+        KeyDown += FormKeyDown;
         KeyPreview = true;
-        KeyDown += new KeyEventHandler(FormKeyDown);
 
         InitQuoteItems();
         InitIntervalItems();
@@ -74,6 +74,7 @@ public partial class CryptoVisualisation : Form
         if (StandAlone)
             ButtonRefreshClick(null, EventArgs.Empty);
     }
+
 
     private void FrmMain_Load(object? sender, EventArgs? e)
     {
@@ -135,6 +136,17 @@ public partial class CryptoVisualisation : Form
 
     private void Form1Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        // Unsubscribe
+        Load -= FrmMain_Load;
+        Closing -= Form1Closing;
+        ButtonRefresh.Click -= ButtonRefreshClick;
+        ButtonCalculate.Click -= ButtonCalculateClick;
+        ButtonZoomLast.Click -= ButtonFocusLastCandlesClick;
+        EditDeviation.Click -= ButtonFocusLastCandlesClick;
+        EditTransparant.Click -= TransparentClick;
+        KeyDown -= FormKeyDown;
+        plotView.MouseMove -= PlotView_MouseMove;
+
         PickupEdits();
         Session.SaveSessionSettings();
     }
@@ -410,7 +422,7 @@ public partial class CryptoVisualisation : Form
             try
             {
                 CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
-                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval, symbolInterval.CandleList);
+                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval);
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
             }
             finally
@@ -443,7 +455,7 @@ public partial class CryptoVisualisation : Form
             try
             {
                 CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
-                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval, symbolInterval.CandleList);
+                await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval);
                 CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
             }
             finally
@@ -505,8 +517,8 @@ public partial class CryptoVisualisation : Form
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
-            IndicatorFib = new(symbolInterval.CandleList, true, Session.Deviation, interval.Duration),
-            Indicator = new(symbolInterval.CandleList, false, Session.Deviation, interval.Duration),
+            IndicatorFib = new(true, Session.Deviation),
+            Indicator = new(false, Session.Deviation),
         };
 
 
@@ -597,7 +609,7 @@ public partial class CryptoVisualisation : Form
             // Conclusion, we cannot use the AccountSymbolData shared with the sacanner.
             // However, we can reuse the AccountSymbolData class and calculate our own..
             //AccountSymbolData accountScannerSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
-            //AccountSymbolIntervalData accountScannerSymbolIntervalData = accountScannerSymbolData.GetAccountSymbolIntervalData(Data.Interval.IntervalPeriod);
+            //AccountSymbolIntervalData accountScannerSymbolIntervalData = accountScannerSymbolData.GetAccountSymbolInterval(Data.Interval.IntervalPeriod);
 
 
             Data.Symbol.CalculatingZones = true;
@@ -611,14 +623,14 @@ public partial class CryptoVisualisation : Form
                     ZoneTools.LoadAllZones(); // Sync just to be sure
 
 
-                Data.Indicator = new(Data.SymbolInterval.CandleList, false, Session.Deviation, Data.Interval.Duration)
+                Data.Indicator = new(false, Session.Deviation)
                 {
                     MaxTime = Session.MaxDate,
                     ShowSecondary = Session.ShowSecondary,
                     UseOptimizing = Session.UseOptimizing
                 };
 
-                Data.IndicatorFib = new(Data.SymbolInterval.CandleList, true, Session.Deviation, Data.Interval.Duration)
+                Data.IndicatorFib = new(true, Session.Deviation)
                 {
                     MaxTime = Session.MaxDate,
                     ShowSecondary = Session.ShowSecondary,
@@ -632,19 +644,23 @@ public partial class CryptoVisualisation : Form
 
 
                 // What is the best deviation for the indicator?
-                AccountSymbolIntervalData accountSymbolIntervalData = new()
-                {
-                    Interval = Data.SymbolInterval.Interval,
-                    IntervalPeriod = Data.SymbolInterval.IntervalPeriod,
-                };
+                //AccountSymbolIntervalData accountSymbolInterval = new()
+                //{
+                //    Interval = Data.SymbolInterval.Interval,
+                //    IntervalPeriod = Data.SymbolInterval.IntervalPeriod,
+                //};
+                //var accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
+                //var accountSymbolInterval = accountSymbol.GetAccountSymbolInterval(
 #if DEBUGZIGZAG
-                var best = Data.Indicator; 
+                //var best = Data.Indicator; 
 #else
-                TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, Data.SymbolInterval.CandleList);
-                await TrendTools.AddCandlesToTrendIndicatorsAsync(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, Session.MinDate, Session.MaxDate);
-                TrendTools.GetBestTrendIndicator(accountSymbolIntervalData, Data.Symbol, Data.SymbolInterval.CandleList, log);
-                var best = accountSymbolIntervalData.BestZigZagIndicator!;
+                //TrendTools.CreateAllTrendIndicators(accountSymbolInterval, Data.SymbolInterval.CandleList);
+                //ZigZagIndicator9 indicator = new(GlobalData.Settings.General.UseHighLowInTrendCalculation, 1.0m);
+                await TrendTools.AddCandlesToIndicatorsAsync(Data.Indicator, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+                //TrendTools.GetBestTrendIndicator(accountSymbolInterval, Data.Symbol, Data.SymbolInterval.CandleList, log);
+                //var best = accountSymbolInterval.BestZigZagIndicator!;
 #endif
+                var best = Data.Indicator;
 
 
 
@@ -658,7 +674,7 @@ public partial class CryptoVisualisation : Form
                 Data.Symbol.CalculatingZones = true;
                 try
                 {
-                    await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval, Data.SymbolInterval.CandleList);
+                    await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval);
                     CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
                 }
                 finally
@@ -696,7 +712,6 @@ public partial class CryptoVisualisation : Form
                 plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
                 plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Shift, PlotCommands.SnapTrack);
 
-                plotView.MouseMove += PlotView_MouseMove;
 #pragma warning disable CS0618 // Type or member is obsolete
                 plotModel.MouseDown += PlotModel_MouseDown; // Declarared obsolete, there is no workaround/new method, kind of ridiculous?
 #pragma warning restore CS0618 // Type or member is obsolete
