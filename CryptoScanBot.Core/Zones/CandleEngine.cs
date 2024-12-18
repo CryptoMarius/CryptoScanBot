@@ -5,30 +5,30 @@ using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
-using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanBot.Core.Zones;
 
 public class CandleEngine
 {
-    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
+    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
     {
+        return;
         // load candles (kind of quick and dirty)
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
         string filename = baseFolder + $"{symbol.Name}-{interval.Name}.json";
         if (File.Exists(filename))
         {
-            string text = File.ReadAllText(filename);
-
             await symbol.CandleLock.WaitAsync();
             try
             {
-                var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.JsonSerializerIndented);
+                string text = File.ReadAllText(filename);
+                var list = JsonSerializer.Deserialize<CryptoCandleList>(text);
                 if (list != null)
                 {
+                    CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
                     foreach (var c in list.Values)
-                        candleList.TryAdd(c.OpenTime, c);
+                        symbolInterval.CandleList.TryAdd(c.OpenTime, c);
                 }
             }
             finally
@@ -36,18 +36,18 @@ public class CandleEngine
                 symbol.CandleLock.Release();
             }
 
-            //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {added} candles added");
+            //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
         }
     }
 
 
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
+        return;
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-
                 await symbol.CandleLock.WaitAsync();
                 try
                 {
@@ -62,6 +62,7 @@ public class CandleEngine
                     ScannerLog.Logger.Info($"Saving {filename}");
                     loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
 
+                    //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");
                 }
                 finally
                 {
@@ -83,6 +84,7 @@ public class CandleEngine
         {
             foreach (var symbolInterval in symbol.IntervalPeriodList)
             {
+                int cleaned = symbolInterval.CandleList.Count;
                 // Remove old candles
                 if (symbolInterval.CandleList.Count > 0)
                 {
@@ -108,8 +110,10 @@ public class CandleEngine
                             index--;
                         }
                         symbolInterval.CandleList = newList;
+                        symbolInterval.CandleList.TrimExcess();
                     }
                 }
+                //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Cleaning {cleaned - symbolInterval.CandleList.Count} candles");
             }
         }
         finally
@@ -122,9 +126,10 @@ public class CandleEngine
     /// <summary>
     /// Check if all candles in a date range are present
     /// </summary>
-    private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long minTime, long maxTime, CryptoInterval interval, CryptoCandleList candleList)
+    private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long minTime, long maxTime, CryptoSymbol symbol, CryptoInterval interval)
     {
-        while (candleList!.ContainsKey(minTime))
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        while (symbolInterval.CandleList!.ContainsKey(minTime))
         {
             if (minTime >= maxTime)
             {
@@ -158,20 +163,22 @@ public class CandleEngine
     }
 
 
-    public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, long fetchFrom, int fetchCount)
+    public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long fetchFrom, int fetchCount)
     {
         if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
             throw new Exception("Not supported interval");
 
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
         (long unixMin, long unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
-        (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, interval, candleList);
+        (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
         if (dataAllLocal)
             return false;
         try
         {
             //string text3 = $"need={candleCount}"; 
             //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()}");
-            return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, candleList, unixLoop, unixMax);
+            return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);
         }
         catch (Exception error)
         {

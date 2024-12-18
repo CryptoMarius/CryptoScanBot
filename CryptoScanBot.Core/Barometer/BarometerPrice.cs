@@ -19,7 +19,8 @@ internal class BarometerPrice
         for (int i = 0; i < quoteData.SymbolList.Count; i++) // foreach with ToList() is overkill
         {
             CryptoSymbol symbol = quoteData.SymbolList[i];
-            if (symbol.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbol.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
+            if (symbolInterval.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbolInterval.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
             {
                 if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
                 {

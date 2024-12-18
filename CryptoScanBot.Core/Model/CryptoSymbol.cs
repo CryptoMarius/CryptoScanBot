@@ -123,11 +123,7 @@ public class CryptoSymbol
     public List<CryptoSymbolInterval> IntervalPeriodList { get; set; } = [];
 
     [Computed]
-    // Quick reference to the first intervalSymbol
-    public CryptoCandleList CandleList { get { return IntervalPeriodList[0].CandleList; } }
-
-    [Computed]
-    // Lock the candlelist to manipulates candles
+    // Lock for manipulates candles
     public SemaphoreSlim CandleLock { get; set; } = new(1, 1);
 
 

@@ -158,12 +158,12 @@ public class CryptoCalculation
                 {
                     // Load candles from disk
                     if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
-                        await CandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval, zoomInterval.CandleList);
+                        await CandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
                     loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, false); // in memory, nothing changed
 
                     // Load candles from the exchange
                     int count = durationForThisCandle / zoomInterval.Interval.Duration;
-                    if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, zoomInterval.CandleList, unixStart, count))
+                    if (await CandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
                         loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
