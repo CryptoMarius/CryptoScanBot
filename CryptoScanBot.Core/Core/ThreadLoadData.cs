@@ -200,6 +200,7 @@ public class ThreadLoadData
         {
             using CryptoDatabase databaseThread = new();
             databaseThread.Open();
+            _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
 
             //************************************************************************************
             // Informatie uit de database lezen
@@ -294,7 +295,6 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
-                _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
                
