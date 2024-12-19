@@ -1,14 +1,21 @@
 CryptoScanBot release historie:
 
-14-09-2024 1.9.5.1214
+15-09-2024 1.9.5.1215
+- Scanner - Aandacht voor de grote hoeveelheid memory die nu gebruikt wordt, het lijkt veel hoger als vorige versies (piekt af en toe)
+- Scanner - Waarschijnlijk is het memory probleem gerelateerd aan de deserialize van grote hoeveelheden candles, vervangen met binary opslag (het verbeterd)
 - Scanner - Symbols, een nieuwe kolom geintroduceerd met daarin het percentage tot de dichtbijzijnde zone (van afgelopen minuut)
             Dit wordt 1x per minuut berekend mits de leeftijd van de symbol, het volume en prijs voldoen aan de regels (dus wat laggy)
 - Scanner - Instellingen, teksten of in het engels of in het nederlands maar in hetzelfde kopje niet alles door elkaar
-- Scanner - Dominante zones: Hergebruik van het chart formulier (na een pooje heb je 10 formulieren open staan)
+- Scanner - Dominante zones: Hergebruik van het chart formulier (na een pooje heb je 10 formulieren open staan en nu slechts 1)
 - Scanner - Dominante zones: Coordinaten bewaren zodat het formulier op dezelfde plek en grootte terugkomt
+- Scanner - Secondaire trend zette soms een lagere high na een low (compleet verkeerd om)
+- Scanner - Dominante zones: Het percentage van de intro "filter" was verkeerd
+- Scanner - Dominante zones: De laatste candle in het visualitie scherm klopt niet, er zit soms ruimte tussen
+- Scanner - Dominante zones: De candle van de timeframes inladen als je chart intekend (meer candles)
+
 
 12-09-2024 1.9.5.1212
-- Scanner/Trader - Een status/indicator die de status van de scanner, trader en rulez aangeeft.
+- Scanner/Trader - Een status/indicator die de status van de scanner, trader en de rulez aangeeft.
 - Scanner - In de 4 grids kun je niet meer met DEL een rij weggooien
 - Scanner - Dominante zones: Enkele instellingen verwijderd (batch, posities en nog wat)
 - Scanner - Dominante zones: Automatisch berekenen als er een nieuw swingpoint bijkomt)

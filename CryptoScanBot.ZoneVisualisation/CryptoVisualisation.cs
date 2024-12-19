@@ -643,31 +643,10 @@ public partial class CryptoVisualisation : Form
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
 
 
-                // What is the best deviation for the indicator?
-                //AccountSymbolIntervalData accountSymbolInterval = new()
-                //{
-                //    Interval = Data.SymbolInterval.Interval,
-                //    IntervalPeriod = Data.SymbolInterval.IntervalPeriod,
-                //};
-                //var accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(Data.Symbol.Name);
-                //var accountSymbolInterval = accountSymbol.GetAccountSymbolInterval(
-#if DEBUGZIGZAG
-                //var best = Data.Indicator; 
-#else
-                //TrendTools.CreateAllTrendIndicators(accountSymbolInterval, Data.SymbolInterval.CandleList);
-                //ZigZagIndicator9 indicator = new(GlobalData.Settings.General.UseHighLowInTrendCalculation, 1.0m);
-                await TrendTools.AddCandlesToIndicatorsAsync(Data.Indicator, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
-                //TrendTools.GetBestTrendIndicator(accountSymbolInterval, Data.Symbol, Data.SymbolInterval.CandleList, log);
-                //var best = accountSymbolInterval.BestZigZagIndicator!;
-#endif
-                var best = Data.Indicator;
-
-
-
                 // display data
                 plotModel = CryptoCharting.CreateChart(Data, out horizontalLine, out verticalLine);
                 plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
-                $"{trend} dev={Data.Indicator.Deviation} (best={best.Deviation}) candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
+                $"{trend} dev={Data.Indicator.Deviation} candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
 
 
                 // avoid candles being removed...
@@ -682,8 +661,6 @@ public partial class CryptoVisualisation : Form
                     await CandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
                     Data.Symbol.CalculatingZones = false;
                 }
-                //if (accountScannerSymbolIntervalData.BestZigZagIndicator != null && accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList != null)
-                //    CryptoCharting.DrawZigZag(plotModel, Session, accountScannerSymbolIntervalData.BestZigZagIndicator.ZigZagList, "tst", OxyColors.Yellow);
 
                 if (Session.ShowPoints)
                     CryptoCharting.DrawPoints(plotModel, Session, Data.Indicator.PivotList);

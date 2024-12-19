@@ -12,82 +12,92 @@ public class LiquidityZones
     {
         try
         {
-            // Determine dates
-            long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
-            long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
-            fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
-
-            // Load candles from disk
-            if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
-                await CandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval, data.SymbolInterval.CandleList);
-            loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
-
-            // Load candles from the exchange
-            if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, data.SymbolInterval.CandleList, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
-                loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
-            if (data.SymbolInterval.CandleList.Count == 0)
-                return;
-
-
-            await data.Symbol.CandleLock.WaitAsync();
             try
             {
-                // Calculate indicators
-                foreach (var candle in data.SymbolInterval.CandleList.Values)
+                // Determine dates
+                long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
+                long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
+                fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
+
+                // Load candles from disk
+                if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
+                    await CandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
+                loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
+
+                // Load candles from the exchange
+                if (await CandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+                    loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
+                if (data.SymbolInterval.CandleList.Count == 0)
+                    return;
+
+                await data.Symbol.CandleLock.WaitAsync();
+                try
                 {
-                    if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
+                    // Calculate indicators
+                    foreach (var candle in data.SymbolInterval.CandleList.Values)
                     {
-                        data.Indicator.Calculate(candle, session.UseBatchProcess);
+                        if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
+                        {
+                            data.Indicator.Calculate(candle, session.UseBatchProcess);
 #if !DEBUGZIGZAG
-                        data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+                            data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+#endif
+                        }
+                    }
+                    if (session.UseBatchProcess)
+                    {
+                        data.Indicator.FinishBatch();
+#if !DEBUGZIGZAG
+                        data.IndicatorFib.FinishBatch();
 #endif
                     }
                 }
-                if (session.UseBatchProcess)
+                finally
                 {
-                    data.Indicator.FinishBatch();
-#if !DEBUGZIGZAG
-                    //data.IndicatorFib.FinishBatch();
-#endif
+                    data.Symbol.CandleLock.Release();
                 }
+
+
+
+                // Mark the dominant lows or highs
+                if (session.ForceCalculation)
+                {
+                    await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
+                    CryptoCalculation.CalculateIntroZone(data);
+                    CryptoCalculation.CalculateBrokenBoxes(data);
+                }
+
+
+                // Create the zones and save them
+                if (session.ForceCalculation)
+                    ZoneTools.SaveZonesForSymbol(data.Symbol, data.Interval, data.Indicator.ZigZagList);
+
+                await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
+
+
+                // Set the date of the last swing point for the automatic zone calculation
+                AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+                AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(data.Interval.IntervalPeriod);
+                symbolIntervalData.TimeLastSwingPoint = data.Indicator.GetLastRealZigZag();
+                if (data.Indicator.LastSwingLow != null)
+                    symbolIntervalData.LastSwingLow = data.Indicator.LastSwingLow.Value;
+                if (data.Indicator.LastSwingHigh != null)
+                    symbolIntervalData.LastSwingHigh = data.Indicator.LastSwingHigh.Value;
+
+                //GlobalData.AddTextToLogTab($"{data.Symbol.Name} points={data.Indicator.PivotList.Count} fib.points={data.IndicatorFib.PivotList.Count}");
             }
-            finally
+            catch (Exception error)
             {
-                data.Symbol.CandleLock.Release();
+                ScannerLog.Logger.Info($"ERROR {error}");
+                GlobalData.AddTextToLogTab($"ERROR {error}");
+                await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
             }
-
-
-
-            // Mark the dominant lows or highs
-            if (session.ForceCalculation)
-            {
-                await CryptoCalculation.CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
-                CryptoCalculation.CalculateIntroZone(data);
-                CryptoCalculation.CalculateBrokenBoxes(data);
-            }
-
-
-            // Create the zones and save them
-            if (session.ForceCalculation)
-                ZoneTools.SaveZonesForSymbol(data.Symbol, data.Interval, data.Indicator.ZigZagList);
-
-            await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
-
-
-            // Set the date of the last swing point for the automatic zone calculation
-            AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
-            AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(data.Interval.IntervalPeriod);
-            symbolIntervalData.TimeLastSwingPoint = data.Indicator.GetLastRealZigZag();
         }
-        catch (Exception error)
+        finally
         {
-            ScannerLog.Logger.Info($"ERROR {error}");
-            GlobalData.AddTextToLogTab($"ERROR {error}");
-            await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
+            if (sender == null)
+                _ = CandleEngine.CleanLoadedCandlesAsync(data.Symbol);
         }
-
-        if (sender == null)
-            _ = CandleEngine.CleanLoadedCandlesAsync(data.Symbol);
     }
 
 
@@ -102,7 +112,7 @@ public class LiquidityZones
 
             if (symbol.QuoteData.MinimalVolume == 0 || symbol.Volume >= symbol.QuoteData.MinimalVolume)
             {
-                GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name}");
+                //GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name}");
 
                 CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -134,8 +144,8 @@ public class LiquidityZones
                     Symbol = symbol,
                     Interval = interval,
                     SymbolInterval = symbolInterval,
-                    Indicator = new(symbolInterval.CandleList, false, session.Deviation, interval.Duration),
-                    IndicatorFib = new(symbolInterval.CandleList, true, session.Deviation, interval.Duration),
+                    Indicator = new(false, session.Deviation),
+                    IndicatorFib = new(true, session.Deviation),
                 };
 
                 session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
@@ -157,14 +167,13 @@ public class LiquidityZones
         }
     }
 
-    public static async Task CalculateZonesForAllSymbolsAsync(AddTextEvent? sender)
+    public static void CalculateZonesForAllSymbolsAsync(AddTextEvent? sender)
     {
         if (GlobalData.Settings.General.Exchange != null)
         {
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
-                await CalculateZones(sender, symbol);
-                //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
+                GlobalData.ThreadZoneCalculate?.AddToQueue(symbol);
             }
         }
     }

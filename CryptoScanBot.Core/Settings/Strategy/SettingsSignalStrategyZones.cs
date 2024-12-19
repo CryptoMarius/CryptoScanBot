@@ -12,21 +12,21 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 
     // Limits unzoomed box
     public bool ZonesApplyUnzoomed { get; set; } = false;
-    public decimal MinimumUnZoomedPercentage { get; set; } = 0.0m;
-    public decimal MaximumUnZoomedPercentage { get; set; } = 0.0m;
+    public double MinimumUnZoomedPercentage { get; set; } = 0.0;
+    public double MaximumUnZoomedPercentage { get; set; } = 0.0;
 
     // Limits zoomed box
     public bool ZoomLowerTimeFrames { get; set; } = true;
-    public decimal MinimumZoomedPercentage { get; set; } = 0.2m;
-    public decimal MaximumZoomedPercentage { get; set; } = 0.7m;
+    public double MinimumZoomedPercentage { get; set; } = 0.2;
+    public double MaximumZoomedPercentage { get; set; } = 0.7;
 
     // Signal percentage
-    public decimal WarnPercentage { get; set; } = 1.0m;
+    public double WarnPercentage { get; set; } = 1.0;
 
     // Filter on start
     public bool ZoneStartApply { get; set; } = true;
     public int ZoneStartCandleCount { get; set; } = 5; // 5 candles back
-    public decimal ZoneStartPercentage { get; set; } = 2.5m; // %
+    public double ZoneStartPercentage { get; set; } = 2.5; // %
 
     public SettingsSignalStrategyZones() : base()
     {

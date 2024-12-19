@@ -26,7 +26,7 @@ public class ZigZagResult
     //public DateTime OpenTime { get; set; }
     public decimal Top { get; set; }
     public decimal Bottom { get; set; }
-    public decimal Percentage { get; set; }
+    public double Percentage { get; set; }
     public long? CloseDate { get; set; }
 
     public int PivotIndex { get; set; }

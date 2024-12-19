@@ -158,7 +158,7 @@ public partial class TestForm : Form
 
 
 
-        GlobalData.LoadSettings();
+        GlobalData.LoadSettingsAsync();
         //TradingConfig.IndexStrategyInternally();
 
         // Basicly allemaal constanten
@@ -282,19 +282,13 @@ public partial class TestForm : Form
     /// <summary>
     /// Candles uit de database halen voor de gevraagde interval X indien deze niet aanwezig zijn
     /// </summary>
-    private static CryptoCandleList LoadSymbolCandles(CryptoSymbol symbol, CryptoInterval interval, DateTime dateCandleStart, DateTime dateCandleEinde)
+    private static void LoadSymbolCandles(CryptoSymbol symbol, CryptoInterval interval)
     {
         Semaphore.Wait();
         try
         {
-            CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
-            if (candles.Count == 0)
+            if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.Count == 0)
             {
-                using CryptoDatabase database = new();
-                database.Open();
-
-                long startTime = CandleTools.GetUnixTime(dateCandleStart, 60);
-                long eindeTime = CandleTools.GetUnixTime(dateCandleEinde, 60);
                 GlobalData.AddTextToLogTab(string.Format("{0} {1} Candles lezen", symbol.Name, interval.Name));
 
                 //int aantaltotaal = 0;
@@ -307,7 +301,6 @@ public partial class TestForm : Form
                     DataStore.LoadCandleForSymbol(exchangeStoragePath, symbol);
                 }
             }
-            return candles;
         }
         finally
         {
@@ -766,7 +759,7 @@ public partial class TestForm : Form
         if (System.IO.File.Exists(filename))
         {
             string text = System.IO.File.ReadAllText(filename);
-            config = JsonSerializer.Deserialize<CryptoBackConfig>(text);
+            config = JsonSerializer.Deserialize<CryptoBackConfig>(text, JsonTools.DeSerializerOptions);
         }
     }
 
@@ -952,7 +945,7 @@ public partial class TestForm : Form
                     intervalPeriod = CryptoIntervalPeriod.interval3m;
                     if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
                         return;
-                    LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
+                    LoadSymbolCandles(symbol, interval);
                     candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
 
                     double[] values = new double[candles.Count];
@@ -1120,16 +1113,14 @@ public partial class TestForm : Form
                 {
 
                     CryptoIntervalPeriod intervalPeriod;
-                    CryptoCandleList candles;
-                    DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 02, 1, 0, 0, 0), DateTimeKind.Utc);
-                    DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 1, 0, 0, 0), DateTimeKind.Utc);
+                    
 
 
                     intervalPeriod = CryptoIntervalPeriod.interval1m;
                     if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
                         return;
-                    LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-                    candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+                    LoadSymbolCandles(symbol, interval);
+                    CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
 
                     List<EmaResult> ema200List = (List<EmaResult>)candles.Values.GetEma(200);
                     //List<EmaResult> ema100List = (List<EmaResult>)candles.Values.GetEma(100);
@@ -1362,18 +1353,10 @@ public partial class TestForm : Form
         {
             if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol? symbol))
             {
-                DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2022, 11, 21, 00, 00, 0), DateTimeKind.Utc);
-                DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2022, 12, 01, 00, 00, 0), DateTimeKind.Utc);
-
                 // Voor de SignalCreate moet ook de 1m geladen worden
                 if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
                     return;
-                LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-
-
-                //if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval3m, out interval))
-                //  return;
-                //LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
+                LoadSymbolCandles(symbol, interval);
 
 
                 CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -2271,7 +2254,7 @@ public partial class TestForm : Form
         // TODO: Zorgen dat alleen het gekozen interval en algoritme actief is in de instellingen
 
         createdSignalCount = 0;
-        GlobalData.LoadSettings();
+        GlobalData.LoadSettingsAsync();
 
         CryptoBackConfig config = new();
         LoadConfig(ref config);
@@ -2719,13 +2702,13 @@ public partial class TestForm : Form
         test.Password = "Hello World";
        
         string text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        var test2 = JsonSerializer.Deserialize<TestObject>(text);
+        var test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
 
         text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        test2 = JsonSerializer.Deserialize<TestObject>(text);
+        test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
 
         text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        test2 = JsonSerializer.Deserialize<TestObject>(text);
+        test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
         //
 
     }

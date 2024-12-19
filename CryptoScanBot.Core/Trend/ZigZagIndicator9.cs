@@ -3,22 +3,19 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trend;
 
-public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, decimal deviation, int duration)
+public class ZigZagIndicator9
 {
-    public bool UseHighLow = useHighLow; // Use High/Low or Open/Close
+    public bool UseHighLow { get; set; } = false; // Use High/Low or Open/Close
     public bool ShowSecondary { get; set; } = false; // see more than primary trend
 
 
-    public bool UseOptimizing = true; // Debug
+    public bool UseOptimizing { get; set; } =  true; // Debug
     public long MaxTime { get; set; } = -1; // Debug
     public int CandleCount { get; set; } = 0; // Debug, count of candles added
 
     //public int Depth { get; set; } = 12; // from previous approach, but does not work
-    public decimal Deviation { get; set; } = deviation; // Optimizing (does not work for now)
+    public decimal Deviation { get; set; } // Optimizing (does not work for now)
     //public int BackStep { get; set; } = 3; // from previous approach, but does not work
-
-    private readonly CryptoCandleList CandleList = candleList; // reference to source candlelist (just for adding dummy points)
-    public int Duration { get; set; } = duration; // Interval duration off source candlelist (just for adding dummy points)
 
     private readonly List<ZigZagResult> AddedDummyZigZag = []; // collected points for recreating a low/high after a BOS formed
 
@@ -29,9 +26,15 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
     public ZigZagResult? LastSwingHigh = null; // the last High ZigZag
     public ZigZagResult? LastSwingPoint = null; // the last ZigZag added
 
-    private readonly ZigZagLanceBeggs ZigZagLanceBeggs = new(useHighLow);
+    private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
 
+    public ZigZagIndicator9(bool useHighLow, decimal deviation)
+    {
+        Deviation = deviation;
+        UseHighLow = useHighLow;
+        ZigZagLanceBeggs = new(UseHighLow);
+    }
 
     private decimal GetLowValue(CryptoCandle candle) => candle.GetLowValue(UseHighLow);
     private decimal GetHighValue(CryptoCandle candle) => candle.GetHighValue(UseHighLow);
@@ -246,7 +249,7 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
         // Did we have an unnoticed BOS (because there didn't form a L or H in the last 5 candles but the
         // LAST candle was a lower/higher then the previous H/L! (this is important for trend decisions)
         // okay, this might not be perfect, but close I think? (what a hassle btw...)
-        if (ZigZagList.Count > 1 && CandleList.Count > 1 && LastSwingLow != null && LastSwingHigh != null)
+        if (ZigZagList.Count > 1 && LastSwingLow != null && LastSwingHigh != null)
         {
             bool added = false;
             if (!added)
@@ -512,6 +515,5 @@ public class ZigZagIndicator9(CryptoCandleList candleList, bool useHighLow, deci
         TryAddDummyPoints();
         OptimizeList();
     }
-
 
 }

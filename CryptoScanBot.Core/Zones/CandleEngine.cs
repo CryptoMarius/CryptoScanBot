@@ -72,7 +72,7 @@ public class CandleEngine
     //}
 
 
-    public static async void LoadCandleDataFromDisk(CryptoSymbol symbol, CryptoInterval interval)
+    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
     {
         // load candles (kind of quick and dirty)
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";

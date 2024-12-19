@@ -68,9 +68,6 @@ public class CryptoPositionPart
     public bool ManualOrder { get; set; }
 
     [Computed]
-    public bool IsChanged { get; set; }
-
-    [Computed]
     public SortedList<int, CryptoPositionStep> StepList { get; set; } = [];
 }
 

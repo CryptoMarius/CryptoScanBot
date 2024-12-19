@@ -7,13 +7,11 @@ using CryptoScanBot.Core.Exchange;
 using Dapper.Contrib.Extensions;
 using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Exchange.Altrady;
-using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Core;
 
-public class PositionMonitor : IDisposable
+public class PositionMonitor //: IDisposable
 {
     // Tellertje die getoond wordt in applicatie (indicatie van aantal meldingen)
     private static int analyseCount;
@@ -46,24 +44,23 @@ public class PositionMonitor : IDisposable
         Database.Open();
     }
 
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+    //public void Dispose()
+    //{
+    //    Dispose(true);
+    //    GC.SuppressFinalize(this);
+    //}
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            if (Database != null)
-            {
-                Database.Close();
-                Database.Dispose();
-                //Database = null;
-            }
-        }
-    }
+    //protected virtual void Dispose(bool disposing)
+    //{
+    //    if (disposing)
+    //    {
+    //        if (Database != null)
+    //        {
+    //            Database.Close();
+    //            Database.Dispose();
+    //        }
+    //    }
+    //}
 
     public void ClearSignals()
     {
@@ -1804,16 +1801,23 @@ public class PositionMonitor : IDisposable
                     if (LastCandle1mCloseTime % intervalX.Duration == 0)
                     {
                         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-                        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(intervalX.IntervalPeriod);
+                        AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(intervalX.IntervalPeriod);
 
-                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(symbolIntervalData.IntervalPeriod);
-                        await TrendInterval.CalculateAsync(Symbol, symbolInterval.CandleList, symbolIntervalData, 0, LastCandle1mCloseTime);
-                        if (symbolIntervalData.BestZigZagIndicator != null && symbolIntervalData.BestZigZagIndicator.LastSwingPoint != null)
-                        {
-                            long? lastSwingPointTime = symbolIntervalData.BestZigZagIndicator.GetLastRealZigZag();
-                            if (lastSwingPointTime == null || symbolIntervalData.TimeLastSwingPoint == null || symbolIntervalData.TimeLastSwingPoint > lastSwingPointTime)
-                                GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
-                        }
+                        decimal valueLow = LastCandle1m.GetLowValue(false);
+                        decimal valueHigh = LastCandle1m.GetHighValue(false);
+                        if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||
+                           accountSymbolInterval.LastSwingHigh == null || valueHigh > accountSymbolInterval.LastSwingHigh)
+                            GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+
+                        //todo? find another way
+                        //CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(accountSymbolInterval.IntervalPeriod);
+                        //await TrendInterval.CalculateAsync(Symbol, symbolInterval.CandleList, accountSymbolInterval, 0, LastCandle1mCloseTime);
+                        //if (accountSymbolInterval.BestZigZagIndicator != null && accountSymbolInterval.BestZigZagIndicator.LastSwingPoint != null)
+                        //{
+                        //    long? lastSwingPointTime = accountSymbolInterval.BestZigZagIndicator.GetLastRealZigZag();
+                        //    if (lastSwingPointTime == null || accountSymbolInterval.TimeLastSwingPoint == null || accountSymbolInterval.TimeLastSwingPoint > lastSwingPointTime)
+                        //        GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                        //}
                     }
 
 

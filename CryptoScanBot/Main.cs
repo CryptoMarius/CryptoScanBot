@@ -120,7 +120,7 @@ public partial class FrmMain : Form
 
 
         // Instelling laden
-        GlobalData.LoadSettings();
+        GlobalData.LoadSettingsAsync();
 
         GridSymbolView = new() { Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
         GridSymbolView.InitGrid();
@@ -490,16 +490,16 @@ public partial class FrmMain : Form
                 // Clear candle data
                 if (reloadQuoteChange || reloadExchangeChange)
                 {
-                    foreach (var s in GlobalData.Settings.General.Exchange!.SymbolListId.Values)
+                    foreach (var symbol in GlobalData.Settings.General.Exchange!.SymbolListId.Values)
                     {
-                        if ((!s.QuoteData.FetchCandles || s.Status == 0) && s.CandleList.Count != 0)
+                        if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
                         {
-                            foreach (var x in s.IntervalPeriodList)
+                            foreach (var x in symbol.IntervalPeriodList)
                             {
                                 if (x.CandleList.Count != 0)
                                 {
                                     x.CandleList.Clear();
-                                    GlobalData.AddTextToLogTab($"Cleared candles for {s.Name} {x.Interval.Name}");
+                                    GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name} {x.Interval.Name}");
                                 }
                             }
                         }

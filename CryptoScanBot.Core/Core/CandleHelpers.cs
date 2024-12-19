@@ -149,6 +149,27 @@ public static class Helper
     }
 
 
+    public static string ToString0(this double value, string fmt = "N15")
+    {
+        string text = value.ToString(fmt); //Get the stock string
+
+        //If there is a decimal point present
+        string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        if (text.Contains(seperator))
+        {
+            //Remove all trailing zeros
+            text = text.TrimEnd('0');
+
+            //If all we are left with is a decimal point
+            if (text.EndsWith(seperator)) //then remove it
+                text = text.TrimEnd(seperator[0]);
+        }
+
+        return text;
+    }
+
+
+
     /// <summary>
     /// Clamp a decimal to a min and max value
     /// </summary>

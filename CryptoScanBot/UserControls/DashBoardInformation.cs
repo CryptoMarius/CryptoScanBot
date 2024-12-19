@@ -461,6 +461,11 @@ public partial class DashBoardInformation : UserControl
 
             BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
             CreateBarometerBitmap(GlobalData.Settings.General.Exchange, quoteData, interval);
+
+            //GC.Collect(); // not the nicest way...
+            GC.Collect(); 
+            GC.WaitForPendingFinalizers(); 
+            GC.Collect();
         }
         catch (Exception error)
         {
@@ -659,6 +664,7 @@ public partial class DashBoardInformation : UserControl
                 }
             }
         }
+
     }
 
     private void ListViewInformation_DoubleClick(object? sender, EventArgs? e)

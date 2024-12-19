@@ -17,7 +17,7 @@ public class ZoneTools
         // Alle openstaande posities lezen 
         //GlobalData.AddTextToLogTab("Reading open zones");
 
-        foreach (var x in GlobalData.ActiveAccount!.Data.SymbolDataList.Values)
+        foreach (var x in GlobalData.ActiveAccount!.Data.SymbolDataList.Values.ToList())
         {
             x.ResetZoneData();
         }
@@ -46,10 +46,18 @@ public class ZoneTools
                         // Creation date is the date of the last swing point (SH/SL)
                         long timeLastSwingPoint = CandleTools.GetUnixTime(zone.CreateTime, 0);
                         CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
-                        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolIntervalData(interval.IntervalPeriod);
+                        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
 
                         if (symbolIntervalData.TimeLastSwingPoint == null || timeLastSwingPoint > symbolIntervalData.TimeLastSwingPoint)
+                        {
                             symbolIntervalData.TimeLastSwingPoint = timeLastSwingPoint;
+
+                            if (symbolIntervalData.LastSwingLow == null || zone.Bottom > symbolIntervalData.LastSwingLow)
+                                symbolIntervalData.LastSwingLow = zone.Bottom;
+                            if (symbolIntervalData.LastSwingHigh == null || zone.Top > symbolIntervalData.LastSwingHigh)
+                                symbolIntervalData.LastSwingHigh = zone.Top;
+                        }
+
                     }
                 }
             }
@@ -58,15 +66,6 @@ public class ZoneTools
 
     public static void SaveZonesForSymbol(CryptoSymbol symbol, CryptoInterval interval, List<ZigZagResult> zigZagList)
     {
-        using CryptoDatabase databaseThread = new();
-        databaseThread.Connection.Open();
-
-        //using var transaction = databaseThread.BeginTransaction();
-        //databaseThread.Connection.Execute($"delete from zone where symbolId={symbol.Id}", transaction);
-        //transaction.Commit();
-
-
-
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
 
         // Oops, there are duplicate zones (strange, didn't expect this!)
@@ -148,18 +147,7 @@ public class ZoneTools
                     symbolData.ZoneListShort.Add(zone.Bottom, zone);
 
                 if (changed)
-                {
-                    if (zone.Id > 0)
-                    {
-                        modified++;
-                        databaseThread.Connection.Update(zone);
-                    }
-                    else
-                    {
-                        inserted++;
-                        databaseThread.Connection.Insert(zone);
-                    }
-                }
+                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 else untouched++;
                 zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
             }
@@ -169,9 +157,12 @@ public class ZoneTools
         foreach (var zone in zoneIndex.Values)
         {
             deleted++;
-            databaseThread.Connection.Delete(zone);
+            zone.Id *= -1;
+            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
         }
-        GlobalData.AddTextToLogTab($"{symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted} untouched={untouched}");
+        int total = symbolData.ZoneListLong.Count + symbolData.ZoneListShort.Count;
+        GlobalData.AddTextToLogTab($"{symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted} " +
+            $"untouched={untouched} total={total} ({symbolData.ZoneListLong.Count}/{symbolData.ZoneListShort.Count})");
     }
 
 }

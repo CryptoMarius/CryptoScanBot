@@ -34,15 +34,16 @@ public class CryptoSignal: CryptoData2
     public bool IsInvalid { get; set; }
 
     /// <summary>
-    /// Bevat de candle.OpenTime (maar het signaal is pas bij CloseTime gedetecteerd)
+    /// Time the signal is generated (at close of the candle) = CloseDate
     /// </summary>
     public long EventTime { get; set; }
+
     public DateTime OpenDate { get; set; }
 
     // Einde van de candle (voor sorteren in web)
     public DateTime CloseDate { get; set; }
 
-    // Tot dit tijdstip is het signaal geldig (nodig voor de query)
+    // Tot dit tijdstip is het signaal geldig (for startup query)
     public DateTime ExpirationDate { get; set; }
 
     [Computed]

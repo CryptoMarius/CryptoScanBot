@@ -27,7 +27,7 @@ public class TestBase
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent += AddTextToLogTab;
 
-            GlobalData.LoadSettings();
+            GlobalData.LoadSettingsAsync();
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
             GlobalData.LoadIntervals();
@@ -167,7 +167,7 @@ public class TestBase
             throw new Exception($"File {fileName} not found");
 
         string text = File.ReadAllText(fileName);
-        var list = JsonSerializer.Deserialize<CryptoCandleList>(text)
+        var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.DeSerializerOptions)
             ?? throw new Exception($"Unable to load candles from {fileName}");
 
         // Clear list so we not have unexpected stuff..

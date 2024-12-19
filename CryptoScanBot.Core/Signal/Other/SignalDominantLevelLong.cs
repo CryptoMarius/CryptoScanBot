@@ -71,7 +71,7 @@ public class DominantLevelLong : SignalCreateBase
             if (zone.OpenTime != null && CandleLast.OpenTime >= zone.OpenTime && zone.CloseTime == null)
             {
                 bool changed = false;
-                decimal alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                decimal alarmPrice = zone.Top * (decimal)(100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
                 if (CandleLast.Low <= alarmPrice)
                 {
                     if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddMinutes(5))

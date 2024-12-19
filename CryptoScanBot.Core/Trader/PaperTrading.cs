@@ -146,7 +146,8 @@ public class PaperTrading
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact
-                        if (position.Symbol.CandleList.TryGetValue(from, out CryptoCandle? candle))
+                        CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
+                        if (symbolInterval.CandleList.TryGetValue(from, out CryptoCandle? candle))
                         {
                             await PaperTradingCheckStep(database, position, part, step, candle);
                         }

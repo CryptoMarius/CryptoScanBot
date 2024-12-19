@@ -11,6 +11,7 @@ using CryptoScanBot.Core.Model;
 
 using Mexc.Net.Clients;
 using ExchangeTest.Exchange.Altrady;
+using CryptoScanBot.Core.Json;
 
 
 namespace CryptoScanBot.Experiment;
@@ -49,7 +50,7 @@ public partial class Form1 : Form
         }
 
 
-        GlobalData.LoadSettings();
+        GlobalData.LoadSettingsAsync();
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
         GlobalData.SetTradingAccounts();
@@ -102,7 +103,7 @@ public partial class Form1 : Form
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                GlobalData.TradingApi = JsonSerializer.Deserialize<SettingsExchangeApi>(text);
+                GlobalData.TradingApi = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
             }
             else
                 throw new Exception($"file not found {filename}");
@@ -122,7 +123,7 @@ public partial class Form1 : Form
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                GlobalData.AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text);
+                GlobalData.AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
             }
             else
                 throw new Exception($"file not found {filename}");

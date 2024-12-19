@@ -60,7 +60,7 @@ public class CommandTools
                     return;
 
                 case Command.CalculateAllLiquidityZones:
-                    _ = Task.Run(() => { _ = LiquidityZones.CalculateZonesForAllSymbolsAsync(null); });
+                    LiquidityZones.CalculateZonesForAllSymbolsAsync(null);
                     return;
 
             }

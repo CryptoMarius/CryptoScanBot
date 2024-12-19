@@ -6,12 +6,11 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
-- dogeusdt, zone intro "filter" lijkt de verkeerde candle te hebben! Wellicht toch de zones gebruiken ipv zigzag objecten?
-- De laatste candle in het visualitie scherm klopt niet, zit soms ruimte tussen
-- De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de chart library de fout in?
-- De candle van de lagere timeframes inladen als je inzoomt..
+- Probleem, veel duplicaat symbols aanwezig in de database (en de de $bmp was ook een probleem..), dat geeft overhead en vergissingen?
 
 Scanner:
+- Scanner - De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de charting library de fout in?
+- Scanner - Signalen importeren of exporteren, exchange, symbol, interval, time, strategy, price 
 - Scanner - Altcoin season index toevoegen https://www.blockchaincenter.net/en/altcoin-season-index/, maar die site heeft geen api?
 - Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut
 - Scanner - Grafiek, op de x-as de lokale tijd tonen (gaf problemen tijdens de wisseling, component verwacht geen dubbele data)
@@ -22,7 +21,7 @@ Scanner:
 - Scanner - (als extra voor de gui) De trend berekening laat de aanvullende informatie niet meer zien
             (todo: Waar/hoe het vinkje te plaatsen, toch een debug tabsheet of extra dialoog maken, of excel sheet?)
             Staat nu voorlopig even op de debug tabsheet, weet nog niet wat de beste method c.q. plek is
-- Scanner - Nieuwe libraries voor Skender indicator testen/bekijken/stabiel? (dat is namelijk een pre-release)
+- Scanner - Nieuwe libraries voor Skender indicator testen/bekijken/stabiel? (er is namelijk een pre-release)
 - Scanner - Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn wel wat vragen over geweest.
 - Scanner - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval (zie je ook wat als je geen trader gebruikt)
 - Scanner - De grid tekst kleur is zwart in de actuele regel (als je de selectie uitzet met de nieuwe instelling)

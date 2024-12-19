@@ -105,7 +105,7 @@ public static class CandleTools
     /// <summary>
     /// Add the final candle in the right interval
     /// </summary>
-    static public CryptoCandle CreateCandle(CryptoSymbol symbol, CryptoInterval interval, DateTime openTime, 
+    static public CryptoCandle CreateCandle(CryptoSymbol symbol, CryptoInterval interval, DateTime openTime,
         decimal open, decimal high, decimal low, decimal close, decimal baseVolume, decimal quoteVolume, bool isDuplicated)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);

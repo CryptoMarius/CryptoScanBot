@@ -256,10 +256,10 @@ public class CryptoCharting
     public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color };
-        var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
-        var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
-        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
-        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 5, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
+        var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
+        var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
+        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
+        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
         foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= session.MinDate && zigzag.Candle!.OpenTime <= session.MaxDate)

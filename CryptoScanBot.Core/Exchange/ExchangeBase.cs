@@ -52,14 +52,14 @@ public interface ICandle
     /// retrieve candles of this interval in daterange (fetch and map from exchange to local)
     /// This method is for the virualisation of the zones and emulator
     /// </summary>
-    public Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval, long minFetch, long maxFetch);
+    public Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long minFetch, long maxFetch);
 
     /// <summary>
     /// retrieve candles of this interval in daterange
     /// (uses GetCandlesForInterval)
     /// This method is for the virualisation of the zones and emulator
     /// </summary>
-    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList, long unixLoop, long unixMax);
+    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long unixLoop, long unixMax);
 }
 
 public interface IApi

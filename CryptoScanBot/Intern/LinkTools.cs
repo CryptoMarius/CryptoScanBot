@@ -32,7 +32,7 @@ public static class LinkTools
         if (!WebViewDummyInitialized)
         {
             WebViewDummyInitialized = true;
-            await InitializeWebView(WebViewDummy);
+            await InitializeWebView(WebViewDummy!);
         }
     }
 
