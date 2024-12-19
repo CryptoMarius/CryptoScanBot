@@ -355,46 +355,6 @@ public class CryptoCharting
             DrawLiqBoxesInternal(chart, zone, session);
         foreach (var zone in symbolData.ZoneListShort.Values)
             DrawLiqBoxesInternal(chart, zone, session);
-
-
-        //var lastZigZag = data.Indicator.ZigZagList.Last();
-        //foreach (var signal in data.Indicator.ZigZagList)
-        //{
-        //    // Laatste zigZag is niet relevant (niet bevestigd?)
-        //    if (signal == lastZigZag || !signal.Dominant)
-        //        continue;
-
-        //    if (signal.Candle!.OpenTime >= session.MinDate && signal.Candle!.OpenTime <= session.MaxDate && signal.Dominant)
-        //    {
-        //        OxyColor color;
-        //        if (signal.PointType == 'L')
-        //            color = OxyColors.Green;
-        //        else
-        //            color = OxyColors.OrangeRed;
-
-        //        long dateLast;
-        //        if (signal.CloseTime != null)
-        //            dateLast = (long)signal.CloseTime;
-        //        else
-        //            dateLast = session.MaxDate;
-        //        //dateLast -= data.Interval.Duration;
-
-        //        // Create a rectangle annotation
-        //        var rectangle = new RectangleAnnotation
-        //        {
-        //            MinimumX = signal.Candle.OpenTime,  // X-coordinate of the lower-left corner
-        //            MinimumY = (double)signal.Bottom,  // Y-coordinate of the lower-left corner
-        //            MaximumX = dateLast,  // X-coordinate of the upper-right corner
-        //            MaximumY = (double)signal.Top,  // Y-coordinate of the upper-right corner
-        //                                            //Fill = Color.LightGray,  // Rectangle fill color
-        //            Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
-        //            Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
-        //            StrokeThickness = 0,          // Border thickness
-        //            Text = signal.Percentage.ToString("N2")
-        //        };
-        //        chart.Annotations.Add(rectangle);
-        //    }
-        //}
     }
 
 

@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 37;
+    public readonly static int CurrentDatabaseVersion = 38;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1008,6 +1008,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
+            // New types of zones
+            try { database.Connection.Execute("alter table Zone add Kind integer", transaction); } catch { }
             // if the zone is valid
             try { database.Connection.Execute("alter table Zone add IsValid integer", transaction); } catch { }
 
@@ -1030,7 +1032,25 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
-        
+
+        //***********************************************************
+        // 20-12-2024, to show other kind of zones?
+        if (CurrentVersion > version.Version && version.Version == 37)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // New types of zones
+            try { database.Connection.Execute("alter table Zone add Kind integer", transaction); } catch { }
+            try { database.Connection.Execute("update Zone set Kind = 1", transaction); } catch { }
+            try { database.Connection.Execute("alter table Zone Drop Column Strategy", transaction); } catch { }
+
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
     }
 
 }

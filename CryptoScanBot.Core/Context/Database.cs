@@ -773,7 +773,7 @@ public class CryptoDatabase : IDisposable
                 "AccountId Integer NOT NULL," +
                 "ExchangeId Integer NOT NULL," +
                 "SymbolId Integer NOT NULL," +
-                "Strategy Integer NOT NULL," +
+                "Kind integer not null," +
                 "Side integer not null," +
                 "OpenTime TEXT NULL," +
                 "Top TEXT not null," +

@@ -94,6 +94,7 @@ public class ZoneTools
                 {
                     zone = new()
                     {
+                        Kind = CryptoZoneKind.DominantLevel,
                         CreateTime = zigZag.Candle.Date,
                         AccountId = GlobalData.ActiveAccount.Id,
                         Account = GlobalData.ActiveAccount,
@@ -105,7 +106,7 @@ public class ZoneTools
                         Top = zigZag.Top,
                         Bottom = zigZag.Bottom,
                         Side = side,
-                        Strategy = CryptoSignalStrategy.DominantLevel,
+                        IsValid = false,
                     };
                     changed = true;
                 }
