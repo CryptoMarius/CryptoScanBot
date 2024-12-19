@@ -13,7 +13,9 @@ using CryptoScanBot.ZoneVisualisation;
 
 using Microsoft.Win32;
 
-using Nito.AsyncEx;
+//using Nito.AsyncEx;
+//    <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
+
 
 using System.Text;
 using System.Text.Json;
@@ -24,7 +26,6 @@ namespace CryptoScanBot;
 public partial class FrmMain : Form
 {
     private readonly ColorSchemeTest theme = new();
-    //private ContextMenuStrip MenuTest = new();
 
     public class ColorSchemeTest
     {
@@ -169,7 +170,8 @@ public partial class FrmMain : Form
     private void FrmMain_FormClosing(object? sender, FormClosingEventArgs? e)
     {
         GlobalData.ApplicationIsClosing = true;
-        AsyncContext.Run(ScannerSession.StopAsync);
+        //AsyncContext.Run(ScannerSession.StopAsync);
+        _ = Task.Run(() => ScannerSession.StopAsync());
     }
 
     private void FrmMain_Shown(object? sender, EventArgs? e)
@@ -297,7 +299,8 @@ public partial class FrmMain : Form
                 break;
             case PowerModes.Suspend:
                 GlobalData.AddTextToLogTab("PowerMode - Suspend");
-                AsyncContext.Run(ScannerSession.StopAsync);
+                //AsyncContext.Run(ScannerSession.StopAsync);
+                _ = Task.Run(() => ScannerSession.StopAsync());
                 break;
         }
     }
@@ -467,7 +470,8 @@ public partial class FrmMain : Form
                     GlobalData.AddTextToLogTab("De exchange is aangepast (reload)!");
                 else if (reloadQuoteChange)
                     GlobalData.AddTextToLogTab("De lijst met quote's is aangepast (reload)!");
-                AsyncContext.Run(ScannerSession.StopAsync);
+                //AsyncContext.Run(ScannerSession.StopAsync);
+                _ = Task.Run(() => ScannerSession.StopAsync());
 
                 GlobalData.Settings.General.Exchange = dialog.NewExchange;
                 GlobalData.Settings.General.ExchangeId = dialog.NewExchange!.Id;

@@ -100,7 +100,6 @@
     <PackageReference Include="Microsoft.Web.WebView2">
       <Version>1.0.2739.15</Version>
     </PackageReference>
-    <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
     <PackageReference Include="System.Reflection.Emit">
       <Version>4.7.0</Version>
     </PackageReference>
