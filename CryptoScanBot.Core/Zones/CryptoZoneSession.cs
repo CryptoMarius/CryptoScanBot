@@ -44,7 +44,7 @@ public class CryptoZoneSession
         if (File.Exists(filename))
         {
             string text = File.ReadAllText(filename);
-            var session = JsonSerializer.Deserialize<CryptoZoneSession>(text, JsonTools.JsonSerializerIndented);
+            var session = JsonSerializer.Deserialize<CryptoZoneSession>(text, JsonTools.DeSerializerOptions);
             if (session != null)
                 return session;
         }

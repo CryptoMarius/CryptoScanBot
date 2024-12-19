@@ -6,9 +6,32 @@ namespace CryptoScanBot.Core.Json;
 public class JsonTools
 {
     public static readonly JsonSerializerOptions JsonSerializerIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = true, IncludeFields = true };
+    {
+        AllowTrailingCommas = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, 
+        IncludeFields = true,
+        IgnoreReadOnlyFields = true,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+    };
 
     public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
-    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, WriteIndented = false };
+    {
+        AllowTrailingCommas = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, 
+        IncludeFields = true,
+        IgnoreReadOnlyFields = true,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = false,
+    };
 
+    public static readonly JsonSerializerOptions DeSerializerOptions = new()
+    {
+        AllowTrailingCommas = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        IncludeFields = true,
+        IgnoreReadOnlyFields = true,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+    };
 }

@@ -26,7 +26,7 @@ public class ColorConverter : JsonConverter<Color>
             }
         }
 
-        return JsonSerializer.Deserialize<Color>(ref reader);
+        return JsonSerializer.Deserialize<Color>(ref reader, JsonTools.DeSerializerOptions);
     }
 
     public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)

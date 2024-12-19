@@ -68,7 +68,7 @@ public class AltradyWebhook
             if (!message.StartsWith('{'))
                 return null;
 
-            var root = JsonSerializer.Deserialize<AltradyWebhookPayload>(message);
+            var root = JsonSerializer.Deserialize<AltradyWebhookPayload>(message, JsonTools.DeSerializerOptions);
 
             //return JsonDocument.Parse(branch?.V?.ToString() ?? "");
             return root;

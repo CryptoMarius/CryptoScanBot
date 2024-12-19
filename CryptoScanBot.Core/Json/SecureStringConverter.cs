@@ -43,7 +43,7 @@ public class SecureStringConverter : JsonConverter<string>
             }
         }
 
-        return JsonSerializer.Deserialize<string>(ref reader);
+        return JsonSerializer.Deserialize<string>(ref reader, options);
     }
 
     public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)

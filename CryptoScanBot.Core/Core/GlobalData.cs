@@ -404,7 +404,7 @@ static public class GlobalData
 
 
 
-    static public void LoadBaseSettings()
+    static public void LoadBaseSettingsAsync()
     {
         try
         {
@@ -417,8 +417,10 @@ static public class GlobalData
                 //    Settings = (Settings)formatter.Deserialize(readStream);
                 //    readStream.Close();
                 //}
-                string text = File.ReadAllText(filename);
-                var value = JsonSerializer.Deserialize<SettingsBasic>(text);
+                //string text = File.ReadAllText(filename);
+                //var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.DeSerializerOptions);
+                using FileStream stream = File.OpenRead(filename);
+                var value = JsonSerializer.Deserialize<SettingsBasic>(stream, JsonTools.DeSerializerOptions);
                 if (value != null)
                     Settings = value;
                 else
@@ -450,7 +452,7 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<CryptoExternalUrlList>(text);
+                var value = JsonSerializer.Deserialize<CryptoExternalUrlList>(text, JsonTools.DeSerializerOptions);
                 if (value != null)
                     ExternalUrls = value;
                 else
@@ -486,7 +488,7 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsUser>(text);
+                var value = JsonSerializer.Deserialize<SettingsUser>(text, JsonTools.DeSerializerOptions);
                 if (value != null)
                     SettingsUser = value;
                 else
@@ -509,7 +511,7 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsTelegram>(text);
+                var value = JsonSerializer.Deserialize<SettingsTelegram>(text, JsonTools.DeSerializerOptions);
                 if (value != null)
                     Telegram = value;
                 else
@@ -532,7 +534,7 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text);
+                var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
                 if (value != null)
                     TradingApi = value;
                 else
@@ -553,7 +555,7 @@ static public class GlobalData
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text);
+                var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
                 if (value != null)
                     AltradyApi = value;
                 else
@@ -569,9 +571,9 @@ static public class GlobalData
 
 
 
-    static public void LoadSettings()
+    static public void LoadSettingsAsync()
     {
-        LoadBaseSettings();
+        LoadBaseSettingsAsync();
         LoadExchangeSettings();
         LoadTelegramSettings();
         LoadLinkSettings();

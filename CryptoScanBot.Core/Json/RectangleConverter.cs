@@ -33,7 +33,7 @@ public class RectangleConverter : JsonConverter<Rectangle>
             return new Rectangle(values[0], values[1], values[2], values[3]);
         }
 
-        return JsonSerializer.Deserialize<Rectangle>(ref reader);
+        return JsonSerializer.Deserialize<Rectangle>(ref reader, options);
     }
 
     public override void Write(Utf8JsonWriter writer, Rectangle value, JsonSerializerOptions options)
