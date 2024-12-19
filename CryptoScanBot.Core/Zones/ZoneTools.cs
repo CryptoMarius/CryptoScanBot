@@ -148,8 +148,21 @@ public class ZoneTools
                     symbolData.ZoneListShort.Add(zone.Bottom, zone);
 
                 if (changed)
+                {
+                    if (zone.Id > 0)
+                    {
+                        modified++;
+                        //databaseThread.Connection.Update(zone);
+                    }
+                    else
+                    {
+                        inserted++;
+                        //databaseThread.Connection.Insert(zone);
+                    }
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                }
                 else untouched++;
+				
                 zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
             }
         }
