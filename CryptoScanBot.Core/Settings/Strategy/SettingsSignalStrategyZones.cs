@@ -21,7 +21,7 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
     public double MaximumZoomedPercentage { get; set; } = 0.7;
 
     // Signal percentage
-    public double WarnPercentage { get; set; } = 1.0;
+    public decimal WarnPercentage { get; set; } = 1.0m;
 
     // Filter on start
     public bool ZoneStartApply { get; set; } = true;
