@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Settings.Strategy;
 
+[Serializable]
 public class SettingsSignalStrategyStobb : SettingsSignalStrategyBase
 {
     // Het BB percentage kan via de user interface uit worden gezet (nomargin)

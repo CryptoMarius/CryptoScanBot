@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Settings.Strategy;
 
+[Serializable]
 public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
 {
     public double BBMinPercentage { get; set; } = 1.50;

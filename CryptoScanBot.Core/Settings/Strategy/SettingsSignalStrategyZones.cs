@@ -2,6 +2,7 @@
 
 namespace CryptoScanBot.Core.Settings.Strategy;
 
+[Serializable]
 public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
     public bool ShowZoneSignals { get; set; } = false;

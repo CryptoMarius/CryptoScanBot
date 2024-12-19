@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Settings.Strategy;
 
+[Serializable]
 public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
 {
     // SBM1 signals

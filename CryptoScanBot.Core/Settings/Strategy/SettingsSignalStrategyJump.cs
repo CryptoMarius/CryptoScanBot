@@ -1,5 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Settings.Strategy;
 
+[Serializable]
 public class SettingsSignalStrategyJump : SettingsSignalStrategyBase
 {
     public bool UseLowHighCalculation { get; set; } = false;
