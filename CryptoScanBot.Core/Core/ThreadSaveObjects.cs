@@ -57,6 +57,25 @@ public class ThreadSaveObjects
                             else
                                 databaseThread.Connection.Update(signal, transaction);
                         }
+                        else if (o is Model.CryptoExchange exchange)
+                        {
+                            if (exchange.Id == 0)
+                                databaseThread.Connection.Insert(exchange, transaction);
+                            else
+                                databaseThread.Connection.Update(exchange, transaction);
+                        }
+                        else if (o is CryptoSymbol symbol)
+                        {
+                            if (symbol.Id < 0)
+                            {
+                                symbol.Id = Math.Abs(symbol.Id);
+                                databaseThread.Connection.Delete(symbol, transaction);
+                            }
+                            else if (symbol.Id == 0)
+                                databaseThread.Connection.Insert(symbol, transaction);
+                            else
+                                databaseThread.Connection.Update(symbol, transaction);
+                        }
                         else if (o is CryptoPosition position)
                         {
                             if (position.Id == 0)
@@ -64,8 +83,18 @@ public class ThreadSaveObjects
                             else
                                 databaseThread.Connection.Update(position, transaction);
                         }
-
-                        transaction.Commit();
+                        else if (o is CryptoZone zone)
+                        {
+                            if (zone.Id < 0)
+                            {
+                                zone.Id = Math.Abs(zone.Id);
+                                databaseThread.Connection.Delete(zone, transaction);
+                            }
+                            else if (zone.Id == 0)
+                                databaseThread.Connection.Insert(zone, transaction);
+                            else
+                                databaseThread.Connection.Update(zone, transaction);
+                        }
                     }
                     catch (Exception error)
                     {
