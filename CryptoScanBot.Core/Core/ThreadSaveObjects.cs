@@ -95,6 +95,7 @@ public class ThreadSaveObjects
                             else
                                 databaseThread.Connection.Update(zone, transaction);
                         }
+                        transaction.Commit();
                     }
                     catch (Exception error)
                     {
