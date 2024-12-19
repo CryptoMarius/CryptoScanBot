@@ -5,69 +5,162 @@ using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanBot.Core.Zones;
 
 public class CandleEngine
 {
-    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
+    private static async Task ReadFromBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
     {
-        return;
-        // load candles (kind of quick and dirty)
-        string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-        string filename = baseFolder + $"{symbol.Name}-{interval.Name}.json";
-        if (File.Exists(filename))
+        // json does take a lot of memory
+        await symbol.CandleLock.WaitAsync();
+        try
         {
-            await symbol.CandleLock.WaitAsync();
-            try
-            {
-                string text = File.ReadAllText(filename);
-                var list = JsonSerializer.Deserialize<CryptoCandleList>(text);
-                if (list != null)
-                {
-                    CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
-                    foreach (var c in list.Values)
-                        symbolInterval.CandleList.TryAdd(c.OpenTime, c);
-                }
-            }
-            finally
-            {
-                symbol.CandleLock.Release();
-            }
+            CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
+            using FileStream readStream = new(filename, FileMode.Open, FileAccess.Read, FileShare.None, 65536);
+            using BinaryReader binaryReader = new(readStream, Encoding.UTF8, false);
 
-            //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
+            // Iets met een version
+            int version = binaryReader.ReadInt32();
+            int candleCount = binaryReader.ReadInt32();
+            while (candleCount-- > 0)
+            {
+                CryptoCandle candle = new()
+                {
+                    OpenTime = binaryReader.ReadInt64(),
+                    Open = binaryReader.ReadDecimal(),
+                    High = binaryReader.ReadDecimal(),
+                    Low = binaryReader.ReadDecimal(),
+                    Close = binaryReader.ReadDecimal(),
+                    Volume = binaryReader.ReadDecimal(),
+                };
+                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+            }
+        }
+        finally
+        {
+            symbol.CandleLock.Release();
         }
     }
 
 
+    //private static async Task ReadFromTxt(CryptoSymbol symbol, CryptoInterval interval, string filename)
+    //{
+    //    // json does take a lot of memory
+    //    await symbol.CandleLock.WaitAsync();
+    //    try
+    //    {
+    //        CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
+
+    //        using FileStream stream = File.OpenRead(filename);
+    //        var list = await JsonSerializer.DeserializeAsync<List<CryptoCandle>>(stream, JsonTools.DeSerializerOptions);
+    //        //string text = File.ReadAllText(filename);
+    //        //var list = JsonSerializer.Deserialize<CryptoCandleList>(text);
+    //        if (list != null)
+    //        {
+    //            foreach (var c in list)
+    //                symbolInterval.CandleList.TryAdd(c.OpenTime, c);
+    //        }
+    //    }
+    //    finally
+    //    {
+    //        symbol.CandleLock.Release();
+    //    }
+    //}
+
+
+    public static async void LoadCandleDataFromDisk(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        // load candles (kind of quick and dirty)
+        string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
+        string filenameBin = baseFolder + $"{symbol.Name}-{interval.Name}.bin";
+        //string filenameTxt = baseFolder + $"{symbol.Name}-{interval.Name}.json";
+        if (File.Exists(filenameBin))
+            await ReadFromBin(symbol, interval, filenameBin);
+        //else if (File.Exists(filenameTxt))
+        //    await ReadFromTxt(symbol, interval, filenameTxt);
+        //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
+    }
+
+    public static async Task WriteToBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
+    {
+        // json does take a lot of memory
+        CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
+
+        await symbol.CandleLock.WaitAsync();
+        try
+        {
+            //using ZipArchive zipStream = new(writeStream, ZipArchiveMode.Create, true);
+
+            using FileStream writeStream = new(filename, FileMode.Create, FileAccess.Write, FileShare.None, 65536);
+            using BinaryWriter binaryWriter = new(writeStream, Encoding.UTF8, false);
+
+            // Iets met een version
+            int version = 1;
+            binaryWriter.Write(version);
+            int count = symbolInterval.CandleList.Count;
+            binaryWriter.Write(count);
+
+            for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+            {
+                CryptoCandle? candle = symbolInterval.CandleList.Values[j];
+                if (candle != null)
+                {
+                    binaryWriter.Write(candle.OpenTime);
+                    binaryWriter.Write(candle.Open);
+                    binaryWriter.Write(candle.High);
+                    binaryWriter.Write(candle.Low);
+                    binaryWriter.Write(candle.Close);
+                    binaryWriter.Write(candle.Volume);
+                }
+            }
+        }
+        finally
+        {
+            symbol.CandleLock.Release();
+        }
+    }
+
+    //public static async Task WriteToTxt(CryptoSymbol symbol, CryptoInterval interval, string filename)
+    //{
+    //    CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
+
+    //    await symbol.CandleLock.WaitAsync();
+    //    try
+    //    {
+    //        using FileStream stream = File.OpenWrite(filename);
+    //        await JsonSerializer.SerializeAsync(stream, symbolInterval.CandleList.Values, JsonTools.JsonSerializerIndented);
+    //    }
+    //    finally
+    //    {
+    //        symbol.CandleLock.Release();
+    //    }
+    //}
+
+
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        return;
         foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-                await symbol.CandleLock.WaitAsync();
-                try
-                {
-                    // Save candles (kind of quick and dirty)
-                    string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-                    string filename = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
-                    Directory.CreateDirectory(baseFolder);
-                    string text = JsonSerializer.Serialize(symbolInterval.CandleList, JsonTools.JsonSerializerIndented);
-                    File.WriteAllText(filename, text);
+                string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
+                Directory.CreateDirectory(baseFolder);
 
-                    //log.AppendLine($"saving {filename}");
-                    ScannerLog.Logger.Info($"Saving {filename}");
-                    loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                string filenameBin = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.bin";
+                await WriteToBin(symbol, symbolInterval.Interval, filenameBin);
 
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");
-                }
-                finally
-                {
-                    symbol.CandleLock.Release();
-                }
+                //string filenameTxt = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
+                //await WriteToTxt(symbol, symbolInterval.Interval, filenameTxt);
+
+                //log.AppendLine($"saving {filename}");
+                ScannerLog.Logger.Info($"Saving {filenameBin}");
+                loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+
+                //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");
             }
         }
     }
@@ -84,7 +177,7 @@ public class CandleEngine
         {
             foreach (var symbolInterval in symbol.IntervalPeriodList)
             {
-                int cleaned = symbolInterval.CandleList.Count;
+                //int cleaned = symbolInterval.CandleList.Count;
                 // Remove old candles
                 if (symbolInterval.CandleList.Count > 0)
                 {
