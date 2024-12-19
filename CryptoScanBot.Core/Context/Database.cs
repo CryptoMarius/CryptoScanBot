@@ -233,7 +233,11 @@ public class CryptoDatabase : IDisposable
             // De exchanges moeten aanwezig zijn na initialisatie
             using var transaction = connection.Connection.BeginTransaction();
 
-            foreach (var exchange in CreateExchangeList())
+            List<Model.CryptoExchange> list = [];
+            foreach (Model.CryptoExchange exchange in connection.Connection.GetAll<Model.CryptoExchange>())
+                list.Add(exchange);
+
+            foreach (var exchange in list)
             {
                 foreach (CryptoAccountType accountType in Enum.GetValues(typeof(CryptoAccountType)))
                 {
