@@ -1,13 +1,13 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Trend;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot;
 
@@ -142,7 +142,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     break;
                 case ColumnsForGrid.AltradyId:
                     CreateColumn("AltradyId", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
-                    break;                    
+                    break;
                 case ColumnsForGrid.Created:
                     CreateColumn("Created", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
                     break;
@@ -882,8 +882,8 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                             else
                                 foreColor = Color.Red;
                         }
-            }
-            break;
+                    }
+                    break;
             }
         }
 

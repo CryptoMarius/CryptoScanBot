@@ -17,7 +17,7 @@ public static class CommandHelper
         };
         if (click == null)
             menuItem.Click += click ?? CommandTools.ExecuteCommand;
-        else 
+        else
             menuItem.Click += click;
         menuStrip.Items.Add(menuItem);
         return menuItem;
@@ -29,9 +29,9 @@ public static class CommandHelper
         {
             Command = command,
             DataGrid = dataGrid,
-            Text = text            
+            Text = text
         };
-        menuItem.Click += click ?? CommandTools.ExecuteCommand;        
+        menuItem.Click += click ?? CommandTools.ExecuteCommand;
         menuStrip.DropDownItems.Add(menuItem);
         return menuItem;
     }

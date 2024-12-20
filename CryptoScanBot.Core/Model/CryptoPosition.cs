@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -75,7 +74,7 @@ public class CryptoPosition : CryptoData2
     // Zou computed kunnen, maar voor de zekerheid in de database
     public bool Reposition { get; set; }
 
-   
+
     public string? AltradyPositionId { get; set; }
 
 

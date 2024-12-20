@@ -1,9 +1,8 @@
-﻿using System.Collections.Concurrent;
-
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
+
+using System.Collections.Concurrent;
 
 namespace CryptoScanBot.Core.Core;
 

@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;

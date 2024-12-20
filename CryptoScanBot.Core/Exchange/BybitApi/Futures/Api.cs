@@ -1,16 +1,17 @@
-﻿using System.Text.Json;
-
-using Bybit.Net.Clients;
+﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Json;
+using CryptoScanBot.Core.Model;
+
+using System.Text.Json;
 
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;

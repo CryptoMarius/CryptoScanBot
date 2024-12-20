@@ -1,7 +1,4 @@
-﻿using System.Text.Encodings.Web;
-using System.Text.Json;
-
-using Bybit.Net.Clients;
+﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 using Bybit.Net.Objects.Options;
@@ -12,8 +9,10 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace ExchangeTest.Bybit.SpotUta;
 

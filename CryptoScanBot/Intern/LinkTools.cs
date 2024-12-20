@@ -61,7 +61,7 @@ public static class LinkTools
 
                 if (WebViewTradingView != null)
                     WebViewTradingView.Source = new(Url);
-                if (activateTab && TabControl!=null)
+                if (activateTab && TabControl != null)
                     TabControl.SelectedTab = TabPageBrowser;
             }
             else

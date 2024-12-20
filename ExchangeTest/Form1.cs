@@ -1,17 +1,18 @@
+using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Core;
-
-using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Barometer;
-using System.Text.Json;
-using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Trader;
+
+using ExchangeTest.Exchange.Altrady;
 
 using Mexc.Net.Clients;
-using ExchangeTest.Exchange.Altrady;
-using CryptoScanBot.Core.Json;
+
+using System.Text.Json;
 
 
 namespace CryptoScanBot.Experiment;
@@ -83,7 +84,7 @@ public partial class Form1 : Form
 
             if (text == "")
                 text = "\r\n";
-            else 
+            else
                 text = DateTime.Now.ToLocalTime() + " " + text + "\r\n";
             if (InvokeRequired)
                 Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
@@ -179,7 +180,7 @@ public partial class Form1 : Form
         // This exchange is alway's returning the last 1000 candles (not what we asked, but voila)
         //DateTime dateStart = DateTime.UtcNow.AddDays(-10); //CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
         DateTime dateStartX = new(2024, 08, 28, 00, 30, 00, DateTimeKind.Utc);
-        symbolInterval.LastCandleSynchronized = CandleTools.GetUnixTime(dateStartX.AddDays(-1), 60); 
+        symbolInterval.LastCandleSynchronized = CandleTools.GetUnixTime(dateStartX.AddDays(-1), 60);
 
 
         while (true)
@@ -288,71 +289,71 @@ public partial class Form1 : Form
         //// Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         //using BybitRestClient client = new();
 
-            ////client.ClientOptions.
+        ////client.ClientOptions.
 
-            ////StopOrderType x = StopOrderType.TpSlOrder;
+        ////StopOrderType x = StopOrderType.TpSlOrder;
 
-            //client.ClientOptions.OutputOriginalData = true;
+        //client.ClientOptions.OutputOriginalData = true;
 
-            //WebCallResult<BybitOrderId> result = await client.V5Api.Trading.PlaceOrderAsync(
-            //    Category.Spot,
-            //    "APRSUSDT",
-            //    OrderSide.Buy,
-            //    NewOrderType.Limit,
-            //    quantity: 1.01m,
-            //    price: 0.51m,
-            //    isLeverage: false,
-            //    triggerPrice: 0.50m,
-            //    triggerDirection: TriggerDirection.Fall
-            //    //timeInForce: TimeInForce.PostOnly
-            //    );
+        //WebCallResult<BybitOrderId> result = await client.V5Api.Trading.PlaceOrderAsync(
+        //    Category.Spot,
+        //    "APRSUSDT",
+        //    OrderSide.Buy,
+        //    NewOrderType.Limit,
+        //    quantity: 1.01m,
+        //    price: 0.51m,
+        //    isLeverage: false,
+        //    triggerPrice: 0.50m,
+        //    triggerDirection: TriggerDirection.Fall
+        //    //timeInForce: TimeInForce.PostOnly
+        //    );
 
-            //string text = JsonSerializer.Serialize(result, ExchangeHelper.JsonSerializerNotIndented).Trim();
-            //GlobalData.AddTextToLogTab(text);
-            //ScannerLog.Logger.Trace(text);
+        //string text = JsonSerializer.Serialize(result, ExchangeHelper.JsonSerializerNotIndented).Trim();
+        //GlobalData.AddTextToLogTab(text);
+        //ScannerLog.Logger.Trace(text);
 
-            //stopLossOrderType: OrderType.LimitMaker
-            //triggerDirection: TriggerDirection.Fall, orderFilter: OrderFilter.OcoOrder, triggerPrice: 50000m,
+        //stopLossOrderType: OrderType.LimitMaker
+        //triggerDirection: TriggerDirection.Fall, orderFilter: OrderFilter.OcoOrder, triggerPrice: 50000m,
 
-            //    //stopLossTrigger: TriggerType.LastPrice,
-            //    //stopLossOrderType: OrderType.Market,
-            //    //stopLossTakeProfitMode:, 
-            //    //StopLossTakeProfitMode.Full,
-            //    //stopLoss: stop,
-            //    //stopPrice: stop,
+        //    //stopLossTrigger: TriggerType.LastPrice,
+        //    //stopLossOrderType: OrderType.Market,
+        //    //stopLossTakeProfitMode:, 
+        //    //StopLossTakeProfitMode.Full,
+        //    //stopLoss: stop,
+        //    //stopPrice: stop,
 
-            //    takeProfitOrderType: OrderType.Limit,
-            //    takeProfit: price,
+        //    takeProfitOrderType: OrderType.Limit,
+        //    takeProfit: price,
 
-            //    stopLossTriggerBy: TriggerType.IndexPrice,
-            //    stopLossOrderType: OrderType.Market,
-            //    stopLoss: stop,
+        //    stopLossTriggerBy: TriggerType.IndexPrice,
+        //    stopLossOrderType: OrderType.Market,
+        //    stopLoss: stop,
 
-            //    stopLossLimitPrice: limit,
+        //    stopLossLimitPrice: limit,
 
-            //    timeInForce: TimeInForce.GoodTillCanceled
-            //);
-
-
-
-            ////client.V5Api.Trading.PlaceOrderAsync(Category.Spot, "BTCUSDT", OrderSide.Sell, NewOrderType.Limit, quantity: quantity, 
-            ////    timeInForce: TimeInForce.GoodTillCanceled, 
-            ////    stopLossOrderType: OrderType.Limit, 
-            ////    stopLoss: price, stopLossLimitPrice: stopPrice, 
-            ////    stopLossTakeProfitMode: StopLossTakeProfitMode.Full, 
-            ////    stopLossTriggerBy: TriggerType.LastPrice, 
-            ////    clientOrderId: newClientOrderId
-            //// );
+        //    timeInForce: TimeInForce.GoodTillCanceled
+        //);
 
 
 
-            //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
-            //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null, 
-            //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null, 
-            //////    OrderType? takeProfitOrderType = null, decimal? takeProfit = null, decimal? takeProfitLimitPrice = null, OrderType? stopLossOrderType = null, 
-            //////    decimal? stopLoss = null, decimal? stopLossLimitPrice = null, TriggerType? takeProfitTriggerBy = null, TriggerType? stopLossTriggerBy = null, 
-            //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null, 
-            //////    SelfMatchPreventionType? selfMatchPreventionType = null, MarketUnit? marketUnit = null, CancellationToken ct = default(CancellationToken));
+        ////client.V5Api.Trading.PlaceOrderAsync(Category.Spot, "BTCUSDT", OrderSide.Sell, NewOrderType.Limit, quantity: quantity, 
+        ////    timeInForce: TimeInForce.GoodTillCanceled, 
+        ////    stopLossOrderType: OrderType.Limit, 
+        ////    stopLoss: price, stopLossLimitPrice: stopPrice, 
+        ////    stopLossTakeProfitMode: StopLossTakeProfitMode.Full, 
+        ////    stopLossTriggerBy: TriggerType.LastPrice, 
+        ////    clientOrderId: newClientOrderId
+        //// );
+
+
+
+        //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
+        //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null, 
+        //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null, 
+        //////    OrderType? takeProfitOrderType = null, decimal? takeProfit = null, decimal? takeProfitLimitPrice = null, OrderType? stopLossOrderType = null, 
+        //////    decimal? stopLoss = null, decimal? stopLossLimitPrice = null, TriggerType? takeProfitTriggerBy = null, TriggerType? stopLossTriggerBy = null, 
+        //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null, 
+        //////    SelfMatchPreventionType? selfMatchPreventionType = null, MarketUnit? marketUnit = null, CancellationToken ct = default(CancellationToken));
 
     }
 

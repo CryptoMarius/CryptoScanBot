@@ -1,6 +1,6 @@
 ﻿using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Account;
 

@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-using Binance.Net.Clients;
+﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 
 using CryptoScanBot.Core.Context;
@@ -9,6 +7,8 @@ using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 

@@ -1,6 +1,4 @@
-﻿using CryptoScanBot.Core.Model;
-
-namespace CryptoScanBot.Core.Core;
+﻿namespace CryptoScanBot.Core.Core;
 
 public class IntervalTools
 {
@@ -61,7 +59,7 @@ public class IntervalTools
 
         // Calculate source (just in case)
         sourceStart -= sourceStart % sourceDuration;
-        
+
         // Calculate target
         long targetStart = sourceStart - sourceStart % targetDuration;
 

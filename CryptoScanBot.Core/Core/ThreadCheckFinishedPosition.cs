@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
@@ -274,7 +273,7 @@ public class ThreadCheckFinishedPosition
             }
             finally
             {
-                if (!GlobalData.BackTest) 
+                if (!GlobalData.BackTest)
                     position.ProcessPositionSemaphore.Release();
             }
 

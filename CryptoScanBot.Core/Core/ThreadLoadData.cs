@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
@@ -297,7 +296,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
-               
+
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)

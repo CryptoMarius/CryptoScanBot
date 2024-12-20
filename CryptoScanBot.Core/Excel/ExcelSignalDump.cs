@@ -4,8 +4,6 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
-using Dapper;
-
 using NPOI.SS.UserModel;
 
 namespace CryptoScanBot.Core.Excel;
@@ -42,7 +40,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
 
 
     private void DumpCandeData()
-    {        
+    {
         int columns = 0;
         ISheet sheet = Book.CreateSheet("Signal");
 
@@ -99,7 +97,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
                                 row++;
 
                                 WriteCell(sheet, column++, row, Signal.OpenDate == candle.Date ? "Signal" : "");
-                                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate); 
+                                WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
                                 WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
@@ -107,9 +105,9 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
                                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);                                
+                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage, CellStylePercentageNormal);
-                                
+
 
                                 WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.CandleData.Sma50, CellStyleDecimalNormal);

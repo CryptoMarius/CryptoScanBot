@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Signal;
 
 public static class SignalHelper
 {
-   public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
+    public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
         if (candle.CandleData?.StochSignal > GlobalData.Settings.General.StochValueOversold - correction)

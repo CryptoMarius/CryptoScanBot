@@ -93,7 +93,7 @@ public class DominantLevelShort : SignalCreateBase
                 }
                 else
                 {
-                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close; 
+                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
                     if (distance == null || dist < distance)
                         distance = dist;
                 }

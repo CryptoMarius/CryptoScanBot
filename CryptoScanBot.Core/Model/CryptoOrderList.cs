@@ -2,7 +2,7 @@
 
 namespace CryptoScanBot.Core.Model;
 
-public class CryptoOrderList: SortedList<string, CryptoOrder>
+public class CryptoOrderList : SortedList<string, CryptoOrder>
 {
     public void AddOrder(CryptoOrder order, bool log = true)
     {

@@ -4,6 +4,6 @@ public enum CryptoEntryOrDcaPricing
 {
     SignalPrice,
     MarketPrice,
-    BidPrice, 
+    BidPrice,
     AskPrice
 }

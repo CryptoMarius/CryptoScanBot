@@ -1,5 +1,5 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal;
@@ -184,7 +184,7 @@ public class LuxIndicator
         //{
         //    CalculateOld(symbol, out luxOverSold2, out luxOverBought2);
         //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateOld {luxOverSold2} {luxOverBought2}");
-            
+
         //    CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
         //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateNew {luxOverSold} {luxOverBought}");
         //}

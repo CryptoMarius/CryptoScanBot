@@ -1,7 +1,8 @@
 ﻿using CryptoScanBot.Core.Const;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Core;
+
 using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.Core.Signal;

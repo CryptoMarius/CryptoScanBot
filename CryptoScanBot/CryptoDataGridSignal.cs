@@ -815,8 +815,8 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                             else
                                 foreColor = Color.Red;
                         }
-            }
-            break;
+                    }
+                    break;
             }
 
             DataGridViewCell cell = Grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -1004,7 +1004,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     //            var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
     //                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseTime);
 
-                 
+
     //            {
     //                decimal entryValue = signal.Symbol.QuoteData!.EntryAmount;
 

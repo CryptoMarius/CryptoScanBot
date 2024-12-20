@@ -6,7 +6,6 @@ using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
 using Dapper;
-using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Zones;
 
@@ -134,7 +133,7 @@ public class ZoneTools
                     zone.CloseTime = null;
                 }
 
-                
+
                 if (zigZag.IsValid != zone.IsValid)
                 {
                     changed = true;
@@ -162,7 +161,7 @@ public class ZoneTools
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
                 else untouched++;
-				
+
                 zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
             }
         }

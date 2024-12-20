@@ -109,7 +109,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
                     WriteCell(sheet, column++, row, step.Quantity * step.Price, CellStyleDecimalNormal); // estimated
                 else
                     WriteCell(sheet, column++, row, step.QuoteQuantityFilled, CellStyleDecimalNormal);
-                
+
                 WriteCell(sheet, column++, row, step.Commission, CellStyleDecimalNormal);
                 WriteCell(sheet, column++, row, step.CommissionAsset, CellStyleDecimalNormal);
                 WriteCell(sheet, column++, row, step.CommissionBase, CellStyleDecimalNormal);
@@ -389,7 +389,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         WriteCell(sheet, row, column++, position.Quantity, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.RemainingDust, CellStyleDecimalNormal);
         WriteCell(sheet, row, column++, position.AltradyPositionId);
-        
+
 
         AutoSize(sheet, 6);
     }

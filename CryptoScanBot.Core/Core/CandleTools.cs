@@ -1,7 +1,4 @@
-﻿using System.Text;
-
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
@@ -270,8 +267,8 @@ public static class CandleTools
 
 
 
-    
-    public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close, 
+
+    public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime, decimal open, decimal high, decimal low, decimal close,
         decimal baseVolume, decimal quoteVolume, bool duplicated = false)
     {
         //await symbol.Lock("Process1mCandleAsync");

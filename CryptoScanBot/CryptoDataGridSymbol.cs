@@ -2,8 +2,6 @@
 using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Zones;
 using CryptoScanBot.ZoneVisualisation;
 
 namespace CryptoScanBot;
@@ -68,9 +66,9 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 case ColumnsForGrid.Distance:
                     CreateColumn("Distance", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75).Visible = false;
                     break;
-                //case ColumnsForGrid.MarketTrend:
-                //    CreateColumn("M.Trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
-                //    break;
+                    //case ColumnsForGrid.MarketTrend:
+                    //    CreateColumn("M.Trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
+                    //    break;
             }
         }
 
@@ -87,7 +85,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
             //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
             ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneDistance(a), ZoneDistance(b)),
             //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
-            
+
             _ => 0
         };
 
@@ -141,7 +139,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         // Set the date of the last swing point for the automatic zone calculation
         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
-        
+
         if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
             return null;
         if (symbolIntervalData.BestLongZone == null)
@@ -151,7 +149,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
 
         return Math.Min(symbolIntervalData.BestLongZone.Value, symbolIntervalData.BestShortZone.Value);
     }
-    
+
 
     //private static float? MarketTrend(CryptoSymbol symbol)
     //{

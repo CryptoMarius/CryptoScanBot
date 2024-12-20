@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Account;
 

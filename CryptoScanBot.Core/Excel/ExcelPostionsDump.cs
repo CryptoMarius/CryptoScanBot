@@ -99,7 +99,7 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
         WriteCell(sheet, columns++, row, "Barometer4h");
         WriteCell(sheet, columns++, row, "Barometer1d");
 
-        WriteCell(sheet, columns++, row, "AltradyId"); 
+        WriteCell(sheet, columns++, row, "AltradyId");
 
         foreach (CryptoPosition position in PositionList.ToList())
         {
@@ -169,7 +169,7 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
     }
 
 
-   public void ExportToExcel()
+    public void ExportToExcel()
     {
         GlobalData.AddTextToLogTab($"Dumping positions to Excel");
         try

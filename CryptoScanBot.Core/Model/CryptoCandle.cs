@@ -1,11 +1,11 @@
-﻿using System.Text.Json.Serialization;
-
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
 using Skender.Stock.Indicators;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Model;
 

@@ -1,6 +1,5 @@
-﻿using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Momentum;
 
@@ -52,7 +51,7 @@ public class SignalSbmBase(CryptoAccount account, CryptoSymbol symbol, CryptoInt
                     }
                 }
             }
-            
+
             candlesAgo++;
             candleCount--;
             prevCandle = lastCandle;

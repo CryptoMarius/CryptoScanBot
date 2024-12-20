@@ -30,7 +30,7 @@ public class CryptoData
     //public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
     [Computed]
     public double? SlopeMacd { get; set; }
-    
+
     // Stochastic indicator values
     /// <summary>
     /// Stoch Oscillator %K (blue), calculated from the last 14 candles
@@ -87,7 +87,7 @@ public class CryptoData
 
         // MACD indicator values
         MacdValue = source.MacdValue;
-        MacdSignal= source.MacdSignal;
+        MacdSignal = source.MacdSignal;
         MacdHistogram = source.MacdHistogram;
         SlopeMacd = source.SlopeMacd;
 
@@ -128,7 +128,7 @@ public class CryptoData
 }
 
 // Shared between Position and Signal
-public class CryptoData2: CryptoData
+public class CryptoData2 : CryptoData
 {
     public decimal SignalPrice { get; set; }
     public decimal SignalVolume { get; set; }

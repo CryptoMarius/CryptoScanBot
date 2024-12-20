@@ -1,16 +1,8 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using Bybit.Net.Objects;
-using Bybit.Net.Objects.Models.V5;
-
-using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
-
-using CryptoScanBot.Core.Exchange;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Model;
 
 namespace ExchangeTest.Exchange.Bybit.Spot;
 

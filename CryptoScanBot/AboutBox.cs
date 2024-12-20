@@ -1,7 +1,7 @@
-﻿using System.Reflection;
-using System.Text;
+﻿using CryptoScanBot.Core.Core;
 
-using CryptoScanBot.Core.Core;
+using System.Reflection;
+using System.Text;
 
 namespace CryptoScanBot;
 

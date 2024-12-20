@@ -1,9 +1,9 @@
-﻿using System.Text.Json;
-
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Emulator;
 

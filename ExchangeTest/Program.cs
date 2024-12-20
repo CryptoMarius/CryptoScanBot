@@ -1,6 +1,6 @@
-using System.Reflection;
-
 using CryptoScanBot.Core.Core;
+
+using System.Reflection;
 
 namespace CryptoScanBot.Experiment;
 

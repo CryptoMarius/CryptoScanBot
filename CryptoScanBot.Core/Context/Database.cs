@@ -794,34 +794,34 @@ public class CryptoDatabase : IDisposable
         }
     }
 
-//private static void CreateTableBalancing(CryptoDatabase connection)
-//{
-//    //// Balance (echt? weet niet waarom we dit op deze manier opslaan, balanceren doe je binnen groep, die mis ik, een oude versie wellicht?)
-//    if (MissingTable(connection, "Balance"))
-//    //{
-//    //    connection.Connection.Execute("CREATE TABLE [Balance] (" +
-//    //        "Id integer primary key autoincrement not null," +
-//    //        "ExchangeId Integer NOT NULL," +
-//    //        "SymbolId Integer NOT NULL," +
-//    //        "EventTime TEXT NOT NULL," +
-//    //        "Name TEXT NOT NULL," +
-//    //        "Price TEXT NOT NULL," +
-//    //        "Quantity TEXT NOT NULL," +
-//    //        "QuoteQuantity TEXT NOT NULL," +
-//    //        "InvestedQuantity TEXT NULL," +
-//    //        "InvestedValue TEXT NULL," +
-//    //        "UsdtValue TEXT NULL," +
-//    //        "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
-//    //        "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
-//    //    ")");
-//    //    connection.Connection.Execute("CREATE INDEX IdxBalanceId ON [Balance](Id)");
-//    //    connection.Connection.Execute("CREATE INDEX IdxBalanceExchangeId ON [Balance](ExchangeId)");
-//    //    connection.Connection.Execute("CREATE INDEX IdxBalanceSymbolId ON [Balance](SymbolId)");
-//    //    connection.Connection.Execute("CREATE INDEX IdxBalanceEventTime ON [Balance](EventTime)");
-//    //}
-//}
+    //private static void CreateTableBalancing(CryptoDatabase connection)
+    //{
+    //    //// Balance (echt? weet niet waarom we dit op deze manier opslaan, balanceren doe je binnen groep, die mis ik, een oude versie wellicht?)
+    //    if (MissingTable(connection, "Balance"))
+    //    //{
+    //    //    connection.Connection.Execute("CREATE TABLE [Balance] (" +
+    //    //        "Id integer primary key autoincrement not null," +
+    //    //        "ExchangeId Integer NOT NULL," +
+    //    //        "SymbolId Integer NOT NULL," +
+    //    //        "EventTime TEXT NOT NULL," +
+    //    //        "Name TEXT NOT NULL," +
+    //    //        "Price TEXT NOT NULL," +
+    //    //        "Quantity TEXT NOT NULL," +
+    //    //        "QuoteQuantity TEXT NOT NULL," +
+    //    //        "InvestedQuantity TEXT NULL," +
+    //    //        "InvestedValue TEXT NULL," +
+    //    //        "UsdtValue TEXT NULL," +
+    //    //        "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
+    //    //        "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+    //    //    ")");
+    //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceId ON [Balance](Id)");
+    //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceExchangeId ON [Balance](ExchangeId)");
+    //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceSymbolId ON [Balance](SymbolId)");
+    //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceEventTime ON [Balance](EventTime)");
+    //    //}
+    //}
 
-public string CreateNewUniqueId()
+    public string CreateNewUniqueId()
     {
         // SQL server
         // Create Sequence UniqueSequenceId as int start with 1 increment by 1

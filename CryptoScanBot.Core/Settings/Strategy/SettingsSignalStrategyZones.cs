@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Settings.Strategy;
 public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
     public bool ShowZoneSignals { get; set; } = false;
-    
+
     public int CandleCount { get; set; } = 500; //3000; // 3000=150 day's back, 500=20.8 dagen
     public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval1h;
 

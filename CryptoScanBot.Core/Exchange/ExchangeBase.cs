@@ -1,8 +1,9 @@
-﻿using System.Text;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Model;
+
+using System.Text;
 
 namespace CryptoScanBot.Core.Exchange;
 

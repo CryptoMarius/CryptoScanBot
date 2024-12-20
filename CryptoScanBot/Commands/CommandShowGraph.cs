@@ -6,7 +6,7 @@ namespace CryptoScanBot.Commands;
 public class CommandShowGraph : CommandBase
 {
     private static CryptoVisualisation? CryptoVisualisationForm = null;
-    
+
     public override void Execute(ToolStripMenuItemCommand item, object sender)
     {
         if (sender is CryptoSymbol symbol)

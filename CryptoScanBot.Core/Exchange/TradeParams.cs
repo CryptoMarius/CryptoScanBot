@@ -1,5 +1,7 @@
 ﻿using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Enums;
+
 using System.Net;
 
 namespace CryptoScanBot.Core.Exchange;

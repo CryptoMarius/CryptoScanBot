@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
@@ -9,6 +7,8 @@ using Dapper.Contrib.Extensions;
 
 using Mexc.Net.Clients;
 using Mexc.Net.Enums;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
@@ -140,7 +140,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
                                     continue;
                                 }
-                                
+
                                 //Eventueel symbol toevoegen
                                 if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
                                 {

@@ -1,4 +1,5 @@
 ﻿using Bybit.Net.Enums;
+
 using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;

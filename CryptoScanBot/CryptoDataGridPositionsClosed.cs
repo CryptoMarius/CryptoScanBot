@@ -123,7 +123,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     break;
                 case ColumnsForGrid.AltradyId:
                     CreateColumn("AltradyId", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
-                    break;                    
+                    break;
                 case ColumnsForGrid.Created:
                     CreateColumn("Created", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
                     break;
@@ -817,8 +817,8 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                             else
                                 foreColor = Color.Red;
                         }
-            }
-            break;
+                    }
+                    break;
             }
         }
 

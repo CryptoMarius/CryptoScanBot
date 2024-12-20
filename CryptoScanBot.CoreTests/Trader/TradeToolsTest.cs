@@ -1,11 +1,12 @@
-﻿using Dapper.Contrib.Extensions;
-using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trader;
 using CryptoScanBot.CoreTests;
+
+using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Intern.Tests;
 
@@ -46,7 +47,7 @@ public class TradeToolsTest : TestBase
 
         DeleteAllPositionRelatedStuff(database);
 
-        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb, 
+        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb,
             CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
         position.Account.Data.PositionList.Add(symbol.Name, position);
@@ -55,7 +56,7 @@ public class TradeToolsTest : TestBase
 
         // Dit wordt een rommeltje, in aparte routines afsplitsen?
 
-        CryptoPositionPart entryPart = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, GlobalData.IntervalList[0], 
+        CryptoPositionPart entryPart = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, GlobalData.IntervalList[0],
             CryptoSignalStrategy.Stobb, CryptoEntryOrDcaStrategy.AfterNextSignal, tradeParams.Price, lastCandle1mCloseTimeDate);
         if (position.PartList.Count != 1)
             Assert.Fail("Geen entry gemaakt");
@@ -82,7 +83,7 @@ public class TradeToolsTest : TestBase
 
         // De eerste market buy is gevuld, controle!
         // 2 controles, want blijft alles wel hetzelfde?
-        task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position) );
+        task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
         task.Wait();
         CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
@@ -144,7 +145,7 @@ public class TradeToolsTest : TestBase
         // Check, of het wel zoveel % lager is (wat is die standaard percentage eigenlijk?)
 
         // De dca en sell veranderd niets, maar blijft alles wel hetzelfde?
-        task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position) );
+        task = Task.Run(() => _ = TradeTools.CalculatePositionResultsViaOrders(database, position));
         task.Wait();
         CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 

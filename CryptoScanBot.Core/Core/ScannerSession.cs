@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Telegram;
@@ -143,7 +142,7 @@ public static class ScannerSession
                 taskList.Add(task);
 
                 task = Task.Run(() => { GlobalData.ThreadZoneCalculate?.Stop(); });
-                taskList.Add(task);                
+                taskList.Add(task);
 
                 if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
                 {
@@ -329,7 +328,7 @@ public static class ScannerSession
             await api.Symbol.GetSymbolsAsync();
 
             if (ExchangeBase.KLineTicker != null)
-            await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
+                await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
             if (ExchangeBase.PriceTicker != null)
                 await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
             if (ExchangeBase.UserTicker != null)

@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanBot.Core.Core;
@@ -10,6 +8,8 @@ using CryptoScanBot.Core.Model;
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 using Kraken.Net.Objects.Models.Socket;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 

@@ -47,7 +47,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                         //symbol.Volume = tick.BaseVolume; //?
                         //if (tick.LastQuantity.HasValue)
                         //    symbol.Volume = (decimal)tick.LastQuantity; //= Quoted = het volume * de prijs                                
-                                                                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
+                        //symbol.Volume = tick.Volume24h; //= Base = het volume * de prijs                                
 
                         //bool first = true;
                         //Bewaren voor debug werkzaamheden

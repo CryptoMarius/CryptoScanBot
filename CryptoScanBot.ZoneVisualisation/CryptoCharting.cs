@@ -94,9 +94,10 @@ public class CryptoCharting
                 fibLevel.Points.Add(new DataPoint(stop, (double)value));
                 chart.Series.Add(fibLevel);
 
-                chart.Annotations.Add(new TextAnnotation {
+                chart.Annotations.Add(new TextAnnotation
+                {
                     TextColor = OxyColors.White,
-                    TextPosition = new DataPoint(stop + data.Interval.Duration * 4, (double)value), 
+                    TextPosition = new DataPoint(stop + data.Interval.Duration * 4, (double)value),
                     TextVerticalAlignment = VerticalAlignment.Middle,
                     Text = $"{percent:N3}%",
                     Font = OxyFontName,
@@ -159,7 +160,7 @@ public class CryptoCharting
                 while (symbolInterval1m.CandleList.TryGetValue(loopHighInterval, out CryptoCandle? _))
                 {
                     long loop1m = loopHighInterval;
-                    long loop1mMax = loopHighInterval + symbolInterval.Interval.Duration; 
+                    long loop1mMax = loopHighInterval + symbolInterval.Interval.Duration;
                     CryptoCandle newCandle = new()
                     {
                         Low = decimal.MaxValue,
@@ -426,9 +427,9 @@ public class CryptoCharting
             //MinorGridlineColor = OxyColors.Gray,
 
             MajorStep = (24 * 60 * 60 / data.Interval.Duration) * data.Interval.Duration,
-            MinorStep = (24 * 60 * 60 / data.Interval.Duration) * data.Interval.Duration / 6, 
+            MinorStep = (24 * 60 * 60 / data.Interval.Duration) * data.Interval.Duration / 6,
         });
-        
+
 
         chart.Axes.Add(new LinearAxis
         {
@@ -450,10 +451,10 @@ public class CryptoCharting
         });
 
         // Something like a crosshair
-        verticalLine = new LineAnnotation { Type = LineAnnotationType.Vertical, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.25, X = 0};
+        verticalLine = new LineAnnotation { Type = LineAnnotationType.Vertical, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.25, X = 0 };
         chart.Annotations.Add(verticalLine);
 
-        horizontalLine = new LineAnnotation { Type = LineAnnotationType.Horizontal, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.25, Y = 0};
+        horizontalLine = new LineAnnotation { Type = LineAnnotationType.Horizontal, Color = OxyColors.DarkGray, LineStyle = LineStyle.Dash, StrokeThickness = 0.25, Y = 0 };
         chart.Annotations.Add(horizontalLine);
 
         //long unix = CandleTools.GetUnixTime(new DateTime(2024, 11, 09, 00, 00, 00, DateTimeKind.Utc), 60);

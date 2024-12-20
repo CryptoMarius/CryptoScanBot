@@ -1,9 +1,4 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Model;
-using Skender.Stock.Indicators;
-
-namespace CryptoScanBot.Core.Signal.Other;
+﻿namespace CryptoScanBot.Core.Signal.Other;
 
 #if EXTRASTRATEGIES
 

@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal.Momentum;
 
 namespace CryptoScanBot.Core.Signal;
 
@@ -60,7 +59,7 @@ public class SignalCreateBase
     }
 
 
-    public virtual string DisplayText() 
+    public virtual string DisplayText()
         => $"stoch={CandleLast?.CandleData?.StochOscillator:N8} signal={CandleLast?.CandleData?.StochSignal:N8}";
 
 

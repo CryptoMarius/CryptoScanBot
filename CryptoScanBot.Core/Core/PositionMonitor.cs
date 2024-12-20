@@ -1,13 +1,14 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Exchange;
+
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Exchange.Altrady;
-using CryptoScanBot.Core.Account;
 
 namespace CryptoScanBot.Core.Core;
 
@@ -1612,12 +1613,12 @@ public class PositionMonitor //: IDisposable
                     {
                         // Check entry
                         if (part.Purpose == CryptoPartPurpose.Entry)
-                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.EntryStrategy, 
+                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.EntryStrategy,
                                 GlobalData.Settings.Trading.EntryOrderPrice, GlobalData.Settings.Trading.EntryOrderType);
 
                         // Check DCA
                         if (part.Purpose == CryptoPartPurpose.Dca)
-                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStrategy, 
+                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStrategy,
                                 GlobalData.Settings.Trading.DcaOrderPrice, GlobalData.Settings.Trading.DcaOrderType);
                     }
                 }
@@ -1672,7 +1673,7 @@ public class PositionMonitor //: IDisposable
                     TradeTools.CalculateProfitAndBreakEvenPrice(position);
                     tp = CalculateTpPrices(position);
                     //if (xx != position.BreakEvenPrice)
-                      //  xx = xx; does not change (afaict)????
+                    //  xx = xx; does not change (afaict)????
 
                     // And place the (single/combined) take profit order to minimize dust)
                     await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart, tp.price, tp.stop, tp.limit, LastCandle1mCloseTimeDate, text);
@@ -1922,6 +1923,6 @@ public class PositionMonitor //: IDisposable
     }
 
 
-    public static void ResetAnalyseCount() => 
+    public static void ResetAnalyseCount() =>
         analyseCount = 0;
 }

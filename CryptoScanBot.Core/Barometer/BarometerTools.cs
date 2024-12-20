@@ -69,7 +69,7 @@ public class BarometerTools
         }
         return null;
     }
-    
+
 
     private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
     {
@@ -156,7 +156,7 @@ public class BarometerTools
                 candle.Low = BarometerPerc;
                 candle.Close = BarometerPerc;
 
-                
+
                 // Administratie bijwerken
                 if (priceBarometer)
                 {

@@ -68,7 +68,7 @@ public class CryptoCalculation
 
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther, 
+        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         zigZag.Top = top;
@@ -384,7 +384,7 @@ public class CryptoCalculation
             ZigZagResult? previous = null;
             foreach (var zigZag in data.Indicator.ZigZagList)
             {
-                if (previous != null) 
+                if (previous != null)
                 {
                     if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all zones (also the closed ones)
                     {
@@ -432,6 +432,6 @@ public class CryptoCalculation
                 }
                 previous = zigZag;
             }
-        }   
+        }
     }
 }

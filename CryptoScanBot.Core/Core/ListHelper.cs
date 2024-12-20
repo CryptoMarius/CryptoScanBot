@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace CryptoScanBot.Core.Core;
+﻿namespace CryptoScanBot.Core.Core;
 
 public static class ListHelper
 {
@@ -15,8 +13,8 @@ public static class ListHelper
             // Handle equality as being greater.
             // Note: this will break Remove(key) or IndexOfKey(key) since the comparer never returns 0 to signal key equality
             if (result == 0)
-                return 1; 
-            else          
+                return 1;
+            else
                 return result;
         }
     }

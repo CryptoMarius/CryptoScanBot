@@ -1,5 +1,7 @@
 ﻿using CryptoScanBot.Core.Json;
+
 using Dapper.Contrib.Extensions;
+
 using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Model;

@@ -1,8 +1,8 @@
-﻿using System.Globalization;
-using System.Text;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Core;
+
+using System.Globalization;
+using System.Text;
 
 namespace CryptoScanBot.Core.Core;
 
@@ -55,7 +55,7 @@ public static class Helper
             s = s + " interval=" + interval.Name;
 
         //if (fmt == "N0")
-          //  fmt = "N2";
+        //  fmt = "N2";
 
         s = s + " open=" + candle.Open.ToString(fmt);
         s = s + " high=" + candle.High.ToString(fmt);

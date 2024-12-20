@@ -11,7 +11,7 @@ public partial class UserControlTelegram : UserControl
 
         EditTelegramToken.TextChanged += EditTokenChanged;
         EditTelegramChatId.TextChanged += EditChatIdChanged;
-        
+
         ButtonTestTelegram.Click += ButtonTestTelegram_Click;
         buttonTelegramStart.Click += ButtonTelegramStart_Click;
     }
@@ -33,7 +33,7 @@ public partial class UserControlTelegram : UserControl
         EditTelegramChatId.Text = GlobalData.Telegram.ChatId;
         EditUseEmojiInTrend.Checked = GlobalData.Telegram.EmojiInTrend;
         EditSendSignalsToTelegram.Checked = GlobalData.Telegram.SendSignalsToTelegram;
-    
+
         EditTokenChanged(null, EventArgs.Empty);
         EditChatIdChanged(null, EventArgs.Empty);
     }

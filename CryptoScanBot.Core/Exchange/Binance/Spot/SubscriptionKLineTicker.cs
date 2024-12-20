@@ -1,10 +1,12 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
+using Binance.Net.Interfaces;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
-using Binance.Net.Interfaces;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 

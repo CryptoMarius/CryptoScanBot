@@ -1,11 +1,12 @@
 ﻿using CryptoExchange.Net.Authentication;
+
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using Mexc.Net.Clients;
 using Mexc.Net.Enums;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
@@ -61,7 +62,7 @@ public class Api : ExchangeBase
 
         PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-       // UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+        // UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
 
 

@@ -1,12 +1,13 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Emulator;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
 using CryptoScanBot.ZoneVisualisation;
@@ -15,10 +16,8 @@ using Microsoft.Win32;
 
 using Nito.AsyncEx;
 
-
 using System.Text;
 using System.Text.Json;
-using CryptoScanBot.Core.Json;
 
 namespace CryptoScanBot;
 

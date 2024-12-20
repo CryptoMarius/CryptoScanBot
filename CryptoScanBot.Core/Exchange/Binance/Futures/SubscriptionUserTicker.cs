@@ -62,8 +62,8 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
                         CryptoOrder orderTemp = new()
                         {
                             TradeAccount = GlobalData.ActiveAccount!,
-                             Exchange = symbol.Exchange,
-                             Symbol = symbol,
+                            Exchange = symbol.Exchange,
+                            Symbol = symbol,
                         };
                         Order.PickupOrder(GlobalData.ActiveAccount!, symbol, orderTemp, data.Data.UpdateData);
 

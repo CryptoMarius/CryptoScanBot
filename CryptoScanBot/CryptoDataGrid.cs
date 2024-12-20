@@ -1,10 +1,10 @@
-﻿using System.Collections;
-using System.Runtime.InteropServices;
-
-using CryptoScanBot.Commands;
+﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Settings;
+
+using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace CryptoScanBot;
 
@@ -25,9 +25,9 @@ public static class ControlHelper
         }
     }
 
-    public static void ResumeDrawing(this Control target) 
-    { 
-        ResumeDrawing(target, true); 
+    public static void ResumeDrawing(this Control target)
+    {
+        ResumeDrawing(target, true);
     }
 
     public static void ResumeDrawing(this Control target, bool redraw)
@@ -59,7 +59,7 @@ public abstract class CryptoDataGrid
 }
 
 
-public abstract class CryptoDataGrid<T>: CryptoDataGrid
+public abstract class CryptoDataGrid<T> : CryptoDataGrid
 {
     public required List<T> List;
     internal ContextMenuStrip MenuStripCells = new();
@@ -137,7 +137,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             HeaderText = headerText,
             ValueType = type,
         };
-        
+
         c.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
         if (width > 0)
         {
@@ -169,7 +169,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
         // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/implementing-virtual-mode-wf-datagridview-control?view=netframeworkdesktop-4.8&redirectedfrom=MSDN
         Grid.ReadOnly = true;
         Grid.VirtualMode = true;
-        
+
         Grid.RowHeadersWidth = 20;
         Grid.RowHeadersVisible = false; // the first column to select rows
         //Grid.RowHeadersDefaultCellStyle.BackColor = Grid.DefaultCellStyle.BackColor;
@@ -189,7 +189,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
 
         Grid.GridColor = Color.Black; // VeryLightGray1;
         Grid.BackgroundColor = Grid.DefaultCellStyle.BackColor;
-        
+
         Grid.BorderStyle = BorderStyle.None; // Fixed3D, FixedSingle; // Rand rond het grid
         Grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Single;
         Grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single; // Raised;
@@ -365,7 +365,7 @@ public abstract class CryptoDataGrid<T>: CryptoDataGrid
             {
                 MenuStripOpening(sender, e);
                 //MenuStripCells.Items[0].PerformClick(); // first item = tradingapp
-                
+
                 Command command;
                 if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateTradingApp)
                     command = Command.ActivateTradingApp;

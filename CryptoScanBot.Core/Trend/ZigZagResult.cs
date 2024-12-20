@@ -1,7 +1,5 @@
 ﻿using CryptoScanBot.Core.Model;
 
-using Dapper.Contrib.Extensions;
-
 namespace CryptoScanBot.Core.Trend;
 
 [Serializable]
@@ -20,7 +18,7 @@ public class ZigZagResult
     public decimal? BackupValue { get; set; }
     public CryptoCandle? BackupCandle { get; set; }
     public int? BackupIndex { get; set; }
-    
+
 
     // Zone
     //public DateTime OpenTime { get; set; }
@@ -30,7 +28,7 @@ public class ZigZagResult
     public long? CloseDate { get; set; }
 
     public int PivotIndex { get; set; }
-    
+
     public void ReusePoint(CryptoCandle candle, decimal value, bool dummy, int pivotIndex)
     {
         // Intention is to reset stuff because we are going to reuse a pivot point, clear the other stuff

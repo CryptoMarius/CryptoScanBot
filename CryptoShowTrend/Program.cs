@@ -1,7 +1,7 @@
-using System.Reflection;
-
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.ZoneVisualisation;
+
+using System.Reflection;
 
 namespace CryptoShowTrend;
 

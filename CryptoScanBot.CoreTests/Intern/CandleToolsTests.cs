@@ -1,6 +1,6 @@
 ﻿using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Model;
 using CryptoScanBot.CoreTests;
 
 namespace CryptoScanBot.Intern.Tests;
@@ -23,7 +23,7 @@ public class CandleToolsTests : TestBase
         decimal value = 19000;
         DateTime startTime = new(2023, 08, 27, 00, 00, 00, DateTimeKind.Utc);
         long startTimeUnix = CandleTools.GetUnixTime(startTime, 60);
-        for (int count = 60; count <= 24*60*60; count+=60) // 1 single day
+        for (int count = 60; count <= 24 * 60 * 60; count += 60) // 1 single day
         {
             startTime = CandleTools.GetUnixDate(startTimeUnix);
 
@@ -70,7 +70,7 @@ public class CandleToolsTests : TestBase
                     Assert.AreEqual(value, c.High, $"Candle.High");
                     Assert.AreEqual(value, c.Low, $"Candle.Low");
                     Assert.AreEqual(value, c.Close, $"Candle.Close");
-                    
+
                     Assert.AreEqual(interval.Duration / 60, c.Volume, $"Candle.Volume");
                 }
             }

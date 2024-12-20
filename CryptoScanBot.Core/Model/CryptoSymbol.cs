@@ -114,7 +114,7 @@ public class CryptoSymbol
     // Quote: display format
     public required virtual CryptoQuoteData QuoteData { get; set; }
 
-    
+
     [Computed]
     public bool CalculatingZones { get; set; }
 

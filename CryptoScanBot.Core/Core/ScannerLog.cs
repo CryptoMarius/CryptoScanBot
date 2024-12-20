@@ -1,6 +1,4 @@
-﻿using CryptoScanBot.Core.Core;
-
-using NLog;
+﻿using NLog;
 
 namespace CryptoScanBot.Core.Core;
 

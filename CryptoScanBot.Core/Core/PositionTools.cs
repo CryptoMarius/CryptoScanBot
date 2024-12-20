@@ -1,13 +1,11 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Model;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
-using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Core;
 
@@ -66,7 +64,7 @@ public static class PositionTools
         return null;
     }
 
-    public static CryptoPosition CreatePosition(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side, 
+    public static CryptoPosition CreatePosition(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
         CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
@@ -142,7 +140,7 @@ public static class PositionTools
     }
 
 
-    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part, 
+    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part,
         TradeParams tradeParams, CryptoTrailing trailing = CryptoTrailing.None)
     {
         CryptoPositionStep step = new()
@@ -209,7 +207,7 @@ public static class PositionTools
         // OrderId index aanvullen
         if (step.OrderId != null && step.OrderId != "")
             part.Position.StepOrderList.TryAdd(step.OrderId, step);
-        if (step.Order2Id != null && step.Order2Id != "") 
+        if (step.Order2Id != null && step.Order2Id != "")
             part.Position.StepOrderList.TryAdd(step.Order2Id, step);
     }
 
@@ -259,7 +257,7 @@ public static class PositionTools
         foreach (CryptoPositionPart part in database.Connection.Query<CryptoPositionPart>(sql))
         {
             if (part.IntervalId.HasValue && GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
-               part.Interval = interval!;
+                part.Interval = interval!;
             AddPositionPart(position, part);
         }
 

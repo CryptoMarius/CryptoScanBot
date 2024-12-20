@@ -4,6 +4,7 @@ using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -105,7 +106,7 @@ public class Api : ExchangeBase
 
 
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
-        CryptoPosition position, CryptoPositionPart part, 
+        CryptoPosition position, CryptoPositionPart part,
         DateTime currentDate, CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {

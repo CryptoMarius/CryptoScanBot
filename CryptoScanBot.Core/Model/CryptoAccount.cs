@@ -23,5 +23,5 @@ public class CryptoAccount
     // (emulator can run simultanious with scanner, paper or exchange trading)
     [Computed]
     public AccountData Data { get; } = new();
-    
+
 }

@@ -4,6 +4,7 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;

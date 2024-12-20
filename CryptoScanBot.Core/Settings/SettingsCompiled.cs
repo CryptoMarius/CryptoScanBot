@@ -1,9 +1,9 @@
-﻿using System.Text.Json.Serialization;
-
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Settings;
 

@@ -1,12 +1,13 @@
-﻿using System.Drawing.Drawing2D;
+﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Const;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Exchange;
+
+using System.Drawing.Drawing2D;
 
 namespace CryptoScanBot.TradingView;
 
@@ -238,7 +239,7 @@ public partial class DashBoardInformation : UserControl
                     loX = candle.OpenTime;
                 if (hiX < candle.OpenTime)
                     hiX = candle.OpenTime;
-                
+
                 // In Bybit Futures zijn er (vanwege storingen) hoge waarden ingevuld
                 if (candle.Close > -50 && candle.Close < 50)
                 {
@@ -463,8 +464,8 @@ public partial class DashBoardInformation : UserControl
             CreateBarometerBitmap(GlobalData.Settings.General.Exchange, quoteData, interval);
 
             //GC.Collect(); // not the nicest way...
-            GC.Collect(); 
-            GC.WaitForPendingFinalizers(); 
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             GC.Collect();
         }
         catch (Exception error)

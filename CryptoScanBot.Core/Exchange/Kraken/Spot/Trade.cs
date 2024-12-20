@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-using CryptoExchange.Net.Objects;
+﻿using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
@@ -11,6 +9,8 @@ using Dapper.Contrib.Extensions;
 
 using Kraken.Net.Clients;
 using Kraken.Net.Objects.Models;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 

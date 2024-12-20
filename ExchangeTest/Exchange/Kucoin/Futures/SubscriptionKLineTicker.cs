@@ -1,11 +1,10 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoScanBot.Core.Enums;
+
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
+
 using Kucoin.Net.Clients;
-using Kucoin.Net.Enums;
 
 namespace ExchangeTest.Exchange.Kucoin.Futures;
 
@@ -48,8 +47,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //    throw new Exception("Geen intervallen?");
 
 
-//TODO!!!!
-// Problem, can't get this to work, this is blocking..
+        //TODO!!!!
+        // Problem, can't get this to work, this is blocking..
 
         //await ((KucoinSocketClient)TickerGroup.SocketClient).???????????? missing in action? Overlooking something???
 

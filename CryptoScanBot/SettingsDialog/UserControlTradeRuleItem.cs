@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Settings;
 
 namespace CryptoScanBot.SettingsDialog;
 
@@ -17,7 +16,7 @@ public partial class UserControlTradeRuleItem : UserControl
     {
         if (EditInterval.DataSource == null)
         {
-            foreach (var interval in GlobalData.IntervalList) 
+            foreach (var interval in GlobalData.IntervalList)
                 IntervalList.Add(interval.Name, interval.IntervalPeriod);
 
             EditInterval.DataSource = new BindingSource(IntervalList, null);
@@ -40,7 +39,7 @@ public partial class UserControlTradeRuleItem : UserControl
         item.Symbol = EditSymbol.Text;
         item.Percentage = (double)EditPercent.Value;
         item.Candles = (int)EditCandles.Value;
-        item.Interval = (CryptoIntervalPeriod)EditInterval.SelectedValue; 
+        item.Interval = (CryptoIntervalPeriod)EditInterval.SelectedValue;
         item.CoolDown = (int)EditCoolDown.Value;
     }
 

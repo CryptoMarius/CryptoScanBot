@@ -199,7 +199,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                                 if (candle.OpenTime == expectedCandlesUpto)
                                 {
-                                     //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
+                                    //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
                                     GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
                                 }
                             }

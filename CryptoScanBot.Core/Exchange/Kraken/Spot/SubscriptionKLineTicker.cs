@@ -6,7 +6,6 @@ using CryptoScanBot.Core.Model;
 
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
-using Kraken.Net.Objects.Models;
 using Kraken.Net.Objects.Models.Socket;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
@@ -43,7 +42,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             foreach (KrakenKlineUpdate kline in data.Data)
             {
-                Task.Run(async () => { await ProcessCandleAsync(data.Symbol?? "", kline); });
+                Task.Run(async () => { await ProcessCandleAsync(data.Symbol ?? "", kline); });
             }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 

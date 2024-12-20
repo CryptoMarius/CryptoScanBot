@@ -1,13 +1,10 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
-using System.IO.Compression;
 using System.Text;
-using System.Text.Json;
 
 namespace CryptoScanBot.Core.Zones;
 

@@ -148,7 +148,7 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
     }
 
 
-   public void ExportToExcel()
+    public void ExportToExcel()
     {
         GlobalData.AddTextToLogTab($"Dumping signals to Excel");
         try

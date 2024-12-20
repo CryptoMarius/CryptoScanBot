@@ -1,5 +1,6 @@
-﻿using Mexc.Net.Enums;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
+
+using Mexc.Net.Enums;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 

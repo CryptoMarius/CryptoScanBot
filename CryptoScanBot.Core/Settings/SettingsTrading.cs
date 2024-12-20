@@ -112,7 +112,7 @@ public class SettingsTrading
     // Het afwijkend percentage bij het kopen
     //public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
-    
+
     //***************************
     // Dca
     public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
@@ -124,7 +124,7 @@ public class SettingsTrading
 
     //***************************
     // Take profit
-    public CryptoOrderType TakeProfitOrderType  { get; set; } = CryptoOrderType.Limit;
+    public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;
     public CryptoTakeProfitStrategy TakeProfitStrategy { get; set; } = CryptoTakeProfitStrategy.FixedPercentage;
 
     // Het verkoop bedrag = buy bedrag * (100+profit / 100)

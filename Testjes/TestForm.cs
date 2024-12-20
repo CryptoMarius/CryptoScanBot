@@ -1,8 +1,4 @@
-﻿using System.Drawing.Drawing2D;
-using System.Speech.Synthesis;
-using System.Text;
-
-using Binance.Net.Clients;
+﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models;
 using Binance.Net.Objects.Models.Spot;
@@ -10,27 +6,30 @@ using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.BackTest;
+using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Json;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
+using CryptoScanBot.Core.Telegram;
+using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Zones;
 
 using Dapper;
 
 using Skender.Stock.Indicators;
 
-using Font = System.Drawing.Font;
-using CryptoScanBot.Core.Const;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Telegram;
-using CryptoScanBot.Core.Zones;
+using System.Drawing.Drawing2D;
 using System.Security.Cryptography;
+using System.Speech.Synthesis;
+using System.Text;
 using System.Text.Json;
-using CryptoScanBot.Core.Json;
 using System.Text.Json.Serialization;
+
+using Font = System.Drawing.Font;
 
 namespace CryptoScanBot;
 
@@ -298,7 +297,7 @@ public partial class TestForm : Form
                 {
                     string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
                     if (!symbol.IsBarometerSymbol() && (symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
-                    DataStore.LoadCandleForSymbol(exchangeStoragePath, symbol);
+                        DataStore.LoadCandleForSymbol(exchangeStoragePath, symbol);
                 }
             }
         }
@@ -1113,7 +1112,7 @@ public partial class TestForm : Form
                 {
 
                     CryptoIntervalPeriod intervalPeriod;
-                    
+
 
 
                     intervalPeriod = CryptoIntervalPeriod.interval1m;
@@ -2700,7 +2699,7 @@ public partial class TestForm : Form
 
         TestObject test = new();
         test.Password = "Hello World";
-       
+
         string text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
         var test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
 

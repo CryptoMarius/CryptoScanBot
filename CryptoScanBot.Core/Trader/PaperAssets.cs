@@ -117,7 +117,7 @@ public class PaperAssets
         }
     }
 
-    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side, 
+    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side,
         CryptoOrderStatus status, decimal quantity, decimal quoteQuantity, string debugText)
     {
         // No asset management for these available (although, would be very nice for Altraady)
@@ -143,7 +143,7 @@ public class PaperAssets
             if (tradeSide == CryptoTradeSide.Long)
             {
                 // going long it will increase the quote (no changes needed)
-                
+
                 if (side == CryptoOrderSide.Buy) // entry
                 {
                     AddLocked(assetQuote, status, quoteQuantity);

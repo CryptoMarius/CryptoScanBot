@@ -1,7 +1,8 @@
-﻿using System.Text;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Model;
 
 using Newtonsoft.Json;
+
+using System.Text;
 
 namespace CryptoScanBot.BackTest;
 

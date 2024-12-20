@@ -353,8 +353,8 @@ static public class GlobalData
                 //TODO: Delete the symbol? (first report all of them.......)
                 AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
             }
-            
-            
+
+
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
 

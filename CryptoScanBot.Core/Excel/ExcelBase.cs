@@ -134,13 +134,13 @@ public abstract class ExcelBase
     protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, double? value, ICellStyle? cellStyle = null)
         => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, decimal? value, ICellStyle? cellStyle = null) 
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, decimal? value, ICellStyle? cellStyle = null)
         => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue((double?)value).WithStyle(cellStyle);
 
     protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, int? value, ICellStyle? cellStyle = null)
         => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
-    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, long? value, ICellStyle? cellStyle = null) 
+    protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, long? value, ICellStyle? cellStyle = null)
         => sheet.GetOrCreateRow(rowIndex).GetOrCreateCell(columnIndex).WithValue(value).WithStyle(cellStyle);
 
     protected static ICell WriteCell(ISheet sheet, int columnIndex, int rowIndex, DateTime? value, ICellStyle? cellStyle = null)

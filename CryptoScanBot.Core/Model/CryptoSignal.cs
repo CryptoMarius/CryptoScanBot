@@ -1,13 +1,10 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Signal;
-
-using Dapper.Contrib.Extensions;
+﻿using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;
 
 
 [Table("Signal")]
-public class CryptoSignal: CryptoData2
+public class CryptoSignal : CryptoData2
 {
     [Key]
     public int Id { get; set; }
@@ -75,7 +72,7 @@ public class CryptoSignal: CryptoData2
             if (Symbol.QuoteValueMinimum > 0 && Symbol.QuoteValueMinimum > minEntryValue)
                 minEntryValue = Symbol.QuoteValueMinimum;
 
-            return minEntryValue; 
+            return minEntryValue;
         }
     }
 }

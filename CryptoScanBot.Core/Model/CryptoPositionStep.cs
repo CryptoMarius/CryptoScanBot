@@ -1,4 +1,5 @@
 ﻿using CryptoScanBot.Core.Enums;
+
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;
@@ -42,7 +43,7 @@ public class CryptoPositionStep
 
     // De commissie berekend vanuit de trades
     public decimal Commission { get; set; }
-    public decimal CommissionBase { get; set; } 
+    public decimal CommissionBase { get; set; }
     public decimal CommissionQuote { get; set; }
     public string? CommissionAsset { get; set; }
 

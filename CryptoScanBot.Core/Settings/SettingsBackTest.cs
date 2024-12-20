@@ -1,6 +1,4 @@
-﻿using CryptoScanBot.Core.Enums;
-
-namespace CryptoScanBot.Core.Settings;
+﻿namespace CryptoScanBot.Core.Settings;
 
 [Serializable]
 public class SettingsBackTest

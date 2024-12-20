@@ -1,6 +1,4 @@
-﻿using CryptoScanBot.Core.Model;
-
-namespace CryptoScanBot.Commands;
+﻿namespace CryptoScanBot.Commands;
 
 public class CommandCopyDataCells : CommandBase
 {

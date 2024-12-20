@@ -1,9 +1,5 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-
-using System.Text;
 
 namespace CryptoScanBot.Core.Trend;
 
@@ -57,7 +53,7 @@ public class TrendTools
                 if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
                 {
                     //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
-                        indicator.Calculate(candle, true);
+                    indicator.Calculate(candle, true);
                     zigZagLastCandleAdded = loop;
                 }
                 loop += interval.Duration;

@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Core.Enums;
+
 using Dapper.Contrib.Extensions;
 
-using System.Drawing;
 using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Settings;
@@ -61,7 +61,7 @@ public class SettingsGeneral
     /// </summary>
     public double RsiValueOverbought { get; set; } = 70;
 
-    
+
     // STOCH instelbare oversold /overbought (op verzoek)
     /// <summary>
     /// Stochastic oversold, normally value = 20

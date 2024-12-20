@@ -8,7 +8,7 @@ public class JsonTools
     public static readonly JsonSerializerOptions JsonSerializerIndented = new()
     {
         AllowTrailingCommas = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, 
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         IncludeFields = true,
         IgnoreReadOnlyFields = true,
         PropertyNameCaseInsensitive = true,
@@ -18,7 +18,7 @@ public class JsonTools
     public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
     {
         AllowTrailingCommas = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, 
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         IncludeFields = true,
         IgnoreReadOnlyFields = true,
         PropertyNameCaseInsensitive = true,
