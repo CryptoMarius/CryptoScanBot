@@ -892,7 +892,7 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             try { database.Connection.Execute("delete from asset", transaction); } catch { } // ignore, start from scratch
-            try { database.Connection.Execute("alter table PositionStep add IsCalculated Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table PositionStep add IsCalculated Integer null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
