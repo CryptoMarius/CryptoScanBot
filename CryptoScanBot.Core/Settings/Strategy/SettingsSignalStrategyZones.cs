@@ -24,7 +24,7 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
     public decimal WarnPercentage { get; set; } = 1.0m;
 
     // Filter on start
-    public bool ZoneStartApply { get; set; } = true;
+    public bool ZoneStartApply { get; set; } = false;
     public int ZoneStartCandleCount { get; set; } = 5; // 5 candles back
     public double ZoneStartPercentage { get; set; } = 2.5; // %
 
