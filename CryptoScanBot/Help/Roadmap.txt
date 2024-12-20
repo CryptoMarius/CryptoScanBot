@@ -7,6 +7,7 @@ Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
 - Probleem, veel duplicaat symbols aanwezig in de database (en de de $bmp was ook een probleem..), dat geeft overhead en vergissingen?
+Zones: De id verwijderen en daar het percentage heenzetten dat ie genaderd is
 
 Scanner:
 - Scanner - De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de charting library de fout in?
