@@ -50,7 +50,7 @@ public class SignalSma50Sma20PriceShort : SignalCreateBase
         if (CandleLast.CandleData!.Sma50 <= CandleLast.CandleData.Sma20)
             return false;
 
-        if (!IsInUpperPartOfBollingerBands(1, 5))
+        if (!IsInUpperPartOfBollingerBands(1, 10))
             return false;
 
         // Is it near the bb in a higher timeframe?
@@ -71,7 +71,7 @@ public class SignalSma50Sma20PriceShort : SignalCreateBase
 
             if (!IndicatorsOkay(candle))
                 return false;
-            if (!IsInUpperPartOfBollingerBands(candle, 20))
+            if (!IsInUpperPartOfBollingerBands(candle, 30))
                 return false;
         }
 
