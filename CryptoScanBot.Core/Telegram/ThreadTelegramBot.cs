@@ -607,7 +607,9 @@ public class ThreadTelegramBotInstance
                                 case MessageType.Text:
                                     {
                                         StringBuilder stringBuilder = new();
-                                        var arguments = update.Message.Text.ToUpper();
+                                        string arguments = "";
+                                        if (update.Message.Text != null)
+                                            arguments = update.Message.Text.ToUpper();
 
                                         string command = "";
                                         string[] parameters = arguments.Split(' ');
