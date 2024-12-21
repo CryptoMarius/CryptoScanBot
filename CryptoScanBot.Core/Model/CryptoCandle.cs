@@ -44,7 +44,7 @@ public class CryptoCandleList : SortedList<long, CryptoCandle>
 }
 
 //
-// Voor een toekomstige Helperclass wellicht? (naar een StringStream oid)
+// For a future Helperclass? (StringStream?)
 //
 //public void DumpSymbol()
 //{
