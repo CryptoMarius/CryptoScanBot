@@ -26,9 +26,9 @@ public class AccountSymbolData
     // Trend data for each interval
     public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
 
-    // Active zones
-    public SortedList<decimal, CryptoZone> ZoneListLong { get; set; } = new(new ListHelper.DuplicateKeyComparer<decimal>());
-    public SortedList<decimal, CryptoZone> ZoneListShort { get; set; } = new(new ListHelper.DuplicateKeyComparer<decimal>());
+    // Active zones (CloseTime = null)
+    public List<CryptoZone> ZoneListLong { get; set; } = [];
+    public List<CryptoZone> ZoneListShort { get; set; } = [];
 
     public AccountSymbolData()
     {
@@ -74,5 +74,11 @@ public class AccountSymbolData
     {
         ResetZoneData();
         ResetTrendData();
+    }
+
+    public void SortZones()
+    {
+        ZoneListLong.Sort((zoneA, zoneB) => zoneB.Top.CompareTo(zoneA.Top)); // desc via Top
+        ZoneListShort.Sort((zoneA, zoneB) => zoneA.Bottom.CompareTo(zoneB.Bottom)); // asc via Bottom
     }
 }

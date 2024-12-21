@@ -7,7 +7,8 @@ namespace CryptoScanBot.Core.Zones;
 
 public class LiquidityZones
 {
-    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session, CryptoZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session,
+        CryptoZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         try
         {
@@ -43,6 +44,17 @@ public class LiquidityZones
 #endif
                         }
                     }
+
+                    // Remember the last swing point for the automatic zone calculation
+                    AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+                    AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(data.Interval.IntervalPeriod);
+                    if (data.Indicator.LastSwingPoint != null)
+                        symbolIntervalData.TimeLastSwingPoint = data.Indicator.LastSwingPoint.Candle.OpenTime;
+                    if (data.Indicator.LastSwingLow != null)
+                        symbolIntervalData.LastSwingLow = data.Indicator.LastSwingLow.Value;
+                    if (data.Indicator.LastSwingHigh != null)
+                        symbolIntervalData.LastSwingHigh = data.Indicator.LastSwingHigh.Value;
+
                     if (session.UseBatchProcess)
                     {
                         data.Indicator.FinishBatch();
@@ -69,19 +81,8 @@ public class LiquidityZones
 
                 // Create the zones and save them
                 if (session.ForceCalculation)
-                    ZoneTools.SaveZonesForSymbol(data.Symbol, data.Interval, data.Indicator.ZigZagList);
-
+                    ZoneTools.SaveZonesForSymbol(data, data.Indicator.ZigZagList);
                 await CandleEngine.SaveCandleDataToDiskAsync(data.Symbol, loadedCandlesInMemory);
-
-
-                // Set the date of the last swing point for the automatic zone calculation
-                AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
-                AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(data.Interval.IntervalPeriod);
-                symbolIntervalData.TimeLastSwingPoint = data.Indicator.GetLastRealZigZag();
-                if (data.Indicator.LastSwingLow != null)
-                    symbolIntervalData.LastSwingLow = data.Indicator.LastSwingLow.Value;
-                if (data.Indicator.LastSwingHigh != null)
-                    symbolIntervalData.LastSwingHigh = data.Indicator.LastSwingHigh.Value;
 
                 //GlobalData.AddTextToLogTab($"{data.Symbol.Name} points={data.Indicator.PivotList.Count} fib.points={data.IndicatorFib.PivotList.Count}");
             }
@@ -155,6 +156,7 @@ public class LiquidityZones
                 data.Symbol.CalculatingZones = true;
                 try
                 {
+                    ZoneTools.LoadZonesForSymbol(data.Symbol.Id, data);
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
                     await CalculateZonesForSymbolAsync(sender, session, data, loadedCandlesInMemory);
                 }

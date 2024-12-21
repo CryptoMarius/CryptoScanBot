@@ -352,9 +352,9 @@ public class CryptoCharting
     public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
-        foreach (var zone in symbolData.ZoneListLong.Values)
+        foreach (var zone in data.ZoneListLong)
             DrawLiqBoxesInternal(chart, zone, session);
-        foreach (var zone in symbolData.ZoneListShort.Values)
+        foreach (var zone in data.ZoneListShort)
             DrawLiqBoxesInternal(chart, zone, session);
     }
 

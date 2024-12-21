@@ -17,7 +17,6 @@ public class AccountSymbolIntervalData
     // Zones: Primary trend, recalculated if outside
     // Administration liquidity zones calculation?? How?
     public long? TimeLastSwingPoint { get; set; }
-
     public decimal? BestLongZone { get; internal set; } = 100m; // distance%
     public decimal? LastSwingHigh { get; internal set; } = null;
 

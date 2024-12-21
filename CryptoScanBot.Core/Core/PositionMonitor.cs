@@ -1804,6 +1804,7 @@ public class PositionMonitor //: IDisposable
                         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
                         AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(intervalX.IntervalPeriod);
 
+                        // Calculate again if the candle is outside of the previous primary trend coordinates
                         decimal valueLow = LastCandle1m.GetLowValue(false);
                         decimal valueHigh = LastCandle1m.GetHighValue(false);
                         if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||
