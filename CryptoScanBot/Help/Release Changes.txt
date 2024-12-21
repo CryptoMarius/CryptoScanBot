@@ -1,6 +1,8 @@
 CryptoScanBot release historie:
 
 15-09-2024 1.9.5.1215
+- Scanner - Dominante zones: De debugteksten verwijderen en in plaats daarvan het percentage dat de zone genaderd is
+- Scanner - Dominante zones: Elke 5 minuten een melding is teveel van het goede, voorlopig is dit nu op 1x per uur gezet
 - Scanner - Aandacht voor de grote hoeveelheid memory die nu gebruikt wordt, het lijkt veel hoger als vorige versies (piekt af en toe)
 - Scanner - Waarschijnlijk is het memory probleem gerelateerd aan de deserialize van grote hoeveelheden candles, vervangen met binary opslag (het verbeterd)
 - Scanner - Symbols, een nieuwe kolom geintroduceerd met daarin het percentage tot de dichtbijzijnde zone (van afgelopen minuut)
@@ -12,6 +14,7 @@ CryptoScanBot release historie:
 - Scanner - Dominante zones: Het percentage van de intro "filter" was verkeerd
 - Scanner - Dominante zones: De laatste candle in het visualitie scherm klopt niet, er zit soms ruimte tussen
 - Scanner - Dominante zones: De candle van de timeframes inladen als je chart intekend (meer candles)
+- Scanner - Er zijn duplicaat symbols aanwezig in de database (en de de barometer symbol was ook een probleem)
 
 
 12-09-2024 1.9.5.1212
