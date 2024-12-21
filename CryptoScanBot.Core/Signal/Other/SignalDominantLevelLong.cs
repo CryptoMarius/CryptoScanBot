@@ -53,7 +53,8 @@ public class SignalDominantLevelLong : SignalCreateBase
                         result = true;
                         zone.AlarmDate = CandleLast.Date;
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                        ExtraText = $"{zone.Bottom} .. {zone.Top} (#{zone.Id}  {CandleLast.Low})";
+                        decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                        ExtraText = $"{zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                     }
                 }
 
