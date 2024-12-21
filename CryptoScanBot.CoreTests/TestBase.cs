@@ -50,7 +50,7 @@ public class TestBase
 
     internal static CryptoSymbol CreateTestSymbol(CryptoDatabase database)
     {
-        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             if (!exchange.SymbolListName.TryGetValue("TESTUSDT", out CryptoSymbol? symbol))
             {
