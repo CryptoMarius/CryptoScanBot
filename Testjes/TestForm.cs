@@ -157,7 +157,7 @@ public partial class TestForm : Form
 
 
 
-        GlobalData.LoadSettingsAsync();
+        GlobalData.LoadSettings();
         //TradingConfig.IndexStrategyInternally();
 
         // Basicly allemaal constanten
@@ -2253,7 +2253,7 @@ public partial class TestForm : Form
         // TODO: Zorgen dat alleen het gekozen interval en algoritme actief is in de instellingen
 
         createdSignalCount = 0;
-        GlobalData.LoadSettingsAsync();
+        GlobalData.LoadSettings();
 
         CryptoBackConfig config = new();
         LoadConfig(ref config);

@@ -121,6 +121,7 @@ public partial class CryptoVisualisation : Form
 
     public static void InitializeApplicationStuff()
     {
+        GlobalData.LoadSettings();
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
@@ -131,6 +132,10 @@ public partial class CryptoVisualisation : Form
         GlobalData.SetTradingAccounts();
         GlobalData.LoadSymbols();
         ZoneTools.LoadAllZones();
+
+        // Saving the zones
+        GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
+        _ = Task.Run(GlobalData.ThreadSaveObjects!.Execute).ConfigureAwait(false);
     }
 
     private void Form1Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -615,13 +620,6 @@ public partial class CryptoVisualisation : Form
             try
             {
                 // reset data
-                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = []; // bool = if it needs saving
-
-                // Load the zones, otherwise reuse the ones in memory
-                if (StandAlone)
-                    ZoneTools.LoadAllZones(); // Sync just to be sure
-
-
                 Data.Indicator = new(false, Session.Deviation)
                 {
                     MaxTime = Session.MaxDate,
@@ -637,7 +635,9 @@ public partial class CryptoVisualisation : Form
                 };
 
 
-                // calculate (and save) the zones
+                // Load and (re)calculate the zones
+                ZoneTools.LoadZonesForSymbol(Data.Symbol.Id, Data);
+                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = []; // bool = if it needs saving
                 await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data, loadedCandlesInMemory);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
 

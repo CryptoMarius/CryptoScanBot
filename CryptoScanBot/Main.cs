@@ -119,7 +119,7 @@ public partial class FrmMain : Form
 
 
         // Instelling laden
-        GlobalData.LoadSettingsAsync();
+        GlobalData.LoadSettings();
 
         GridSymbolView = new() { Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
         GridSymbolView.InitGrid();

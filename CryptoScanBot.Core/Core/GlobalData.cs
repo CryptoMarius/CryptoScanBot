@@ -273,9 +273,9 @@ static public class GlobalData
         }
         else
         {
-            string sql = "select * from signal where BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
 
             using var database = new CryptoDatabase();
+            string sql = "select * from signal where BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
@@ -404,7 +404,7 @@ static public class GlobalData
 
 
 
-    static public void LoadBaseSettingsAsync()
+    static public void LoadBaseSettings()
     {
         try
         {
@@ -571,9 +571,9 @@ static public class GlobalData
 
 
 
-    static public void LoadSettingsAsync()
+    static public void LoadSettings()
     {
-        LoadBaseSettingsAsync();
+        LoadBaseSettings();
         LoadExchangeSettings();
         LoadTelegramSettings();
         LoadLinkSettings();
