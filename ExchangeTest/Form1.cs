@@ -51,7 +51,7 @@ public partial class Form1 : Form
         }
 
 
-        GlobalData.LoadSettingsAsync();
+        GlobalData.LoadSettings();
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
         GlobalData.SetTradingAccounts();

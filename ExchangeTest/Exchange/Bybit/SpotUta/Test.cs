@@ -10,7 +10,7 @@ internal class Test
 
     public static async void ByBitUtaSpotTestAsync()
     {
-        GlobalData.LoadSettingsAsync();
+        GlobalData.LoadSettings();
 
         BybitRestClient.SetDefaultOptions(options =>
         {
