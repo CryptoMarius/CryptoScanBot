@@ -77,7 +77,7 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Version"))
         {
             connection.Connection.Execute("CREATE TABLE [Version] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "Version INTEGER NOT NULL" +
             ")");
 
@@ -97,7 +97,7 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Sequence"))
         {
             connection.Connection.Execute("CREATE TABLE [Sequence] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "Name TEXT NOT NULL" +
             ")");
 
@@ -110,7 +110,7 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Interval"))
         {
             connection.Connection.Execute("CREATE TABLE [Interval] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "IntervalPeriod INTEGER NOT NULL," +
                 "Name TEXT NOT NULL," +
                 "Duration INTEGER NOT NULL," +
@@ -191,13 +191,13 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Exchange"))
         {
             connection.Connection.Execute("CREATE TABLE [Exchange] (" +
-                 "Id integer primary key autoincrement not null," +
+                 "Id INTEGER primary key autoincrement not null," +
                  "LastTimeFetched TEXT NULL," +
-                 "IsSupported Integer not NULL," +
+                 "IsSupported INTEGER NOT NULL DEFAULT 0," +
                  "Name TEXT not NULL," +
                  "FeeRate TEXT not NULL," +
-                 "ExchangeType Integer not NULL," +
-                 "TradingType Integer not NULL" +
+                 "ExchangeType INTEGER not NULL," +
+                 "TradingType INTEGER not NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
             connection.Connection.Execute("CREATE INDEX IdxExchangeName ON Exchange(Name)");
@@ -219,10 +219,10 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "TradeAccount"))
         {
             connection.Connection.Execute("CREATE TABLE [TradeAccount] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "ExchangeId INTEGER NOT NULL," +
-                "AccountType Integer not NULL," +
-                "CanTrade INTEGER CanTrade not NULL," +
+                "AccountType INTEGER not NULL," +
+                "CanTrade INTEGER CanTrade not NULL DEFAULT 0," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
             ")");
@@ -320,7 +320,7 @@ public class CryptoDatabase : IDisposable
     //            "SymbolId INTEGER NOT NULL," +
     //            "IntervalId INTEGER NOT NULL," +
     //            "TrendInfoDate TEXT NULL," +
-    //            "TrendIndicator Integer NULL," +
+    //            "TrendIndicator INTEGER NULL," +
     //            "LastCandleSynchronized TEXT NULL," + // overlapt
     //            "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
     //            "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -339,7 +339,7 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Signal"))
         {
             connection.Connection.Execute("CREATE TABLE [Signal] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NULL," +
@@ -446,20 +446,20 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Position"))
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
-                "Id integer primary key autoincrement not null," +
-                "TradeAccountId integer," + //"AccountId integer," +
+                "Id INTEGER primary key autoincrement not null," +
+                "TradeAccountId INTEGER," + //"AccountId integer," +
 
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
 
-                "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL," +
-                "IntervalId Integer NOT NULL," +
-                "Strategy Integer NOT NULL," +
-                "Side Integer NOT NULL," +
+                "ExchangeId INTEGER NOT NULL," +
+                "SymbolId INTEGER NOT NULL," +
+                "IntervalId INTEGER NOT NULL," +
+                "Strategy INTEGER NOT NULL," +
+                "Side INTEGER NOT NULL," +
 
-                "Status Integer NOT NULL," +
+                "Status INTEGER NOT NULL," +
                 "data TEXT NULL," +
 
                 "EntryPrice TEXT NULL," +
@@ -467,8 +467,8 @@ public class CryptoDatabase : IDisposable
                 "Quantity TEXT NULL," +
                 "RemainingDust TEXT NULL," +
                 "ProfitPrice TEXT NULL," +
-                "PartCount Integer NOT NULL," +
-                "ActiveDca Integer NOT NULL," +
+                "PartCount INTEGER NOT NULL," +
+                "ActiveDca INTEGER NOT NULL," +
                 "Profit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
 
@@ -479,7 +479,7 @@ public class CryptoDatabase : IDisposable
                 "Returned TEXT NULL," +
                 "Reserved TEXT NULL," +
                 "Percentage TEXT NULL," +
-                "Reposition Integer," +
+                "Reposition INTEGER," +
 
                 "AltradyPositionId TEXT NULL," +
 
@@ -580,15 +580,15 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "PositionPart"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionPart] (" +
-                "Id integer primary key autoincrement not null," +
-                "PositionId Integer NOT NULL," +
-                "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL," +
-                "IntervalId Integer NOT NULL," +
+                "Id INTEGER primary key autoincrement not null," +
+                "PositionId INTEGER NOT NULL," +
+                "ExchangeId INTEGER NOT NULL," +
+                "SymbolId INTEGER NOT NULL," +
+                "IntervalId INTEGER NOT NULL," +
                 "Strategy TEXT NOT NULL," +
 
-                "Purpose Integer NOT NULL," +
-                "PartNumber Integer NOT NULL," +
+                "Purpose INTEGER NOT NULL," +
+                "PartNumber INTEGER NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
 
@@ -630,14 +630,14 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "PositionStep"))
         {
             connection.Connection.Execute("CREATE TABLE [PositionStep] (" +
-                "Id integer primary key autoincrement not null," +
-                "PositionId integer NOT NULL," +
-                "PositionPartId integer NOT NULL," +
+                "Id INTEGER primary key autoincrement not null," +
+                "PositionId INTEGER NOT NULL," +
+                "PositionPartId INTEGER NOT NULL," +
                 "CreateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
                 "Status INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
-                "CancelInProgress INTEGER NOT NULL," +
+                "CancelInProgress INTEGER NOT NULL DEFAULT 0," +
                 "OrderType INTEGER NOT NULL," +
                 "OrderId TEXT NOT NULL," +
                 "Order2Id TEXT NULL," +
@@ -652,9 +652,9 @@ public class CryptoDatabase : IDisposable
                 "CommissionBase TEXT NULL," +
                 "CommissionQuote TEXT NULL," +
                 "CommissionAsset NULL," +
-                "RemainingDust Text null," +
+                "RemainingDust TEXT null," +
                 "Trailing INTEGER NULL," +
-                "IsCalculated Integer null," +
+                "IsCalculated INTEGER NOT NULL DEFAULT 0," +
                 "FOREIGN KEY(PositionId) REFERENCES Position(Id)," +
                 "FOREIGN KEY(PositionPartId) REFERENCES PositionPart(Id)" +
             ")");
@@ -671,19 +671,19 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Order"))
         {
             connection.Connection.Execute("CREATE TABLE [Order] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
 
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
 
-                "TradeAccountId Integer NOT NULL," +
-                "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL," +
+                "TradeAccountId INTEGER NOT NULL," +
+                "ExchangeId INTEGER NOT NULL," +
+                "SymbolId INTEGER NOT NULL," +
 
                 "OrderId TEXT NOT NULL," +
-                "Side integer NOT NULL," +
-                "Type integer NOT NULL," +
-                "Status integer NOT NULL," +
+                "Side INTEGER NOT NULL," +
+                "Type INTEGER NOT NULL," +
+                "Status INTEGER NOT NULL," +
 
                 "Price TEXT NOT NULL," +
                 "Quantity TEXT NOT NULL," +
@@ -713,12 +713,12 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Trade"))
         {
             connection.Connection.Execute("CREATE TABLE [Trade] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "TradeTime TEXT NOT NULL," +
 
-                "TradeAccountId Integer NOT NULL," +
-                "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL," +
+                "TradeAccountId INTEGER NOT NULL," +
+                "ExchangeId INTEGER NOT NULL," +
+                "SymbolId INTEGER NOT NULL," +
 
                 "TradeId TEXT NOT NULL," +
                 "OrderId TEXT NOT NULL," +
@@ -747,7 +747,7 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Asset"))
         {
             connection.Connection.Execute("CREATE TABLE [Asset] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "TradeAccountId integer," +
 
                 "Name TEXT NOT NULL," +
@@ -768,13 +768,13 @@ public class CryptoDatabase : IDisposable
         if (MissingTable(connection, "Zone"))
         {
             connection.Connection.Execute("CREATE TABLE [Zone] (" +
-                "Id integer primary key autoincrement not null," +
+                "Id INTEGER primary key autoincrement not null," +
                 "CreateTime TEXT not NULL," +
-                "AccountId Integer NOT NULL," +
-                "ExchangeId Integer NOT NULL," +
-                "SymbolId Integer NOT NULL," +
-                "Kind integer not null," +
-                "Side integer not null," +
+                "AccountId INTEGER NOT NULL," +
+                "ExchangeId INTEGER NOT NULL," +
+                "SymbolId INTEGER NOT NULL," +
+                "Kind INTEGER not null," +
+                "Side INTEGER not null," +
                 "OpenTime TEXT NULL," +
                 "Top TEXT not null," +
                 "Bottom TEXT not null," +
@@ -782,7 +782,7 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
-                "IsValid integer not null," +
+                "IsValid INTEGER not null," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
@@ -800,9 +800,9 @@ public class CryptoDatabase : IDisposable
     //    if (MissingTable(connection, "Balance"))
     //    //{
     //    //    connection.Connection.Execute("CREATE TABLE [Balance] (" +
-    //    //        "Id integer primary key autoincrement not null," +
-    //    //        "ExchangeId Integer NOT NULL," +
-    //    //        "SymbolId Integer NOT NULL," +
+    //    //        "Id INTEGER primary key autoincrement not null," +
+    //    //        "ExchangeId INTEGER NOT NULL," +
+    //    //        "SymbolId INTEGER NOT NULL," +
     //    //        "EventTime TEXT NOT NULL," +
     //    //        "Name TEXT NOT NULL," +
     //    //        "Price TEXT NOT NULL," +

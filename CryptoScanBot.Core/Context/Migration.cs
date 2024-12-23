@@ -303,7 +303,7 @@ public class Migration
                 database.Connection.Execute("update TradeAccount set ExchangeId=2 where Name='Bybit Spot trading'", transaction);
 
                 // We ondersteunen niet op alle exchanges trading (of het is ongetest)
-                database.Connection.Execute("alter table TradeAccount add CanTrade Integer null", transaction);
+                database.Connection.Execute("alter table TradeAccount add CanTrade INTEGER NULL DEFAULT 0", transaction);
                 database.Connection.Execute("update TradeAccount set CanTrade=1", transaction);
                 database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Binance%' and TradeAccountType=2", transaction);
                 database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kraken%' and TradeAccountType=2", transaction);
@@ -370,7 +370,7 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                database.Connection.Execute("alter table positionstep add CancelInProgress Integer null", transaction);
+                database.Connection.Execute("alter table positionstep add CancelInProgress INTEGER NULL DEFAULT 0", transaction);
                 database.Connection.Execute("update positionstep set CancelInProgress=0", transaction);
                 database.Connection.Execute("update positionstep set CancelInProgress=1 where status>4", transaction);
 
@@ -892,7 +892,7 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             try { database.Connection.Execute("delete from asset", transaction); } catch { } // ignore, start from scratch
-            try { database.Connection.Execute("alter table PositionStep add IsCalculated Integer null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table PositionStep add IsCalculated INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
