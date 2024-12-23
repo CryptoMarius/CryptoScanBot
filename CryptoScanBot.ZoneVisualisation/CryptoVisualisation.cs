@@ -131,7 +131,7 @@ public partial class CryptoVisualisation : Form
         GlobalData.Settings.Trading.TradeVia = CryptoAccountType.PaperTrade;
         GlobalData.SetTradingAccounts();
         GlobalData.LoadSymbols();
-        ZoneTools.LoadAllZones();
+        LiquidityZones.LoadAllZones();
 
         // Saving the zones
         GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
@@ -636,7 +636,7 @@ public partial class CryptoVisualisation : Form
 
 
                 // Load and (re)calculate the zones
-                ZoneTools.LoadZonesForSymbol(Data.Symbol.Id, Data);
+                LiquidityZones.LoadZonesForSymbol(Data.Symbol.Id, Data);
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = []; // bool = if it needs saving
                 await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data, loadedCandlesInMemory);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);

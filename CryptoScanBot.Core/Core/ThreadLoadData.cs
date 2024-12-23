@@ -223,7 +223,7 @@ public class ThreadLoadData
                 // Check the (internal) barometer symbols
                 BarometerTools.InitBarometerSymbols();
 
-                ZoneTools.LoadAllZones();
+                LiquidityZones.LoadAllZones();
 
                 GlobalData.AddTextToLogTab("Reading candle information");
                 DataStore.LoadCandles();
