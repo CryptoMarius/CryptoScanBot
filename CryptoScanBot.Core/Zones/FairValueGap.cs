@@ -27,8 +27,8 @@ public class FairValueGap
             if (candle.Low > prev2.High && prev.Close > prev2.High)
             {
                 // todo, add the zone
-                decimal perc = 100 * (candle.Low - prev2.High) / prev2.High;
-                if (perc > 0.25m)
+                double perc = 100 * (double)((candle.Low - prev2.High) / prev2.High);
+                if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage)
                 {
                     GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {side} FVG {prev2.High}..{candle.Low} {perc:N2}%");
 
@@ -63,8 +63,8 @@ public class FairValueGap
                 if (candle.High < prev2.Low && prev.Close < prev2.Low)
                 {
                     // todo, add the zone
-                    decimal perc = 100 * (prev2.Low - candle.High) / candle.High;
-                    if (perc > 0.25m)
+                    double perc = 100 * (double)((prev2.Low - candle.High) / candle.High);
+                    if (perc > GlobalData.Settings.Signal.ZonesFvg.MinimumPercentage)
                     {
                         GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {side} FVG {candle.Low}..{prev2.High} {perc:N2}%");
 

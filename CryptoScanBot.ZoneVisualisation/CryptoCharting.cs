@@ -301,6 +301,10 @@ public class CryptoCharting
 
     private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, CryptoZoneSession session)
     {
+        // Dont show the closed fvg
+        if (zone.Kind == CryptoZoneKind.FairValueGap && zone.CloseTime != null)
+            return;
+
         if (zone.OpenTime >= session.MinDate && zone.OpenTime <= session.MaxDate)
         {
             OxyColor color;

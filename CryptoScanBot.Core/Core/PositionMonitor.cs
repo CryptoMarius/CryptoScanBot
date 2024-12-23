@@ -7,6 +7,7 @@ using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
+using CryptoScanBot.Core.Zones;
 
 using Dapper.Contrib.Extensions;
 
@@ -1788,6 +1789,22 @@ public class PositionMonitor //: IDisposable
                             if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
                                 signalList.AddRange(createSignal.SignalList);
 
+
+                            // FVG
+                            if (interval.IntervalPeriod > CryptoIntervalPeriod.interval2m)
+                            {
+                                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
+                                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
+                                {
+                                    SignalCreate createSignal2 = new(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                                    if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
+                                        signalList.AddRange(createSignal2.SignalList);
+                                }
+
+                                // Scan for new FVG's
+                                FairValueGap.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                            }
+
                             // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
                             Interlocked.Increment(ref analyseCount);
                         }
@@ -1795,7 +1812,8 @@ public class PositionMonitor //: IDisposable
                 }
 
 
-                if (GlobalData.Settings.Signal.Zones.ShowZoneSignals)
+                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Zones.ShowSignalsLong) ||
+                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Zones.ShowSignalsShort))
                 {
                     // First try to automaticly calculate the zones
                     CryptoInterval intervalX = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
@@ -1804,7 +1822,7 @@ public class PositionMonitor //: IDisposable
                         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
                         AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(intervalX.IntervalPeriod);
 
-                        // Calculate again if the candle is outside of the previous primary trend coordinates
+                        // Scan for new zones if candle is outside of the previous primary trend
                         decimal valueLow = LastCandle1m.GetLowValue(false);
                         decimal valueHigh = LastCandle1m.GetHighValue(false);
                         if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||

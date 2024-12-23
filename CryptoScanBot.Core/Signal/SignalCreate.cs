@@ -663,7 +663,7 @@ public class SignalCreate
     public async Task<bool> AnalyzeZonesAsync(long candleIntervalOpenTime)
     {
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} zones");
+            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} dom. zones");
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
@@ -680,4 +680,23 @@ public class SignalCreate
         return SignalList.Count > 0;
     }
 
+
+    public async Task<bool> AnalyzeFairValueGapAsync(long candleIntervalOpenTime)
+    {
+        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} fvg zones");
+        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
+        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
+
+        if (Prepare(candleIntervalOpenTime, true))
+        {
+            if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.FairValueGap, out AlgorithmDefinition? algorithmDefinition))
+            {
+                await ExecuteAlgorithmAsync(algorithmDefinition!);
+                //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
+            }
+        }
+        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
+        return SignalList.Count > 0;
+    }
 }
