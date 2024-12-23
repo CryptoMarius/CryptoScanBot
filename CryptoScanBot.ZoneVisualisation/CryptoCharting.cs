@@ -304,6 +304,9 @@ public class CryptoCharting
         // Dont show the closed fvg
         if (zone.Kind == CryptoZoneKind.FairValueGap && zone.CloseTime != null)
             return;
+        if (zone.Kind == CryptoZoneKind.FairValueGap && !session.ShowFvgZones)
+            return;
+
 
         if (zone.OpenTime >= session.MinDate && zone.OpenTime <= session.MaxDate)
         {

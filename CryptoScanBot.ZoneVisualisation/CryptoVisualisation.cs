@@ -197,6 +197,7 @@ public partial class CryptoVisualisation : Form
         EditShowSecondary.Checked = Session.ShowSecondary;
         EditUseOptimizing.Checked = Session.UseOptimizing;
         EditShowSignals.Checked = Session.ShowSignals;
+        EditShowFvgZones.Checked = Session.ShowFvgZones;
     }
 
     public void ShowProgress(string text)
@@ -586,6 +587,7 @@ public partial class CryptoVisualisation : Form
         Session.UseOptimizing = EditUseOptimizing.Checked;
         Session.ShowPoints = EditShowPivots.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
+        Session.ShowFvgZones = EditShowFvgZones.Checked;
     }
 
 

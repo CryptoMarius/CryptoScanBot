@@ -34,6 +34,7 @@ public class CryptoZoneSession
     public bool ForceCalculation { get; set; } = false;
     public bool ShowSignals { get; set; } = false;
     public bool ShowPositions { get; set; } = false;
+    public bool ShowFvgZones { get; set; } = false;
 
     public static CryptoZoneSession LoadSessionSettings()
     {
