@@ -46,6 +46,9 @@ public class SettingsSignal
     // Dominant zones
     public SettingsSignalStrategyZones Zones = new();
 
+    // Fair Value gap zones
+    public SettingsSignalStrategyFvg ZonesFvg = new();
+
     // Logging
     public bool LogMinimalVolume { get; set; } = false;
     public bool LogMinimalPrice { get; set; } = false;

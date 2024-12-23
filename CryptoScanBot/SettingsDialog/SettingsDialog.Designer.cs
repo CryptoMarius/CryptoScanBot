@@ -28,7 +28,6 @@ partial class FrmSettings
     /// </summary>
     private void InitializeComponent()
     {
-        components = new System.ComponentModel.Container();
         panelButtons = new Panel();
         buttonGotoAppDataFolder = new Button();
         buttonReset = new Button();
@@ -203,9 +202,10 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabSignalZones = new TabPage();
         flowLayoutPanel4 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsDominantLevel = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsZonesDominant = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox11 = new GroupBox();
-        EditShowZoneSignals = new CheckBox();
+        EditShowZoneSignalsShort = new CheckBox();
+        EditShowZoneSignalsLong = new CheckBox();
         label60 = new Label();
         label62 = new Label();
         EditZonesCandleCount = new NumericUpDown();
@@ -229,6 +229,14 @@ partial class FrmSettings
         EditZoneStartApply = new CheckBox();
         label30 = new Label();
         EditZoneStartCandleCount = new NumericUpDown();
+        tabSignalZonesFvg = new TabPage();
+        flowLayoutPanel10 = new FlowLayoutPanel();
+        UserControlSettingsSoundAndColorsZonesFvg = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        groupBox14 = new GroupBox();
+        EditShowFvgSignalsShort = new CheckBox();
+        EditShowFvgSignalsLong = new CheckBox();
+        label34 = new Label();
+        EditZonesFvgMinimumPercentage = new NumericUpDown();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -388,6 +396,10 @@ partial class FrmSettings
         groupBox8.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditZoneStartPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditZoneStartCandleCount).BeginInit();
+        tabSignalZonesFvg.SuspendLayout();
+        flowLayoutPanel10.SuspendLayout();
+        groupBox14.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -583,7 +595,7 @@ partial class FrmSettings
         label42.Location = new Point(5, 181);
         label42.Margin = new Padding(4, 0, 4, 0);
         label42.Name = "label42";
-        label42.Size = new Size(91, 15);
+        label42.Size = new Size(108, 15);
         label42.TabIndex = 297;
         label42.Text = "Double click action";
         // 
@@ -604,7 +616,7 @@ partial class FrmSettings
         EditHideSelectedRow.Location = new Point(9, 356);
         EditHideSelectedRow.Margin = new Padding(4, 3, 4, 3);
         EditHideSelectedRow.Name = "EditHideSelectedRow";
-        EditHideSelectedRow.Size = new Size(145, 19);
+        EditHideSelectedRow.Size = new Size(138, 19);
         EditHideSelectedRow.TabIndex = 295;
         EditHideSelectedRow.Text = "Hide selection in grid";
         EditHideSelectedRow.UseVisualStyleBackColor = true;
@@ -626,7 +638,7 @@ partial class FrmSettings
         label22.Location = new Point(9, 26);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
-        label22.Size = new Size(104, 15);
+        label22.Size = new Size(106, 15);
         label22.TabIndex = 290;
         label22.Text = "Standard deviation";
         // 
@@ -781,7 +793,7 @@ partial class FrmSettings
         label74.Location = new Point(9, 35);
         label74.Margin = new Padding(4, 0, 4, 0);
         label74.Name = "label74";
-        label74.Size = new Size(130, 15);
+        label74.Size = new Size(138, 15);
         label74.TabIndex = 283;
         label74.Text = "Extra application caption";
         // 
@@ -791,7 +803,7 @@ partial class FrmSettings
         EditHideSymbolsOnTheLeft.Location = new Point(9, 331);
         EditHideSymbolsOnTheLeft.Margin = new Padding(4, 3, 4, 3);
         EditHideSymbolsOnTheLeft.Name = "EditHideSymbolsOnTheLeft";
-        EditHideSymbolsOnTheLeft.Size = new Size(182, 19);
+        EditHideSymbolsOnTheLeft.Size = new Size(131, 19);
         EditHideSymbolsOnTheLeft.TabIndex = 281;
         EditHideSymbolsOnTheLeft.Text = "Hide the symbol list";
         EditHideSymbolsOnTheLeft.UseVisualStyleBackColor = true;
@@ -822,7 +834,7 @@ partial class FrmSettings
         EditShowInvalidSignals.Location = new Point(9, 304);
         EditShowInvalidSignals.Margin = new Padding(4, 3, 4, 3);
         EditShowInvalidSignals.Name = "EditShowInvalidSignals";
-        EditShowInvalidSignals.Size = new Size(175, 19);
+        EditShowInvalidSignals.Size = new Size(132, 19);
         EditShowInvalidSignals.TabIndex = 278;
         EditShowInvalidSignals.Text = "Show invalid signals";
         EditShowInvalidSignals.UseVisualStyleBackColor = true;
@@ -833,7 +845,7 @@ partial class FrmSettings
         label84.Location = new Point(7, 65);
         label84.Margin = new Padding(4, 0, 4, 0);
         label84.Name = "label84";
-        label84.Size = new Size(100, 15);
+        label84.Size = new Size(94, 15);
         label84.TabIndex = 277;
         label84.Text = "Active exchange";
         // 
@@ -853,7 +865,7 @@ partial class FrmSettings
         label16.Location = new Point(6, 271);
         label16.Margin = new Padding(4, 0, 4, 0);
         label16.Name = "label16";
-        label16.Size = new Size(263, 15);
+        label16.Size = new Size(216, 15);
         label16.TabIndex = 274;
         label16.Text = "Check every x minutes for new symbols";
         // 
@@ -874,7 +886,7 @@ partial class FrmSettings
         label6.Location = new Point(6, 246);
         label6.Margin = new Padding(4, 0, 4, 0);
         label6.Name = "label6";
-        label6.Size = new Size(186, 15);
+        label6.Size = new Size(168, 15);
         label6.TabIndex = 272;
         label6.Text = "Remove signals after x candles";
         // 
@@ -916,7 +928,7 @@ partial class FrmSettings
         label18.Location = new Point(6, 219);
         label18.Margin = new Padding(4, 0, 4, 0);
         label18.Name = "label18";
-        label18.Size = new Size(257, 15);
+        label18.Size = new Size(207, 15);
         label18.TabIndex = 268;
         label18.Text = "Play heart beat sound every x minutes";
         // 
@@ -995,7 +1007,7 @@ partial class FrmSettings
         userControlQuoteHeader1.Margin = new Padding(0);
         userControlQuoteHeader1.Name = "userControlQuoteHeader1";
         userControlQuoteHeader1.Padding = new Padding(0, 0, 0, 3);
-        userControlQuoteHeader1.Size = new Size(618, 23);
+        userControlQuoteHeader1.Size = new Size(620, 23);
         userControlQuoteHeader1.TabIndex = 0;
         // 
         // tabSignal
@@ -1021,6 +1033,7 @@ partial class FrmSettings
         tabControlSignals.Controls.Add(tabSignalStoRsi);
         tabControlSignals.Controls.Add(tabSignalJump);
         tabControlSignals.Controls.Add(tabSignalZones);
+        tabControlSignals.Controls.Add(tabSignalZonesFvg);
         tabControlSignals.Dock = DockStyle.Fill;
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
@@ -1279,7 +1292,7 @@ partial class FrmSettings
         label79.Location = new Point(462, 465);
         label79.Margin = new Padding(4, 0, 4, 0);
         label79.Name = "label79";
-        label79.Size = new Size(176, 15);
+        label79.Size = new Size(97, 15);
         label79.TabIndex = 275;
         label79.Text = "Smaller is a nogo";
         // 
@@ -1289,7 +1302,7 @@ partial class FrmSettings
         label48.Location = new Point(462, 433);
         label48.Margin = new Padding(4, 0, 4, 0);
         label48.Name = "label48";
-        label48.Size = new Size(176, 15);
+        label48.Size = new Size(97, 15);
         label48.TabIndex = 274;
         label48.Text = "Smaller is a nogo";
         // 
@@ -1299,7 +1312,7 @@ partial class FrmSettings
         label38.Location = new Point(462, 403);
         label38.Margin = new Padding(4, 0, 4, 0);
         label38.Name = "label38";
-        label38.Size = new Size(173, 15);
+        label38.Size = new Size(91, 15);
         label38.TabIndex = 273;
         label38.Text = "Larger is a nogo";
         // 
@@ -1309,7 +1322,7 @@ partial class FrmSettings
         label37.Location = new Point(462, 376);
         label37.Margin = new Padding(4, 0, 4, 0);
         label37.Name = "label37";
-        label37.Size = new Size(173, 15);
+        label37.Size = new Size(91, 15);
         label37.TabIndex = 272;
         label37.Text = "Larger is a nogo";
         // 
@@ -1319,7 +1332,7 @@ partial class FrmSettings
         label10.Location = new Point(22, 348);
         label10.Margin = new Padding(4, 0, 4, 0);
         label10.Name = "label10";
-        label10.Size = new Size(186, 15);
+        label10.Size = new Size(139, 15);
         label10.TabIndex = 271;
         label10.Text = "Check the last 60 candles";
         // 
@@ -1329,7 +1342,7 @@ partial class FrmSettings
         EditCandlesWithFlatPriceCheck.Location = new Point(22, 378);
         EditCandlesWithFlatPriceCheck.Margin = new Padding(4, 3, 4, 3);
         EditCandlesWithFlatPriceCheck.Name = "EditCandlesWithFlatPriceCheck";
-        EditCandlesWithFlatPriceCheck.Size = new Size(213, 19);
+        EditCandlesWithFlatPriceCheck.Size = new Size(201, 19);
         EditCandlesWithFlatPriceCheck.TabIndex = 270;
         EditCandlesWithFlatPriceCheck.Text = "Check the number of flat candles";
         EditCandlesWithFlatPriceCheck.UseVisualStyleBackColor = true;
@@ -1340,7 +1353,7 @@ partial class FrmSettings
         EditCandlesWithZeroVolumeCheck.Location = new Point(23, 407);
         EditCandlesWithZeroVolumeCheck.Margin = new Padding(4, 3, 4, 3);
         EditCandlesWithZeroVolumeCheck.Name = "EditCandlesWithZeroVolumeCheck";
-        EditCandlesWithZeroVolumeCheck.Size = new Size(262, 19);
+        EditCandlesWithZeroVolumeCheck.Size = new Size(290, 19);
         EditCandlesWithZeroVolumeCheck.TabIndex = 269;
         EditCandlesWithZeroVolumeCheck.Text = "Check the number of candles without any volume";
         EditCandlesWithZeroVolumeCheck.UseVisualStyleBackColor = true;
@@ -1351,7 +1364,7 @@ partial class FrmSettings
         EditMinimumAboveBollingerBandsSmaCheck.Location = new Point(23, 437);
         EditMinimumAboveBollingerBandsSmaCheck.Margin = new Padding(4, 3, 4, 3);
         EditMinimumAboveBollingerBandsSmaCheck.Name = "EditMinimumAboveBollingerBandsSmaCheck";
-        EditMinimumAboveBollingerBandsSmaCheck.Size = new Size(211, 19);
+        EditMinimumAboveBollingerBandsSmaCheck.Size = new Size(219, 19);
         EditMinimumAboveBollingerBandsSmaCheck.TabIndex = 268;
         EditMinimumAboveBollingerBandsSmaCheck.Text = "Check if candles are above bb.center";
         EditMinimumAboveBollingerBandsSmaCheck.UseVisualStyleBackColor = true;
@@ -1362,7 +1375,7 @@ partial class FrmSettings
         EditMinimumAboveBollingerBandsUpperCheck.Location = new Point(23, 467);
         EditMinimumAboveBollingerBandsUpperCheck.Margin = new Padding(4, 3, 4, 3);
         EditMinimumAboveBollingerBandsUpperCheck.Name = "EditMinimumAboveBollingerBandsUpperCheck";
-        EditMinimumAboveBollingerBandsUpperCheck.Size = new Size(220, 19);
+        EditMinimumAboveBollingerBandsUpperCheck.Size = new Size(247, 19);
         EditMinimumAboveBollingerBandsUpperCheck.TabIndex = 267;
         EditMinimumAboveBollingerBandsUpperCheck.Text = "Check number of candles above bb.upper";
         EditMinimumAboveBollingerBandsUpperCheck.UseVisualStyleBackColor = true;
@@ -1562,7 +1575,7 @@ partial class FrmSettings
         groupBox2.Margin = new Padding(10);
         groupBox2.Name = "groupBox2";
         groupBox2.Padding = new Padding(10);
-        groupBox2.Size = new Size(433, 291);
+        groupBox2.Size = new Size(428, 291);
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Settings";
@@ -1573,7 +1586,7 @@ partial class FrmSettings
         EditStobOnlyIfPreviousStobb.Location = new Point(21, 173);
         EditStobOnlyIfPreviousStobb.Margin = new Padding(4, 3, 4, 3);
         EditStobOnlyIfPreviousStobb.Name = "EditStobOnlyIfPreviousStobb";
-        EditStobOnlyIfPreviousStobb.Size = new Size(222, 19);
+        EditStobOnlyIfPreviousStobb.Size = new Size(184, 19);
         EditStobOnlyIfPreviousStobb.TabIndex = 167;
         EditStobOnlyIfPreviousStobb.Text = "Only if a previous signal exists";
         EditStobOnlyIfPreviousStobb.UseVisualStyleBackColor = true;
@@ -1614,7 +1627,7 @@ partial class FrmSettings
         label85.Location = new Point(21, 243);
         label85.Margin = new Padding(4, 0, 4, 0);
         label85.Name = "label85";
-        label85.Size = new Size(118, 15);
+        label85.Size = new Size(112, 15);
         label85.TabIndex = 162;
         label85.Text = "Minimal trend short";
         // 
@@ -1636,7 +1649,7 @@ partial class FrmSettings
         label66.Location = new Point(21, 213);
         label66.Margin = new Padding(4, 0, 4, 0);
         label66.Name = "label66";
-        label66.Size = new Size(115, 15);
+        label66.Size = new Size(109, 15);
         label66.TabIndex = 160;
         label66.Text = "Minimal trend long";
         // 
@@ -1658,7 +1671,7 @@ partial class FrmSettings
         EditStobIncludeSbmPercAndCrossing.Location = new Point(21, 148);
         EditStobIncludeSbmPercAndCrossing.Margin = new Padding(4, 3, 4, 3);
         EditStobIncludeSbmPercAndCrossing.Name = "EditStobIncludeSbmPercAndCrossing";
-        EditStobIncludeSbmPercAndCrossing.Size = new Size(252, 19);
+        EditStobIncludeSbmPercAndCrossing.Size = new Size(261, 19);
         EditStobIncludeSbmPercAndCrossing.TabIndex = 159;
         EditStobIncludeSbmPercAndCrossing.Text = "With SBM conditiions percentages/crossings";
         EditStobIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
@@ -1669,7 +1682,7 @@ partial class FrmSettings
         EditStobIncludeSbmMaLines.Location = new Point(21, 123);
         EditStobIncludeSbmMaLines.Margin = new Padding(4, 3, 4, 3);
         EditStobIncludeSbmMaLines.Name = "EditStobIncludeSbmMaLines";
-        EditStobIncludeSbmMaLines.Size = new Size(181, 19);
+        EditStobIncludeSbmMaLines.Size = new Size(188, 19);
         EditStobIncludeSbmMaLines.TabIndex = 158;
         EditStobIncludeSbmMaLines.Text = "With SBM conditions MA-lines";
         EditStobIncludeSbmMaLines.UseVisualStyleBackColor = true;
@@ -1680,7 +1693,7 @@ partial class FrmSettings
         EditStobIncludeRsi.Location = new Point(21, 98);
         EditStobIncludeRsi.Margin = new Padding(4, 3, 4, 3);
         EditStobIncludeRsi.Name = "EditStobIncludeRsi";
-        EditStobIncludeRsi.Size = new Size(232, 19);
+        EditStobIncludeRsi.Size = new Size(244, 19);
         EditStobIncludeRsi.TabIndex = 157;
         EditStobIncludeRsi.Text = "With RSI oversold/overbought conditions";
         EditStobIncludeRsi.UseVisualStyleBackColor = true;
@@ -1691,7 +1704,7 @@ partial class FrmSettings
         EditStobbUseLowHigh.Location = new Point(21, 73);
         EditStobbUseLowHigh.Margin = new Padding(4, 3, 4, 3);
         EditStobbUseLowHigh.Name = "EditStobbUseLowHigh";
-        EditStobbUseLowHigh.Size = new Size(398, 19);
+        EditStobbUseLowHigh.Size = new Size(393, 19);
         EditStobbUseLowHigh.TabIndex = 156;
         EditStobbUseLowHigh.Text = "Calculate BB oversold/overbought via low/high instead of open/close";
         EditStobbUseLowHigh.UseVisualStyleBackColor = true;
@@ -1776,7 +1789,7 @@ partial class FrmSettings
         EditSbmUseLowHigh.Location = new Point(14, 91);
         EditSbmUseLowHigh.Margin = new Padding(4, 3, 4, 3);
         EditSbmUseLowHigh.Name = "EditSbmUseLowHigh";
-        EditSbmUseLowHigh.Size = new Size(265, 19);
+        EditSbmUseLowHigh.Size = new Size(213, 19);
         EditSbmUseLowHigh.TabIndex = 168;
         EditSbmUseLowHigh.Text = "Use low/high instead of open/close";
         EditSbmUseLowHigh.UseVisualStyleBackColor = true;
@@ -1787,7 +1800,7 @@ partial class FrmSettings
         EditSbm2UseLowHigh.Location = new Point(18, 179);
         EditSbm2UseLowHigh.Margin = new Padding(4, 3, 4, 3);
         EditSbm2UseLowHigh.Name = "EditSbm2UseLowHigh";
-        EditSbm2UseLowHigh.Size = new Size(281, 19);
+        EditSbm2UseLowHigh.Size = new Size(213, 19);
         EditSbm2UseLowHigh.TabIndex = 167;
         EditSbm2UseLowHigh.Text = "Use low/high instead of open/close";
         EditSbm2UseLowHigh.UseVisualStyleBackColor = true;
@@ -1852,7 +1865,7 @@ partial class FrmSettings
         label12.Location = new Point(14, 156);
         label12.Margin = new Padding(4, 0, 4, 0);
         label12.Name = "label12";
-        label12.Size = new Size(224, 15);
+        label12.Size = new Size(208, 15);
         label12.TabIndex = 159;
         label12.Text = "Percentage in relation to the BB bands";
         // 
@@ -1964,7 +1977,7 @@ partial class FrmSettings
         label39.Location = new Point(18, 79);
         label39.Margin = new Padding(4, 0, 4, 0);
         label39.Name = "label39";
-        label39.Size = new Size(180, 15);
+        label39.Size = new Size(133, 15);
         label39.TabIndex = 159;
         label39.Text = "MACD recovery candles";
         // 
@@ -2014,7 +2027,7 @@ partial class FrmSettings
         label4.Location = new Point(16, 242);
         label4.Margin = new Padding(4, 0, 4, 0);
         label4.Name = "label4";
-        label4.Size = new Size(372, 15);
+        label4.Size = new Size(254, 15);
         label4.TabIndex = 153;
         label4.Text = "Minimal percentage between ma200 and ma20";
         // 
@@ -2035,7 +2048,7 @@ partial class FrmSettings
         label8.Location = new Point(16, 267);
         label8.Margin = new Padding(4, 0, 4, 0);
         label8.Name = "label8";
-        label8.Size = new Size(363, 15);
+        label8.Size = new Size(248, 15);
         label8.TabIndex = 151;
         label8.Text = "Minimal percentage between ma50 and ma20";
         // 
@@ -2056,7 +2069,7 @@ partial class FrmSettings
         label7.Location = new Point(16, 213);
         label7.Margin = new Padding(4, 0, 4, 0);
         label7.Name = "label7";
-        label7.Size = new Size(369, 15);
+        label7.Size = new Size(254, 15);
         label7.TabIndex = 149;
         label7.Text = "Minimal percentage between ma200 and ma50";
         // 
@@ -2088,7 +2101,7 @@ partial class FrmSettings
         EditSbmMa50AndMa20Crossing.Location = new Point(18, 170);
         EditSbmMa50AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa50AndMa20Crossing.Name = "EditSbmMa50AndMa20Crossing";
-        EditSbmMa50AndMa20Crossing.Size = new Size(402, 19);
+        EditSbmMa50AndMa20Crossing.Size = new Size(360, 19);
         EditSbmMa50AndMa20Crossing.TabIndex = 147;
         EditSbmMa50AndMa20Crossing.Text = "Check for a crossing of the ma50 and ma20 in the last x candles";
         EditSbmMa50AndMa20Crossing.UseVisualStyleBackColor = true;
@@ -2110,7 +2123,7 @@ partial class FrmSettings
         EditSbmMa200AndMa50Crossing.Location = new Point(18, 119);
         EditSbmMa200AndMa50Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa50Crossing.Name = "EditSbmMa200AndMa50Crossing";
-        EditSbmMa200AndMa50Crossing.Size = new Size(408, 19);
+        EditSbmMa200AndMa50Crossing.Size = new Size(366, 19);
         EditSbmMa200AndMa50Crossing.TabIndex = 145;
         EditSbmMa200AndMa50Crossing.Text = "Check for a crossing of the ma200 and ma50 in the last x candles";
         EditSbmMa200AndMa50Crossing.UseVisualStyleBackColor = true;
@@ -2132,7 +2145,7 @@ partial class FrmSettings
         EditSbmMa200AndMa20Crossing.Location = new Point(18, 145);
         EditSbmMa200AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa20Crossing.Name = "EditSbmMa200AndMa20Crossing";
-        EditSbmMa200AndMa20Crossing.Size = new Size(408, 19);
+        EditSbmMa200AndMa20Crossing.Size = new Size(366, 19);
         EditSbmMa200AndMa20Crossing.TabIndex = 143;
         EditSbmMa200AndMa20Crossing.Text = "Check for a crossing of the ma200 and ma20 in the last x candles";
         EditSbmMa200AndMa20Crossing.UseVisualStyleBackColor = true;
@@ -2188,7 +2201,7 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(291, 198);
+        groupBox6.Size = new Size(284, 198);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
@@ -2229,7 +2242,7 @@ partial class FrmSettings
         EditSkipFirstSignal.Location = new Point(16, 121);
         EditSkipFirstSignal.Margin = new Padding(4, 3, 4, 3);
         EditSkipFirstSignal.Name = "EditSkipFirstSignal";
-        EditSkipFirstSignal.Size = new Size(213, 19);
+        EditSkipFirstSignal.Size = new Size(217, 19);
         EditSkipFirstSignal.TabIndex = 170;
         EditSkipFirstSignal.Text = "Only if there is a previous storsi sigal";
         EditSkipFirstSignal.UseVisualStyleBackColor = true;
@@ -2240,7 +2253,7 @@ partial class FrmSettings
         EditCheckBollingerBandsCondition.Location = new Point(16, 96);
         EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
         EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
-        EditCheckBollingerBandsCondition.Size = new Size(261, 19);
+        EditCheckBollingerBandsCondition.Size = new Size(223, 19);
         EditCheckBollingerBandsCondition.TabIndex = 169;
         EditCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
         EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
@@ -2251,7 +2264,7 @@ partial class FrmSettings
         label24.Location = new Point(16, 60);
         label24.Margin = new Padding(4, 0, 4, 0);
         label24.Name = "label24";
-        label24.Size = new Size(95, 15);
+        label24.Size = new Size(103, 15);
         label24.TabIndex = 127;
         label24.Text = "Correction STOCH";
         // 
@@ -2270,7 +2283,7 @@ partial class FrmSettings
         label26.Location = new Point(16, 31);
         label26.Margin = new Padding(4, 0, 4, 0);
         label26.Name = "label26";
-        label26.Size = new Size(74, 15);
+        label26.Size = new Size(82, 15);
         label26.TabIndex = 125;
         label26.Text = "Correction RSI";
         // 
@@ -2331,7 +2344,7 @@ partial class FrmSettings
         groupBox5.Margin = new Padding(10);
         groupBox5.Name = "groupBox5";
         groupBox5.Padding = new Padding(10);
-        groupBox5.Size = new Size(285, 151);
+        groupBox5.Size = new Size(257, 151);
         groupBox5.TabIndex = 159;
         groupBox5.TabStop = false;
         groupBox5.Text = "Settings";
@@ -2363,7 +2376,7 @@ partial class FrmSettings
         EditJumpUseLowHighCalculation.Location = new Point(21, 103);
         EditJumpUseLowHighCalculation.Margin = new Padding(4, 3, 4, 3);
         EditJumpUseLowHighCalculation.Name = "EditJumpUseLowHighCalculation";
-        EditJumpUseLowHighCalculation.Size = new Size(250, 19);
+        EditJumpUseLowHighCalculation.Size = new Size(222, 19);
         EditJumpUseLowHighCalculation.TabIndex = 127;
         EditJumpUseLowHighCalculation.Text = "Use High/Low instead of Open/Close";
         EditJumpUseLowHighCalculation.UseVisualStyleBackColor = true;
@@ -2403,7 +2416,7 @@ partial class FrmSettings
         // 
         flowLayoutPanel4.AutoScroll = true;
         flowLayoutPanel4.AutoSize = true;
-        flowLayoutPanel4.Controls.Add(UserControlSettingsSoundAndColorsDominantLevel);
+        flowLayoutPanel4.Controls.Add(UserControlSettingsSoundAndColorsZonesDominant);
         flowLayoutPanel4.Controls.Add(groupBox11);
         flowLayoutPanel4.Controls.Add(groupBox12);
         flowLayoutPanel4.Controls.Add(groupBox13);
@@ -2415,21 +2428,22 @@ partial class FrmSettings
         flowLayoutPanel4.Size = new Size(1120, 572);
         flowLayoutPanel4.TabIndex = 160;
         // 
-        // UserControlSettingsSoundAndColorsDominantLevel
+        // UserControlSettingsSoundAndColorsZonesDominant
         // 
-        UserControlSettingsSoundAndColorsDominantLevel.AutoScroll = true;
-        UserControlSettingsSoundAndColorsDominantLevel.AutoSize = true;
-        UserControlSettingsSoundAndColorsDominantLevel.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsDominantLevel.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsDominantLevel.Name = "UserControlSettingsSoundAndColorsDominantLevel";
-        UserControlSettingsSoundAndColorsDominantLevel.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsDominantLevel.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsDominantLevel.TabIndex = 158;
+        UserControlSettingsSoundAndColorsZonesDominant.AutoScroll = true;
+        UserControlSettingsSoundAndColorsZonesDominant.AutoSize = true;
+        UserControlSettingsSoundAndColorsZonesDominant.Location = new Point(0, 0);
+        UserControlSettingsSoundAndColorsZonesDominant.Margin = new Padding(0);
+        UserControlSettingsSoundAndColorsZonesDominant.Name = "UserControlSettingsSoundAndColorsZonesDominant";
+        UserControlSettingsSoundAndColorsZonesDominant.Padding = new Padding(10);
+        UserControlSettingsSoundAndColorsZonesDominant.Size = new Size(807, 176);
+        UserControlSettingsSoundAndColorsZonesDominant.TabIndex = 158;
         // 
         // groupBox11
         // 
         groupBox11.AutoSize = true;
-        groupBox11.Controls.Add(EditShowZoneSignals);
+        groupBox11.Controls.Add(EditShowZoneSignalsShort);
+        groupBox11.Controls.Add(EditShowZoneSignalsLong);
         groupBox11.Controls.Add(label60);
         groupBox11.Controls.Add(label62);
         groupBox11.Controls.Add(EditZonesCandleCount);
@@ -2438,26 +2452,37 @@ partial class FrmSettings
         groupBox11.Location = new Point(10, 186);
         groupBox11.Margin = new Padding(10);
         groupBox11.Name = "groupBox11";
-        groupBox11.Size = new Size(291, 123);
+        groupBox11.Size = new Size(291, 156);
         groupBox11.TabIndex = 160;
         groupBox11.TabStop = false;
-        groupBox11.Text = "Settings";
+        groupBox11.Text = "Settings dominant zones";
         // 
-        // EditShowZoneSignals
+        // EditShowZoneSignalsShort
         // 
-        EditShowZoneSignals.AutoSize = true;
-        EditShowZoneSignals.Location = new Point(7, 22);
-        EditShowZoneSignals.Margin = new Padding(4, 3, 4, 3);
-        EditShowZoneSignals.Name = "EditShowZoneSignals";
-        EditShowZoneSignals.Size = new Size(122, 19);
-        EditShowZoneSignals.TabIndex = 140;
-        EditShowZoneSignals.Text = "Show zone signals";
-        EditShowZoneSignals.UseVisualStyleBackColor = true;
+        EditShowZoneSignalsShort.AutoSize = true;
+        EditShowZoneSignalsShort.Location = new Point(7, 50);
+        EditShowZoneSignalsShort.Margin = new Padding(4, 3, 4, 3);
+        EditShowZoneSignalsShort.Name = "EditShowZoneSignalsShort";
+        EditShowZoneSignalsShort.Size = new Size(124, 19);
+        EditShowZoneSignalsShort.TabIndex = 141;
+        EditShowZoneSignalsShort.Text = "Show signals short";
+        EditShowZoneSignalsShort.UseVisualStyleBackColor = true;
+        // 
+        // EditShowZoneSignalsLong
+        // 
+        EditShowZoneSignalsLong.AutoSize = true;
+        EditShowZoneSignalsLong.Location = new Point(7, 22);
+        EditShowZoneSignalsLong.Margin = new Padding(4, 3, 4, 3);
+        EditShowZoneSignalsLong.Name = "EditShowZoneSignalsLong";
+        EditShowZoneSignalsLong.Size = new Size(121, 19);
+        EditShowZoneSignalsLong.TabIndex = 140;
+        EditShowZoneSignalsLong.Text = "Show signals long";
+        EditShowZoneSignalsLong.UseVisualStyleBackColor = true;
         // 
         // label60
         // 
         label60.AutoSize = true;
-        label60.Location = new Point(213, 47);
+        label60.Location = new Point(213, 82);
         label60.Margin = new Padding(4, 0, 4, 0);
         label60.Name = "label60";
         label60.Size = new Size(71, 15);
@@ -2467,7 +2492,7 @@ partial class FrmSettings
         // label62
         // 
         label62.AutoSize = true;
-        label62.Location = new Point(6, 47);
+        label62.Location = new Point(6, 82);
         label62.Margin = new Padding(4, 0, 4, 0);
         label62.Name = "label62";
         label62.Size = new Size(77, 15);
@@ -2476,7 +2501,7 @@ partial class FrmSettings
         // 
         // EditZonesCandleCount
         // 
-        EditZonesCandleCount.Location = new Point(135, 44);
+        EditZonesCandleCount.Location = new Point(135, 80);
         EditZonesCandleCount.Margin = new Padding(4, 3, 4, 3);
         EditZonesCandleCount.Maximum = new decimal(new int[] { 6000, 0, 0, 0 });
         EditZonesCandleCount.Name = "EditZonesCandleCount";
@@ -2486,7 +2511,7 @@ partial class FrmSettings
         // label63
         // 
         label63.AutoSize = true;
-        label63.Location = new Point(7, 80);
+        label63.Location = new Point(7, 113);
         label63.Margin = new Padding(4, 0, 4, 0);
         label63.Name = "label63";
         label63.Size = new Size(167, 15);
@@ -2497,7 +2522,7 @@ partial class FrmSettings
         // 
         EditZonesWarnPercentage.DecimalPlaces = 2;
         EditZonesWarnPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditZonesWarnPercentage.Location = new Point(215, 78);
+        EditZonesWarnPercentage.Location = new Point(215, 111);
         EditZonesWarnPercentage.Margin = new Padding(4, 3, 4, 3);
         EditZonesWarnPercentage.Name = "EditZonesWarnPercentage";
         EditZonesWarnPercentage.Size = new Size(56, 23);
@@ -2511,7 +2536,7 @@ partial class FrmSettings
         groupBox12.Controls.Add(EditMaximumUnZoomedPercentage);
         groupBox12.Controls.Add(label54);
         groupBox12.Controls.Add(EditMinimumUnZoomedPercentage);
-        groupBox12.Location = new Point(10, 329);
+        groupBox12.Location = new Point(10, 362);
         groupBox12.Margin = new Padding(10);
         groupBox12.Name = "groupBox12";
         groupBox12.Size = new Size(276, 120);
@@ -2703,6 +2728,98 @@ partial class FrmSettings
         EditZoneStartCandleCount.Size = new Size(56, 23);
         EditZoneStartCandleCount.TabIndex = 129;
         // 
+        // tabSignalZonesFvg
+        // 
+        tabSignalZonesFvg.Controls.Add(flowLayoutPanel10);
+        tabSignalZonesFvg.Location = new Point(4, 27);
+        tabSignalZonesFvg.Name = "tabSignalZonesFvg";
+        tabSignalZonesFvg.Padding = new Padding(3);
+        tabSignalZonesFvg.Size = new Size(1126, 578);
+        tabSignalZonesFvg.TabIndex = 13;
+        tabSignalZonesFvg.Text = "FVG";
+        tabSignalZonesFvg.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel10
+        // 
+        flowLayoutPanel10.AutoScroll = true;
+        flowLayoutPanel10.AutoSize = true;
+        flowLayoutPanel10.Controls.Add(UserControlSettingsSoundAndColorsZonesFvg);
+        flowLayoutPanel10.Controls.Add(groupBox14);
+        flowLayoutPanel10.Dock = DockStyle.Fill;
+        flowLayoutPanel10.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel10.Location = new Point(3, 3);
+        flowLayoutPanel10.Name = "flowLayoutPanel10";
+        flowLayoutPanel10.Size = new Size(1120, 572);
+        flowLayoutPanel10.TabIndex = 161;
+        // 
+        // UserControlSettingsSoundAndColorsZonesFvg
+        // 
+        UserControlSettingsSoundAndColorsZonesFvg.AutoScroll = true;
+        UserControlSettingsSoundAndColorsZonesFvg.AutoSize = true;
+        UserControlSettingsSoundAndColorsZonesFvg.Location = new Point(0, 0);
+        UserControlSettingsSoundAndColorsZonesFvg.Margin = new Padding(0);
+        UserControlSettingsSoundAndColorsZonesFvg.Name = "UserControlSettingsSoundAndColorsZonesFvg";
+        UserControlSettingsSoundAndColorsZonesFvg.Padding = new Padding(10);
+        UserControlSettingsSoundAndColorsZonesFvg.Size = new Size(807, 176);
+        UserControlSettingsSoundAndColorsZonesFvg.TabIndex = 158;
+        // 
+        // groupBox14
+        // 
+        groupBox14.AutoSize = true;
+        groupBox14.Controls.Add(EditShowFvgSignalsShort);
+        groupBox14.Controls.Add(EditShowFvgSignalsLong);
+        groupBox14.Controls.Add(label34);
+        groupBox14.Controls.Add(EditZonesFvgMinimumPercentage);
+        groupBox14.Location = new Point(10, 186);
+        groupBox14.Margin = new Padding(10);
+        groupBox14.Name = "groupBox14";
+        groupBox14.Size = new Size(278, 123);
+        groupBox14.TabIndex = 160;
+        groupBox14.TabStop = false;
+        groupBox14.Text = "Settings FVG";
+        // 
+        // EditShowFvgSignalsShort
+        // 
+        EditShowFvgSignalsShort.AutoSize = true;
+        EditShowFvgSignalsShort.Location = new Point(7, 47);
+        EditShowFvgSignalsShort.Margin = new Padding(4, 3, 4, 3);
+        EditShowFvgSignalsShort.Name = "EditShowFvgSignalsShort";
+        EditShowFvgSignalsShort.Size = new Size(124, 19);
+        EditShowFvgSignalsShort.TabIndex = 141;
+        EditShowFvgSignalsShort.Text = "Show short signals";
+        EditShowFvgSignalsShort.UseVisualStyleBackColor = true;
+        // 
+        // EditShowFvgSignalsLong
+        // 
+        EditShowFvgSignalsLong.AutoSize = true;
+        EditShowFvgSignalsLong.Location = new Point(7, 22);
+        EditShowFvgSignalsLong.Margin = new Padding(4, 3, 4, 3);
+        EditShowFvgSignalsLong.Name = "EditShowFvgSignalsLong";
+        EditShowFvgSignalsLong.Size = new Size(121, 19);
+        EditShowFvgSignalsLong.TabIndex = 140;
+        EditShowFvgSignalsLong.Text = "Show long signals";
+        EditShowFvgSignalsLong.UseVisualStyleBackColor = true;
+        // 
+        // label34
+        // 
+        label34.AutoSize = true;
+        label34.Location = new Point(7, 80);
+        label34.Margin = new Padding(4, 0, 4, 0);
+        label34.Name = "label34";
+        label34.Size = new Size(122, 15);
+        label34.TabIndex = 125;
+        label34.Text = "Minimum percentage";
+        // 
+        // EditZonesFvgMinimumPercentage
+        // 
+        EditZonesFvgMinimumPercentage.DecimalPlaces = 2;
+        EditZonesFvgMinimumPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditZonesFvgMinimumPercentage.Location = new Point(215, 78);
+        EditZonesFvgMinimumPercentage.Margin = new Padding(4, 3, 4, 3);
+        EditZonesFvgMinimumPercentage.Name = "EditZonesFvgMinimumPercentage";
+        EditZonesFvgMinimumPercentage.Size = new Size(56, 23);
+        EditZonesFvgMinimumPercentage.TabIndex = 126;
+        // 
         // tabTrading
         // 
         tabTrading.Controls.Add(tabControlTrading);
@@ -2876,7 +2993,7 @@ partial class FrmSettings
         EditCheckFurtherPriceMove.Location = new Point(21, 91);
         EditCheckFurtherPriceMove.Margin = new Padding(4, 3, 4, 3);
         EditCheckFurtherPriceMove.Name = "EditCheckFurtherPriceMove";
-        EditCheckFurtherPriceMove.Size = new Size(184, 19);
+        EditCheckFurtherPriceMove.Size = new Size(185, 19);
         EditCheckFurtherPriceMove.TabIndex = 278;
         EditCheckFurtherPriceMove.Text = "Check price decrease/increase";
         EditCheckFurtherPriceMove.UseVisualStyleBackColor = true;
@@ -2887,7 +3004,7 @@ partial class FrmSettings
         EditCheckIncreasingMacd.Location = new Point(20, 47);
         EditCheckIncreasingMacd.Margin = new Padding(4, 3, 4, 3);
         EditCheckIncreasingMacd.Name = "EditCheckIncreasingMacd";
-        EditCheckIncreasingMacd.Size = new Size(184, 19);
+        EditCheckIncreasingMacd.Size = new Size(226, 19);
         EditCheckIncreasingMacd.TabIndex = 277;
         EditCheckIncreasingMacd.Text = "MACD must be increasing/decreasing";
         EditCheckIncreasingMacd.UseVisualStyleBackColor = true;
@@ -2898,7 +3015,7 @@ partial class FrmSettings
         EditCheckIncreasingStoch.Location = new Point(20, 68);
         EditCheckIncreasingStoch.Margin = new Padding(4, 3, 4, 3);
         EditCheckIncreasingStoch.Name = "EditCheckIncreasingStoch";
-        EditCheckIncreasingStoch.Size = new Size(199, 19);
+        EditCheckIncreasingStoch.Size = new Size(192, 19);
         EditCheckIncreasingStoch.TabIndex = 276;
         EditCheckIncreasingStoch.Text = "Stoch not overbought/oversold";
         EditCheckIncreasingStoch.UseVisualStyleBackColor = true;
@@ -2909,7 +3026,7 @@ partial class FrmSettings
         EditCheckIncreasingRsi.Location = new Point(20, 26);
         EditCheckIncreasingRsi.Margin = new Padding(4, 3, 4, 3);
         EditCheckIncreasingRsi.Name = "EditCheckIncreasingRsi";
-        EditCheckIncreasingRsi.Size = new Size(165, 19);
+        EditCheckIncreasingRsi.Size = new Size(207, 19);
         EditCheckIncreasingRsi.TabIndex = 275;
         EditCheckIncreasingRsi.Text = "RSI must be increasing/decreasing";
         EditCheckIncreasingRsi.UseVisualStyleBackColor = true;
@@ -3026,7 +3143,7 @@ partial class FrmSettings
         EditLogCanceledOrders.Location = new Point(12, 90);
         EditLogCanceledOrders.Margin = new Padding(4, 3, 4, 3);
         EditLogCanceledOrders.Name = "EditLogCanceledOrders";
-        EditLogCanceledOrders.Size = new Size(157, 19);
+        EditLogCanceledOrders.Size = new Size(135, 19);
         EditLogCanceledOrders.TabIndex = 340;
         EditLogCanceledOrders.Text = "Log cancelled orders";
         EditLogCanceledOrders.UseVisualStyleBackColor = true;
@@ -3037,7 +3154,7 @@ partial class FrmSettings
         EditSoundTradeNotification.Location = new Point(12, 65);
         EditSoundTradeNotification.Margin = new Padding(4, 3, 4, 3);
         EditSoundTradeNotification.Name = "EditSoundTradeNotification";
-        EditSoundTradeNotification.Size = new Size(186, 19);
+        EditSoundTradeNotification.Size = new Size(141, 19);
         EditSoundTradeNotification.TabIndex = 339;
         EditSoundTradeNotification.Text = "Play sound for a trade";
         EditSoundTradeNotification.UseVisualStyleBackColor = true;
@@ -3048,7 +3165,7 @@ partial class FrmSettings
         EditDisableNewPositions.Location = new Point(12, 40);
         EditDisableNewPositions.Margin = new Padding(4, 3, 4, 3);
         EditDisableNewPositions.Name = "EditDisableNewPositions";
-        EditDisableNewPositions.Size = new Size(187, 19);
+        EditDisableNewPositions.Size = new Size(158, 19);
         EditDisableNewPositions.TabIndex = 338;
         EditDisableNewPositions.Text = "Dont open new positions";
         EditDisableNewPositions.UseVisualStyleBackColor = true;
@@ -3125,7 +3242,7 @@ partial class FrmSettings
         label59.Location = new Point(-170, 282);
         label59.Margin = new Padding(4, 0, 4, 0);
         label59.Name = "label59";
-        label59.Size = new Size(97, 15);
+        label59.Size = new Size(96, 15);
         label59.TabIndex = 271;
         label59.Text = "Entry conditions";
         // 
@@ -3235,7 +3352,7 @@ partial class FrmSettings
         label55.Location = new Point(20, 36);
         label55.Margin = new Padding(4, 0, 4, 0);
         label55.Name = "label55";
-        label55.Size = new Size(308, 15);
+        label55.Size = new Size(223, 15);
         label55.TabIndex = 222;
         label55.Text = "(1 symbol per line with optional remarks)";
         // 
@@ -3277,9 +3394,8 @@ partial class FrmSettings
         label51.Location = new Point(20, 36);
         label51.Margin = new Padding(4, 0, 4, 0);
         label51.Name = "label51";
-        label51.Size = new Size(308, 15);
+        label51.Size = new Size(0, 15);
         label51.TabIndex = 222;
-        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabShortWhiteList
         // 
@@ -3319,9 +3435,8 @@ partial class FrmSettings
         label29.Location = new Point(20, 36);
         label29.Margin = new Padding(4, 0, 4, 0);
         label29.Name = "label29";
-        label29.Size = new Size(308, 15);
+        label29.Size = new Size(0, 15);
         label29.TabIndex = 221;
-        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabShortBlackList
         // 
@@ -3361,9 +3476,8 @@ partial class FrmSettings
         label49.Location = new Point(20, 36);
         label49.Margin = new Padding(4, 0, 4, 0);
         label49.Name = "label49";
-        label49.Size = new Size(308, 15);
+        label49.Size = new Size(0, 15);
         label49.TabIndex = 222;
-        label55.Text = "(1 symbol per line with optional remarks)";
         // 
         // tabPageOptions
         // 
@@ -3411,7 +3525,7 @@ partial class FrmSettings
         EditDebugTrendCalculation.Location = new Point(25, 50);
         EditDebugTrendCalculation.Margin = new Padding(4, 3, 4, 3);
         EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
-        EditDebugTrendCalculation.Size = new Size(325, 19);
+        EditDebugTrendCalculation.Size = new Size(322, 19);
         EditDebugTrendCalculation.TabIndex = 302;
         EditDebugTrendCalculation.Text = "Show more information during TrendCalculation (in file)";
         EditDebugTrendCalculation.UseVisualStyleBackColor = true;
@@ -3603,6 +3717,13 @@ partial class FrmSettings
         groupBox8.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditZoneStartPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditZoneStartCandleCount).EndInit();
+        tabSignalZonesFvg.ResumeLayout(false);
+        tabSignalZonesFvg.PerformLayout();
+        flowLayoutPanel10.ResumeLayout(false);
+        flowLayoutPanel10.PerformLayout();
+        groupBox14.ResumeLayout(false);
+        groupBox14.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -3877,7 +3998,7 @@ partial class FrmSettings
     private CheckBox EditDebugAssetManagement;
     private TabPage tabSignalZones;
     private FlowLayoutPanel flowLayoutPanel4;
-    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsDominantLevel;
+    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsZonesDominant;
     private GroupBox groupBox8;
     private Label label30;
     private NumericUpDown EditZoneStartCandleCount;
@@ -3918,10 +4039,19 @@ partial class FrmSettings
     private Label label62;
     private Label label63;
     private GroupBox groupBox12;
-    private CheckBox EditShowZoneSignals;
+    private CheckBox EditShowZoneSignalsLong;
     private GroupBox groupBox13;
     private CheckBox EditZoneStartApply;
     private NumericUpDown EditZonesCandleCount;
     private NumericUpDown EditMinimumZoomedPercentage;
     private CheckBox EditZonesApplyUnzoomed;
+    private TabPage tabSignalZonesFvg;
+    private FlowLayoutPanel flowLayoutPanel10;
+    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsZonesFvg;
+    private GroupBox groupBox14;
+    private CheckBox EditShowFvgSignalsLong;
+    private Label label34;
+    private NumericUpDown EditZonesFvgMinimumPercentage;
+    private CheckBox EditShowZoneSignalsShort;
+    private CheckBox EditShowFvgSignalsShort;
 }
