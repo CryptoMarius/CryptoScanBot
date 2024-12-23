@@ -5,29 +5,27 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Other;
 
-public class SignalDominantLevelLong : SignalCreateBase
+public class SignalFairValueGapLong : SignalCreateBase
 {
-    public SignalDominantLevelLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalFairValueGapLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.DominantLevel;
+        SignalStrategy = CryptoSignalStrategy.FairValueGap;
     }
 
 
     public override bool IsSignal()
     {
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
-        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
+        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
         int index = 0;
         ExtraText = "";
         bool result = false;
-        decimal distance = 100m;
-        while (index < symbolData.ZoneListLong.Count) // sorted on Zone.Top descending
+        while (index < symbolData.FvgListLong.Count) // sorted on Zone.Top descending
         {
             decimal? alarmPrice = null;
-            var zone = symbolData.ZoneListLong[index];
+            var zone = symbolData.FvgListLong[index];
             if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
             {
                 // Close old invalid zone without notifications..
@@ -40,7 +38,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                 else
                 {
                     // If it is within a certain percentage signal it..
-                    alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                    alarmPrice = zone.Top;
                     if (CandleLast.Low <= alarmPrice)
                     {
                         if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
@@ -62,22 +60,13 @@ public class SignalDominantLevelLong : SignalCreateBase
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                         GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
                     }
-
-
-                    // Show the distance to the next available zone (for the symbol grid)
-                    if (zone.CloseTime == null)
-                    {
-                        decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
-                        if (dist < distance)
-                            distance = dist;
-                    }
                 }
             }
 
             if (zone.CloseTime != null)
             {
-                symbolData.ZoneListLong.RemoveAt(index);
-                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone {zone.Id} {zone.Side} {zone.Description}");
+                symbolData.FvgListLong.RemoveAt(index);
+                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone {zone.Id} {zone.Side} {zone.Description}");
             }
             else index++;
 
@@ -87,7 +76,6 @@ public class SignalDominantLevelLong : SignalCreateBase
             if (alarmPrice != null && alarmPrice > zone.Top)
                 break;
         }
-        symbolIntervalData.BestLongZone = distance;
         return result;
     }
 

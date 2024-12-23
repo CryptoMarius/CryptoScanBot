@@ -128,8 +128,8 @@ public static class RegisterAlgorithms
         {
             Name = "dom.nearby",
             Strategy = CryptoSignalStrategy.DominantLevel,
-            AnalyzeLongType = typeof(DominantLevelLong),
-            AnalyzeShortType = typeof(DominantLevelShort),
+            AnalyzeLongType = typeof(SignalDominantLevelLong),
+            AnalyzeShortType = typeof(SignalDominantLevelShort),
         });
 
 
@@ -153,6 +153,13 @@ public static class RegisterAlgorithms
         //});
 
 
+        Register(new AlgorithmDefinition()
+        {
+            Name = "fvg",
+            Strategy = CryptoSignalStrategy.FairValueGap,
+            AnalyzeLongType = typeof(SignalFairValueGapLong),
+            AnalyzeShortType = typeof(SignalFairValueGapShort),
+        });
     }
 
 

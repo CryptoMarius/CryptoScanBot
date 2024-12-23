@@ -51,7 +51,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
         if (CandleLast.CandleData!.Sma50 >= CandleLast.CandleData.Sma20)
             return false;
 
-        if (!IsInLowerPartOfBollingerBands(1, 10))
+        if (!IsInLowerPartOfBollingerBands(1, 7.5m))
             return false;
 
 
@@ -73,7 +73,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
 
             if (!IndicatorsOkay(candle))
                 return false;
-            if (!IsInLowerPartOfBollingerBands(candle, 30))
+            if (!IsInLowerPartOfBollingerBands(candle, 30m))
                 return false;
         }
 

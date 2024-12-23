@@ -7,6 +7,7 @@ namespace CryptoScanBot.Core.Model;
 public enum CryptoZoneKind
 {
     DominantLevel = 1, // Or LiquidityZone..?
+    FairValueGap = 2,
 }
 
 [Table("Zone")]
