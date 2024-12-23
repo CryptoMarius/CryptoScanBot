@@ -1,6 +1,9 @@
 CryptoScanBot release historie:
 
-15-09-2024 1.9.5.1215
+15-09-2024 1.9.5.1223
+- Scanner - Fair Value gap zones detecteren, opslaan en melden
+- Scanner - Fair Value gap zones: Aparte instellingen voor long/short, minimale percentage (kleine percentages zijn de moeite niet waard c.q. minder betrouwbaar)
+- Scanner - Dominante zones: Aparte instellingen voor long/short
 - Scanner - Dominante zones: De debugteksten verwijderen en in plaats daarvan het percentage dat de zone genaderd is
 - Scanner - Dominante zones: Elke 5 minuten een melding is teveel van het goede, voorlopig is dit nu op 1x per uur gezet
 - Scanner - Aandacht voor de grote hoeveelheid memory die nu gebruikt wordt, het lijkt veel hoger als vorige versies (piekt af en toe)

@@ -6,9 +6,12 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
-- Nadenken over een melding van een Fair value Gap, double top en bottom..
+- Nadenken over een melding van een Fair value Gap, double top en bottom, sluit niet echt aan op voorgaande
+- Verwijderen van gesloten FVG uit de database (cleanup)
+- Verwijderen van oude gesloten oude Zones uit de database (cleanup)
 
 Scanner:
+- Scanner - Optioneel, een plaatje in Telegram van de situatie
 - Scanner - De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de charting library de fout in?
 - Scanner - Signalen importeren of exporteren, exchange, symbol, interval, time, strategy, price 
 - Scanner - Altcoin season index toevoegen https://www.blockchaincenter.net/en/altcoin-season-index/, maar die site heeft geen api?
