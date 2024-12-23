@@ -1710,7 +1710,7 @@ public partial class TestForm : Form
                 // Voor de SignalCreate moet ook de 1m geladen worden
                 if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval? interval))
                     return;
-                LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
+                LoadSymbolCandles(symbol, interval); //, dateCandleStart, dateCandleEinde);
 
                 CreateBarometerBitmap(symbol.QuoteData, interval);
 
@@ -2276,7 +2276,7 @@ public partial class TestForm : Form
         GlobalData.Settings.Signal.Long.Strategy.Add("sbm4");
         GlobalData.Settings.Signal.Long.Strategy.Add("flux");
         GlobalData.Settings.Signal.Long.Strategy.Add("stob");
-        //GlobalData.Settings.Signal.Analyze.Strategy[CryptoOrderSide.Buy].Add(algorithm);
+        //GlobalData.Settings.Signal.ScanForNew.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
 
         GlobalData.Settings.Trading.Active = true;
@@ -2362,7 +2362,7 @@ public partial class TestForm : Form
                         {
                             if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? intervalX))
                             {
-                                LoadSymbolCandles(symbolX, intervalX, config.DateStart, config.DateEinde);
+                                LoadSymbolCandles(symbolX, intervalX); //, config.DateStart, config.DateEinde);
                             }
                         }
                     }
@@ -2397,15 +2397,15 @@ public partial class TestForm : Form
                             foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
                             {
                                 if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval15m)
-                                    LoadSymbolCandles(symbol, intervalX, config.DateStart, config.DateEinde);
+                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
                                 if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval30m)
-                                    LoadSymbolCandles(symbol, intervalX, config.DateStart, config.DateEinde);
+                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
                                 if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1h)
-                                    LoadSymbolCandles(symbol, intervalX, config.DateStart, config.DateEinde);
+                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
                                 if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval4h)
-                                    LoadSymbolCandles(symbol, intervalX, config.DateStart, config.DateEinde);
+                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
                                 if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1d)
-                                    LoadSymbolCandles(symbol, intervalX, config.DateStart, config.DateEinde);
+                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
                             }
                         }
                     }
