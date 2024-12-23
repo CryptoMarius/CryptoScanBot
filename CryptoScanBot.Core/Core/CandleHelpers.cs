@@ -11,7 +11,7 @@ public static class Helper
     public static DateTime GetExpirationDate(this CryptoSignal signal, CryptoInterval interval)
     {
         // Keep these longer
-        if (signal.Strategy == CryptoSignalStrategy.DominantLevel)
+        if (signal.Strategy >= CryptoSignalStrategy.DominantLevel)
             return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 2);
         else
             return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);
