@@ -234,7 +234,7 @@ public partial class FrmSettings : Form
         EditJumpCandlesLookbackCount.Value = settings.Signal.Jump.CandlesLookbackCount;
         EditJumpUseLowHighCalculation.Checked = settings.Signal.Jump.UseLowHighCalculation;
 
-        // Zones
+        // Dominant Zones
         UserControlSettingsSoundAndColorsZonesDominant.LoadConfig("Zones", settings.Signal.Zones);
 
         EditShowZoneSignalsLong.Checked = settings.Signal.Zones.ShowSignalsLong;
@@ -256,6 +256,7 @@ public partial class FrmSettings : Form
         EditZoneStartPercentage.Value = (decimal)settings.Signal.Zones.ZoneStartPercentage;
 
         // Zones FVG
+        UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.Zones);
         EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
         EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
@@ -504,7 +505,7 @@ public partial class FrmSettings : Form
         settings.Signal.Jump.UseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
 
 
-        // Zones
+        // Dominant Zones
         UserControlSettingsSoundAndColorsZonesDominant.SaveConfig(settings.Signal.Zones);
 
         settings.Signal.Zones.ShowSignalsLong = EditShowZoneSignalsLong.Checked;
@@ -528,10 +529,10 @@ public partial class FrmSettings : Form
 
         // FVG
         UserControlSettingsSoundAndColorsZonesFvg.SaveConfig(settings.Signal.ZonesFvg);
-
         settings.Signal.ZonesFvg.ShowSignalsLong = EditShowFvgSignalsLong.Checked;
         settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;
         settings.Signal.ZonesFvg.MinimumPercentage = (double)EditZonesFvgMinimumPercentage.Value;
+
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

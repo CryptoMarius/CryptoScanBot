@@ -47,7 +47,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                             zone.AlarmDate = CandleLast.Date;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
-                            ExtraText = $"{zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                            ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         }
                     }
 
@@ -58,7 +58,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                         ExtraText += "....";
                         zone.CloseTime = CandleLast.OpenTime;
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone {zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
                 }
             }
@@ -66,7 +66,7 @@ public class SignalFairValueGapLong : SignalCreateBase
             if (zone.CloseTime != null)
             {
                 symbolData.FvgListLong.RemoveAt(index);
-                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone {zone.Id} {zone.Side} {zone.Description}");
+                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
             }
             else index++;
 
