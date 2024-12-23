@@ -256,8 +256,8 @@ public partial class FrmSettings : Form
         EditZoneStartPercentage.Value = (decimal)settings.Signal.Zones.ZoneStartPercentage;
 
         // Zones FVG
-        EditShowZoneFvgSignals.CheckedLong = settings.Signal.ZonesFvg.ShowZoneSignalsLong;
-        EditShowZoneFvgSignals.CheckedShort = settings.Signal.ZonesFvg.ShowZoneSignalsShort;
+        EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
+        EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
 
         // --------------------------------------------------------------------------------
