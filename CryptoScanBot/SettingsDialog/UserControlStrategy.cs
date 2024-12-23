@@ -16,7 +16,7 @@ public partial class UserControlStrategy : UserControl
     {
         foreach (var signalDefinition in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
-            if (signalDefinition.Strategy == CryptoSignalStrategy.DominantLevel)
+            if (signalDefinition.Strategy >= CryptoSignalStrategy.DominantLevel)
                 continue;
             if (isForTrading && signalDefinition.Strategy == CryptoSignalStrategy.Jump)
                 continue;
