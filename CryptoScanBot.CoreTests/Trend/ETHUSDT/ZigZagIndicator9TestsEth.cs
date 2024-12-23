@@ -61,7 +61,7 @@ public class ZigZagIndicator9TestsEth : TestBase
         // act
 
 
-        long key = symbolInterval.CandleList.Values.First().OpenTime;
+        long key = symbolInterval.CandleList.Keys.First();
         foreach (var data in list)
         {
             while (indicator.PivotList.Count <= data.I)

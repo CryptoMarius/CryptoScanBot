@@ -200,13 +200,13 @@ public class Candles
                         // Naar het lagere tijd interval om de eerste en laatste candle te achterhalen
                         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(intervalCalc.ConstructFrom!.IntervalPeriod);
                         CryptoCandleList candlesLowerInterval = symbolPeriod.CandleList;
-                        if (candlesLowerInterval.Values.Any())
+                        if (candlesLowerInterval.Count > 0)
                         {
-                            long unixFirst = candlesLowerInterval.Values.First().OpenTime;
+                            long unixFirst = candlesLowerInterval.Keys.First();
                             unixFirst -= unixFirst % intervalCalc.Duration; // too much?
                             //DateTime dateFirstDebug = CandleTools.GetUnixDate(unixFirst);
 
-                            long unixLast = candlesLowerInterval.Values.Last().OpenTime;
+                            long unixLast = candlesLowerInterval.Keys.Last();
                             unixLast -= unixLast % intervalCalc.Duration; // too much? ++ ?
                             //DateTime dateLastDebug = CandleTools.GetUnixDate(unixLast);
 

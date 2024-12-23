@@ -72,7 +72,7 @@ public class ThreadCheckFinishedPosition
             CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
             {
-                CryptoCandle candle = symbolInterval.CandleList.Values[^1]; // todo, not working for emulator!
+                CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                 try
                 {
                     if (candle.Low < position.PriceMin || position.PriceMin == 0)

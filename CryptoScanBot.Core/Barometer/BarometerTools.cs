@@ -87,7 +87,7 @@ public class BarometerTools
             long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
             while (candles.Values.Count > 0)
             {
-                CryptoCandle c = candles.Values[0];
+                CryptoCandle c = candles.Values.First();
                 if (c.OpenTime < startFetchUnix)
                     candles.Remove(c.OpenTime);
                 else break;
@@ -117,7 +117,7 @@ public class BarometerTools
             {
                 // Geef deze alvast een waarde
                 if (candles.Count > 0)
-                    periodStart = candles.Values.First().OpenTime;
+                    periodStart = candles.Keys.First();
                 else
                     periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60); // GlobalData.GetCurrentDateTime(position.TradeAccount) oeps
 
