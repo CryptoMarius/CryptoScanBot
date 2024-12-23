@@ -30,6 +30,10 @@ public class AccountSymbolData
     public List<CryptoZone> ZoneListLong { get; set; } = [];
     public List<CryptoZone> ZoneListShort { get; set; } = [];
 
+    // Active FVG zones (CloseTime = null)
+    public List<CryptoZone> FvgListLong { get; set; } = [];
+    public List<CryptoZone> FvgListShort { get; set; } = [];
+
     public AccountSymbolData()
     {
         SymbolTrendDataList = [];
@@ -50,9 +54,14 @@ public class AccountSymbolData
         return SymbolTrendDataList[(int)intervalPeriod];
     }
 
+    public void ResetFvgData()
+    {
+        FvgListLong.Clear();
+        FvgListShort.Clear();
+    }
+
     public void ResetZoneData()
     {
-        // Does this work (for the reset every hour)
         ZoneListLong.Clear();
         ZoneListShort.Clear();
 
@@ -62,7 +71,6 @@ public class AccountSymbolData
 
     public void ResetTrendData()
     {
-        // Does this work (for the reset every hour)
         MarketTrendDate = null;
         MarketTrendPercentage = null;
 
@@ -70,14 +78,12 @@ public class AccountSymbolData
             accountSymbolInterval.ResetTrendData();
     }
 
-    public void Reset()
-    {
-        ResetZoneData();
-        ResetTrendData();
-    }
 
     public void SortZones()
     {
+        FvgListLong.Sort((zoneA, zoneB) => zoneB.Top.CompareTo(zoneA.Top)); // desc via Top
+        FvgListShort.Sort((zoneA, zoneB) => zoneA.Bottom.CompareTo(zoneB.Bottom)); // asc via Bottom
+
         ZoneListLong.Sort((zoneA, zoneB) => zoneB.Top.CompareTo(zoneA.Top)); // desc via Top
         ZoneListShort.Sort((zoneA, zoneB) => zoneA.Bottom.CompareTo(zoneB.Bottom)); // asc via Bottom
     }
