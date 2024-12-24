@@ -101,9 +101,9 @@ public class CandleEngine
             int count = symbolInterval.CandleList.Count;
             binaryWriter.Write(count);
 
-            for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+            foreach (var pair in symbolInterval.CandleList)
             {
-                CryptoCandle? candle = symbolInterval.CandleList.Values[j];
+                CryptoCandle? candle = pair.Value;
                 if (candle != null)
                 {
                     binaryWriter.Write(candle.OpenTime);
@@ -114,6 +114,28 @@ public class CandleEngine
                     binaryWriter.Write(candle.Volume);
                 }
             }
+
+            //if (count > 0)
+            //{
+            //    long openTime = symbolInterval.CandleList.Keys.First();
+            //    while (count-- > 0)
+            //    {
+            //        //for (int j = 0; j < symbolInterval.CandleList.Count; j++)
+            //        {
+            //            CryptoCandle? candle = symbolInterval.CandleList.Values[j];
+            //            if (candle != null)
+            //            {
+            //                binaryWriter.Write(candle.OpenTime);
+            //                binaryWriter.Write(candle.Open);
+            //                binaryWriter.Write(candle.High);
+            //                binaryWriter.Write(candle.Low);
+            //                binaryWriter.Write(candle.Close);
+            //                binaryWriter.Write(candle.Volume);
+            //            }
+            //        }
+            //        openTime += interval.Duration;
+            //    }
+            //}
         }
         finally
         {
@@ -182,25 +204,35 @@ public class CandleEngine
                     long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
                     // investigate the first, does it need removal?
-                    CryptoCandle c = symbolInterval.CandleList.Values.First();
-                    if (c.OpenTime < startFetchUnix)
+                    long openTime = symbolInterval.CandleList.Keys.First();
+                    if (openTime < startFetchUnix)
                     {
                         // It takes forever to delete 100.000 of candles!!
                         // There is a *huge* amount of candles, just copy them to a new list
                         // This copies worst case 500 for the higher intervals, a bit more for the 1m
                         // TODO: Use TakeLast() does not work with sortedlist (investigate)
                         CryptoCandleList newList = [];
-                        int index = symbolInterval.CandleList.Count - 1;
-                        while (index > 0)
+
+                        long unix = symbolInterval.CandleList.Keys.Last();
+                        while (unix >= startFetchUnix)
                         {
-                            c = symbolInterval.CandleList.Values[index];
-                            if (c.OpenTime < startFetchUnix)
-                                break;
-                            newList.Add(c.OpenTime, c);
-                            index--;
+                            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? c))
+                                newList.Add(c.OpenTime, c);
+                            unix -= symbolInterval.Interval.Duration;
                         }
+
+
+                        //int index = symbolInterval.CandleList.Count - 1;
+                        //while (index > 0)
+                        //{
+                        //    CryptoCandle c = symbolInterval.CandleList.Values[index];
+                        //    if (c.OpenTime < startFetchUnix)
+                        //        break;
+                        //    newList.Add(c.OpenTime, c);
+                        //    index--;
+                        //}
                         symbolInterval.CandleList = newList;
-                        symbolInterval.CandleList.TrimExcess();
+                        //symbolInterval.CandleList.TrimExcess();
                     }
                 }
                 //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Cleaning {cleaned - symbolInterval.CandleList.Count} candles");
@@ -258,7 +290,7 @@ public class CandleEngine
         if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
             throw new Exception("Not supported interval");
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        //CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         (long unixMin, long unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
         (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
