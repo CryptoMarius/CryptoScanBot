@@ -1791,7 +1791,7 @@ public class PositionMonitor //: IDisposable
 
 
                             // FVG
-                            if (interval.IntervalPeriod > CryptoIntervalPeriod.interval2m)
+                            if (interval.IntervalPeriod >= CryptoIntervalPeriod.interval15m)
                             {
                                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
                                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
