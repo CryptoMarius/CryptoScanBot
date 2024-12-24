@@ -515,7 +515,7 @@ public class LiquidityZones
         List<ZigZagResult> zonesLong = [];
         List<ZigZagResult> zonesShort = [];
 
-        long delay = 6 * data.SymbolInterval.Interval.Duration;
+        long delay = 4 * data.SymbolInterval.Interval.Duration;
         long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
 
         if (data.Indicator.ZigZagList.Count > 0)
@@ -599,12 +599,18 @@ public class LiquidityZones
                         {
                             double diff = (double)Math.Abs(zigZag.Value - price.Value);
                             double perc = 100 * diff / (double)zigZag.Value;
+                            //if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                            //{
+                            //    zigZag.NiceIntro = $"{perc:N2} !";
+                            //}
+                            //else
+                            //    zigZag.NiceIntro = $"{perc:N2}";
                             if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
                             {
-                                zigZag.NiceIntro = $"{perc:N2} !!!";
+                                zigZag.NiceIntro = $"!";
                             }
                             else
-                                zigZag.NiceIntro = $"{perc:N2}";
+                                zigZag.NiceIntro = "";
                         }
                     }
                 }
@@ -774,7 +780,110 @@ public class LiquidityZones
         }
     }
 
-    
+
+    private static void CalculateBrokenZones(CryptoSymbolInterval symbolInterval, ref long key, long checkUpTo, long delay, List<CryptoZone> zonesLong, List<CryptoZone> zonesShort)
+    {
+        while (key <= checkUpTo)
+        {
+            if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
+            {
+                // Note: A candle could break multiple long or short boxes, that might be an unforseen problem..
+
+                foreach (var zone in zonesLong)
+                {
+                    if (key >= zone.OpenTime!.Value + delay && candle.Low < zone.Top)
+                    {
+                        zone.CloseTime = candle.OpenTime;
+                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        zonesLong.Remove(zone); // breaks iterator
+                        break;
+                    }
+                }
+                foreach (var zone in zonesShort)
+                {
+                    if (key >= zone.OpenTime!.Value + delay && candle.High > zone.Bottom)
+                    {
+                        zone.CloseTime = candle.OpenTime;
+                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        zonesShort.Remove(zone); // breaks iterator
+                        break;
+                    }
+                }
+            }
+            key += symbolInterval.Interval.Duration;
+        }
+    }
+
+
+    private static void CalculateBrokenZonesForSymbol(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        // Collect all active zones (FVG + Dominant zones)
+        List<CryptoZone> zones = []; // sorted on opentime, both FVG and dominant zones
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        foreach (CryptoZone zone in symbolData.ZoneListLong)
+            zones.Add(zone);
+        foreach (CryptoZone zone in symbolData.ZoneListShort)
+            zones.Add(zone);
+        foreach (CryptoZone zone in symbolData.FvgListLong)
+            zones.Add(zone);
+        foreach (CryptoZone zone in symbolData.FvgListShort)
+            zones.Add(zone);
+
+
+        if (zones.Count > 0)
+        {
+            List<CryptoZone> zonesLong = [];
+            List<CryptoZone> zonesShort = [];
+            long delay = 4 * interval.Duration;
+            long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+            // Kind of brute force (on 1h candles so its not that bad)..
+            int last = zones.Count - 1;
+            long key = zones.First().OpenTime!.Value;
+            key = IntervalTools.StartOfIntervalCandle(key, interval.Duration);
+
+            zones.Sort((zoneA, zoneB) => zoneA.OpenTime!.Value.CompareTo(zoneB.OpenTime!.Value));
+            for (int i = 0; i <= last; i++)
+            {
+                // Might have a problem with equal times?
+
+                var zone = zones[i];
+                // The list of active zones are growing as we iterate, broken zones will be removed to keep the list small
+                // Could optimize with sorted list (sort on top or bottom and shorten the loop in CalculateBrokenZones)
+                if (zone.Side == CryptoTradeSide.Long)
+                    zonesLong.Add(zone);
+                else
+                    zonesShort.Add(zone);
+
+                long checkUpTo;
+                if (i < last)
+                    checkUpTo = zone.OpenTime!.Value;
+                else
+                    checkUpTo = maxTime;
+
+                CalculateBrokenZones(symbolInterval, ref key, checkUpTo, delay, zonesLong, zonesShort);
+            }
+            CalculateBrokenZones(symbolInterval, ref key, maxTime, delay, zonesLong, zonesShort);
+        }
+    }
+
+
+    public static Task CalculateBrokenZonesForAllSymbols()
+    {
+        if (GlobalData.Settings.General.Exchange != null)
+        {
+            CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+
+            foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
+            {
+                CalculateBrokenZonesForSymbol(symbol, interval);
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+
     public static void CalculateZonesForAllSymbolsAsync(AddTextEvent? sender)
     {
         if (GlobalData.Settings.General.Exchange != null)
