@@ -296,7 +296,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 _ = Task.Run(GlobalData.ThreadMonitorCandle!.Execute).ConfigureAwait(false);
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
-
+                _ = Task.Run(async () => { await LiquidityZones.CalculateBrokenZonesForAllSymbols(); }).ConfigureAwait(false);
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
