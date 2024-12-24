@@ -23,7 +23,6 @@ using Dapper;
 using Skender.Stock.Indicators;
 
 using System.Drawing.Drawing2D;
-using System.Security.Cryptography;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Text.Json;
@@ -714,37 +713,54 @@ public partial class TestForm : Form
     }
 
 
-    static public List<CryptoCandle> CalculateHistory(CryptoCandleList candleSticks, int maxCandles)
-    {
-        //Transporteer de candles naar de Stock list
-        //Jammer dat we met tussen-array's moeten werken
-        //int i = 1;
-        List<CryptoCandle> history = [];
-        Monitor.Enter(candleSticks);
-        try
-        {
-            //Vanwege performance nemen we een gedeelte van de candles
-            for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
-            {
-                CryptoCandle candle = candleSticks.Values[i];
+    //static public List<CryptoCandle> CalculateHistory(CryptoCandleList candleSticks, int maxCandles)
+    //{
+    //    //Transporteer de candles naar de Stock list
+    //    //Jammer dat we met tussen-array's moeten werken
+    //    //int i = 1;
+    //    List<CryptoCandle> history = new(maxCandles);
+    //    Monitor.Enter(candleSticks);
+    //    try
+    //    {
+    //        if (candleSticks.Count > 0)
+    //        {
+    //            long unix = candleSticks.Keys.Last();
+    //            while (maxCandles-- > 0)
+    //            {
+    //                if (candleSticks.TryGetValue(unix, out CryptoCandle? candle))
+    //                {
+    //                    //In omgekeerde volgorde in de lijst zetten
+    //                    if (history.Count == 0)
+    //                        history.Add(candle);
+    //                    else
+    //                        history.Insert(0, candle);
+    //                }
+    //                unix -=
+    //            }
+    //        }
 
-                //In omgekeerde volgorde in de lijst zetten
-                if (history.Count == 0)
-                    history.Add(candle);
-                else
-                    history.Insert(0, candle);
+    //        ////Vanwege performance nemen we een gedeelte van de candles
+    //        //for (int i = candleSticks.Values.Count - 1; i >= 0; i--)
+    //        //{
+    //        //    CryptoCandle candle = candleSticks.Values[i];
 
-                maxCandles--;
-                if (maxCandles == 0)
-                    break;
-            }
-        }
-        finally
-        {
-            Monitor.Exit(candleSticks);
-        }
-        return history;
-    }
+    //        //    //In omgekeerde volgorde in de lijst zetten
+    //        //    if (history.Count == 0)
+    //        //        history.Add(candle);
+    //        //    else
+    //        //        history.Insert(0, candle);
+
+    //        //    maxCandles--;
+    //        //    if (maxCandles == 0)
+    //        //        break;
+    //        //}
+    //    }
+    //    finally
+    //    {
+    //        Monitor.Exit(candleSticks);
+    //    }
+    //    return history;
+    //}
 
 
     static public void LoadConfig(ref CryptoBackConfig config)
@@ -1702,8 +1718,8 @@ public partial class TestForm : Form
         {
             if (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
             {
-                DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
-                DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
+                //DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
+                //DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
 
 
 
@@ -2132,7 +2148,7 @@ public partial class TestForm : Form
         CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
 
         // munten met een hele lage Satoshi waardering (1 Satoshi = 1E-8)
-        CryptoCandle candle = candles.Values.First();
+        CryptoCandle candle = candles.Values.Last();
         if (candle.Open < config.PriceLimit)
         {
             GlobalData.AddTextToLogTab(string.Format("{0} {1} price to low {2:N3}", DateTime.Now.ToLocalTime(), symbol.Name, candle.Open));
@@ -2666,49 +2682,4 @@ public partial class TestForm : Form
     }
 
 
-    public static string Protect(string stringToEncrypt, string optionalEntropy, DataProtectionScope scope)
-    {
-        return Convert.ToBase64String(
-            ProtectedData.Protect(
-                Encoding.UTF8.GetBytes(stringToEncrypt)
-                , optionalEntropy != null ? Encoding.UTF8.GetBytes(optionalEntropy) : null
-                , scope));
-    }
-    public static string Unprotect(string encryptedString, string optionalEntropy, DataProtectionScope scope)
-    {
-        return Encoding.UTF8.GetString(
-            ProtectedData.Unprotect(
-                Convert.FromBase64String(encryptedString)
-                , optionalEntropy != null ? Encoding.UTF8.GetBytes(optionalEntropy) : null
-                , scope));
-    }
-
-    private void ButtonEncryptDecrypt(object? sender, EventArgs e)
-    {
-        // https://stackoverflow.com/questions/51971447/which-encryption-algorithm-does-the-protectdata-class-use
-        string optionalEntropy = "Altrady";
-
-        string encoded = Protect("Hello World", optionalEntropy, DataProtectionScope.LocalMachine);
-        AddTextToLogTab($"Encoded = {encoded}");
-
-        string decoded = Unprotect(encoded, optionalEntropy, DataProtectionScope.LocalMachine);
-        AddTextToLogTab($"Decoded = {decoded}");
-
-        // now how to protect the api key's without having the user to reenter them...
-
-
-        TestObject test = new();
-        test.Password = "Hello World";
-
-        string text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        var test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
-
-        text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
-
-        text = JsonSerializer.Serialize(test, JsonTools.JsonSerializerIndented);
-        test2 = JsonSerializer.Deserialize<TestObject>(text, JsonTools.DeSerializerOptions);
-        //
-
-    }
 }
