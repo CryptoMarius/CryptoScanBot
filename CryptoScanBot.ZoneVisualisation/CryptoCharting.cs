@@ -315,6 +315,9 @@ public class CryptoCharting
                 color = OxyColors.Green;
             else
                 color = OxyColors.OrangeRed;
+            if (zone.Kind == CryptoZoneKind.FairValueGap)
+                color = OxyColors.Gray;
+
 
             long dateOpen;
             if (zone.OpenTime != null)
