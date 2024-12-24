@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Model;
 using System.Text;
 
 namespace CryptoScanBot.Core.Telegram;
+
 public class TelegramShowValue
 {
     public static void ShowValue(string arguments, StringBuilder stringbuilder)

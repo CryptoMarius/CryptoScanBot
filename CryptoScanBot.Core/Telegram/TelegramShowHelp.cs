@@ -1,6 +1,7 @@
 ﻿using System.Text;
 
 namespace CryptoScanBot.Core.Telegram;
+
 public class TelegramShowHelp
 {
     public static void ShowHelp(StringBuilder stringBuilder)
@@ -14,6 +15,8 @@ public class TelegramShowHelp
 
         stringBuilder.AppendLine("signalstart   start signal bot");
         stringBuilder.AppendLine("signalstop    stop signal bot");
+        stringBuilder.AppendLine("reset         reset the scanner (restart)");
+        stringBuilder.AppendLine("calculatezones calculate the zones");
 
         stringBuilder.AppendLine("value         show value BTC,BNB and ETH"); // todo, de juiste basismunten tonen
         stringBuilder.AppendLine("barometer     show barometer BTC/ETH/USDT"); // todo, de juiste basismunten tonen
@@ -21,7 +24,5 @@ public class TelegramShowHelp
         stringBuilder.AppendLine("chatid        ChatId configuratie");
         stringBuilder.AppendLine("help          this help screen");
     }
-
-
 
 }

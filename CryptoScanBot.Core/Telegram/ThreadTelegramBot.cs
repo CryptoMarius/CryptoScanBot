@@ -633,6 +633,10 @@ public class ThreadTelegramBotInstance
                                             TelegramShowStatus.ShowStatus(command, stringBuilder);
                                         else if (command == "VALUE")
                                             TelegramShowValue.ShowValue(command, stringBuilder);
+                                        else if (command == "RESET")
+                                            TelegramResetScanner.Execute(command, stringBuilder);
+                                        else if (command == "CALCULATEZONES")
+                                            TelegramCalculateZones.Execute(command, stringBuilder);
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
