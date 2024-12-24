@@ -1,9 +1,13 @@
 CryptoScanBot release historie:
 
-15-09-2024 1.9.5.1223
+24-12-2024 1.9.5.1224
 - Scanner - Dominante zones/FVG: Bij het opstarten de gebroken FVG en zones afmelden
 - Scanner - Nieuw telegram commando "reset" commando om de scanner opnieuw te starten
 - Scanner - Nieuw telegram commando "calculatezones" om de liq. zone te berekenen
+- Scanner - Fair Value gap in het chart formulier in het grijs tekenen
+- Scanner - Fair Value gap alleen de 15+ interval en hoger want het zijn er gewoon teveel
+
+23-12-2024 1.9.5.1223
 - Scanner - Fair Value gap zones detecteren, opslaan en melden
 - Scanner - Fair Value gap zones: Aparte instellingen voor long/short, minimale percentage (kleine percentages zijn de moeite niet waard c.q. minder betrouwbaar)
 - Scanner - Dominante zones: Aparte instellingen voor long/short
@@ -23,7 +27,7 @@ CryptoScanBot release historie:
 - Scanner - Er zijn duplicaat symbols aanwezig in de database (en de de barometer symbol was ook een probleem)
 
 
-12-09-2024 1.9.5.1212
+12-12-2024 1.9.5.1212
 - Scanner/Trader - Een status/indicator die de status van de scanner, trader en de rulez aangeeft.
 - Scanner - In de 4 grids kun je niet meer met DEL een rij weggooien
 - Scanner - Dominante zones: Enkele instellingen verwijderd (batch, posities en nog wat)
