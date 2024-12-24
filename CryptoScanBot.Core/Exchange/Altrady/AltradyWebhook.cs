@@ -81,13 +81,16 @@ public class AltradyWebhook
     }
 
 
-    public static void DelegateControlToAltrady(CryptoPosition position)
+    public static void DelegateControlToAltrady(CryptoPosition position, string url = "", string command = "open")
     {
         if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
         {
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} unable to send to Altrady webhook, no api key's available");
             return;
         }
+
+        if (url == "")
+            url = "https://api.altrady.com/v2/signal_bot_positions";
 
 
         //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook"); //  LastTradeDate={position.Symbol.LastTradeDate}
@@ -112,8 +115,8 @@ public class AltradyWebhook
             //string createError = "???"; +createError
 
             // Request body
-            request.test = false;
-            request.action = "open"; // ['open', 'close', 'reverse', 'increase', 'start_bot', 'start_and_open', 'stop_bot', 'stop_and_close'],
+            request.test = true;
+            request.action = command; // "open"; // ['open', 'close', 'reverse', 'increase', 'start_bot', 'start_and_open', 'stop_bot', 'stop_and_close'],
             if (position.Side == Enums.CryptoTradeSide.Long)
                 request.side = "long";
             else
@@ -189,7 +192,7 @@ public class AltradyWebhook
             //var jsonData = await httpClient.GetFromJsonAsync<request>("https://api.alternative.me/fng/");
             //await httpClient.SendAsync("/api/v3/exchangeInfo", HttpMethod.Post);????
 
-            httpWebRequest = (HttpWebRequest)WebRequest.Create("https://api.altrady.com/v2/signal_bot_positions");
+            httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
             httpWebRequest.ContentType = "application/json";
             httpWebRequest.Method = "POST";
 
