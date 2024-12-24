@@ -9,6 +9,17 @@ using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Model;
 
+
+// new idea:
+// We specify candle.open etc in uint(4) / ticksize instead of decimal(8).
+// We could spefify the rest in an offset of the open
+// this saves 4 * 8 - 4 * 4 = 16 bytes per record (might even use smallint for offset?)
+//
+// Additional:
+// Specify the opentime in uint(4) instead of long(8)
+// save ~20 bytes per candle * 4.000.000 candles = 80 Mb (+more because of dictionary key's)
+// but its a lot of work..
+
 [Serializable]
 public class CryptoCandle : IQuote
 {
@@ -39,7 +50,7 @@ public class CryptoCandle : IQuote
     public bool IsDuplicated { get; set; }
 }
 
-public class CryptoCandleList : SortedList<long, CryptoCandle>
+public class CryptoCandleList : SortedList<long, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
 {
 }
 
