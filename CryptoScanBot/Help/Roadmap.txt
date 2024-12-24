@@ -6,7 +6,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
-- Nadenken over een melding van een Fair value Gap, double top en bottom, sluit niet echt aan op voorgaande
+- Detectie van de double top en bottom (via de secondary trend?)
 - Verwijderen van gesloten FVG uit de database (cleanup)
 - Verwijderen van oude gesloten oude Zones uit de database (cleanup)
 
