@@ -35,50 +35,55 @@ public class LuxIndicator
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
-        int count = 0;
-        for (int j = symbolInterval.CandleList.Count - 30; j < symbolInterval.CandleList.Count; j++)
+        if (symbolInterval.CandleList.Count > 30)
         {
-            if (j < 1) //out of range, not sure if skipping 0 was intentional?
-                continue;
-            candlePrev = candleLast;
-            candleLast = symbolInterval.CandleList.Values[j];
-            if (candlePrev == null)
-                continue;
-            count++;
+            //long unixLast = symbolInterval.CandleList.Keys.Last();
+            //long unixFirst = unixLast - 30 * symbolInterval.Interval.Duration;
 
-            int k = 0;
-            decimal avg = 0m;
-            overbuy = 0;
-            oversell = 0;
-            decimal diff = candleLast.Close - candlePrev.Close;
-
-            for (int i = min; i < max; i++)
+            int count = 0;
+            for (int j = symbolInterval.CandleList.Count - 30; j < symbolInterval.CandleList.Count; j++)
             {
-                decimal alpha = 1 / (decimal)i;
+                //if (j < 1) //out of range, not sure if skipping 0 was intentional?
+                //    continue;
+                candlePrev = candleLast;
+                candleLast = symbolInterval.CandleList.Values[j];
+                if (candlePrev == null)
+                    continue;
+                count++;
 
-                decimal num_rma = alpha * diff + (1m - alpha) * num[k];
-                decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
+                int k = 0;
+                decimal avg = 0m;
+                overbuy = 0;
+                oversell = 0;
+                decimal diff = candleLast.Close - candlePrev.Close;
 
-                decimal rsi;
-                if (den_rma == 0)
-                    rsi = 50m;
-                else
-                    rsi = 50m * num_rma / den_rma + 50m;
+                for (int i = min; i < max; i++)
+                {
+                    decimal alpha = 1 / (decimal)i;
 
-                avg += rsi;
+                    decimal num_rma = alpha * diff + (1m - alpha) * num[k];
+                    decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
-                if (rsi > overbought)
-                    overbuy++;
-                if (rsi < oversold)
-                    oversell++;
+                    decimal rsi;
+                    if (den_rma == 0)
+                        rsi = 50m;
+                    else
+                        rsi = 50m * num_rma / den_rma + 50m;
+
+                    avg += rsi;
+
+                    if (rsi > overbought)
+                        overbuy++;
+                    if (rsi < oversold)
+                        oversell++;
 
 
-                num[k] = num_rma;
-                den[k] = den_rma;
-                k++;
+                    num[k] = num_rma;
+                    den[k] = den_rma;
+                    k++;
+                }
             }
         }
-
         luxOverSold = 10 * oversell;
         luxOverBought = 10 * overbuy;
     }
