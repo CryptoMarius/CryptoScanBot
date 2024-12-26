@@ -24,12 +24,6 @@ public class CryptoQuoteData
     [JsonConverter(typeof(ColorConverter))]
     public System.Drawing.Color DisplayColor { get; set; } = System.Drawing.Color.White;
 
-    //decimal IQuote.Open => (decimal)Open;
-    //decimal IQuote.High => (decimal)High;
-    //decimal IQuote.Low => (decimal)Low;
-    //decimal IQuote.Close => (decimal)Close;
-    //decimal IQuote.Volume => (decimal)Volume;
-
     // List of symbols (for this quote)
     [Computed]
     [JsonIgnore]

@@ -713,7 +713,7 @@ public partial class TestForm : Form
     }
 
 
-    //static public List<CryptoCandle> CalculateHistory(CryptoCandleList candleSticks, int maxCandles)
+    //public static List<CryptoCandle> CalculateHistory(CryptoCandleList candleSticks, int maxCandles)
     //{
     //    //Transporteer de candles naar de Stock list
     //    //Jammer dat we met tussen-array's moeten werken
@@ -763,7 +763,7 @@ public partial class TestForm : Form
     //}
 
 
-    static public void LoadConfig(ref CryptoBackConfig config)
+    public static void LoadConfig(ref CryptoBackConfig config)
     {
         //Laad de gecachte 1m candlesticks (langere historie, minder overhad)
         //string x = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -779,7 +779,7 @@ public partial class TestForm : Form
     }
 
 
-    static public void SaveConfig(CryptoBackConfig config)
+    public static void SaveConfig(CryptoBackConfig config)
     {
         //Laad de gecachte 1m candlesticks (langere historie, minder overhad)
         //string x = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -1034,300 +1034,310 @@ public partial class TestForm : Form
 
     private void Button7_Click(object? sender, EventArgs? e)
     {
-        GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab("Lijstjes");
-        GlobalData.AddTextToLogTab("");
-        //List<VolatiteitStat> a = new List<VolatiteitStat>();
+        // not sure what it does..
+
+        //GlobalData.AddTextToLogTab("");
+        //GlobalData.AddTextToLogTab("Lijstjes");
+        //GlobalData.AddTextToLogTab("");
+        ////List<VolatiteitStat> a = new List<VolatiteitStat>();
 
 
 
-        // Trend trader strategy indicator (bron code pine script)
-        // Voor iedere candles van links naar rechts... onderstaande:
+        //// Trend trader strategy indicator (bron code pine script)
+        //// Voor iedere candles van links naar rechts... onderstaande:
 
-        //@version=5
-        //indicator(title = 'Trend Trader Strategy', overlay = true)
-        //Length = input.int(21, minval = 1)
-        //Multiplier = input.float(3, minval = 0.000001)
-        //avgTR = ta.wma(ta.atr(1), Length)
-        //highestC = ta.highest(Length)
-        //lowestC = ta.lowest(Length)
-        //hiLimit = highestC[1] - avgTR[1] * Multiplier
-        //loLimit = lowestC[1] + avgTR[1] * Multiplier
-        //ret = 0.0
-        //pos = 0.0
-        //ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
-        //pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
-        //if pos != pos[1] and pos == 1
-        //    alert("Color changed - Buy", alert.freq_once_per_bar_close)
-        //if pos != pos[1] and pos == -1
-        //    alert("Color changed - Sell", alert.freq_once_per_bar_close)
-        //barcolor(pos == -1 ? color.red : pos == 1 ? color.green : color.blue)
-        //plot(ret, color = color.new(color.blue, 0), title = 'Trend Trader Strategy')
-
-
-        //Andere aanpak (want bovenstaande snap ik niets van)
-        //https://www.prorealcode.com/prorealtime-indicators/andrew-abraham-trend-trader/
-        //avrTR = weightedaverage[Length](AverageTrueRange[1](close))
-        //highestC = highest[Length](high)
-        //lowestC = lowest[Length](low)
-        //hiLimit = highestC[1] - (avrTR[1] * Multiplier)
-        //lolimit = lowestC[1] + (avrTR[1] * Multiplier)
-
-        //if (close > hiLimit AND close > loLimit) THEN
-        //     ret = hiLimit
-        //ELSIF(close < loLimit AND close < hiLimit) THEN
-        //     ret = loLimit
-        //ELSE
-        //     ret = ret[1]
-        //ENDIF
-
-        //RETURN ret coloured(238,238,0) as "Trend Trader"
+        ////@version=5
+        ////indicator(title = 'Trend Trader Strategy', overlay = true)
+        ////Length = input.int(21, minval = 1)
+        ////Multiplier = input.float(3, minval = 0.000001)
+        ////avgTR = ta.wma(ta.atr(1), Length)
+        ////highestC = ta.highest(Length)
+        ////lowestC = ta.lowest(Length)
+        ////hiLimit = highestC[1] - avgTR[1] * Multiplier
+        ////loLimit = lowestC[1] + avgTR[1] * Multiplier
+        ////ret = 0.0
+        ////pos = 0.0
+        ////ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
+        ////pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
+        ////if pos != pos[1] and pos == 1
+        ////    alert("Color changed - Buy", alert.freq_once_per_bar_close)
+        ////if pos != pos[1] and pos == -1
+        ////    alert("Color changed - Sell", alert.freq_once_per_bar_close)
+        ////barcolor(pos == -1 ? color.red : pos == 1 ? color.green : color.blue)
+        ////plot(ret, color = color.new(color.blue, 0), title = 'Trend Trader Strategy')
 
 
-        //https://usethinkscript.com/threads/trend-trader-strategy-for-thinkorswim.11643/
-        //Ruby:
-        //#////////////////////////////////////////////////////////////
-        //#//  Copyright by HPotter v1.0 21/01/2021
-        //#// This is plots the indicator developed by Andrew Abraham
-        //#// in the Trading the Trend article of TASC September 1998
-        //#////////////////////////////////////////////////////////////
-        //# study(title="Trend Trader Strategy", overlay = true)
-        //# ported by @bvaikunth 6/2022
-        //# requested by @kls06541
-        //input Length = 21;
-        //input AtrMult = 3.0;
-        //input AvgType = AverageType.simple;
-        //def atr = MovingAverage(avgtype, TrueRange(high, close, low), 1);
-        //def avgTR = WMA(atr, Length);
-        //def highestC = Highest(high, Length);
-        //def lowestC = Lowest(low, Length);
-        //def UP = highestC[1] - (avgTR[1] * AtrMult);
-        //def DN = lowestC[1] + (avgTR[1] * AtrMult);
+        ////Andere aanpak (want bovenstaande snap ik niets van)
+        ////https://www.prorealcode.com/prorealtime-indicators/andrew-abraham-trend-trader/
+        ////avrTR = weightedaverage[Length](AverageTrueRange[1](close))
+        ////highestC = highest[Length](high)
+        ////lowestC = lowest[Length](low)
+        ////hiLimit = highestC[1] - (avrTR[1] * Multiplier)
+        ////lolimit = lowestC[1] + (avrTR[1] * Multiplier)
 
-        //script nz {
-        //    input data = 0;
-        //    input data2 = close;
-        //    def ret_val = if IsNaN(data) then data else data2;
-        //    plot return = ret_val;
+        ////if (close > hiLimit AND close > loLimit) THEN
+        ////     ret = hiLimit
+        ////ELSIF(close < loLimit AND close < hiLimit) THEN
+        ////     ret = loLimit
+        ////ELSE
+        ////     ret = ret[1]
+        ////ENDIF
+
+        ////RETURN ret coloured(238,238,0) as "Trend Trader"
+
+
+        ////https://usethinkscript.com/threads/trend-trader-strategy-for-thinkorswim.11643/
+        ////Ruby:
+        ////#////////////////////////////////////////////////////////////
+        ////#//  Copyright by HPotter v1.0 21/01/2021
+        ////#// This is plots the indicator developed by Andrew Abraham
+        ////#// in the Trading the Trend article of TASC September 1998
+        ////#////////////////////////////////////////////////////////////
+        ////# study(title="Trend Trader Strategy", overlay = true)
+        ////# ported by @bvaikunth 6/2022
+        ////# requested by @kls06541
+        ////input Length = 21;
+        ////input AtrMult = 3.0;
+        ////input AvgType = AverageType.simple;
+        ////def atr = MovingAverage(avgtype, TrueRange(high, close, low), 1);
+        ////def avgTR = WMA(atr, Length);
+        ////def highestC = Highest(high, Length);
+        ////def lowestC = Lowest(low, Length);
+        ////def UP = highestC[1] - (avgTR[1] * AtrMult);
+        ////def DN = lowestC[1] + (avgTR[1] * AtrMult);
+
+        ////script nz {
+        ////    input data = 0;
+        ////    input data2 = close;
+        ////    def ret_val = if IsNaN(data) then data else data2;
+        ////    plot return = ret_val;
+        ////}
+        ////def ret = if close > UP and close > DN then UP else if close < DN and close<UP then DN else nz(ret[1], close);
+        ////def pos = if close > ret then 1 else if close < ret then - 1 else nz(pos[1], 0);
+
+        ////plot trend = ret;
+
+        ////trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
+
+
+        //var exchange = GlobalData.Settings.General.Exchange;
+        //if (exchange != null)
+        //{
+
+        //    if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol? symbol))
+        //    {
+        //        if ((symbol.Quote.Equals("USDT")) && (symbol.Status == 1))
+        //        {
+
+        //            CryptoIntervalPeriod intervalPeriod;
+
+
+
+        //            intervalPeriod = CryptoIntervalPeriod.interval1m;
+        //            if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
+        //                return;
+        //            LoadSymbolCandles(symbol, interval);
+        //            CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+
+        //            List<EmaResult> ema200List = (List<EmaResult>)candles.Values.GetEma(200);
+        //            //List<EmaResult> ema100List = (List<EmaResult>)candles.Values.GetEma(100);
+        //            List<EmaResult> ema50List = (List<EmaResult>)candles.Values.GetEma(50);
+        //            List<RsiResult> RsiList = (List<RsiResult>)candles.Values.GetRsi();
+        //            List<StochResult> stochList = (List<StochResult>)Indicator.GetStoch(candles.Values, 14, 3, 1);
+        //            List<BollingerBandsResult> bbList = (List<BollingerBandsResult>)Indicator.GetBollingerBands(candles.Values, 20, 3);
+
+        //            GlobalData.AddTextToLogTab(symbol.Name);
+
+        //            long lastMelding = 0;
+        //            int length = 100;
+        //            decimal multiplier = 3.0m;
+        //            Period21 prevData = null;
+
+        //            List<CryptoCandle> viewPort = [];
+
+        //            if (candles.Count > 0)
+        //            {
+        //                long unixLast = candles.Values.Last().OpenTime;
+        //                long unixLoop = candles.Values.First().OpenTime;
+
+        //                while (unixLoop <= unixLast))
+        //                    {
+        //                    if (candles.TryGetValue(unixLoop, out CryptoCandle? candle))
+        //                    {
+        //                        viewPort.Add(candle);
+
+        //                        // Kopietje vanwege input richting wma
+        //                        //CryptoCandle c = new()
+        //                        //{
+        //                        //    OpenTime = candle.OpenTime,
+        //                        //    Close = candle.Close
+        //                        //};
+        //                        if (x < length)
+        //                            continue;
+
+        //                        // Hierdoor blijft een continue lijst van 21 candles (een beperkte view van 21 candles over het geheel)
+        //                        // Qua test scheelt dit (maar in de echte wereld blijft het een 1 voor 1 aanpak)
+        //                        viewPort.Remove(viewPort[0]);
+
+        //                        // aanlooptijd indicatoren
+        //                        if (x < 200)
+        //                            continue;
+
+
+
+        //                        // Bepaal de hoogste en laagste in een 21 candle interval (denk ik)
+        //                        //highestC = ta.highest(Length)
+        //                        //lowestC = ta.lowest(Length)
+        //                        Period21 data = new();
+        //                        foreach (CryptoCandle c2 in viewPort)
+        //                        {
+        //                            if ((decimal)c2.Low < data.Lowest)
+        //                                data.Lowest = (decimal)c2.Low;
+        //                            if ((decimal)c2.High > data.Highest)
+        //                                data.Highest = (decimal)c2.High;
+        //                        }
+
+
+        //                        //avgTR = ta.wma(ta.atr(1), Length)
+        //                        //?ehh? voorgaande atr, eigenlijk geen idee wat hier precies staat!
+        //                        //Zou dat een wma van de laatste atr zijn? (anders weet ik het ook niet hoor)
+        //                        List<AtrResult> atrList = (List<AtrResult>)viewPort.GetAtr(length);
+        //                        data.AvgTr = (decimal)atrList[^1].Atr.Value;
+
+
+        //                        // De voorgaande  waarden dus? bah
+        //                        //hiLimit = highestC[1] - avgTR[1] * Multiplier
+        //                        //loLimit = lowestC[1] + avgTR[1] * Multiplier
+        //                        if (prevData != null)
+        //                        {
+        //                            decimal hiLimit = prevData.Highest - (prevData.AvgTr * multiplier);
+        //                            decimal loLimit = prevData.Lowest + (prevData.AvgTr * multiplier);
+
+
+        //                            //ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
+        //                            //     (                                   ) true       (condition                       )  true      false
+        //                            //pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
+        //                            //if pos != pos[1] and pos == 1
+        //                            //    alert("Color changed - Buy", alert.freq_once_per_bar_close)
+        //                            //if pos != pos[1] and pos == -1
+        //                            //    alert("Color changed - Sell", alert.freq_once_per_bar_close)
+        //                            //barcolor(pos == -1 ? color.red : pos == 1 ? color.green : color.blue)
+        //                            //plot(ret, color = color.new(color.blue, 0), title = 'Trend Trader Strategy')
+
+
+        //                            // Pff, lekkere conditie hoor
+        //                            //ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
+        //                            if ((candle.Close > hiLimit) && (candle.Close > loLimit))
+        //                                data.Ret = hiLimit;
+        //                            else if ((candle.Close < loLimit) && (candle.Close < hiLimit))
+        //                                data.Ret = loLimit;
+        //                            else
+        //                                data.Ret = prevData.Ret;
+
+
+        //                            ////pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
+        //                            //if (candle.Close > data.Ret)
+        //                            //    data.Pos = 1m;
+        //                            //else if (candle.Close < data.Ret)
+        //                            //    data.Pos = -1m;
+        //                            //else
+        //                            //    data.Pos = prevData.Pos;
+
+
+        //                            ////if pos != pos[1] and pos == 1
+        //                            ////    alert("Color changed - Buy", alert.freq_once_per_bar_close)
+
+        //                            //if ((data.Pos != prevData.Pos) && (data.Pos == 1))
+        //                            //    //    alert("Color changed - Buy", alert.freq_once_per_bar_close)
+        //                            //    data = data;
+
+        //                            ////if pos != pos[1] and pos == -1
+        //                            ////    alert("Color changed - Sell", alert.freq_once_per_bar_close)
+        //                            //if ((data.Pos != prevData.Pos) && (data.Pos == -1))
+        //                            //    //    alert("Color changed - Sell", alert.freq_once_per_bar_close)
+        //                            //    data = data;
+
+
+        //                            //GlobalData.AddTextToLogTab(string.Format("{0} {1}", candle.DateLocal.ToString(), data.Ret));
+
+
+
+
+        //                            EmaResult ema50 = ema50List[x];
+        //                            EmaResult ema200 = ema200List[x];
+        //                            //BollingerBandsResult bbResult2; // = bbList[x];
+        //                            if ((candle.Close > data.Ret) && (ema50.Ema.Value > ema200.Ema.Value))
+        //                            {
+
+
+        //                                // is in de afgelopen 25 candles er een oversold situatie geweest
+        //                                // Of is er een Rsi oversold geweest
+
+        //                                int count = 25;
+        //                                for (int y = x; y > 0; y--)
+        //                                {
+        //                                    CryptoCandle lastCandle = candles.Values[y];
+
+        //                                    float boundary;
+        //                                    bool melding = true;
+
+        //                                    if (melding)
+        //                                    {
+        //                                        // Stochastic Oscillator: &K en & D moeten kleiner zijn dan 20 %.
+        //                                        StochResult stochResult = stochList[y];
+        //                                        if (stochResult.Signal.Value > 20f)
+        //                                            melding = false;
+        //                                    }
+
+        //                                    // Een piek-waarde onder de bollinger band (de CC methode)
+        //                                    BollingerBandsResult bbResult = bbList[y];
+        //                                    decimal lastCandleLowest = Math.Min(lastCandle.Open, lastCandle.Close);
+        //                                    if (lastCandleLowest >= (decimal)bbResult.LowerBand)
+        //                                        melding = false;
+
+        //                                    if (melding)
+        //                                    {
+        //                                        if (lastMelding + interval.Duration != candle.OpenTime)
+        //                                            GlobalData.AddTextToLogTab(string.Format("{0} {1} STOBB", candle.DateLocal.ToString(), data.Ret));
+        //                                        break;
+        //                                    }
+
+
+        //                                    melding = true;
+        //                                    boundary = 30f;
+        //                                    RsiResult rsiResult = RsiList[y];
+        //                                    if ((boundary > 0) && (rsiResult.Rsi >= boundary))
+        //                                    {
+        //                                        melding = false;
+        //                                    }
+
+        //                                    if (melding)
+        //                                    {
+        //                                        if (lastMelding + interval.Duration != candle.OpenTime)
+        //                                            GlobalData.AddTextToLogTab(string.Format("{0} {1} RSI", candle.DateLocal.ToString(), data.Ret));
+        //                                        break;
+        //                                    }
+
+
+
+        //                                    count--;
+        //                                    if (count < 0)
+        //                                        break;
+        //                                }
+
+        //                                lastMelding = candle.OpenTime;
+
+        //                            }
+
+        //                        }
+        //                        prevData = data;
+
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
         //}
-        //def ret = if close > UP and close > DN then UP else if close < DN and close<UP then DN else nz(ret[1], close);
-        //def pos = if close > ret then 1 else if close < ret then - 1 else nz(pos[1], 0);
-
-        //plot trend = ret;
-
-        //trend.assignvaluecolor( if pos == -1 then color.red else if pos == 1 then color.green else color.blue);
-
-
-        var exchange = GlobalData.Settings.General.Exchange;
-        if (exchange != null)
-        {
-
-            if (exchange.SymbolListName.TryGetValue("NEBLUSDT", out CryptoSymbol? symbol))
-            {
-                if ((symbol.Quote.Equals("USDT")) && (symbol.Status == 1))
-                {
-
-                    CryptoIntervalPeriod intervalPeriod;
-
-
-
-                    intervalPeriod = CryptoIntervalPeriod.interval1m;
-                    if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                        return;
-                    LoadSymbolCandles(symbol, interval);
-                    CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
-
-                    List<EmaResult> ema200List = (List<EmaResult>)candles.Values.GetEma(200);
-                    //List<EmaResult> ema100List = (List<EmaResult>)candles.Values.GetEma(100);
-                    List<EmaResult> ema50List = (List<EmaResult>)candles.Values.GetEma(50);
-                    List<RsiResult> RsiList = (List<RsiResult>)candles.Values.GetRsi();
-                    List<StochResult> stochList = (List<StochResult>)Indicator.GetStoch(candles.Values, 14, 3, 1);
-                    List<BollingerBandsResult> bbList = (List<BollingerBandsResult>)Indicator.GetBollingerBands(candles.Values, 20, 3);
-
-                    GlobalData.AddTextToLogTab(symbol.Name);
-
-                    long lastMelding = 0;
-                    int length = 100;
-                    decimal multiplier = 3.0m;
-                    Period21 prevData = null;
-
-                    List<CryptoCandle> viewPort = [];
-
-                    for (int x = 0; x < candles.Count; x++)
-                    {
-                        CryptoCandle candle = candles.Values[x];
-                        viewPort.Add(candle);
-
-                        // Kopietje vanwege input richting wma
-                        //CryptoCandle c = new()
-                        //{
-                        //    OpenTime = candle.OpenTime,
-                        //    Close = candle.Close
-                        //};
-                        if (x < length)
-                            continue;
-
-                        // Hierdoor blijft een continue lijst van 21 candles (een beperkte view van 21 candles over het geheel)
-                        // Qua test scheelt dit (maar in de echte wereld blijft het een 1 voor 1 aanpak)
-                        viewPort.Remove(viewPort[0]);
-
-                        // aanlooptijd indicatoren
-                        if (x < 200)
-                            continue;
-
-
-
-                        // Bepaal de hoogste en laagste in een 21 candle interval (denk ik)
-                        //highestC = ta.highest(Length)
-                        //lowestC = ta.lowest(Length)
-                        Period21 data = new();
-                        foreach (CryptoCandle c2 in viewPort)
-                        {
-                            if ((decimal)c2.Low < data.Lowest)
-                                data.Lowest = (decimal)c2.Low;
-                            if ((decimal)c2.High > data.Highest)
-                                data.Highest = (decimal)c2.High;
-                        }
-
-
-                        //avgTR = ta.wma(ta.atr(1), Length)
-                        //?ehh? voorgaande atr, eigenlijk geen idee wat hier precies staat!
-                        //Zou dat een wma van de laatste atr zijn? (anders weet ik het ook niet hoor)
-                        List<AtrResult> atrList = (List<AtrResult>)viewPort.GetAtr(length);
-                        data.AvgTr = (decimal)atrList[^1].Atr.Value;
-
-
-                        // De voorgaande  waarden dus? bah
-                        //hiLimit = highestC[1] - avgTR[1] * Multiplier
-                        //loLimit = lowestC[1] + avgTR[1] * Multiplier
-                        if (prevData != null)
-                        {
-                            decimal hiLimit = prevData.Highest - (prevData.AvgTr * multiplier);
-                            decimal loLimit = prevData.Lowest + (prevData.AvgTr * multiplier);
-
-
-                            //ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
-                            //     (                                   ) true       (condition                       )  true      false
-                            //pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
-                            //if pos != pos[1] and pos == 1
-                            //    alert("Color changed - Buy", alert.freq_once_per_bar_close)
-                            //if pos != pos[1] and pos == -1
-                            //    alert("Color changed - Sell", alert.freq_once_per_bar_close)
-                            //barcolor(pos == -1 ? color.red : pos == 1 ? color.green : color.blue)
-                            //plot(ret, color = color.new(color.blue, 0), title = 'Trend Trader Strategy')
-
-
-                            // Pff, lekkere conditie hoor
-                            //ret:= close > hiLimit and close > loLimit ? hiLimit : close < loLimit and close<hiLimit ? loLimit : nz(ret[1], close)
-                            if ((candle.Close > hiLimit) && (candle.Close > loLimit))
-                                data.Ret = hiLimit;
-                            else if ((candle.Close < loLimit) && (candle.Close < hiLimit))
-                                data.Ret = loLimit;
-                            else
-                                data.Ret = prevData.Ret;
-
-
-                            ////pos:= close > ret ? 1 : close < ret ? -1 : nz(pos[1], 0)
-                            //if (candle.Close > data.Ret)
-                            //    data.Pos = 1m;
-                            //else if (candle.Close < data.Ret)
-                            //    data.Pos = -1m;
-                            //else
-                            //    data.Pos = prevData.Pos;
-
-
-                            ////if pos != pos[1] and pos == 1
-                            ////    alert("Color changed - Buy", alert.freq_once_per_bar_close)
-
-                            //if ((data.Pos != prevData.Pos) && (data.Pos == 1))
-                            //    //    alert("Color changed - Buy", alert.freq_once_per_bar_close)
-                            //    data = data;
-
-                            ////if pos != pos[1] and pos == -1
-                            ////    alert("Color changed - Sell", alert.freq_once_per_bar_close)
-                            //if ((data.Pos != prevData.Pos) && (data.Pos == -1))
-                            //    //    alert("Color changed - Sell", alert.freq_once_per_bar_close)
-                            //    data = data;
-
-
-                            //GlobalData.AddTextToLogTab(string.Format("{0} {1}", candle.DateLocal.ToString(), data.Ret));
-
-
-
-
-                            EmaResult ema50 = ema50List[x];
-                            EmaResult ema200 = ema200List[x];
-                            //BollingerBandsResult bbResult2; // = bbList[x];
-                            if ((candle.Close > data.Ret) && (ema50.Ema.Value > ema200.Ema.Value))
-                            {
-
-
-                                // is in de afgelopen 25 candles er een oversold situatie geweest
-                                // Of is er een Rsi oversold geweest
-
-                                int count = 25;
-                                for (int y = x; y > 0; y--)
-                                {
-                                    CryptoCandle lastCandle = candles.Values[y];
-
-                                    float boundary;
-                                    bool melding = true;
-
-                                    if (melding)
-                                    {
-                                        // Stochastic Oscillator: &K en & D moeten kleiner zijn dan 20 %.
-                                        StochResult stochResult = stochList[y];
-                                        if (stochResult.Signal.Value > 20f)
-                                            melding = false;
-                                    }
-
-                                    // Een piek-waarde onder de bollinger band (de CC methode)
-                                    BollingerBandsResult bbResult = bbList[y];
-                                    decimal lastCandleLowest = Math.Min(lastCandle.Open, lastCandle.Close);
-                                    if (lastCandleLowest >= (decimal)bbResult.LowerBand)
-                                        melding = false;
-
-                                    if (melding)
-                                    {
-                                        if (lastMelding + interval.Duration != candle.OpenTime)
-                                            GlobalData.AddTextToLogTab(string.Format("{0} {1} STOBB", candle.DateLocal.ToString(), data.Ret));
-                                        break;
-                                    }
-
-
-                                    melding = true;
-                                    boundary = 30f;
-                                    RsiResult rsiResult = RsiList[y];
-                                    if ((boundary > 0) && (rsiResult.Rsi >= boundary))
-                                    {
-                                        melding = false;
-                                    }
-
-                                    if (melding)
-                                    {
-                                        if (lastMelding + interval.Duration != candle.OpenTime)
-                                            GlobalData.AddTextToLogTab(string.Format("{0} {1} RSI", candle.DateLocal.ToString(), data.Ret));
-                                        break;
-                                    }
-
-
-
-                                    count--;
-                                    if (count < 0)
-                                        break;
-                                }
-
-                                lastMelding = candle.OpenTime;
-
-                            }
-
-                        }
-                        prevData = data;
-
-                    }
-                }
-            }
-        }
     }
 
 
@@ -1465,402 +1475,402 @@ public partial class TestForm : Form
     }
 
 
-    private void CreateBarometerBitmap(CryptoQuoteData quoteData, CryptoInterval interval)
-    {
-        float blocks = 4;
-
-        // pixel dimensies van het plaatje
-        int intWidth = pictureBox1.Width;
-        int intHeight = pictureBox1.Height;
-
-        var exchange = GlobalData.Settings.General.Exchange;
-        if (exchange != null)
-        {
-            if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
-            {
-                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                CryptoCandleList candleList = symbolPeriod.CandleList;
-
-                // determine range of data
-                long loX = long.MaxValue;
-                long hiX = long.MinValue;
-                float loY = float.MaxValue;
-                float hiY = float.MinValue;
-                int candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-                    if (loX > candle.OpenTime)
-                        loX = candle.OpenTime;
-                    if (hiX < candle.OpenTime)
-                        hiX = candle.OpenTime;
-
-                    if (loY > (float)candle.Close)
-                        loY = (float)candle.Close;
-                    if (hiY < (float)candle.Close)
-                        hiY = (float)candle.Close;
-                    if (candleCount-- < 0)
-                        break;
-                }
-                if (loX == long.MaxValue)
-                    return;
-
-
-                // ranges x and y
-                float screenX = hiX - loX; // unix time
-                float screenY = hiY - loY; // barometer, something like -5 .. +5
-                if (screenY < 5)
-                    screenY = 5f; // from -2 to +2
-                if (hiY > 0.5 * screenY)
-                    screenY = +2 * hiY;
-                if (loY < -0.5 * screenY)
-                    screenY = -2 * loY;
-
-
-
-                // factor to keep points within picture
-                float scaleX = intWidth / screenX;
-                float scaleY = intHeight / screenY;
-
-                // ofset to first point
-                float offsetX = 0; // start in the left of the picture
-                float offsetY = scaleY * 0.5f * screenY; // center of picture
-
-                // flix y (specific for winform - what a crap)
-                scaleY = -1 * scaleY;
-
-                System.Drawing.Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
-
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-                // horizontal lines (1% per line)
-                for (int y = -3; y <= 3; y++)
-                {
-                    PointF p1 = new(0, offsetY + scaleY * y);
-                    PointF p2 = new(intWidth, offsetY + scaleY * y);
-                    if (y == 0)
-                        g.DrawLine(Pens.Red, p1, p2);
-                    else
-                        g.DrawLine(Pens.Gray, p1, p2);
-                }
-
-                // vertical lines (show hours)
-                //Pen pen = new Pen(Color.Gray, 0.5F);
-                long intervalTime = 60 * 60;
-                long lastX = hiX - (hiX % intervalTime);
-                while (lastX > loX)
-                {
-                    //DateTime ehh = CandleTools.GetUnixDate(lastX);
-                    //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
-
-                    PointF p1 = new(0, 0)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
-                    PointF p2 = new(0, intHeight)
-                    {
-                        X = offsetX + scaleX * (float)(lastX - loX)
-                    };
-                    g.DrawLine(Pens.Gray, p1, p2);
-                    lastX -= intervalTime;
-                }
-
-
-                bool init = false;
-                PointF point1 = new(0, 0);
-                PointF point2 = new(0, 0);
-                candleCount = (int)(blocks * 60);
-                for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                {
-                    CryptoCandle candle = candleList.Values[i];
-
-                    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
-                    point2.Y = offsetY + scaleY * ((float)candle.Close);
-                    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                    if (init)
-                    {
-                        if (candle.Close < 0)
-                            g.DrawLine(Pens.Red, point1, point2);
-                        else
-                            g.DrawLine(Pens.DarkGreen, point1, point2);
-                    }
-
-                    point1 = point2;
-                    init = true;
-                    if (candleCount-- < 0)
-                        break;
-                }
-
-                if (candleList.Values.Count > 0)
-                {
-                    CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
-                    string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
-
-                    Font drawFont = new("Microsoft Sans Serif", this.Font.Size);
-                    Rectangle rect = new(0, 0, intWidth, intHeight - 8);
-                    TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
-                }
-
-                {
-                    // experiment met 3 cirkels zoals Altrady
-                    int y = 0;
-                    int offset = 17; //40
-                    int offsetValue = 37; //60
-                                          //Rectangle rect1;
-                                          //SolidBrush solidBrush;
-                    Rectangle rect1 = new(0, y, intWidth, intHeight);
-                    Font drawFont1 = new("Microsoft Sans Serif", this.Font.Size);
-                    CryptoIntervalPeriod[] list = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
-
-                    foreach (CryptoIntervalPeriod intervalPeriod in list)
-                    {
-                        Color color;
-                        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
-                        if (barometerData?.PriceBarometer < 0)
-                            color = Color.Red;
-                        else
-                            color = Color.Green;
-
-                        y += 20;
-                        //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                        SolidBrush solidBrush = new(color);
-                        g.FillEllipse(solidBrush, offset, y, 15, 15);
-                        rect1 = new(offsetValue, y, intWidth, intHeight);
-                        TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
-                    }
-
-
-                    //y += 20;
-                    ////rect1 = new Rectangle(0, y, intWidth, intHeight);
-                    ////TextRenderer.DrawText(g, "1H:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                    //SolidBrush solidBrush = new SolidBrush(Color.FromArgb(255, 255, 0, 0));
-                    //g.FillEllipse(solidBrush, offset, y, radius, radius);
-                    //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                    //TextRenderer.DrawText(g, "1.29", drawFont1, rect1, Color.Green, Color.Transparent, TextFormatFlags.Top);
+    //private void CreateBarometerBitmap(CryptoQuoteData quoteData, CryptoInterval interval)
+    //{
+    //    float blocks = 4;
+
+    //    // pixel dimensies van het plaatje
+    //    int intWidth = pictureBox1.Width;
+    //    int intHeight = pictureBox1.Height;
+
+    //    var exchange = GlobalData.Settings.General.Exchange;
+    //    if (exchange != null)
+    //    {
+    //        if ((quoteData != null) && (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol)))
+    //        {
+    //            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+    //            CryptoCandleList candleList = symbolPeriod.CandleList;
+
+    //            // determine range of data
+    //            long loX = long.MaxValue;
+    //            long hiX = long.MinValue;
+    //            float loY = float.MaxValue;
+    //            float hiY = float.MinValue;
+    //            int candleCount = (int)(blocks * 60);
+    //            for (int i = candleList.Values.Count - 1; i >= 0; i--)
+    //            {
+    //                CryptoCandle candle = candleList.Values[i];
+    //                if (loX > candle.OpenTime)
+    //                    loX = candle.OpenTime;
+    //                if (hiX < candle.OpenTime)
+    //                    hiX = candle.OpenTime;
+
+    //                if (loY > (float)candle.Close)
+    //                    loY = (float)candle.Close;
+    //                if (hiY < (float)candle.Close)
+    //                    hiY = (float)candle.Close;
+    //                if (candleCount-- < 0)
+    //                    break;
+    //            }
+    //            if (loX == long.MaxValue)
+    //                return;
+
+
+    //            // ranges x and y
+    //            float screenX = hiX - loX; // unix time
+    //            float screenY = hiY - loY; // barometer, something like -5 .. +5
+    //            if (screenY < 5)
+    //                screenY = 5f; // from -2 to +2
+    //            if (hiY > 0.5 * screenY)
+    //                screenY = +2 * hiY;
+    //            if (loY < -0.5 * screenY)
+    //                screenY = -2 * loY;
+
+
+
+    //            // factor to keep points within picture
+    //            float scaleX = intWidth / screenX;
+    //            float scaleY = intHeight / screenY;
+
+    //            // ofset to first point
+    //            float offsetX = 0; // start in the left of the picture
+    //            float offsetY = scaleY * 0.5f * screenY; // center of picture
+
+    //            // flix y (specific for winform - what a crap)
+    //            scaleY = -1 * scaleY;
+
+    //            System.Drawing.Image bmp = new Bitmap(intWidth, intHeight);
+    //            Graphics g = Graphics.FromImage(bmp);
+
+    //            g.SmoothingMode = SmoothingMode.AntiAlias;
+    //            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+    //            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+    //            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+    //            // horizontal lines (1% per line)
+    //            for (int y = -3; y <= 3; y++)
+    //            {
+    //                PointF p1 = new(0, offsetY + scaleY * y);
+    //                PointF p2 = new(intWidth, offsetY + scaleY * y);
+    //                if (y == 0)
+    //                    g.DrawLine(Pens.Red, p1, p2);
+    //                else
+    //                    g.DrawLine(Pens.Gray, p1, p2);
+    //            }
+
+    //            // vertical lines (show hours)
+    //            //Pen pen = new Pen(Color.Gray, 0.5F);
+    //            long intervalTime = 60 * 60;
+    //            long lastX = hiX - (hiX % intervalTime);
+    //            while (lastX > loX)
+    //            {
+    //                //DateTime ehh = CandleTools.GetUnixDate(lastX);
+    //                //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
+
+    //                PointF p1 = new(0, 0)
+    //                {
+    //                    X = offsetX + scaleX * (float)(lastX - loX)
+    //                };
+    //                PointF p2 = new(0, intHeight)
+    //                {
+    //                    X = offsetX + scaleX * (float)(lastX - loX)
+    //                };
+    //                g.DrawLine(Pens.Gray, p1, p2);
+    //                lastX -= intervalTime;
+    //            }
+
+
+    //            bool init = false;
+    //            PointF point1 = new(0, 0);
+    //            PointF point2 = new(0, 0);
+    //            candleCount = (int)(blocks * 60);
+    //            for (int i = candleList.Values.Count - 1; i >= 0; i--)
+    //            {
+    //                CryptoCandle candle = candleList.Values[i];
+
+    //                point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
+    //                point2.Y = offsetY + scaleY * ((float)candle.Close);
+    //                //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
+
+    //                if (init)
+    //                {
+    //                    if (candle.Close < 0)
+    //                        g.DrawLine(Pens.Red, point1, point2);
+    //                    else
+    //                        g.DrawLine(Pens.DarkGreen, point1, point2);
+    //                }
+
+    //                point1 = point2;
+    //                init = true;
+    //                if (candleCount-- < 0)
+    //                    break;
+    //            }
+
+    //            if (candleList.Values.Count > 0)
+    //            {
+    //                CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
+    //                string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
+
+    //                Font drawFont = new("Microsoft Sans Serif", this.Font.Size);
+    //                Rectangle rect = new(0, 0, intWidth, intHeight - 8);
+    //                TextRenderer.DrawText(g, text, drawFont, rect, Color.Black, Color.Transparent, TextFormatFlags.Bottom);
+    //            }
+
+    //            {
+    //                // experiment met 3 cirkels zoals Altrady
+    //                int y = 0;
+    //                int offset = 17; //40
+    //                int offsetValue = 37; //60
+    //                                      //Rectangle rect1;
+    //                                      //SolidBrush solidBrush;
+    //                Rectangle rect1 = new(0, y, intWidth, intHeight);
+    //                Font drawFont1 = new("Microsoft Sans Serif", this.Font.Size);
+    //                CryptoIntervalPeriod[] list = [CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d];
+
+    //                foreach (CryptoIntervalPeriod intervalPeriod in list)
+    //                {
+    //                    Color color;
+    //                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+    //                    if (barometerData?.PriceBarometer < 0)
+    //                        color = Color.Red;
+    //                    else
+    //                        color = Color.Green;
+
+    //                    y += 20;
+    //                    //TextRenderer.DrawText(g, "1h", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+    //                    SolidBrush solidBrush = new(color);
+    //                    g.FillEllipse(solidBrush, offset, y, 15, 15);
+    //                    rect1 = new(offsetValue, y, intWidth, intHeight);
+    //                    TextRenderer.DrawText(g, barometerData?.PriceBarometer?.ToString("N2"), drawFont1, rect1, color, Color.Transparent, TextFormatFlags.Top);
+    //                }
+
+
+    //                //y += 20;
+    //                ////rect1 = new Rectangle(0, y, intWidth, intHeight);
+    //                ////TextRenderer.DrawText(g, "1H:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+    //                //SolidBrush solidBrush = new SolidBrush(Color.FromArgb(255, 255, 0, 0));
+    //                //g.FillEllipse(solidBrush, offset, y, radius, radius);
+    //                //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+    //                //TextRenderer.DrawText(g, "1.29", drawFont1, rect1, Color.Green, Color.Transparent, TextFormatFlags.Top);
 
 
 
-                    //y += 20;
-                    ////rect1 = new Rectangle(0, y, intWidth, intHeight);
-                    ////TextRenderer.DrawText(g, "4H:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                    //solidBrush = new SolidBrush(Color.FromArgb(255, 0, 255, 0));
-                    //g.FillEllipse(solidBrush, offset, y, radius, radius);
-                    //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                    //TextRenderer.DrawText(g, "-0.29", drawFont1, rect1, Color.Red, Color.Transparent, TextFormatFlags.Top);
-
-
-
-                    //y += 20;
-                    ////rect1 = new Rectangle(0, y, intWidth, intHeight);
-                    ////TextRenderer.DrawText(g, "1D:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
-                    //solidBrush = new SolidBrush(Color.Red); //Color.FromArgb(255, 0, 0, 255)
-                    //g.FillEllipse(solidBrush, offset, y, radius, radius);
-                    //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
-                    //TextRenderer.DrawText(g, "-3.29", drawFont1, rect1, Color.Red, Color.Transparent, TextFormatFlags.Top);
-                }
-
-
-
-
-                //bmp.Save(@"e:\test.bmp");
-                pictureBox1.ClientSize = new Size(intWidth, intHeight);
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
-
-
-                ////MyImage = new Bitmap(fileToDisplay);
-                ////pictureBox1.ClientSize = new Size(intWidth, intHeight);
-                ////pictureBox1.Image = bmp;
-                ////pictureBox1.Refresh();
-            }
-            else
-            {
-
-                System.Drawing.Image bmp = new Bitmap(intWidth, intHeight);
-                Graphics g = Graphics.FromImage(bmp);
-
-                Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
-            }
-        }
-    }
-
-
-    private void ButtonBitmap_Click(object? sender, EventArgs? e)
-    {
-        tabControl.SelectedTab = tabPageBitmap;
-
-        // Dit is een poging om een grafiekje te maken van een munt
-
-        //GlobalData.Settings.Signal.AnalysisShowStobbOverbought = false;
-        //GlobalData.Settings.Signal.AnalysisShowStobbOversold = true;
-
-        GlobalData.Settings.Signal.Sbm.BBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.Sbm.BBMaxPercentage = 100.0;
-        GlobalData.Settings.Signal.Stobb.BBMinPercentage = 1.5;
-        GlobalData.Settings.Signal.Stobb.BBMaxPercentage = 5.0;
-
-        GlobalData.Settings.Signal.AboveBollingerBandsSma = 0;
-        GlobalData.Settings.Signal.AboveBollingerBandsUpper = 0;
-
-        GlobalData.Settings.Signal.CandlesWithFlatPrice = 0;
-        GlobalData.Settings.Signal.CandlesWithZeroVolume = 0;
-
-        //GlobalData.Settings.Signal.AnalysisShowCandleJumpDown = false;
-        //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
-
-
-        var exchange = GlobalData.Settings.General.Exchange;
-        if (exchange != null)
-        {
-            if (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
-            {
-                //DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
-                //DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
-
-
-
-                // Voor de SignalCreate moet ook de 1m geladen worden
-                if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval? interval))
-                    return;
-                LoadSymbolCandles(symbol, interval); //, dateCandleStart, dateCandleEinde);
-
-                CreateBarometerBitmap(symbol.QuoteData, interval);
-
-                ////if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval3m, out interval))
-                ////  return;
-                ////LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-
-
-                //CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-                ////List<CryptoCandle> allCandles = symbolPeriod.CandleList.Values.ToList();
-                ////symbolPeriod.CandleList = new CryptoCandleList();
-                //CryptoCandleList candleList = symbolPeriod.CandleList;
-
-                //// bepaal de range van de te tonen punten
-                //long loX = long.MaxValue;
-                //long hiX = long.MinValue;
-                //float loY = float.MaxValue;
-                //float hiY = float.MinValue;
-                //foreach (CryptoCandle candle in candleList.Values)
-                //{
-                //    if (loX > candle.OpenTime)
-                //        loX = candle.OpenTime;
-                //    if (hiX < candle.OpenTime)
-                //        hiX = candle.OpenTime;
-
-                //    if (loY > (float)candle.Close)
-                //        loY = (float)candle.Close;
-                //    if (hiY < (float)candle.Close)
-                //        hiY = (float)candle.Close;
-                //}
-                //if (loX == long.MaxValue)
-                //    return;
-
-                //// pixel dimensies van het plaatje
-                //int intWidth = 150 * 2;
-                //int intHeight = 50 * 2;
-
-                //// range binnen punten
-                //float screenX = hiX - loX; // unix time
-                //float screenY = hiY - loY; // barometer, something like -5 .. +5
-                //if (screenY < 5)
-                //    screenY = 5f;
-
-                //// factor to keep points within picture
-                //float scaleX = intWidth / screenX;
-                //float scaleY = intHeight / screenY;
-
-                //// ofset to first point
-                //float offsetX = 0; // start in the left of the picture
-                //float offsetY = scaleY * 0.5f * screenY; // center of picture
-
-                //// flix y (something specific with winform? what a crap)
-                //scaleY = -1 * scaleY;
-
-                //System.Drawing.Image bmp = new System.Drawing.Bitmap(intWidth, intHeight);
-                //Graphics g = Graphics.FromImage(bmp);
-
-
-                //// vertical lines (1% per line)
-                //for (int y = -3; y <= 3; y++)
-                //{
-                //    PointF p1 = new PointF(0, offsetY + scaleY * y);
-                //    PointF p2 = new PointF(intWidth, offsetY + scaleY * y);
-                //    if (y == 0)
-                //        g.DrawLine(Pens.Red, p1, p2);
-                //    else
-                //        g.DrawLine(Pens.Gray, p1, p2);
-                //}
-
-                //// horizontal lines (hours)
-                //long intervalTime = 60 * 60; // * 1000;
-                //long lastX = hiX - (hiX % intervalTime);
-                //while (lastX > loX)
-                //{
-                //    PointF p1 = new PointF(0, 0);
-                //    p1.X = offsetX + scaleX * (float)(lastX - loX);
-                //    PointF p2 = new PointF(0, intHeight);
-                //    p2.X = offsetX + scaleX * (float)(lastX - loX);
-
-                //    DateTime ehh = CandleTools.GetUnixDate(lastX);
-                //    //if (ehh.Hour % 2 == 0)
-                //    //    g.DrawLine(Pens.Red, p1, p2);
-                //    //else
-                //    g.DrawLine(Pens.Gray, p1, p2);
-                //    lastX -= intervalTime;
-                //}
-
-
-                //bool init = false;
-                //PointF point1 = new PointF(0, 0);
-                //PointF point2 = new PointF(0, 0);
-                //for (int i = candleList.Values.Count - 1; i >= 0; i--)
-                //{
-                //    CryptoCandle candle = candleList.Values[i];
-
-                //    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
-                //    point2.Y = offsetY + scaleY * ((float)candle.Close);
-                //    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                //    if (init)
-                //        g.DrawLine(Pens.Red, point1, point2);
-
-                //    point1 = point2;
-                //    init = true;
-                //}
-
-                //Font drawFont = new Font(this.Font.Name, this.Font.Size); //Microsoft Sans Serif
-                ////Font drawFontBold = new Font("Arial", 12, FontStyle.Bold);
-                ////SolidBrush drawBrush = new SolidBrush(Color.Black);
-
-                ////TextFormatFlags flags = TextFormatFlags.Bottom; // | TextFormatFlags.WordBreak;
-                //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit; 
-                ////System.Drawing.Text.TextRenderingHint.AntiAlias;
-                //TextRenderer.DrawText(g, "15:01", drawFont,
-                //    new Rectangle(2, 0, intWidth, intHeight - 6), Color.Gray, Color.Transparent, TextFormatFlags.Bottom);
-                ////SystemColors.ControlText, SystemColors.ControlDark
-
-                ////g.DrawString("Hello", this.Font, 
-
-
-                //bmp.Save(@"e:\test.bmp");
-
-
-                ////MyImage = new Bitmap(fileToDisplay);
-                ////pictureBox1.ClientSize = new Size(intWidth, intHeight);
-                ////pictureBox1.Image = bmp;
-                ////pictureBox1.Refresh();
-
-
-            }
-        }
-
-    }
+    //                //y += 20;
+    //                ////rect1 = new Rectangle(0, y, intWidth, intHeight);
+    //                ////TextRenderer.DrawText(g, "4H:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+    //                //solidBrush = new SolidBrush(Color.FromArgb(255, 0, 255, 0));
+    //                //g.FillEllipse(solidBrush, offset, y, radius, radius);
+    //                //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+    //                //TextRenderer.DrawText(g, "-0.29", drawFont1, rect1, Color.Red, Color.Transparent, TextFormatFlags.Top);
+
+
+
+    //                //y += 20;
+    //                ////rect1 = new Rectangle(0, y, intWidth, intHeight);
+    //                ////TextRenderer.DrawText(g, "1D:", drawFont1, rect1, Color.Black, Color.Transparent, TextFormatFlags.Top);
+    //                //solidBrush = new SolidBrush(Color.Red); //Color.FromArgb(255, 0, 0, 255)
+    //                //g.FillEllipse(solidBrush, offset, y, radius, radius);
+    //                //rect1 = new Rectangle(offsetValue, y, intWidth, intHeight);
+    //                //TextRenderer.DrawText(g, "-3.29", drawFont1, rect1, Color.Red, Color.Transparent, TextFormatFlags.Top);
+    //            }
+
+
+
+
+    //            //bmp.Save(@"e:\test.bmp");
+    //            pictureBox1.ClientSize = new Size(intWidth, intHeight);
+    //            Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
+
+
+    //            ////MyImage = new Bitmap(fileToDisplay);
+    //            ////pictureBox1.ClientSize = new Size(intWidth, intHeight);
+    //            ////pictureBox1.Image = bmp;
+    //            ////pictureBox1.Refresh();
+    //        }
+    //        else
+    //        {
+
+    //            System.Drawing.Image bmp = new Bitmap(intWidth, intHeight);
+    //            Graphics g = Graphics.FromImage(bmp);
+
+    //            Invoke((MethodInvoker)(() => { pictureBox1.Image = bmp; pictureBox1.Refresh(); }));
+    //        }
+    //    }
+    //}
+
+
+    //private void ButtonBitmap_Click(object? sender, EventArgs? e)
+    //{
+    //    tabControl.SelectedTab = tabPageBitmap;
+
+    //    // Dit is een poging om een grafiekje te maken van een munt
+
+    //    //GlobalData.Settings.Signal.AnalysisShowStobbOverbought = false;
+    //    //GlobalData.Settings.Signal.AnalysisShowStobbOversold = true;
+
+    //    GlobalData.Settings.Signal.Sbm.BBMinPercentage = 1.5;
+    //    GlobalData.Settings.Signal.Sbm.BBMaxPercentage = 100.0;
+    //    GlobalData.Settings.Signal.Stobb.BBMinPercentage = 1.5;
+    //    GlobalData.Settings.Signal.Stobb.BBMaxPercentage = 5.0;
+
+    //    GlobalData.Settings.Signal.AboveBollingerBandsSma = 0;
+    //    GlobalData.Settings.Signal.AboveBollingerBandsUpper = 0;
+
+    //    GlobalData.Settings.Signal.CandlesWithFlatPrice = 0;
+    //    GlobalData.Settings.Signal.CandlesWithZeroVolume = 0;
+
+    //    //GlobalData.Settings.Signal.AnalysisShowCandleJumpDown = false;
+    //    //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
+
+
+    //    var exchange = GlobalData.Settings.General.Exchange;
+    //    if (exchange != null)
+    //    {
+    //        if (exchange.SymbolListName.TryGetValue(Core.Const.Constants.SymbolNameBarometerPrice + "USDT", out CryptoSymbol? symbol)) //"BTCUSDT"
+    //        {
+    //            //DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2023, 03, 01, 05, 00, 0), DateTimeKind.Utc);
+    //            //DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2023, 04, 02, 00, 00, 0), DateTimeKind.Utc);
+
+
+
+    //            // Voor de SignalCreate moet ook de 1m geladen worden
+    //            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1h, out CryptoInterval? interval))
+    //                return;
+    //            LoadSymbolCandles(symbol, interval); //, dateCandleStart, dateCandleEinde);
+
+    //            CreateBarometerBitmap(symbol.QuoteData, interval);
+
+    //            ////if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval3m, out interval))
+    //            ////  return;
+    //            ////LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
+
+
+    //            //CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+    //            ////List<CryptoCandle> allCandles = symbolPeriod.CandleList.Values.ToList();
+    //            ////symbolPeriod.CandleList = new CryptoCandleList();
+    //            //CryptoCandleList candleList = symbolPeriod.CandleList;
+
+    //            //// bepaal de range van de te tonen punten
+    //            //long loX = long.MaxValue;
+    //            //long hiX = long.MinValue;
+    //            //float loY = float.MaxValue;
+    //            //float hiY = float.MinValue;
+    //            //foreach (CryptoCandle candle in candleList.Values)
+    //            //{
+    //            //    if (loX > candle.OpenTime)
+    //            //        loX = candle.OpenTime;
+    //            //    if (hiX < candle.OpenTime)
+    //            //        hiX = candle.OpenTime;
+
+    //            //    if (loY > (float)candle.Close)
+    //            //        loY = (float)candle.Close;
+    //            //    if (hiY < (float)candle.Close)
+    //            //        hiY = (float)candle.Close;
+    //            //}
+    //            //if (loX == long.MaxValue)
+    //            //    return;
+
+    //            //// pixel dimensies van het plaatje
+    //            //int intWidth = 150 * 2;
+    //            //int intHeight = 50 * 2;
+
+    //            //// range binnen punten
+    //            //float screenX = hiX - loX; // unix time
+    //            //float screenY = hiY - loY; // barometer, something like -5 .. +5
+    //            //if (screenY < 5)
+    //            //    screenY = 5f;
+
+    //            //// factor to keep points within picture
+    //            //float scaleX = intWidth / screenX;
+    //            //float scaleY = intHeight / screenY;
+
+    //            //// ofset to first point
+    //            //float offsetX = 0; // start in the left of the picture
+    //            //float offsetY = scaleY * 0.5f * screenY; // center of picture
+
+    //            //// flix y (something specific with winform? what a crap)
+    //            //scaleY = -1 * scaleY;
+
+    //            //System.Drawing.Image bmp = new System.Drawing.Bitmap(intWidth, intHeight);
+    //            //Graphics g = Graphics.FromImage(bmp);
+
+
+    //            //// vertical lines (1% per line)
+    //            //for (int y = -3; y <= 3; y++)
+    //            //{
+    //            //    PointF p1 = new PointF(0, offsetY + scaleY * y);
+    //            //    PointF p2 = new PointF(intWidth, offsetY + scaleY * y);
+    //            //    if (y == 0)
+    //            //        g.DrawLine(Pens.Red, p1, p2);
+    //            //    else
+    //            //        g.DrawLine(Pens.Gray, p1, p2);
+    //            //}
+
+    //            //// horizontal lines (hours)
+    //            //long intervalTime = 60 * 60; // * 1000;
+    //            //long lastX = hiX - (hiX % intervalTime);
+    //            //while (lastX > loX)
+    //            //{
+    //            //    PointF p1 = new PointF(0, 0);
+    //            //    p1.X = offsetX + scaleX * (float)(lastX - loX);
+    //            //    PointF p2 = new PointF(0, intHeight);
+    //            //    p2.X = offsetX + scaleX * (float)(lastX - loX);
+
+    //            //    DateTime ehh = CandleTools.GetUnixDate(lastX);
+    //            //    //if (ehh.Hour % 2 == 0)
+    //            //    //    g.DrawLine(Pens.Red, p1, p2);
+    //            //    //else
+    //            //    g.DrawLine(Pens.Gray, p1, p2);
+    //            //    lastX -= intervalTime;
+    //            //}
+
+
+    //            //bool init = false;
+    //            //PointF point1 = new PointF(0, 0);
+    //            //PointF point2 = new PointF(0, 0);
+    //            //for (int i = candleList.Values.Count - 1; i >= 0; i--)
+    //            //{
+    //            //    CryptoCandle candle = candleList.Values[i];
+
+    //            //    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
+    //            //    point2.Y = offsetY + scaleY * ((float)candle.Close);
+    //            //    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
+
+    //            //    if (init)
+    //            //        g.DrawLine(Pens.Red, point1, point2);
+
+    //            //    point1 = point2;
+    //            //    init = true;
+    //            //}
+
+    //            //Font drawFont = new Font(this.Font.Name, this.Font.Size); //Microsoft Sans Serif
+    //            ////Font drawFontBold = new Font("Arial", 12, FontStyle.Bold);
+    //            ////SolidBrush drawBrush = new SolidBrush(Color.Black);
+
+    //            ////TextFormatFlags flags = TextFormatFlags.Bottom; // | TextFormatFlags.WordBreak;
+    //            //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit; 
+    //            ////System.Drawing.Text.TextRenderingHint.AntiAlias;
+    //            //TextRenderer.DrawText(g, "15:01", drawFont,
+    //            //    new Rectangle(2, 0, intWidth, intHeight - 6), Color.Gray, Color.Transparent, TextFormatFlags.Bottom);
+    //            ////SystemColors.ControlText, SystemColors.ControlDark
+
+    //            ////g.DrawString("Hello", this.Font, 
+
+
+    //            //bmp.Save(@"e:\test.bmp");
+
+
+    //            ////MyImage = new Bitmap(fileToDisplay);
+    //            ////pictureBox1.ClientSize = new Size(intWidth, intHeight);
+    //            ////pictureBox1.Image = bmp;
+    //            ////pictureBox1.Refresh();
+
+
+    //        }
+    //    }
+
+    //}
 
     private async void Button2_Click_1(object? sender, EventArgs? e)
     {
@@ -2122,7 +2132,7 @@ public partial class TestForm : Form
     //                            databaseThread.BulkInsertCandles(candleCache, transaction);
     //                            candleCache.Clear();
     //                        }
-    //                        //static public void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
+    //                        //public static void BulkInsertCandles(this SqlConnection MyConnection, List<CryptoCandle> cache, SqlTransaction transaction)
     //                    }
     //                }
     //                System.IO.File.Delete(downLoadFolder + name + ".csv");

@@ -834,7 +834,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
             {
-                CryptoCandle candle = symbolInterval.CandleList.Values[^1]; // todo, not working for emulator!
+                CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                 try
                 {
                     if (candle.Low < signal.PriceMin || signal.PriceMin == 0)

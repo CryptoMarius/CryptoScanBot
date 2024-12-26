@@ -29,7 +29,7 @@ public class CandleToolsTests : TestBase
 
             // Use Process1mCandle?
 
-            CryptoCandle candle = await CandleTools.Process1mCandleAsync(symbol, startTime, value, value, value, value, 1, 1, false);
+            CryptoCandle candle = await CandleTools.Process1mCandleAsync(symbol, startTime, value, value, value, value, 1, 1);
             CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
             string text = $"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true);
             Console.WriteLine(text);

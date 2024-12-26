@@ -78,6 +78,7 @@ public class Symbols
                                         Quote = symbolData.QuoteAsset,
                                         QuoteData = quoteData,
                                         Status = 1,
+                                        PriceTickSize = 1,
                                     };
                                 }
                                 symbol.Name = symbolName; //symbolData.Symbol, BaseQuoteM?

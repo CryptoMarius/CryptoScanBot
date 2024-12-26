@@ -96,7 +96,7 @@ public class Candles
                 {
                     // Quoted = volume * price (expressed in usdt/eth/btc etc), base is coins
                     CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.Volume, false);
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.Volume);
 
                     // Onthoud de laatste aangeleverde candle, t/m die datum is ten minste alles binnen gehaald
                     if (candle.OpenTime > last)

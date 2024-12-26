@@ -40,7 +40,6 @@ namespace CryptoScanBot
             ButtonVolatiteit = new Button();
             comboBox1 = new ComboBox();
             ButtonBackTest = new Button();
-            ButtonBitmap = new Button();
             tabControl = new TabControl();
             tabPageLog = new TabPage();
             textBox1 = new TextBox();
@@ -94,7 +93,6 @@ namespace CryptoScanBot
             panel1.Controls.Add(ButtonVolatiteit);
             panel1.Controls.Add(comboBox1);
             panel1.Controls.Add(ButtonBackTest);
-            panel1.Controls.Add(ButtonBitmap);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
             panel1.Margin = new Padding(4, 3, 4, 3);
@@ -172,17 +170,6 @@ namespace CryptoScanBot
             ButtonBackTest.Text = "Backtest";
             ButtonBackTest.UseVisualStyleBackColor = true;
             ButtonBackTest.Click += ButtonBackTest_Click;
-            // 
-            // ButtonBitmap
-            // 
-            ButtonBitmap.Location = new Point(13, 16);
-            ButtonBitmap.Margin = new Padding(4, 3, 4, 3);
-            ButtonBitmap.Name = "ButtonBitmap";
-            ButtonBitmap.Size = new Size(88, 27);
-            ButtonBitmap.TabIndex = 5;
-            ButtonBitmap.Text = "Bitmap";
-            ButtonBitmap.UseVisualStyleBackColor = true;
-            ButtonBitmap.Click += ButtonBitmap_Click;
             // 
             // tabControl
             // 
@@ -447,7 +434,6 @@ namespace CryptoScanBot
         #endregion
 
         private Panel panel1;
-        private Button ButtonBitmap;
         private TabControl tabControl;
         private TabPage tabPageLog;
         private TextBox textBox1;

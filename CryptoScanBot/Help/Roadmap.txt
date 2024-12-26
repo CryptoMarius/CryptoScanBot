@@ -9,6 +9,7 @@ Todo:
 - Detectie van de double top en bottom (via de secondary trend?)
 - Verwijderen van gesloten FVG uit de database (cleanup)
 - Verwijderen van oude gesloten oude Zones uit de database (cleanup)
+Ik heb de fvg nu gelimiteerd tot het 15m interval en hoger en Ik zit te denken om dat toch maar instelbaar te gaan maken. Wellicht moet ik de fvg ook berekenen nadat je de scanner een poosje uit hebt gezet, maar dat komt nog wel..
 
 Scanner:
 - Scanner - Optioneel, een plaatje in Telegram van de situatie

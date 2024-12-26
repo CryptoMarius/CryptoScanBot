@@ -215,7 +215,7 @@ public partial class DashBoardInformation : UserControl
 
     public void CreateBarometerBitmap(Core.Model.CryptoExchange exchange, CryptoQuoteData quoteData, CryptoInterval interval)
     {
-        float blocks = Constants.BarometerGraphHours;
+        int blocks = Constants.BarometerGraphHours;
 
         // pixel dimensies van het plaatje
         int intWidth = pictureBox1.Width;
@@ -225,31 +225,35 @@ public partial class DashBoardInformation : UserControl
         {
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
             CryptoCandleList candleList = symbolPeriod.CandleList;
+            if (candleList.Count == 0)
+                return;
 
             // determine range of data
             long loX = long.MaxValue;
             long hiX = long.MinValue;
             float loY = float.MaxValue;
             float hiY = float.MinValue;
-            int candleCount = (int)(blocks * 60);
-            for (int i = candleList.Values.Count - 1; i >= 0; i--)
+            int candleCount = blocks * 60;
+            long unix = candleList.Values.Last().OpenTime;
+            while (candleCount-- > 0)
             {
-                CryptoCandle candle = candleList.Values[i];
-                if (loX > candle.OpenTime)
-                    loX = candle.OpenTime;
-                if (hiX < candle.OpenTime)
-                    hiX = candle.OpenTime;
-
-                // In Bybit Futures zijn er (vanwege storingen) hoge waarden ingevuld
-                if (candle.Close > -50 && candle.Close < 50)
+                if (candleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
-                    if (loY > (float)candle.Close)
-                        loY = (float)candle.Close;
-                    if (hiY < (float)candle.Close)
-                        hiY = (float)candle.Close;
+                    if (loX > candle.OpenTime)
+                        loX = candle.OpenTime;
+                    if (hiX < candle.OpenTime)
+                        hiX = candle.OpenTime;
+
+                    // Ignore very high barometer values (malfunctions Bybit Futures)
+                    if (candle.Close > -50 && candle.Close < 50)
+                    {
+                        if (loY > (float)candle.Close)
+                            loY = (float)candle.Close;
+                        if (hiY < (float)candle.Close)
+                            hiY = (float)candle.Close;
+                    }
                 }
-                if (candleCount-- < 0)
-                    break;
+                unix -= 60; // interval.Duration; The barometer has each 1 minute a barometer value
             }
             if (loX == long.MaxValue)
                 return;
@@ -322,27 +326,28 @@ public partial class DashBoardInformation : UserControl
             bool init = false;
             PointF point1 = new(0, 0);
             PointF point2 = new(0, 0);
-            candleCount = (int)(blocks * 60);
-            for (int i = candleList.Values.Count - 1; i >= 0; i--)
+            candleCount = blocks * 60;
+            unix = candleList.Values.Last().OpenTime;
+            while (candleCount-- > 0)
             {
-                CryptoCandle candle = candleList.Values[i];
-
-                point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
-                point2.Y = offsetY + scaleY * ((float)candle.Close);
-                //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
-
-                if (init)
+                if (candleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
-                    if (candle.Close < 0)
-                        g.DrawLine(Pens.Red, point1, point2);
-                    else
-                        g.DrawLine(Pens.DarkGreen, point1, point2);
-                }
+                    point2.X = offsetX + scaleX * (float)(candle.OpenTime - loX);
+                    point2.Y = offsetY + scaleY * ((float)candle.Close);
+                    //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
 
-                point1 = point2;
-                init = true;
-                if (candleCount-- < 0)
-                    break;
+                    if (init)
+                    {
+                        if (candle.Close < 0)
+                            g.DrawLine(Pens.Red, point1, point2);
+                        else
+                            g.DrawLine(Pens.DarkGreen, point1, point2);
+                    }
+
+                    point1 = point2;
+                    init = true;
+                }
+                unix -= 60; // interval.Duration; The barometer has each 1 minute a barometer value
             }
 
 
@@ -400,7 +405,7 @@ public partial class DashBoardInformation : UserControl
             // Barometer tijd
             if (candleList.Values.Count > 0)
             {
-                CryptoCandle candle = candleList.Values[candleList.Values.Count - 1];
+                CryptoCandle candle = candleList.Values.Last();
                 //Rectangle rect = new(6, 0, intWidth, intHeight - 8);
                 string text = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
 

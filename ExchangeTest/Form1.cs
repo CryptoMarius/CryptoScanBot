@@ -64,7 +64,7 @@ public partial class Form1 : Form
         TradingConfig.InitWhiteAndBlackListSettings(); // after loading symbols
 
         GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
-        ThreadLoadData.IndexQuoteDataSymbols(GlobalData.Settings.General.Exchange);
+        ThreadLoadData.IndexQuoteDataSymbols(GlobalData.Settings.General.Exchange!);
 
 
 
@@ -95,7 +95,7 @@ public partial class Form1 : Form
         }
     }
 
-    static public void LoadExchangeSettings(string name)
+    public static void LoadExchangeSettings(string name)
     {
         string filename = $"{GlobalData.AppName}-exchange{name}.json";
         try
@@ -173,6 +173,7 @@ public partial class Form1 : Form
             Quote = "USDT",
             QuoteData = quoteData,
             Base = "BTC",
+            PriceTickSize = 0.01m,
         };
         CryptoInterval interval = GlobalData.IntervalList[0];
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);

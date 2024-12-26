@@ -105,11 +105,9 @@ public class StorageHistoricalData
             if (symbolInterval.CandleList.Values.Count > 0)
             {
                 // The storage name depends on the date
-                {
-                    CryptoCandle candle = symbolInterval.CandleList.Values[0];
-                    period = GetPeriod(interval, candle.Date);
-                    filename = GetFolder(symbol, interval, candle.Date);
-                }
+                DateTime candleDate = symbolInterval.CandleList.Values.First().Date;
+                period = GetPeriod(interval, candleDate);
+                filename = GetFolder(symbol, interval, candleDate);
 
                 foreach (var candle in symbolInterval.CandleList.Values)
                 {

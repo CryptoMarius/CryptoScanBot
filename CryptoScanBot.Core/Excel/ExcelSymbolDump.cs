@@ -60,7 +60,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
     //}
 
 
-    //static public void ExportToExcelAll()
+    //public static void ExportToExcelAll()
     //{
     //    foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
     //    {
@@ -141,7 +141,6 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "BaseVolume");
 #endif
         WriteCell(sheet, columns++, row, "QuoteVolume");
-        WriteCell(sheet, columns++, row, "Duplicated");
 
         WriteCell(sheet, columns++, row, "SlopeRsi");
         WriteCell(sheet, columns++, row, "SlopeMacd");
@@ -156,7 +155,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         {
             row++;
             int column = 0;
-            bool attention = (last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime || candle.IsDuplicated);
+            bool attention = (last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime);
 
             WriteCell(sheet, column++, row, candle.OpenTime);
             if (attention)
@@ -179,11 +178,6 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
             else
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
-
-            if (candle.IsDuplicated)
-                WriteCell(sheet, column++, row, candle.IsDuplicated.ToString());
-            else
-                column++;
 
             if (candle.CandleData != null)
             {

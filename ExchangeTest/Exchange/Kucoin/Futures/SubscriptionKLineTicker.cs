@@ -78,7 +78,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                candle = new();
         //                klineListTemp.TryAdd(candleOpenUnix, candle);
         //            }
-        //            candle.IsDuplicated = false;
         //            candle.OpenTime = candleOpenUnix;
         //            candle.Open = kline.OpenPrice;
         //            candle.High = kline.HighPrice;
@@ -138,7 +137,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                            {
         //                                nextCandle = new();
         //                                klineListTemp.Add(nextCandleUnix, nextCandle);
-        //                                nextCandle.IsDuplicated = true;
         //                                nextCandle.OpenTime = nextCandleUnix;
         //                                nextCandle.Open = lastCandle.Close;
         //                                nextCandle.High = lastCandle.Close;
@@ -160,7 +158,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                            klineListTemp.Remove(candle.OpenTime);
 
         //                            //Process1mCandle(Symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
-        //                            CandleTools.CreateCandle(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume, candle.IsDuplicated);
+        //                            CandleTools.CreateCandle(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
         //                            //SaveCandleAndUpdateHigherTimeFrames(Symbol, candle);
         //                            // Calculate higher timeframes
         //                            long candle1mCloseTime = candle.OpenTime + interval.Duration;
@@ -178,10 +176,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                            Symbol.AskPrice = candle.Close;
         //                            Symbol.BidPrice = candle.Close;
 
-        //                            //if (candle.IsDuplicated)
-        //                            //    ScannerLog.Logger.Trace("Dup candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
-        //                            //else
-        //                            //    ScannerLog.Logger.Trace("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
+        //                            //ScannerLog.Logger.Trace("New candle " + candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true));
 
         //                            // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
         //                            if (candle.OpenTime == expectedCandlesUpto)

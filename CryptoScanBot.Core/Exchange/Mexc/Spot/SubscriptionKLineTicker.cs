@@ -83,7 +83,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 candle = new();
                                 tempList.TryAdd(candleOpenUnix, candle);
                             }
-                            candle.IsDuplicated = false;
                             candle.OpenTime = candleOpenUnix;
                             candle.Open = kline.OpenPrice;
                             candle.High = kline.HighPrice;
@@ -149,7 +148,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 {
                                     nextCandle = new();
                                     tempList.Add(nextCandleUnix, nextCandle);
-                                    nextCandle.IsDuplicated = true;
                                     nextCandle.OpenTime = nextCandleUnix;
                                     nextCandle.Open = lastCandle.Close;
                                     nextCandle.High = lastCandle.Close;
@@ -185,16 +183,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 #else
                                     0,
 #endif
-                                    candle.Volume, candle.IsDuplicated);
+                                    (decimal)candle.Volume);
 
                                 //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
                                 //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                 // Debug...
-                                //if (candle.IsDuplicated)
-                                //    GlobalData.AddTextToLogTab("Dup candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
-                                //else
-                                //    GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
+                                //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
 
                                 // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
                                 if (candle.OpenTime == expectedCandlesUpto)

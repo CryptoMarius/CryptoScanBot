@@ -29,11 +29,33 @@ public class CryptoCandle : IQuote
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public decimal Volume { get; set; }
+    //decimal IQuote.Volume => (decimal)Volume;
 #if SUPPORTBASEVOLUME
     public decimal BaseVolume { get; set; }
 #endif
 
+    // Idea, we store it as uint together with the factor, saves some memory
+    //public uint OpenStorage { get; set; }
+    //public uint HighStorage { get; set; }
+    //public uint LowStorage { get; set; }
+    //public uint CloseStorage { get; set; }
+
+    //// decimal = 16 bytes, long = 8, uint = 4
+    //// 4*16 - 3*4 = 64 - 12 = 52 bytes per candle, not wurth the effort?
+    //[Computed]
+    //public uint PriceFactor { get; set; }
+    //[Computed]
+    //public decimal OpenDecimal { get { return (long)OpenStorage / PriceFactor; } set { OpenStorage = (uint)(value * PriceFactor); } }
+    //[Computed]
+    //public decimal HighDecimal { get { return (long)HighStorage / PriceFactor; } set { HighStorage = (uint)(value * PriceFactor); } }
+    //[Computed]
+    //public decimal LowDecimal { get { return (long)LowStorage / PriceFactor; } set { LowStorage = (uint)(value * PriceFactor); } }
+    //[Computed]
+    //public decimal CloseDecimal { get { return (long)CloseStorage / PriceFactor; } set { CloseStorage = (uint)(value * PriceFactor); } }
+
+
     [Computed]
+    //[JsonIgnore]
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
 
     [Computed]
@@ -43,14 +65,9 @@ public class CryptoCandle : IQuote
     [Computed]
     [JsonIgnore]
     public CandleIndicatorData? CandleData { get; set; }
-
-    // Candles die on the fly zijn aangemaakt (niet confirmed) vanwege Kucoin
-    [Computed]
-    [JsonIgnore]
-    public bool IsDuplicated { get; set; }
 }
 
-public class CryptoCandleList : SortedList<long, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
+public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
 {
 }
 

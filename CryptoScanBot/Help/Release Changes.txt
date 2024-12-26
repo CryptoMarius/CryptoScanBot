@@ -64,7 +64,7 @@ CryptoScanBot release historie:
 - Scanner - Dominante zones: de foutmelding zien op te lossen (die soms bovenin de chart komt te staan)
 - Scanner - Trend aanpassingen om deze optimaler te laten lopen (het toevoegen van een laatste punt gaf wederom problemen)
             Lewis Kelly legt het hier mooi uit: https://www.youtube.com/watch?v=plhWMmmgZj4
-- Scanner - De controle op 1d effectief is vervallen, deze is nu vervangen met de controle efefctief dmv meerdere dagen (opnieuw instellen!)
+- Scanner - De controle op 1d effectief is vervallen, deze is nu vervangen met de controle effectief dmv meerdere dagen (opnieuw instellen!)
 - Scanner - Nieuwe instelling om bij een dubbelklik het trend en zone formulier te openen in plaats van de exchange
 - Scanner - Nieuwe geluiden: de oude geluiden staan in de subfolder
 - Scanner - Dominante zones: Replay knoppen ingebouwd

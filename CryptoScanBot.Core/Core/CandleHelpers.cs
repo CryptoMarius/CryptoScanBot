@@ -68,10 +68,6 @@ public static class Helper
             s = s + " BaseVolume=" + candle.BaseVolume.ToString();
 #endif
         }
-        if (candle.IsDuplicated)
-        {
-            s += " DUPLICATED";
-        }
         return s;
     }
 
@@ -352,7 +348,7 @@ public static class Helper
     }
 
 
-    static public void ShowAssets(CryptoAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
+    public static void ShowAssets(CryptoAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
     {
         valueBtc = 0;
         valueUsdt = 0;
@@ -424,7 +420,7 @@ public static class Helper
     }
 
 
-    static public void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
+    public static void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
     {
         decimal investedInTrades = position.Invested - position.Returned;
         string s = $"{position.Symbol.Name} {position.Side} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
@@ -437,7 +433,7 @@ public static class Helper
     }
 
 
-    static public void ShowPositions(StringBuilder stringBuilder)
+    public static void ShowPositions(StringBuilder stringBuilder)
     {
         int positionTotal = 0;
         foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
