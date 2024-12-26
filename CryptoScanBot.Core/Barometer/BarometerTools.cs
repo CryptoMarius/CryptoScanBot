@@ -15,7 +15,7 @@ public class BarometerTools
     private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
 
 
-    static public void InitBarometerSymbols()
+    public static void InitBarometerSymbols()
     {
         // Check all the (internal) barometer symbols
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)

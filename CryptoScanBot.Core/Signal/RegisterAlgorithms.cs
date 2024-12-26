@@ -10,7 +10,7 @@ public static class RegisterAlgorithms
     /// <summary>
     /// All available strategies + indexed
     /// </summary>
-    static public readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionList = [];
+    public static readonly SortedList<CryptoSignalStrategy, AlgorithmDefinition> AlgorithmDefinitionList = [];
 
 
     public static void Register(AlgorithmDefinition algorithmDefinition)

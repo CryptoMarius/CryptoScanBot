@@ -78,7 +78,7 @@ public static class ThreadTelegramBot
     }
 
 
-    async static public void SendSignal(CryptoSignal signal)
+    async public static void SendSignal(CryptoSignal signal)
     {
         if (bot == null || signal == null || ChatId == "")
             return;

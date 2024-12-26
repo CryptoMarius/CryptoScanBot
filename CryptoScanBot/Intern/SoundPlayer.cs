@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace CryptoScanBot.Intern;
 
-static public class ThreadSoundPlayer
+public static class ThreadSoundPlayer
 {
     private static Thread? soundThread = null;
     private static readonly BlockingCollection<(string soundFile, bool test)> soundQueue = new();

@@ -140,7 +140,7 @@ public static class PositionTools
     }
 
 
-    static public CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part,
+    public static CryptoPositionStep CreatePositionStep(CryptoPosition position, CryptoPositionPart part,
         TradeParams tradeParams, CryptoTrailing trailing = CryptoTrailing.None)
     {
         CryptoPositionStep step = new()
@@ -191,7 +191,7 @@ public static class PositionTools
     }
 
 
-    static public void AddPositionPart(CryptoPosition position, CryptoPositionPart part)
+    public static void AddPositionPart(CryptoPosition position, CryptoPositionPart part)
     {
         position.PartList.TryAdd(part.Id, part);
         part.Position = position; // parent
@@ -200,7 +200,7 @@ public static class PositionTools
     }
 
 
-    static public void AddPositionPartStep(CryptoPositionPart part, CryptoPositionStep step)
+    public static void AddPositionPartStep(CryptoPositionPart part, CryptoPositionStep step)
     {
         part.StepList.TryAdd(step.Id, step);
 
@@ -212,7 +212,7 @@ public static class PositionTools
     }
 
 
-    static public void AddPositionClosed(CryptoPosition position)
+    public static void AddPositionClosed(CryptoPosition position)
     {
         if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
         {
@@ -233,7 +233,7 @@ public static class PositionTools
     }
 
 
-    static public void RemovePosition(CryptoAccount tradeAccount, CryptoPosition position, bool addToClosed)
+    public static void RemovePosition(CryptoAccount tradeAccount, CryptoPosition position, bool addToClosed)
     {
         if (tradeAccount.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
         {

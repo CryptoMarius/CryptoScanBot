@@ -61,7 +61,7 @@ public class Order() : OrderBase(), IOrder
     }
 
 
-    static public void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrder item)
+    public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrder item)
     {
         order.CreateTime = item.CreateTime;
         order.UpdateTime = item.UpdateTime;

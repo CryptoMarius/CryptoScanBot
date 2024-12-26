@@ -18,7 +18,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 /// </summary>
 public class Trade() : TradeBase(), ITrade
 {
-    static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
+    public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
     {
         trade.TradeTime = item.Timestamp;
 

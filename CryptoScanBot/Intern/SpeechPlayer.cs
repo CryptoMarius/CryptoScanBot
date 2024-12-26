@@ -5,7 +5,7 @@ using System.Speech.Synthesis;
 
 namespace CryptoScanBot.Intern;
 
-static public class ThreadSpeechPlayer
+public static class ThreadSpeechPlayer
 {
     private static Thread? speechPlayThread;
     private static readonly BlockingCollection<string> speechQueue = [];

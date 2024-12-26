@@ -1,6 +1,6 @@
 ﻿namespace CryptoScanBot.Core.Const;
 
-static public class Constants
+public static class Constants
 {
     public const int BarometerGraphHours = 7;
 

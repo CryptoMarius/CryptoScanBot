@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Core;
 public class ScannerLog
 {
     // The nlogger stuff
-    static public Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+    public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {
@@ -42,7 +42,7 @@ public class ScannerLog
         //config.LoggingRules.Add(rule);
     }
 
-    static public void InitializeLogging()
+    public static void InitializeLogging()
     {
         // nlog is lastig te beinvloeden, daarom maar via code
         // serilog is niet veel anders, prima logging, maar beinvloeding van bestandsnamen is gelimiteerd (splitsen errors is een probleem)

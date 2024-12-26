@@ -23,10 +23,10 @@ internal class ByBitWeight
 /// </summary>
 public static class LimitRate
 {
-    static public long CurrentWeight { get; set; }
+    public static long CurrentWeight { get; set; }
     static private List<ByBitWeight> List { get; } = new List<ByBitWeight>();
 
-    static public void WaitForFairWeight(long newWeight)
+    public static void WaitForFairWeight(long newWeight)
     {
 
         Monitor.Enter(List);

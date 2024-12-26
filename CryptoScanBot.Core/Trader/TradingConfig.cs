@@ -20,7 +20,7 @@ public static class TradingConfig
         Trading.Add(CryptoTradeSide.Short, new SettingsCompiled());
     }
 
-    static public void IndexStrategyInternally()
+    public static void IndexStrategyInternally()
     {
         Signals[CryptoTradeSide.Long].IndexStrategyInternally(GlobalData.Settings.Signal.Long, CryptoTradeSide.Long);
         Signals[CryptoTradeSide.Short].IndexStrategyInternally(GlobalData.Settings.Signal.Short, CryptoTradeSide.Short);
@@ -30,7 +30,7 @@ public static class TradingConfig
     }
 
 
-    static public void InitWhiteAndBlackListHelper(List<string> list, SortedList<string, bool> target, string caption)
+    public static void InitWhiteAndBlackListHelper(List<string> list, SortedList<string, bool> target, string caption)
     {
         // Het 1e woord is de symbol
         char[] delimiterChars = [' ', ',', '-', '.', ':', '\t'];
@@ -61,7 +61,7 @@ public static class TradingConfig
         }
     }
 
-    static public void InitWhiteAndBlackListSettings()
+    public static void InitWhiteAndBlackListSettings()
     {
         // Nadat de symbol zijn ingelezen de black en whitelist initialiseren
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Signals[CryptoTradeSide.Long].BlackList, "BlackList.Long");

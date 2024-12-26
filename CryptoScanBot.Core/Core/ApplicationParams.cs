@@ -15,7 +15,7 @@ public class ApplicationParams
     [Option('e', "exchange", Required = false, HelpText = "De te gebruiken exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot of Mexc Spot)")]
     public string? ExchangeName { get { return _ExchangeName; } set { _ExchangeName = value!.Trim(); } }
 
-    static public ApplicationParams? Options { get; set; }
+    public static ApplicationParams? Options { get; set; }
 
     public static void InitApplicationOptions()
     {

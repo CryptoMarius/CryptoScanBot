@@ -29,7 +29,7 @@ public delegate void PlayMediaEvent(string text, bool test = false);
 public delegate void SetCandleTimerEnable(bool value);
 
 
-static public class GlobalData
+public static class GlobalData
 {
     public static string AppName { get; set; } = "";
     public static string AppPath { get; set; } = "";
@@ -145,7 +145,7 @@ static public class GlobalData
     public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
     public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
-    static public void LoadExchanges()
+    public static void LoadExchanges()
     {
         // Load & index the exchanges
         //AddTextToLogTab("Reading exchange information");
@@ -202,7 +202,7 @@ static public class GlobalData
     }
 
 
-    static public void LoadIntervals()
+    public static void LoadIntervals()
     {
         // Load & index all the available intervals
         //AddTextToLogTab("Reading interval information");
@@ -233,7 +233,7 @@ static public class GlobalData
         IntervalList.Sort((x, y) => x.IntervalPeriod.CompareTo(y.IntervalPeriod));
     }
 
-    static public void LoadSymbols()
+    public static void LoadSymbols()
     {
         // De symbols uit de database lezen (ook van andere exchanges)
         // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
@@ -244,7 +244,7 @@ static public class GlobalData
             AddSymbol(symbol);
     }
 
-    static public void LoadSignals()
+    public static void LoadSignals()
     {
         //GlobalData.AddTextToLogTab("Reading some signals");
 
@@ -297,7 +297,7 @@ static public class GlobalData
     }
 
 
-    static public void AddExchange(Model.CryptoExchange exchange)
+    public static void AddExchange(Model.CryptoExchange exchange)
     {
         if (!ExchangeListName.ContainsKey(exchange.Name))
         {
@@ -307,7 +307,7 @@ static public class GlobalData
     }
 
 
-    static public CryptoQuoteData AddQuoteData(string quoteName)
+    public static CryptoQuoteData AddQuoteData(string quoteName)
     {
         if (!Settings.QuoteCoins.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
         {
@@ -329,7 +329,7 @@ static public class GlobalData
         return quoteData;
     }
 
-    static public void AddSymbol(CryptoSymbol symbol)
+    public static void AddSymbol(CryptoSymbol symbol)
     {
 #if LIMITSYMBOLS
         // Test with limits anount of symbols for debugging purposes
@@ -404,7 +404,7 @@ static public class GlobalData
 
 
 
-    static public void LoadBaseSettings()
+    public static void LoadBaseSettings()
     {
         try
         {
@@ -443,7 +443,7 @@ static public class GlobalData
     }
 
 
-    static public void LoadLinkSettings()
+    public static void LoadLinkSettings()
     {
         string filename = $"{AppName}-weblinks.json";
         try
@@ -479,7 +479,7 @@ static public class GlobalData
     /// <summary>
     /// Window coordinates, active columns etc.
     /// </summary>
-    static public void LoadUserSettings()
+    public static void LoadUserSettings()
     {
         string filename = $"{AppName}-user.json";
         try
@@ -502,7 +502,7 @@ static public class GlobalData
         }
     }
 
-    static public void LoadTelegramSettings()
+    public static void LoadTelegramSettings()
     {
         string filename = $"{AppName}-telegram.json";
         try
@@ -525,7 +525,7 @@ static public class GlobalData
         }
     }
 
-    static public void LoadExchangeSettings()
+    public static void LoadExchangeSettings()
     {
         string filename = $"{AppName}-exchange.json";
         try
@@ -571,7 +571,7 @@ static public class GlobalData
 
 
 
-    static public void LoadSettings()
+    public static void LoadSettings()
     {
         LoadBaseSettings();
         LoadExchangeSettings();
@@ -581,7 +581,7 @@ static public class GlobalData
     }
 
 
-    static public void DefaultSettings()
+    public static void DefaultSettings()
     {
         // Apply some defaults
         if (Settings.QuoteCoins.Count == 0)
@@ -615,7 +615,7 @@ static public class GlobalData
         }
     }
 
-    static public void SaveUserSettings()
+    public static void SaveUserSettings()
     {
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
@@ -624,7 +624,7 @@ static public class GlobalData
         File.WriteAllText(filename, text);
     }
 
-    static public void SaveSettings()
+    public static void SaveSettings()
     {
         string baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
@@ -669,7 +669,7 @@ static public class GlobalData
     }
 
 
-    static public void PlaySomeMusic(string text, bool test = false)
+    public static void PlaySomeMusic(string text, bool test = false)
     {
         try
         {
@@ -682,7 +682,7 @@ static public class GlobalData
         }
     }
 
-    static public void PlaySomeSpeech(string text, bool test = false)
+    public static void PlaySomeSpeech(string text, bool test = false)
     {
         try
         {
@@ -695,7 +695,7 @@ static public class GlobalData
         }
     }
 
-    static public void AddTextToTelegram(string text)
+    public static void AddTextToTelegram(string text)
     {
         if (!BackTest)
         {
@@ -711,7 +711,7 @@ static public class GlobalData
         }
     }
 
-    static public void AddTextToTelegram(string text, CryptoPosition position)
+    public static void AddTextToTelegram(string text, CryptoPosition position)
     {
         if (!BackTest)
         {
@@ -739,7 +739,7 @@ static public class GlobalData
         }
     }
 
-    //static public void AddTextToTelegram(string text, CryptoSymbol symbol)
+    //public static void AddTextToTelegram(string text, CryptoSymbol symbol)
     //{
     //    if (LogToTelegram is null)
     //        return;
@@ -764,18 +764,18 @@ static public class GlobalData
     //    }
     //}
 
-    static public void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
-    static public void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
-    static public void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
+    public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
+    public static void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
+    public static void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
-    static public void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
-    static public void PositionsHaveChanged(string text) => PositionsHaveChangedEvent?.Invoke(text);
+    public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
+    public static void PositionsHaveChanged(string text) => PositionsHaveChangedEvent?.Invoke(text);
 
-    static public void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
-    static public void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
+    public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
+    public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
 
-    static public string GetBaseDir()
+    public static string GetBaseDir()
     {
         if (string.IsNullOrEmpty(AppDataFolder))
         {

@@ -12,7 +12,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
 public class Asset() : AssetBase(), IAsset
 {
-    static public void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
+    public static void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
     {
         tradeAccount.Data.AssetListSemaphore.Wait();
         try

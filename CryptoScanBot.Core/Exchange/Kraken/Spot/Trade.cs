@@ -19,7 +19,7 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 /// </summary>
 public class Trade() : TradeBase(), ITrade
 {
-    static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
+    public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {
         trade.TradeTime = item.Timestamp;
 

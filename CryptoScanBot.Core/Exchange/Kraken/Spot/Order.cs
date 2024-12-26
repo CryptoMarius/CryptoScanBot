@@ -56,7 +56,7 @@ public class Order() : OrderBase(), IOrder
 
 
 
-    static public void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenOrderUpdate item)
+    public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, KrakenOrderUpdate item)
     {
         order.CreateTime = item.Timestamp;
         order.UpdateTime = item.Timestamp; // TODO??? 

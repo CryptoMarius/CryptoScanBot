@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trader;
 
-static public class TradeHandler
+public static class TradeHandler
 {
     /// <summary>
     /// Vanuit de user ticker komt een reactie op een trade. De positie wordt doorgegeven naar 

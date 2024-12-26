@@ -15,7 +15,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
 public class Trade() : TradeBase(), ITrade
 {
-    static public void PickupTradeV3(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
+    public static void PickupTradeV3(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
     {
         trade.TradeTime = item.TradeTime;
 
@@ -37,7 +37,7 @@ public class Trade() : TradeBase(), ITrade
     }
 
 
-    static public void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
+    public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
     {
         trade.TradeTime = item.Timestamp;
 

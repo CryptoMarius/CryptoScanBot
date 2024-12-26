@@ -17,10 +17,10 @@ internal class KucoinWeight
 /// </summary>
 public static class KucoinWeights
 {
-    static public long CurrentWeight { get; set; }
+    public static long CurrentWeight { get; set; }
     static private List<KucoinWeight> List { get; } = new();
 
-    static public void WaitForFairWeight(long newWeight)
+    public static void WaitForFairWeight(long newWeight)
     {
 
         Monitor.Enter(List);

@@ -6,7 +6,6 @@ using Microsoft.Web.WebView2.Core;
 
 namespace CryptoScanBot.Intern;
 
-
 public static class LinkTools
 {
     private static bool WebViewDummyInitialized;
@@ -39,7 +38,7 @@ public static class LinkTools
 
     private static async Task InitializeWebViewTradingView()
     {
-        if (!WebViewTradingViewInitialized)
+        if (WebViewTradingView != null && !WebViewTradingViewInitialized)
         {
             WebViewTradingViewInitialized = true;
             await InitializeWebView(WebViewTradingView);
@@ -89,5 +88,15 @@ public static class LinkTools
         ActivateTradingApp(externalTradingApp, symbol, interval, CryptoExternalUrlType.External);
     }
 
+
+    public static void InitializeTradingView()
+    {
+        if (WebViewTradingView != null)
+        {
+            CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+            if (GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? symbol))
+                ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
+        }
+    }
 
 }

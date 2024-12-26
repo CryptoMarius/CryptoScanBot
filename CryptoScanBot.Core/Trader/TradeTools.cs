@@ -414,7 +414,7 @@ public class TradeTools
     /// Na het opstarten is er behoefte om openstaande orders en trades te synchroniseren
     /// (dependency: de trades en steps moeten hiervoor ingelezen zijn)
     /// </summary>
-    static public async Task CalculatePositionResultsViaOrders(CryptoDatabase database, CryptoPosition position, bool forceCalculation = false)
+    public static async Task CalculatePositionResultsViaOrders(CryptoDatabase database, CryptoPosition position, bool forceCalculation = false)
     {
         // Als de positie reeds gesloten is gaan we niet meer aanpassen
         // (kan gesloten zijn vanwege een verkeerde beslissing, timeout?)
@@ -808,7 +808,7 @@ public class TradeTools
     }
 
 
-    static public async Task<(bool cancelled, TradeParams? tradeParams)> CancelOrder(CryptoDatabase database,
+    public static async Task<(bool cancelled, TradeParams? tradeParams)> CancelOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step,
         DateTime currentTime, CryptoOrderStatus newStatus, string cancelReason)
     {
@@ -841,7 +841,7 @@ public class TradeTools
 
 
 
-    static public async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
+    public static async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
         decimal takeProfitPrice, decimal? tpStop, decimal? tpLimit, DateTime currentTime, string extraText)
     {
         CryptoSymbol symbol = position.Symbol;

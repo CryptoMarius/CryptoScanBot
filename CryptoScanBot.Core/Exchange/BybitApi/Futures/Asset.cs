@@ -12,7 +12,7 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Futures;
 
 public class Asset() : AssetBase(), IAsset
 {
-    static public void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
+    public static void PickupAssets(CryptoAccount tradeAccount, BybitAllAssetBalances balances)
     {
         tradeAccount.Data.AssetListSemaphore.Wait();
         try

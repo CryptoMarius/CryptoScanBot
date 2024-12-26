@@ -274,7 +274,7 @@ public static class ScannerSession
     }
 
 
-    static public void ConnectionWasLost(string text)
+    public static void ConnectionWasLost(string text)
     {
         ConnectionWasLostEvent?.Invoke(text);
     }
@@ -289,7 +289,7 @@ public static class ScannerSession
     }
 
 
-    static public void ConnectionWasRestored(string text)
+    public static void ConnectionWasRestored(string text)
     {
         ConnectionWasRestoredEvent?.Invoke(text);
     }
