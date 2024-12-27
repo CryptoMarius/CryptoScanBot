@@ -213,6 +213,7 @@ public partial class FrmMain : Form
         PositionsHaveChangedEvent("");
 
         ScannerSession.Start(0);
+        LinkTools.InitializeTradingView();
     }
 
 
