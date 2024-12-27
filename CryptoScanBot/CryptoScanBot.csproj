@@ -88,6 +88,7 @@
     <Content Include="Resources\icons.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="JK.Mexc.Net" Version="1.15.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
       <Version>9.0.0</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
