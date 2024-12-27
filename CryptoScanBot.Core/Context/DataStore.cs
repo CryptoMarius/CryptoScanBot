@@ -177,70 +177,59 @@ public class DataStore
 
                         if (count > 0)
                         {
-                            using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
+                            await symbol.CandleLock.WaitAsync();
+                            try
                             {
-                                using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
+                                using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
                                 {
-                                    int version = 1;
-
-                                    // Iets met een version
-                                    binaryWriter.Write(version);
-                                    binaryWriter.Write(symbol.Name);
-
-                                    foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                                    using (BinaryWriter binaryWriter = new(memoryStream, Encoding.UTF8, false))
                                     {
-                                        binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
-                                        if (symbolInterval.LastCandleSynchronized.HasValue)
-                                            binaryWriter.Write((long)symbolInterval.LastCandleSynchronized); // int64
-                                        else
-                                            binaryWriter.Write((long)0); // int64
+                                        int version = 1;
+                                        binaryWriter.Write(version);
+                                        binaryWriter.Write(symbol.Name);
 
-                                        binaryWriter.Write(symbolInterval.CandleList.Count);
-
-                                        foreach (var pair in symbolInterval.CandleList)
+                                        foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
                                         {
-                                            CryptoCandle? candle = pair.Value;
-                                            if (candle != null)
+                                            binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
+                                            if (symbolInterval.LastCandleSynchronized.HasValue)
+                                                binaryWriter.Write((long)symbolInterval.LastCandleSynchronized);
+                                            else
+                                                binaryWriter.Write((long)0);
+
+                                            binaryWriter.Write(symbolInterval.CandleList.Count);
+
+                                            foreach (var pair in symbolInterval.CandleList)
                                             {
-                                                binaryWriter.Write(candle.OpenTime);
-                                                binaryWriter.Write(candle.Open);
-                                                binaryWriter.Write(candle.High);
-                                                binaryWriter.Write(candle.Low);
-                                                binaryWriter.Write(candle.Close);
-                                                binaryWriter.Write(candle.Volume);
+                                                CryptoCandle? candle = pair.Value;
+                                                if (candle != null)
+                                                {
+                                                    binaryWriter.Write(candle.OpenTime);
+                                                    binaryWriter.Write(candle.Open);
+                                                    binaryWriter.Write(candle.High);
+                                                    binaryWriter.Write(candle.Low);
+                                                    binaryWriter.Write(candle.Close);
+                                                    binaryWriter.Write(candle.Volume);
 #if SUPPORTBASEVOLUME
-                                                binaryWriter.Write(candle.BaseVolume); // version 2
+                                                binaryWriter.Write(candle.BaseVolume);
 #endif
+                                                }
                                             }
                                         }
-
-                                        //                                        for (int j = 0; j < symbolInterval.CandleList.Count; j++)
-                                        //                                        {
-                                        //                                            CryptoCandle? candle = symbolInterval.CandleList.Values[j];
-                                        //                                            if (candle != null)
-                                        //                                            {
-                                        //                                                binaryWriter.Write(candle.OpenTime);
-                                        //                                                binaryWriter.Write(candle.Open);
-                                        //                                                binaryWriter.Write(candle.High);
-                                        //                                                binaryWriter.Write(candle.Low);
-                                        //                                                binaryWriter.Write(candle.Close);
-                                        //                                                binaryWriter.Write(candle.Volume);
-                                        //#if SUPPORTBASEVOLUME
-                                        //                                                binaryWriter.Write(candle.BaseVolume); // version 2
-                                        //#endif
-                                        //                                            }
-                                        //                                        }
+                                        Directory.CreateDirectory(dirSymbol);
+                                        using (FileStream writeStream = new(filename, FileMode.Create))
+                                        {
+                                            memoryStream.Position = 0;
+                                            memoryStream.CopyTo(writeStream);
+                                            writeStream.Close();
+                                        }
+                                        binaryWriter.Close();
                                     }
-                                    Directory.CreateDirectory(dirSymbol);
-                                    using (FileStream writeStream = new(filename, FileMode.Create))
-                                    {
-                                        memoryStream.Position = 0;
-                                        memoryStream.CopyTo(writeStream);
-                                        writeStream.Close();
-                                    }
-                                    binaryWriter.Close();
+                                    memoryStream.Close();
                                 }
-                                memoryStream.Close();
+                            }
+                            finally
+                            {
+                                symbol.CandleLock.Release();
                             }
                         }
                     }
