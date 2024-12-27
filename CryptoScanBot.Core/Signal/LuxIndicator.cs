@@ -103,7 +103,6 @@ public class LuxIndicator
 
         long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
 
-        // Dat array van 10 (nu globaal)
         decimal[] num = new decimal[10];
         decimal[] den = new decimal[10];
         for (int j = 0; j < 10; j++)
@@ -117,7 +116,6 @@ public class LuxIndicator
         int max = 20;
         int oversold = 30;
         int overbought = 70;
-        //decimal N = max - min + 1;
 
         int overbuy = 0;
         int oversell = 0;
