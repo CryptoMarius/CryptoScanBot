@@ -834,9 +834,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
             {
-                CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                 try
                 {
+                    CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                     if (candle.Low < signal.PriceMin || signal.PriceMin == 0)
                     {
                         signal.PriceMin = candle.Low;
@@ -904,7 +904,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     }
 
 
-#if DEBUG
+//#if DEBUG
     static long LastStatisticUpdate = 0;
 
     private void UpdateStatistics()
@@ -944,7 +944,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             }
         }
     }
-#endif
+//#endif
 
     private void RefreshInformation(object? sender, EventArgs? e)
     {
@@ -959,7 +959,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 Grid.InvalidateColumn((int)ColumnsForGrid.SignalPrice);
                 Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
-#if DEBUG
+//#if DEBUG
                 if (GlobalData.Settings.General.DebugSignalStrength)
                 {
                     UpdateStatistics();
@@ -968,7 +968,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
                     Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
                 }
-#endif
+//#endif
             }
             finally
             {
