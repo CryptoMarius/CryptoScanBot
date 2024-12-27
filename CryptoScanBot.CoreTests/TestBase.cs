@@ -115,7 +115,7 @@ public class TestBase
         while (count > 0)
         {
             startTime = CandleTools.GetUnixDate(startTimeUnix);
-            candle = CandleTools.CreateCandle(symbol, GlobalData.IntervalList[0], startTime, price, price, price, price, 1, 1, false);
+            candle = CandleTools.CreateCandle(symbol, GlobalData.IntervalList[0], startTime, price, price, price, price, 1, 1);
             symbol.LastPrice = price;
             //CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
             //string text = $"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true);
