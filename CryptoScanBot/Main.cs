@@ -78,12 +78,12 @@ public partial class FrmMain : Form
 
 #if DEBUG
         MenuMain.AddSeperator();
-        MenuMain.AddCommand(null, "Test - Scanner restart", Command.ScannerSessionDebug);
         MenuMain.AddCommand(null, "Test - Save Candles", Command.None, TestSaveCandlesClick);
         MenuMain.AddCommand(null, "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         MenuMain.AddCommand(null, "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
-        MenuMain.AddCommand(null, "Test - Calculate all liquidity zones (slow!)", Command.CalculateAllLiquidityZones);
 #endif
+        MenuMain.AddCommand(null, "Scanner internal restart", Command.ScannerSessionDebug);
+        MenuMain.AddCommand(null, "Calculate all liquidity zones (slow!)", Command.CalculateAllLiquidityZones);
         MenuMain.AddSeperator();
         MenuMain.AddCommand(null, "About", Command.About);
 
