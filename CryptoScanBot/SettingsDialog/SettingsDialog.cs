@@ -51,7 +51,7 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
-#if !DEBUG
+//#if !DEBUG
         EditDebugTrendCalculation.Visible = false;
         EditDebugKLineReceive.Visible = false;
         EditDebugSignalCreate.Visible = false;
@@ -60,7 +60,7 @@ public partial class FrmSettings : Form
         EditDebugSymbol.Visible = false;
         LabelDebugSymbol.Visible = false;
         EditDebugAssetManagement.Visible = false;
-#endif
+//#endif
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = +120;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
@@ -117,7 +117,7 @@ public partial class FrmSettings : Form
 
         UserControlTelegram.LoadConfig();
 
-#if DEBUG
+//#if DEBUG
         EditDebugTrendCalculation.Checked = settings.General.DebugTrendCalculation;
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
@@ -125,7 +125,7 @@ public partial class FrmSettings : Form
         EditUseHighLowInTrendCalculation.Checked = settings.General.UseHighLowInTrendCalculation;
         EditDebugAssetManagement.Checked = settings.General.DebugAssetManagement;
         EditDebugSymbol.Text = settings.General.DebugSymbol.Trim();
-#endif
+//#endif
 
         // ------------------------------------------------------------------------------
         // Base coins
@@ -398,7 +398,7 @@ public partial class FrmSettings : Form
         UserControlTelegram.SaveConfig();
 
 
-#if DEBUG
+//#if DEBUG
         settings.General.DebugTrendCalculation = EditDebugTrendCalculation.Checked;
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
@@ -406,12 +406,12 @@ public partial class FrmSettings : Form
         settings.General.DebugAssetManagement = EditDebugAssetManagement.Checked;
         settings.General.UseHighLowInTrendCalculation = EditUseHighLowInTrendCalculation.Checked;
         settings.General.DebugSymbol = EditDebugSymbol.Text.Trim();
-#else
-        settings.General.DebugSymbol = "";
-        settings.General.DebugKLineReceive = false;
-        settings.General.DebugSignalCreate = false;
-        settings.General.DebugSignalStrength = false;
-#endif
+//#else
+//        settings.General.DebugSymbol = "";
+//        settings.General.DebugKLineReceive = false;
+//        settings.General.DebugSignalCreate = false;
+//        settings.General.DebugSignalStrength = false;
+//#endif
 
         // ------------------------------------------------------------------------------
         // Base coins
@@ -650,7 +650,7 @@ public partial class FrmSettings : Form
 
     private void EditTradingApp_SelectionChangeCommitted(object sender, EventArgs e)
     {
-        EditTradingAppInternExtern.Enabled = EditTradingApp.SelectedIndex < 2;
+        EditTradingAppInternExtern.Enabled = EditTradingApp.SelectedIndex >= 2;
     }
 
 }
