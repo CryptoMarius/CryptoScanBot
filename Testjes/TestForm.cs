@@ -6,7 +6,6 @@ using Binance.Net.Objects.Models.Spot;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.BackTest;
-using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -22,13 +21,11 @@ using Dapper;
 
 using Skender.Stock.Indicators;
 
-using System.Drawing.Drawing2D;
 using System.Speech.Synthesis;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using Font = System.Drawing.Font;
 
 namespace CryptoScanBot;
 
@@ -922,18 +919,32 @@ public partial class TestForm : Form
         var exchange = GlobalData.Settings.General.Exchange;
         if (exchange != null)
         {
-            //CryptoSymbol symbol;
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             //if (exchange.SymbolListName.TryGetValue("NEBLBUSD", out symbol))
             {
                 if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
                 {
+                    CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval3m;
+                    CryptoInterval interval = GlobalData.IntervalListPeriod[intervalPeriod];
+                    LoadSymbolCandles(symbol, interval);
+                    CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+                    if (candles.Count == 0)
+                        continue;
+                    CryptoCandle last = candles.Values.Last();
+
+                    // Heeft de munt genoeg 24h volume
+                    if (!SymbolTools.CheckValidMinimalVolume(symbol, last.OpenTime, 3 * 60, out _))
+                        continue;
+                    // Heeft de munt een redelijke prijs
+                    if (!SymbolTools.CheckValidMinimalPrice(symbol, out _))
+                        continue;
+                    if (!SymbolTools.CheckNewCoin(symbol, out string _))
+                        continue;
+
                     int count = 0;
                     decimal diffSum = 0;
-                    CryptoIntervalPeriod intervalPeriod;
-                    CryptoCandleList candles;
-                    DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2024, 11, 1, 0, 0, 0), DateTimeKind.Utc);
-                    DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2024, 12, 8, 0, 0, 0), DateTimeKind.Utc);
+                    //DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2024, 11, 01, 0, 0, 0), DateTimeKind.Utc);
+                    //DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2025, 01, 01, 0, 0, 0), DateTimeKind.Utc);
 
 
                     //intervalPeriod = CryptoIntervalPeriod.interval10m;
@@ -954,15 +965,6 @@ public partial class TestForm : Form
                     //    diffSum += diff;
 
                     //}
-
-
-
-                    intervalPeriod = CryptoIntervalPeriod.interval3m;
-                    if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval interval))
-                        return;
-                    LoadSymbolCandles(symbol, interval);
-                    candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
-
                     double[] values = new double[candles.Count];
 
                     count = 0;
@@ -992,10 +994,7 @@ public partial class TestForm : Form
                     a.Add(item);
 
                     candles.Clear();
-
-
                 }
-
             }
         }
 
