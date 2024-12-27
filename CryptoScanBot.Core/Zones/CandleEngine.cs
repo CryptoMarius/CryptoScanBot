@@ -176,7 +176,7 @@ public class CandleEngine
                 //await WriteToTxt(symbol, symbolInterval.Interval, filenameTxt);
 
                 //log.AppendLine($"saving {filename}");
-                ScannerLog.Logger.Info($"Saving {filenameBin}");
+                //ScannerLog.Logger.Info($"Saving {filenameBin}");
                 loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
 
                 //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");
