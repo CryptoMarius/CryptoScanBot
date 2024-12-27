@@ -231,7 +231,7 @@ public partial class Form1 : Form
                 foreach (var kline in result.Data)
                 {
                     CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.QuoteVolume, false);
+                        kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 0, kline.QuoteVolume);
 
                     //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
 
