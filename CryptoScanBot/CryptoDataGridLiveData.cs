@@ -6,7 +6,7 @@ using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot;
 
-public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoWhatever
+public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoLiveData
 {
     private enum ColumnsForGrid
     {
@@ -18,7 +18,6 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
         Price,
         Volume,
         BB,
-        AvgBB,
         Rsi,
         MacdValue,
         MacdSignal,
@@ -102,44 +101,44 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
                 case ColumnsForGrid.BB:
                     CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
-                case ColumnsForGrid.AvgBB:
-                    CreateColumn("AvgBB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
-                    break;
+                //case ColumnsForGrid.AvgBB:
+                //    CreateColumn("AvgBB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                //    break;
                 case ColumnsForGrid.Rsi:
-                    CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Rsi", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.MacdValue:
-                    CreateColumn("Macd Value", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Value", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    CreateColumn("Macd Signal", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Signal", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Stoch:
-                    CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Signal:
-                    CreateColumn("Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Signal", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Sma200:
-                    CreateColumn("Sma200", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Sma200", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Sma50:
-                    CreateColumn("Sma50", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Sma50", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Sma20:
-                    CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("Sma20", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.PSar:
-                    CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                    CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.Lux5mLong:
-                    CreateColumn("Lux 5m long", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
+                    CreateColumn("Lux 5m long", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
                     break;
                 case ColumnsForGrid.Lux5mShort:
-                    CreateColumn("Lux 5m short", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
+                    CreateColumn("Lux 5m short", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -148,16 +147,45 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
     }
 
 
-    private int Compare(CryptoWhatever a, CryptoWhatever b)
+    private int Compare(CryptoLiveData a, CryptoLiveData b)
     {
         try
         {
             CryptoSymbolInterval symbolIntervalA = a.Symbol.GetSymbolInterval(a.Interval.IntervalPeriod);
-            CryptoSymbolInterval symbolIntervalB = b.Symbol.GetSymbolInterval(b.Interval.IntervalPeriod);
-            if (symbolIntervalA.CandleList.Count == 0 || symbolIntervalB.CandleList.Count == 0)
+            if (symbolIntervalA.CandleList.Count == 0)
                 return 0;
-            CryptoCandle candleA = symbolIntervalA.CandleList.Values.Last();
-            CryptoCandle candleB = symbolIntervalB.CandleList.Values.Last();
+
+
+            CryptoCandle candleA;
+            while (true)
+            {
+                try
+                {
+                    candleA = symbolIntervalA.CandleList.Values.Last();
+                    break;
+                }
+                catch
+                {
+                    // ignore stupid collections was modified, this is far from nice, but we cannot lock both candlelist (async lock)
+                }
+            }                    
+
+            CryptoSymbolInterval symbolIntervalB = b.Symbol.GetSymbolInterval(b.Interval.IntervalPeriod);
+            if (symbolIntervalB.CandleList.Count == 0)
+                return 0;
+            CryptoCandle candleB;
+            while (true)
+            {
+                try
+                {
+                    candleB = symbolIntervalB.CandleList.Values.Last();
+                    break;
+                }
+                catch
+                {
+                    // ignore stupid collections was modified, this is far from nice, but we cannot lock both candlelist (async lock)
+                }
+            }
 
             int compareResult = (ColumnsForGrid)SortColumn switch
             {
@@ -230,18 +258,17 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
     }
 
 
-
     public override void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        CryptoWhatever? whatever = GetCellObject(e.RowIndex);
-        if (whatever != null)
+        CryptoLiveData? liveData = GetCellObject(e.RowIndex);
+        if (liveData != null)
         {
             try
             {
-                CryptoSymbolInterval symbolInterval = whatever.Symbol.GetSymbolInterval(whatever.Interval.IntervalPeriod);
+                CryptoSymbolInterval symbolInterval = liveData.Symbol.GetSymbolInterval(liveData.Interval.IntervalPeriod);
                 if (symbolInterval.CandleList.Count == 0)
                     return;
                 CryptoCandle candle = symbolInterval.CandleList.Values.Last();
@@ -249,26 +276,26 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
                 switch ((ColumnsForGrid)e.ColumnIndex)
                 {
                     case ColumnsForGrid.Id:
-                        e.Value = whatever.Symbol.Id;
+                        e.Value = liveData.Symbol.Id;
                         break;
                     case ColumnsForGrid.Date:
-                        DateTime date2 = candle.Date.AddSeconds(whatever.Interval.Duration);
+                        DateTime date2 = candle.Date.AddSeconds(liveData.Interval.Duration);
                         e.Value = candle.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + date2.ToLocalTime().ToString("HH:mm");
                         break;
                     case ColumnsForGrid.Exchange:
-                        e.Value = whatever.Symbol.Exchange.Name;
+                        e.Value = liveData.Symbol.Exchange.Name;
                         break;
                     case ColumnsForGrid.Symbol:
-                        e.Value = whatever.Symbol.Name;
+                        e.Value = liveData.Symbol.Name;
                         break;
                     case ColumnsForGrid.Interval:
-                        e.Value = whatever.Interval.Name;
+                        e.Value = liveData.Interval.Name;
                         break;
                     case ColumnsForGrid.Price:
-                        e.Value = whatever.Symbol.LastPrice?.ToString(whatever.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Symbol.LastPrice?.ToString(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Volume:
-                        e.Value = whatever.Symbol.Volume;
+                        e.Value = liveData.Symbol.Volume;
                         break;
                     case ColumnsForGrid.BB:
                         e.Value = candle.CandleData?.BollingerBandsPercentage;
@@ -280,13 +307,13 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
                         e.Value = candle.CandleData?.Rsi;
                         break;
                     case ColumnsForGrid.MacdValue:
-                        e.Value = candle.CandleData?.MacdValue.ToString0(whatever.Symbol.PriceDisplayFormat);
+                        e.Value = candle.CandleData?.MacdValue.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.MacdSignal:
-                        e.Value = candle.CandleData?.MacdSignal.ToString0(whatever.Symbol.PriceDisplayFormat);
+                        e.Value = candle.CandleData?.MacdSignal.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.MacdHistogram:
-                        e.Value = candle.CandleData?.MacdHistogram.ToString0(whatever.Symbol.PriceDisplayFormat);
+                        e.Value = candle.CandleData?.MacdHistogram.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Stoch:
                         e.Value = candle.CandleData?.StochOscillator;
@@ -344,10 +371,10 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
             backColor = Grid.DefaultCellStyle.BackColor;
 
         Color foreColor = Color.Black;
-        CryptoWhatever? whatever = GetCellObject(e.RowIndex);
-        if (whatever != null)
+        CryptoLiveData? liveData = GetCellObject(e.RowIndex);
+        if (liveData != null)
         {
-            CryptoSymbolInterval symbolInterval = whatever.Symbol.GetSymbolInterval(whatever.Interval.IntervalPeriod);
+            CryptoSymbolInterval symbolInterval = liveData.Symbol.GetSymbolInterval(liveData.Interval.IntervalPeriod);
             if (symbolInterval.CandleList.Count == 0)
                 return;
             CryptoCandle candle = symbolInterval.CandleList.Values.Last();
@@ -356,7 +383,7 @@ public class CryptoDataGridWhatever<T>() : CryptoDataGrid<T>() where T : CryptoW
             {
                 case ColumnsForGrid.Symbol:
                     {
-                            Color displayColor = whatever.Symbol.QuoteData!.DisplayColor;
+                            Color displayColor = liveData.Symbol.QuoteData!.DisplayColor;
                             if (displayColor != Color.White)
                                 backColor = displayColor;
                     }

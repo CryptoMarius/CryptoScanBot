@@ -36,6 +36,6 @@ public class SettingsUser
     public SortedList<string, ColumnSetting> GridColumnsSymbol { get; set; } = [];
     public SortedList<string, ColumnSetting> GridColumnsPositionsOpen { get; set; } = [];
     public SortedList<string, ColumnSetting> GridColumnsPositionsClosed { get; set; } = [];
-    public SortedList<string, ColumnSetting> GridColumnsWhatever { get; set; } = [];
+    public SortedList<string, ColumnSetting> GridColumnsLiveData { get; set; } = [];
 }
 

@@ -43,8 +43,8 @@ public partial class FrmMain : Form
     private readonly List<CryptoPosition> PositionClosedListView = [];
     private readonly CryptoDataGridPositionsClosed<CryptoPosition> GridPositionClosedView;
 
-    private readonly List<CryptoWhatever> WhateverListView = [];
-    private readonly CryptoDataGridWhatever<CryptoWhatever> GridWhateverView;
+    private readonly List<CryptoLiveData> LiveDataListView = [];
+    private readonly CryptoDataGridLiveData<CryptoLiveData> GridLiveDataView;
 
     private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
@@ -136,8 +136,8 @@ public partial class FrmMain : Form
         GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed };
         GridPositionClosedView.InitGrid();
 
-        GridWhateverView = new() { Grid = dataGridWhateverView, List = WhateverListView, ColumnList = GlobalData.SettingsUser.GridColumnsWhatever };
-        GridWhateverView.InitGrid();
+        GridLiveDataView = new() { Grid = dataGridLiveDataView, List = LiveDataListView, ColumnList = GlobalData.SettingsUser.GridColumnsLiveData };
+        GridLiveDataView.InitGrid();
 
 
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
@@ -629,21 +629,21 @@ public partial class FrmMain : Form
 
 
         // Speed up adding signals
-        if (GlobalData.WhateverQueue.Count > 0)
+        if (GlobalData.LiveDataQueue.Count > 0)
         {
-            if (Monitor.TryEnter(GlobalData.WhateverQueue))
+            if (Monitor.TryEnter(GlobalData.LiveDataQueue))
                 try
                 {
-                    List<CryptoWhatever> whateverList = [];
+                    List<CryptoLiveData> liveDataList = [];
 
-                    while (GlobalData.WhateverQueue.Count > 0)
+                    while (GlobalData.LiveDataQueue.Count > 0)
                     {
-                        CryptoWhatever whatever = GlobalData.WhateverQueue.Dequeue();
-                        if (whatever != null)
-                            whateverList.Add(whatever);
+                        CryptoLiveData liveData = GlobalData.LiveDataQueue.Dequeue();
+                        if (liveData != null)
+                            liveDataList.Add(liveData);
                     }
 
-                    if (whateverList.Count != 0)
+                    if (liveDataList.Count != 0)
                     {
                         // verwerken..
                         Task.Factory.StartNew(() =>
@@ -652,7 +652,7 @@ public partial class FrmMain : Form
                             {
                                 if (!GlobalData.ApplicationIsClosing)
                                 {
-                                    GridWhateverView.AddRange(whateverList);
+                                    GridLiveDataView.AddRange(liveDataList);
                                 }
                             }));
                         });
@@ -660,7 +660,7 @@ public partial class FrmMain : Form
                 }
                 finally
                 {
-                    Monitor.Exit(GlobalData.WhateverQueue);
+                    Monitor.Exit(GlobalData.LiveDataQueue);
                 }
         }
 
