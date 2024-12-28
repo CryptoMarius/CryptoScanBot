@@ -92,7 +92,8 @@ public class LuxIndicator
         long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
-        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
+        //long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
+        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 11 * symbolInterval.Interval.Duration;
 
 
 
@@ -102,32 +103,27 @@ public class LuxIndicator
         int oversell = 0;
         int oversold = 30;
         int overbought = 70;
-        decimal[] num = new decimal[10];
-        decimal[] den = new decimal[10];
+        var N = max - min + 1;
+        decimal[] num = new decimal[N];
+        decimal[] den = new decimal[N];
 
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
-        //for (int j = candles.Count - 30; j < candles.Count; j++)
-        //int count = 0;
         long loop = candleIntervalOpenTimeStart;
         while (loop <= candleIntervalOpenTimeEnd)
         {
             candlePrev = candleLast;
             if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev != null)
             {
-                //count++;
-
                 int k = 0;
-                decimal avg = 0m;
                 overbuy = 0;
                 oversell = 0;
                 decimal diff = candleLast.Close - candlePrev.Close;
 
-                for (int i = min; i < max; i++)
+                for (int i = min; i <= max; i++)
                 {
-                    decimal alpha = 1 / (decimal)i;
-
+                    decimal alpha = 1.0m / i;
                     decimal num_rma = alpha * diff + (1m - alpha) * num[k];
                     decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
@@ -137,13 +133,10 @@ public class LuxIndicator
                     else
                         rsi = 50m * num_rma / den_rma + 50m;
 
-                    avg += rsi;
-
                     if (rsi > overbought)
                         overbuy++;
                     if (rsi < oversold)
                         oversell++;
-
 
                     num[k] = num_rma;
                     den[k] = den_rma;
@@ -153,8 +146,8 @@ public class LuxIndicator
             loop += symbolInterval.Interval.Duration;
         }
 
-        luxOverSold = 10 * oversell;
-        luxOverBought = 10 * overbuy;
+        luxOverSold = (int)(100 * (decimal)oversell / N);
+        luxOverBought = (int)(100 * (decimal)overbuy / N); 
     }
 
     public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
