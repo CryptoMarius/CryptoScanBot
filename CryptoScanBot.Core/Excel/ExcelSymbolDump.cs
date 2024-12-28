@@ -142,13 +142,13 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 #endif
         WriteCell(sheet, columns++, row, "QuoteVolume");
 
-        WriteCell(sheet, columns++, row, "SlopeRsi");
-        WriteCell(sheet, columns++, row, "SlopeMacd");
-        WriteCell(sheet, columns++, row, "SlopeStoch");
-        WriteCell(sheet, columns++, row, "SlopeSma20");
-        WriteCell(sheet, columns++, row, "SlopeSma50");
-        WriteCell(sheet, columns++, row, "SlopeSma100");
-        WriteCell(sheet, columns++, row, "SlopeSma200");
+        //WriteCell(sheet, columns++, row, "SlopeRsi");
+        //WriteCell(sheet, columns++, row, "SlopeMacd");
+        //WriteCell(sheet, columns++, row, "SlopeStoch");
+        //WriteCell(sheet, columns++, row, "SlopeSma20");
+        //WriteCell(sheet, columns++, row, "SlopeSma50");
+        //WriteCell(sheet, columns++, row, "SlopeSma100");
+        //WriteCell(sheet, columns++, row, "SlopeSma200");
 
         CryptoCandle? last = null;
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
@@ -179,29 +179,29 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             else
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
 
-            if (candle.CandleData != null)
-            {
-                List<double?> bla = [];
-                bla.Add(candle.CandleData.SlopeRsi);
-                bla.Add(candle.CandleData.SlopeMacd);
-                bla.Add(candle.CandleData.SlopeStoch);
-                bla.Add(candle.CandleData.SlopeSma20);
-                bla.Add(candle.CandleData.SlopeSma50);
-                bla.Add(candle.CandleData.SlopeSma100);
-                bla.Add(candle.CandleData.SlopeSma200);
+            //if (candle.CandleData != null)
+            //{
+            //    List<double?> bla = [];
+            //    bla.Add(candle.CandleData.SlopeRsi);
+            //    bla.Add(candle.CandleData.SlopeMacd);
+            //    bla.Add(candle.CandleData.SlopeStoch);
+            //    bla.Add(candle.CandleData.SlopeSma20);
+            //    bla.Add(candle.CandleData.SlopeSma50);
+            //    bla.Add(candle.CandleData.SlopeSma100);
+            //    bla.Add(candle.CandleData.SlopeSma200);
 
-                foreach (var value in bla)
-                {
-                    if (value != null)
-                    {
-                        if (value <= 0)
-                            WriteCell(sheet, column, row, value, CellStyleDecimalRed);
-                        else
-                            WriteCell(sheet, column, row, value, CellStyleDecimalGreen);
-                    }
-                    column++;
-                }
-            }
+            //    foreach (var value in bla)
+            //    {
+            //        if (value != null)
+            //        {
+            //            if (value <= 0)
+            //                WriteCell(sheet, column, row, value, CellStyleDecimalRed);
+            //            else
+            //                WriteCell(sheet, column, row, value, CellStyleDecimalGreen);
+            //        }
+            //        column++;
+            //    }
+            //}
 
             last = candle;
         }

@@ -28,8 +28,8 @@ public class CryptoData
     public double? MacdSignal { get; set; } // red - moving average
     public double? MacdHistogram { get; set; } // kan ook calculated worden (source - value of andersom)
     //public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
-    [Computed]
-    public double? SlopeMacd { get; set; }
+    //[Computed]
+    //public double? SlopeMacd { get; set; }
 
     // Stochastic indicator values
     /// <summary>
@@ -40,8 +40,8 @@ public class CryptoData
     /// Stoch Signal %D (red), average from the last 3 %K values
     /// </summary>
     public double? StochSignal { get; set; } // Stochastic oscillator %D (red)
-    [Computed]
-    public double? SlopeStoch { get; set; }
+    //[Computed]
+    //public double? SlopeStoch { get; set; }
 
     // EMA (Exponential Moving Average) indicator values
 #if EXTRASTRATEGIES
@@ -61,20 +61,25 @@ public class CryptoData
     // SMA (Simple Moving Average) indicator values
     //public double? Sma8 { get; set; }
     public double? Sma20 { get; set; }
-    public double? SlopeSma20 { get; set; }
+    //public double? SlopeSma20 { get; set; }
     public double? Sma50 { get; set; }
-    public double? SlopeSma50 { get; set; }
+    //public double? SlopeSma50 { get; set; }
     public double? Sma100 { get; set; }
-    public double? SlopeSma100 { get; set; }
+    //public double? SlopeSma100 { get; set; }
     public double? Sma200 { get; set; }
-    public double? SlopeSma200 { get; set; }
+    //public double? SlopeSma200 { get; set; }
 
     // RSI indicator
     public double? Rsi { get; set; }
-    public double? SlopeRsi { get; set; }
+    //public double? SlopeRsi { get; set; }
 
     // Parabolic Sar indicator
     public double? PSar { get; set; }
+
+    [Computed]
+    public byte LuxIndicator5mLong { get; set; }
+    [Computed]
+    public byte LuxIndicator5mShort { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -89,7 +94,7 @@ public class CryptoData
         MacdValue = source.MacdValue;
         MacdSignal = source.MacdSignal;
         MacdHistogram = source.MacdHistogram;
-        SlopeMacd = source.SlopeMacd;
+        //SlopeMacd = source.SlopeMacd;
 
         // Stochastic indicator values
         StochSignal = source.StochSignal;
@@ -97,7 +102,7 @@ public class CryptoData
 
         // RSI indicator values
         Rsi = source.Rsi;
-        SlopeRsi = source.SlopeRsi;
+        //SlopeRsi = source.SlopeRsi;
 
         // EMA indicator values
         //Ema9 = source.Ema9;
@@ -114,16 +119,19 @@ public class CryptoData
         // SMA indicator values
         //public double? Sma8 { get; set; }
         Sma20 = source.Sma20;
-        SlopeSma20 = source.SlopeSma20;
+        //SlopeSma20 = source.SlopeSma20;
         Sma50 = source.Sma50;
-        SlopeSma50 = source.SlopeSma50;
+        //SlopeSma50 = source.SlopeSma50;
         Sma100 = source.Sma100;
-        SlopeSma100 = source.SlopeSma100;
+        //SlopeSma100 = source.SlopeSma100;
         Sma200 = source.Sma200;
-        SlopeSma200 = source.SlopeSma200;
+        //SlopeSma200 = source.SlopeSma200;
 
         // Parabolic SAR indicator value
         PSar = source.PSar;
+
+        LuxIndicator5mLong = source.LuxIndicator5mLong;
+        LuxIndicator5mShort = source.LuxIndicator5mShort;
     }
 }
 

@@ -121,7 +121,7 @@ public class Emulator
             foreach (var interval in GlobalData.IntervalList)
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                CandleIndicatorData.CalculateIndicators([.. symbolInterval.CandleList.Values], symbolInterval.CandleList.Count);
+                CandleIndicatorData.CalculateIndicators(symbol, symbolInterval.Interval, [.. symbolInterval.CandleList.Values], symbolInterval.CandleList.Count);
             }
 
             bool exec = true;

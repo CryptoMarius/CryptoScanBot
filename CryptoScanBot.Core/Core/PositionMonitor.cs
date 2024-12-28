@@ -685,7 +685,7 @@ public class PositionMonitor //: IDisposable
                 }
 
                 // Eenmalig de indicators klaarzetten
-                CandleIndicatorData.CalculateIndicators(history);
+                CandleIndicatorData.CalculateIndicators(Symbol, interval, history);
             }
         }
         finally

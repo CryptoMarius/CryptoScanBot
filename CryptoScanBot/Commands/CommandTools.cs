@@ -19,6 +19,7 @@ public class CommandTools
             CryptoSymbol symbol => (true, symbol.Exchange!, symbol, null, GlobalData.IntervalList[5], null),
             CryptoSignal signal => (true, signal.Exchange!, signal.Symbol, signal, signal.Interval, null),
             CryptoPosition position => (true, position.Exchange, position.Symbol, null, position.Interval, position),
+            CryptoWhatever whatever => (true, whatever.Symbol.Exchange, whatever.Symbol, null, whatever.Interval, null),
             _ => (false, null, null, null, null, null)
         };
     }

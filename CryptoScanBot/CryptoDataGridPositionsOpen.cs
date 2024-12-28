@@ -55,7 +55,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         BB,
         AvgBB,
         Rsi,
-        SlopeRsi,
+        //SlopeRsi,
         MacdValue,
         MacdSignal,
         MacdHistogram,
@@ -262,9 +262,9 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                 case ColumnsForGrid.MacdHistogram:
                     CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-                case ColumnsForGrid.SlopeRsi:
-                    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                //    break;
                 case ColumnsForGrid.Stoch:
                     CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
@@ -387,7 +387,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
             ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
             ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
             ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
-            ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
+            //ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
             ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
             ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
             ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
@@ -595,9 +595,9 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                 case ColumnsForGrid.MacdHistogram:
                     e.Value = position.MacdHistogram.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
-                case ColumnsForGrid.SlopeRsi:
-                    e.Value = position.SlopeRsi;
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    e.Value = position.SlopeRsi;
+                //    break;
                 case ColumnsForGrid.Stoch:
                     e.Value = position.StochOscillator;
                     break;
@@ -774,15 +774,15 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     }
                     break;
 
-                case ColumnsForGrid.SlopeRsi:
-                    {
-                        double? value = position.SlopeRsi;
-                        if (value < 0)
-                            foreColor = Color.Red;
-                        else if (value > 0)
-                            foreColor = Color.Green;
-                    }
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    {
+                //        double? value = position.SlopeRsi;
+                //        if (value < 0)
+                //            foreColor = Color.Red;
+                //        else if (value > 0)
+                //            foreColor = Color.Green;
+                //    }
+                //    break;
 
                 case ColumnsForGrid.Stoch:
                     {
@@ -1160,7 +1160,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
 
     private void RefreshInformation(object? sender, EventArgs? e)
     {
-        if (GlobalData.ApplicationIsClosing)
+        if (GlobalData.ApplicationIsClosing || !WinFormTools.IsControlVisibleToUser(Grid))
             return;
 
         try

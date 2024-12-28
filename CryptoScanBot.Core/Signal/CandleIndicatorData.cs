@@ -9,21 +9,21 @@ namespace CryptoScanBot.Core.Signal;
 
 public class CandleIndicatorData : CryptoData
 {
-    private const int SlopeCount = 2;
+    //private const int SlopeCount = 2;
 
     // Test
-    public double? Ema9 { get; set; }
-    public double? Wma30 { get; set; }
-    public double? Tema { get; set; }
+    //public double? Ema9 { get; set; }
+    //public double? Wma30 { get; set; }
+    //public double? Tema { get; set; }
 
-#if EXTRASTRATEGIES
-    public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
+//#if EXTRASTRATEGIES
+//    public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
 
-    //public double? MacdLtValue { get; set; }
-    //public double? MacdLtSignal { get; set; }
-    public double? MacdTestHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
-    //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
-#endif
+//    //public double? MacdLtValue { get; set; }
+//    //public double? MacdLtSignal { get; set; }
+//    public double? MacdTestHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
+//    //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
+//#endif
 
 
     // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
@@ -159,7 +159,7 @@ public class CandleIndicatorData : CryptoData
     /// <summary>
     /// Calculate all the indicators we want to have an fill in the last 60 candles
     /// </summary>
-    public static void CalculateIndicators(List<CryptoCandle> history, int fillMax = 61)
+    public static void CalculateIndicators(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> history, int fillMax = 61)
     {
         // Overslaan indien het gevuld is (meerdere aanroepen)
         CryptoCandle candle = history.Last();
@@ -328,6 +328,13 @@ public class CandleIndicatorData : CryptoData
             }
 
         }
+
+
+        // Iets wat ik wel eens gebruikt als ik trade
+        CryptoCandle? lastCandle = history[history.Count - 1];
+        LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
+        lastCandle!.CandleData!.LuxIndicator5mLong = (byte)luxOverSold;
+        lastCandle!.CandleData!.LuxIndicator5mShort = (byte)luxOverBought;
     }
 
     // We need 1 day + X hours because of the barometr calculation (we show ~5 hours in the display)
@@ -389,7 +396,7 @@ public class CandleIndicatorData : CryptoData
                 return false;
             }
 
-            CalculateIndicators(History, fillMax);
+            CalculateIndicators(symbol, symbolInterval.Interval, History, fillMax);
         }
 
         reaction = "";

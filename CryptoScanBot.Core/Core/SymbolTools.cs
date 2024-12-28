@@ -350,7 +350,7 @@ public class SymbolTools
                         }
 
                         // Eenmalig de indicators klaarzetten
-                        CandleIndicatorData.CalculateIndicators(history);
+                        CandleIndicatorData.CalculateIndicators(Symbol, Interval, history);
 
                     }
                 }

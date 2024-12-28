@@ -389,12 +389,11 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
     }
 
 
-    public virtual void AddObject(List<T> range)
+    public virtual void AddRange(List<T> range)
     {
         List.AddRange(range);
-        SortFunction();
-
-        Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; Grid.Invalidate(); }));
+        //SortFunction();
+        Grid.Invoke((MethodInvoker)(() => { Grid.RowCount = List.Count; SortFunction(); Grid.Invalidate(); }));
     }
 
     private void HeaderClick(object? sender, DataGridViewCellMouseEventArgs e)
@@ -545,4 +544,5 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         }
         return default;
     }
+
 }

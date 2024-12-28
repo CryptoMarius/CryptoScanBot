@@ -17,21 +17,14 @@ public class LuxIndicator
         // Dat array van 10 (nu globaal)
         decimal[] num = new decimal[10];
         decimal[] den = new decimal[10];
-        for (int j = 0; j < 10; j++)
-        {
-            num[j] = 0m;
-            den[j] = 0m;
-        }
 
-        // Gefixeerde getallen
+
         int min = 10;
         int max = 20;
-        int oversold = 30;
-        int overbought = 70;
-        //decimal N = max - min + 1;
-
         int overbuy = 0;
         int oversell = 0;
+        int oversold = 30;
+        int overbought = 70;
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
@@ -40,7 +33,7 @@ public class LuxIndicator
             long unixLast = symbolInterval.CandleList.Keys.Last();
             long unixLoop = unixLast - 29 * symbolInterval.Interval.Duration;
 
-            int count = 0;
+            //int count = 0;
             //for (int j = symbolInterval.CandleList.Count - 30; j < symbolInterval.CandleList.Count; j++)
             while (unixLoop <= unixLast)
             {
@@ -52,7 +45,7 @@ public class LuxIndicator
                 //candleLast = symbolInterval.CandleList.Values[j];
                 if (symbolInterval.CandleList.TryGetValue(unixLoop, out candleLast))
                 {
-                    count++;
+                    //count++;
 
                     int k = 0;
                     decimal avg = 0m;
@@ -99,45 +92,31 @@ public class LuxIndicator
         long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
-
-
         long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
 
-        decimal[] num = new decimal[10];
-        decimal[] den = new decimal[10];
-        for (int j = 0; j < 10; j++)
-        {
-            num[j] = 0m;
-            den[j] = 0m;
-        }
 
-        // Gefixeerde getallen
+
         int min = 10;
         int max = 20;
-        int oversold = 30;
-        int overbought = 70;
-
         int overbuy = 0;
         int oversell = 0;
+        int oversold = 30;
+        int overbought = 70;
+        decimal[] num = new decimal[10];
+        decimal[] den = new decimal[10];
+
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
-
         //for (int j = candles.Count - 30; j < candles.Count; j++)
-        int count = 0;
+        //int count = 0;
         long loop = candleIntervalOpenTimeStart;
         while (loop <= candleIntervalOpenTimeEnd)
         {
             candlePrev = candleLast;
             if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev != null)
             {
-                count++;
-                //if (j < 1) out of range, not sure if skipping 0 was intentional?
-                //    continue;
-                //candlePrev = candleLast;
-                //candleLast = candles.Values[j];
-                //if (candlePrev == null)
-                //    continue;
+                //count++;
 
                 int k = 0;
                 decimal avg = 0m;
@@ -176,13 +155,11 @@ public class LuxIndicator
 
         luxOverSold = 10 * oversell;
         luxOverBought = 10 * overbuy;
-
-
     }
 
-    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long lastOpenTime)
+    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
     {
-        CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
+        CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, candleCloseTime);
 
         //// Debug, same results for old and new? No?
         //CalculateOld(symbol, out int luxOverSold2, out int luxOverBought2);
@@ -193,7 +170,7 @@ public class LuxIndicator
         //    CalculateOld(symbol, out luxOverSold2, out luxOverBought2);
         //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateOld {luxOverSold2} {luxOverBought2}");
 
-        //    CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, lastOpenTime);
+        //    CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, candleCloseTime);
         //    GlobalData.AddTextToLogTab($"LuxIndicator.CalculateNew {luxOverSold} {luxOverBought}");
         //}
     }

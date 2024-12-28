@@ -28,7 +28,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         BB,
         AvgBB,
         Rsi,
-        SlopeRsi,
+        //SlopeRsi,
         MacdValue,
         MacdSignal,
         MacdHistogram,
@@ -177,9 +177,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.MacdHistogram:
                     CreateColumn("Macd Histo", typeof(decimal), string.Empty, DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-                case ColumnsForGrid.SlopeRsi:
-                    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    CreateColumn("Slope RSI", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                //    break;
                 case ColumnsForGrid.Stoch:
                     CreateColumn("Stoch", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
@@ -285,7 +285,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
             ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
             ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
-            ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
+            //ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
             ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
             ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
             ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
@@ -435,9 +435,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.MacdHistogram:
                     e.Value = signal.MacdHistogram.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
-                case ColumnsForGrid.SlopeRsi:
-                    e.Value = signal.SlopeRsi;
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    e.Value = signal.SlopeRsi;
+                //    break;
                 case ColumnsForGrid.Stoch:
                     e.Value = signal.StochOscillator;
                     break;
@@ -658,15 +658,15 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     }
                     break;
 
-                case ColumnsForGrid.SlopeRsi:
-                    {
-                        double? value = signal.SlopeRsi;
-                        if (value < 0)
-                            foreColor = Color.Red;
-                        else if (value > 0)
-                            foreColor = Color.Green;
-                    }
-                    break;
+                //case ColumnsForGrid.SlopeRsi:
+                //    {
+                //        double? value = signal.SlopeRsi;
+                //        if (value < 0)
+                //            foreColor = Color.Red;
+                //        else if (value > 0)
+                //            foreColor = Color.Green;
+                //    }
+                //    break;
 
                 case ColumnsForGrid.Stoch:
                     {
@@ -944,41 +944,45 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             }
         }
     }
-//#endif
+    //#endif
 
     private void RefreshInformation(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
 
-        try
+        if (GlobalData.Settings.General.DebugSignalStrength)
+            UpdateStatistics();
+
+        if (WinFormTools.IsControlVisibleToUser(Grid))
         {
-            Grid.SuspendDrawing();
             try
             {
-                Grid.InvalidateColumn((int)ColumnsForGrid.SignalPrice);
-                Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
-
-//#if DEBUG
-                if (GlobalData.Settings.General.DebugSignalStrength)
+                Grid.SuspendDrawing();
+                try
                 {
-                    UpdateStatistics();
-                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
-                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
-                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
-                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.SignalPrice);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
+
+                    if (GlobalData.Settings.General.DebugSignalStrength)
+                    {
+                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
+                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
+                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
+                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
+                    }
+                    //#endif
                 }
-//#endif
+                finally
+                {
+                    Grid.ResumeDrawing();
+                }
             }
-            finally
+            catch (Exception error)
             {
-                Grid.ResumeDrawing();
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
             }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
         }
     }
 

@@ -37,17 +37,20 @@ public partial class FrmMain : Form
     private readonly List<CryptoSignal> SignalListView = [];
     private readonly CryptoDataGridSignal<CryptoSignal> GridSignalView;
 
-    private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
-    private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
-    private readonly ToolStripMenuItemCommand ApplicationTradingBot;
-    private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
-    private readonly ToolStripMenuItemCommand ApplicationBackTestExec;
-
     private readonly List<CryptoPosition> PositionOpenListView = [];
     private readonly CryptoDataGridPositionsOpen<CryptoPosition> GridPositionOpenView;
 
     private readonly List<CryptoPosition> PositionClosedListView = [];
     private readonly CryptoDataGridPositionsClosed<CryptoPosition> GridPositionClosedView;
+
+    private readonly List<CryptoWhatever> WhateverListView = [];
+    private readonly CryptoDataGridWhatever<CryptoWhatever> GridWhateverView;
+
+    private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
+    private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
+    private readonly ToolStripMenuItemCommand ApplicationTradingBot;
+    private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
+    private readonly ToolStripMenuItemCommand ApplicationBackTestExec;
 
     public FrmMain()
     {
@@ -132,6 +135,10 @@ public partial class FrmMain : Form
 
         GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed };
         GridPositionClosedView.InitGrid();
+
+        GridWhateverView = new() { Grid = dataGridWhateverView, List = WhateverListView, ColumnList = GlobalData.SettingsUser.GridColumnsWhatever };
+        GridWhateverView.InitGrid();
+
 
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
         LinkTools.TabControl = tabControl;
@@ -607,7 +614,7 @@ public partial class FrmMain : Form
                             {
                                 if (!GlobalData.ApplicationIsClosing)
                                 {
-                                    GridSignalView.AddObject(signals);
+                                    GridSignalView.AddRange(signals);
                                     //ListViewSignalsAddSignalRange(signals);
                                 }
                             }));
@@ -617,6 +624,43 @@ public partial class FrmMain : Form
                 finally
                 {
                     Monitor.Exit(GlobalData.SignalQueue);
+                }
+        }
+
+
+        // Speed up adding signals
+        if (GlobalData.WhateverQueue.Count > 0)
+        {
+            if (Monitor.TryEnter(GlobalData.WhateverQueue))
+                try
+                {
+                    List<CryptoWhatever> whateverList = [];
+
+                    while (GlobalData.WhateverQueue.Count > 0)
+                    {
+                        CryptoWhatever whatever = GlobalData.WhateverQueue.Dequeue();
+                        if (whatever != null)
+                            whateverList.Add(whatever);
+                    }
+
+                    if (whateverList.Count != 0)
+                    {
+                        // verwerken..
+                        Task.Factory.StartNew(() =>
+                        {
+                            Invoke(new Action(() =>
+                            {
+                                if (!GlobalData.ApplicationIsClosing)
+                                {
+                                    GridWhateverView.AddRange(whateverList);
+                                }
+                            }));
+                        });
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(GlobalData.WhateverQueue);
                 }
         }
 
@@ -953,7 +997,7 @@ public partial class FrmMain : Form
                 }
             }
             SymbolListView.Clear();
-            GridSymbolView.AddObject(range);
+            GridSymbolView.AddRange(range);
             GridSymbolView.AdjustObjectCount();
             GridSymbolView.ApplySorting();
         }
@@ -988,9 +1032,9 @@ public partial class FrmMain : Form
                     try
                     {
                         PositionOpenListView.Clear();
-                        GridPositionOpenView.AddObject(list);
-                        GridPositionOpenView.AdjustObjectCount();
-                        GridPositionOpenView.ApplySorting();
+                        GridPositionOpenView.AddRange(list);
+                        //GridPositionOpenView.AdjustObjectCount();
+                        //GridPositionOpenView.ApplySorting();
                     }
                     finally
                     {
@@ -1001,9 +1045,9 @@ public partial class FrmMain : Form
                     try
                     {
                         PositionClosedListView.Clear();
-                        GridPositionClosedView.AddObject(GlobalData.PositionsClosed);
-                        GridPositionClosedView.AdjustObjectCount();
-                        GridPositionClosedView.ApplySorting();
+                        GridPositionClosedView.AddRange(GlobalData.PositionsClosed);
+                        //GridPositionClosedView.AdjustObjectCount();
+                        //GridPositionClosedView.ApplySorting();
 
                         dashBoardControl1.RefreshInformation(null, null);
                         //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#einde");

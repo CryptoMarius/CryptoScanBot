@@ -594,7 +594,7 @@ public class SignalCreate
         // Eenmalig de indicators klaarzetten
         Candle = History[^1];
         if (Candle.CandleData == null)
-            CandleIndicatorData.CalculateIndicators(History);
+            CandleIndicatorData.CalculateIndicators(Symbol, Interval, History);
 
         //GlobalData.Logger.Trace($"SignalCreate.Prepare.Stop {Symbol.Name} {Interval.Name} {Side}");
         return true;
@@ -631,6 +631,26 @@ public class SignalCreate
             //        continue;
             //    }
             //}
+            if (!GlobalData.WhateverQueueAdded.ContainsKey((Symbol.Name, Interval.IntervalPeriod)))
+            {
+                if (Monitor.TryEnter(GlobalData.WhateverQueue))
+                {
+                    try
+                    {
+                        CryptoWhatever whatever = new()
+                        {
+                            Symbol = this.Symbol,
+                            Interval = this.Interval,
+                        };
+                        GlobalData.WhateverQueue.Enqueue(whatever);
+                        GlobalData.WhateverQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), true);
+                    }
+                    finally
+                    {
+                        Monitor.Exit(GlobalData.WhateverQueue);
+                    }
+                }
+            }
 
 
             // SBM en stobb zijn afhankelijk van elkaar, vandaar de break

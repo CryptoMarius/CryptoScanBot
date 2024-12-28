@@ -11,9 +11,9 @@ public class CryptoSymbolInterval
     // The last synchronized candle with the exchange (without gaps)
     public long? LastCandleSynchronized { get; set; }
 
-    // The last signals generated for this interval
-    public List<CryptoSignal> SignalList { get; set; } = [];
-
     // The candles for this interval
     public CryptoCandleList CandleList { get; set; } = [];
+
+    // The last signals generated for this interval
+    public List<CryptoSignal> SignalList { get; set; } = [];
 }

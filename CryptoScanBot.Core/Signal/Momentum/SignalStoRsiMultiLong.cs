@@ -64,7 +64,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
                 List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
                 if (history == null)
                     return false;
-                CandleIndicatorData.CalculateIndicators(history);
+                CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
             if (IndicatorsOkay(candle!) && candle.IsStochOverbought(GlobalData.Settings.Signal.StoRsi.AddStochAmount) && candle.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))

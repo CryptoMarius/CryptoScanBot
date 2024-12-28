@@ -105,6 +105,8 @@ public static class GlobalData
 
     public static readonly Queue<CryptoSignal> SignalQueue = new();
     public static readonly List<CryptoPosition> PositionsClosed = [];
+    public static readonly Queue<CryptoWhatever> WhateverQueue = [];
+    public static readonly Dictionary<(string, CryptoIntervalPeriod), bool> WhateverQueueAdded = [];
 
     public static event PlayMediaEvent? PlaySound;
     public static event PlayMediaEvent? PlaySpeech;

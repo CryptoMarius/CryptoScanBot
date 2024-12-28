@@ -125,7 +125,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
                 List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
                 if (history == null)
                     return false;
-                CandleIndicatorData.CalculateIndicators(history);
+                CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
             if (IndicatorsOkay(candle!) && candle.IsStochOversold() && candle.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))

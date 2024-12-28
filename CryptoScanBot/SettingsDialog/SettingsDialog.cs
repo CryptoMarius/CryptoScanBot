@@ -51,16 +51,16 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
-//#if !DEBUG
-        EditDebugTrendCalculation.Visible = false;
-        EditDebugKLineReceive.Visible = false;
-        EditDebugSignalCreate.Visible = false;
-        EditDebugSignalStrength.Visible = false;
-        EditUseHighLowInTrendCalculation.Visible = false;
-        EditDebugSymbol.Visible = false;
-        LabelDebugSymbol.Visible = false;
-        EditDebugAssetManagement.Visible = false;
-//#endif
+////#if !DEBUG
+//        EditDebugTrendCalculation.Visible = false;
+//        EditDebugKLineReceive.Visible = false;
+//        EditDebugSignalCreate.Visible = false;
+//        EditDebugSignalStrength.Visible = false;
+//        EditUseHighLowInTrendCalculation.Visible = false;
+//        EditDebugSymbol.Visible = false;
+//        LabelDebugSymbol.Visible = false;
+//        EditDebugAssetManagement.Visible = false;
+////#endif
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = +120;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
