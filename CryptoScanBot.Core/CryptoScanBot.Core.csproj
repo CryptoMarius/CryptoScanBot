@@ -13,10 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Exchange\Base\**" />
     <Compile Remove="Exchange\Kucoin\Futures\**" />
     <Compile Remove="Exchange\Mexc\Spot\NewFolder\**" />
+    <EmbeddedResource Remove="Exchange\Base\**" />
     <EmbeddedResource Remove="Exchange\Kucoin\Futures\**" />
     <EmbeddedResource Remove="Exchange\Mexc\Spot\NewFolder\**" />
+    <None Remove="Exchange\Base\**" />
     <None Remove="Exchange\Kucoin\Futures\**" />
     <None Remove="Exchange\Mexc\Spot\NewFolder\**" />
   </ItemGroup>
@@ -209,7 +212,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Exchange\Base\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 

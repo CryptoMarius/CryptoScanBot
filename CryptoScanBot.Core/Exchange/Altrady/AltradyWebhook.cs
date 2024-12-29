@@ -115,7 +115,7 @@ public class AltradyWebhook
             //string createError = "???"; +createError
 
             // Request body
-            request.test = true;
+            request.test = false;
             request.action = command; // "open"; // ['open', 'close', 'reverse', 'increase', 'start_bot', 'start_and_open', 'stop_bot', 'stop_and_close'],
             if (position.Side == Enums.CryptoTradeSide.Long)
                 request.side = "long";
