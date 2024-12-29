@@ -346,7 +346,15 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     public override void SortFunction()
     {
-        List.Sort(Compare);
+        Monitor.Enter(List);
+        try
+        {
+            List.Sort(Compare);
+        }
+        finally
+        {
+            Monitor.Exit(List);
+        }
     }
 
 
@@ -904,7 +912,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     }
 
 
-//#if DEBUG
     static long LastStatisticUpdate = 0;
 
     private void UpdateStatistics()
@@ -917,11 +924,11 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         long x = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
         if (x == LastStatisticUpdate)
             return;
-        LastStatisticUpdate = x;
 
         // Avoid duplicate calls (when the list is serious long)
         if (Monitor.TryEnter(List))
         {
+            LastStatisticUpdate = x;
             try
             {
                 if (List.Count > 0)
@@ -944,7 +951,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
             }
         }
     }
-    //#endif
 
     private void RefreshInformation(object? sender, EventArgs? e)
     {
