@@ -1,5 +1,10 @@
 CryptoScanBot release historie:
 
+29-12-2024 2.0.1
+- Scanner - tabblad Live data, candles zonder data verwijderen
+- Trader - De order naar de Altrady webhook worden als test doorgestuurd
+
+
 29-12-2024 2.0
 - Scanner - tabblad Live data
 
