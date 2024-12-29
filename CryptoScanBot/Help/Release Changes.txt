@@ -1,5 +1,8 @@
 CryptoScanBot release historie:
 
+29-12-2024 2.0
+- Scanner - tabblad Live data
+
 24-12-2024 1.9.5.1224
 - Scanner - Dominante zones/FVG: Bij het opstarten de gebroken FVG en zones afmelden
 - Scanner - Nieuw telegram commando "reset" commando om de scanner opnieuw te starten
