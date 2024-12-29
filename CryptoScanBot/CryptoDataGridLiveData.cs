@@ -218,7 +218,14 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
 
     public override void SortFunction()
     {
-        List.Sort(Compare);
+try
+        {
+            List.Sort(Compare);
+        }
+        finally
+        {
+            Monitor.Exit(List);
+        }
     }
 
 
@@ -426,28 +433,68 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
     }
 
 
+    static long LastCheck = 0;
 
-    private void RefreshInformation(object? sender, EventArgs? e)
+    private void RemoveOldObjects()
     {
-        if (GlobalData.ApplicationIsClosing || !WinFormTools.IsControlVisibleToUser(Grid))
+        // statistics (not sure where to put it right now)
+        if (GlobalData.BackTest)
             return;
 
-        try
+        // Avoid needless updates
+        long x = CandleTools.GetUnixTime(DateTime.UtcNow, 15 * 60);
+        if (x == LastCheck)
+            return;
+ 
+        if (Monitor.TryEnter(List))
         {
-            Grid.SuspendDrawing();
+            LastCheck = x;
             try
             {
-                Grid.InvalidateColumn((int)ColumnsForGrid.Price);
+                if (List.Count > 0)
+                {
+                    for (int index = List.Count - 1; index >= 0; index--)
+                    {
+                        CryptoLiveData liveData = List[index];
+                        if (liveData.Candle.CandleData == null)
+                            List.Remove((T)liveData);
+                    }
+                }
             }
             finally
             {
-                Grid.ResumeDrawing();
+                Monitor.Exit(List);
             }
         }
-        catch (Exception error)
+    }
+
+
+    private void RefreshInformation(object? sender, EventArgs? e)
+    {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
+        RemoveOldObjects();
+
+        if (WinFormTools.IsControlVisibleToUser(Grid))
         {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
+            try
+            {
+                Grid.SuspendDrawing();
+                try
+                {
+                    Grid.InvalidateColumn((int)ColumnsForGrid.Price);
+                }
+                finally
+                {
+                    Grid.ResumeDrawing();
+                }
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
+            }
         }
     }
 
