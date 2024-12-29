@@ -331,7 +331,7 @@ public class CandleIndicatorData : CryptoData
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        CryptoCandle? lastCandle = history[history.Count - 1];
+        CryptoCandle? lastCandle = history[^1];
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
         lastCandle!.CandleData!.LuxIndicator5mLong = (byte)luxOverSold;
         lastCandle!.CandleData!.LuxIndicator5mShort = (byte)luxOverBought;

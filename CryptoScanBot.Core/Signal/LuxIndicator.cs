@@ -92,8 +92,7 @@ public class LuxIndicator
         long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
-        //long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
-        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 11 * symbolInterval.Interval.Duration;
+        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
 
 
 

@@ -34,8 +34,8 @@ internal static class Program
         // Version stuff
         var assembly = Assembly.GetExecutingAssembly().GetName();
         string appVersion = assembly.Version.ToString();
-        while (appVersion.EndsWith(".0"))
-            appVersion = appVersion[0..^2];
+        while (appVersion.EndsWith(".0.0"))
+            appVersion = appVersion[0..^4];
         GlobalData.AppVersion = appVersion;
     }
 }

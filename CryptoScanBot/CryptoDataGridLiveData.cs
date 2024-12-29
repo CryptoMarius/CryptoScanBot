@@ -151,65 +151,29 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
     {
         try
         {
-            CryptoSymbolInterval symbolIntervalA = a.Symbol.GetSymbolInterval(a.Interval.IntervalPeriod);
-            if (symbolIntervalA.CandleList.Count == 0)
-                return 0;
-
-
-            CryptoCandle candleA;
-            while (true)
-            {
-                try
-                {
-                    candleA = symbolIntervalA.CandleList.Values.Last();
-                    break;
-                }
-                catch
-                {
-                    // ignore stupid collections was modified, this is far from nice, but we cannot lock both candlelist (async lock)
-                }
-            }                    
-
-            CryptoSymbolInterval symbolIntervalB = b.Symbol.GetSymbolInterval(b.Interval.IntervalPeriod);
-            if (symbolIntervalB.CandleList.Count == 0)
-                return 0;
-            CryptoCandle candleB;
-            while (true)
-            {
-                try
-                {
-                    candleB = symbolIntervalB.CandleList.Values.Last();
-                    break;
-                }
-                catch
-                {
-                    // ignore stupid collections was modified, this is far from nice, but we cannot lock both candlelist (async lock)
-                }
-            }
-
             int compareResult = (ColumnsForGrid)SortColumn switch
             {
                 ColumnsForGrid.Id => ObjectCompare.Compare(a.Symbol.Id, b.Symbol.Id),
-                ColumnsForGrid.Date => ObjectCompare.Compare(candleA.Date, candleB.Date),
+                ColumnsForGrid.Date => ObjectCompare.Compare(a.Candle.Date, b.Candle.Date),
                 ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Symbol.Exchange.Name, b.Symbol.Exchange.Name),
                 ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
                 ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
                 ColumnsForGrid.Price => ObjectCompare.Compare(a.Symbol.LastPrice, b.Symbol.LastPrice),
                 ColumnsForGrid.Volume => ObjectCompare.Compare(a.Symbol.Volume, b.Symbol.Volume),
-                ColumnsForGrid.BB => ObjectCompare.Compare(candleA.CandleData?.BollingerBandsPercentage, candleB.CandleData?.BollingerBandsPercentage),
-                //ColumnsForGrid.AvgBB => ObjectCompare.Compare(candleA.CandleData?.AvgBB, candleB.CandleData?.AvgBB),
-                ColumnsForGrid.MacdValue => ObjectCompare.Compare(candleA.CandleData?.MacdValue, candleB.CandleData?.MacdValue),
-                ColumnsForGrid.MacdSignal => ObjectCompare.Compare(candleA.CandleData?.MacdSignal, candleB.CandleData?.MacdSignal),
-                ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(candleA.CandleData?.MacdHistogram, candleB.CandleData?.MacdHistogram),
-                ColumnsForGrid.Rsi => ObjectCompare.Compare(candleA.CandleData?.Rsi, candleB.CandleData?.Rsi),
-                ColumnsForGrid.Stoch => ObjectCompare.Compare(candleA.CandleData?.StochOscillator, candleB.CandleData?.StochOscillator),
-                ColumnsForGrid.Signal => ObjectCompare.Compare(candleA.CandleData?.StochSignal, candleB.CandleData?.StochSignal),
-                ColumnsForGrid.Sma200 => ObjectCompare.Compare(candleA.CandleData?.Sma200, candleB.CandleData?.Sma200),
-                ColumnsForGrid.Sma50 => ObjectCompare.Compare(candleA.CandleData?.Sma50, candleB.CandleData?.Sma50),
-                ColumnsForGrid.Sma20 => ObjectCompare.Compare(candleA.CandleData?.Sma20, candleB.CandleData?.Sma20),
-                ColumnsForGrid.PSar => ObjectCompare.Compare(candleA.CandleData?.PSar, candleB.CandleData?.PSar),
-                ColumnsForGrid.Lux5mLong => ObjectCompare.Compare(candleA.CandleData?.LuxIndicator5mLong, candleB.CandleData?.LuxIndicator5mLong),
-                ColumnsForGrid.Lux5mShort => ObjectCompare.Compare(candleA.CandleData?.LuxIndicator5mShort, candleB.CandleData?.LuxIndicator5mShort),
+                ColumnsForGrid.BB => ObjectCompare.Compare(a.Candle.CandleData?.BollingerBandsPercentage, b.Candle.CandleData?.BollingerBandsPercentage),
+                //ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.Candle.CandleData?.AvgBB, b.Candle.CandleData?.AvgBB),
+                ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.Candle.CandleData?.MacdValue, b.Candle.CandleData?.MacdValue),
+                ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.Candle.CandleData?.MacdSignal, b.Candle.CandleData?.MacdSignal),
+                ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.Candle.CandleData?.MacdHistogram, b.Candle.CandleData?.MacdHistogram),
+                ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Candle.CandleData?.Rsi, b.Candle.CandleData?.Rsi),
+                ColumnsForGrid.Stoch => ObjectCompare.Compare(a.Candle.CandleData?.StochOscillator, b.Candle.CandleData?.StochOscillator),
+                ColumnsForGrid.Signal => ObjectCompare.Compare(a.Candle.CandleData?.StochSignal, b.Candle.CandleData?.StochSignal),
+                ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Candle.CandleData?.Sma200, b.Candle.CandleData?.Sma200),
+                ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Candle.CandleData?.Sma50, b.Candle.CandleData?.Sma50),
+                ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Candle.CandleData?.Sma20, b.Candle.CandleData?.Sma20),
+                ColumnsForGrid.PSar => ObjectCompare.Compare(a.Candle.CandleData?.PSar, b.Candle.CandleData?.PSar),
+                ColumnsForGrid.Lux5mLong => ObjectCompare.Compare(a.Candle.CandleData?.LuxIndicator5mLong, b.Candle.CandleData?.LuxIndicator5mLong),
+                ColumnsForGrid.Lux5mShort => ObjectCompare.Compare(a.Candle.CandleData?.LuxIndicator5mShort, b.Candle.CandleData?.LuxIndicator5mShort),
                 _ => 0
             };
 
@@ -217,7 +181,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
             // extend if still the same
             if (compareResult == 0)
             {
-                compareResult = ObjectCompare.Compare(candleA.Date, candleB.Date);
+                compareResult = ObjectCompare.Compare(a.Candle.Date, b.Candle.Date);
                 if (compareResult == 0)
                 {
                     if (SortOrder == SortOrder.Ascending)
@@ -268,19 +232,14 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         {
             try
             {
-                CryptoSymbolInterval symbolInterval = liveData.Symbol.GetSymbolInterval(liveData.Interval.IntervalPeriod);
-                if (symbolInterval.CandleList.Count == 0)
-                    return;
-                CryptoCandle candle = symbolInterval.CandleList.Values.Last();
-
                 switch ((ColumnsForGrid)e.ColumnIndex)
                 {
                     case ColumnsForGrid.Id:
                         e.Value = liveData.Symbol.Id;
                         break;
                     case ColumnsForGrid.Date:
-                        DateTime date2 = candle.Date.AddSeconds(liveData.Interval.Duration);
-                        e.Value = candle.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + date2.ToLocalTime().ToString("HH:mm");
+                        DateTime date2 = liveData.Candle.Date.AddSeconds(liveData.Interval.Duration);
+                        e.Value = liveData.Candle.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + date2.ToLocalTime().ToString("HH:mm");
                         break;
                     case ColumnsForGrid.Exchange:
                         e.Value = liveData.Symbol.Exchange.Name;
@@ -298,46 +257,46 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                         e.Value = liveData.Symbol.Volume;
                         break;
                     case ColumnsForGrid.BB:
-                        e.Value = candle.CandleData?.BollingerBandsPercentage;
+                        e.Value = liveData.Candle.CandleData?.BollingerBandsPercentage;
                         break;
                     //case ColumnsForGrid.AvgBB:
-                    //    e.Value = candle.CandleData?.AvgBB;
+                    //    e.Value = liveData.Candle.CandleData?.AvgBB;
                     //    break;
                     case ColumnsForGrid.Rsi:
-                        e.Value = candle.CandleData?.Rsi;
+                        e.Value = liveData.Candle.CandleData?.Rsi;
                         break;
                     case ColumnsForGrid.MacdValue:
-                        e.Value = candle.CandleData?.MacdValue.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdValue.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.MacdSignal:
-                        e.Value = candle.CandleData?.MacdSignal.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdSignal.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.MacdHistogram:
-                        e.Value = candle.CandleData?.MacdHistogram.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdHistogram.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Stoch:
-                        e.Value = candle.CandleData?.StochOscillator;
+                        e.Value = liveData.Candle.CandleData?.StochOscillator;
                         break;
                     case ColumnsForGrid.Signal:
-                        e.Value = candle.CandleData?.StochSignal;
+                        e.Value = liveData.Candle.CandleData?.StochSignal;
                         break;
                     case ColumnsForGrid.Sma200:
-                        e.Value = candle.CandleData?.Sma200;
+                        e.Value = liveData.Candle.CandleData?.Sma200;
                         break;
                     case ColumnsForGrid.Sma50:
-                        e.Value = candle.CandleData?.Sma50;
+                        e.Value = liveData.Candle.CandleData?.Sma50;
                         break;
                     case ColumnsForGrid.Sma20:
-                        e.Value = candle.CandleData?.Sma20;
+                        e.Value = liveData.Candle.CandleData?.Sma20;
                         break;
                     case ColumnsForGrid.PSar:
-                        e.Value = candle.CandleData?.PSar;
+                        e.Value = liveData.Candle.CandleData?.PSar;
                         break;
                     case ColumnsForGrid.Lux5mLong:
-                        e.Value = candle.CandleData?.LuxIndicator5mLong;
+                        e.Value = liveData.Candle.CandleData?.LuxIndicator5mLong;
                         break;
                     case ColumnsForGrid.Lux5mShort:
-                        e.Value = candle.CandleData?.LuxIndicator5mShort;
+                        e.Value = liveData.Candle.CandleData?.LuxIndicator5mShort;
                         break;
                     default:
                         e.Value = '?';
@@ -374,10 +333,6 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         CryptoLiveData? liveData = GetCellObject(e.RowIndex);
         if (liveData != null)
         {
-            CryptoSymbolInterval symbolInterval = liveData.Symbol.GetSymbolInterval(liveData.Interval.IntervalPeriod);
-            if (symbolInterval.CandleList.Count == 0)
-                return;
-            CryptoCandle candle = symbolInterval.CandleList.Values.Last();
 
             switch ((ColumnsForGrid)e.ColumnIndex)
             {
@@ -392,7 +347,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.Rsi:
                     {
                         // Oversold/overbougt
-                        double? value = candle.CandleData?.Rsi;
+                        double? value = liveData.Candle.CandleData?.Rsi;
                         if (value < GlobalData.Settings.General.RsiValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.RsiValueOverbought)
@@ -403,7 +358,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 //case ColumnsForGrid.AvgBB:
                 //    {
                 //        // Oversold/overbougt
-                //        double? value = candle.CandleData?.AvgBB;
+                //        double? value = liveData.Candle.CandleData?.AvgBB;
                 //        if (value < 1.5)
                 //            foreColor = Color.Red;
                 //        else if (value > 1.5)
@@ -414,7 +369,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.Stoch:
                     {
                         // Oversold/overbougt
-                        double? value = candle.CandleData?.StochOscillator;
+                        double? value = liveData.Candle.CandleData?.StochOscillator;
                         if (value < GlobalData.Settings.General.StochValueOversold)
                             foreColor = Color.Red;
                         else if (value > GlobalData.Settings.General.StochValueOverbought)
@@ -425,7 +380,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.Signal:
                     {
                         // Oversold/overbougt
-                        double? value = candle.CandleData?.StochSignal;
+                        double? value = liveData.Candle.CandleData?.StochSignal;
                         if (value < 20f)
                             foreColor = Color.Red;
                         else if (value > 80f)
@@ -435,30 +390,30 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
 
                 case ColumnsForGrid.Sma50:
                     {
-                        double? value = candle.CandleData?.Sma50;
-                        if (value < candle.CandleData?.Sma200)
+                        double? value = liveData.Candle.CandleData?.Sma50;
+                        if (value < liveData.Candle.CandleData?.Sma200)
                             foreColor = Color.Green;
-                        else if (value > candle.CandleData?.Sma200)
+                        else if (value > liveData.Candle.CandleData?.Sma200)
                             foreColor = Color.Red;
                     }
                     break;
 
                 case ColumnsForGrid.Sma20:
                     {
-                        double? value = candle.CandleData?.Sma20;
-                        if (value < candle.CandleData?.Sma50)
+                        double? value = liveData.Candle.CandleData?.Sma20;
+                        if (value < liveData.Candle.CandleData?.Sma50)
                             foreColor = Color.Green;
-                        else if (value > candle.CandleData?.Sma50)
+                        else if (value > liveData.Candle.CandleData?.Sma50)
                             foreColor = Color.Red;
                     }
                     break;
 
                 case ColumnsForGrid.PSar:
                     {
-                        double? value = candle.CandleData?.PSar;
-                        if (value <= candle.CandleData?.Sma20)
+                        double? value = liveData.Candle.CandleData?.PSar;
+                        if (value <= liveData.Candle.CandleData?.Sma20)
                             foreColor = Color.Green;
-                        else if (value > candle.CandleData?.Sma20)
+                        else if (value > liveData.Candle.CandleData?.Sma20)
                             foreColor = Color.Red;
                     }
                     break;

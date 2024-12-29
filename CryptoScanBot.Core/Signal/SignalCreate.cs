@@ -631,25 +631,30 @@ public class SignalCreate
             //        continue;
             //    }
             //}
-            if (!GlobalData.LiveDataQueueAdded.ContainsKey((Symbol.Name, Interval.IntervalPeriod)))
+            if (!GlobalData.LiveDataQueueAdded.TryGetValue((Symbol.Name, Interval.IntervalPeriod), out CryptoLiveData? liveData))
             {
                 if (Monitor.TryEnter(GlobalData.LiveDataQueue))
                 {
                     try
                     {
-                        CryptoLiveData liveData = new()
+                        liveData = new()
                         {
                             Symbol = this.Symbol,
                             Interval = this.Interval,
+                            Candle = Candle!,
                         };
                         GlobalData.LiveDataQueue.Enqueue(liveData);
-                        GlobalData.LiveDataQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), true);
+                        GlobalData.LiveDataQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), liveData);
                     }
                     finally
                     {
                         Monitor.Exit(GlobalData.LiveDataQueue);
                     }
                 }
+            }
+            else
+            {
+                liveData.Candle = Candle!;
             }
 
 
