@@ -132,7 +132,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalDominantLevelShort),
         });
 
-
+#if DEBUG
         //***************************************************
         // Test
         //***************************************************
@@ -143,6 +143,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
             AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
         });
+#endif
 
         //Register(new AlgorithmDefinition()
         //{
