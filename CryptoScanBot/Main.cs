@@ -69,8 +69,8 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Settings", Command.None, ToolStripMenuItemSettings_Click);
         MenuMain.AddCommand(null, "Refresh information", Command.None, ToolStripMenuItemRefresh_Click_1);
         MenuMain.AddCommand(null, "Clear log en ticker count", Command.None, MainMenuClearAll_Click);
-        MenuMain.AddCommand(null, "Tradingview import files", Command.TradingViewImportList);
         MenuMain.AddSeperator();
+        MenuMain.AddCommand(null, "Export Tradingview import files", Command.TradingViewImportList);
         MenuMain.AddCommand(null, "Export all exchange information to Excel", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "Export all signal information to Excel", Command.ExcelSignalsInformation);
         MenuMain.AddCommand(null, "Export all position information to Excel", Command.ExcelPositionsInformation);
@@ -143,8 +143,8 @@ public partial class FrmMain : Form
         // Dummy browser verbergen, is een browser om het extra confirmatie dialoog in externe browser te vermijden
         LinkTools.TabControl = tabControl;
         LinkTools.TabPageBrowser = tabPageBrowser;
-        LinkTools.WebViewDummy = webViewDummy;
-        LinkTools.WebViewTradingView = webViewTradingView;
+        LinkTools.WebViewTradingApp.Browser = webViewDummy;
+        LinkTools.WebViewTradingView.Browser = webViewTradingView;
         tabControl.TabPages.Remove(tabPagewebViewDummy);
 
         CryptoDatabase.SetDatabaseDefaults();
@@ -321,7 +321,7 @@ public partial class FrmMain : Form
 
             if (components != null)
             {
-                LinkTools.WebViewDummy?.Dispose();
+                LinkTools.WebViewTradingApp.Browser?.Dispose();
                 components.Dispose();
             }
         }
@@ -632,6 +632,7 @@ public partial class FrmMain : Form
         if (GlobalData.LiveDataQueue.Count > 0)
         {
             if (Monitor.TryEnter(GlobalData.LiveDataQueue))
+            {
                 try
                 {
                     List<CryptoLiveData> liveDataList = [];
@@ -662,6 +663,7 @@ public partial class FrmMain : Form
                 {
                     Monitor.Exit(GlobalData.LiveDataQueue);
                 }
+            }
         }
 
 
@@ -669,6 +671,7 @@ public partial class FrmMain : Form
         if (logQueue.Count > 0)
         {
             if (Monitor.TryEnter(logQueue))
+            {
                 try
                 {
                     List<CryptoSignal> signals = [];
@@ -707,6 +710,7 @@ public partial class FrmMain : Form
                 {
                     Monitor.Exit(logQueue);
                 }
+            }
         }
     }
 

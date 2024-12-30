@@ -709,7 +709,7 @@ public partial class DashBoardInformation : UserControl
                     if (href != null)
                     {
                         Uri uri = new(href);
-                        LinkTools.WebViewTradingView.Source = uri;
+                        LinkTools.WebViewTradingView.Browser.Source = uri;
                         LinkTools.TabControl.SelectedTab = LinkTools.TabPageBrowser;
                     }
                 }
