@@ -9,6 +9,7 @@ Todo:
 - Detectie van de double top en bottom (via de secondary trend?)
 - Verwijderen van gesloten FVG uit de database (cleanup)
 - Verwijderen van oude gesloten oude Zones uit de database (cleanup)
+- Opbouwen van de FVG bij het opstarten (wordt nu alleen bij de laatste 3 candles gedaan)
 Ik heb de fvg nu gelimiteerd tot het 15m interval en hoger en Ik zit te denken om dat toch maar instelbaar te gaan maken. Wellicht moet ik de fvg ook berekenen nadat je de scanner een poosje uit hebt gezet, maar dat komt nog wel..
 
 Scanner:

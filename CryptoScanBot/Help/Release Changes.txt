@@ -1,9 +1,14 @@
 CryptoScanBot release historie:
 
+?30-12-2024 2.0.2
+- Scanner - De locking van de live data bevatte een fout
+- Scanner - Experimentele strategie sma50sma20 was zichtbaar (die is niet betrouwbaar)
+- Scanner - De menuoptie "Show symbol chart" verplaatst naar de 1e 4 menuopties in de popup menu
+- Scanner - Shortcuts op de commando's voor de trading app, tradingview en chart formulier (ctrl-1..5).
+
 29-12-2024 2.0.1
 - Scanner - tabblad Live data, candles zonder data verwijderen
-- Trader - De order naar de Altrady webhook worden als test doorgestuurd
-
+- Trader - De orders naar de Altrady webhook worden als test doorgestuurd
 
 29-12-2024 2.0
 - Scanner - tabblad Live data
