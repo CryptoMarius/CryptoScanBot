@@ -209,6 +209,7 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         Grid.ColumnHeaderMouseClick += HeaderClick;
         Grid.DoubleClick += GridDoubleClick;
         Grid.MouseUp += ShowPopupMenu;
+        Grid.KeyDown += KeyDown;
 
         // Commands
         Grid.ContextMenuStrip = MenuStripCells;
@@ -216,6 +217,14 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         InitializeCommands(MenuStripCells);
     }
 
+    public void InitializeStandardCommands(ContextMenuStrip menuStrip)
+    {
+        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, shortcutKeys: Keys.Control | Keys.D1);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.Control | Keys.D2);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.Control | Keys.D3);
+        menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.Control | Keys.D4);
+        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D5);
+    }
 
     internal void FillColumnPopup()
     {
@@ -251,29 +260,31 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     private void ShowPopupMenu(object? sender, MouseEventArgs e)
     {
-        if (e.Button != MouseButtons.Right)
+        if (sender == null || e.Button != MouseButtons.Right)
             return;
 
-        var dgv = (DataGridView)sender;
-        ContextMenuStrip? cms = null;
-        var hit = dgv.HitTest(e.X, e.Y);
-        switch (hit.Type)
+        DataGridView? dgv = (DataGridView)sender;
+        if (dgv != null)
         {
-            case DataGridViewHitTestType.ColumnHeader:
-                cms = MenuStripHeader;
-                break;
-            case DataGridViewHitTestType.Cell:
-                cms = MenuStripCells;
-                // adjust the selection
-                var info = Grid.HitTest(e.X, e.Y);
-                if (info.RowIndex >= 0)
-                    Grid.Rows[info.RowIndex].Selected = true;
-                else
-                    return;
-                break;
+            ContextMenuStrip? cms = null;
+            var hit = dgv.HitTest(e.X, e.Y);
+            switch (hit.Type)
+            {
+                case DataGridViewHitTestType.ColumnHeader:
+                    cms = MenuStripHeader;
+                    break;
+                case DataGridViewHitTestType.Cell:
+                    cms = MenuStripCells;
+                    // adjust the selection
+                    var info = Grid.HitTest(e.X, e.Y);
+                    if (info.RowIndex >= 0)
+                        Grid.Rows[info.RowIndex].Selected = true;
+                    else
+                        return;
+                    break;
+            }
+            cms?.Show(dgv, e.Location);
         }
-
-        cms?.Show(dgv, e.Location);
     }
 
     private void CommandAdjustColumns(object? sender, EventArgs? e)
@@ -353,6 +364,11 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
             SelectedObjectIndex = -1;
             SelectedObject = null;
         }
+    }
+
+    private void KeyDown(object? sender, KeyEventArgs e)
+    {
+        MenuStripOpening(sender, null);
     }
 
     public void GridDoubleClick(object? sender, EventArgs? e)

@@ -37,10 +37,8 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
-        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange); // todo direct link?
+        InitializeStandardCommands(menuStrip);
+
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
@@ -218,7 +216,8 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
 
     public override void SortFunction()
     {
-try
+        Monitor.Enter(List);
+        try
         {
             List.Sort(Compare);
         }
@@ -437,17 +436,13 @@ try
 
     private void RemoveOldObjects()
     {
-        // statistics (not sure where to put it right now)
-        if (GlobalData.BackTest)
-            return;
-
-        // Avoid needless updates
+        // Avoid frequent updates
         long x = CandleTools.GetUnixTime(DateTime.UtcNow, 15 * 60);
         if (x == LastCheck)
             return;
  
         if (Monitor.TryEnter(List))
-        {
+        {            
             LastCheck = x;
             try
             {
@@ -457,7 +452,11 @@ try
                     {
                         CryptoLiveData liveData = List[index];
                         if (liveData.Candle.CandleData == null)
+                        {
                             List.Remove((T)liveData);
+                            if (GlobalData.LiveDataQueueAdded.ContainsKey((liveData.Symbol.Name, liveData.Interval.IntervalPeriod)))
+                                GlobalData.LiveDataQueueAdded.Remove((liveData.Symbol.Name, liveData.Interval.IntervalPeriod));
+                        }
                     }
                 }
             }

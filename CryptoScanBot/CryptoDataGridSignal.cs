@@ -67,14 +67,11 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
-        //menuStrip.AddCommand(this, "Exchange ", Command.ActivateActiveExchange); // todo direct link?
+        InitializeStandardCommands(menuStrip);
+
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy data cells", Command.CopyDataGridCells);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
         menuStrip.AddCommand(this, "Calculate liquidity zones", Command.CalculateSymbolLiquidityZones);
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
@@ -920,7 +917,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         if (GlobalData.BackTest)
             return;
 
-        // Avoid needless updates
+        // Avoid frequent updates
         long x = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
         if (x == LastStatisticUpdate)
             return;

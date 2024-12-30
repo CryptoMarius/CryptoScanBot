@@ -85,9 +85,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
 
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern);
+        InitializeStandardCommands(menuStrip);
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Position recalculate", Command.None, CommandPositionRecalculateExecute);
@@ -98,7 +96,6 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Copy symbol name", Command.CopySymbolInformation);
         menuStrip.AddCommand(this, "Copy all data cells", Command.CopyDataGridCells);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph);
         menuStrip.AddCommand(this, "Calculate liquidity zones", Command.CalculateSymbolLiquidityZones);
         menuStrip.AddCommand(this, "Export trend information to log", Command.ShowTrendInformation);
         menuStrip.AddCommand(this, "Export symbol information to Excel", Command.ExcelSymbolInformation);
@@ -412,7 +409,15 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
 
     public override void SortFunction()
     {
-        List.Sort(Compare);
+        Monitor.Enter(List);
+        try
+        {
+            List.Sort(Compare);
+        }
+        finally
+        {
+            Monitor.Exit(List);
+        }
     }
 
 
