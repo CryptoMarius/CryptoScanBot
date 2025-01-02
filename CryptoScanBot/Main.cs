@@ -594,6 +594,7 @@ public partial class FrmMain : Form
         if (GlobalData.SignalQueue.Count > 0)
         {
             if (Monitor.TryEnter(GlobalData.SignalQueue))
+            {
                 try
                 {
                     List<CryptoSignal> signals = [];
@@ -625,6 +626,7 @@ public partial class FrmMain : Form
                 {
                     Monitor.Exit(GlobalData.SignalQueue);
                 }
+            }
         }
 
 

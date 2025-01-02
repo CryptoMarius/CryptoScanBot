@@ -286,8 +286,6 @@ public class CandleIndicatorData : CryptoData
                 candleData.Rsi = rsiList[index].Rsi;
                 //if (slopeRsiList != null && index < slopeRsiList.Count)
                 //    candleData.SlopeRsi = slopeRsiList[index].Slope;
-                if (iteration == 1)
-                    symbolIntervalData.RsiValue = (float)candleData.Rsi!;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
@@ -344,7 +342,6 @@ public class CandleIndicatorData : CryptoData
             luxValue += luxOverBought;
         if (luxOverSold > 0)
             luxValue -= luxOverSold;
-        symbolIntervalData.LuxValue = luxValue;
         lastCandle!.CandleData!.Lux5mValue = luxValue;
     }
 
