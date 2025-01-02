@@ -65,14 +65,26 @@ public class ThreadCheckFinishedPosition
         }
     }
 
-    private static bool UpdatePositionStatistics(CryptoPosition position)
+    private static async Task<bool> UpdatePositionStatisticsAsync(CryptoPosition position)
     {
         if (position.CloseTime == null && position.Account.AccountType != CryptoAccountType.BackTest)
         {
             CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
             {
-                CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
+                // Lock to avoid problems
+                CryptoCandle candle;
+                await position.Symbol.CandleLock.WaitAsync();
+                try
+                {
+                    candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
+                }
+                finally
+                {
+                    position.Symbol.CandleLock.Release();
+                }
+
+
                 try
                 {
                     if (candle.Low < position.PriceMin || position.PriceMin == 0)
@@ -260,7 +272,7 @@ public class ThreadCheckFinishedPosition
 
                 if (GlobalData.Settings.General.DebugSignalStrength)
                 {
-                    if (UpdatePositionStatistics(position))
+                    if (await UpdatePositionStatisticsAsync(position))
                     {
                         GlobalData.ThreadSaveObjects!.AddToQueue(position);
                     }
