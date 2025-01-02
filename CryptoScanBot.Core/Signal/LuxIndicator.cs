@@ -14,13 +14,15 @@ public class LuxIndicator
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
 
-        // Dat array van 10 (nu globaal)
+        // Array of 10 elements
         decimal[] num = new decimal[10];
         decimal[] den = new decimal[10];
 
 
-        int min = 10;
-        int max = 20;
+        //int min = 10;
+        //int max = 20;
+        int min = 05;
+        int max = 22;
         int overbuy = 0;
         int oversell = 0;
         int oversold = 30;
@@ -33,31 +35,28 @@ public class LuxIndicator
             long unixLast = symbolInterval.CandleList.Keys.Last();
             long unixLoop = unixLast - 29 * symbolInterval.Interval.Duration;
 
-            //int count = 0;
-            //for (int j = symbolInterval.CandleList.Count - 30; j < symbolInterval.CandleList.Count; j++)
             while (unixLoop <= unixLast)
             {
-                //if (j < 1) //out of range, not sure if skipping 0 was intentional?
-                //    continue;
                 candlePrev = candleLast;
                 if (candlePrev == null)
                     continue;
-                //candleLast = symbolInterval.CandleList.Values[j];
                 if (symbolInterval.CandleList.TryGetValue(unixLoop, out candleLast))
                 {
                     //count++;
 
                     int k = 0;
-                    decimal avg = 0m;
                     overbuy = 0;
                     oversell = 0;
                     decimal diff = candleLast.Close - candlePrev.Close;
 
+                    // Calculate with RMA
                     for (int i = min; i < max; i++)
                     {
                         decimal alpha = 1 / (decimal)i;
 
+                        // RMA - numerator .... num[k]=α⋅diff+(1−α)⋅num[k−1]
                         decimal num_rma = alpha * diff + (1m - alpha) * num[k];
+                        // RMA - denominator ..... den[k]=α⋅∣diff∣+(1−α)⋅den[k−1]
                         decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
                         decimal rsi;
@@ -65,8 +64,6 @@ public class LuxIndicator
                             rsi = 50m;
                         else
                             rsi = 50m * num_rma / den_rma + 50m;
-
-                        avg += rsi;
 
                         if (rsi > overbought)
                             overbuy++;
