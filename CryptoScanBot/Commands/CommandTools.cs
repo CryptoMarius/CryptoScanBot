@@ -16,7 +16,7 @@ public class CommandTools
     {
         return sender switch
         {
-            CryptoSymbol symbol => (true, symbol.Exchange!, symbol, null, GlobalData.IntervalList[5], null),
+            CryptoSymbol symbol => (true, symbol.Exchange!, symbol, null, GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m], null),
             CryptoSignal signal => (true, signal.Exchange!, signal.Symbol, signal, signal.Interval, null),
             CryptoPosition position => (true, position.Exchange, position.Symbol, null, position.Interval, position),
             CryptoLiveData liveData => (true, liveData.Symbol.Exchange, liveData.Symbol, null, liveData.Interval, null),
@@ -142,13 +142,13 @@ public class CommandTools
                                 _ = Task.Run(() => { new ExcelPositionDump(position).ExportToExcel(); });
                             }
                             break;
-                        case Command.ShowSymbolGraph:
-                            if (symbol != null && interval != null)
-                            {
-                                CommandShowGraph command = new();
-                                command.Execute(item, symbol);
-                            }
-                            break;
+                        //case Command.ShowSymbolGraph:
+                        //    if (symbol != null && interval != null)
+                        //    {
+                        //        CommandShowGraph command = new();
+                        //        command.Execute(item, symbol);
+                        //    }
+                        //    break;
 
                         case Command.CalculateSymbolLiquidityZones:
                             if (symbol != null)
