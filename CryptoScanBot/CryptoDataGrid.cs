@@ -2,6 +2,7 @@
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.ZoneVisualisation;
 
 using System.Collections;
 using System.Runtime.InteropServices;
@@ -223,7 +224,7 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.Control | Keys.D2);
         menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.Control | Keys.D3);
         menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.Control | Keys.D4);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D5);
+        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D5, click: CommandShowGraph);
     }
 
     internal void FillColumnPopup()
@@ -543,22 +544,39 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
     }
 
 
-    public delegate T? GetNextGridObject(T currentObject, int direction = 1);
 
-    public T? GetNextObject(T currentObject, int direction = 1)
+    public object? GetNextObject(object? currentObject, int direction = 1)
     {
-        if (Grid.SelectedRows.Count > 0)
+        if (currentObject != null && Grid.SelectedRows.Count > 0)
         {
             int index = List.IndexOf((T)currentObject);
             index += direction;
             if (index >= 0 && index < List.Count)
             {
                 Grid.ClearSelection();
-                //Grid//.CurrentRow = Grid.Rows[index];
                 Grid.Rows[index].Selected = true;
                 return List[index];
             }
         }
         return default;
+    }
+
+
+    private void CommandShowGraph(object? sender, EventArgs e)
+    {
+        if (sender is ToolStripMenuItemCommand item)
+        {
+            if (Grid.SelectedRows.Count > 0)
+            {
+                int index = Grid.SelectedRows[0].Index;
+                object? current = List[index];
+
+                // A wrapper to avoid moving the Windows Grid units into Core..
+                CryptoVisualisation.GetNextObject = GetNextObject;
+
+                CommandShowGraph command = new();
+                command.Execute(item, current);
+            }
+        }
     }
 }

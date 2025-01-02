@@ -82,7 +82,7 @@ public class LiquidityZones
     public static void LoadZonesForSymbol(int symbolId, CryptoZoneData data)
     {
         using var database = new CryptoDatabase();
-        string sql = "select * from zone where SymbolId = @SymbolId";
+        string sql = "select * from zone where SymbolId = @SymbolId and Kind=1";
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbolId }))
         {
             if (GlobalData.TradeAccountList.TryGetValue(zone.AccountId, out CryptoAccount? tradeAccount))

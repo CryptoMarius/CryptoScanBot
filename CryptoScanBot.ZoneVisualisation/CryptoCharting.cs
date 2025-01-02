@@ -369,6 +369,17 @@ public class CryptoCharting
     }
 
 
+    public static void DrawFvgBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    {
+        var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+        foreach (var zone in symbolData.FvgListLong)
+            DrawLiqBoxesInternal(chart, zone, session);
+        foreach (var zone in symbolData.FvgListShort)
+            DrawLiqBoxesInternal(chart, zone, session);
+    }
+
+
+
     private static string LabelFormatterX(double x)
     {
         string s;

@@ -15,8 +15,7 @@ using System.Text;
 
 namespace CryptoScanBot.ZoneVisualisation;
 
-public delegate CryptoSymbol? GetNextSymbol(CryptoSymbol currentObject, int direction = 1);
-
+public delegate object? GetNextObject(object? current, int direction = 1);
 
 public partial class CryptoVisualisation : Form
 {
@@ -31,7 +30,9 @@ public partial class CryptoVisualisation : Form
     private string OldSymbolQuote = "";
     private string OldIntervalName = "";
 
-    public static GetNextSymbol? GetNextSymbol = null;
+    
+    private static object? CurrentObject = null;
+    public static GetNextObject? GetNextObject = null;
 
 
     public CryptoVisualisation()
@@ -555,8 +556,16 @@ public partial class CryptoVisualisation : Form
     }
 
 
-    public void StartWithSymbolAsync(CryptoSymbol symbol)
+    public void StartWithSymbolAsync(object? current)
     {
+        CurrentObject = current;
+        if (current == null)
+            return;
+
+        CryptoSymbol? symbol = GetSymbolFrom(current);
+        if (symbol == null)
+            return;
+
         Session.SymbolBase = symbol.Base;
         Session.SymbolQuote = symbol.Quote;
         LoadEdits();
@@ -669,6 +678,8 @@ public partial class CryptoVisualisation : Form
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.Indicator.ZigZagList, "liq", OxyColors.White);
                 if (Session.ShowLiqBoxes)
                     CryptoCharting.DrawLiqBoxes(plotModel, Data, Session);
+                if (Session.ShowFvgZones)
+                    CryptoCharting.DrawFvgBoxes(plotModel, Data, Session);
                 if (Session.ShowFib)
                     CryptoCharting.DrawFibRetracement(plotModel, Data);
                 if (Session.ShowFibZigZag)
@@ -768,21 +779,37 @@ public partial class CryptoVisualisation : Form
     }
 
 
+    public static CryptoSymbol? GetSymbolFrom(object? current)
+    {
+        if (current != null)
+        {
+            if (current is CryptoSymbol symbol)
+                return symbol;
+            if (current is CryptoSignal signal)
+                return signal.Symbol;
+            if (current is CryptoPosition position)
+                return position.Symbol;
+            if (current is CryptoLiveData liveData)
+                return liveData.Symbol;
+       }
+       return null;
+    }
+
     private void FormKeyDown(object? sender, KeyEventArgs e)
     {
-        if (Data != null && GetNextSymbol != null)
+        if (Data != null && GetNextObject != null)
         {
             if (e.Control && e.Alt && e.KeyCode == Keys.Left)
             {
-                CryptoSymbol? nextSymbol = GetNextSymbol(Data.Symbol, -1);
-                if (nextSymbol != null)
-                    StartWithSymbolAsync(nextSymbol);
+                object? current = GetNextObject(CurrentObject, -1);
+                if (current != null)
+                    StartWithSymbolAsync(current);
             }
             if (e.Control && e.Alt && e.KeyCode == Keys.Right)
             {
-                CryptoSymbol? nextSymbol = GetNextSymbol(Data.Symbol, +1);
-                if (nextSymbol != null)
-                    StartWithSymbolAsync(nextSymbol);
+                object? current = GetNextObject(CurrentObject, +1);
+                if (current != null)
+                    StartWithSymbolAsync(current);
             }
         }
     }

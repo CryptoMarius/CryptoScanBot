@@ -7,9 +7,9 @@ public class CommandShowGraph : CommandBase
 {
     private static CryptoVisualisation? CryptoVisualisationForm = null;
 
-    public override void Execute(ToolStripMenuItemCommand item, object sender)
+    public override void Execute(ToolStripMenuItemCommand item, object? sender)
     {
-        if (sender is CryptoSymbol symbol)
+        if (sender != null)
         {
             CryptoVisualisation? dialog = null;
             try
@@ -27,7 +27,7 @@ public class CommandShowGraph : CommandBase
                 StartPosition = FormStartPosition.CenterParent
             };
 
-            dialog.StartWithSymbolAsync(symbol);
+            dialog.StartWithSymbolAsync(sender);
             dialog.Show();
             if (CryptoVisualisationForm != null)
                 dialog.BringToFront();

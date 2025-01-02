@@ -200,29 +200,4 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         cell.Style.ForeColor = foreColor;
     }
 
-
-    public CryptoSymbol? GetNextSymbol(CryptoSymbol currentSymbol, int direction = 1)
-    {
-        return GetNextObject((T)currentSymbol, direction);
-    }
-
-
-    private void CommandShowGraph(object? sender, EventArgs e)
-    {
-        if (sender is ToolStripMenuItemCommand item)
-        {
-            if (Grid.SelectedRows.Count > 0)
-            {
-                int index = Grid.SelectedRows[0].Index;
-                CryptoSymbol symbol = List[index];
-
-                // A wrapper to avoid moving the Windows Grid units into Core..
-                CryptoVisualisation.GetNextSymbol = GetNextSymbol;
-
-                CommandShowGraph command = new();
-                command.Execute(item, symbol);
-            }
-        }
-    }
-
 }

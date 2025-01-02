@@ -28,6 +28,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         BB,
         AvgBB,
         Rsi,
+        Lux5m,
         //SlopeRsi,
         MacdValue,
         MacdSignal,
@@ -38,7 +39,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         Sma50,
         Sma20,
         PSar,
-        Lux5m,
         FundingRate,
 
         Trend15m,

@@ -55,6 +55,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         BB,
         AvgBB,
         Rsi,
+        Lux5m,
         //SlopeRsi,
         MacdValue,
         MacdSignal,
@@ -65,7 +66,6 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         Sma50,
         Sma20,
         PSar,
-        Lux5m,
 
         //FundingRate,
         Trend15m,

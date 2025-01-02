@@ -19,6 +19,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         Volume,
         BB,
         Rsi,
+        Lux5m,
         MacdValue,
         MacdSignal,
         MacdHistogram,
@@ -28,8 +29,6 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         Sma50,
         Sma20,
         PSar,
-        Lux5mLong,
-        Lux5mShort,
     }
 
     private System.Windows.Forms.Timer? TimerRefreshInformation = null;
@@ -132,11 +131,8 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.PSar:
                     CreateColumn("PSar", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
-                case ColumnsForGrid.Lux5mLong:
-                    CreateColumn("Lux 5m long", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
-                    break;
-                case ColumnsForGrid.Lux5mShort:
-                    CreateColumn("Lux 5m short", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
+                case ColumnsForGrid.Lux5m:
+                    CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -170,8 +166,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Candle.CandleData?.Sma50, b.Candle.CandleData?.Sma50),
                 ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Candle.CandleData?.Sma20, b.Candle.CandleData?.Sma20),
                 ColumnsForGrid.PSar => ObjectCompare.Compare(a.Candle.CandleData?.PSar, b.Candle.CandleData?.PSar),
-                ColumnsForGrid.Lux5mLong => ObjectCompare.Compare(a.Candle.CandleData?.LuxIndicator5mLong, b.Candle.CandleData?.LuxIndicator5mLong),
-                ColumnsForGrid.Lux5mShort => ObjectCompare.Compare(a.Candle.CandleData?.LuxIndicator5mShort, b.Candle.CandleData?.LuxIndicator5mShort),
+                ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.Candle.CandleData?.Lux5mValue, b.Candle.CandleData?.Lux5mValue),
                 _ => 0
             };
 
@@ -298,11 +293,8 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     case ColumnsForGrid.PSar:
                         e.Value = liveData.Candle.CandleData?.PSar;
                         break;
-                    case ColumnsForGrid.Lux5mLong:
-                        e.Value = liveData.Candle.CandleData?.LuxIndicator5mLong;
-                        break;
-                    case ColumnsForGrid.Lux5mShort:
-                        e.Value = liveData.Candle.CandleData?.LuxIndicator5mShort;
+                    case ColumnsForGrid.Lux5m:
+                        e.Value = liveData.Candle.CandleData?.Lux5mValue;
                         break;
                     default:
                         e.Value = '?';
