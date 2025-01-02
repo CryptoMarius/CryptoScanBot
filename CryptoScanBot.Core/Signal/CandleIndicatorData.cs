@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Const;
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Const;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -44,7 +45,6 @@ public class CandleIndicatorData : CryptoData
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={intervalCandles.Count} requested={maxCandles}";
             return null;
         }
-
 
         // https://trendspider.com/learning-center/linear-regression-slope-a-comprehensive-guide-for-traders/
         //Calculation and Interpretation of the LRS
@@ -233,6 +233,9 @@ public class CandleIndicatorData : CryptoData
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
             standardDeviations: GlobalData.Settings.General.BbStdDeviation);
 
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+
         // Fill the last 60 candles with the indicator data
         int iteration = 0;
         for (int index = history.Count - 1; index >= 0; index--)
@@ -283,6 +286,8 @@ public class CandleIndicatorData : CryptoData
                 candleData.Rsi = rsiList[index].Rsi;
                 //if (slopeRsiList != null && index < slopeRsiList.Count)
                 //    candleData.SlopeRsi = slopeRsiList[index].Slope;
+                if (iteration == 1)
+                    symbolIntervalData.RsiValue = (float)candleData.Rsi!;
 
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
@@ -330,11 +335,17 @@ public class CandleIndicatorData : CryptoData
         }
 
 
-        // Iets wat ik wel eens gebruikt als ik trade
+        // I use the lux indicator frequently and combine its results in a single value
         CryptoCandle? lastCandle = history[^1];
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
-        lastCandle!.CandleData!.LuxIndicator5mLong = (byte)luxOverSold;
-        lastCandle!.CandleData!.LuxIndicator5mShort = (byte)luxOverBought;
+
+        float luxValue = 0;
+        if (luxOverBought > 0)
+            luxValue += luxOverBought;
+        if (luxOverSold > 0)
+            luxValue -= luxOverSold;
+        symbolIntervalData.LuxValue = luxValue;
+        lastCandle!.CandleData!.Lux5mValue = luxValue;
     }
 
     // We need 1 day + X hours because of the barometr calculation (we show ~5 hours in the display)
