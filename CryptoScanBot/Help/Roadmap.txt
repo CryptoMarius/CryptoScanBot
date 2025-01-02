@@ -11,6 +11,9 @@ Todo:
 - Verwijderen van oude gesloten oude Zones uit de database (cleanup)
 - Opbouwen van de FVG bij het opstarten (wordt nu alleen bij de laatste 3 candles gedaan)
 Ik heb de fvg nu gelimiteerd tot het 15m interval en hoger en Ik zit te denken om dat toch maar instelbaar te gaan maken. Wellicht moet ik de fvg ook berekenen nadat je de scanner een poosje uit hebt gezet, maar dat komt nog wel..
+JanM: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), hij heeft de scanner weken achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn
+EricN: De laatste FVG laten zien (of gewoon een paar rechthoek + tekst wellicht)
+Marco: Heeft gezien dat er assets gehaald worden bij een papertrade (of zou het de webhook zijn?)
 
 Scanner:
 - Scanner - Optioneel, een plaatje in Telegram van de situatie
