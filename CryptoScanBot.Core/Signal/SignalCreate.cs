@@ -552,13 +552,13 @@ public class SignalCreate
 
         if (!Symbol.LastPrice.HasValue)
         {
-            // Die wordt ingevuld in de BinanceStream1mCandles en BinanceStreamPriceTicker, dus zelden leeg
-            GlobalData.AddTextToLogTab(string.Format("Analyse {0} Er is geen lastprice aanwezig", Symbol.Name));
+            // LastPrice is filled in the price tickers, but can be delayed..
+            GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} No last price available");
             return false;
         }
 
 
-        // Is het volume binnen de gestelde grenzen          
+        // Is the volume within a certain minimal limit
         if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(zones, candleOpenTime, Interval.Duration, out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalVolume)
@@ -569,7 +569,7 @@ public class SignalCreate
             return false;
         }
 
-        // Is de prijs binnen de gestelde grenzen
+        // Is the price within a certain minimal limit
         if (!HasOpenPosition() && !Symbol.CheckValidMinimalPrice(out response))
         {
             if (GlobalData.Settings.Signal.LogMinimalPrice)
