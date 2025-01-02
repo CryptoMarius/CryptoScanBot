@@ -77,9 +77,7 @@ public class CryptoData
     public double? PSar { get; set; }
 
     [Computed]
-    public byte LuxIndicator5mLong { get; set; }
-    [Computed]
-    public byte LuxIndicator5mShort { get; set; }
+    public float Lux5mValue { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -130,8 +128,7 @@ public class CryptoData
         // Parabolic SAR indicator value
         PSar = source.PSar;
 
-        LuxIndicator5mLong = source.LuxIndicator5mLong;
-        LuxIndicator5mShort = source.LuxIndicator5mShort;
+        Lux5mValue = source.Lux5mValue;
     }
 }
 
