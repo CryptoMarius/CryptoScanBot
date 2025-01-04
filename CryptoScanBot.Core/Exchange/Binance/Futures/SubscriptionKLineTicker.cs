@@ -39,7 +39,15 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Task.Run(async () => { await ProcessCandleAsync((BinanceStreamKlineData)data.Data); });
             }
-        }, ExchangeBase.CancellationToken).ConfigureAwait(false);
+        }, false, ExchangeBase.CancellationToken).ConfigureAwait(false);
+
+        // Premium: When it's omitted, null or false  it will be the old behavior.
+        // Setting it to true will subscribe to the premium index klines
+        // for a symbol instead of the price data of a symbol.
+        // For reference: https://whaleportal.com/learn/premium-index/
+
+
+
         return subscriptionResult;
     }
 
