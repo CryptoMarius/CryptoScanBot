@@ -2,43 +2,42 @@
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.SettingsDialog;
+
 public partial class UserControlQuote : UserControl
 {
+    private readonly CryptoQuoteData QuoteData;
 
-    public CryptoQuoteData QuoteData;
-
-    public UserControlQuote()
+    public UserControlQuote(CryptoQuoteData quoteData)
     {
         InitializeComponent();
 
+        QuoteData = quoteData;
         EditMinimumVolume.Maximum = decimal.MaxValue;
         EditMinimumPrice.Maximum = decimal.MaxValue;
         EditEntryAmount.Maximum = decimal.MaxValue;
         EditEntryPercentage.Maximum = 100;
     }
 
-    public void LoadConfig(CryptoQuoteData quoteData)
+    public void LoadConfig()
     {
-        QuoteData = quoteData;
-
-        EditQuoteName.Text = quoteData.Name;
-        EditQuoteName.Checked = quoteData.FetchCandles;
-        EditMinimumVolume.Value = quoteData.MinimalVolume;
-        EditMinimumPrice.Value = quoteData.MinimalPrice;
-        PanelColor.BackColor = quoteData.DisplayColor;
-        EditEntryAmount.Value = quoteData.EntryAmount;
-        EditEntryPercentage.Value = quoteData.EntryPercentage;
-        labelSymbols.Text = $"{quoteData.SymbolList.Count} symbols";
+        EditQuoteName.Text = QuoteData.Name;
+        EditQuoteName.Checked = QuoteData.FetchCandles;
+        EditMinimumVolume.Value = QuoteData.MinimalVolume;
+        EditMinimumPrice.Value = QuoteData.MinimalPrice;
+        PanelColor.BackColor = QuoteData.DisplayColor;
+        EditEntryAmount.Value = QuoteData.EntryAmount;
+        EditEntryPercentage.Value = QuoteData.EntryPercentage;
+        labelSymbols.Text = $"{QuoteData.SymbolList.Count} symbols";
     }
 
-    public void SaveConfig(CryptoQuoteData quoteData)
+    public void SaveConfig()
     {
-        quoteData.FetchCandles = EditQuoteName.Checked;
-        quoteData.MinimalVolume = EditMinimumVolume.Value;
-        quoteData.MinimalPrice = EditMinimumPrice.Value;
-        quoteData.DisplayColor = PanelColor.BackColor;
-        quoteData.EntryAmount = EditEntryAmount.Value;
-        quoteData.EntryPercentage = EditEntryPercentage.Value;
+        QuoteData.FetchCandles = EditQuoteName.Checked;
+        QuoteData.MinimalVolume = EditMinimumVolume.Value;
+        QuoteData.MinimalPrice = EditMinimumPrice.Value;
+        QuoteData.DisplayColor = PanelColor.BackColor;
+        QuoteData.EntryAmount = EditEntryAmount.Value;
+        QuoteData.EntryPercentage = EditEntryPercentage.Value;
     }
 
     private void ButtonColor_Click(object? sender, EventArgs e)
