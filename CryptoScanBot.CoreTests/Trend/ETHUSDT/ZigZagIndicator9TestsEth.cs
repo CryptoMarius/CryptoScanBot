@@ -38,7 +38,7 @@ public class ZigZagIndicator9TestsEth : TestBase
         LoadCandleDataFromDisk(symbolInterval.CandleList, Path.Combine(path, "Trend\\ETHUSDT\\ETHUSDT-1h.json"));
 
         // Trend via open/close
-        ZigZagIndicator9 indicator = new(false, 1.0m);
+        ZigZagIndicator indicator = new(false, 1.0m);
 
 
         List<DataForTest> list =

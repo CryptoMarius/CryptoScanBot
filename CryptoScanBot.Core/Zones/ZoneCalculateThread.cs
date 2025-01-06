@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 
 namespace CryptoScanBot.Core.Zones;
 
-public class ThreadZoneCalculate
+public class ZoneCalculateThread
 {
 
     private readonly BlockingCollection<CryptoSymbol> Queue = [];

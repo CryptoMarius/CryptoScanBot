@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Zones;
 
-public class CryptoZoneData
+public class ZoneData
 {
     public required CryptoAccount Account { get; set; }
     public required Model.CryptoExchange Exchange { get; set; }
@@ -15,8 +15,10 @@ public class CryptoZoneData
     public List<CryptoZone> ZoneListLong { get; set; } = [];
     public List<CryptoZone> ZoneListShort { get; set; } = [];
 
-    public required ZigZagIndicator9 Indicator { get; set; }
-    public required ZigZagIndicator9 IndicatorFib { get; set; }
+    public required ZigZagIndicator Indicator { get; set; }
+    public required ZigZagIndicator IndicatorFib { get; set; }
+    public ZigZagIndicator IndicatorDtb { get; set; }
+    
 
     public List<CryptoSignal> Signals { get; set; } = [];
     //public List<CryptoPosition> Positions { get; set; } = [];

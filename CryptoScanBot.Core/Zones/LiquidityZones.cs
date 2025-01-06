@@ -79,7 +79,7 @@ public class LiquidityZones
     }
 
 
-    public static void LoadZonesForSymbol(int symbolId, CryptoZoneData data)
+    public static void LoadZonesForSymbol(int symbolId, ZoneData data)
     {
         using var database = new CryptoDatabase();
         string sql = "select * from zone where SymbolId = @SymbolId and Kind=1";
@@ -105,7 +105,7 @@ public class LiquidityZones
     }
 
 
-    public static void SaveZonesForSymbol(CryptoZoneData data, List<ZigZagResult> zigZagList)
+    public static void SaveZonesForSymbol(ZoneData data, List<ZigZagResult> zigZagList)
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
 
@@ -136,7 +136,7 @@ public class LiquidityZones
                 bool changed = false;
                 CryptoTradeSide side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short;
 
-                // Try to reuse the previous zones.
+                // Try to reuse the previous1 zones.
                 if (!zoneIndex.TryGetValue((zigZag.Bottom, zigZag.Top, side), out CryptoZone? zone))
                 {
                     zone = new()
@@ -450,7 +450,7 @@ public class LiquidityZones
         }
     }
 
-    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, CryptoZoneData data, bool zoomLiqBoxes, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, ZoneData data, bool zoomLiqBoxes, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating zones");
         ZigZagResult? previous = null;
@@ -477,7 +477,7 @@ public class LiquidityZones
     }
 
 
-    public static void CheckZones(CryptoZoneData data, ref long key, long checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
+    public static void CheckZones(ZoneData data, ref long key, long checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
     {
         // public because of testing (yeah, q&d)
 
@@ -510,7 +510,7 @@ public class LiquidityZones
         }
     }
 
-    public static void CalculateBrokenBoxes(CryptoZoneData data)
+    public static void CalculateBrokenBoxes(ZoneData data)
     {
         List<ZigZagResult> zonesLong = [];
         List<ZigZagResult> zonesShort = [];
@@ -554,7 +554,7 @@ public class LiquidityZones
         }
     }
 
-    internal static void CalculateIntroZone(CryptoZoneData data)
+    internal static void CalculateIntroZone(ZoneData data)
     {
         // Determine if a liq. box/zone has an interesting intro
         if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
@@ -619,8 +619,8 @@ public class LiquidityZones
         }
     }
 
-    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, CryptoZoneSession session,
-        CryptoZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task CalculateZonesForSymbolAsync(AddTextEvent? sender, ZoneSession session,
+        ZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         try
         {
@@ -654,6 +654,7 @@ public class LiquidityZones
 #if !DEBUGZIGZAG
                             data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
 #endif
+                            data.IndicatorDtb.Calculate(candle, session.UseBatchProcess);
                         }
                     }
 
@@ -679,7 +680,6 @@ public class LiquidityZones
                 {
                     data.Symbol.CandleLock.Release();
                 }
-
 
 
                 // Mark the dominant lows or highs
@@ -712,6 +712,56 @@ public class LiquidityZones
         }
     }
 
+    public static List<(ZigZagResult, ZigZagResult, ZigZagResult)> CalculateDoubleTopBottom(ZoneData data)
+    {
+        // how? Steven Hart (The Trading Channel):
+        // Using a Swing High - Draw a box from the high to the close / low to open
+        // if a next high/low connects with that rectangle (not cross it with close)
+
+        // Not sure if enumerating the points will do the job...
+        // buy hey, lets just try it for now...
+        List<(ZigZagResult , ZigZagResult , ZigZagResult )> l = [];
+
+        // primary trend
+        ZigZagResult? previous2 = null;
+        ZigZagResult? previous1 = null;
+        foreach (var p0 in data.Indicator.ZigZagList)
+        {
+            if (previous1 != null && previous2 != null && p0.PivotIndex + 2 < data.Indicator.PivotList.Count)
+            {
+                ZigZagResult p1 = data.Indicator.PivotList[p0.PivotIndex + 1];
+                ZigZagResult p2 = data.Indicator.PivotList[p0.PivotIndex + 2];
+                //ZigZagResult px = data.Indicator.PivotList[p0.PivotIndex + 3];
+
+                // double top
+                if (previous1.PointType == 'L' && p0.PointType == 'H' && p1.PointType == 'L' && p2.PointType == 'H'
+                    && previous1.Value < p1.Value) //&& previous2.Value < p0.Value 
+                {
+                    decimal value = Math.Abs(Math.Max(p2.Candle.Open, p2.Candle.Close) - Math.Max(p0.Candle.Open, p0.Candle.Close));
+                    decimal perc = 100 * value / Math.Max(p0.Candle.Open, p0.Candle.Close);
+                    if (perc < 0.75m)
+                    {
+                        l.Add((p2, p1, p0));
+                    }
+                }
+
+                // double bottom
+                if (previous1.PointType == 'H' && p0.PointType == 'L' && p1.PointType == 'H' && p2.PointType == 'L'
+                    && previous1.Value > p1.Value) //&& previous2.Value > p0.Value 
+                {
+                    decimal value = Math.Abs(Math.Min(p2.Candle.Open, p2.Candle.Close) - Math.Min(p0.Candle.Open, p0.Candle.Close));
+                    decimal perc = 100 * value / Math.Min(p0.Candle.Open, p0.Candle.Close);
+                    if (perc < 0.75m)
+                    {
+                        l.Add((p2, p1, p0));
+                    }
+                }
+            }
+            previous2 = previous1;
+            previous1 = p0;
+        }
+        return l;
+    }
 
     public static async Task CalculateZones(AddTextEvent? sender, CryptoSymbol symbol)
     {
@@ -730,7 +780,7 @@ public class LiquidityZones
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
                 // Would be nice if we got rid of this one
-                CryptoZoneSession session = new()
+                ZoneSession session = new()
                 {
                     SymbolBase = symbol.Base,
                     SymbolQuote = symbol.Quote,
@@ -749,7 +799,7 @@ public class LiquidityZones
                 };
 
 
-                CryptoZoneData data = new()
+                ZoneData data = new()
                 {
                     Account = GlobalData.ActiveAccount!,
                     Exchange = symbol.Exchange,
@@ -776,6 +826,7 @@ public class LiquidityZones
                 {
                     data.Symbol.CalculatingZones = false;
                 }
+
             }
         }
     }

@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace CryptoScanBot.Core.Zones;
 
 [Serializable]
-public class CryptoZoneSession
+public class ZoneSession
 {
     public string SymbolBase { get; set; } = "BTC";
     public string SymbolQuote { get; set; } = "USDT";
@@ -35,8 +35,10 @@ public class CryptoZoneSession
     public bool ShowSignals { get; set; } = false;
     public bool ShowPositions { get; set; } = false;
     public bool ShowFvgZones { get; set; } = false;
+    public bool ShowDtb { get; set; } = false;
 
-    public static CryptoZoneSession LoadSessionSettings()
+
+    public static ZoneSession LoadSessionSettings()
     {
         // load previous Session settings
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
@@ -44,7 +46,7 @@ public class CryptoZoneSession
         if (File.Exists(filename))
         {
             string text = File.ReadAllText(filename);
-            var session = JsonSerializer.Deserialize<CryptoZoneSession>(text, JsonTools.DeSerializerOptions);
+            var session = JsonSerializer.Deserialize<ZoneSession>(text, JsonTools.DeSerializerOptions);
             if (session != null)
                 return session;
         }

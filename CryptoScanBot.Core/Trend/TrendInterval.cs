@@ -64,7 +64,7 @@ public class TrendInterval
     /// <summary>
     /// Interpret the zigzag values en try to identify a trend
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator9 indicator, StringBuilder? log)
+    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log)
     {
         var zigZagList = indicator.ZigZagList;
         CryptoTrendIndicator trend = CryptoTrendIndicator.Sideways;
@@ -208,7 +208,7 @@ public class TrendInterval
         //TrendTools.CreateAllTrendIndicators(accountSymbolIntervalData, candleList);
 
         // Add candles to the ZigZag indicators
-        ZigZagIndicator9 indicator = new(GlobalData.Settings.General.UseHighLowInTrendCalculation, 1.0m);
+        ZigZagIndicator indicator = new(GlobalData.Settings.General.UseHighLowInTrendCalculation, 1.0m);
         //accountSymbolIntervalData.ZigZagLastCandleAdded = 
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
 

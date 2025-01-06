@@ -38,7 +38,7 @@ public class TrendTools
     //}
 
 
-    public static async Task<long?> AddCandlesToIndicatorsAsync(ZigZagIndicator9 indicator, CryptoSymbol symbol, CryptoInterval interval, long min, long max)
+    public static async Task<long?> AddCandlesToIndicatorsAsync(ZigZagIndicator indicator, CryptoSymbol symbol, CryptoInterval interval, long min, long max)
     {
         long? zigZagLastCandleAdded = null;
 
