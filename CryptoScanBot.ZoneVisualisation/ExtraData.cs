@@ -9,7 +9,7 @@ namespace CryptoScanBot.Core.Zones;
 public class ExtraData
 {
 
-    public static void LoadSignalsForSymbol(CryptoZoneData data, long from)
+    public static void LoadSignalsForSymbol(ZoneData data, long from)
     {
         data.Signals.Clear();
         string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId and EventTime > @eventTime";
@@ -43,7 +43,7 @@ public class ExtraData
 
     }
 
-    public static void LoadPositionsForSymbol(CryptoZoneData data, long from)
+    public static void LoadPositionsForSymbol(ZoneData data, long from)
     {
         //data.Positions.Clear();
         //using var database = new CryptoDatabase();

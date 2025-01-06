@@ -52,7 +52,7 @@ public class CryptoCharting
         return retracements;
     }
 
-    public static void DrawFibRetracement(PlotModel chart, CryptoZoneData data)
+    public static void DrawFibRetracement(PlotModel chart, ZoneData data)
     {
         var indicator = data.IndicatorFib;
         //// Mhh, fib levels proberen te zetten
@@ -108,7 +108,7 @@ public class CryptoCharting
         }
     }
 
-    public static void DrawCandleSerie(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    public static void DrawCandleSerie(PlotModel chart, ZoneData data, ZoneSession session)
     {
 
         CryptoSymbolInterval symbolInterval = data.Symbol.GetSymbolInterval(session.ActiveInterval);
@@ -195,7 +195,7 @@ public class CryptoCharting
     }
 
 
-    internal static void DrawPoints(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> pivotList)
+    internal static void DrawPoints(PlotModel chart, ZoneSession session, List<ZigZagResult> pivotList)
     {
         var seriesHigh = new ScatterSeries { Title = "p high", MarkerSize = 2, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
         var seriesLow = new ScatterSeries { Title = "p low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
@@ -224,7 +224,7 @@ public class CryptoCharting
     }
 
 
-    internal static void DrawSignals(PlotModel chart, CryptoZoneSession session, List<CryptoSignal> signalList)
+    internal static void DrawSignals(PlotModel chart, ZoneSession session, List<CryptoSignal> signalList)
     {
         var seriesShort = new ScatterSeries { Title = "s high", MarkerSize = 2, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Diamond, };
         var seriesLong = new ScatterSeries { Title = "s low", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Diamond, };
@@ -254,7 +254,7 @@ public class CryptoCharting
     }
 
 
-    public static void DrawZigZag(PlotModel chart, CryptoZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
+    public static void DrawZigZag(PlotModel chart, ZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
@@ -299,7 +299,7 @@ public class CryptoCharting
         //seriesZigZag.TrackerFormatString = text;
     }
 
-    private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, CryptoZoneSession session)
+    private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, ZoneSession session)
     {
         // Dont show the closed fvg
         if (zone.Kind == CryptoZoneKind.FairValueGap && zone.CloseTime != null)
@@ -359,7 +359,7 @@ public class CryptoCharting
     }
 
 
-    public static void DrawLiqBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    public static void DrawLiqBoxes(PlotModel chart, ZoneData data, ZoneSession session)
     {
         //var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
         foreach (var zone in data.ZoneListLong)
@@ -369,7 +369,7 @@ public class CryptoCharting
     }
 
 
-    public static void DrawFvgBoxes(PlotModel chart, CryptoZoneData data, CryptoZoneSession session)
+    public static void DrawFvgBoxes(PlotModel chart, ZoneData data, ZoneSession session)
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
         foreach (var zone in symbolData.FvgListLong)
@@ -409,7 +409,7 @@ public class CryptoCharting
         return s;
     }
 
-    public static PlotModel CreateChart(CryptoZoneData data, out LineAnnotation horizontalLine, out LineAnnotation verticalLine)
+    public static PlotModel CreateChart(ZoneData data, out LineAnnotation horizontalLine, out LineAnnotation verticalLine)
     {
         _interval = data.Interval;
         _priceFormat = data.Symbol.PriceDisplayFormat;

@@ -145,9 +145,9 @@ public partial class FrmSettings : Form
 
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            UserControlQuote control = new();
+            UserControlQuote control = new(quoteData);
             flowLayoutPanelQuotes.Controls.Add(control);
-            control.LoadConfig(quoteData);
+            control.LoadConfig();
         }
 
         // ------------------------------------------------------------------------------
@@ -242,6 +242,7 @@ public partial class FrmSettings : Form
         EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
         EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
         //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
+        EditZonesCandleCountZoom.Value = settings.Signal.Zones.CandleCountZoom;
 
         EditZoomLowerTimeFrames.Checked = settings.Signal.Zones.ZoomLowerTimeFrames;
         EditMinimumZoomedPercentage.Value = (decimal)settings.Signal.Zones.MinimumZoomedPercentage;
@@ -260,6 +261,12 @@ public partial class FrmSettings : Form
         EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
         EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
+
+        // Double top/bottom
+        UserControlSettingsSoundAndColorsZonesDtb.LoadConfig("Double top/bottom", settings.Signal.DoubleTopBottom);
+        EditShowDtbSignalsLong.Checked = settings.Signal.DoubleTopBottom.ShowSignalsLong;
+        EditShowDtbSignalsShort.Checked = settings.Signal.DoubleTopBottom.ShowSignalsShort;
+        EditZonesDtbMinimumPercentage.Value = (decimal)settings.Signal.DoubleTopBottom.MinimumPercentage;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -419,7 +426,7 @@ public partial class FrmSettings : Form
         foreach (var control in flowLayoutPanelQuotes.Controls)
         {
             if (control is UserControlQuote controlQuote)
-                controlQuote.SaveConfig(controlQuote.QuoteData);
+                controlQuote.SaveConfig();
         }
 
         // ------------------------------------------------------------------------------
@@ -513,6 +520,7 @@ public partial class FrmSettings : Form
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
         settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
         //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h
+        settings.Signal.Zones.CandleCountZoom = (int)EditZonesCandleCountZoom.Value;
 
         settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
         settings.Signal.Zones.MinimumZoomedPercentage = (double)EditMinimumZoomedPercentage.Value;
@@ -533,6 +541,11 @@ public partial class FrmSettings : Form
         settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;
         settings.Signal.ZonesFvg.MinimumPercentage = (double)EditZonesFvgMinimumPercentage.Value;
 
+        // Double top/bottom
+        UserControlSettingsSoundAndColorsZonesDtb.SaveConfig(settings.Signal.DoubleTopBottom);
+        settings.Signal.DoubleTopBottom.ShowSignalsLong = EditShowDtbSignalsLong.Checked;
+        settings.Signal.DoubleTopBottom.ShowSignalsShort = EditShowDtbSignalsShort.Checked;
+        settings.Signal.DoubleTopBottom.MinimumPercentage = (double)EditZonesDtbMinimumPercentage.Value;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -561,16 +574,16 @@ public partial class FrmSettings : Form
         // Black & White list
         // --------------------------------------------------------------------------------
 
-        settings.BlackListOversold = [.. textBoxBlackListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
+        settings.BlackListOversold = [.. textBoxBlackListOversold.Text.Trim().Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOversold.Sort();
 
-        settings.WhiteListOversold = [.. textBoxWhiteListOversold.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
+        settings.WhiteListOversold = [.. textBoxWhiteListOversold.Text.Trim().Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOversold.Sort();
 
-        settings.BlackListOverbought = [.. textBoxBlackListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
+        settings.BlackListOverbought = [.. textBoxBlackListOverbought.Text.Trim().Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOverbought.Sort();
 
-        settings.WhiteListOverbought = [.. textBoxWhiteListOverbought.Text.Trim().Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)];
+        settings.WhiteListOverbought = [.. textBoxWhiteListOverbought.Text.Trim().Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries)];
         settings.WhiteListOverbought.Sort();
 
         // --------------------------------------------------------------------------------

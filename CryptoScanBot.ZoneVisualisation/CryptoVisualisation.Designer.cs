@@ -50,6 +50,7 @@ partial class CryptoVisualisation
         ButtonZoomLast = new Button();
         EditShowFib = new CheckBox();
         EditShowFibZigZag = new CheckBox();
+        EditShowFvgZones = new CheckBox();
         panel1 = new Panel();
         labelInterval = new Label();
         ButtonPlus = new Button();
@@ -61,7 +62,7 @@ partial class CryptoVisualisation
         EditShowPositions = new CheckBox();
         EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        EditShowFvgZones = new CheckBox();
+        EditShowDtb = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         panel1.SuspendLayout();
@@ -93,6 +94,7 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditShowFib);
         flowLayoutPanel1.Controls.Add(EditShowFibZigZag);
         flowLayoutPanel1.Controls.Add(EditShowFvgZones);
+        flowLayoutPanel1.Controls.Add(EditShowDtb);
         flowLayoutPanel1.Controls.Add(panel1);
         flowLayoutPanel1.Controls.Add(PanelPlayBack);
         flowLayoutPanel1.Controls.Add(EditShowPositions);
@@ -299,12 +301,22 @@ partial class CryptoVisualisation
         EditShowFibZigZag.Text = "Show fib lines";
         EditShowFibZigZag.UseVisualStyleBackColor = true;
         // 
+        // EditShowFvgZones
+        // 
+        EditShowFvgZones.AutoSize = true;
+        EditShowFvgZones.Location = new Point(6, 519);
+        EditShowFvgZones.Name = "EditShowFvgZones";
+        EditShowFvgZones.Size = new Size(108, 19);
+        EditShowFvgZones.TabIndex = 32;
+        EditShowFvgZones.Text = "Show fvg zones";
+        EditShowFvgZones.UseVisualStyleBackColor = true;
+        // 
         // panel1
         // 
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 544);
+        panel1.Location = new Point(6, 569);
         panel1.Name = "panel1";
         panel1.Size = new Size(95, 66);
         panel1.TabIndex = 21;
@@ -343,7 +355,7 @@ partial class CryptoVisualisation
         PanelPlayBack.Controls.Add(labelMaxTime);
         PanelPlayBack.Controls.Add(ButtonGoRight);
         PanelPlayBack.Controls.Add(ButtonGoLeft);
-        PanelPlayBack.Location = new Point(6, 616);
+        PanelPlayBack.Location = new Point(6, 641);
         PanelPlayBack.Name = "PanelPlayBack";
         PanelPlayBack.Size = new Size(95, 65);
         PanelPlayBack.TabIndex = 22;
@@ -380,7 +392,7 @@ partial class CryptoVisualisation
         // EditShowPositions
         // 
         EditShowPositions.AutoSize = true;
-        EditShowPositions.Location = new Point(6, 687);
+        EditShowPositions.Location = new Point(6, 712);
         EditShowPositions.Name = "EditShowPositions";
         EditShowPositions.Size = new Size(106, 19);
         EditShowPositions.TabIndex = 30;
@@ -390,7 +402,7 @@ partial class CryptoVisualisation
         // EditUseBatchProcess
         // 
         EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 712);
+        EditUseBatchProcess.Location = new Point(6, 737);
         EditUseBatchProcess.Name = "EditUseBatchProcess";
         EditUseBatchProcess.Size = new Size(99, 19);
         EditUseBatchProcess.TabIndex = 28;
@@ -411,15 +423,15 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // EditShowFvgZones
+        // EditShowDtb
         // 
-        EditShowFvgZones.AutoSize = true;
-        EditShowFvgZones.Location = new Point(6, 519);
-        EditShowFvgZones.Name = "EditShowFvgZones";
-        EditShowFvgZones.Size = new Size(108, 19);
-        EditShowFvgZones.TabIndex = 32;
-        EditShowFvgZones.Text = "Show fvg zones";
-        EditShowFvgZones.UseVisualStyleBackColor = true;
+        EditShowDtb.AutoSize = true;
+        EditShowDtb.Location = new Point(6, 544);
+        EditShowDtb.Name = "EditShowDtb";
+        EditShowDtb.Size = new Size(77, 19);
+        EditShowDtb.TabIndex = 33;
+        EditShowDtb.Text = "Show Dtb";
+        EditShowDtb.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -478,4 +490,5 @@ partial class CryptoVisualisation
     private CheckBox EditShowPositions;
     private Button ButtonRefresh;
     private CheckBox EditShowFvgZones;
+    private CheckBox EditShowDtb;
 }

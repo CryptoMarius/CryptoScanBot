@@ -3,11 +3,11 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Other;
 
-public class SignalDoubleTopBottomShort : SignalCreateBase
+public class SignalDoubleTopBottomLong : SignalCreateBase
 {
-    public SignalDoubleTopBottomShort(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalDoubleTopBottomLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
+        SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.DoubleTopBottomLong;
     }
 

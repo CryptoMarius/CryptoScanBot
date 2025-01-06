@@ -161,6 +161,15 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalFairValueGapLong),
             AnalyzeShortType = typeof(SignalFairValueGapShort),
         });
+
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "dtb",
+            Strategy = CryptoSignalStrategy.DoubleTopBottomLong,
+            AnalyzeLongType = typeof(SignalDoubleTopBottomLong),
+            AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
+        });
     }
 
 

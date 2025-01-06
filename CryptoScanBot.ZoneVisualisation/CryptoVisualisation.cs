@@ -9,6 +9,7 @@ using CryptoScanBot.Core.Zones;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
+using OxyPlot.Series;
 
 using System.Diagnostics;
 using System.Text;
@@ -22,15 +23,15 @@ public partial class CryptoVisualisation : Form
     private PlotModel? plotModel;
     private LineAnnotation? verticalLine;
     private LineAnnotation? horizontalLine;
-    private readonly CryptoZoneSession Session = new();
-    private CryptoZoneData? Data;
+    private readonly ZoneSession Session = new();
+    private ZoneData? Data;
     private bool StandAlone { get; set; } = false;
 
     private string OldSymbolBase = "";
     private string OldSymbolQuote = "";
     private string OldIntervalName = "";
 
-    
+
     private static object? CurrentObject = null;
     public static GetNextObject? GetNextObject = null;
 
@@ -48,7 +49,7 @@ public partial class CryptoVisualisation : Form
             InitializeApplicationStuff();
         }
 
-        Session = CryptoZoneSession.LoadSessionSettings();
+        Session = ZoneSession.LoadSessionSettings();
         Session.UseBatchProcess = true;
         Session.ShowPositions = false;
         LoadEdits();
@@ -199,6 +200,7 @@ public partial class CryptoVisualisation : Form
         EditUseOptimizing.Checked = Session.UseOptimizing;
         EditShowSignals.Checked = Session.ShowSignals;
         EditShowFvgZones.Checked = Session.ShowFvgZones;
+        EditShowDtb.Checked = Session.ShowDtb;
     }
 
     public void ShowProgress(string text)
@@ -336,18 +338,13 @@ public partial class CryptoVisualisation : Form
 
     private void ButtonFocusLastCandlesClick(object? sender, EventArgs e)
     {
-        //plotView!.Model = plotModel;
-        //plotModel?.InvalidatePlot(true);
-        ////var axis = plotView.ActualModel.Axes[0];
-        //return;
-
         if (Data != null && plotModel != null && Data.SymbolInterval.CandleList.Count > 0)
         {
             decimal l = decimal.MaxValue;
             decimal h = decimal.MinValue;
             CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
             long unix = candleLast.OpenTime;
-            int count = 100;
+            int count = GlobalData.Settings.Signal.Zones.CandleCountZoom;
             CryptoCandle xlast = candleLast;
             CryptoCandle xfirst = candleLast;
             while (count > 0)
@@ -597,6 +594,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowPoints = EditShowPivots.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
         Session.ShowFvgZones = EditShowFvgZones.Checked;
+        Session.ShowDtb = EditShowDtb.Checked;
     }
 
 
@@ -645,13 +643,18 @@ public partial class CryptoVisualisation : Form
                     UseOptimizing = Session.UseOptimizing
                 };
 
+                Data.IndicatorDtb = new(false, Session.Deviation)
+                {
+                    MaxTime = Session.MaxDate,
+                    ShowSecondary = true,
+                    UseOptimizing = Session.UseOptimizing
+                };
 
                 // Load and (re)calculate the zones
                 LiquidityZones.LoadZonesForSymbol(Data.Symbol.Id, Data);
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = []; // bool = if it needs saving
                 await LiquidityZones.CalculateZonesForSymbolAsync(ShowProgress, Session, Data, loadedCandlesInMemory);
                 CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
-
 
                 // display data
                 plotModel = CryptoCharting.CreateChart(Data, out horizontalLine, out verticalLine);
@@ -672,6 +675,54 @@ public partial class CryptoVisualisation : Form
                     Data.Symbol.CalculatingZones = false;
                 }
 
+
+                // Test double top/bottom
+                if (Session.ShowDtb)
+                {
+                    List<(ZigZagResult, ZigZagResult, ZigZagResult)> l = LiquidityZones.CalculateDoubleTopBottom(Data);
+                    //var seriesHigh = new ScatterSeries { Title = "dtb high", MarkerSize = 15, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
+                    //var seriesLow = new ScatterSeries { Title = "dtb low", MarkerSize = 15, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
+                    foreach (var zigzag in l)
+                    {
+                        //var series = new LineSeries { Title = "1", Color = OxyColors.Red };
+                        //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+                        //series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+                        //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
+                        //plotModel.Series.Add(series);
+
+                        OxyColor color;
+                        if (zigzag.Item1.PointType == 'L')
+                            color = OxyColors.Green;
+                        else
+                            color = OxyColors.Orange;
+                        var rectangle = new PolygonAnnotation
+                        {
+                            StrokeThickness = 1, // Border thickness
+                            Fill = OxyColor.FromAColor(75, color),
+                            Stroke = OxyColor.FromAColor(75, color)
+                        };
+                        rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+                        rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+                        rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
+                        plotModel.Annotations.Add(rectangle);
+
+                        //var series = new LineSeries { Title = "1", Color = color };
+                        //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+                        //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item1.Value));
+                        //plotModel.Series.Add(series);
+
+                        var series = new LineSeries { Title = "1", Color = color };
+                        series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+                        series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime + Data.Interval.Duration * 5, (double)zigzag.Item1.Value));
+                        plotModel.Series.Add(series);
+
+                        series = new LineSeries { Title = "2", Color = color };
+                        series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+                        series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime + Data.Interval.Duration * 5, (double)zigzag.Item2.Value));
+                        plotModel.Series.Add(series);
+                    }
+                }
+
                 if (Session.ShowPoints)
                     CryptoCharting.DrawPoints(plotModel, Session, Data.Indicator.PivotList);
                 if (Session.ShowLiqZigZag)
@@ -686,6 +737,7 @@ public partial class CryptoVisualisation : Form
                     CryptoCharting.DrawZigZag(plotModel, Session, Data.IndicatorFib.ZigZagList, "fib", OxyColors.White);
                 if (Session.ShowSignals)
                     CryptoCharting.DrawSignals(plotModel, Session, Data.Signals);
+
 
 
                 plotView.Controller = new PlotController();
@@ -791,8 +843,8 @@ public partial class CryptoVisualisation : Form
                 return position.Symbol;
             if (current is CryptoLiveData liveData)
                 return liveData.Symbol;
-       }
-       return null;
+        }
+        return null;
     }
 
     private void FormKeyDown(object? sender, KeyEventArgs e)
