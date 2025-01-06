@@ -125,7 +125,7 @@ public partial class TestForm : Form
         GlobalData.ThreadSaveObjects = new ThreadSaveObjects();
         GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
-        GlobalData.ThreadZoneCalculate = new ThreadZoneCalculate();
+        GlobalData.ThreadZoneCalculate = new ZoneCalculateThread();
 
         //string APIKEY = "?";
         //string APISECRET = "?";
