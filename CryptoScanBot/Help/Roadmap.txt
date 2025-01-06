@@ -14,6 +14,7 @@ Ik heb de fvg nu gelimiteerd tot het 15m interval en hoger en Ik zit te denken o
 JanM: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), hij heeft de scanner weken achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn
 EricN: De laatste FVG laten zien (of gewoon een paar rechthoek + tekst wellicht)
 Marco: Heeft gezien dat er assets gehaald worden bij een papertrade (of zou het de webhook zijn?)
+EricN: 2e header regel van de chart verdwijnt? (met name als het scherm te klein is om de gehele regel te laten zien, blijkbaar kapt die 2e regel niet af of doet geen wordwrap)
 
 Scanner:
 - Scanner - Optioneel, een plaatje in Telegram van de situatie
