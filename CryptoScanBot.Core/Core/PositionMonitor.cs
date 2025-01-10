@@ -1685,7 +1685,7 @@ public class PositionMonitor //: IDisposable
         }
 
         //// Is er wel een initiele TP order aanwezig? zoniet dan dit alsnog doen!
-        //// (buiten de Prepare loop gehaald die intern een controle op het interval doet)
+        //// (buiten de PrepareIndicators loop gehaald die intern een controle op het interval doet)
         //// Dus nu wordt de sell order vrijwel direct geplaatst (na een 1m candle)
         //foreach (CryptoPositionPart part in position.Parts.Values.ToList())
         //{
@@ -1764,7 +1764,7 @@ public class PositionMonitor //: IDisposable
                 return [];
             }
 
-            // Introductie long/short: Pakt wellicht onhandig uit, nu meerdere keren aanroep van de signalcreate zonder dat er hergebruik is van de candles (is dat heel erg?)
+
             foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
             {
                 // Barometer check
@@ -1772,7 +1772,6 @@ public class PositionMonitor //: IDisposable
                 {
                     if (TradingConfig.Signals[side].BarometerLog)
                         GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
-                    //Symbol.ClearSignals(); niet doen, dan raken ook de net gemaakte signals van de long weg..
                 }
                 else
                 {
@@ -1789,22 +1788,6 @@ public class PositionMonitor //: IDisposable
                             if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
                                 signalList.AddRange(createSignal.SignalList);
 
-
-                            // FVG
-                            if (interval.IntervalPeriod >= CryptoIntervalPeriod.interval15m)
-                            {
-                                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
-                                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
-                                {
-                                    SignalCreate createSignal2 = new(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
-                                    if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
-                                        signalList.AddRange(createSignal2.SignalList);
-                                }
-
-                                // Scan for new FVG's
-                                FairValueGap.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
-                            }
-
                             // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
                             Interlocked.Increment(ref analyseCount);
                         }
@@ -1812,36 +1795,54 @@ public class PositionMonitor //: IDisposable
                 }
 
 
+                // FVG - Fair Value Gaps
+                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
+                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
+                {
+                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.Interval)
+                    {
+                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                        {
+                            // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
+                            if (LastCandle1mCloseTime % interval.Duration == 0)
+                                FairValueGap.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                        }
+                    }
+
+                    SignalCreate createSignal2 = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
+                    if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
+                        signalList.AddRange(createSignal2.SignalList);
+                }
+
+
+                // DLZ - Dominant Liquidity Zones
                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Zones.ShowSignalsLong) ||
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Zones.ShowSignalsShort))
                 {
-                    // First try to automaticly calculate the zones
-                    CryptoInterval intervalX = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
-                    if (LastCandle1mCloseTime % intervalX.Duration == 0)
+                    // for now only the configured interval (default=1h)
+                    //foreach (string intervalName in GlobalData.Settings.Signal.Zones.Interval)
+                    CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
                     {
-                        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-                        AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(intervalX.IntervalPeriod);
+                        //if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                        {
+                            // Try to automaticly calculate zones
+                            if (LastCandle1mCloseTime % interval.Duration == 0)
+                            {
+                                AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+                                AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
 
-                        // Scan for new zones if candle is outside of the previous primary trend
-                        decimal valueLow = LastCandle1m.GetLowValue(false);
-                        decimal valueHigh = LastCandle1m.GetHighValue(false);
-                        if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||
-                           accountSymbolInterval.LastSwingHigh == null || valueHigh > accountSymbolInterval.LastSwingHigh)
-                            GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                                // Scan for new zones if candle is outside of the previous primary trend
+                                decimal valueLow = LastCandle1m.GetLowValue(false);
+                                decimal valueHigh = LastCandle1m.GetHighValue(false);
+                                if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||
+                                   accountSymbolInterval.LastSwingHigh == null || valueHigh > accountSymbolInterval.LastSwingHigh)
+                                    GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                            }
 
-                        //todo? find another way
-                        //CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(accountSymbolInterval.IntervalPeriod);
-                        //await TrendInterval.CalculateAsync(Symbol, symbolInterval.CandleList, accountSymbolInterval, 0, LastCandle1mCloseTime);
-                        //if (accountSymbolInterval.BestZigZagIndicator != null && accountSymbolInterval.BestZigZagIndicator.LastSwingPoint != null)
-                        //{
-                        //    long? lastSwingPointTime = accountSymbolInterval.BestZigZagIndicator.GetLastRealZigZag();
-                        //    if (lastSwingPointTime == null || accountSymbolInterval.TimeLastSwingPoint == null || accountSymbolInterval.TimeLastSwingPoint > lastSwingPointTime)
-                        //        GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
-                        //}
+                        }
                     }
 
-
-                    // Only for the 1m interval
+                    // Signal if the 1m candles approaches the zone
                     SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
                     if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
                         signalList.AddRange(createSignal.SignalList);
@@ -1897,7 +1898,7 @@ public class PositionMonitor //: IDisposable
             //int offset = accountSymbolData.ZoneListLong.Keys.BinarySearchIndexOf(LastCandle1m.Close);
 
 
-            //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
+            //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
 
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
