@@ -1173,6 +1173,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
             Grid.SuspendDrawing();
             try
             {
+                SortFunction();
                 Grid.InvalidateColumn((int)ColumnsForGrid.Duration);
                 Grid.InvalidateColumn((int)ColumnsForGrid.Status);
                 Grid.InvalidateColumn((int)ColumnsForGrid.Profit);

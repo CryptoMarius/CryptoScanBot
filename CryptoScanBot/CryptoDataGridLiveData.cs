@@ -474,6 +474,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 Grid.SuspendDrawing();
                 try
                 {
+                    SortFunction();
                     Grid.InvalidateColumn((int)ColumnsForGrid.Price);
                 }
                 finally

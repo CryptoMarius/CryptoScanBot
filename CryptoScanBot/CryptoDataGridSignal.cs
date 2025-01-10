@@ -964,6 +964,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 Grid.SuspendDrawing();
                 try
                 {
+                    SortFunction();
                     Grid.InvalidateColumn((int)ColumnsForGrid.SignalPrice);
                     Grid.InvalidateColumn((int)ColumnsForGrid.PriceChange);
 
