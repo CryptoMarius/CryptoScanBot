@@ -97,7 +97,7 @@ public class TradeToolsTest : TestBase
         // ********************************** place entry TP *******************************************
         // *********************************************************************************************
         // Nu moet er een sell gezet worden
-        // Ik zie een probleem met de Prepare en afwezige candles!
+        // Ik zie een probleem met de PrepareIndicators en afwezige candles!
         // Die zijn bedoeld voor trailing stuff enzo, hoe werk je daar omheen?
 
         task = Task.Run(() =>
@@ -178,7 +178,7 @@ public class TradeToolsTest : TestBase
         // ********************************** place TP#2 ***********************************************
         // *********************************************************************************************
         // Nu moet er een sell gezet worden
-        // Ik zie een probleem met de Prepare en afwezige candles!
+        // Ik zie een probleem met de PrepareIndicators en afwezige candles!
         // Die zijn bedoeld voor trailing stuff enzo, hoe werk je daar omheen?
 
         task = Task.Run(() =>

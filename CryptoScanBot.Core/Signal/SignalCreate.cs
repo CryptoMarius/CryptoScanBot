@@ -538,18 +538,8 @@ public class SignalCreate
     }
 
 
-    /// <summary>
-    /// Zet de de laatste x candles op een rijtje en bereken de indicators
-    /// </summary>
-    /// <param name="candleOpenTime"></param>
-    /// <returns></returns>
-    public bool Prepare(long candleOpenTime, bool zones)
+    private bool CheckSymbol(long candleOpenTime, bool zones)
     {
-        //GlobalData.Logger.Trace($"SignalCreate.Prepare.Start {Symbol.Name} {Interval.Name} {Side}");
-
-        Candle = null;
-        string response = "";
-
         if (!Symbol.LastPrice.HasValue)
         {
             // LastPrice is filled in the price tickers, but can be delayed..
@@ -559,7 +549,7 @@ public class SignalCreate
 
 
         // Is the volume within a certain minimal limit
-        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(zones, candleOpenTime, Interval.Duration, out response))
+        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(zones, candleOpenTime, Interval.Duration, out string response))
         {
             if (GlobalData.Settings.Signal.LogMinimalVolume)
                 GlobalData.AddTextToLogTab("Analyse " + response);
@@ -578,7 +568,21 @@ public class SignalCreate
                 GlobalData.AddTextToLogTab("Analyse " + response);
             return false;
         }
+        return true;
+    }
 
+
+    /// <summary>
+    /// Zet de de laatste x candles op een rijtje en bereken de indicators
+    /// </summary>
+    /// <param name="candleOpenTime"></param>
+    /// <returns></returns>
+    private bool PrepareIndicators(long candleOpenTime, bool zones)
+    {
+        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
+
+        Candle = null;
+        string response = "";
 
         // Build a list of candles
         History ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
@@ -596,7 +600,7 @@ public class SignalCreate
         if (Candle.CandleData == null)
             CandleIndicatorData.CalculateIndicators(Symbol, Interval, History);
 
-        //GlobalData.Logger.Trace($"SignalCreate.Prepare.Stop {Symbol.Name} {Interval.Name} {Side}");
+        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Stop {Symbol.Name} {Interval.Name} {Side}");
         return true;
     }
 
@@ -609,7 +613,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
         // Eenmalig de indicators klaarzetten
-        if (Prepare(candleIntervalOpenTime, false))
+        if (CheckSymbol(candleIntervalOpenTime, false) && PrepareIndicators(candleIntervalOpenTime, false))
         {
             // TODO: opnieuw activeren en controleren of het idee klopt:
 
@@ -692,8 +696,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
-        // Eenmalig de indicators klaarzetten
-        if (Prepare(candleIntervalOpenTime, true))
+        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime, true))
         {
             if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
             {
@@ -713,7 +716,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
-        if (Prepare(candleIntervalOpenTime, true))
+        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime, true))
         {
             if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.FairValueGap, out AlgorithmDefinition? algorithmDefinition))
             {
