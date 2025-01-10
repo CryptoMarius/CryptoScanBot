@@ -7,10 +7,11 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
     public bool ShowSignalsLong { get; set; } = false;
     public bool ShowSignalsShort { get; set; } = false;
+    //public List<string> Interval { get; set; } = [];
+    public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     public int CandleCount { get; set; } = 500; //3000; // 3000=150 day's back, 500=20.8 dagen
     public int CandleCountZoom { get; set; } = 125;
-    public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // Limits unzoomed box
     public bool ZonesApplyUnzoomed { get; set; } = false;
@@ -32,6 +33,7 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 
     public SettingsSignalStrategyZones() : base()
     {
+        //Interval.Add("1h");
         SoundFileLong = "sound-zones-long.wav";
         SoundFileShort = "sound-zones-short.wav";
     }
