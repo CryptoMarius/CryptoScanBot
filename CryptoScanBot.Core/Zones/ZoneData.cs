@@ -17,7 +17,6 @@ public class ZoneData
 
     public required ZigZagIndicator Indicator { get; set; }
     public required ZigZagIndicator IndicatorFib { get; set; }
-    public ZigZagIndicator IndicatorDtb { get; set; }
     
 
     public List<CryptoSignal> Signals { get; set; } = [];
