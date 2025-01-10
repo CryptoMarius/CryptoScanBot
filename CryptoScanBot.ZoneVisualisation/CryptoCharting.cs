@@ -108,7 +108,7 @@ public class CryptoCharting
         }
     }
 
-    public static void DrawCandleSerie(PlotModel chart, ZoneData data, ZoneSession session)
+    public static void DrawCandles(PlotModel chart, ZoneData data, ZoneSession session)
     {
 
         CryptoSymbolInterval symbolInterval = data.Symbol.GetSymbolInterval(session.ActiveInterval);
@@ -254,7 +254,7 @@ public class CryptoCharting
     }
 
 
-    public static void DrawZigZag(PlotModel chart, ZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
+    internal static void DrawZigZag(PlotModel chart, ZoneSession session, List<ZigZagResult> zigZagList, string caption, OxyColor color)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
@@ -358,10 +358,59 @@ public class CryptoCharting
         }
     }
 
+    internal static void DrawDtb(PlotModel chart, ZoneData data)
+    {
+        List<(ZigZagResult, ZigZagResult, ZigZagResult)> l = LiquidityZones.CalculateDoubleTopBottom(data);
+        //var seriesHigh = new ScatterSeries { Title = "dtb high", MarkerSize = 15, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
+        //var seriesLow = new ScatterSeries { Title = "dtb low", MarkerSize = 15, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
+        foreach (var zigzag in l)
+        {
+            //var series = new LineSeries { Title = "1", Color = OxyColors.Red };
+            //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+            //series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+            //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
+            //plotModel.Series.Add(series);
+
+            OxyColor color;
+            if (zigzag.Item1.PointType == 'L')
+                color = OxyColors.Green;
+            else
+                color = OxyColors.Orange;
+            var rectangle = new PolygonAnnotation
+            {
+                StrokeThickness = 1, // Border thickness
+                Fill = OxyColor.FromAColor(75, color),
+                Stroke = OxyColor.FromAColor(75, color)
+            };
+            rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+            rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+            rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
+            chart.Annotations.Add(rectangle);
+
+            //var series = new LineSeries { Title = "1", Color = color };
+            //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+            //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item1.Value));
+            //plotModel.Series.Add(series);
+
+            var series = new LineSeries { Title = "1", Color = color };
+            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
+            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime + data.Interval.Duration * 5, (double)zigzag.Item1.Value));
+            chart.Series.Add(series);
+
+            series = new LineSeries
+            {
+                Title = "2",
+                Color = color
+            };
+            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
+            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime + data.Interval.Duration * 5, (double)zigzag.Item2.Value));
+            chart.Series.Add(series);
+        }
+    }
 
     public static void DrawLiqBoxes(PlotModel chart, ZoneData data, ZoneSession session)
     {
-        //var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+        //var symbolData = GlobalData.ActiveAccount!.data.GetSymbolData(data.Symbol.Name);
         foreach (var zone in data.ZoneListLong)
             DrawLiqBoxesInternal(chart, zone, session);
         foreach (var zone in data.ZoneListShort)
