@@ -317,6 +317,7 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
+        UserControlIntervalZonesFvg = new SettingsDialog.UserControlInterval();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -2794,6 +2795,7 @@ partial class FrmSettings
         flowLayoutPanel10.AutoSize = true;
         flowLayoutPanel10.Controls.Add(UserControlSettingsSoundAndColorsZonesFvg);
         flowLayoutPanel10.Controls.Add(groupBox14);
+        flowLayoutPanel10.Controls.Add(UserControlIntervalZonesFvg);
         flowLayoutPanel10.Dock = DockStyle.Fill;
         flowLayoutPanel10.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel10.Location = new Point(3, 3);
@@ -3721,6 +3723,16 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
+        // UserControlIntervalZonesFvg
+        // 
+        UserControlIntervalZonesFvg.AutoScroll = true;
+        UserControlIntervalZonesFvg.AutoSize = true;
+        UserControlIntervalZonesFvg.Location = new Point(3, 322);
+        UserControlIntervalZonesFvg.MinimumSize = new Size(100, 150);
+        UserControlIntervalZonesFvg.Name = "UserControlIntervalZonesFvg";
+        UserControlIntervalZonesFvg.Size = new Size(100, 150);
+        UserControlIntervalZonesFvg.TabIndex = 161;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -4211,4 +4223,5 @@ partial class FrmSettings
     private CheckBox EditShowDtbSignalsLong;
     private Label label35;
     private NumericUpDown EditZonesDtbMinimumPercentage;
+    private SettingsDialog.UserControlInterval UserControlIntervalZonesFvg;
 }

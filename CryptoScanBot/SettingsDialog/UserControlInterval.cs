@@ -1,30 +1,32 @@
 ﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.SettingsDialog;
 
 public partial class UserControlInterval : UserControl
 {
-
-    // Gewenste trend op interval
-    private readonly Dictionary<CheckBox, string> ControlList = new();
+    private readonly Dictionary<CheckBox, string> ControlList = [];
 
     public UserControlInterval()
     {
         InitializeComponent();
     }
 
-    public void InitControls()
+    public void InitControls(CryptoIntervalPeriod minimalInterval = CryptoIntervalPeriod.interval1m)
     {
         foreach (var interval in GlobalData.IntervalList)
         {
-            CheckBox checkbox = new()
+            if (interval.IntervalPeriod >= minimalInterval)
             {
-                AutoSize = true,
-                UseVisualStyleBackColor = true,
-                Text = interval.Name,
-            };
-            flowLayoutPanel1.Controls.Add(checkbox);
-            ControlList.Add(checkbox, interval.Name);
+                CheckBox checkbox = new()
+                {
+                    AutoSize = true,
+                    UseVisualStyleBackColor = true,
+                    Text = interval.Name,
+                };
+                flowLayoutPanel1.Controls.Add(checkbox);
+                ControlList.Add(checkbox, interval.Name);
+            }
         }
     }
 

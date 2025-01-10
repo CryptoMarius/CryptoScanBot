@@ -34,6 +34,8 @@ public partial class FrmSettings : Form
         UserControlTradingLong.InitControls(true, CryptoTradeSide.Long);
         UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
 
+        UserControlIntervalZonesFvg.InitControls(CryptoIntervalPeriod.interval1h);
+
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
         TradeVia.Add("Papertrading", CryptoAccountType.PaperTrade);
@@ -257,7 +259,8 @@ public partial class FrmSettings : Form
         EditZoneStartPercentage.Value = (decimal)settings.Signal.Zones.ZoneStartPercentage;
 
         // Zones FVG
-        UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.Zones);
+        UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.Interval);
+        UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.ZonesFvg);
         EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
         EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
@@ -536,6 +539,7 @@ public partial class FrmSettings : Form
 
 
         // FVG
+        UserControlIntervalZonesFvg.SaveConfig(settings.Signal.ZonesFvg.Interval);
         UserControlSettingsSoundAndColorsZonesFvg.SaveConfig(settings.Signal.ZonesFvg);
         settings.Signal.ZonesFvg.ShowSignalsLong = EditShowFvgSignalsLong.Checked;
         settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;
