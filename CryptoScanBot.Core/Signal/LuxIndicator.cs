@@ -19,10 +19,10 @@ public class LuxIndicator
         decimal[] den = new decimal[10];
 
 
-        //int min = 10;
-        //int max = 20;
-        int min = 05;
-        int max = 22;
+        int min = 10;
+        int max = 20;
+        //int min = 05;
+        //int max = 22;
         int overbuy = 0;
         int oversell = 0;
         int oversold = 30;
