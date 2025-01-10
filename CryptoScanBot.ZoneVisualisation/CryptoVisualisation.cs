@@ -9,7 +9,6 @@ using CryptoScanBot.Core.Zones;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
-using OxyPlot.Series;
 
 using System.Diagnostics;
 using System.Text;
@@ -420,13 +419,13 @@ public partial class CryptoVisualisation : Form
                 }
             }
 
-            //CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            //CryptoCharting.DrawCandles(plotModel, Data, Session);
             Data.Symbol.CalculatingZones = true;
             try
             {
                 CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
                 await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval);
-                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                CryptoCharting.DrawCandles(plotModel, Data, Session);
             }
             finally
             {
@@ -453,13 +452,13 @@ public partial class CryptoVisualisation : Form
                 }
             }
 
-            //CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+            //CryptoCharting.DrawCandles(plotModel, Data, Session);
             Data.Symbol.CalculatingZones = true;
             try
             {
                 CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
                 await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, symbolInterval.Interval);
-                CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                CryptoCharting.DrawCandles(plotModel, Data, Session);
             }
             finally
             {
@@ -532,6 +531,7 @@ public partial class CryptoVisualisation : Form
             OldSymbolQuote = Session.SymbolQuote;
             OldIntervalName = Session.IntervalName;
 
+            Session.IntervalName = Data.Interval.Name;
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
             Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
@@ -629,7 +629,7 @@ public partial class CryptoVisualisation : Form
             try
             {
                 // reset data
-                Data.Indicator = new(false, Session.Deviation)
+                Data.Indicator = new(false, Session.Deviation) // was false GlobalData.Settings.General.UseHighLowInTrendCalculation
                 {
                     MaxTime = Session.MaxDate,
                     ShowSecondary = Session.ShowSecondary,
@@ -643,12 +643,6 @@ public partial class CryptoVisualisation : Form
                     UseOptimizing = Session.UseOptimizing
                 };
 
-                Data.IndicatorDtb = new(false, Session.Deviation)
-                {
-                    MaxTime = Session.MaxDate,
-                    ShowSecondary = true,
-                    UseOptimizing = Session.UseOptimizing
-                };
 
                 // Load and (re)calculate the zones
                 LiquidityZones.LoadZonesForSymbol(Data.Symbol.Id, Data);
@@ -667,7 +661,7 @@ public partial class CryptoVisualisation : Form
                 try
                 {
                     await CandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval);
-                    CryptoCharting.DrawCandleSerie(plotModel, Data, Session);
+                    CryptoCharting.DrawCandles(plotModel, Data, Session);
                 }
                 finally
                 {
@@ -676,53 +670,8 @@ public partial class CryptoVisualisation : Form
                 }
 
 
-                // Test double top/bottom
-                if (Session.ShowDtb)
-                {
-                    List<(ZigZagResult, ZigZagResult, ZigZagResult)> l = LiquidityZones.CalculateDoubleTopBottom(Data);
-                    //var seriesHigh = new ScatterSeries { Title = "dtb high", MarkerSize = 15, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
-                    //var seriesLow = new ScatterSeries { Title = "dtb low", MarkerSize = 15, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
-                    foreach (var zigzag in l)
-                    {
-                        //var series = new LineSeries { Title = "1", Color = OxyColors.Red };
-                        //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-                        //series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
-                        //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
-                        //plotModel.Series.Add(series);
-
-                        OxyColor color;
-                        if (zigzag.Item1.PointType == 'L')
-                            color = OxyColors.Green;
-                        else
-                            color = OxyColors.Orange;
-                        var rectangle = new PolygonAnnotation
-                        {
-                            StrokeThickness = 1, // Border thickness
-                            Fill = OxyColor.FromAColor(75, color),
-                            Stroke = OxyColor.FromAColor(75, color)
-                        };
-                        rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-                        rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
-                        rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
-                        plotModel.Annotations.Add(rectangle);
-
-                        //var series = new LineSeries { Title = "1", Color = color };
-                        //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-                        //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item1.Value));
-                        //plotModel.Series.Add(series);
-
-                        var series = new LineSeries { Title = "1", Color = color };
-                        series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-                        series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime + Data.Interval.Duration * 5, (double)zigzag.Item1.Value));
-                        plotModel.Series.Add(series);
-
-                        series = new LineSeries { Title = "2", Color = color };
-                        series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
-                        series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime + Data.Interval.Duration * 5, (double)zigzag.Item2.Value));
-                        plotModel.Series.Add(series);
-                    }
-                }
-
+                if (Session.ShowDtb) // Test double top/bottom
+                    CryptoCharting.DrawDtb(plotModel, Data);
                 if (Session.ShowPoints)
                     CryptoCharting.DrawPoints(plotModel, Session, Data.Indicator.PivotList);
                 if (Session.ShowLiqZigZag)
