@@ -654,7 +654,6 @@ public class LiquidityZones
 #if !DEBUGZIGZAG
                             data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
 #endif
-                            data.IndicatorDtb.Calculate(candle, session.UseBatchProcess);
                         }
                     }
 
@@ -806,7 +805,7 @@ public class LiquidityZones
                     Symbol = symbol,
                     Interval = interval,
                     SymbolInterval = symbolInterval,
-                    Indicator = new(false, session.Deviation),
+                    Indicator = new(false, session.Deviation), // was false! GlobalData.Settings.General.UseHighLowInTrendCalculation
                     IndicatorFib = new(true, session.Deviation),
                 };
 
