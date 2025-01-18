@@ -299,24 +299,40 @@ public class CryptoCharting
         //seriesZigZag.TrackerFormatString = text;
     }
 
+
+    // Color combinations
+    private static readonly Dictionary<(CryptoZoneKind, CryptoTradeSide, bool), (OxyColor boxColor, OxyColor textColor)> colorList = new()
+    {
+        { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Long, false), (OxyColors.Green, OxyColors.White) },
+        { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Short, false), (OxyColors.OrangeRed, OxyColors.White) },
+        { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Long, true), (OxyColors.Green, OxyColors.Red) },
+        { (CryptoZoneKind.DominantLevel, CryptoTradeSide.Short, true), (OxyColors.OrangeRed, OxyColors.Yellow) },
+
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, false), (OxyColors.Gray, OxyColors.White) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, false), (OxyColors.Gray, OxyColors.White) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Long, true), (OxyColors.DarkGray, OxyColors.Red) },
+        { (CryptoZoneKind.FairValueGap, CryptoTradeSide.Short, true), (OxyColors.DarkGray, OxyColors.Red) },
+    };
+
     private static void DrawLiqBoxesInternal(PlotModel chart, CryptoZone zone, ZoneSession session)
     {
-        // Dont show the closed fvg
-        if (zone.Kind == CryptoZoneKind.FairValueGap && zone.CloseTime != null)
-            return;
         if (zone.Kind == CryptoZoneKind.FairValueGap && !session.ShowFvgZones)
             return;
+
+        // Dont show closed fvg (older than 2h)
+        if (zone.Kind == CryptoZoneKind.FairValueGap && zone.CloseTime != null)
+        {
+            long awhileago= CandleTools.GetUnixTime(DateTime.UtcNow, 60) - 2 * 60 * 60;
+            if (zone.CloseTime < awhileago)
+                return;
+        }
 
 
         if (zone.OpenTime >= session.MinDate && zone.OpenTime <= session.MaxDate)
         {
-            OxyColor color;
-            if (zone.Side == CryptoTradeSide.Long)
-                color = OxyColors.Green;
-            else
-                color = OxyColors.OrangeRed;
-            if (zone.Kind == CryptoZoneKind.FairValueGap)
-                color = OxyColors.Gray;
+            var colors = colorList[(zone.Kind, zone.Side, zone.CloseTime.HasValue)];
+            OxyColor boxColor = colors.boxColor;
+            OxyColor textColor = colors.textColor;
 
 
             long dateOpen;
@@ -335,11 +351,13 @@ public class CryptoCharting
             if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
             {
                 if (zone.Description.Contains('!'))
-                    col = OxyColor.FromArgb(128, color.R, color.G, color.B);
+                    col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
                 else
-                    col = OxyColor.FromArgb(64, color.R, color.G, color.B);
+                    col = OxyColor.FromArgb(64, boxColor.R, boxColor.G, boxColor.B);
             }
-            else col = OxyColor.FromArgb(128, color.R, color.G, color.B);
+            else col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
+
+
 
             // Create a rectangle annotation
             var rectangle = new RectangleAnnotation
@@ -348,11 +366,13 @@ public class CryptoCharting
                 MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
                 MaximumX = dateLast,  // X-coordinate of the upper-right corner
                 MaximumY = (double)zone.Top,  // Y-coordinate of the upper-right corner
-                                              //Fill = Color.LightGray,  // Rectangle fill color
-                Fill = col, //OxyColor.FromArgb(128, color.R, color.G, color.B),
-                Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B), // rectangle
+                                              //Fill = Color.LightGray,  // Rectangle fill boxColor
+                Fill = col, //OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B),
+                Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, boxColor.R, boxColor.G, boxColor.B), // rectangle
                 StrokeThickness = 0,          // Border thickness
+                TextColor = textColor,
                 Text = zone.Description,
+                ToolTip = zone.Description, //?
             };
             chart.Annotations.Add(rectangle);
         }
@@ -387,7 +407,7 @@ public class CryptoCharting
             rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
             chart.Annotations.Add(rectangle);
 
-            //var series = new LineSeries { Title = "1", Color = color };
+            //var series = new LineSeries { Title = "1", Color = boxColor };
             //series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
             //series.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item1.Value));
             //plotModel.Series.Add(series);
@@ -530,15 +550,15 @@ public class CryptoCharting
         //long unix = CandleTools.GetUnixTime(new DateTime(2024, 11, 09, 00, 00, 00, DateTimeKind.Utc), 60);
         //if (data.SymbolInterval.CandleList.TryGetValue(unix, out var candle))
         //{
-        //    OxyColor color = OxyColors.BlueViolet;
+        //    OxyColor boxColor = OxyColors.BlueViolet;
         //    var rectangle = new RectangleAnnotation
         //    {
         //        MinimumX = candle.OpenTime - _interval?.Duration / 2, 
         //        MinimumY = (double)candle.Low - 20000,
         //        MaximumX = candle.OpenTime + _interval?.Duration / 2,
         //        MaximumY = (double)candle.High + 20000,
-        //        Fill = OxyColor.FromArgb(128, color.R, color.G, color.B),
-        //        Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, color.R, color.G, color.B),
+        //        Fill = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B),
+        //        Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, boxColor.R, boxColor.G, boxColor.B),
         //        StrokeThickness = 0.25, 
         //    };
         //    chart.Annotations.Add(rectangle);
