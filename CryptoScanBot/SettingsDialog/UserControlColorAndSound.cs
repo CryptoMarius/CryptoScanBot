@@ -33,7 +33,7 @@ public partial class UserControlColorAndSound : UserControl
             Filter = "wav bestanden|*.wav"
         };
 
-        string path = Path.GetDirectoryName(EditSoundFile.Text);
+        string? path = Path.GetDirectoryName(EditSoundFile.Text);
         if (path == null || path == "")
         {
             //This will give us the full name path of the executable file:
