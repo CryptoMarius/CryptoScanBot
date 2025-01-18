@@ -109,16 +109,56 @@ public class LiquidityZones
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
 
+        int deleted = 0;
         // Oops, there are duplicate zones (strange, didn't expect this!)
         // We remove the duplicates with this code which is fine for now.
-        // (still curious why this is happening..... ENAUSDT 14 Aug 23:00 UTC)
-        SortedList<(decimal, decimal, CryptoTradeSide), CryptoZone> zoneIndex = [];
+        SortedList<(CryptoTradeSide, long, decimal, decimal), CryptoZone> zoneIndex = [];
         foreach (var zone in data.ZoneListLong)
+        {
             if (zone.Kind == CryptoZoneKind.DominantLevel)
-                zoneIndex.TryAdd((zone.Bottom, zone.Top, zone.Side), zone);
+            {
+                if (zoneIndex.ContainsKey((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top)))
+                {
+                    if (zone.Id > 0)
+                    {
+                        deleted++;
+                        zone.Id *= -1;
+                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        //if (data.Symbol.Name == "HMSTRUSDT")
+                        //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} duplicate={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                    }
+                    //else
+                    //{
+                    //    if (data.Symbol.Name == "HMSTRUSDT")
+                    //        GlobalData.AddTextToLogTab($"{data.Symbol.Name} duplicate problem={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                    //}
+                }
+                else zoneIndex.Add((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top), zone);
+            }
+        }
         foreach (var zone in data.ZoneListShort)
+        {
             if (zone.Kind == CryptoZoneKind.DominantLevel)
-                zoneIndex.TryAdd((zone.Bottom, zone.Top, zone.Side), zone);
+            {
+                if (zoneIndex.ContainsKey((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top)))
+                {
+                    if (zone.Id > 0)
+                    {
+                        deleted++;
+                        zone.Id *= -1;
+                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        //if (data.Symbol.Name == "HMSTRUSDT")
+                        //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} duplicate={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                    }
+                    //else
+                    //{
+                    //    if (data.Symbol.Name == "HMSTRUSDT")
+                    //        GlobalData.AddTextToLogTab($"{data.Symbol.Name} duplicate problem={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                    //}
+                }
+                else zoneIndex.Add((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top), zone);
+            }
+        }
 
         // We rebuild all the lists
         data.ZoneListLong.Clear();
@@ -126,7 +166,6 @@ public class LiquidityZones
         symbolData.ResetZoneData();
 
         int inserted = 0;
-        int deleted = 0;
         int modified = 0;
         int untouched = 0;
         foreach (var zigZag in zigZagList)
@@ -136,8 +175,8 @@ public class LiquidityZones
                 bool changed = false;
                 CryptoTradeSide side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short;
 
-                // Try to reuse the previous1 zones.
-                if (!zoneIndex.TryGetValue((zigZag.Bottom, zigZag.Top, side), out CryptoZone? zone))
+                // Try to reuse a previous zone
+                if (!zoneIndex.TryGetValue((side, zigZag.Candle.OpenTime, zigZag.Bottom, zigZag.Top), out CryptoZone? zone))
                 {
                     zone = new()
                     {
@@ -210,30 +249,39 @@ public class LiquidityZones
                         modified++;
                         //databaseThread.Connection.Update(zone);
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        //if (data.Symbol.Name == "HMSTRUSDT")
+                        //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} modifying={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
                     }
                     else
                     {
                         inserted++;
                         //databaseThread.Connection.Insert(zone);
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                        //if (data.Symbol.Name == "HMSTRUSDT")
+                        //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} inserting={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
                     }
                 }
                 else untouched++;
 
-                zoneIndex.Remove((zigZag.Bottom, zigZag.Top, side));
+                zoneIndex.Remove((side, zigZag.Candle.OpenTime, zigZag.Bottom, zigZag.Top));
             }
         }
 
         // delete the remaining zones
         foreach (var zone in zoneIndex.Values)
         {
-            deleted++;
-            zone.Id *= -1;
-            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+            if (zone.Id != 0)
+            {
+                deleted++;
+                zone.Id *= -1;
+                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                //if (data.Symbol.Name == "HMSTRUSDT")
+                //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} deleting={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+            }
         }
         int total = data.ZoneListLong.Count + data.ZoneListShort.Count;
         GlobalData.AddTextToLogTab($"{data.Symbol.Name} Zones calculated, inserted={inserted} modified={modified} deleted={deleted} " +
-            $"untouched={untouched} total={total} ({symbolData.ZoneListLong.Count}/{symbolData.ZoneListShort.Count})");
+            $"untouched={untouched} total={total} (open={symbolData.ZoneListLong.Count} long / {symbolData.ZoneListShort.Count} short)");
 
         symbolData.SortZones();
     }
