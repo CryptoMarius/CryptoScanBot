@@ -7,7 +7,7 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
     public bool ShowSignalsLong { get; set; } = false;
     public bool ShowSignalsShort { get; set; } = false;
-    //public List<string> Interval { get; set; } = [];
+    //public List<string> IntervalList { get; set; } = ["1h"];
     public CryptoIntervalPeriod Interval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     public int CandleCount { get; set; } = 500; //3000; // 3000=150 day's back, 500=20.8 dagen

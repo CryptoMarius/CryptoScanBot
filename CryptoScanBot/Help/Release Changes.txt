@@ -1,7 +1,14 @@
 CryptoScanBot release historie:
 
-?30-12-2024 2.0.2
-- Scanner - De grids blijven nu gesorteerd op de geselecteerde sorteer kolom
+18-01-2025 2.0.2
+- Scanner - Dominante zones: Er komen meerdere zones over elkaar heen te liggen, intern zijn een aantal per abuis gedupliceerd (er er wordt maar 1 afgemeld)
+- Scanner - Dominante zones: De scanner houdt geen rekening met meerdere zones met dezelfde top en bottom (worden iedere keer verwijderd en opnieuw toegevoegd)
+- Scanner - Dominante zones: Afgesloten zones (fvg en dlz) worden nu met rode karakters getoond
+- Scanner - Dominante zones: De afgesloten FVG worden nu 2h lang getoond (om toch wat inzicht te krijgen qua afgesloten zones)
+- Scanner - Een eerste poging tot detectie van de double top en bottom (via de secondary trend) is nu zichtbaar gemaakt.
+            Het lijkt niet echt bruikbaar, wellicht kun je het gebruiken als een soort van bevestiging (misschien heeft iemand tips?)
+- Scanner - De afstand in het symbol grid heeft nu een kleur om aan te geven of het de afstand naar de long of de short zone is
+- Scanner - De inhoud van de grids blijven nu gesorteerd op de geselecteerde sorteer volgorde/kolom en onthouden hoe ze gesorteerd waren
 - Scanner - FVG nu via een een configureerbaar setje van intervallen (was voorheen gekoppeld aan de aangevinkte long en short intervallen)
 - Scanner - De locking van de live data bevatte een fout
 - Scanner - Experimentele strategie sma50sma20 was zichtbaar (die is niet betrouwbaar)

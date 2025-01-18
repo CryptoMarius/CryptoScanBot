@@ -654,6 +654,7 @@ public partial class CryptoVisualisation : Form
                 plotModel = CryptoCharting.CreateChart(Data, out horizontalLine, out verticalLine);
                 plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
                 $"{trend} dev={Data.Indicator.Deviation} candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
+                //$"{trend} dev={Data.Indicator.Deviation} candles={Data.Indicator.CandleCount} points={Data.ZoneListLong.Count}/{Data.ZoneListShort.Count}";
 
 
                 // avoid candles being removed...
