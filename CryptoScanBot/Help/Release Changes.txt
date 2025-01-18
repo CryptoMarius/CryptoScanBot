@@ -1,6 +1,8 @@
 CryptoScanBot release historie:
 
 ?30-12-2024 2.0.2
+- Scanner - De grids blijven nu gesorteerd op de geselecteerde sorteer kolom
+- Scanner - FVG nu via een een configureerbaar setje van intervallen (was voorheen gekoppeld aan de aangevinkte long en short intervallen)
 - Scanner - De locking van de live data bevatte een fout
 - Scanner - Experimentele strategie sma50sma20 was zichtbaar (die is niet betrouwbaar)
 - Scanner - De menuoptie "Show symbol chart" verplaatst naar de 1e 4 menuopties in de popup menu

@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿using CryptoScanBot.Core.Enums;
+
+using System.Drawing;
 using System.Text.Json.Serialization;
 
 namespace CryptoScanBot.Core.Settings;
@@ -22,6 +24,15 @@ public class FormDimensions
     public int SplitterDistance { get; set; } = 0;
 }
 
+// Columns and sort order per grid
+[Serializable]
+public class GridSettingsUser
+{
+    public int? SortColumn = null;
+    public GridSortOrder? SortOrder = null;
+    public SortedList<string, ColumnSetting> ColumnList { get; set; } = [];
+}
+
 [Serializable]
 public class SettingsUser
 {
@@ -31,11 +42,19 @@ public class SettingsUser
     // Saved custom colors
     public int[] CustomColors { get; set; } = [];
 
-    // Visible columns in each grid
-    public SortedList<string, ColumnSetting> GridColumnsSignal { get; set; } = [];
-    public SortedList<string, ColumnSetting> GridColumnsSymbol { get; set; } = [];
-    public SortedList<string, ColumnSetting> GridColumnsPositionsOpen { get; set; } = [];
-    public SortedList<string, ColumnSetting> GridColumnsPositionsClosed { get; set; } = [];
-    public SortedList<string, ColumnSetting> GridColumnsLiveData { get; set; } = [];
+    public GridSettingsUser GridSignal { get; set; } = new();
+    public SortedList<string, ColumnSetting>? GridColumnsSignal { get; set; } // only for migration
+    
+    public GridSettingsUser GridSymbol { get; set; } = new();
+    public SortedList<string, ColumnSetting>? GridColumnsSymbol { get; set; } // only for migration
+
+    public GridSettingsUser GridPositionsOpen { get; set; } = new();
+    public SortedList<string, ColumnSetting>? GridColumnsPositionsOpen { get; set; } // only for migration
+
+    public GridSettingsUser GridPositionsClosed { get; set; } = new();
+    public SortedList<string, ColumnSetting>? GridColumnsPositionsClosed { get; set; } // only for migration
+
+    public GridSettingsUser GridLiveData { get; set; } = new();
+    public SortedList<string, ColumnSetting>? GridColumnsLiveData { get; set; } // only for migration
 }
 

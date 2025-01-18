@@ -54,9 +54,26 @@ public abstract class CryptoDataGrid
     public required DataGridView Grid;
     internal Object? SelectedObject;
     internal int SelectedObjectIndex;
-    public required SortedList<string, ColumnSetting> ColumnList = [];
 
+    public abstract void RefreshInformation(object? sender, EventArgs? e);
     public abstract void GetTextFunction(object? sender, DataGridViewCellValueEventArgs e);
+
+    internal CaseInsensitiveComparer ObjectCompare = new();
+    public required GridSettingsUser GridSettings { get; set; } = new();
+    
+    // Only for migration of the visible columns (keep it for like 2 versions)
+    public required SortedList<string, ColumnSetting>? ColumnList 
+    { 
+        set
+        {
+            // Migrate the columns to the new structure once
+            if (value != null && GridSettings.ColumnList.Count == 0)
+            {
+                foreach (var column in value) 
+                    GridSettings.ColumnList.Add(column.Key, column.Value);
+            }
+        }
+    }
 }
 
 
@@ -66,11 +83,6 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
     internal ContextMenuStrip MenuStripCells = new();
     internal ContextMenuStrip MenuStripHeader = new();
 
-    // sorting
-    internal int SortColumn = 0;
-    internal SortOrder SortOrder = SortOrder.None;
-    internal CaseInsensitiveComparer ObjectCompare = new();
-
     // background colors
     internal Color VeryLightGray1 = Color.FromArgb(0xf1, 0xf1, 0xf1);
     internal Color VeryLightGray2 = Color.FromArgb(0xa1, 0xa1, 0xa1);
@@ -78,13 +90,13 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     public void InitGrid()
     {
-        int count = ColumnList.Count;
+        int count = GridSettings.ColumnList.Count;
 
         InitializeGrid();
         InitializeHeaders();
         ShowSortIndicator();
         FillColumnPopup();
-        if (ColumnList.Count != count)
+        if (GridSettings.ColumnList.Count != count)
             GlobalData.SaveUserSettings();
     }
 
@@ -218,14 +230,16 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         InitializeCommands(MenuStripCells);
     }
 
+
     public void InitializeStandardCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Activate trading app", Command.ActivateTradingApp, shortcutKeys: Keys.Control | Keys.D1);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.Control | Keys.D2);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.Control | Keys.D3);
-        menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.Control | Keys.D4);
-        menuStrip.AddCommand(this, "Show symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D5, click: CommandShowGraph);
+        menuStrip.AddCommand(this, "Symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D1, click: CommandShowGraph);
+        menuStrip.AddCommand(this, "Trading app", Command.ActivateTradingApp, shortcutKeys: Keys.Control | Keys.D2);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.Control | Keys.D3);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.Control | Keys.D4);
+        menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.Control | Keys.D5);
     }
+
 
     internal void FillColumnPopup()
     {
@@ -236,10 +250,10 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
         foreach (DataGridViewColumn column in Grid.Columns)
         {
-            if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
+            if (!GridSettings.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
-                ColumnList.Add(column.HeaderText, columnSetting);
+                GridSettings.ColumnList.Add(column.HeaderText, columnSetting);
                 columnSetting.Visible = column.Visible;
             }
             if (column.Tag is bool alwaysVisible)
@@ -302,7 +316,7 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         {
             foreach (DataGridViewColumn column in Grid.Columns)
             {
-                if (ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
+                if (GridSettings.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
                 {
                     column.Visible = columnSetting.Visible;
                 }
@@ -333,12 +347,12 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
         {
             if (column.HeaderText != "")
             {
-                if (!ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
+                if (!GridSettings.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
                 {
                     columnSetting = new();
                     if (column.Tag is bool alwaysVisible)
                         columnSetting.AlwaysVisible = alwaysVisible;
-                    ColumnList.Add(column.HeaderText, columnSetting);
+                    GridSettings.ColumnList.Add(column.HeaderText, columnSetting);
                 }
                 columnSetting.Width = column.Width;
                 columnSetting.Visible = column.Visible || columnSetting.AlwaysVisible;
@@ -355,15 +369,16 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     public void MenuStripOpening(object? sender, EventArgs? e)
     {
+        SelectedObject = null;
+        SelectedObjectIndex = -1;
         if (Grid.SelectedRows.Count > 0)
         {
-            SelectedObjectIndex = Grid.SelectedRows[0].Index;
-            SelectedObject = List[SelectedObjectIndex];
-        }
-        else
-        {
-            SelectedObjectIndex = -1;
-            SelectedObject = null;
+            int index = Grid.SelectedRows[0].Index;
+            if (index < List.Count)
+            {
+                SelectedObjectIndex = index;
+                SelectedObject = List[index];
+            }
         }
     }
 
@@ -416,36 +431,43 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     private void HeaderClick(object? sender, DataGridViewCellMouseEventArgs e)
     {
-        int column = e.ColumnIndex;
-        if (SortColumn >= 0)
+        if (GridSettings.SortColumn != null)
         {
-            if (SortColumn == column && SortOrder == SortOrder.Ascending)
-                SortOrder = SortOrder.Descending; // same column, reverse
-            else
+            int column = e.ColumnIndex;
+            if (GridSettings.SortColumn >= 0)
             {
-                // Sort on new column and remove the old SortGlyph
-                SortOrder = SortOrder.Ascending;
-                // Sort indicator not always visible because of column width, make it bold instead
-                //clumn.HeaderCell.SortGlyphDirection = SortOrder == SortOrder.Ascending ? SortOrder.Ascending : SortOrder.Descending;
-                Grid.Columns[SortColumn].HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size);
+                if (GridSettings.SortColumn == column && GridSettings.SortOrder == GridSortOrder.Ascending)
+                    GridSettings.SortOrder = GridSortOrder.Descending; // same column, reverse
+                else
+                {
+                    // Sort on new column and remove the old SortGlyph
+                    GridSettings.SortOrder = GridSortOrder.Ascending;
+                    // Sort indicator not always visible because of column width, make it bold instead
+                    //clumn.HeaderCell.SortGlyphDirection = GridSortOrder == GridSortOrder.Ascending ? GridSortOrder.Ascending : GridSortOrder.Descending;
+                    Grid.Columns[GridSettings.SortColumn.Value].HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size);
+                }
             }
-        }
-        else
-            SortOrder = SortOrder.Ascending; // new column, sort
-        SortColumn = column;
+            else
+                GridSettings.SortOrder = GridSortOrder.Ascending; // new column, sort
+            GridSettings.SortColumn = column;
 
-        ShowSortIndicator();
-        SortFunction();
-        Grid.Invalidate();
+            ShowSortIndicator();
+            SortFunction();
+            Grid.Invalidate();
+            GlobalData.SaveUserSettings();
+        }
     }
 
     public void ShowSortIndicator()
     {
-        int column = SortColumn;
-        DataGridViewColumn newSortColumn = Grid.Columns[column];
-        // Sort indicator not always visible because of column width, make it bold instead
-        //newSortColumn.HeaderCell.SortGlyphDirection = SortOrder == SortOrder.Ascending ? SortOrder.Ascending : SortOrder.Descending;
-        newSortColumn.HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size, FontStyle.Bold);
+        if (GridSettings.SortColumn != null)
+        {
+            int column = GridSettings.SortColumn.Value;
+            DataGridViewColumn newSortColumn = Grid.Columns[column];
+            // Sort indicator not always visible because of column width, make it bold instead
+            //newSortColumn.HeaderCell.SortGlyphDirection = GridSortOrder == GridSortOrder.Ascending ? GridSortOrder.Ascending : GridSortOrder.Descending;
+            newSortColumn.HeaderCell.Style.Font = new(Grid.ColumnHeadersDefaultCellStyle.Font.Name, Grid.ColumnHeadersDefaultCellStyle.Font.Size, FontStyle.Bold);
+        }
     }
 
 
@@ -463,7 +485,7 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
             return;
 
         string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.Exchange.Name);
-        Grid.ContextMenuStrip!.Items[0].Text = text;
+        Grid.ContextMenuStrip!.Items[1].Text = text;
         if (GlobalData.Settings.General.HideSelectedRow)
         {
             Grid.DefaultCellStyle.SelectionBackColor = Grid.DefaultCellStyle.BackColor;

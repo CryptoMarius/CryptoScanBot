@@ -126,8 +126,10 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
 
     public override void InitializeHeaders()
     {
-        SortOrder = SortOrder.Descending;
-        SortColumn = (int)ColumnsForGrid.Created;
+        if (GridSettings.SortOrder == null)
+            GridSettings.SortOrder = GridSortOrder.Descending;
+        if (GridSettings.SortColumn == null || GridSettings.SortColumn > Enum.GetNames(typeof(ColumnsForGrid)).Length)
+            GridSettings.SortColumn = (int)ColumnsForGrid.Created;
 
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
@@ -339,106 +341,120 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
 
     private int Compare(CryptoPosition a, CryptoPosition b)
     {
-        int compareResult = (ColumnsForGrid)SortColumn switch
+        try
         {
-            ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
-            ColumnsForGrid.AltradyId => ObjectCompare.Compare(a.AltradyPositionId, b.AltradyPositionId),
-            ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
-            ColumnsForGrid.Updated => ObjectCompare.Compare(a.UpdateTime, b.UpdateTime),
-            ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
-            ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
-            ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
-            ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
-            ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
-            ColumnsForGrid.Strategy => ObjectCompare.Compare(a.StrategyText, b.StrategyText),
-            ColumnsForGrid.Side => ObjectCompare.Compare(a.SideText, b.SideText),
-            ColumnsForGrid.Status => ObjectCompare.Compare(a.Status, b.Status),
-            ColumnsForGrid.Invested => ObjectCompare.Compare(a.Invested, b.Invested),
-            ColumnsForGrid.Returned => ObjectCompare.Compare(a.Returned, b.Returned),
-            ColumnsForGrid.Commission => ObjectCompare.Compare(a.Commission, b.Commission),
-            ColumnsForGrid.BreakEven => ObjectCompare.Compare(a.BreakEvenPrice, b.BreakEvenPrice),
-            ColumnsForGrid.Quantity => ObjectCompare.Compare(a.Quantity, b.Quantity),
-            ColumnsForGrid.Open => ObjectCompare.Compare(a.Invested - a.Returned - a.Commission, b.Invested - b.Returned - b.Commission),
-            ColumnsForGrid.Profit => ObjectCompare.Compare(a.CurrentProfit(), b.CurrentProfit()),
-            ColumnsForGrid.BreakEvenPercent => ObjectCompare.Compare(a.CurrentBreakEvenPercentage(), b.CurrentBreakEvenPercentage()),
-            ColumnsForGrid.Parts => ObjectCompare.Compare(a.PartCount, b.PartCount),
-            ColumnsForGrid.EntryPrice => ObjectCompare.Compare(a.EntryPrice, b.EntryPrice),
-            ColumnsForGrid.ProfitPrice => ObjectCompare.Compare(a.ProfitPrice, b.ProfitPrice),
-            ColumnsForGrid.Percentage => ObjectCompare.Compare(a.CurrentProfitPercentage(), b.CurrentProfitPercentage()),
-            ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
-            ColumnsForGrid.QuantityTick => ObjectCompare.Compare(a.Symbol.QuantityTickSize, b.Symbol.QuantityTickSize),
-            ColumnsForGrid.RemainingDust => ObjectCompare.Compare(a.RemainingDust, b.RemainingDust),
-            ColumnsForGrid.DustValue => ObjectCompare.Compare(a.RemainingDust * a.Symbol.LastPrice, b.RemainingDust * b.Symbol.LastPrice),
-
-            // Signal information
-            ColumnsForGrid.SignalDate => ObjectCompare.Compare(a.SignalEventTime, b.SignalEventTime),
-            ColumnsForGrid.SignalPrice => ObjectCompare.Compare(a.SignalPrice, b.SignalPrice),
-            ColumnsForGrid.SignalVolume => ObjectCompare.Compare(a.SignalVolume, b.SignalVolume),
-            ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
-            ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
-            ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
-            ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
-            ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
-            ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.AvgBB, b.AvgBB),
-            ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
-            ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
-            ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
-            ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
-            //ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
-            ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
-            ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
-            ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
-            ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Sma50, b.Sma50),
-            ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Sma20, b.Sma20),
-            ColumnsForGrid.PSar => ObjectCompare.Compare(a.PSar, b.PSar),
-            ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
-            ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
-            ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
-            ColumnsForGrid.Trend1h => ObjectCompare.Compare(a.Trend1h, b.Trend1h),
-            ColumnsForGrid.Trend4h => ObjectCompare.Compare(a.Trend4h, b.Trend4h),
-            ColumnsForGrid.Trend1d => ObjectCompare.Compare(a.Trend1d, b.Trend1d),
-            ColumnsForGrid.Barometer15m => ObjectCompare.Compare(a.Barometer15m, b.Barometer15m),
-            ColumnsForGrid.Barometer30m => ObjectCompare.Compare(a.Barometer30m, b.Barometer30m),
-            ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
-            ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
-            ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
-            ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
-            ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
-            ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
-            ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
-            ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
-            _ => 0
-        };
-
-
-        // extend if still the same
-        if (compareResult == 0)
-        {
-            compareResult = ObjectCompare.Compare(a.CreateTime, b.CreateTime);
-            if (compareResult == 0)
+            if (GridSettings.SortColumn != null)
             {
-                if (SortOrder == SortOrder.Ascending)
-                    compareResult = ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name);
+                int compareResult = (ColumnsForGrid)GridSettings.SortColumn switch
+                {
+                    ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
+                    ColumnsForGrid.AltradyId => ObjectCompare.Compare(a.AltradyPositionId, b.AltradyPositionId),
+                    ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
+                    ColumnsForGrid.Updated => ObjectCompare.Compare(a.UpdateTime, b.UpdateTime),
+                    ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
+                    ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
+                    ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
+                    ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
+                    ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
+                    ColumnsForGrid.Strategy => ObjectCompare.Compare(a.StrategyText, b.StrategyText),
+                    ColumnsForGrid.Side => ObjectCompare.Compare(a.SideText, b.SideText),
+                    ColumnsForGrid.Status => ObjectCompare.Compare(a.Status, b.Status),
+                    ColumnsForGrid.Invested => ObjectCompare.Compare(a.Invested, b.Invested),
+                    ColumnsForGrid.Returned => ObjectCompare.Compare(a.Returned, b.Returned),
+                    ColumnsForGrid.Commission => ObjectCompare.Compare(a.Commission, b.Commission),
+                    ColumnsForGrid.BreakEven => ObjectCompare.Compare(a.BreakEvenPrice, b.BreakEvenPrice),
+                    ColumnsForGrid.Quantity => ObjectCompare.Compare(a.Quantity, b.Quantity),
+                    ColumnsForGrid.Open => ObjectCompare.Compare(a.Invested - a.Returned - a.Commission, b.Invested - b.Returned - b.Commission),
+                    ColumnsForGrid.Profit => ObjectCompare.Compare(a.CurrentProfit(), b.CurrentProfit()),
+                    ColumnsForGrid.BreakEvenPercent => ObjectCompare.Compare(a.CurrentBreakEvenPercentage(), b.CurrentBreakEvenPercentage()),
+                    ColumnsForGrid.Parts => ObjectCompare.Compare(a.PartCount, b.PartCount),
+                    ColumnsForGrid.EntryPrice => ObjectCompare.Compare(a.EntryPrice, b.EntryPrice),
+                    ColumnsForGrid.ProfitPrice => ObjectCompare.Compare(a.ProfitPrice, b.ProfitPrice),
+                    ColumnsForGrid.Percentage => ObjectCompare.Compare(a.CurrentProfitPercentage(), b.CurrentProfitPercentage()),
+                    ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
+                    ColumnsForGrid.QuantityTick => ObjectCompare.Compare(a.Symbol.QuantityTickSize, b.Symbol.QuantityTickSize),
+                    ColumnsForGrid.RemainingDust => ObjectCompare.Compare(a.RemainingDust, b.RemainingDust),
+                    ColumnsForGrid.DustValue => ObjectCompare.Compare(a.RemainingDust * a.Symbol.LastPrice, b.RemainingDust * b.Symbol.LastPrice),
+
+                    // Signal information
+                    ColumnsForGrid.SignalDate => ObjectCompare.Compare(a.SignalEventTime, b.SignalEventTime),
+                    ColumnsForGrid.SignalPrice => ObjectCompare.Compare(a.SignalPrice, b.SignalPrice),
+                    ColumnsForGrid.SignalVolume => ObjectCompare.Compare(a.SignalVolume, b.SignalVolume),
+                    ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
+                    ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
+                    ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
+                    ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
+                    ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
+                    ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.AvgBB, b.AvgBB),
+                    ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
+                    ColumnsForGrid.MacdSignal => ObjectCompare.Compare(a.MacdSignal, b.MacdSignal),
+                    ColumnsForGrid.MacdHistogram => ObjectCompare.Compare(a.MacdHistogram, b.MacdHistogram),
+                    ColumnsForGrid.Rsi => ObjectCompare.Compare(a.Rsi, b.Rsi),
+                    //ColumnsForGrid.SlopeRsi => ObjectCompare.Compare(a.SlopeRsi, b.SlopeRsi),
+                    ColumnsForGrid.Stoch => ObjectCompare.Compare(a.StochOscillator, b.StochOscillator),
+                    ColumnsForGrid.Signal => ObjectCompare.Compare(a.StochSignal, b.StochSignal),
+                    ColumnsForGrid.Sma200 => ObjectCompare.Compare(a.Sma200, b.Sma200),
+                    ColumnsForGrid.Sma50 => ObjectCompare.Compare(a.Sma50, b.Sma50),
+                    ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Sma20, b.Sma20),
+                    ColumnsForGrid.PSar => ObjectCompare.Compare(a.PSar, b.PSar),
+                    ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.LuxIndicator5m, b.LuxIndicator5m),
+                    ColumnsForGrid.Trend15m => ObjectCompare.Compare(a.Trend15m, b.Trend15m),
+                    ColumnsForGrid.Trend30m => ObjectCompare.Compare(a.Trend30m, b.Trend30m),
+                    ColumnsForGrid.Trend1h => ObjectCompare.Compare(a.Trend1h, b.Trend1h),
+                    ColumnsForGrid.Trend4h => ObjectCompare.Compare(a.Trend4h, b.Trend4h),
+                    ColumnsForGrid.Trend1d => ObjectCompare.Compare(a.Trend1d, b.Trend1d),
+                    ColumnsForGrid.Barometer15m => ObjectCompare.Compare(a.Barometer15m, b.Barometer15m),
+                    ColumnsForGrid.Barometer30m => ObjectCompare.Compare(a.Barometer30m, b.Barometer30m),
+                    ColumnsForGrid.Barometer1h => ObjectCompare.Compare(a.Barometer1h, b.Barometer1h),
+                    ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
+                    ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
+                    ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
+                    ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
+                    ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
+                    ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
+                    ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+                    _ => 0
+                };
+
+
+                // extend if still the same
+                if (compareResult == 0)
+                {
+                    compareResult = ObjectCompare.Compare(a.CreateTime, b.CreateTime);
+                    if (compareResult == 0)
+                    {
+                        if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                            compareResult = ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name);
+                        else
+                            compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
+                    }
+                    if (compareResult == 0)
+                    {
+                        if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                            compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
+                        else
+                            compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
+                    }
+                }
+
+
+                // Calculate correct return value based on object comparison
+                if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                    return +compareResult;
+                else if (GridSettings.SortOrder == GridSortOrder.Descending)
+                    return -compareResult;
                 else
-                    compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
+                    return 0;
             }
-            if (compareResult == 0)
-            {
-                if (SortOrder == SortOrder.Ascending)
-                    compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
-                else
-                    compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
-            }
+            else
+                return 0;
         }
-
-
-        // Calculate correct return value based on object comparison
-        if (SortOrder == SortOrder.Ascending)
-            return +compareResult;
-        else if (SortOrder == SortOrder.Descending)
-            return -compareResult;
-        else
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("ERROR " + error.ToString());
             return 0;
+        }
     }
 
 
@@ -1163,7 +1179,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
     //}
 
 
-    private void RefreshInformation(object? sender, EventArgs? e)
+    public override void RefreshInformation(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing || !WinFormTools.IsControlVisibleToUser(Grid))
             return;

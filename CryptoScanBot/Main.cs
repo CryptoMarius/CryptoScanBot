@@ -124,19 +124,19 @@ public partial class FrmMain : Form
         // Instelling laden
         GlobalData.LoadSettings();
 
-        GridSymbolView = new() { Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
+        GridSymbolView = new() { Grid = dataGridViewSymbols, List = SymbolListView, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol, GridSettings = GlobalData.SettingsUser.GridSymbol};
         GridSymbolView.InitGrid();
 
-        GridSignalView = new() { Grid = dataGridViewSignals, List = SignalListView, ColumnList = GlobalData.SettingsUser.GridColumnsSignal };
+        GridSignalView = new() { Grid = dataGridViewSignals, List = SignalListView, ColumnList = GlobalData.SettingsUser.GridColumnsSignal, GridSettings = GlobalData.SettingsUser.GridSignal };
         GridSignalView.InitGrid();
 
-        GridPositionOpenView = new() { Grid = dataGridViewPositionOpen, List = PositionOpenListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsOpen };
+        GridPositionOpenView = new() { Grid = dataGridViewPositionOpen, List = PositionOpenListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsOpen, GridSettings = GlobalData.SettingsUser.GridPositionsOpen };
         GridPositionOpenView.InitGrid();
 
-        GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed };
+        GridPositionClosedView = new() { Grid = dataGridViewPositionClosed, List = PositionClosedListView, ColumnList = GlobalData.SettingsUser.GridColumnsPositionsClosed, GridSettings = GlobalData.SettingsUser.GridPositionsClosed };
         GridPositionClosedView.InitGrid();
 
-        GridLiveDataView = new() { Grid = dataGridLiveDataView, List = LiveDataListView, ColumnList = GlobalData.SettingsUser.GridColumnsLiveData };
+        GridLiveDataView = new() { Grid = dataGridLiveDataView, List = LiveDataListView, ColumnList = GlobalData.SettingsUser.GridLiveData.ColumnList, GridSettings = GlobalData.SettingsUser.GridLiveData };
         GridLiveDataView.InitGrid();
 
 
@@ -643,7 +643,11 @@ public partial class FrmMain : Form
                     {
                         CryptoLiveData liveData = GlobalData.LiveDataQueue.Dequeue();
                         if (liveData != null)
-                            liveDataList.Add(liveData);
+                        {
+                            if (!(TradingConfig.Signals[CryptoTradeSide.Long].InBlackList(liveData.Symbol.Name) == MatchBlackAndWhiteList.Present ||
+                                TradingConfig.Signals[CryptoTradeSide.Short].InBlackList(liveData.Symbol.Name) == MatchBlackAndWhiteList.Present))
+                                liveDataList.Add(liveData);
+                        }
                     }
 
                     if (liveDataList.Count != 0)
@@ -962,7 +966,7 @@ public partial class FrmMain : Form
             List<CryptoSymbol> range = [];
 
             string filter = "";
-            symbolFilter.Invoke((System.Windows.Forms.MethodInvoker)(() => filter = symbolFilter.Text.ToUpper()));
+            symbolFilter.Invoke((System.Windows.Forms.MethodInvoker)(() => filter = symbolFilter.Text.Trim().ToUpper()));
             //Invoke((MethodInvoker)(() => TextBoxLog.AppendText(text)));
 
             // De muntparen toevoegen aan de userinterface
@@ -1077,6 +1081,28 @@ public partial class FrmMain : Form
             if (GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue(symbolname, out CryptoSymbol? symbol))
                 Invoke((System.Windows.Forms.MethodInvoker)(() =>
                 LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false)));
+        }
+
+        // Could be more generic..
+        if (tabControl.SelectedTab == tabPageSymbols)
+        {
+            GridSymbolView.RefreshInformation(sender, e);
+        }
+        else if (tabControl.SelectedTab == tabPageSignals)
+        {
+            GridSignalView.RefreshInformation(sender, e);
+        }
+        else if (tabControl.SelectedTab == tabPageLiveData)
+        {
+            GridLiveDataView.RefreshInformation(sender, e);
+        }
+        else if (tabControl.SelectedTab == tabPagePositionsOpen)
+        {
+            GridPositionOpenView.RefreshInformation(sender, e);
+        }
+        else if (tabControl.SelectedTab == tabPagePositionsClosed)
+        {
+            GridPositionClosedView.RefreshInformation(sender, e);
         }
 
     }

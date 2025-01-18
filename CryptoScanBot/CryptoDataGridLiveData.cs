@@ -2,7 +2,6 @@
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot;
 
@@ -66,8 +65,10 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
 
     public override void InitializeHeaders()
     {
-        SortOrder = SortOrder.Descending;
-        SortColumn = (int)ColumnsForGrid.Date;
+        if (GridSettings.SortOrder == null)
+            GridSettings.SortOrder = GridSortOrder.Descending;
+        if (GridSettings.SortColumn == null || GridSettings.SortColumn > Enum.GetNames(typeof(ColumnsForGrid)).Length)
+            GridSettings.SortColumn = (int)ColumnsForGrid.Date;
 
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
@@ -145,8 +146,10 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
     {
         try
         {
-            int compareResult = (ColumnsForGrid)SortColumn switch
+            if (GridSettings.SortColumn != null)
             {
+                int compareResult = (ColumnsForGrid)GridSettings.SortColumn switch
+                {
                 ColumnsForGrid.Id => ObjectCompare.Compare(a.Symbol.Id, b.Symbol.Id),
                 ColumnsForGrid.Date => ObjectCompare.Compare(a.Candle.Date, b.Candle.Date),
                 ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Symbol.Exchange.Name, b.Symbol.Exchange.Name),
@@ -167,36 +170,43 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 ColumnsForGrid.Sma20 => ObjectCompare.Compare(a.Candle.CandleData?.Sma20, b.Candle.CandleData?.Sma20),
                 ColumnsForGrid.PSar => ObjectCompare.Compare(a.Candle.CandleData?.PSar, b.Candle.CandleData?.PSar),
                 ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.Candle.CandleData?.Lux5mValue, b.Candle.CandleData?.Lux5mValue),
-                _ => 0
-            };
+                    _ => 0
+                };
+                // extend lux with rsi if needed
+                if (compareResult == 0 && (ColumnsForGrid)GridSettings.SortColumn == ColumnsForGrid.Lux5m)
+                        compareResult = ObjectCompare.Compare(a.Candle.CandleData?.Rsi, b.Candle.CandleData?.Rsi);
 
-
-            // extend if still the same
-            if (compareResult == 0)
-            {
-                compareResult = ObjectCompare.Compare(a.Candle.Date, b.Candle.Date);
+                // extend if still the same
                 if (compareResult == 0)
                 {
-                    if (SortOrder == SortOrder.Ascending)
-                        compareResult = ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name);
-                    else
-                        compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
+
+
+                    compareResult = ObjectCompare.Compare(a.Candle.Date, b.Candle.Date);
+                    if (compareResult == 0)
+                    {
+                        if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                            compareResult = ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name);
+                        else
+                            compareResult = ObjectCompare.Compare(b.Symbol.Name, a.Symbol.Name);
+                    }
+                    if (compareResult == 0)
+                    {
+                        if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                            compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
+                        else
+                            compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
+                    }
                 }
-                if (compareResult == 0)
-                {
-                    if (SortOrder == SortOrder.Ascending)
-                        compareResult = ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod);
-                    else
-                        compareResult = ObjectCompare.Compare(b.Interval!.IntervalPeriod, a.Interval!.IntervalPeriod);
-                }
+
+
+                // Calculate correct return value based on object comparison
+                if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                    return +compareResult;
+                else if (GridSettings.SortOrder == GridSortOrder.Descending)
+                    return -compareResult;
+                else
+                    return 0;
             }
-
-
-            // Calculate correct return value based on object comparison
-            if (SortOrder == SortOrder.Ascending)
-                return +compareResult;
-            else if (SortOrder == SortOrder.Descending)
-                return -compareResult;
             else
                 return 0;
         }
@@ -460,7 +470,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
     }
 
 
-    private void RefreshInformation(object? sender, EventArgs? e)
+    public override void RefreshInformation(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;

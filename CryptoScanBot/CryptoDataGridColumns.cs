@@ -19,12 +19,12 @@ public partial class CryptoDataGridColumns : Form
 
         foreach (DataGridViewColumn column in Grid.Grid.Columns)
         {
-            if (!Grid.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
+            if (!Grid.GridSettings.ColumnList.TryGetValue(column.HeaderText, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
                 if (column.Tag is bool alwaysVisible)
                     columnSetting.AlwaysVisible = alwaysVisible;
-                Grid.ColumnList.Add(column.HeaderText, columnSetting);
+                Grid.GridSettings.ColumnList.Add(column.HeaderText, columnSetting);
             }
 
             CheckBox item = new()
@@ -45,10 +45,10 @@ public partial class CryptoDataGridColumns : Form
     {
         foreach (var item in List)
         {
-            if (!Grid.ColumnList.TryGetValue(item.Text, out ColumnSetting? columnSetting))
+            if (!Grid.GridSettings.ColumnList.TryGetValue(item.Text, out ColumnSetting? columnSetting))
             {
                 columnSetting = new();
-                Grid.ColumnList.Add(item.Text, columnSetting);
+                Grid.GridSettings.ColumnList.Add(item.Text, columnSetting);
             }
             columnSetting.Visible = item.Checked || columnSetting.AlwaysVisible;
         }

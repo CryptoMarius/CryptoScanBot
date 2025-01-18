@@ -1,8 +1,8 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.ZoneVisualisation;
 
 namespace CryptoScanBot;
 
@@ -19,6 +19,9 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         //MarketTrend, to much cpu needed
     }
 
+    private System.Windows.Forms.Timer? TimerRefreshInformation = null;
+
+
     public override void InitializeCommands(ContextMenuStrip menuStrip)
     {
         InitializeStandardCommands(menuStrip);
@@ -33,13 +36,22 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
 
         menuStrip.AddSeperator();
         menuStrip.AddCommand(this, "Hide selection", Command.None, ClearSelection);
+
+        TimerRefreshInformation = new()
+        {
+            Enabled = true,
+            Interval = 15 * 1000,
+        };
+        TimerRefreshInformation.Tick += RefreshInformation;
     }
 
 
     public override void InitializeHeaders()
     {
-        SortOrder = SortOrder.Ascending;
-        SortColumn = (int)ColumnsForGrid.Symbol;
+        if (GridSettings.SortOrder == null)
+            GridSettings.SortOrder = GridSortOrder.Ascending;
+        if (GridSettings.SortColumn == null || GridSettings.SortColumn > Enum.GetNames(typeof(ColumnsForGrid)).Length)
+            GridSettings.SortColumn = (int)ColumnsForGrid.Symbol;
 
         var columns = Enum.GetValues(typeof(ColumnsForGrid));
         foreach (ColumnsForGrid column in columns)
@@ -73,33 +85,47 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
 
     private int Compare(CryptoSymbol a, CryptoSymbol b)
     {
-        int compareResult = (ColumnsForGrid)SortColumn switch
+        try
         {
-            ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
-            ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Name, b.Name),
-            ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
-            //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
-            ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneDistance(a), ZoneDistance(b)),
-            //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
+            if (GridSettings.SortColumn != null)
+            {
+                int compareResult = (ColumnsForGrid)GridSettings.SortColumn switch
+                {
+                    ColumnsForGrid.Id => ObjectCompare.Compare(a.Id, b.Id),
+                    ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Name, b.Name),
+                    ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
+                    //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
+                    ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneDistance(a), ZoneDistance(b)),
+                    //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
 
-            _ => 0
-        };
+                    _ => 0
+                };
 
 
-        // extend if still the same
-        if (compareResult == 0 && SortColumn > 0)
-        {
-            compareResult = ObjectCompare.Compare(a.Name, b.Name);
+                // extend if still the same
+                if (compareResult == 0 && GridSettings.SortColumn > 0)
+                {
+                    compareResult = ObjectCompare.Compare(a.Name, b.Name);
+                }
+
+
+                // Calculate correct return value based on object comparison
+                if (GridSettings.SortOrder == GridSortOrder.Ascending)
+                    return +compareResult;
+                else if (GridSettings.SortOrder == GridSortOrder.Descending)
+                    return -compareResult;
+                else
+                    return 0;
+            }
+            else
+                return 0;
         }
-
-
-        // Calculate correct return value based on object comparison
-        if (SortOrder == SortOrder.Ascending)
-            return +compareResult;
-        else if (SortOrder == SortOrder.Descending)
-            return -compareResult;
-        else
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab("ERROR " + error.ToString());
             return 0;
+        }
     }
 
 
@@ -144,16 +170,44 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
 
+        // no data
         if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
             return null;
+
+        // only one of them
         if (symbolIntervalData.BestLongZone == null)
             return symbolIntervalData.BestShortZone;
         if (symbolIntervalData.BestShortZone == null)
             return symbolIntervalData.BestLongZone;
 
+        // which of the two is closeby
         return Math.Min(symbolIntervalData.BestLongZone.Value, symbolIntervalData.BestShortZone.Value);
     }
 
+
+    private static CryptoTradeSide? ZoneTradeSide(CryptoSymbol symbol)
+    {
+        // Set the date of the last swing point for the automatic zone calculation
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
+
+        // no data
+        if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
+            return null;
+
+        // only one of them
+        if (symbolIntervalData.BestLongZone == null)
+            return CryptoTradeSide.Short;
+        if (symbolIntervalData.BestShortZone == null)
+            return CryptoTradeSide.Long;
+
+
+        // which of the two is closeby
+        if (symbolIntervalData.BestLongZone.Value < symbolIntervalData.BestShortZone.Value)
+            return CryptoTradeSide.Long;
+        else
+            return CryptoTradeSide.Short;
+    }
 
     //private static float? MarketTrend(CryptoSymbol symbol)
     //{
@@ -192,6 +246,14 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                     else
                         foreColor = Color.Red;
                     break;
+
+                case ColumnsForGrid.Distance:
+                    CryptoTradeSide? zoneTradeSide = ZoneTradeSide(symbol);
+                    if (zoneTradeSide == CryptoTradeSide.Long)
+                        foreColor = Color.Green;
+                    else if (zoneTradeSide == CryptoTradeSide.Short)
+                        foreColor = Color.Red;
+                    break;
             }
         }
 
@@ -200,4 +262,33 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         cell.Style.ForeColor = foreColor;
     }
 
+
+    public override void RefreshInformation(object? sender, EventArgs? e)
+    {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
+        if (WinFormTools.IsControlVisibleToUser(Grid))
+        {
+            try
+            {
+                Grid.SuspendDrawing();
+                try
+                {
+                    SortFunction();
+                    Grid.InvalidateColumn((int)ColumnsForGrid.Distance);
+                    Grid.InvalidateColumn((int)ColumnsForGrid.Volume);
+                }
+                finally
+                {
+                    Grid.ResumeDrawing();
+                }
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"Error RefreshInformation {error}");
+            }
+        }
+    }
 }
