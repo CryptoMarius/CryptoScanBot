@@ -110,11 +110,11 @@ public partial class TestForm : Form
 
         tabControl.SelectedTab = tabPageLog;
 
-        GridSignals = new() { Grid = dataGridViewSignal, List = SignalList, ColumnList = GlobalData.SettingsUser.GridColumnsSignal };
+        GridSignals = new() { Grid = dataGridViewSignal, List = SignalList, ColumnList = GlobalData.SettingsUser.GridColumnsSignal, GridSettings = GlobalData.SettingsUser.GridSignal };
         GridSignals.InitGrid();
-        GridSymbols = new() { Grid = dataGridViewSymbol, List = SymbolList, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol };
-        GridSymbols.InitGrid();
 
+        GridSymbols = new() { Grid = dataGridViewSymbol, List = SymbolList, ColumnList = GlobalData.SettingsUser.GridColumnsSymbol, GridSettings = GlobalData.SettingsUser.GridSymbol };
+        GridSymbols.InitGrid();
 
 
         //Om vanuit achtergrond threads iets te kunnen loggen (kan charmanter?)
@@ -411,7 +411,7 @@ public partial class TestForm : Form
         // Display grid lines.
         listView1.GridLines = true;
         // Sort the items in the list in ascending order.
-        //listView1.Sorting = SortOrder.None;
+        //listView1.Sorting = GridSortOrder.None;
 
         //listView1.HotTracking = true; // verstoord de kleuren en is onrustig
 
