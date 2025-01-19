@@ -132,18 +132,18 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalDominantLevelShort),
         });
 
-#if DEBUG
-        //***************************************************
-        // Test
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "sma50sma20",
-            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
-            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
-            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
-        });
-#endif
+//#if DEBUG
+//        //***************************************************
+//        // Test
+//        //***************************************************
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "sma50sma20",
+//            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
+//            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
+//            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
+//        });
+//#endif
 
         //Register(new AlgorithmDefinition()
         //{
@@ -163,13 +163,13 @@ public static class RegisterAlgorithms
         });
 
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "dtb",
-            Strategy = CryptoSignalStrategy.DoubleTopBottomLong,
-            AnalyzeLongType = typeof(SignalDoubleTopBottomLong),
-            AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "dtb",
+        //    Strategy = CryptoSignalStrategy.DoubleTopBottomLong,
+        //    AnalyzeLongType = typeof(SignalDoubleTopBottomLong),
+        //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
+        //});
     }
 
 

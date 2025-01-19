@@ -22,5 +22,4 @@ public enum CryptoSignalStrategy
 
     DominantLevel = 1000,
     FairValueGap = 1001,
-    DoubleTopBottomLong = 1002,
 }

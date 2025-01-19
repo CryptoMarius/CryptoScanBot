@@ -30,6 +30,8 @@
     <Compile Remove="Exchange\BybitApi\Spot\CandlesEmulator.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\Kraken\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Signal\Other\SignalDoubleTopBottomLong.cs" />
+    <Compile Remove="Signal\Other\SignalDoubleTopBottomShort.cs" />
     <Compile Remove="Signal\SignalMacdLtLong.cs" />
     <Compile Remove="Signal\SignalMacdLtShort.cs" />
     <Compile Remove="Signal\SignalMacdTestLong.cs" />
