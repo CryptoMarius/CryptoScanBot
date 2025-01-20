@@ -183,6 +183,7 @@ public partial class FrmSettings : Form
         EditStobIncludeSbmMaLines.Checked = settings.Signal.Stobb.IncludeSoftSbm;
         EditStobIncludeSbmPercAndCrossing.Checked = settings.Signal.Stobb.IncludeSbmPercAndCrossing;
         EditStobOnlyIfPreviousStobb.Checked = settings.Signal.Stobb.OnlyIfPreviousStobb;
+        EditStobOnlyIfLux5m.Checked = settings.Signal.Stobb.OnlyIfLux5m;
 
         EditStobTrendLong.Value = settings.Signal.Stobb.TrendLong;
         EditStobTrendShort.Value = settings.Signal.Stobb.TrendShort;
@@ -228,7 +229,8 @@ public partial class FrmSettings : Form
         EditStorsiAddRsiAmount.Value = settings.Signal.StoRsi.AddRsiAmount;
         EditStorsiAddStochAmount.Value = settings.Signal.StoRsi.AddStochAmount;
         EditSkipFirstSignal.Checked = settings.Signal.StoRsi.SkipFirstSignal;
-        EditCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
+        EditStorsiCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
+        EditStoRsiOnlyIfLux5m.Checked = settings.Signal.StoRsi.OnlyIfLux5m;
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.LoadConfig("Jump", settings.Signal.Jump);
@@ -463,6 +465,8 @@ public partial class FrmSettings : Form
         settings.Signal.Stobb.IncludeSoftSbm = EditStobIncludeSbmMaLines.Checked;
         settings.Signal.Stobb.IncludeSbmPercAndCrossing = EditStobIncludeSbmPercAndCrossing.Checked;
         settings.Signal.Stobb.OnlyIfPreviousStobb = EditStobOnlyIfPreviousStobb.Checked;
+        settings.Signal.Stobb.OnlyIfLux5m = EditStobOnlyIfLux5m.Checked;
+
         settings.Signal.Stobb.TrendLong = EditStobTrendLong.Value;
         settings.Signal.Stobb.TrendShort = EditStobTrendShort.Value;
         settings.Signal.Stobb.UseLowHigh = EditStobbUseLowHigh.Checked;
@@ -506,7 +510,8 @@ public partial class FrmSettings : Form
         settings.Signal.StoRsi.AddRsiAmount = (int)EditStorsiAddRsiAmount.Value;
         settings.Signal.StoRsi.AddStochAmount = (int)EditStorsiAddStochAmount.Value;
         settings.Signal.StoRsi.SkipFirstSignal = EditSkipFirstSignal.Checked;
-        settings.Signal.StoRsi.CheckBollingerBandsCondition = EditCheckBollingerBandsCondition.Checked;
+        settings.Signal.StoRsi.CheckBollingerBandsCondition = EditStorsiCheckBollingerBandsCondition.Checked;
+        settings.Signal.StoRsi.OnlyIfLux5m = EditStoRsiOnlyIfLux5m.Checked;
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.SaveConfig(settings.Signal.Jump);

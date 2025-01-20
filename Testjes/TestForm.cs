@@ -941,34 +941,11 @@ public partial class TestForm : Form
                     if (!SymbolTools.CheckNewCoin(symbol, out string _))
                         continue;
 
+
+
                     int count = 0;
                     decimal diffSum = 0;
-                    //DateTime dateCandleStart = DateTime.SpecifyKind(new DateTime(2024, 11, 01, 0, 0, 0), DateTimeKind.Utc);
-                    //DateTime dateCandleEinde = DateTime.SpecifyKind(new DateTime(2025, 01, 01, 0, 0, 0), DateTimeKind.Utc);
-
-
-                    //intervalPeriod = CryptoIntervalPeriod.interval10m;
-                    //if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out interval))
-                    //    return;
-                    //LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
-                    //candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
-
-                    //double[] values1h = new double[candles.Count];
-
-                    //count = 0;
-                    //diffSum = 0;
-                    //foreach (CryptoCandle candle in candles.Values)
-                    //{
-                    //    values1h[count] = (double)candle.Close;
-                    //    count++;
-                    //    decimal diff = (candle.High - candle.Low) / candle.Close;
-                    //    diffSum += diff;
-
-                    //}
                     double[] values = new double[candles.Count];
-
-                    count = 0;
-                    diffSum = 0;
                     foreach (CryptoCandle candle in candles.Values)
                     {
                         values[count] = (double)candle.Close;
@@ -2668,27 +2645,95 @@ public partial class TestForm : Form
 
     private void Button4_Click(object? sender, EventArgs? e)
     {
-        var exchange = GlobalData.Settings.General.Exchange;
-        if (exchange != null)
+        //var exchange = GlobalData.Settings.General.Exchange;
+        //if (exchange != null)
+        //{
+        //    if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol? symbol))
+        //    {
+        //        CryptoSignal signal = new()
+        //        {
+        //            OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
+        //            SignalPrice = 0.12345m,
+        //            Symbol = symbol,
+        //            Exchange = exchange,
+        //            Side = CryptoTradeSide.Long,
+        //            Interval = GlobalData.IntervalList[3],
+        //            Candle = null,
+        //        };
+        //        SignalList.Insert(0, signal);
+        //    }
+
+        //    GridSignals.AdjustObjectCount();
+        //}
+
+
+        float oversold = 30;   // Oversold niveau
+        float overbought = 70; // Overbought niveau
+
+        int min = 10; // Minimale lengte van RSI-vensters
+        int max = 20; // Maximale lengte van RSI-vensters
+        int N = max - min + 1; // Aantal RSI-vensters
+
+
+        // Simuleer voorbeeldprijsdata (vervang dit door echte data)
+        List<float> source = new List<float> { 100, 102, 101, 105, 103, 104, 106, 108, 107, 109 };
+
+        // Controleer of er genoeg data is
+        if (source.Count < 2)
         {
-            if (exchange.SymbolListName.TryGetValue("PAXGUSDT", out CryptoSymbol? symbol))
-            {
-                CryptoSignal signal = new()
-                {
-                    OpenDate = DateTime.UtcNow.AddHours(SignalList.Count),
-                    SignalPrice = 0.12345m,
-                    Symbol = symbol,
-                    Exchange = exchange,
-                    Side = CryptoTradeSide.Long,
-                    Interval = GlobalData.IntervalList[3],
-                    Candle = null,
-                };
-                SignalList.Insert(0, signal);
-            }
-
-            GridSignals.AdjustObjectCount();
+            GlobalData.AddTextToLogTab("Niet genoeg data om RSI te berekenen.");
+            return;
         }
-    }
 
+        // Initialiseer arrays voor de numerators (num) en denominators (den)
+        var num = new float[N];
+        var den = new float[N];
+
+        float avg = 0; // Gemiddelde RSI over alle lengtes
+        int overbuy = 0, oversell = 0; // Tellen van overbought en oversold waarden
+
+        // Itereer over lengtes en bereken RSI
+        for (int i = min; i <= max; i++)
+        {
+            float alpha = 1f / i; // Smoothing factor
+            int k = i - min; // Index voor num en den
+
+            for (int j = 1; j < source.Count; j++)
+            {
+                float diff = source[j] - source[j - 1]; // Prijsverandering
+
+                // Bereken numerator en denominator met RMA-formule
+                num[k] = alpha * diff + (1 - alpha) * num[k];
+                den[k] = alpha * Math.Abs(diff) + (1 - alpha) * den[k];
+
+                // Controleer op nul voordat we delen
+                if (den[k] != 0)
+                {
+                    float rsi = 50 * num[k] / den[k] + 50;
+
+                    // Gemiddelde RSI berekenen
+                    avg += rsi;
+
+                    // Tellen van overbought en oversold
+                    if (rsi > overbought)
+                        overbuy++;
+                    if (rsi < oversold)
+                        oversell++;
+                }
+            }
+        }
+
+        // Gemiddelde RSI berekenen
+        avg /= (N * (source.Count - 1));
+
+        // Bereken percentages overbought en oversold
+        float overbuyPercentage = (float)overbuy / (N * (source.Count - 1)) * 100;
+        float oversellPercentage = (float)oversell / (N * (source.Count - 1)) * 100;
+
+        // Resultaten weergeven
+        GlobalData.AddTextToLogTab($"Gemiddelde RSI: {avg:F2}");
+        GlobalData.AddTextToLogTab($"Overbought Percentage: {overbuyPercentage:F2}%");
+        GlobalData.AddTextToLogTab($"Oversold Percentage: {oversellPercentage:F2}%");
+    }
 
 }

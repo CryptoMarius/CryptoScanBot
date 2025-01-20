@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
-18-01-2025 2.0.2
+20-01-2025 2.0.2
+- Scanner - Extra instelling Lux 5m als extra conditie voor de Stob en Storsi (een voorlopig experiment)
 - Scanner - Dominante zones: Er komen meerdere zones over elkaar heen te liggen, intern zijn een aantal per abuis gedupliceerd (er er wordt maar 1 afgemeld)
 - Scanner - Dominante zones: De scanner houdt geen rekening met meerdere zones met dezelfde top en bottom (worden iedere keer verwijderd en opnieuw toegevoegd)
 - Scanner - Dominante zones: Afgesloten zones (fvg en dlz) worden nu met rode karakters getoond

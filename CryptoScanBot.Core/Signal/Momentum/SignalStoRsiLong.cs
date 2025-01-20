@@ -35,6 +35,16 @@ public class SignalStoRsiLong : SignalSbmBaseLong
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
+        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        {
+            if (CandleLast.CandleData!.Lux5mValue < 50)
+            {
+                response = "lux not oversold";
+                return false;
+            }
+        }
+
+
         // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {

@@ -186,7 +186,7 @@ partial class FrmSettings
         EditStorsiBBMinPercentage = new NumericUpDown();
         EditStorsiBBMaxPercentage = new NumericUpDown();
         EditSkipFirstSignal = new CheckBox();
-        EditCheckBollingerBandsCondition = new CheckBox();
+        EditStorsiCheckBollingerBandsCondition = new CheckBox();
         label24 = new Label();
         EditStorsiAddStochAmount = new NumericUpDown();
         label26 = new Label();
@@ -240,6 +240,7 @@ partial class FrmSettings
         EditShowFvgSignalsLong = new CheckBox();
         label34 = new Label();
         EditZonesFvgMinimumPercentage = new NumericUpDown();
+        UserControlIntervalZonesFvg = new SettingsDialog.UserControlInterval();
         tabPageDoubleTB = new TabPage();
         flowLayoutPanel11 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsZonesDtb = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
@@ -317,7 +318,8 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        UserControlIntervalZonesFvg = new SettingsDialog.UserControlInterval();
+        EditStobOnlyIfLux5m = new CheckBox();
+        EditStoRsiOnlyIfLux5m = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -1577,6 +1579,7 @@ partial class FrmSettings
         // groupBox2
         // 
         groupBox2.AutoSize = true;
+        groupBox2.Controls.Add(EditStobOnlyIfLux5m);
         groupBox2.Controls.Add(EditStobOnlyIfPreviousStobb);
         groupBox2.Controls.Add(label1);
         groupBox2.Controls.Add(EditStobbBBMinPercentage);
@@ -1593,7 +1596,7 @@ partial class FrmSettings
         groupBox2.Margin = new Padding(10);
         groupBox2.Name = "groupBox2";
         groupBox2.Padding = new Padding(10);
-        groupBox2.Size = new Size(428, 291);
+        groupBox2.Size = new Size(428, 320);
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Settings";
@@ -1642,7 +1645,7 @@ partial class FrmSettings
         // label85
         // 
         label85.AutoSize = true;
-        label85.Location = new Point(21, 243);
+        label85.Location = new Point(18, 272);
         label85.Margin = new Padding(4, 0, 4, 0);
         label85.Name = "label85";
         label85.Size = new Size(112, 15);
@@ -1652,7 +1655,7 @@ partial class FrmSettings
         // EditStobTrendShort
         // 
         EditStobTrendShort.DecimalPlaces = 2;
-        EditStobTrendShort.Location = new Point(177, 239);
+        EditStobTrendShort.Location = new Point(174, 268);
         EditStobTrendShort.Margin = new Padding(4, 3, 4, 3);
         EditStobTrendShort.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         EditStobTrendShort.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
@@ -1664,7 +1667,7 @@ partial class FrmSettings
         // label66
         // 
         label66.AutoSize = true;
-        label66.Location = new Point(21, 213);
+        label66.Location = new Point(18, 242);
         label66.Margin = new Padding(4, 0, 4, 0);
         label66.Name = "label66";
         label66.Size = new Size(109, 15);
@@ -1674,7 +1677,7 @@ partial class FrmSettings
         // EditStobTrendLong
         // 
         EditStobTrendLong.DecimalPlaces = 2;
-        EditStobTrendLong.Location = new Point(177, 209);
+        EditStobTrendLong.Location = new Point(174, 238);
         EditStobTrendLong.Margin = new Padding(4, 3, 4, 3);
         EditStobTrendLong.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
         EditStobTrendLong.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
@@ -2206,11 +2209,12 @@ partial class FrmSettings
         // groupBox6
         // 
         groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(EditStoRsiOnlyIfLux5m);
         groupBox6.Controls.Add(label28);
         groupBox6.Controls.Add(EditStorsiBBMinPercentage);
         groupBox6.Controls.Add(EditStorsiBBMaxPercentage);
         groupBox6.Controls.Add(EditSkipFirstSignal);
-        groupBox6.Controls.Add(EditCheckBollingerBandsCondition);
+        groupBox6.Controls.Add(EditStorsiCheckBollingerBandsCondition);
         groupBox6.Controls.Add(label24);
         groupBox6.Controls.Add(EditStorsiAddStochAmount);
         groupBox6.Controls.Add(label26);
@@ -2219,7 +2223,7 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(284, 198);
+        groupBox6.Size = new Size(284, 243);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
@@ -2227,7 +2231,7 @@ partial class FrmSettings
         // label28
         // 
         label28.AutoSize = true;
-        label28.Location = new Point(13, 150);
+        label28.Location = new Point(13, 195);
         label28.Margin = new Padding(4, 0, 4, 0);
         label28.Name = "label28";
         label28.Size = new Size(77, 15);
@@ -2237,7 +2241,7 @@ partial class FrmSettings
         // EditStorsiBBMinPercentage
         // 
         EditStorsiBBMinPercentage.DecimalPlaces = 2;
-        EditStorsiBBMinPercentage.Location = new Point(121, 146);
+        EditStorsiBBMinPercentage.Location = new Point(121, 191);
         EditStorsiBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMinPercentage.Name = "EditStorsiBBMinPercentage";
         EditStorsiBBMinPercentage.Size = new Size(65, 23);
@@ -2247,7 +2251,7 @@ partial class FrmSettings
         // EditStorsiBBMaxPercentage
         // 
         EditStorsiBBMaxPercentage.DecimalPlaces = 2;
-        EditStorsiBBMaxPercentage.Location = new Point(205, 146);
+        EditStorsiBBMaxPercentage.Location = new Point(205, 191);
         EditStorsiBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMaxPercentage.Name = "EditStorsiBBMaxPercentage";
         EditStorsiBBMaxPercentage.Size = new Size(65, 23);
@@ -2265,16 +2269,16 @@ partial class FrmSettings
         EditSkipFirstSignal.Text = "Only if there is a previous storsi sigal";
         EditSkipFirstSignal.UseVisualStyleBackColor = true;
         // 
-        // EditCheckBollingerBandsCondition
+        // EditStorsiCheckBollingerBandsCondition
         // 
-        EditCheckBollingerBandsCondition.AutoSize = true;
-        EditCheckBollingerBandsCondition.Location = new Point(16, 96);
-        EditCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
-        EditCheckBollingerBandsCondition.Name = "EditCheckBollingerBandsCondition";
-        EditCheckBollingerBandsCondition.Size = new Size(223, 19);
-        EditCheckBollingerBandsCondition.TabIndex = 169;
-        EditCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
-        EditCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
+        EditStorsiCheckBollingerBandsCondition.AutoSize = true;
+        EditStorsiCheckBollingerBandsCondition.Location = new Point(16, 96);
+        EditStorsiCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiCheckBollingerBandsCondition.Name = "EditStorsiCheckBollingerBandsCondition";
+        EditStorsiCheckBollingerBandsCondition.Size = new Size(223, 19);
+        EditStorsiCheckBollingerBandsCondition.TabIndex = 169;
+        EditStorsiCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
+        EditStorsiCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
         // 
         // label24
         // 
@@ -2870,6 +2874,16 @@ partial class FrmSettings
         EditZonesFvgMinimumPercentage.Name = "EditZonesFvgMinimumPercentage";
         EditZonesFvgMinimumPercentage.Size = new Size(56, 23);
         EditZonesFvgMinimumPercentage.TabIndex = 126;
+        // 
+        // UserControlIntervalZonesFvg
+        // 
+        UserControlIntervalZonesFvg.AutoScroll = true;
+        UserControlIntervalZonesFvg.AutoSize = true;
+        UserControlIntervalZonesFvg.Location = new Point(3, 322);
+        UserControlIntervalZonesFvg.MinimumSize = new Size(100, 150);
+        UserControlIntervalZonesFvg.Name = "UserControlIntervalZonesFvg";
+        UserControlIntervalZonesFvg.Size = new Size(100, 150);
+        UserControlIntervalZonesFvg.TabIndex = 161;
         // 
         // tabPageDoubleTB
         // 
@@ -3723,15 +3737,27 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // UserControlIntervalZonesFvg
+        // EditStobOnlyIfLux5m
         // 
-        UserControlIntervalZonesFvg.AutoScroll = true;
-        UserControlIntervalZonesFvg.AutoSize = true;
-        UserControlIntervalZonesFvg.Location = new Point(3, 322);
-        UserControlIntervalZonesFvg.MinimumSize = new Size(100, 150);
-        UserControlIntervalZonesFvg.Name = "UserControlIntervalZonesFvg";
-        UserControlIntervalZonesFvg.Size = new Size(100, 150);
-        UserControlIntervalZonesFvg.TabIndex = 161;
+        EditStobOnlyIfLux5m.AutoSize = true;
+        EditStobOnlyIfLux5m.Location = new Point(21, 198);
+        EditStobOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditStobOnlyIfLux5m.Name = "EditStobOnlyIfLux5m";
+        EditStobOnlyIfLux5m.Size = new Size(144, 19);
+        EditStobOnlyIfLux5m.TabIndex = 168;
+        EditStobOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditStobOnlyIfLux5m.UseVisualStyleBackColor = true;
+        // 
+        // EditStoRsiOnlyIfLux5m
+        // 
+        EditStoRsiOnlyIfLux5m.AutoSize = true;
+        EditStoRsiOnlyIfLux5m.Location = new Point(16, 146);
+        EditStoRsiOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditStoRsiOnlyIfLux5m.Name = "EditStoRsiOnlyIfLux5m";
+        EditStoRsiOnlyIfLux5m.Size = new Size(144, 19);
+        EditStoRsiOnlyIfLux5m.TabIndex = 174;
+        EditStoRsiOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditStoRsiOnlyIfLux5m.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -4135,7 +4161,7 @@ partial class FrmSettings
     private NumericUpDown EditStorsiAddStochAmount;
     private FlowLayoutPanel flowLayoutPanelQuotes;
     private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
-    private CheckBox EditCheckBollingerBandsCondition;
+    private CheckBox EditStorsiCheckBollingerBandsCondition;
     private GroupBox groupBox7;
     private Label label22;
     private NumericUpDown EditBbStdDeviation;
@@ -4224,4 +4250,6 @@ partial class FrmSettings
     private Label label35;
     private NumericUpDown EditZonesDtbMinimumPercentage;
     private SettingsDialog.UserControlInterval UserControlIntervalZonesFvg;
+    private CheckBox EditStobOnlyIfLux5m;
+    private CheckBox EditStoRsiOnlyIfLux5m;
 }

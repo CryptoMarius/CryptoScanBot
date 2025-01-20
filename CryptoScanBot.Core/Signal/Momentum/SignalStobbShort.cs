@@ -40,6 +40,15 @@ public class SignalStobbShort : SignalSbmBaseShort
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
+        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        {
+            if (CandleLast.CandleData!.Lux5mValue < 50)
+            {
+                response = "lux not overbought";
+                return false;
+            }
+        }
+
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
