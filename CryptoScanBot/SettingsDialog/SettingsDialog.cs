@@ -267,12 +267,6 @@ public partial class FrmSettings : Form
         EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
 
-        // Double top/bottom
-        UserControlSettingsSoundAndColorsZonesDtb.LoadConfig("Double top/bottom", settings.Signal.DoubleTopBottom);
-        EditShowDtbSignalsLong.Checked = settings.Signal.DoubleTopBottom.ShowSignalsLong;
-        EditShowDtbSignalsShort.Checked = settings.Signal.DoubleTopBottom.ShowSignalsShort;
-        EditZonesDtbMinimumPercentage.Value = (decimal)settings.Signal.DoubleTopBottom.MinimumPercentage;
-
         // --------------------------------------------------------------------------------
         // Extra instap condities
         // --------------------------------------------------------------------------------
@@ -549,12 +543,6 @@ public partial class FrmSettings : Form
         settings.Signal.ZonesFvg.ShowSignalsLong = EditShowFvgSignalsLong.Checked;
         settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;
         settings.Signal.ZonesFvg.MinimumPercentage = (double)EditZonesFvgMinimumPercentage.Value;
-
-        // Double top/bottom
-        UserControlSettingsSoundAndColorsZonesDtb.SaveConfig(settings.Signal.DoubleTopBottom);
-        settings.Signal.DoubleTopBottom.ShowSignalsLong = EditShowDtbSignalsLong.Checked;
-        settings.Signal.DoubleTopBottom.ShowSignalsShort = EditShowDtbSignalsShort.Checked;
-        settings.Signal.DoubleTopBottom.MinimumPercentage = (double)EditZonesDtbMinimumPercentage.Value;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

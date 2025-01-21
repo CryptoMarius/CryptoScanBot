@@ -128,6 +128,7 @@ partial class FrmSettings
         flowLayoutPanel6 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStobb = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox2 = new GroupBox();
+        EditStobOnlyIfLux5m = new CheckBox();
         EditStobOnlyIfPreviousStobb = new CheckBox();
         label1 = new Label();
         EditStobbBBMinPercentage = new NumericUpDown();
@@ -182,6 +183,7 @@ partial class FrmSettings
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
+        EditStoRsiOnlyIfLux5m = new CheckBox();
         label28 = new Label();
         EditStorsiBBMinPercentage = new NumericUpDown();
         EditStorsiBBMaxPercentage = new NumericUpDown();
@@ -241,14 +243,6 @@ partial class FrmSettings
         label34 = new Label();
         EditZonesFvgMinimumPercentage = new NumericUpDown();
         UserControlIntervalZonesFvg = new SettingsDialog.UserControlInterval();
-        tabPageDoubleTB = new TabPage();
-        flowLayoutPanel11 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsZonesDtb = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
-        groupBox15 = new GroupBox();
-        EditShowDtbSignalsShort = new CheckBox();
-        EditShowDtbSignalsLong = new CheckBox();
-        label35 = new Label();
-        EditZonesDtbMinimumPercentage = new NumericUpDown();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -318,8 +312,6 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        EditStobOnlyIfLux5m = new CheckBox();
-        EditStoRsiOnlyIfLux5m = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -415,10 +407,6 @@ partial class FrmSettings
         flowLayoutPanel10.SuspendLayout();
         groupBox14.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).BeginInit();
-        tabPageDoubleTB.SuspendLayout();
-        flowLayoutPanel11.SuspendLayout();
-        groupBox15.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditZonesDtbMinimumPercentage).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -1053,7 +1041,6 @@ partial class FrmSettings
         tabControlSignals.Controls.Add(tabSignalJump);
         tabControlSignals.Controls.Add(tabSignalZones);
         tabControlSignals.Controls.Add(tabSignalZonesFvg);
-        tabControlSignals.Controls.Add(tabPageDoubleTB);
         tabControlSignals.Dock = DockStyle.Fill;
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
@@ -1600,6 +1587,17 @@ partial class FrmSettings
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Settings";
+        // 
+        // EditStobOnlyIfLux5m
+        // 
+        EditStobOnlyIfLux5m.AutoSize = true;
+        EditStobOnlyIfLux5m.Location = new Point(21, 198);
+        EditStobOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditStobOnlyIfLux5m.Name = "EditStobOnlyIfLux5m";
+        EditStobOnlyIfLux5m.Size = new Size(144, 19);
+        EditStobOnlyIfLux5m.TabIndex = 168;
+        EditStobOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditStobOnlyIfLux5m.UseVisualStyleBackColor = true;
         // 
         // EditStobOnlyIfPreviousStobb
         // 
@@ -2227,6 +2225,17 @@ partial class FrmSettings
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
+        // 
+        // EditStoRsiOnlyIfLux5m
+        // 
+        EditStoRsiOnlyIfLux5m.AutoSize = true;
+        EditStoRsiOnlyIfLux5m.Location = new Point(16, 146);
+        EditStoRsiOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditStoRsiOnlyIfLux5m.Name = "EditStoRsiOnlyIfLux5m";
+        EditStoRsiOnlyIfLux5m.Size = new Size(144, 19);
+        EditStoRsiOnlyIfLux5m.TabIndex = 174;
+        EditStoRsiOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditStoRsiOnlyIfLux5m.UseVisualStyleBackColor = true;
         // 
         // label28
         // 
@@ -2884,96 +2893,6 @@ partial class FrmSettings
         UserControlIntervalZonesFvg.Name = "UserControlIntervalZonesFvg";
         UserControlIntervalZonesFvg.Size = new Size(100, 150);
         UserControlIntervalZonesFvg.TabIndex = 161;
-        // 
-        // tabPageDoubleTB
-        // 
-        tabPageDoubleTB.Controls.Add(flowLayoutPanel11);
-        tabPageDoubleTB.Location = new Point(4, 27);
-        tabPageDoubleTB.Name = "tabPageDoubleTB";
-        tabPageDoubleTB.Padding = new Padding(3);
-        tabPageDoubleTB.Size = new Size(1126, 578);
-        tabPageDoubleTB.TabIndex = 14;
-        tabPageDoubleTB.Text = "Double top/bottom";
-        tabPageDoubleTB.UseVisualStyleBackColor = true;
-        // 
-        // flowLayoutPanel11
-        // 
-        flowLayoutPanel11.Controls.Add(UserControlSettingsSoundAndColorsZonesDtb);
-        flowLayoutPanel11.Controls.Add(groupBox15);
-        flowLayoutPanel11.Dock = DockStyle.Fill;
-        flowLayoutPanel11.FlowDirection = FlowDirection.TopDown;
-        flowLayoutPanel11.Location = new Point(3, 3);
-        flowLayoutPanel11.Name = "flowLayoutPanel11";
-        flowLayoutPanel11.Size = new Size(1120, 572);
-        flowLayoutPanel11.TabIndex = 0;
-        // 
-        // UserControlSettingsSoundAndColorsZonesDtb
-        // 
-        UserControlSettingsSoundAndColorsZonesDtb.AutoScroll = true;
-        UserControlSettingsSoundAndColorsZonesDtb.AutoSize = true;
-        UserControlSettingsSoundAndColorsZonesDtb.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsZonesDtb.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsZonesDtb.Name = "UserControlSettingsSoundAndColorsZonesDtb";
-        UserControlSettingsSoundAndColorsZonesDtb.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsZonesDtb.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsZonesDtb.TabIndex = 159;
-        // 
-        // groupBox15
-        // 
-        groupBox15.AutoSize = true;
-        groupBox15.Controls.Add(EditShowDtbSignalsShort);
-        groupBox15.Controls.Add(EditShowDtbSignalsLong);
-        groupBox15.Controls.Add(label35);
-        groupBox15.Controls.Add(EditZonesDtbMinimumPercentage);
-        groupBox15.Location = new Point(10, 186);
-        groupBox15.Margin = new Padding(10);
-        groupBox15.Name = "groupBox15";
-        groupBox15.Size = new Size(278, 123);
-        groupBox15.TabIndex = 161;
-        groupBox15.TabStop = false;
-        groupBox15.Text = "Settings Double Top Bottom";
-        // 
-        // EditShowDtbSignalsShort
-        // 
-        EditShowDtbSignalsShort.AutoSize = true;
-        EditShowDtbSignalsShort.Location = new Point(7, 47);
-        EditShowDtbSignalsShort.Margin = new Padding(4, 3, 4, 3);
-        EditShowDtbSignalsShort.Name = "EditShowDtbSignalsShort";
-        EditShowDtbSignalsShort.Size = new Size(124, 19);
-        EditShowDtbSignalsShort.TabIndex = 141;
-        EditShowDtbSignalsShort.Text = "Show short signals";
-        EditShowDtbSignalsShort.UseVisualStyleBackColor = true;
-        // 
-        // EditShowDtbSignalsLong
-        // 
-        EditShowDtbSignalsLong.AutoSize = true;
-        EditShowDtbSignalsLong.Location = new Point(7, 22);
-        EditShowDtbSignalsLong.Margin = new Padding(4, 3, 4, 3);
-        EditShowDtbSignalsLong.Name = "EditShowDtbSignalsLong";
-        EditShowDtbSignalsLong.Size = new Size(121, 19);
-        EditShowDtbSignalsLong.TabIndex = 140;
-        EditShowDtbSignalsLong.Text = "Show long signals";
-        EditShowDtbSignalsLong.UseVisualStyleBackColor = true;
-        // 
-        // label35
-        // 
-        label35.AutoSize = true;
-        label35.Location = new Point(7, 80);
-        label35.Margin = new Padding(4, 0, 4, 0);
-        label35.Name = "label35";
-        label35.Size = new Size(122, 15);
-        label35.TabIndex = 125;
-        label35.Text = "Minimum percentage";
-        // 
-        // EditZonesDtbMinimumPercentage
-        // 
-        EditZonesDtbMinimumPercentage.DecimalPlaces = 2;
-        EditZonesDtbMinimumPercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditZonesDtbMinimumPercentage.Location = new Point(215, 78);
-        EditZonesDtbMinimumPercentage.Margin = new Padding(4, 3, 4, 3);
-        EditZonesDtbMinimumPercentage.Name = "EditZonesDtbMinimumPercentage";
-        EditZonesDtbMinimumPercentage.Size = new Size(56, 23);
-        EditZonesDtbMinimumPercentage.TabIndex = 126;
         // 
         // tabTrading
         // 
@@ -3737,28 +3656,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // EditStobOnlyIfLux5m
-        // 
-        EditStobOnlyIfLux5m.AutoSize = true;
-        EditStobOnlyIfLux5m.Location = new Point(21, 198);
-        EditStobOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
-        EditStobOnlyIfLux5m.Name = "EditStobOnlyIfLux5m";
-        EditStobOnlyIfLux5m.Size = new Size(144, 19);
-        EditStobOnlyIfLux5m.TabIndex = 168;
-        EditStobOnlyIfLux5m.Text = "Only if lux 5m at 100%";
-        EditStobOnlyIfLux5m.UseVisualStyleBackColor = true;
-        // 
-        // EditStoRsiOnlyIfLux5m
-        // 
-        EditStoRsiOnlyIfLux5m.AutoSize = true;
-        EditStoRsiOnlyIfLux5m.Location = new Point(16, 146);
-        EditStoRsiOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
-        EditStoRsiOnlyIfLux5m.Name = "EditStoRsiOnlyIfLux5m";
-        EditStoRsiOnlyIfLux5m.Size = new Size(144, 19);
-        EditStoRsiOnlyIfLux5m.TabIndex = 174;
-        EditStoRsiOnlyIfLux5m.Text = "Only if lux 5m at 100%";
-        EditStoRsiOnlyIfLux5m.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3902,12 +3799,6 @@ partial class FrmSettings
         groupBox14.ResumeLayout(false);
         groupBox14.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).EndInit();
-        tabPageDoubleTB.ResumeLayout(false);
-        flowLayoutPanel11.ResumeLayout(false);
-        flowLayoutPanel11.PerformLayout();
-        groupBox15.ResumeLayout(false);
-        groupBox15.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditZonesDtbMinimumPercentage).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -4241,14 +4132,6 @@ partial class FrmSettings
     private Label label32;
     private Label label33;
     private NumericUpDown EditZonesCandleCountZoom;
-    private TabPage tabPageDoubleTB;
-    private FlowLayoutPanel flowLayoutPanel11;
-    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsZonesDtb;
-    private GroupBox groupBox15;
-    private CheckBox EditShowDtbSignalsShort;
-    private CheckBox EditShowDtbSignalsLong;
-    private Label label35;
-    private NumericUpDown EditZonesDtbMinimumPercentage;
     private SettingsDialog.UserControlInterval UserControlIntervalZonesFvg;
     private CheckBox EditStobOnlyIfLux5m;
     private CheckBox EditStoRsiOnlyIfLux5m;
