@@ -8,7 +8,7 @@ public class TelegramCalculateZones
 {
     public static void Execute(string arguments, StringBuilder stringbuilder)
     {
-        LiquidityZones.CalculateZonesForAllSymbolsAsync(null);
+        ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
         stringbuilder.AppendLine("Started calculations of zones");
     }
 

@@ -1799,13 +1799,13 @@ public class PositionMonitor //: IDisposable
                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
                 {
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.Interval)
+                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
                     {
                         if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                         {
                             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
                             if (LastCandle1mCloseTime % interval.Duration == 0)
-                                FairValueGap.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                                ZoneFvg.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
                         }
                     }
 
@@ -1820,10 +1820,9 @@ public class PositionMonitor //: IDisposable
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Zones.ShowSignalsShort))
                 {
                     // for now only the configured interval (default=1h)
-                    //foreach (string intervalName in GlobalData.Settings.Signal.Zones.Interval)
-                    CryptoInterval interval = GlobalData.IntervalListPeriod[GlobalData.Settings.Signal.Zones.Interval];
+                    foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
                     {
-                        //if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                         {
                             // Try to automaticly calculate zones
                             if (LastCandle1mCloseTime % interval.Duration == 0)
@@ -1834,9 +1833,14 @@ public class PositionMonitor //: IDisposable
                                 // Scan for new zones if candle is outside of the previous primary trend
                                 decimal valueLow = LastCandle1m.GetLowValue(false);
                                 decimal valueHigh = LastCandle1m.GetHighValue(false);
-                                if (accountSymbolInterval.LastSwingLow == null || valueLow < accountSymbolInterval.LastSwingLow ||
-                                   accountSymbolInterval.LastSwingHigh == null || valueHigh > accountSymbolInterval.LastSwingHigh)
-                                    GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol);
+                                if (accountSymbolInterval.Zones.LastSwingLow == null || valueLow < accountSymbolInterval.Zones.LastSwingLow ||
+                                   accountSymbolInterval.Zones.LastSwingHigh == null || valueHigh > accountSymbolInterval.Zones.LastSwingHigh)
+                                {
+                                    // avoid duplicate calculation (kind of a weak attemp)
+                                    accountSymbolInterval.Zones.LastSwingLow = valueLow;
+                                    accountSymbolInterval.Zones.LastSwingHigh = valueHigh;
+                                    GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol, interval);
+                                }
                             }
 
                         }

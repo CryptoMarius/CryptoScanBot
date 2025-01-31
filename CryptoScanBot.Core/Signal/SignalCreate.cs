@@ -390,17 +390,17 @@ public class SignalCreate
             signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
 
             AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(signal.Interval.IntervalPeriod);
-            signal.TrendIndicator = accountSymbolIntervalData.TrendIndicator;
+            signal.TrendIndicator = accountSymbolIntervalData.Trend.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval15m);
-            signal.Trend15m = accountSymbolIntervalData.TrendIndicator;
+            signal.Trend15m = accountSymbolIntervalData.Trend.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval30m);
-            signal.Trend30m = accountSymbolIntervalData.TrendIndicator;
+            signal.Trend30m = accountSymbolIntervalData.Trend.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1h);
-            signal.Trend1h = accountSymbolIntervalData.TrendIndicator;
+            signal.Trend1h = accountSymbolIntervalData.Trend.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval4h);
-            signal.Trend4h = accountSymbolIntervalData.TrendIndicator;
+            signal.Trend4h = accountSymbolIntervalData.Trend.TrendIndicator;
             accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1d);
-            signal.Trend1d = accountSymbolIntervalData.TrendIndicator;
+            signal.Trend1d = accountSymbolIntervalData.Trend.TrendIndicator;
         }
 
 

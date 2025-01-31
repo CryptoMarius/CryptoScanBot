@@ -158,6 +158,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
                 },
+                HyperTrader = null,
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
@@ -204,6 +205,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
                 },
+                HyperTrader = null,
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
@@ -223,11 +225,37 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                     Execute = CryptoExternalUrlType.Internal,
                     Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
                 },
+                HyperTrader = null,
                 TradingView = new()
                 {
                     Execute = CryptoExternalUrlType.External,
                     Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}&interval={interval}",
                 },
+            }
+        );
+
+
+        Remove("Okc");
+        this.TryAdd("Okx Spot",
+            new()
+            {
+                Altrady = new()
+                {
+                    Code = "OKEX",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/OKEX_{QUOTE}_{BASE}:{interval}",
+                },
+                HyperTrader = null,
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=OKEX:{BASE}{QUOTE}&interval={interval}",
+                },
+                ExchangeUrl = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://my.okx.com/trade-spot/{BASE}-{QUOTE}",
+                }
             }
         );
 

@@ -79,7 +79,7 @@ public static class ScannerSession
                 GlobalData.ThreadMonitorCandle = new ThreadMonitorCandle();
                 GlobalData.ThreadMonitorOrder = new ThreadMonitorOrder();
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
-                GlobalData.ThreadZoneCalculate = new ZoneCalculateThread();
+                GlobalData.ThreadZoneCalculate = new ZoneThreadCalculate();
 
                 if (GlobalData.TradingApi.Key != "")
                     _ = ExchangeBase.UserTicker!.StartAsync();

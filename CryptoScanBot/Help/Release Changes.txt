@@ -1,5 +1,15 @@
 CryptoScanBot release historie:
 
+31-01-2025 2.0.3
+- Scanner - De achterstand in FVG alsnog berekenen bij het opstarten + gebroken zones afvoeren.
+- Scanner - Verwijderen van gesloten DLZ en FVG zones uit de database (cleanup na geconfigureerd aantal candles)
+- Scanner - DLZ zones op configureerbare intervallen kunnen laten berekenen (configureer niet teveel, het kost namelijk best veel tijd)
+- Scanner - DLZ zones worden niet correct gemarkeerd dmv het "intro" filter en de zones wisselen vaak van kleur na knop berekenen
+- Scanner - Meerdere timeframe voor de DLZ kunnen configureren (vanaf de 1h en hoger)
+- Scanner - De FVG create datum is verkeerd ingevuld (deze bevatte de candle.OpenTime ipv de CloseTime)
+- Scanner - De double top/bottom configuratie verwijderd (is niet bruikbaar om geautomatiseerd op te traden)
+- Scanner - De afgesloten FVG zones niet meer laten zien (enkel de recente afgesloten wat langer laten zien, 60 candles ofzo)
+
 20-01-2025 2.0.2
 - Scanner - Extra instelling Lux 5m als extra conditie voor de Stob en Storsi (een voorlopig experiment)
 - Scanner - Dominante zones: Er komen meerdere zones over elkaar heen te liggen, intern zijn een aantal per abuis gedupliceerd (er er wordt maar 1 afgemeld)

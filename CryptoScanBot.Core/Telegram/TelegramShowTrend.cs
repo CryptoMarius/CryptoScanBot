@@ -26,12 +26,12 @@ public class TelegramShowTrend
                 await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
 
                 AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
+                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolIntervalDataList)
                 {
                     string s;
-                    if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                    if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                    else if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";

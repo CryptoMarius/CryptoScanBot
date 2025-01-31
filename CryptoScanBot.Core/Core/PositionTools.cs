@@ -304,7 +304,7 @@ public static class PositionTools
         foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in trend)
         {
             AccountSymbolIntervalData accountSymbolIntervalData = tradeAccount.Data.GetSymbolTrendData(symbolName, entry.Key);
-            if (accountSymbolIntervalData.TrendIndicator != entry.Value)
+            if (accountSymbolIntervalData.Trend.TrendIndicator != entry.Value)
             {
                 reaction = $"trend op de {accountSymbolIntervalData.Interval.Name} niet gelijk aan {entry.Value}";
                 return false;
