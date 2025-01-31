@@ -168,20 +168,19 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
     {
         // Set the date of the last swing point for the automatic zone calculation
         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
 
         // no data
-        if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
+        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
             return null;
 
         // only one of them
-        if (symbolIntervalData.BestLongZone == null)
-            return symbolIntervalData.BestShortZone;
-        if (symbolIntervalData.BestShortZone == null)
-            return symbolIntervalData.BestLongZone;
+        if (symbolData.BestLongZone == null)
+            return symbolData.BestShortZone;
+        if (symbolData.BestShortZone == null)
+            return symbolData.BestLongZone;
 
         // which of the two is closeby
-        return Math.Min(symbolIntervalData.BestLongZone.Value, symbolIntervalData.BestShortZone.Value);
+        return Math.Min(symbolData.BestLongZone.Value, symbolData.BestShortZone.Value);
     }
 
 
@@ -189,21 +188,20 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
     {
         // Set the date of the last swing point for the automatic zone calculation
         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
 
         // no data
-        if (symbolIntervalData.BestLongZone == null && symbolIntervalData.BestShortZone == null)
+        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
             return null;
 
         // only one of them
-        if (symbolIntervalData.BestLongZone == null)
+        if (symbolData.BestLongZone == null)
             return CryptoTradeSide.Short;
-        if (symbolIntervalData.BestShortZone == null)
+        if (symbolData.BestShortZone == null)
             return CryptoTradeSide.Long;
 
 
         // which of the two is closeby
-        if (symbolIntervalData.BestLongZone.Value < symbolIntervalData.BestShortZone.Value)
+        if (symbolData.BestLongZone.Value < symbolData.BestShortZone.Value)
             return CryptoTradeSide.Long;
         else
             return CryptoTradeSide.Short;
