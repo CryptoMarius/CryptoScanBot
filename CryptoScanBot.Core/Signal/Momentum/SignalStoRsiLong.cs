@@ -37,9 +37,9 @@ public class SignalStoRsiLong : SignalSbmBaseLong
     {
         if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
         {
-            if (CandleLast.CandleData!.Lux5mValue < 50)
+            if (CandleLast.CandleData!.Lux5mValue > -50)
             {
-                response = "lux not oversold";
+                response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
                 return false;
             }
         }

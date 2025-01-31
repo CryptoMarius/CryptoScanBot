@@ -44,7 +44,7 @@ public class SignalStobbShort : SignalSbmBaseShort
         {
             if (CandleLast.CandleData!.Lux5mValue < 50)
             {
-                response = "lux not overbought";
+                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
                 return false;
             }
         }
