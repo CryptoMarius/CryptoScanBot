@@ -8,7 +8,7 @@ using System.Text;
 
 namespace CryptoScanBot.Core.Zones;
 
-public class CandleEngine
+public class ZoneCandleEngine
 {
     private static async Task ReadFromBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
     {
@@ -43,30 +43,6 @@ public class CandleEngine
         }
     }
 
-
-    //private static async Task ReadFromTxt(CryptoSymbol symbol, CryptoInterval interval, string filename)
-    //{
-    //    // json does take a lot of memory
-    //    await symbol.CandleLock.WaitAsync();
-    //    try
-    //    {
-    //        CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
-
-    //        using FileStream stream = File.OpenRead(filename);
-    //        var list = await JsonSerializer.DeserializeAsync<List<CryptoCandle>>(stream, JsonTools.DeSerializerOptions);
-    //        //string text = File.ReadAllText(filename);
-    //        //var list = JsonSerializer.Deserialize<CryptoCandleList>(text);
-    //        if (list != null)
-    //        {
-    //            foreach (var c in list)
-    //                symbolInterval.CandleList.TryAdd(c.OpenTime, c);
-    //        }
-    //    }
-    //    finally
-    //    {
-    //        symbol.CandleLock.Release();
-    //    }
-    //}
 
 
     public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
@@ -115,27 +91,7 @@ public class CandleEngine
                 }
             }
 
-            //if (count > 0)
-            //{
-            //    long openTime = symbolInterval.CandleList.Keys.First();
-            //    while (count-- > 0)
-            //    {
-            //        //for (int j = 0; j < symbolInterval.CandleList.Count; j++)
-            //        {
-            //            CryptoCandle? candle = symbolInterval.CandleList.Values[j];
-            //            if (candle != null)
-            //            {
-            //                binaryWriter.Write(candle.OpenTime);
-            //                binaryWriter.Write(candle.Open);
-            //                binaryWriter.Write(candle.High);
-            //                binaryWriter.Write(candle.Low);
-            //                binaryWriter.Write(candle.Close);
-            //                binaryWriter.Write(candle.Volume);
-            //            }
-            //        }
-            //        openTime += interval.Duration;
-            //    }
-            //}
+
         }
         finally
         {
@@ -143,21 +99,6 @@ public class CandleEngine
         }
     }
 
-    //public static async Task WriteToTxt(CryptoSymbol symbol, CryptoInterval interval, string filename)
-    //{
-    //    CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
-
-    //    await symbol.CandleLock.WaitAsync();
-    //    try
-    //    {
-    //        using FileStream stream = File.OpenWrite(filename);
-    //        await JsonSerializer.SerializeAsync(stream, symbolInterval.CandleList.Values, JsonTools.JsonSerializerIndented);
-    //    }
-    //    finally
-    //    {
-    //        symbol.CandleLock.Release();
-    //    }
-    //}
 
 
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)

@@ -23,12 +23,12 @@ public class CommandShowTrendInfo : CommandBase
             log.AppendLine("");
 
             AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-            foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
+            foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolIntervalDataList)
             {
                 string s;
-                if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bullish)
                     s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bullish";
-                else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                else if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bearish)
                     s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bearish";
                 else
                     s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=sideway's";

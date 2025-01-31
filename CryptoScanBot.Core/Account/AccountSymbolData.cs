@@ -10,33 +10,25 @@ public class AccountSymbolData
 {
     public required string SymbolName { get; set; }
 
-    // The generated signals for each symbol
-    //public List<CryptoSignal> SymbolSignalList { get; set; } = [];
-
-
-    // Markettrend 
+    // Markettrend cache (only need to recalcutate when a candle is finished on a interval)
     public long? MarketTrendDate { get; set; }
     public float? MarketTrendPercentage { get; set; }
-
-
     [Computed]
     // Lock the candlelist to manipulates candles
     public SemaphoreSlim TrendLock { get; set; } = new(1, 1);
 
     // Trend data for each interval
-    public List<AccountSymbolIntervalData> SymbolTrendDataList { get; set; } = [];
+    public List<AccountSymbolIntervalData> SymbolIntervalDataList { get; set; } = [];
 
-    // Active zones (CloseTime = null)
-    public List<CryptoZone> ZoneListLong { get; set; } = [];
-    public List<CryptoZone> ZoneListShort { get; set; } = [];
+    // Display only (an initial hidden column in the symbol grid)
+    // These are the closest zones (calculated from all the AccountInterval zones)
+    public decimal? BestLongZone { get; internal set; } = 100m; // distance%
+    public decimal? BestShortZone { get; internal set; } = 100m; // distance%
 
-    // Active FVG zones (CloseTime = null)
-    public List<CryptoZone> FvgListLong { get; set; } = [];
-    public List<CryptoZone> FvgListShort { get; set; } = [];
 
     public AccountSymbolData()
     {
-        SymbolTrendDataList = [];
+        SymbolIntervalDataList = [];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             AccountSymbolIntervalData accountSymbolTrendData = new()
@@ -44,47 +36,35 @@ public class AccountSymbolData
                 Interval = interval,
                 IntervalPeriod = interval.IntervalPeriod,
             };
-            SymbolTrendDataList.Add(accountSymbolTrendData);
+            SymbolIntervalDataList.Add(accountSymbolTrendData);
         }
     }
 
 
     public AccountSymbolIntervalData GetAccountSymbolInterval(CryptoIntervalPeriod intervalPeriod)
     {
-        return SymbolTrendDataList[(int)intervalPeriod];
+        return SymbolIntervalDataList[(int)intervalPeriod];
     }
 
     public void ResetFvgData()
     {
-        FvgListLong.Clear();
-        FvgListShort.Clear();
+        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolIntervalDataList)
+            accountSymbolInterval.FvgZones.ResetZones();
     }
 
-    public void ResetZoneData()
+    public void ResetDlzData()
     {
-        ZoneListLong.Clear();
-        ZoneListShort.Clear();
-
-        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolTrendDataList)
-            accountSymbolInterval.ResetZoneData();
+        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolIntervalDataList)
+            accountSymbolInterval.DlzZones.ResetZones();
+        //accountSymbolInterval.Zones.ResetSwingPointData(); Why?
     }
 
     public void ResetTrendData()
     {
         MarketTrendDate = null;
         MarketTrendPercentage = null;
-
-        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolTrendDataList)
-            accountSymbolInterval.ResetTrendData();
+        foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolIntervalDataList)
+            accountSymbolInterval.Trend.ResetTrendData();
     }
 
-
-    public void SortZones()
-    {
-        FvgListLong.Sort((zoneA, zoneB) => zoneB.Top.CompareTo(zoneA.Top)); // desc via Top
-        FvgListShort.Sort((zoneA, zoneB) => zoneA.Bottom.CompareTo(zoneB.Bottom)); // asc via Bottom
-
-        ZoneListLong.Sort((zoneA, zoneB) => zoneB.Top.CompareTo(zoneA.Top)); // desc via Top
-        ZoneListShort.Sort((zoneA, zoneB) => zoneA.Bottom.CompareTo(zoneB.Bottom)); // asc via Bottom
-    }
 }

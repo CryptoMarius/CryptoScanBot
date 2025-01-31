@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trend;
 
@@ -14,6 +15,7 @@ public class ZigZagResult
     public bool IsValid { get; set; } = false;
     public bool Dummy { get; set; } = false;
     public string NiceIntro { get; set; } = ""; // intro before box is interesting (a "jump" into the zone, ==not a small step)
+    public CryptoZoneStrength Strength { get; set; } = CryptoZoneStrength.None;
 
     public decimal? BackupValue { get; set; }
     public CryptoCandle? BackupCandle { get; set; }

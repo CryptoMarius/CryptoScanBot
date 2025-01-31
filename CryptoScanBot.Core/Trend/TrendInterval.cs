@@ -18,7 +18,6 @@ public class TrendInterval
         // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
         //accountSymbolIntervalData.ZigZagIndicator ??= new(candleList, false);
 
-
         // start time
         if (minDate == 0)
         {
@@ -166,7 +165,8 @@ public class TrendInterval
 
 
 
-    public static async Task CalculateAsync(CryptoSymbol symbol, CryptoCandleList candleList, AccountSymbolIntervalData accountSymbolIntervalData,
+    public static async Task CalculateAsync(CryptoSymbol symbol, CryptoCandleList candleList, 
+        AccountSymbolIntervalData accountSymbolIntervalData,
         long minDate, long maxDate, StringBuilder? log = null)
     {
         var interval = accountSymbolIntervalData.Interval;
@@ -183,11 +183,11 @@ public class TrendInterval
             // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
             // Bij new munten, flatliners en andere gedrochten is het dus sideway's!
             //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
-            accountSymbolIntervalData.ResetZoneData();
-            accountSymbolIntervalData.ResetTrendData();
+            accountSymbolIntervalData.Zones.ResetSwingPointData();
+            accountSymbolIntervalData.Trend.ResetTrendData();
 #if DEBUG
-            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (no candles)");
-            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (no candles)");
+            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {accountSymbolIntervalData.Trend.TrendInfoDate} {accountSymbolIntervalData.Trend.TrendIndicator} (no candles)");
+            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.Trend.TrendInfoDate} {accountSymbolIntervalData.Trend.TrendIndicator} (no candles)");
 #endif
             return;
         }
@@ -195,8 +195,8 @@ public class TrendInterval
 
         if (!ResolveStartAndEndDate(candleList, accountSymbolIntervalData, ref minDate, ref maxDate))
         {
-            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (date period problem)");
-            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.TrendInfoDate} {accountSymbolIntervalData.TrendIndicator} (date period problem)");
+            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {accountSymbolIntervalData.Trend.TrendInfoDate} {accountSymbolIntervalData.Trend.TrendIndicator} (date period problem)");
+            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {accountSymbolIntervalData.Trend.TrendInfoDate} {accountSymbolIntervalData.Trend.TrendIndicator} (date period problem)");
             return;
         }
         //#if DEBUG
@@ -220,9 +220,9 @@ public class TrendInterval
         var bestIndicator = indicator;
         //var bestIndicator = accountSymbolIntervalData.BestZigZagIndicator!;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
-        accountSymbolIntervalData.TrendIndicator = trendIndicator;
-        accountSymbolIntervalData.TrendInfoUnix = maxDate;
-        accountSymbolIntervalData.TrendInfoDate = CandleTools.GetUnixDate(maxDate);
+        accountSymbolIntervalData.Trend.TrendIndicator = trendIndicator;
+        accountSymbolIntervalData.Trend.TrendInfoUnix = maxDate;
+        accountSymbolIntervalData.Trend.TrendInfoDate = CandleTools.GetUnixDate(maxDate);
 
         // Note: We could also do something like take the average trend over the last x zigzag indicators??
         // We still need to choose a proper indicator to do our analysis though on s/r & s/d and liquidity zones
@@ -231,8 +231,8 @@ public class TrendInterval
         {
             //string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
             //$"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
-            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.TrendInfoDate} " +
-            $"zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.TrendIndicator} "
+            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {accountSymbolIntervalData.Trend.TrendInfoDate} " +
+            $"zigzagcount={bestIndicator.ZigZagList.Count} {accountSymbolIntervalData.Trend.TrendIndicator} "
             //#if DEBUG
             //             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
             //#endif

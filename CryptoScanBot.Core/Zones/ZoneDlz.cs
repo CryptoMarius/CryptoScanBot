@@ -1,0 +1,624 @@
+﻿using CryptoScanBot.Core.Account;
+using CryptoScanBot.Core.Context;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
+
+using Dapper;
+
+namespace CryptoScanBot.Core.Zones;
+
+// DLZ - Dominant Liquidity Zones 
+
+public class ZoneDlz
+{
+
+    public static void LoadAllZones()
+    {
+        foreach (var x in GlobalData.ActiveAccount!.Data.SymbolDataList.Values.ToList())
+        {
+            x.ResetFvgData();
+            x.ResetDlzData();
+            x.ResetTrendData();
+        }
+
+        using var database = new CryptoDatabase();
+        string sql = "select * from zone where CloseTime is null order by CreateTime";
+        foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql))
+        {
+            PutZoneInMemory(zone);
+        }
+    }
+
+
+    public static void LoadZonesForSymbol(CryptoSymbol symbol)
+    {
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        symbolData.ResetFvgData();
+        symbolData.ResetDlzData();
+        symbolData.ResetTrendData();
+
+        using var database = new CryptoDatabase();
+
+        string sql = "select * from zone where SymbolId = @SymbolId order by CreateTime"; //and Kind=1 
+        foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbol.Id }))
+        {
+            PutZoneInMemory(zone);
+        }
+    }
+
+
+    private static void PutZoneInMemory(CryptoZone zone)
+    {
+        if (GlobalData.TradeAccountList.TryGetValue(zone.AccountId, out CryptoAccount? tradeAccount))
+        {
+            zone.Account = tradeAccount;
+            if (GlobalData.ExchangeListId.TryGetValue(zone.ExchangeId, out Model.CryptoExchange? exchange))
+            {
+                zone.Exchange = exchange;
+                if (exchange.SymbolListId.TryGetValue(zone.SymbolId, out CryptoSymbol? symbol))
+                {
+                    zone.Symbol = symbol;
+                    AccountSymbolData symbolData = tradeAccount.Data.GetSymbolData(symbol.Name);
+
+                    if (GlobalData.IntervalListId.TryGetValue(zone.IntervalId, out CryptoInterval? interval))
+                    {
+                        zone.Interval = interval;
+                        var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+
+                        if (zone.Kind == CryptoZoneKind.FairValueGap)
+                        {
+                            symbolIntervalData.FvgZones.Add(zone);
+                        }
+                        else
+                        {
+                            symbolIntervalData.DlzZones.Add(zone);
+
+                            // Creation date is the date of the last swing point (SH/SL)
+                            // TODO: Question: Is this still the right way?
+                            long timeLastSwingPoint = CandleTools.GetUnixTime(zone.CreateTime, 0);
+                            if (symbolIntervalData.Zones.TimeLastSwingPoint == null || timeLastSwingPoint > symbolIntervalData.Zones.TimeLastSwingPoint)
+                            {
+                                symbolIntervalData.Zones.TimeLastSwingPoint = timeLastSwingPoint;
+                                if (symbolIntervalData.Zones.LastSwingLow == null || zone.Bottom > symbolIntervalData.Zones.LastSwingLow)
+                                    symbolIntervalData.Zones.LastSwingLow = zone.Bottom;
+                                if (symbolIntervalData.Zones.LastSwingHigh == null || zone.Top > symbolIntervalData.Zones.LastSwingHigh)
+                                    symbolIntervalData.Zones.LastSwingHigh = zone.Top;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    private static void CreateZonesFromZigZag(ZoneData data, List<ZigZagResult> zigZagList, List<CryptoZone> zones)
+    {
+        foreach (var zigZag in zigZagList)
+        {
+            if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newCreatedZones (also the closed ones)
+            {
+                CryptoZone zone = new()
+                {
+                    Kind = CryptoZoneKind.DominantLevel,
+                    Strength = CryptoZoneStrength.Strong,
+                    CreateTime = zigZag.Candle.Date,
+                    AccountId = GlobalData.ActiveAccount!.Id,
+                    Account = GlobalData.ActiveAccount,
+                    ExchangeId = data.Symbol.Exchange.Id,
+                    Exchange = data.Symbol.Exchange,
+                    SymbolId = data.Symbol.Id,
+                    Symbol = data.Symbol,
+                    IntervalId = data.Interval.Id,
+                    Interval = data.Interval,
+                    OpenTime = zigZag.Candle.OpenTime,
+                    Top = zigZag.Top,
+                    Bottom = zigZag.Bottom,
+                    Side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short,
+                    IsValid = zigZag.IsValid,
+                    CloseTime = zigZag.CloseDate,
+                    Description = $"{data.Interval.Name}: {zigZag.Percentage:N2}% {zigZag.NiceIntro}",
+                };
+                zones.Add(zone);
+            }
+        }
+    }
+
+
+    public static void SaveZonesForSymbol(ZoneData data, List<ZigZagResult> zigZagList)
+    {
+        // We are going to rebuild all the dlz lists
+        var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+        var symbolIntervalData = symbolData.GetAccountSymbolInterval(data.Interval.IntervalPeriod);
+
+        // Collect old zones
+        DatabaseStatistics dbStats = new();
+        SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
+        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongOpen, dbStats);
+        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortOpen, dbStats);
+        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongClosed, dbStats);
+        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortClosed, dbStats);
+        symbolIntervalData.DlzZones.ResetZones();
+
+        // Create new zones
+        List<CryptoZone> newCreatedZones = [];
+        CreateZonesFromZigZag(data, zigZagList, newCreatedZones);
+
+        // Rebuild
+        ZoneTools.AddZonesToInternalLists(symbolIntervalData.DlzZones, zonesFromDatabase, newCreatedZones, dbStats);
+        ZoneTools.DeleteRemainingZones(zonesFromDatabase, dbStats);
+
+        GlobalData.AddTextToLogTab($"{data.Symbol.Name} {data.Interval.Name} Zones calculated, inserted={dbStats.Inserted} " +
+            $"modified={dbStats.Modified} deleted={dbStats.Deleted} " +
+            $"untouched={dbStats.Untouched} total={dbStats.Total}");
+    }
+
+
+    private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag)
+    {
+        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
+        {
+            var value = GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage;
+            if (value > 0 && zigZag.Percentage < value)
+            {
+                zigZag.Dominant = false;
+                //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static bool UnzoomedPercentageAboveMaximum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
+        {
+            var value = GlobalData.Settings.Signal.Zones.MaximumUnZoomedPercentage;
+            if (value > 0 && zigZag.Percentage > value)
+            {
+                zigZag.Dominant = false;
+                //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Unzoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static bool ZoomedPercentageBelowMinimum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MinimumZoomedPercentage;
+        if (value > 0 && zigZag.Percentage < value)
+        {
+            zigZag.Dominant = false;
+            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Zoomed box ignored {zigZag.Percentage:N2} < {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+        return false;
+    }
+
+    private static bool ZoomedPercentageAboveMaximum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
+    {
+        var value = GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage;
+        if (value > 0 && zigZag.Percentage > value)
+        {
+            zigZag.Dominant = false;
+            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Zoomed box ignored {zigZag.Percentage:N2} > {value:N2} {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+            return true;
+        }
+        return false;
+    }
+
+
+    public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
+        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther,
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    {
+        zigZag.Top = top;
+        zigZag.Bottom = bottom;
+        zigZag.IsValid = true;
+        zigZag.Dominant = true;
+        zigZag.Percentage = (double)(100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom));
+        //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot at {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+
+        // Borrow the wick from the neighbour if higher or lower
+        if (zigZag.PointType == 'L')
+        {
+            CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            {
+                if (candle.Low < zigZag.Bottom)
+                {
+                    zigZag.Top = Math.Max(candle.Close, candle.Open);
+                    zigZag.Bottom = candle.Low;
+                }
+            }
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
+            {
+                if (candle.Low < zigZag.Bottom)
+                {
+                    zigZag.Top = Math.Max(candle.Close, candle.Open);
+                    zigZag.Bottom = candle.Low;
+                }
+            }
+        }
+        else if (zigZag.PointType == 'H')
+        {
+            CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            {
+                if (candle.High > zigZag.Top)
+                {
+                    zigZag.Top = candle.High;
+                    zigZag.Bottom = Math.Min(candle.Close, candle.Open);
+                }
+            }
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime - interval.Duration, out candle))
+            {
+                if (candle.High > zigZag.Top)
+                {
+                    zigZag.Top = candle.High;
+                    zigZag.Bottom = Math.Min(candle.Close, candle.Open);
+                }
+            }
+        }
+        if (zigZag.Top != top || zigZag.Bottom != bottom)
+        {
+            zigZag.Percentage = (double)(100 * ((zigZag.Top - zigZag.Bottom) / zigZag.Bottom));
+            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot corrected {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
+        }
+
+        // Is the (unzoomed) percentage between the configured limits? 
+        // Or is the percentage alread below the zoom-limit? (saves time)
+        if (UnzoomedPercentageBelowMinimum(zigZag)
+            || UnzoomedPercentageAboveMaximum(zigZag)
+            || ZoomedPercentageBelowMinimum(zigZag))
+        {
+            zigZag.IsValid = false;
+            return; // (mark the point as not dominant + exit)
+        }
+
+
+
+        // If the found percentage is obove 0.7% zoom in on the lower intervals (withing the boundaries of the current candle)
+        if (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoomFurther)
+        {
+            CryptoIntervalPeriod zoom = interval!.IntervalPeriod;
+            long unixStart = zigZag.Candle.OpenTime;
+            long unixEinde = zigZag.Candle.OpenTime + interval.Duration;
+            //DateTime unixStartDebug = CandleTools.GetUnixDate(unixStart);
+            //DateTime unixEindeDebug = CandleTools.GetUnixDate(unixEinde);
+            int durationForThisCandle = (int)(unixEinde - unixStart);
+
+            while (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
+            {
+                zoom--;
+                //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zooming {zoom} {zigZag.Percentage:N2}%");
+
+                // Is IntervalList supported by Exchange
+                CryptoSymbolInterval zoomInterval = symbol!.GetSymbolInterval(zoom);
+                if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
+                {
+                    // Load candles from disk
+                    if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
+                        await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
+                    loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, false); // in memory, nothing zoneExistsInDatabase
+
+                    // Load candles from the exchange
+                    int count = durationForThisCandle / zoomInterval.Interval.Duration;
+                    if (await ZoneCandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
+                        loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
+
+                    long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
+                    while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
+                    {
+                        //DateTime loopDebug = CandleTools.GetUnixDate(loop);
+                        if (loop >= zigZag.Candle.OpenTime) // really?
+                        {
+                            if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                            {
+                                if (zigZag.PointType == 'L')
+                                {
+                                    decimal bodyTop = Math.Max(candle.Open, candle.Close);
+                                    if (bodyTop < zigZag.Top)
+                                    {
+                                        double percentage = (double)(100 * ((bodyTop - zigZag.Bottom) / zigZag.Bottom));
+                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
+                                        {
+                                            zigZag.Top = bodyTop;
+                                            zigZag.Percentage = percentage;
+                                            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zoomed {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2} {zoomInterval.Interval.Name}");
+                                        }
+                                    }
+                                }
+                                else // High
+                                {
+                                    decimal bodyBottom = Math.Min(candle.Open, candle.Close);
+                                    if (bodyBottom > zigZag.Bottom)
+                                    {
+                                        double percentage = (double)(100 * ((zigZag.Top - bodyBottom) / bodyBottom));
+                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
+                                        {
+                                            zigZag.Bottom = bodyBottom;
+                                            zigZag.Percentage = percentage;
+                                            //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zoomed {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2} {zoomInterval.Interval.Name}");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        loop += zoomInterval.Interval.Duration;
+                    }
+                }
+
+                if (zigZag.Percentage <= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
+                    break;
+            }
+        }
+
+        // Is the zoomed percentage between the configured limits?
+        if (ZoomedPercentageBelowMinimum(zigZag) || ZoomedPercentageAboveMaximum(zigZag))
+        {
+            zigZag.IsValid = false;
+            return; // (mark the point as not dominant + exit)
+        }
+    }
+
+    public static async Task CalculateLiqBoxesAsync(AddTextEvent? sender, ZoneData data, bool zoomLiqBoxes, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    {
+        //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newCreatedZones");
+        ZigZagResult? previous = null;
+        ZigZagResult? previous2 = null;
+        foreach (var zigZag in data.Indicator.ZigZagList)
+        {
+            if (previous != null && previous2 != null && !zigZag.Dummy)
+            {
+                sender?.Invoke($"Calculating dlz zones {data.Symbol.Exchange.Name} {data.Symbol.Name} {data.Interval.Name} {zigZag.Candle.Date}");
+
+                // Check: a dominant Low leading to a new Higher High
+                if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
+                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
+                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, zoomLiqBoxes, loadedCandlesInMemory);
+
+                // Check: a dominant High leading to a new Lower Low
+                if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
+                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
+                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), zoomLiqBoxes, loadedCandlesInMemory);
+            }
+            previous2 = previous;
+            previous = zigZag;
+        }
+    }
+
+
+    public static void CheckZones(ZoneData data, ref long key, long checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
+    {
+        while (key <= checkUpTo)
+        {
+            if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
+            {
+                // Note: A candle can break multiple long or short boxes
+
+                foreach (var zigZag in zonesLong)
+                {
+                    if (key > zigZag.Candle.OpenTime + delay && candle.Low < zigZag.Top)
+                    {
+                        zigZag.CloseDate = candle.OpenTime + data.SymbolInterval.Interval.Duration;
+                        zonesLong.Remove(zigZag);
+                        break;
+                    }
+                }
+                foreach (var zigZag in zonesShort)
+                {
+                    if (key > zigZag.Candle.OpenTime + delay && candle.High > zigZag.Bottom)
+                    {
+                        zigZag.CloseDate = candle.OpenTime + data.SymbolInterval.Interval.Duration;
+                        zonesShort.Remove(zigZag);
+                        break;
+                    }
+                }
+            }
+            key += data.SymbolInterval.Interval.Duration;
+        }
+    }
+
+    
+    public static void CalculateBrokenBoxes(ZoneData data)
+    {
+        List<ZigZagResult> zonesLong = [];
+        List<ZigZagResult> zonesShort = [];
+
+        long delay = 4 * data.SymbolInterval.Interval.Duration; // TODO, not correct!
+        long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+
+        if (data.Indicator.ZigZagList.Count > 0)
+        {
+            // brute force, this is going to take a lot of iterations..
+            int last = data.Indicator.ZigZagList.Count - 1;
+            long key = data.Indicator.ZigZagList.First().Candle.OpenTime + delay;
+
+            for (int i = 0; i <= last; i++)
+            {
+                var zigZag = data.Indicator.ZigZagList[i];
+
+                if (zigZag.Dominant && !zigZag.Dummy) // all newCreatedZones (also the closed ones) //  && zigZag.IsValid
+                {
+                    // The newCreatedZones are growing as we iterate, broken newCreatedZones will be removed to keep the list small
+                    if (zigZag.PointType == 'L')
+                        zonesLong.Add(zigZag);
+                    else
+                        zonesShort.Add(zigZag);
+
+                    long checkUpTo;
+                    if (i < last)
+                        checkUpTo = zigZag.Candle.OpenTime;
+                    else
+                        checkUpTo = maxTime;
+
+                    CheckZones(data, ref key, checkUpTo, delay, zonesLong, zonesShort);
+                }
+                else
+                {
+                    // Close it just to be sure..
+                    zigZag.CloseDate = zigZag.Candle.OpenTime + data.SymbolInterval.Interval.Duration;
+                }
+            }
+            CheckZones(data, ref key, maxTime, delay, zonesLong, zonesShort);
+        }
+    }
+
+    internal static void CalculateIntroZone(ZoneData data)
+    {
+        // Determine if a liq. box/zone has an interesting intro
+        if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
+        {
+            ZigZagResult? previous = null;
+            foreach (var zigZag in data.Indicator.ZigZagList)
+            {
+                if (previous != null)
+                {
+                    if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newCreatedZones (also the closed ones)
+                    {
+                        decimal price = zigZag.Value;
+                        long max = zigZag.Candle.OpenTime;
+                        long min = max - GlobalData.Settings.Signal.Zones.ZoneStartCandleCount * data.Interval.Duration;
+                        if (min < previous.Candle.OpenTime)
+                            min = previous.Candle.OpenTime;
+                        while (min < max)
+                        {
+                            if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle? candle))
+                            {
+                                if (zigZag.PointType == 'L')
+                                {
+                                    if (candle.High > zigZag.Value)
+                                    {
+                                        if (candle.High > price)
+                                            price = candle.High;
+                                    }
+                                }
+                                else
+                                {
+                                    if (candle.Low < zigZag.Value)
+                                    {
+                                        if (candle.Low < price)
+                                            price = candle.Low;
+                                    }
+                                }
+                            }
+                            min += data.SymbolInterval.Interval.Duration;
+                        }
+
+
+                        //Problem Value is not the start of the box!!
+                        //double diff = (double)Math.Abs(zigZag.Value - price);
+                        //double perc = 100 * diff / (double)zigZag.Value;
+                        //if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                        //{
+                        //    zigZag.NiceIntro = $"{perc:N2} !";
+                        //}
+                        //else
+                        //    zigZag.NiceIntro = $"{perc:N2}";
+
+                        decimal boxLimit;
+                        if (zigZag.PointType == 'L')
+                            boxLimit = zigZag.Candle.Low;
+                        else
+                            boxLimit = zigZag.Candle.High;
+                        double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
+                        zigZag.NiceIntro = $"{perc:N2}"; // {price} {boxLimit}";
+
+                        if (perc <= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                            zigZag.Strength = CryptoZoneStrength.Weak;
+                        else
+                            zigZag.Strength = CryptoZoneStrength.Strong; 
+                    }
+                }
+                previous = zigZag;
+            }
+        }
+    }
+
+
+    public static async Task CalculateDlzZonesAsync(AddTextEvent? sender, ZoneSession session,
+        ZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    {
+        try
+        {
+            // Determine dates
+            long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
+            long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
+            fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
+            // Load candles from disk
+            if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
+                await ZoneCandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
+            loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing zoneExistsInDatabase (save alway's)
+                                                                              // Load candles from the exchange
+            if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+                loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
+            if (data.SymbolInterval.CandleList.Count == 0)
+                return;
+
+
+            await data.Symbol.CandleLock.WaitAsync();
+            try
+            {
+                // Calculate indicators
+                foreach (var candle in data.SymbolInterval.CandleList.Values)
+                {
+                    if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
+                    {
+                        data.Indicator.Calculate(candle, session.UseBatchProcess);
+#if !DEBUGZIGZAG
+                        data.IndicatorFib.Calculate(candle, session.UseBatchProcess);
+#endif
+                    }
+                }
+
+                // Remember the last swing point for the automatic zone calculation
+                AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
+                AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(data.Interval.IntervalPeriod);
+                if (data.Indicator.LastSwingPoint != null)
+                    symbolIntervalData.Zones.TimeLastSwingPoint = data.Indicator.LastSwingPoint.Candle.OpenTime;
+                if (data.Indicator.LastSwingLow != null)
+                    symbolIntervalData.Zones.LastSwingLow = data.Indicator.LastSwingLow.Value;
+                if (data.Indicator.LastSwingHigh != null)
+                    symbolIntervalData.Zones.LastSwingHigh = data.Indicator.LastSwingHigh.Value;
+
+                if (session.UseBatchProcess)
+                {
+                    data.Indicator.FinishBatch();
+#if !DEBUGZIGZAG
+                    data.IndicatorFib.FinishBatch();
+#endif
+                }
+            }
+            finally
+            {
+                data.Symbol.CandleLock.Release();
+            }
+
+
+            // Mark the dominant lows or highs
+            if (session.ForceCalculation)
+            {
+                await CalculateLiqBoxesAsync(sender, data, session.ZoomLiqBoxes, loadedCandlesInMemory);
+                CalculateIntroZone(data);
+                CalculateBrokenBoxes(data);
+                SaveZonesForSymbol(data, data.Indicator.ZigZagList);
+            }
+
+
+            //GlobalData.AddTextToLogTab($"{data.Symbol.Name} points={data.Indicator.PivotList.Count} fib.points={data.IndicatorFib.PivotList.Count}");
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Info($"ERROR {error}");
+            GlobalData.AddTextToLogTab($"ERROR {error}");
+        }
+    }
+
+}

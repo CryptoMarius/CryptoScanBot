@@ -124,28 +124,28 @@ public class CryptoDatabase : IDisposable
 
             using var transaction = connection.BeginTransaction();
 
-            // De intervallen moeten aanwezig zijn na initialisatie
+            // All the required and supported intervals
             List<CryptoInterval> IntervalList = [];
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); //0
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, IntervalList[0])); //1
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, IntervalList[0])); //2
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5 * 60, IntervalList[0])); //3
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval10m, "10m", 10 * 60, IntervalList[3])); //4
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval15m, "15m", 15 * 60, IntervalList[3]));  //5
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval30m, "30m", 30 * 60, IntervalList[5])); //6
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1h, "1h", 01 * 60 * 60, IntervalList[6])); //7
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2h, "2h", 02 * 60 * 60, IntervalList[7])); //8
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3h, "3h", 03 * 60 * 60, IntervalList[7])); //9
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60 * 60, IntervalList[8])); //10
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60 * 60, IntervalList[9])); //11
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60 * 60, IntervalList[10])); //12
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, IntervalList[10])); //13
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 1 * 24 * 60 * 60, IntervalList[11])); //14
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); // 0
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, IntervalList[0])); // 1
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, IntervalList[0])); // 2
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5 * 60, IntervalList[0])); // 3
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval10m, "10m", 10 * 60, IntervalList[3])); // 4
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval15m, "15m", 15 * 60, IntervalList[3]));  // 5
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval30m, "30m", 30 * 60, IntervalList[5])); // 6
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1h, "1h", 01 * 60 * 60, IntervalList[6])); // 7
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2h, "2h", 02 * 60 * 60, IntervalList[7])); // 8
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3h, "3h", 03 * 60 * 60, IntervalList[7])); // 9
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60 * 60, IntervalList[8])); // 10
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60 * 60, IntervalList[9])); // 11
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60 * 60, IntervalList[10])); // 12
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, IntervalList[10])); // 13
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 24 * 60 * 60, IntervalList[11])); // 14
 
-            // iets teveel, niet relevant voor deze tool
-            //IntervalList.Add(new CryptoInterval(CryptoIntervalPeriod.interval3d, "3d", 3 * 24 * 60 * 60, IntervalList[12])); //13
-            //IntervalList.Add(new Interval(IntervalPeriod.interval1w, "1w", 7 * 24 * 60 * 60, IntervalList[12], (decimal)4)); //14
-            //IntervalList.Add(new Interval(IntervalPeriod.interval2w, "2w", 14 * 24 * 60 * 60, IntervalList[14], (decimal)4)); //15
+            // Not relevant for this tool (for now?)
+            //IntervalList.Add(CryptoInterval.CreateInterval(CryptoInterval.interval3d, "3d", 3 * 24 * 60 * 60, IntervalList[14])); // 15
+            //IntervalList.Add(CryptoInterval.CreateInterval(IntervalPeriod.interval1w, "1w", 7 * 24 * 60 * 60, IntervalList[14])); // 16
+            //IntervalList.Add(CryptoInterval.CreateInterval(IntervalPeriod.interval2w, "2w", 14 * 24 * 60 * 60, IntervalList[16])); // 17
 
             foreach (CryptoInterval interval in IntervalList)
             {
@@ -179,10 +179,13 @@ public class CryptoDatabase : IDisposable
 
             // not supported (kline streams not working properly)
             new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
+            // Never looked at futures though..
 
             new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
             // Er is nog geen nuget library die deze ondersteund
             //new() { Name = "Mexc Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
+
+            new() { Name = "Okx Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
         ];
     }
 
@@ -324,7 +327,7 @@ public class CryptoDatabase : IDisposable
     //            "LastCandleSynchronized TEXT NULL," + // overlapt
     //            "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
     //            "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
-    //            "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
+    //            "FOREIGN KEY(IntervalId) REFERENCES IntervalList(Id)" +
     //        ")");
     //        connection.Connection.Execute("CREATE INDEX IdxSymbolIntervalId ON SymbolInterval(Id)");
     //        connection.Connection.Execute("CREATE INDEX IdxSymbolIntervalExchangeId ON SymbolInterval(ExchangeId)");
@@ -773,8 +776,10 @@ public class CryptoDatabase : IDisposable
                 "AccountId INTEGER NOT NULL," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
+                "IntervalId INTEGER NOT NULL," +
                 "Kind INTEGER not null," +
                 "Side INTEGER not null," +
+                "Strength INTEGER not null, " +
                 "OpenTime TEXT NULL," +
                 "Top TEXT not null," +
                 "Bottom TEXT not null," +
@@ -785,11 +790,13 @@ public class CryptoDatabase : IDisposable
                 "IsValid INTEGER not null," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
-                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+                "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
+                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxZoneId ON Zone(Id)");
             connection.Connection.Execute("CREATE INDEX IdxZoneExchangeId ON Zone(ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneSymbolId ON Zone(SymbolId)");
+            connection.Connection.Execute("CREATE INDEX IdxZoneIntervalId ON Zone(IntervalId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneAccountId ON Zone(AccountId)");
         }
     }
@@ -850,7 +857,11 @@ public class CryptoDatabase : IDisposable
             databaseThread.Open();
             using var transaction = databaseThread.BeginTransaction();
             {
-                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", new { opendate = DateTime.UtcNow.AddDays(-7) });
+                DateTime aWhileAgo = DateTime.UtcNow.AddDays(-7);
+                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", new { opendate = aWhileAgo });
+
+                long aWhileAgoUnix = CandleTools.GetUnixTime(aWhileAgo, 60);
+                databaseThread.Connection.Execute("delete from zone where kind = 2 and closetime < @closetime", new { closetime = aWhileAgoUnix });
                 transaction.Commit();
             }
         }
@@ -908,6 +919,8 @@ public class CryptoDatabase : IDisposable
         // Indien noodzakelijk database upgraden 
         Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
+        // Frequently dropped
+        CreateTableZone(connection);
 
         CleanUpDatabase();
 

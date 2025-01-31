@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 38;
+    public readonly static int CurrentDatabaseVersion = 41;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1051,6 +1051,61 @@ public class Migration
             transaction.Commit();
         }
 
+        //***********************************************************
+        // 23-01-2025, added interval to zone table (foreign key, just drop the table)
+        if (CurrentVersion > version.Version && version.Version == 38)
+        {
+            using var transaction = database.BeginTransaction();
+
+            //New types of zones
+            //try { database.Connection.Execute("delete fom Zone", transaction); } catch { }
+            //try { database.Connection.Execute("alter table Zone add IntervalId integer", transaction); } catch { }
+            try { database.Connection.Execute("drop table Zone", transaction); } catch { }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 25-01-2025, added OKX experimental
+        if (CurrentVersion > version.Version && version.Version == 39)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // New exchange OKX Spot
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(6, 0, 'Okx Spot', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 0);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 0);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 0);", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 31-01-2025 Indication of weak or strong boxes
+        if (CurrentVersion > version.Version && version.Version == 40)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // For indication of weak or strong boxes
+            // note: with a try catch because of possible new zone table
+            try { database.Connection.Execute("alter table zone add Strength integer", transaction); } catch { }
+            try { database.Connection.Execute("update zone set Strength=0", transaction); } catch { }
+            try { database.Connection.Execute("update zone set Strength=1 where Kind=1", transaction); } catch { }
+            try { database.Connection.Execute("update zone set Strength=2 where Kind=1 and Description like '%!'", transaction); } catch { }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 
 }

@@ -34,6 +34,7 @@ public partial class FrmSettings : Form
         UserControlTradingLong.InitControls(true, CryptoTradeSide.Long);
         UserControlTradingShort.InitControls(true, CryptoTradeSide.Short);
 
+        UserControlIntervalZonesDominant.InitControls(CryptoIntervalPeriod.interval1h);
         UserControlIntervalZonesFvg.InitControls(CryptoIntervalPeriod.interval1h);
 
         // Trading (excluding the backtest)
@@ -239,6 +240,7 @@ public partial class FrmSettings : Form
         EditJumpUseLowHighCalculation.Checked = settings.Signal.Jump.UseLowHighCalculation;
 
         // Dominant Zones
+        UserControlIntervalZonesDominant.LoadConfig(settings.Signal.Zones.IntervalList);
         UserControlSettingsSoundAndColorsZonesDominant.LoadConfig("Zones", settings.Signal.Zones);
 
         EditShowZoneSignalsLong.Checked = settings.Signal.Zones.ShowSignalsLong;
@@ -261,7 +263,7 @@ public partial class FrmSettings : Form
         EditZoneStartPercentage.Value = (decimal)settings.Signal.Zones.ZoneStartPercentage;
 
         // Zones FVG
-        UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.Interval);
+        UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.ZonesFvg);
         EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
         EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
@@ -515,13 +517,13 @@ public partial class FrmSettings : Form
 
 
         // Dominant Zones
+        UserControlIntervalZonesDominant.SaveConfig(settings.Signal.Zones.IntervalList);
         UserControlSettingsSoundAndColorsZonesDominant.SaveConfig(settings.Signal.Zones);
 
         settings.Signal.Zones.ShowSignalsLong = EditShowZoneSignalsLong.Checked;
         settings.Signal.Zones.ShowSignalsShort = EditShowZoneSignalsShort.Checked;
         settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
         settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
-        //settings.Signal.Zones.Interval = CryptoIntervalPeriod.interval1h; //EditZonesInterval.Value; hardcoded 1h
         settings.Signal.Zones.CandleCountZoom = (int)EditZonesCandleCountZoom.Value;
 
         settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
@@ -538,7 +540,7 @@ public partial class FrmSettings : Form
 
 
         // FVG
-        UserControlIntervalZonesFvg.SaveConfig(settings.Signal.ZonesFvg.Interval);
+        UserControlIntervalZonesFvg.SaveConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.SaveConfig(settings.Signal.ZonesFvg);
         settings.Signal.ZonesFvg.ShowSignalsLong = EditShowFvgSignalsLong.Checked;
         settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;

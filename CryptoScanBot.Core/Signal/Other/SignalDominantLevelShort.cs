@@ -16,80 +16,96 @@ public class SignalDominantLevelShort : SignalCreateBase
 
     public override bool IsSignal()
     {
-        AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
-        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.Zones.Interval);
-        int index = 0;
         ExtraText = "";
         bool result = false;
-        decimal distance = 100m;
-        while (index < symbolData.ZoneListShort.Count) // sorted on Zone.Bottom asscending
+        
+        decimal closestZone = 100;
+        AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+
+        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListShort.Count}");
+        foreach (var intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
         {
-            decimal? alarmPrice = null;
-            var zone = symbolData.ZoneListShort[index];
-            if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
+            if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
             {
-                // Close old invalid zone without notifications..
-                if (CandleLast.Low > zone.Top)
+                var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+
+                int index = 0;
+                decimal distance = 100m;
+                while (index < symbolIntervalData.DlzZones.ShortOpen.Count) // sorted on Zone.Bottom asscending
                 {
-                    zone.CloseTime = CandleLast.OpenTime;
-                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone #{zone.Id} {zone.Side} {zone.Description}");
-                }
-                else
-                {
-                    // If it is within a certain percentage signal it..
-                    alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
-                    if (CandleLast.High >= alarmPrice)
+                    decimal? alarmPrice = null;
+                    var zone = symbolIntervalData.DlzZones.ShortOpen[index];
+                    if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
                     {
-                        if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                        // Close old invalid zone without notifications..
+                        if (CandleLast.Low > zone.Top)
                         {
-                            result = true;
-                            zone.AlarmDate = CandleLast.Date;
+                            zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
-                            ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone #{zone.Id} {zone.Side} {zone.Description}");
+                        }
+                        else
+                        {
+                            // If it is within a certain percentage signal it..
+                            alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.Zones.WarnPercentage) / 100;
+                            if (CandleLast.High >= alarmPrice)
+                            {
+                                if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                                {
+                                    result = true;
+                                    zone.AlarmDate = CandleLast.Date;
+                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                }
+                            }
+
+
+                            // Close if the candle touched the zone..
+                            if (CandleLast.High > zone.Bottom)
+                            {
+                                ExtraText += "....";
+                                zone.CloseTime = CandleLast.OpenTime;
+                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone #{zone.Id} {zone.Side} {zone.Description}");
+                            }
+
+
+                            // Show the distance to the next available zone (for the symbol grid)
+                            if (zone.CloseTime == null)
+                            {
+                                decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                if (dist < distance)
+                                    distance = dist;
+                            }
                         }
                     }
 
-
-                    // Close if the candle touched the zone..
-                    if (CandleLast.High > zone.Bottom)
+                    // Remove closed zones
+                    if (zone.CloseTime != null)
                     {
-                        ExtraText += "....";
-                        zone.CloseTime = CandleLast.OpenTime;
-                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone #{zone.Id} {zone.Side} {zone.Description}");
+                        symbolIntervalData.DlzZones.ShortOpen.RemoveAt(index);
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
+                    else index++;
 
 
-                    // Show the distance to the next available zone (for the symbol grid)
-                    if (zone.CloseTime == null)
-                    {
-                        decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
-                        if (dist < distance)
-                            distance = dist;
-                    }
+                    // The list is sorted on its top value and if there are no more reachable zones break
+                    // (this saves a lot of looping time)
+                    if (alarmPrice != null && alarmPrice < zone.Bottom)
+                        break;
                 }
+
+                symbolIntervalData.Zones.BestShortZone = distance;
+                if (distance < closestZone)
+                    closestZone = distance;
             }
-
-            // Remove closed zones
-            if (zone.CloseTime != null)
-            {
-                symbolData.ZoneListShort.RemoveAt(index);
-                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone #{zone.Id} {zone.Side} {zone.Description}");
-            }
-            else index++;
-
-
-            // The list is sorted on its top value and if there are no more reachable zones break
-            // (this saves a lot of looping time)
-            if (alarmPrice != null && alarmPrice < zone.Bottom)
-                break;
         }
-        symbolIntervalData.BestShortZone = distance;
+        symbolData.BestShortZone = closestZone;
+    
         return result;
     }
+
 
 
     public override bool AllowStepIn(CryptoSignal signal)

@@ -137,7 +137,7 @@ public static class GlobalData
     public static ThreadMonitorCandle? ThreadMonitorCandle { get; set; }
     public static ThreadMonitorOrder? ThreadMonitorOrder { get; set; }
     public static ThreadCheckFinishedPosition? ThreadCheckPosition { get; set; }
-    public static ZoneCalculateThread? ThreadZoneCalculate { get; set; }
+    public static ZoneThreadCalculate? ThreadZoneCalculate { get; set; }
 
 
     // On special request of a hardcore trader..

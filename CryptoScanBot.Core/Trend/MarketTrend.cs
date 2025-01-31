@@ -25,16 +25,16 @@ public class MarketTrend
                     //int weightSum2 = 0;
                     //int weightMax2 = 0;
                     //int iterarator = 0;
-                    foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolTrendDataList)
+                    foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolIntervalDataList)
                     {
                         //iterarator++;
                         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(accountSymbolIntervalData.IntervalPeriod);
                         await TrendInterval.CalculateAsync(symbol, symbolInterval.CandleList, accountSymbolIntervalData, candleIntervalStart, candleIntervalEnd, log);
 
                         int weight1 = accountSymbolIntervalData.Interval.Duration;
-                        if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bullish)
+                        if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bullish)
                             weightSum1 += weight1;
-                        else if (accountSymbolIntervalData.TrendIndicator == CryptoTrendIndicator.Bearish)
+                        else if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bearish)
                             weightSum1 -= weight1;
                         weightMax1 += weight1;
 

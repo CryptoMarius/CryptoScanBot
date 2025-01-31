@@ -16,65 +16,62 @@ public class SignalFairValueGapLong : SignalCreateBase
 
     public override bool IsSignal()
     {
+        ExtraText = "";
+        bool result = false;
         AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
-        int index = 0;
-        ExtraText = "";
-        bool result = false;
-        while (index < symbolData.FvgListLong.Count) // sorted on Zone.Top descending
+        foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
         {
-            decimal? alarmPrice = null;
-            var zone = symbolData.FvgListLong[index];
-            if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
+            if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
             {
-                // Close old invalid zone without notifications..
-                if (CandleLast.High < zone.Bottom)
+                var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+
+                int index = 0;
+                while (index < symbolIntervalData.FvgZones.LongOpen.Count) // sorted on Zone.Top descending
                 {
-                    zone.CloseTime = CandleLast.OpenTime;
-                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone {zone.Id} {zone.Side} {zone.Description}");
-                }
-                else
-                {
-                    // If it is within a certain percentage signal it..
-                    alarmPrice = zone.Top;
-                    if (CandleLast.Low <= alarmPrice)
+                    var zone = symbolIntervalData.FvgZones.LongOpen[index];
+
+                    if (CandleLast.OpenTime >= zone.OpenTime)
                     {
-                        if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                        if (CandleLast.High < zone.Bottom) // Close without notifications..
                         {
-                            result = true;
-                            zone.AlarmDate = CandleLast.Date;
+                            zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
-                            ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone {zone.Id} {zone.Side} {zone.Description}");
+                        }
+                        else if (CandleLast.Low <= zone.Top)
+                        {
+                            // Otherwise signal it (already to late?)
+                            if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                            {
+                                result = true;
+                                zone.AlarmDate = CandleLast.Date;
+                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                                ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                            }
+
+                            // Close if the candle touched the zone..
+                            zone.CloseTime = CandleLast.OpenTime;
+                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                         }
                     }
 
-
-                    // Close if the candle touched the zone..
-                    if (CandleLast.Low < zone.Top)
+                    if (zone.CloseTime != null)
                     {
-                        ExtraText += "....";
-                        zone.CloseTime = CandleLast.OpenTime;
-                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                        symbolIntervalData.FvgZones.LongOpen.RemoveAt(index);
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
+                    else index++;
+
+
+                    // The list is sorted on zone.top and break if there are no more reachable zones (saves some looping time)
+                    if (CandleLast.Low > zone.Top)
+                        break;
                 }
             }
-
-            if (zone.CloseTime != null)
-            {
-                symbolData.FvgListLong.RemoveAt(index);
-                GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-            }
-            else index++;
-
-
-            // The list is sorted on its top value and if there are no more reachable zones break
-            // (this saves a lot of looping time)
-            if (alarmPrice != null && alarmPrice > zone.Top)
-                break;
         }
         return result;
     }

@@ -4,12 +4,6 @@ using Dapper.Contrib.Extensions;
 
 namespace CryptoScanBot.Core.Model;
 
-public enum CryptoZoneKind
-{
-    DominantLevel = 1, // Or LiquidityZone..?
-    FairValueGap = 2,
-}
-
 [Table("Zone")]
 public class CryptoZone
 {
@@ -28,8 +22,13 @@ public class CryptoZone
     [Computed]
     public required virtual CryptoSymbol Symbol { get; set; }
 
+    public required int IntervalId { get; set; }
+    [Computed]
+    public required virtual CryptoInterval Interval { get; set; }
+
     public required CryptoZoneKind Kind { get; set; }
     public required CryptoTradeSide Side { get; set; }
+    public required CryptoZoneStrength Strength { get; set; }
 
     // Created on..
     public required DateTime CreateTime { get; set; }
