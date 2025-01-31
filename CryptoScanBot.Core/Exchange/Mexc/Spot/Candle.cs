@@ -42,7 +42,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
     Again:
-        var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate, limit: limit);
+        var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, 
+            startTime: minDate, endTime: maxDate, limit: limit);
         if (!result.Success)
         {
             // This is based on the kucoin error number,, does Mexc have an error for overloading the exchange as wel?

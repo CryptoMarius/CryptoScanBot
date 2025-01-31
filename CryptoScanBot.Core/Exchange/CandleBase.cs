@@ -94,7 +94,7 @@ public class CandleBase(ExchangeBase api)
                                         Monitor.Exit(queue);
                                     }
 
-                                    // Er is niet geswitvhed van exchange (omdat het ophalen zo lang duurt)
+                                    // Er is niet geswitched van exchange (omdat het ophalen zo lang duurt)
                                     if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
                                     {
                                         CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);

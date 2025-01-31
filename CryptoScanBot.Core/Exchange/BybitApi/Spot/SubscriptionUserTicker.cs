@@ -1,5 +1,5 @@
 ﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums.V5;
+using Bybit.Net.Enums;
 
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;

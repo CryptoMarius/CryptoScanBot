@@ -44,16 +44,16 @@ public class Order() : OrderBase(), IOrder
 
 
     // Converteer de orderstatus van Exchange naar "intern"
-    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.V5.OrderStatus orderStatus)
+    public static CryptoOrderStatus LocalOrderStatus(Bybit.Net.Enums.OrderStatus orderStatus)
     {
         CryptoOrderStatus localOrderStatus = orderStatus switch
         {
-            Bybit.Net.Enums.V5.OrderStatus.New => CryptoOrderStatus.New,
-            Bybit.Net.Enums.V5.OrderStatus.Filled => CryptoOrderStatus.Filled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
-            Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
-            //Bybit.Net.Enums.V5.OrderStatus.Expired => CryptoOrderStatus.Expired,
-            Bybit.Net.Enums.V5.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
+            Bybit.Net.Enums.OrderStatus.New => CryptoOrderStatus.New,
+            Bybit.Net.Enums.OrderStatus.Filled => CryptoOrderStatus.Filled,
+            Bybit.Net.Enums.OrderStatus.PartiallyFilled => CryptoOrderStatus.PartiallyFilled,
+            Bybit.Net.Enums.OrderStatus.PartiallyFilledCanceled => CryptoOrderStatus.PartiallyAndClosed, // niet alles kon omgezet worden, iets minder gekregen
+            //Bybit.Net.Enums.OrderStatus.Expired => CryptoOrderStatus.Expired,
+            Bybit.Net.Enums.OrderStatus.Cancelled => CryptoOrderStatus.Canceled,
             _ => throw new Exception("Niet ondersteunde orderstatus"),
         };
 
@@ -86,7 +86,7 @@ public class Order() : OrderBase(), IOrder
             order.Price = item.AveragePrice;
         order.Quantity = item.Quantity;
         // Bij deze status wordt het aangevraagde hoeveelheid niet goed ingevuld
-        if (item.Status == Bybit.Net.Enums.V5.OrderStatus.PartiallyFilledCanceled && item.QuantityFilled.HasValue)
+        if (item.Status == Bybit.Net.Enums.OrderStatus.PartiallyFilledCanceled && item.QuantityFilled.HasValue)
             order.Quantity = item.QuantityFilled.Value;
         if (order.Price.HasValue)
             order.QuoteQuantity = order.Price.Value * order.Quantity;

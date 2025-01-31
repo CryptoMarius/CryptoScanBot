@@ -7,4 +7,5 @@ public enum CryptoExchangeType
     Kraken = 3,
     Kucoin = 4,
     Mexc = 5,
+    Okx = 6,
 }

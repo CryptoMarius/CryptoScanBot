@@ -15,7 +15,7 @@ internal class Test
         BybitRestClient.SetDefaultOptions(options =>
         {
             options.OutputOriginalData = true;
-            options.SpotOptions.AutoTimestamp = true;
+            //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);

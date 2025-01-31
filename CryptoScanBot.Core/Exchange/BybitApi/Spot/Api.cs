@@ -93,7 +93,7 @@ public class Api : ExchangeBase
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
             options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);

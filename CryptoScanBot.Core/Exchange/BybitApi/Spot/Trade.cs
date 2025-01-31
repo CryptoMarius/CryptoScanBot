@@ -1,5 +1,4 @@
 ﻿using Bybit.Net.Clients;
-using Bybit.Net.Objects.Models.Spot;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoScanBot.Core.Context;
@@ -15,152 +14,152 @@ namespace CryptoScanBot.Core.Exchange.BybitApi.Spot;
 
 public class Trade() : TradeBase(), ITrade
 {
-    public static void PickupTradeV3(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
-    {
-        trade.TradeTime = item.TradeTime;
+    //public static void PickupTradeV3(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitSpotUserTradeV3 item)
+    //{
+    //    trade.TradeTime = item.TradeTime;
 
-        trade.TradeAccount = tradeAccount;
-        trade.TradeAccountId = tradeAccount.Id;
-        trade.Exchange = symbol.Exchange;
-        trade.ExchangeId = symbol.ExchangeId;
-        trade.Symbol = symbol;
-        trade.SymbolId = symbol.Id;
+    //    trade.TradeAccount = tradeAccount;
+    //    trade.TradeAccountId = tradeAccount.Id;
+    //    trade.Exchange = symbol.Exchange;
+    //    trade.ExchangeId = symbol.ExchangeId;
+    //    trade.Symbol = symbol;
+    //    trade.SymbolId = symbol.Id;
 
-        trade.TradeId = item.TradeId.ToString();
-        trade.OrderId = item.OrderId.ToString();
+    //    trade.TradeId = item.TradeId.ToString();
+    //    trade.OrderId = item.OrderId.ToString();
 
-        trade.Price = item.Price;
-        trade.Quantity = item.Quantity;
-        trade.QuoteQuantity = item.Price * item.Quantity;
-        trade.Commission = item.Fee;
-        trade.CommissionAsset = item.FeeAsset;
-    }
-
-
-    public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
-    {
-        trade.TradeTime = item.Timestamp;
-
-        trade.TradeAccount = tradeAccount;
-        trade.TradeAccountId = tradeAccount.Id;
-        trade.Exchange = symbol.Exchange;
-        trade.ExchangeId = symbol.ExchangeId;
-        trade.Symbol = symbol;
-        trade.SymbolId = symbol.Id;
-
-        trade.TradeId = item.TradeId.ToString();
-        trade.OrderId = item.OrderId.ToString();
-
-        trade.Price = item.Price;
-        trade.Quantity = item.Quantity;
-        trade.QuoteQuantity = item.Price * item.Quantity;
-        if (item.Fee != null)
-            trade.Commission = (decimal)item.Fee;
-        if (item.FeeAsset != null)
-            trade.CommissionAsset = item.FeeAsset;
-    }
+    //    trade.Price = item.Price;
+    //    trade.Quantity = item.Quantity;
+    //    trade.QuoteQuantity = item.Price * item.Quantity;
+    //    trade.Commission = item.Fee;
+    //    trade.CommissionAsset = item.FeeAsset;
+    //}
 
 
-    /// <summary>
-    /// Haal de trades van 1 symbol op
-    /// </summary>
-    public async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
-    {
-        using BybitRestClient client = new();
-        int tradeCount = 0;
-        try
-        {
-            bool isChanged = false;
-            long? fromId = position.Symbol.LastTradeIdFetched;
-            List<CryptoTrade> tradeCache = [];
+    //public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, BybitUserTrade item)
+    //{
+    //    trade.TradeTime = item.Timestamp;
 
-            //GlobalData.AddTextToLogTab($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
-            //ScannerLog.Logger.Trace($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
+    //    trade.TradeAccount = tradeAccount;
+    //    trade.TradeAccountId = tradeAccount.Id;
+    //    trade.Exchange = symbol.Exchange;
+    //    trade.ExchangeId = symbol.ExchangeId;
+    //    trade.Symbol = symbol;
+    //    trade.SymbolId = symbol.Id;
 
-            while (true)
-            {
-                // Administration via Symbol.LastTradeIdFetched (number)
-                if (fromId != null)
-                    fromId += 1;
+    //    trade.TradeId = item.TradeId.ToString();
+    //    trade.OrderId = item.OrderId.ToString();
 
-                LimitRate.WaitForFairWeight(1);
-                ScannerLog.Logger.Trace($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
-                var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, limit: 1000);
-                if (!result.Success)
-                {
-                    GlobalData.AddTextToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
-                    break;
-                }
-
-                if (result.Data != null && result.Data.Any())
-                {
-                    foreach (var item in result.Data)
-                    {
-                        string tradeId = item.TradeId.ToString();
-                        string orderId = item.OrderId.ToString();
-
-                        if (position.StepOrderList.TryGetValue(orderId, out var order))
-                        {
-                            CryptoTrade? trade = position.TradeList.Find(tradeId);
-                            if (trade == null)
-                            {
-                                trade = new()
-                                {
-                                    TradeAccount = position.Account!,
-                                    Exchange = position.Exchange,
-                                    Symbol = position.Symbol,
-                                };
-                                PickupTradeV3(position.Account, position.Symbol, trade, item);
-                                string text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
-                                ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
-                                tradeCache.Add(trade);
-                                position.TradeList.AddTrade(trade);
-
-                                //if (!position.Symbol.LastTradeIdFetched.HasValue || item.TradeId > position.Symbol.LastTradeIdFetched)
-                                //{
-                                //    isChanged = true;
-                                //    fromId = item.TradeId;
-                                //    position.Symbol.LastTradeIdFetched = item.TradeId;
-                                //    position.Symbol.LastTradeFetched = trade.TradeTime;
-                                //}
-                            }
-                        }
-
-                        if (!position.Symbol.LastTradeIdFetched.HasValue || item.TradeId > position.Symbol.LastTradeIdFetched)
-                        {
-                            isChanged = true;
-                            //fromId = item.TradeId;
-                            position.Symbol.LastTradeIdFetched = item.TradeId;
-                            position.Symbol.LastTradeFetched = item.TradeTime;
-                        }
-                        fromId = item.TradeId;
-                    }
-                }
-                else break;
-            }
+    //    trade.Price = item.Price;
+    //    trade.Quantity = item.Quantity;
+    //    trade.QuoteQuantity = item.Price * item.Quantity;
+    //    if (item.Fee != null)
+    //        trade.Commission = (decimal)item.Fee;
+    //    if (item.FeeAsset != null)
+    //        trade.CommissionAsset = item.FeeAsset;
+    //}
 
 
+    ///// <summary>
+    ///// Haal de trades van 1 symbol op
+    ///// </summary>
+    //public async Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
+    //{
+    //    using BybitRestClient client = new();
+    //    int tradeCount = 0;
+    //    try
+    //    {
+    //        bool isChanged = false;
+    //        long? fromId = position.Symbol.LastTradeIdFetched;
+    //        List<CryptoTrade> tradeCache = [];
 
-            if (tradeCache.Count > 0 || isChanged)
-            {
-                database.Open();
-                GlobalData.AddTextToLogTab("Trades " + position.Symbol.Name + " " + tradeCache.Count.ToString());
-                foreach (var trade in tradeCache)
-                    database.Connection.Insert(trade);
-                tradeCount += tradeCache.Count;
+    //        //GlobalData.AddTextToLogTab($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
+    //        //ScannerLog.Logger.Trace($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
 
-                if (isChanged)
-                    database.Connection.Update(position.Symbol);
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
-        }
+    //        while (true)
+    //        {
+    //            // Administration via Symbol.LastTradeIdFetched (number)
+    //            if (fromId != null)
+    //                fromId += 1;
 
-        return tradeCount;
-    }
+    //            LimitRate.WaitForFairWeight(1);
+    //            ScannerLog.Logger.Trace($"GetTradesAsync {position.Symbol.Name} fetching trades from exchange {fromId}");
+    //            var result = await client.SpotApiV3.Trading.GetUserTradesAsync(position.Symbol.Name, fromId: fromId, limit: 1000);
+    //            if (!result.Success)
+    //            {
+    //                GlobalData.AddTextToLogTab($"{position.Symbol.Name} error retreiving trades {result.Error}");
+    //                break;
+    //            }
+
+    //            if (result.Data != null && result.Data.Any())
+    //            {
+    //                foreach (var item in result.Data)
+    //                {
+    //                    string tradeId = item.TradeId.ToString();
+    //                    string orderId = item.OrderId.ToString();
+
+    //                    if (position.StepOrderList.TryGetValue(orderId, out var order))
+    //                    {
+    //                        CryptoTrade? trade = position.TradeList.Find(tradeId);
+    //                        if (trade == null)
+    //                        {
+    //                            trade = new()
+    //                            {
+    //                                TradeAccount = position.Account!,
+    //                                Exchange = position.Exchange,
+    //                                Symbol = position.Symbol,
+    //                            };
+    //                            PickupTradeV3(position.Account, position.Symbol, trade, item);
+    //                            string text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
+    //                            ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
+    //                            tradeCache.Add(trade);
+    //                            position.TradeList.AddTrade(trade);
+
+    //                            //if (!position.Symbol.LastTradeIdFetched.HasValue || item.TradeId > position.Symbol.LastTradeIdFetched)
+    //                            //{
+    //                            //    isChanged = true;
+    //                            //    fromId = item.TradeId;
+    //                            //    position.Symbol.LastTradeIdFetched = item.TradeId;
+    //                            //    position.Symbol.LastTradeFetched = trade.TradeTime;
+    //                            //}
+    //                        }
+    //                    }
+
+    //                    if (!position.Symbol.LastTradeIdFetched.HasValue || item.TradeId > position.Symbol.LastTradeIdFetched)
+    //                    {
+    //                        isChanged = true;
+    //                        //fromId = item.TradeId;
+    //                        position.Symbol.LastTradeIdFetched = item.TradeId;
+    //                        position.Symbol.LastTradeFetched = item.TradeTime;
+    //                    }
+    //                    fromId = item.TradeId;
+    //                }
+    //            }
+    //            else break;
+    //        }
+
+
+
+    //        if (tradeCache.Count > 0 || isChanged)
+    //        {
+    //            database.Open();
+    //            GlobalData.AddTextToLogTab("Trades " + position.Symbol.Name + " " + tradeCache.Count.ToString());
+    //            foreach (var trade in tradeCache)
+    //                database.Connection.Insert(trade);
+    //            tradeCount += tradeCache.Count;
+
+    //            if (isChanged)
+    //                database.Connection.Update(position.Symbol);
+    //        }
+    //    }
+    //    catch (Exception error)
+    //    {
+    //        ScannerLog.Logger.Error(error, "");
+    //        GlobalData.AddTextToLogTab("error get trades " + error.ToString()); // symbol.Text + " " + 
+    //    }
+
+    //    return tradeCount;
+    //}
 
 
 
@@ -265,5 +264,8 @@ public class Trade() : TradeBase(), ITrade
 
     //    return tradeCount;
     //}
-
+    public Task<int> GetTradesAsync(CryptoDatabase database, CryptoPosition position)
+    {
+        throw new NotImplementedException();
+    }
 }

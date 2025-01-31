@@ -33,6 +33,11 @@ public static class Helper
                     return new Mexc.Spot.Api();
                 else
                     throw new Exception("Mexc Futures not supported");
+            case CryptoExchangeType.Okx:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Okx.Spot.Api();
+                else
+                    throw new Exception("Mexc Futures not supported");
             default:
                 throw new Exception("Exchange not supported");
         }
@@ -65,6 +70,11 @@ public static class Helper
             case CryptoExchangeType.Mexc:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Mexc.Spot.Interval.GetExchangeInterval(interval) != null;
+                else
+                    return false;
+            case CryptoExchangeType.Okx:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return Okx.Spot.Interval.GetExchangeInterval(interval) != null;
                 else
                     return false;
             default:
