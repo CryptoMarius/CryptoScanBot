@@ -250,6 +250,7 @@ public partial class FrmMain : Form
 
         GridSymbolView.InitCommandCaptions();
         GridSignalView.InitCommandCaptions();
+        GridLiveDataView.InitCommandCaptions();
         GridPositionOpenView.InitCommandCaptions();
         GridPositionClosedView.InitCommandCaptions();
 
