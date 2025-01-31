@@ -61,7 +61,7 @@ public class CommandTools
                     return;
 
                 case Command.CalculateAllLiquidityZones:
-                    LiquidityZones.CalculateZonesForAllSymbolsAsync(null);
+                    ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
                     return;
 
             }
@@ -92,6 +92,24 @@ public class CommandTools
                             GlobalData.LoadLinkSettings(); // refresh links
                             if (symbol != null && interval != null)
                                 LinkTools.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, symbol, interval, CryptoExternalUrlType.External);
+                            break;
+                        case Command.CommandActivateTradingAppAndTv:
+                            // TODO: refactor
+                            
+                            // Activate trading App
+                            CryptoExternalUrlType tradingAppInternExtern2 = CryptoExternalUrlType.External;
+                            // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+                            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+                                tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern2);
+
+                            // Activate internal Trading View
+                            GlobalData.LoadLinkSettings(); // refresh links
+                            if (symbol != null && interval != null)
+                                LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal);
+
                             break;
                         case Command.ActivateTradingviewIntern:
                             GlobalData.LoadLinkSettings(); // refresh links
@@ -153,7 +171,13 @@ public class CommandTools
                         case Command.CalculateSymbolLiquidityZones:
                             if (symbol != null)
                             {
-                                GlobalData.ThreadZoneCalculate?.AddToQueue(symbol);
+                                foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+                                {
+                                    if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? intervalX))
+                                    {
+                                        GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, intervalX);
+                                    }
+                                }
                             }
                             break;
                     }

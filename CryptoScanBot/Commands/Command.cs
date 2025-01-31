@@ -23,6 +23,7 @@ public enum Command
     About,
     CalculateAllLiquidityZones,
     CalculateSymbolLiquidityZones,
+    CommandActivateTradingAppAndTv,
 }
 
 // Work in progres, opzetje tichting ICommand (teveel werk op dit moment)

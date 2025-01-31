@@ -1026,7 +1026,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     //            database.Open();
     //            database.Connection.Insert(position);
     //            PositionTools.AddPosition(GlobalData.ActiveAccount!, position);
-    //            var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
+    //            var part = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, signal.IntervalList, signal.Strategy,
     //                CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, signal.CloseTime);
 
 
