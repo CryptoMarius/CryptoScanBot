@@ -714,8 +714,9 @@ public class ThreadTelegramBotInstance
                 }
                 catch (Exception error)
                 {
-                    // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-                    ScannerLog.Logger.Error(error, "");
+                    // Stupid Telegram is not playing nice
+                    //ScannerLog.Logger.Error(error, "");
+                    ScannerLog.Logger.Error($"ERROR telegram thread {error.Message}"); // simplify error on 1 line
                     GlobalData.AddTextToLogTab($"ERROR telegram thread {error.Message}");
                 }
                 await Task.Delay(500);
