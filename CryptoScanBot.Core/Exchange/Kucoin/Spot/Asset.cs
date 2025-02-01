@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 public class Asset() : AssetBase(), IAsset
 {
-    public Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public Task GetAssets(CryptoAccount tradeAccount)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {

@@ -113,7 +113,7 @@ public class Order() : OrderBase(), IOrder
     }
 
 
-    public async Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    public async Task<int> GetOrders(CryptoDatabase database, CryptoPosition position)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetOrdersForPositionAsync: Positie {position.Symbol.Name}");
         // Behoorlijk weinig error control ...... 

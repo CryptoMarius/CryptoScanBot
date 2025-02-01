@@ -23,11 +23,11 @@ public class Api : ExchangeBase
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
-        //Asset = new Asset();
+        Asset = new Asset();
         Candle = new Candle(this);
         Symbol = new Symbol();
-        //Order = new Order();
-        //Trade = new Trade();
+        Order = new Order();
+        Trade = new Trade();
     }
 
 

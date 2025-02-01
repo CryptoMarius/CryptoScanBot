@@ -81,7 +81,7 @@ public class Asset() : AssetBase(), IAsset
     }
 
 
-    public async Task GetAssetsAsync(CryptoAccount tradeAccount)
+    public async Task GetAssets(CryptoAccount tradeAccount)
     {
         //ScannerLog.Logger.Trace($"Exchange.BybitSpot.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))

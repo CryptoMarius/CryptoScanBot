@@ -1,7 +1,7 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
+namespace CryptoScanBot.Core.Exchange.Coinbase.Spot;
 
 public class Trade() : TradeBase(), ITrade
 {
@@ -9,5 +9,4 @@ public class Trade() : TradeBase(), ITrade
     {
         throw new NotImplementedException();
     }
-
 }

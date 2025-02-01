@@ -87,7 +87,7 @@ public class Order() : OrderBase(), IOrder
     }
 
 
-    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    public Task<int> GetOrders(CryptoDatabase database, CryptoPosition position)
     {
         return Task.FromResult<int>(0);
     }

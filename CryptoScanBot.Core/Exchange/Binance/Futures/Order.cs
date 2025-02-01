@@ -83,7 +83,7 @@ public class Order() : OrderBase(), IOrder
         order.CommissionAsset = item.FeeAsset;
     }
 
-    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position)
+    public Task<int> GetOrders(CryptoDatabase database, CryptoPosition position)
     {
         return Task.FromResult<int>(0);
     }

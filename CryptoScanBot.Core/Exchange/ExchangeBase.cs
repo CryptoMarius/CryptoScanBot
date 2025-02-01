@@ -11,7 +11,7 @@ namespace CryptoScanBot.Core.Exchange;
 
 public interface IOrder
 {
-    public Task<int> GetOrdersAsync(CryptoDatabase database, CryptoPosition position);
+    public Task<int> GetOrders(CryptoDatabase database, CryptoPosition position);
 }
 
 public interface ITrade
@@ -21,7 +21,7 @@ public interface ITrade
 
 public interface IAsset
 {
-    public Task GetAssetsAsync(CryptoAccount tradeAccount);
+    public Task GetAssets(CryptoAccount tradeAccount);
 }
 
 public interface ISymbol
