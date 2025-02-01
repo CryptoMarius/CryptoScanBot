@@ -5,12 +5,12 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Other;
 
-public class SignalDominantLevelLong : SignalCreateBase
+public class SignalDominantLevelNearLong : SignalCreateBase
 {
-    public SignalDominantLevelLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalDominantLevelNearLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.DominantLevel;
+        SignalStrategy = CryptoSignalStrategy.DominantLevelNear;
     }
 
 
@@ -33,27 +33,41 @@ public class SignalDominantLevelLong : SignalCreateBase
                 decimal distance = 100m;
                 while (index < symbolIntervalData.DlzZones.LongOpen.Count) // sorted on Zone.Top descending
                 {
+                    decimal? alarmPrice = null;
                     var zone = symbolIntervalData.DlzZones.LongOpen[index];
                     if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
                     {
                         // Close old invalid zone without notifications..
-                        if (CandleLast.High < zone.Bottom)
+                        if (CandleLast.High <= zone.Bottom)
                         {
                             zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone #{zone.Id} {zone.Side} {zone.Description}");
                         }
                         else
                         {
-                            // Signal and close if the candle touched the zone..
+                            // If it is within a certain percentage signal it..
+                            alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
+                            if (CandleLast.Low <= alarmPrice)
+                            {
+                                if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                                {
+                                    result = true;
+                                    zone.AlarmDate = CandleLast.Date;
+                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                    decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                }
+                            }
+
+
+                            // Close if the candle touched the zone..
                             if (CandleLast.Low <= zone.Top)
                             {
-                                result = true;
-                                zone.AlarmDate = CandleLast.Date;
+                                ExtraText += "....";
                                 zone.CloseTime = CandleLast.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
-                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone #{zone.Id} {zone.Side} {zone.Description}");
                             }
 
 
@@ -70,13 +84,13 @@ public class SignalDominantLevelLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.DlzZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
                     else index++;
 
 
                     // The list is sorted on zone.top and break if there are no more reachable zones (save some looping time)
-                    if (CandleLast.Low > zone.Top)
+                    if (alarmPrice != null && alarmPrice > zone.Top)
                         break;
                 }
 

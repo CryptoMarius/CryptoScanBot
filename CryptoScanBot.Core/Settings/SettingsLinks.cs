@@ -33,6 +33,9 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     /// </summary>
     public void InitializeUrls()
     {
+        // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+
+
         Remove("Binance");
         this.TryAdd("Binance Futures",
             new()
@@ -235,7 +238,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         );
 
 
-        Remove("Okc");
+        Remove("Okx");
         this.TryAdd("Okx Spot",
             new()
             {
@@ -259,6 +262,30 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             }
         );
 
+
+        Remove("Coinbase");
+        this.TryAdd("Coinbase Spot",
+            new()
+            {
+                Altrady = new()
+                {
+                    Code = "GDAX",
+                    Execute = CryptoExternalUrlType.Internal,
+                    Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
+                },
+                HyperTrader = null,
+                TradingView = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://www.tradingview.com/chart/?symbol=GDAX:{BASE}{QUOTE}&interval={interval}", // ?
+                },
+                ExchangeUrl = new()
+                {
+                    Execute = CryptoExternalUrlType.External,
+                    Url = "https://coinbase.com/trade-spot/{BASE}-{QUOTE}", // ?
+                }
+            }
+        );
 
     }
 

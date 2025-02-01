@@ -30,42 +30,31 @@ public class SignalFairValueGapShort : SignalCreateBase
                 int index = 0;
                 while (index < symbolIntervalData.FvgZones.ShortOpen.Count) // sorted on Zone.Bottom asscending
                 {
-                    decimal? alarmPrice = null;
                     var zone = symbolIntervalData.FvgZones.ShortOpen[index];
-                    if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
+
+                    if (CandleLast.OpenTime >= zone.OpenTime)
                     {
-                        // Close old invalid zone without notifications..
-                        if (CandleLast.Low > zone.Top)
+                        if (CandleLast.Low > zone.Top) // Close without notifications..
                         {
                             zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                         }
-                        else
+                        else if (CandleLast.High >= zone.Bottom)
                         {
-                            // If it is within a certain percentage signal it..
-                            alarmPrice = zone.Bottom;
-                            if (CandleLast.High >= alarmPrice)
+                            if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
                             {
-                                if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
-                                {
-                                    result = true;
-                                    zone.AlarmDate = CandleLast.Date;
-                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
-                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
-                                }
+                                result = true;
+                                zone.AlarmDate = CandleLast.Date;
+                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                             }
-
 
                             // Close if the candle touched the zone..
-                            if (CandleLast.High > zone.Bottom)
-                            {
-                                ExtraText += "....";
-                                zone.CloseTime = CandleLast.OpenTime;
-                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-                            }
+                            zone.CloseTime = CandleLast.OpenTime;
+                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                         }
                     }
 
@@ -73,14 +62,14 @@ public class SignalFairValueGapShort : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.FvgZones.ShortOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone {zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
                     else index++;
 
 
-                    // The list is sorted on zone.bottom and break if there are no more reachable zones (saves some looping time)
-                    if (alarmPrice != null && alarmPrice < zone.Bottom)
-                        break;
+                    // The list is sorted on zone.bottom and break if there are no more reachable zones (save some looping time)
+                    if (CandleLast.High < zone.Bottom)
+                        break;						
                 }
             }
         }

@@ -347,7 +347,7 @@ public partial class CryptoVisualisation : Form
             decimal h = decimal.MinValue;
             CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
             long unix = candleLast.OpenTime;
-            int count = GlobalData.Settings.Signal.Zones.CandleCountZoom;
+            int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
             CryptoCandle xlast = candleLast;
             CryptoCandle xfirst = candleLast;
             while (count > 0)
@@ -495,7 +495,7 @@ public partial class CryptoVisualisation : Form
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
             Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
-            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.Zones.CandleCount * Data.Interval.Duration;
+            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
 
             labelInterval.Text = Session.ActiveInterval.ToString();
             labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
@@ -599,7 +599,7 @@ public partial class CryptoVisualisation : Form
     private static async Task CalculateAllDlzZonesAsync(AddTextEvent? showProgress, CryptoAccount account, ZoneSession session,
         ZoneData data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        if (GlobalData.Settings.Signal.Zones.ShowSignalsLong || GlobalData.Settings.Signal.Zones.ShowSignalsShort)
+        if (GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong || GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort)
         {
             AccountSymbolData symbolData = account!.Data.GetSymbolData(data.Symbol.Name);
             try

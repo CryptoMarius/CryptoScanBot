@@ -267,6 +267,7 @@ public static class CandleTools
         await symbol.CandleLock.WaitAsync();
         try
         {
+            //if (symbol.Name == "BTCUSDT")
             //GlobalData.AddTextToLogTab($"Process1mCandle {symbol.Name} Candle 1m {openTime.ToLocalTime()} start processing");
             // Last known price (and the price ticker will adjust)
             if (!GlobalData.BackTest)

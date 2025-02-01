@@ -127,9 +127,9 @@ public static class RegisterAlgorithms
         Register(new AlgorithmDefinition()
         {
             Name = "dom.nearby",
-            Strategy = CryptoSignalStrategy.DominantLevel,
-            AnalyzeLongType = typeof(SignalDominantLevelLong),
-            AnalyzeShortType = typeof(SignalDominantLevelShort),
+            Strategy = CryptoSignalStrategy.DominantLevelNear,
+            AnalyzeLongType = typeof(SignalDominantLevelNearLong),
+            AnalyzeShortType = typeof(SignalDominantLevelNearShort),
         });
 
 //#if DEBUG

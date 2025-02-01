@@ -38,11 +38,10 @@ public class SignalFairValueGapLong : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone {zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old fvg zone {zone.Id} {zone.Side} {zone.Description}");
                         }
                         else if (CandleLast.Low <= zone.Top)
                         {
-                            // Otherwise signal it (already to late?)
                             if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
                             {
                                 result = true;
@@ -59,6 +58,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                         }
                     }
 
+                    // Remove closed zones
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.FvgZones.LongOpen.RemoveAt(index);
@@ -67,7 +67,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                     else index++;
 
 
-                    // The list is sorted on zone.top and break if there are no more reachable zones (saves some looping time)
+                    // The list is sorted on zone.top and break if there are no more reachable zones (save some looping time)
                     if (CandleLast.Low > zone.Top)
                         break;
                 }

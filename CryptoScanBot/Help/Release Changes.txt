@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 31-01-2025 2.0.3
+- Scanner - DLZ en FVG toegevoegd aan de strategie mogelijkheden
 - Scanner - De achterstand in FVG alsnog berekenen bij het opstarten + gebroken zones afvoeren.
 - Scanner - Verwijderen van gesloten DLZ en FVG zones uit de database (cleanup na geconfigureerd aantal candles)
 - Scanner - DLZ zones op configureerbare intervallen kunnen laten berekenen (configureer niet teveel, het kost namelijk best veel tijd)

@@ -56,7 +56,7 @@ public class AccountSymbolData
     {
         foreach (AccountSymbolIntervalData accountSymbolInterval in SymbolIntervalDataList)
             accountSymbolInterval.DlzZones.ResetZones();
-        //accountSymbolInterval.Zones.ResetSwingPointData(); Why?
+        //accountSymbolInterval.ZonesDlz.ResetSwingPointData(); Why?
     }
 
     public void ResetTrendData()

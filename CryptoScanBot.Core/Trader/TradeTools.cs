@@ -792,7 +792,7 @@ public class TradeTools
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
             if (position.Account.AccountType == CryptoAccountType.RealTrading) // && loadFromExchange
             {
-                count += await GlobalData.Settings.General.Exchange!.GetApiInstance().Order.GetOrdersAsync(database, position);
+                count += await GlobalData.Settings.General.Exchange!.GetApiInstance().Order.GetOrders(database, position);
             }
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist

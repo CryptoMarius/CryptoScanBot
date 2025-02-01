@@ -10,7 +10,7 @@ using Dapper;
 
 namespace CryptoScanBot.Core.Zones;
 
-// DLZ - Dominant Liquidity Zones 
+// DLZ - Dominant Liquidity ZonesDlz 
 
 public class ZoneDlz
 {
@@ -159,9 +159,9 @@ public class ZoneDlz
 
     private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag)
     {
-        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
+        if (GlobalData.Settings.Signal.ZonesDlz.ZonesApplyUnzoomed)
         {
-            var value = GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage;
+            var value = GlobalData.Settings.Signal.ZonesDlz.MinimumUnZoomedPercentage;
             if (value > 0 && zigZag.Percentage < value)
             {
                 zigZag.Dominant = false;
@@ -175,9 +175,9 @@ public class ZoneDlz
 
     private static bool UnzoomedPercentageAboveMaximum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
     {
-        if (GlobalData.Settings.Signal.Zones.ZonesApplyUnzoomed)
+        if (GlobalData.Settings.Signal.ZonesDlz.ZonesApplyUnzoomed)
         {
-            var value = GlobalData.Settings.Signal.Zones.MaximumUnZoomedPercentage;
+            var value = GlobalData.Settings.Signal.ZonesDlz.MaximumUnZoomedPercentage;
             if (value > 0 && zigZag.Percentage > value)
             {
                 zigZag.Dominant = false;
@@ -191,7 +191,7 @@ public class ZoneDlz
 
     private static bool ZoomedPercentageBelowMinimum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
     {
-        var value = GlobalData.Settings.Signal.Zones.MinimumZoomedPercentage;
+        var value = GlobalData.Settings.Signal.ZonesDlz.MinimumZoomedPercentage;
         if (value > 0 && zigZag.Percentage < value)
         {
             zigZag.Dominant = false;
@@ -203,7 +203,7 @@ public class ZoneDlz
 
     private static bool ZoomedPercentageAboveMaximum(ZigZagResult zigZag) //, CryptoSymbol symbol, CryptoInterval interval)
     {
-        var value = GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage;
+        var value = GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage;
         if (value > 0 && zigZag.Percentage > value)
         {
             zigZag.Dominant = false;
@@ -285,7 +285,7 @@ public class ZoneDlz
 
 
         // If the found percentage is obove 0.7% zoom in on the lower intervals (withing the boundaries of the current candle)
-        if (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoomFurther)
+        if (zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage && zoomFurther)
         {
             CryptoIntervalPeriod zoom = interval!.IntervalPeriod;
             long unixStart = zigZag.Candle.OpenTime;
@@ -294,7 +294,7 @@ public class ZoneDlz
             //DateTime unixEindeDebug = CandleTools.GetUnixDate(unixEinde);
             int durationForThisCandle = (int)(unixEinde - unixStart);
 
-            while (zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
+            while (zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
             {
                 zoom--;
                 //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot zooming {zoom} {zigZag.Percentage:N2}%");
@@ -314,7 +314,7 @@ public class ZoneDlz
                         loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
-                    while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
+                    while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
                     {
                         //DateTime loopDebug = CandleTools.GetUnixDate(loop);
                         if (loop >= zigZag.Candle.OpenTime) // really?
@@ -327,7 +327,7 @@ public class ZoneDlz
                                     if (bodyTop < zigZag.Top)
                                     {
                                         double percentage = (double)(100 * ((bodyTop - zigZag.Bottom) / zigZag.Bottom));
-                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
+                                        if (percentage >= GlobalData.Settings.Signal.ZonesDlz.MinimumUnZoomedPercentage)
                                         {
                                             zigZag.Top = bodyTop;
                                             zigZag.Percentage = percentage;
@@ -341,7 +341,7 @@ public class ZoneDlz
                                     if (bodyBottom > zigZag.Bottom)
                                     {
                                         double percentage = (double)(100 * ((zigZag.Top - bodyBottom) / bodyBottom));
-                                        if (percentage >= GlobalData.Settings.Signal.Zones.MinimumUnZoomedPercentage)
+                                        if (percentage >= GlobalData.Settings.Signal.ZonesDlz.MinimumUnZoomedPercentage)
                                         {
                                             zigZag.Bottom = bodyBottom;
                                             zigZag.Percentage = percentage;
@@ -355,7 +355,7 @@ public class ZoneDlz
                     }
                 }
 
-                if (zigZag.Percentage <= GlobalData.Settings.Signal.Zones.MaximumZoomedPercentage)
+                if (zigZag.Percentage <= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
                     break;
             }
         }
@@ -474,7 +474,7 @@ public class ZoneDlz
     internal static void CalculateIntroZone(ZoneData data)
     {
         // Determine if a liq. box/zone has an interesting intro
-        if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
+        if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
         {
             ZigZagResult? previous = null;
             foreach (var zigZag in data.Indicator.ZigZagList)
@@ -485,7 +485,7 @@ public class ZoneDlz
                     {
                         decimal price = zigZag.Value;
                         long max = zigZag.Candle.OpenTime;
-                        long min = max - GlobalData.Settings.Signal.Zones.ZoneStartCandleCount * data.Interval.Duration;
+                        long min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * data.Interval.Duration;
                         if (min < previous.Candle.OpenTime)
                             min = previous.Candle.OpenTime;
                         while (min < max)
@@ -516,7 +516,7 @@ public class ZoneDlz
                         //Problem Value is not the start of the box!!
                         //double diff = (double)Math.Abs(zigZag.Value - price);
                         //double perc = 100 * diff / (double)zigZag.Value;
-                        //if (perc >= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                        //if (perc >= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
                         //{
                         //    zigZag.NiceIntro = $"{perc:N2} !";
                         //}
@@ -529,9 +529,9 @@ public class ZoneDlz
                         else
                             boxLimit = zigZag.Candle.High;
                         double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
-                        zigZag.NiceIntro = $"{perc:N2}"; // {price} {boxLimit}";
+                        zigZag.NiceIntro = $"(intro {perc:N2}%)"; // {price} {boxLimit}";
 
-                        if (perc <= GlobalData.Settings.Signal.Zones.ZoneStartPercentage)
+                        if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
                             zigZag.Strength = CryptoZoneStrength.Weak;
                         else
                             zigZag.Strength = CryptoZoneStrength.Strong; 
@@ -551,13 +551,13 @@ public class ZoneDlz
             // Determine dates
             long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
             long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
-            fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * data.SymbolInterval.Interval.Duration;
+            fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * data.SymbolInterval.Interval.Duration;
             // Load candles from disk
             if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
                 await ZoneCandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
             loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing zoneExistsInDatabase (save alway's)
                                                                               // Load candles from the exchange
-            if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+            if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
                 loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;

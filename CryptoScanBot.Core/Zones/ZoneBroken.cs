@@ -107,7 +107,7 @@ public class ZoneBroken
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
                 var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+                foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                 {
                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                     {

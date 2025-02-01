@@ -327,7 +327,7 @@ public class ThreadLoadData
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await api.Asset.GetAssetsAsync(GlobalData.ActiveAccount!);
+                    await api.Asset.GetAssets(GlobalData.ActiveAccount!);
                 }
 
                 // Toon de ingelezen posities

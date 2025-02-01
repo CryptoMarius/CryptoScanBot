@@ -50,7 +50,7 @@ public class AssetTools
             if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
             {
                 var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
-                await api.Asset.GetAssetsAsync(tradeAccount); // from exchange
+                await api.Asset.GetAssets(tradeAccount); // from exchange
             }
             else
                 PaperAssets.LoadAssets(tradeAccount); // from db

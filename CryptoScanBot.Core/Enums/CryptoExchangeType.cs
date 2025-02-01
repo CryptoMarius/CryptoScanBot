@@ -8,4 +8,5 @@ public enum CryptoExchangeType
     Kucoin = 4,
     Mexc = 5,
     Okx = 6,
+    Coinbase = 7,
 }

@@ -6,17 +6,30 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
-- Detectie van de double top en bottom (via de secondary trend?)
-- Verwijderen van gesloten FVG uit de database (cleanup)
-- Verwijderen van oude gesloten oude Zones uit de database (cleanup)
-- Opbouwen van de FVG bij het opstarten (wordt nu alleen bij de laatste 3 candles gedaan)
-Ik heb de fvg nu gelimiteerd tot het 15m interval en hoger en Ik zit te denken om dat toch maar instelbaar te gaan maken. Wellicht moet ik de fvg ook berekenen nadat je de scanner een poosje uit hebt gezet, maar dat komt nog wel..
-JanM: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), hij heeft de scanner weken achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn
-EricN: De laatste FVG laten zien (of gewoon een paar rechthoek + tekst wellicht)
-Marco: Heeft gezien dat er assets gehaald worden bij een papertrade (of zou het de webhook zijn?)
+JanM: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), 
+      Hij heeft de scanner maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
+      Technisch gezien zou de text-thread dus een probleem kunnen hebben (maar dan zou het euvel altijd moeten optreden, niet na verloop van tijd)
+Marco: Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien..
+Wilco: Heeft unzoomed/zoomed hetzelfde staan en dat gaf wat vreemde resultaten met de zones
 EricN: 2e header regel van de chart verdwijnt? (met name als het scherm te klein is om de gehele regel te laten zien, blijkbaar kapt die 2e regel niet af of doet geen wordwrap)
+Marius: Liquiditeit zones, als short uitgevinkt staat deze ook niet tonen en de afstand dan enkel tot de long zones berekenen (en/of indicatie of het long of short afstand is)
+Marius: De zones die niet voldoen aan het intro zone niet meer laten zien (ook hier wellicht een debug ding zodat je ze toch kan inzien indien nodig)
+Marius: Een dominant punt wordt eigenlijk pas geactiveerd als er een higher high ontstaat, de dlz kan dus niet gebroken zijn voordat dat gebeurd
+Marius: Lux indicator, de ene keer wordt het gecombineerd tot een -100 .. 100, de andere keer is het afhankelijk van de trade richting, samennemen of toch afzonderlijk?
+Marius: Okx, base of quote volume. kloppen de volumes wel in vergelijk met Altrady (zit ik wel op de juiste exchange ten opzichte van Altrady)
+Stijn: Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?)
+Marius: Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde nadat het uit de queue is gehaald?)
+Marius: CandleEngine, bijhouden welke data we eerder opgevraagd hebben (ook als er geen data terug komt), dan hoeven we dat niet 2x achter elkaar te vragen wat nu wel gebeurd
+Marius: Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig
+
+https://my.okx.com/trade-spot/trump-usdt
+
 
 Scanner:
+- Scanner - Oude bestanden in de Pivot directory verwijderen, dat zou ook voor de bestanden van de exchange kunnen (met name voor de verwijderde muntparen)
+- Scanner - Dashboards, de grafieken vervangen met de Oxyplot library
+- Scanner - Dashboards, grafiek van de barometer wellicht vervangen met oxyplot?
+- Scanner - Dashboards, de code voor de verschillende grafieken opsplitsen (nu lastig nazoeken)
 - Scanner - Optioneel, een plaatje in Telegram van de situatie
 - Scanner - De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de charting library de fout in?
 - Scanner - Signalen importeren of exporteren, exchange, symbol, interval, time, strategy, price 
@@ -40,12 +53,6 @@ Scanner:
 - Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
 - Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is flink wat uitzoekwerk)
 - Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
-            https://memprofiler.com/
-            https://www.red-gate.com/products/ants-performance-profiler/
-            https://www.jetbrains.com/dotmemory/
-            https://www.telerik.com/
-            https://learn.microsoft.com/en-us/visualstudio/profiling/memory-usage?view=vs-2022
-            CLRProfiler 
 - Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
             (maar vanwege de herstart na 24 uur worden ze dan wel meegenomen, hoe relevant zijn nieuwe munten voor de scanner?)
 - Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
@@ -137,3 +144,7 @@ Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
 - Trading - ophalen trades implementeren
 - Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
 - Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
+
+Scanner:
+- Exchange OKX - Okx Spot ARUSDT 6h error getting klines [OKXRestApiError] 51001: Instrument ID does not exist (maar volgens de symbols.json is ie er wel, wellicht een conflict europe en worldwide, verkeerde url's?)
+- Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min

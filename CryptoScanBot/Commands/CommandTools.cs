@@ -171,7 +171,7 @@ public class CommandTools
                         case Command.CalculateSymbolLiquidityZones:
                             if (symbol != null)
                             {
-                                foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+                                foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                                 {
                                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? intervalX))
                                     {

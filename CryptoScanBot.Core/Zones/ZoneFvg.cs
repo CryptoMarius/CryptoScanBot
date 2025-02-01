@@ -173,7 +173,7 @@ public class ZoneFvg
         {
             var zone = zoneList[index];
 
-            // situation (A candle way above the zone) The list is sorted on top value and if there are no more reachable zonesFromDatabase break (saves some looping time)
+            // situation (A candle way above the zone) The list is sorted on top value and if there are no more reachable zonesFromDatabase break (save some looping time)
             if (candle.Low > zone.Top)
                 break;
 
@@ -245,7 +245,7 @@ public class ZoneFvg
         {
             var zone = zoneList[index];
 
-            // situation (A candle way below the zone) The list is sorted on bottom value and if there are no more reachable zonesFromDatabase break (saves some looping time)
+            // situation (A candle way below the zone) The list is sorted on bottom value and if there are no more reachable zonesFromDatabase break (save some looping time)
             if (candle.High < zone.Bottom)
                 break;
 
@@ -362,7 +362,7 @@ public class ZoneFvg
                     // Determine date boundaries
                     long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
                     long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, interval.Duration);
-                    fetchFrom -= GlobalData.Settings.Signal.Zones.CandleCount * interval.Duration;
+                    fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
                     
                     // Load candles from disk
                     if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
@@ -370,7 +370,7 @@ public class ZoneFvg
                     loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
                     
                     // Load candles from the exchange
-                    if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.Zones.CandleCount))
+                    if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
                         loadedCandlesInMemory[interval.IntervalPeriod] = true;
 
                     CalculateFvg(symbol, interval, symbolIntervalData);

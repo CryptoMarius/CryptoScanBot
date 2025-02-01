@@ -46,7 +46,7 @@ public class ZoneThreadCalculate
                     IntervalName = interval.Name,
                     ActiveInterval = interval.IntervalPeriod,
                     ShowLiqBoxes = true,
-                    ZoomLiqBoxes = GlobalData.Settings.Signal.Zones.ZoomLowerTimeFrames,
+                    ZoomLiqBoxes = GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames,
                     ShowLiqZigZag = false,
                     ShowFib = false,
                     ShowFibZigZag = false,
@@ -81,7 +81,7 @@ public class ZoneThreadCalculate
                 {
                     session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
                     session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
-                    session.MinDate = session.MaxDate - GlobalData.Settings.Signal.Zones.CandleCount * interval.Duration;
+                    session.MinDate = session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
 
                     await ZoneDlz.CalculateDlzZonesAsync(null, session, data, loadedCandlesInMemory);
                     await ZoneFvg.CalculateFvgZonesAsync(null, data.Account, data.Symbol, interval, loadedCandlesInMemory);
@@ -141,7 +141,7 @@ public class ZoneThreadCalculate
         {
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
-                //foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+                //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                 for (int i = GlobalData.Settings.Signal.ZonesFvg.IntervalList.Count - 1; i >= 0; i--)
                 {
                     string intervalName = GlobalData.Settings.Signal.ZonesFvg.IntervalList[i];

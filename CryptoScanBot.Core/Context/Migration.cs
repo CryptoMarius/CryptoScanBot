@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 41;
+    public readonly static int CurrentDatabaseVersion = 42;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1074,7 +1074,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // New exchange OKX Spot
+            // New experimental exchange OKX Spot
             database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(6, 0, 'Okx Spot', 0.1, 0)", transaction);
             database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
             database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 0);", transaction);
@@ -1100,6 +1100,25 @@ public class Migration
             try { database.Connection.Execute("update zone set Strength=0", transaction); } catch { }
             try { database.Connection.Execute("update zone set Strength=1 where Kind=1", transaction); } catch { }
             try { database.Connection.Execute("update zone set Strength=2 where Kind=1 and Description like '%!'", transaction); } catch { }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 31-01-2025, added Coinbase experimental
+        if (CurrentVersion > version.Version && version.Version == 41)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // New experimental exchange Coinbase Spot
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(7, 0, 'Coinbase Spot', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 10, 1);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 10, 0);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 10, 0);", transaction);
+            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 10, 0);", transaction);
 
             // update version
             version.Version += 1;

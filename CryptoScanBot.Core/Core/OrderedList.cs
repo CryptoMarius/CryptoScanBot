@@ -4,6 +4,11 @@ using System.Collections.ObjectModel;
 // Lots of null errors
 // https://stackoverflow.com/questions/5721889/is-there-a-list-that-is-sorted-automatically-in-net
 
+// TODO: Fix null errors or find a better ordered list
+#pragma warning disable CS8769
+#pragma warning disable CS8603
+#pragma warning disable CS8602
+
 public class OrderedList<T> : IList<T>, ICollection<T>, IList, ICollection, IReadOnlyList<T>, IReadOnlyCollection<T>, IEnumerable<T>, IEnumerable
 {
     #region Fields
@@ -297,3 +302,7 @@ public class OrderedList<T> : IList<T>, ICollection<T>, IList, ICollection, IRea
     }
     #endregion
 }
+
+#pragma warning restore CS8769
+#pragma warning restore CS8603
+#pragma warning restore CS8602

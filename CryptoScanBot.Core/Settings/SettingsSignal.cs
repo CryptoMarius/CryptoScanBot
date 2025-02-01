@@ -44,7 +44,7 @@ public class SettingsSignal
     public SettingsSignalStrategyJump Jump = new();
 
     // Dominant zones
-    public SettingsSignalStrategyZones Zones = new();
+    public SettingsSignalStrategyZones ZonesDlz = new();
 
     // Fair Value gap zones
     public SettingsSignalStrategyFvg ZonesFvg = new();

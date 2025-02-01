@@ -1795,7 +1795,7 @@ public class PositionMonitor //: IDisposable
                 }
 
 
-                // FVG - Fair Value Gaps
+                // FVG - Fair Value Gaps Zones
                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
                 {
@@ -1816,11 +1816,11 @@ public class PositionMonitor //: IDisposable
 
 
                 // DLZ - Dominant Liquidity Zones
-                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Zones.ShowSignalsLong) ||
-                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Zones.ShowSignalsShort))
+                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong) ||
+                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort))
                 {
                     // for now only the configured interval (default=1h)
-                    foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                     {
                         if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                         {

@@ -39,9 +39,9 @@ public class DlzZones
                 dateLast = maxDate + 10000;
 
             OxyColor col;
-            if (GlobalData.Settings.Signal.Zones.ZoneStartApply)
+            if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
             {
-                if (zone.Description.Contains('!'))
+                if (zone.Strength == CryptoZoneStrength.Strong)
                     col = OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B);
                 else
                     col = OxyColor.FromArgb(64, boxColor.R, boxColor.G, boxColor.B);
@@ -75,7 +75,7 @@ public class DlzZones
     public static void Draw(PlotModel chart, CryptoSymbol symbol, long minDate, long maxDate)
     {
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        foreach (string intervalName in GlobalData.Settings.Signal.Zones.IntervalList)
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
             {

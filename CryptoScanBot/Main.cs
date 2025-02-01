@@ -792,13 +792,13 @@ public partial class FrmMain : Form
                             GlobalData.Settings.Signal.StoRsi.SoundFileShort, ref LastSignalSoundStoRsiOverbought);
                     break;
 
-                case CryptoSignalStrategy.DominantLevel:
+                case CryptoSignalStrategy.DominantLevelNear:
                     if (signal.Side == CryptoTradeSide.Long)
-                        PlaySound(signal, GlobalData.Settings.Signal.Zones.PlaySound, GlobalData.Settings.Signal.Zones.PlaySpeech,
-                            GlobalData.Settings.Signal.Zones.SoundFileLong, ref LastSignalSoundZonesOversold);
+                        PlaySound(signal, GlobalData.Settings.Signal.ZonesDlz.PlaySound, GlobalData.Settings.Signal.ZonesDlz.PlaySpeech,
+                            GlobalData.Settings.Signal.ZonesDlz.SoundFileLong, ref LastSignalSoundZonesOversold);
                     if (signal.Side == CryptoTradeSide.Short)
-                        PlaySound(signal, GlobalData.Settings.Signal.Zones.PlaySound, GlobalData.Settings.Signal.Zones.PlaySpeech,
-                            GlobalData.Settings.Signal.Zones.SoundFileShort, ref LastSignalSoundZonesOverbought);
+                        PlaySound(signal, GlobalData.Settings.Signal.ZonesDlz.PlaySound, GlobalData.Settings.Signal.ZonesDlz.PlaySpeech,
+                            GlobalData.Settings.Signal.ZonesDlz.SoundFileShort, ref LastSignalSoundZonesOverbought);
                     break;
             }
 

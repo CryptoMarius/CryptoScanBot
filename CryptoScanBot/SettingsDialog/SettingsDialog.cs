@@ -239,30 +239,30 @@ public partial class FrmSettings : Form
         EditJumpCandlesLookbackCount.Value = settings.Signal.Jump.CandlesLookbackCount;
         EditJumpUseLowHighCalculation.Checked = settings.Signal.Jump.UseLowHighCalculation;
 
-        // Dominant Zones
-        UserControlIntervalZonesDominant.LoadConfig(settings.Signal.Zones.IntervalList);
-        UserControlSettingsSoundAndColorsZonesDominant.LoadConfig("Zones", settings.Signal.Zones);
+        // Dominant ZonesDlz
+        UserControlIntervalZonesDominant.LoadConfig(settings.Signal.ZonesDlz.IntervalList);
+        UserControlSettingsSoundAndColorsZonesDominant.LoadConfig("Zones", settings.Signal.ZonesDlz);
 
-        EditShowZoneSignalsLong.Checked = settings.Signal.Zones.ShowSignalsLong;
-        EditShowZoneSignalsShort.Checked = settings.Signal.Zones.ShowSignalsShort;
-        EditZonesCandleCount.Value = settings.Signal.Zones.CandleCount;
-        EditZonesWarnPercentage.Value = (decimal)settings.Signal.Zones.WarnPercentage;
-        //EditZonesInterval.Value = settings.Signal.Zones.Interval; hardcoded 1h for now
-        EditZonesCandleCountZoom.Value = settings.Signal.Zones.CandleCountZoom;
+        EditShowZoneSignalsLong.Checked = settings.Signal.ZonesDlz.ShowSignalsLong;
+        EditShowZoneSignalsShort.Checked = settings.Signal.ZonesDlz.ShowSignalsShort;
+        EditZonesCandleCount.Value = settings.Signal.ZonesDlz.CandleCount;
+        EditZonesWarnPercentage.Value = (decimal)settings.Signal.ZonesDlz.WarnPercentage;
+        //EditZonesInterval.Value = settings.Signal.ZonesDlz.Interval; hardcoded 1h for now
+        EditZonesCandleCountZoom.Value = settings.Signal.ZonesDlz.CandleCountZoom;
 
-        EditZoomLowerTimeFrames.Checked = settings.Signal.Zones.ZoomLowerTimeFrames;
-        EditMinimumZoomedPercentage.Value = (decimal)settings.Signal.Zones.MinimumZoomedPercentage;
-        EditMaximumZoomedPercentage.Value = (decimal)settings.Signal.Zones.MaximumZoomedPercentage;
+        EditZoomLowerTimeFrames.Checked = settings.Signal.ZonesDlz.ZoomLowerTimeFrames;
+        EditMinimumZoomedPercentage.Value = (decimal)settings.Signal.ZonesDlz.MinimumZoomedPercentage;
+        EditMaximumZoomedPercentage.Value = (decimal)settings.Signal.ZonesDlz.MaximumZoomedPercentage;
 
-        EditZonesApplyUnzoomed.Checked = settings.Signal.Zones.ZonesApplyUnzoomed;
-        EditMinimumUnZoomedPercentage.Value = (decimal)settings.Signal.Zones.MinimumUnZoomedPercentage;
-        EditMaximumUnZoomedPercentage.Value = (decimal)settings.Signal.Zones.MaximumUnZoomedPercentage;
+        EditZonesApplyUnzoomed.Checked = settings.Signal.ZonesDlz.ZonesApplyUnzoomed;
+        EditMinimumUnZoomedPercentage.Value = (decimal)settings.Signal.ZonesDlz.MinimumUnZoomedPercentage;
+        EditMaximumUnZoomedPercentage.Value = (decimal)settings.Signal.ZonesDlz.MaximumUnZoomedPercentage;
 
-        EditZoneStartApply.Checked = settings.Signal.Zones.ZoneStartApply;
-        EditZoneStartCandleCount.Value = settings.Signal.Zones.ZoneStartCandleCount;
-        EditZoneStartPercentage.Value = (decimal)settings.Signal.Zones.ZoneStartPercentage;
+        EditZoneStartApply.Checked = settings.Signal.ZonesDlz.ZoneStartApply;
+        EditZoneStartCandleCount.Value = settings.Signal.ZonesDlz.ZoneStartCandleCount;
+        EditZoneStartPercentage.Value = (decimal)settings.Signal.ZonesDlz.ZoneStartPercentage;
 
-        // Zones FVG
+        // ZonesDlz FVG
         UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.ZonesFvg);
         EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
@@ -516,27 +516,27 @@ public partial class FrmSettings : Form
         settings.Signal.Jump.UseLowHighCalculation = EditJumpUseLowHighCalculation.Checked;
 
 
-        // Dominant Zones
-        UserControlIntervalZonesDominant.SaveConfig(settings.Signal.Zones.IntervalList);
-        UserControlSettingsSoundAndColorsZonesDominant.SaveConfig(settings.Signal.Zones);
+        // Dominant ZonesDlz
+        UserControlIntervalZonesDominant.SaveConfig(settings.Signal.ZonesDlz.IntervalList);
+        UserControlSettingsSoundAndColorsZonesDominant.SaveConfig(settings.Signal.ZonesDlz);
 
-        settings.Signal.Zones.ShowSignalsLong = EditShowZoneSignalsLong.Checked;
-        settings.Signal.Zones.ShowSignalsShort = EditShowZoneSignalsShort.Checked;
-        settings.Signal.Zones.CandleCount = (int)EditZonesCandleCount.Value;
-        settings.Signal.Zones.WarnPercentage = EditZonesWarnPercentage.Value;
-        settings.Signal.Zones.CandleCountZoom = (int)EditZonesCandleCountZoom.Value;
+        settings.Signal.ZonesDlz.ShowSignalsLong = EditShowZoneSignalsLong.Checked;
+        settings.Signal.ZonesDlz.ShowSignalsShort = EditShowZoneSignalsShort.Checked;
+        settings.Signal.ZonesDlz.CandleCount = (int)EditZonesCandleCount.Value;
+        settings.Signal.ZonesDlz.WarnPercentage = EditZonesWarnPercentage.Value;
+        settings.Signal.ZonesDlz.CandleCountZoom = (int)EditZonesCandleCountZoom.Value;
 
-        settings.Signal.Zones.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
-        settings.Signal.Zones.MinimumZoomedPercentage = (double)EditMinimumZoomedPercentage.Value;
-        settings.Signal.Zones.MaximumZoomedPercentage = (double)EditMaximumZoomedPercentage.Value;
+        settings.Signal.ZonesDlz.ZoomLowerTimeFrames = EditZoomLowerTimeFrames.Checked;
+        settings.Signal.ZonesDlz.MinimumZoomedPercentage = (double)EditMinimumZoomedPercentage.Value;
+        settings.Signal.ZonesDlz.MaximumZoomedPercentage = (double)EditMaximumZoomedPercentage.Value;
 
-        settings.Signal.Zones.ZonesApplyUnzoomed = EditZonesApplyUnzoomed.Checked;
-        settings.Signal.Zones.MinimumUnZoomedPercentage = (double)EditMinimumUnZoomedPercentage.Value;
-        settings.Signal.Zones.MaximumUnZoomedPercentage = (double)EditMaximumUnZoomedPercentage.Value;
+        settings.Signal.ZonesDlz.ZonesApplyUnzoomed = EditZonesApplyUnzoomed.Checked;
+        settings.Signal.ZonesDlz.MinimumUnZoomedPercentage = (double)EditMinimumUnZoomedPercentage.Value;
+        settings.Signal.ZonesDlz.MaximumUnZoomedPercentage = (double)EditMaximumUnZoomedPercentage.Value;
 
-        settings.Signal.Zones.ZoneStartApply = EditZoneStartApply.Checked;
-        settings.Signal.Zones.ZoneStartCandleCount = (int)EditZoneStartCandleCount.Value;
-        settings.Signal.Zones.ZoneStartPercentage = (double)EditZoneStartPercentage.Value;
+        settings.Signal.ZonesDlz.ZoneStartApply = EditZoneStartApply.Checked;
+        settings.Signal.ZonesDlz.ZoneStartCandleCount = (int)EditZoneStartCandleCount.Value;
+        settings.Signal.ZonesDlz.ZoneStartPercentage = (double)EditZoneStartPercentage.Value;
 
 
         // FVG
