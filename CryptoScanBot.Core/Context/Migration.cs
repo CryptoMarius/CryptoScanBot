@@ -1085,6 +1085,8 @@ public class Migration
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
+
+            // todo: Delete CryptoScanBot-weblinks.json?
         }
 
 
@@ -1124,6 +1126,8 @@ public class Migration
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
+
+            // todo: Delete CryptoScanBot-weblinks.json?
         }
     }
 
