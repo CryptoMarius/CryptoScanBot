@@ -319,13 +319,10 @@ public static class GlobalData
                 DisplayFormat = "N8",
             };
 
-            if (quoteName.Equals("USDT") || quoteName.Equals("BUSD"))
-                quoteData.DisplayFormat = "N2";
-
             Settings.QuoteCoins.Add(quoteName, quoteData);
         }
 
-        if (quoteName.Equals("USDT") || quoteName.Equals("BUSD"))
+        if (quoteName.Equals("EUR") || quoteName.Equals("USDC") || quoteName.Equals("USDT") || quoteName.Equals("BUSD"))
             quoteData.DisplayFormat = "N2";
 
         return quoteData;
