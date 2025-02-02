@@ -39,7 +39,7 @@ public class ZoneFvg
                         Bottom = prev2.High,
                         Side = CryptoTradeSide.Long,
                         IsValid = false,
-                        Description = $"{interval.Name} fvg {perc:N2}%",
+                        Description = $"{interval.Name} {perc:N2}%",
                     };
                     return zone;
                 }
@@ -77,7 +77,7 @@ public class ZoneFvg
                         Bottom = candle.High,
                         Side = CryptoTradeSide.Short,
                         IsValid = false,
-                        Description = $"{interval.Name} fvg {perc:N2}%",
+                        Description = $"{interval.Name} {perc:N2}%",
                     };
                     return zone;
                 }
@@ -133,7 +133,7 @@ public class ZoneFvg
     }
 
 
-    public static void InvalidateLongZones(AccountSymbolIntervalData symbolIntervalData, 
+    private static void InvalidateLongZones(AccountSymbolIntervalData symbolIntervalData, 
         OrderedList<CryptoZone> zoneList, CryptoCandle candle)
     {
         int count = zoneList.Count;
@@ -177,7 +177,7 @@ public class ZoneFvg
             if (candle.Low > zone.Top)
                 break;
 
-            if (candle.OpenTime >= zone.OpenTime) // emulator..
+            if (zone.CloseTime == null && candle.OpenTime >= zone.OpenTime) // emulator..
             {
                 if (candle.High < zone.Bottom) // situation (C candle completely below zone) close without notifications..
                 {
@@ -193,19 +193,20 @@ public class ZoneFvg
                 }
             }
 
-            if (zone.CloseTime != null) // remove all closed zonesFromDatabase
-            {
-                zoneList.RemoveAt(index);
-                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                symbolIntervalData.FvgZones.LongClosed.Add(zone);
-                //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-            }
-            else index++;
+            //if (zone.CloseTime != null) // remove all closed zonesFromDatabase
+            //{
+            //    //zoneList.RemoveAt(index);
+            //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+            //    //symbolIntervalData.FvgZones.LongClosed.Add(zone);
+            //    //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+            //}
+            //else index++;
+            index++;
         }
     }
 
 
-    public static void InvalidateShortZones(AccountSymbolIntervalData symbolIntervalData, 
+    private static void InvalidateShortZones(AccountSymbolIntervalData symbolIntervalData, 
         OrderedList<CryptoZone> zoneList, CryptoCandle candle)
     {
         int count = zoneList.Count;
@@ -249,7 +250,7 @@ public class ZoneFvg
             if (candle.High < zone.Bottom)
                 break;
 
-            if (candle.OpenTime >= zone.OpenTime)
+            if (zone.CloseTime == null && candle.OpenTime >= zone.OpenTime)
             {
                 if (candle.Low > zone.Top) // situation (C candle completely above zone) close without notifications..
                 {
@@ -265,20 +266,21 @@ public class ZoneFvg
                 }
             }
 
-            if (zone.CloseTime != null) // remove all closed zonesFromDatabase
-            {
-                zoneList.RemoveAt(index);
-                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                symbolIntervalData.FvgZones.ShortClosed.Add(zone);
-                //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-            }
-            else index++;
+            //if (zone.CloseTime != null) // remove all closed zonesFromDatabase
+            //{
+            //    //zoneList.RemoveAt(index);
+            //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+            //    //symbolIntervalData.FvgZones.ShortClosed.Add(zone);
+            //    //GlobalData.AddTextToLogTab($"{symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+            //}
+            //else index++;
+            index++;
         }
     }
 
 
 
-    private static void CreateFvgZones(CryptoSymbol symbol, CryptoInterval interval, 
+    private static void CreateFvgZones(CryptoSymbol symbol, CryptoInterval interval, long minDate,
         AccountSymbolIntervalData symbolIntervalData,
         OrderedList<CryptoZone> longZones, OrderedList<CryptoZone> shortZones)
     {
@@ -289,7 +291,7 @@ public class ZoneFvg
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         foreach (var candle in symbolInterval.CandleList.Values)
         {
-            if (prev2 != null && prev != null) // Need the last 3 candles
+            if (prev2 != null && prev != null && candle.OpenTime > minDate) // Need the last 3 candles
             {
                 // scan for long FVG
                 if (GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong)
@@ -324,7 +326,7 @@ public class ZoneFvg
     }
 
 
-    private static void CalculateFvg(CryptoSymbol symbol, CryptoInterval interval, AccountSymbolIntervalData symbolIntervalData)
+    private static void CalculateFvg(CryptoSymbol symbol, CryptoInterval interval, long minDate, AccountSymbolIntervalData symbolIntervalData)
     {
         // Collect old zones
         DatabaseStatistics dbStats = new();
@@ -338,7 +340,7 @@ public class ZoneFvg
         // Create new zones 
         OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
         OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
-        CreateFvgZones(symbol, interval, symbolIntervalData, longZones, shortZones);
+        CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
 
         // Rebuild
         ZoneTools.AddZonesToInternalLists(symbolIntervalData.FvgZones, zonesFromDatabase, longZones, dbStats);
@@ -373,7 +375,7 @@ public class ZoneFvg
                     if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
                         loadedCandlesInMemory[interval.IntervalPeriod] = true;
 
-                    CalculateFvg(symbol, interval, symbolIntervalData);
+                    CalculateFvg(symbol, interval, fetchFrom, symbolIntervalData);
                 }
             }
             catch (Exception error)
