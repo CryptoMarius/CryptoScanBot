@@ -1799,16 +1799,21 @@ public class PositionMonitor //: IDisposable
                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
                 {
+                    // Automaticly calculate new fvg zones
                     foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
                     {
                         if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                         {
                             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
                             if (LastCandle1mCloseTime % interval.Duration == 0)
-                                ZoneFvg.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                            {
+                                if (Symbol.QuoteData.MinimalVolume == 0 || Symbol.Volume >= Symbol.QuoteData.MinimalVolume)
+                                    ZoneFvg.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
+                            }
                         }
                     }
 
+                    // Signal if the 1m candles touches a fvg zone
                     SignalCreate createSignal2 = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
                     if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
                         signalList.AddRange(createSignal2.SignalList);
@@ -1819,7 +1824,7 @@ public class PositionMonitor //: IDisposable
                 if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong) ||
                     (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort))
                 {
-                    // for now only the configured interval (default=1h)
+                    // Automaticly calculate new dlz zones (if price is outside last swing points)
                     foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                     {
                         if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
@@ -1846,7 +1851,7 @@ public class PositionMonitor //: IDisposable
                         }
                     }
 
-                    // Signal if the 1m candles approaches the zone
+                    // Signal if the 1m candles approaches or touches a dlz zone
                     SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
                     if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
                         signalList.AddRange(createSignal.SignalList);
