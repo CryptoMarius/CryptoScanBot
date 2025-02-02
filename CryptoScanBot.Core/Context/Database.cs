@@ -852,18 +852,23 @@ public class CryptoDatabase : IDisposable
 
     public static void CleanUpDatabase()
     {
-        // Database cleanup (there is no need for old signals)
         try
         {
             using CryptoDatabase databaseThread = new();
             databaseThread.Open();
             using var transaction = databaseThread.BeginTransaction();
             {
-                DateTime aWhileAgo = DateTime.UtcNow.AddDays(-7);
-                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", new { opendate = aWhileAgo });
+                // Database cleanup (there is no need for old signals <fixed 7 day's>)
+                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", 
+                    new { opendate = DateTime.UtcNow.AddDays(-7) });
 
-                long aWhileAgoUnix = CandleTools.GetUnixTime(aWhileAgo, 60);
-                databaseThread.Connection.Execute("delete from zone where kind = 2 and closetime < @closetime", new { closetime = aWhileAgoUnix });
+                // Database cleanup (there is no need for old zones older than the configured value)
+                foreach (var interval in GlobalData.IntervalList)
+                {
+                    // we use the same candlecount for both the fvg and dlz zones
+                    databaseThread.Connection.Execute("delete from zone where createTime < @createTime", 
+                        new { createTime = DateTime.UtcNow.AddSeconds(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration) });
+                }
                 transaction.Commit();
             }
         }
