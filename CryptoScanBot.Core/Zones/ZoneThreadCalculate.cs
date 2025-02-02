@@ -141,7 +141,6 @@ public class ZoneThreadCalculate
         {
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
-                //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                 for (int i = GlobalData.Settings.Signal.ZonesFvg.IntervalList.Count - 1; i >= 0; i--)
                 {
                     string intervalName = GlobalData.Settings.Signal.ZonesFvg.IntervalList[i];

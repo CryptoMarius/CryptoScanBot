@@ -1,9 +1,12 @@
 CryptoScanBot release historie:
 
 31-01-2025 2.0.3
+- Scanner - De DLZ zones wordt niet langer gemarkeerd met een uitroepteken om aan te geven dat het een sterke zone is (afhankelijk van de intro), nu alleen dmv kleur
+- Scanner - De FVG zones worden bij binnenkomst van een nieuwe candle berekend zonder rekening te houden met het minimale volume
+- Scanner - Interne aanpassing in de Dlz zones waardoor deze opnieuw ingesteld moeten worden
 - Scanner - DLZ en FVG toegevoegd aan de strategie mogelijkheden
 - Scanner - De achterstand in FVG alsnog berekenen bij het opstarten + gebroken zones afvoeren.
-- Scanner - Verwijderen van gesloten DLZ en FVG zones uit de database (cleanup na geconfigureerd aantal candles)
+- Scanner - Verwijderen van gesloten DLZ en FVG zones uit de database (cleanup dmv het geconfigureerd aantal candles bij de dlz)
 - Scanner - DLZ zones op configureerbare intervallen kunnen laten berekenen (configureer niet teveel, het kost namelijk best veel tijd)
 - Scanner - DLZ zones worden niet correct gemarkeerd dmv het "intro" filter en de zones wisselen vaak van kleur na knop berekenen
 - Scanner - Meerdere timeframe voor de DLZ kunnen configureren (vanaf de 1h en hoger)
