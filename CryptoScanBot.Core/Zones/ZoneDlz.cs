@@ -104,7 +104,7 @@ public class ZoneDlz
                 CryptoZone zone = new()
                 {
                     Kind = CryptoZoneKind.DominantLevel,
-                    Strength = CryptoZoneStrength.Strong,
+                    Strength = zigZag.Strength, // depending on the percentage of the zone "intro"
                     CreateTime = zigZag.Candle.Date,
                     AccountId = GlobalData.ActiveAccount!.Id,
                     Account = GlobalData.ActiveAccount,
