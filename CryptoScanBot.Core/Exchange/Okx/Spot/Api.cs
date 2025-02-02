@@ -101,11 +101,23 @@ public class Api : ExchangeBase
 
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new OKXApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+
+            //options.AddLogging(x =>
+            //{
+            //    x.SetMinimumLevel(LogLevel.Trace);
+            //    x.AddProvider(new TraceLoggerProvider());
+            //});
+            //options.AddLogging(x =>
+            //{
+            //    x.SetMinimumLevel(LogLevel.None);
+            //    x.AddProvider(new TraceLoggerProvider(LogLevel.None));
+            //});
         });
 
         PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
     }
 
 
