@@ -110,13 +110,21 @@ public partial class FrmSettings : Form
         EditGlobalDataRemoveSignalAfterxCandles.Value = settings.General.RemoveSignalAfterxCandles;
         EditHideSelectedRow.Checked = settings.General.HideSelectedRow;
 
-        // Grenswaarden voor oversold en overbought
-        EditRsiValueOversold.Value = (decimal)settings.General.RsiValueOversold;
-        EditRsiValueOverbought.Value = (decimal)settings.General.RsiValueOverbought;
-        EditStochValueOversold.Value = (decimal)settings.General.StochValueOversold;
-        EditStochValueOverbought.Value = (decimal)settings.General.StochValueOverbought;
+        // RSI
+        EditRsiLength.Value = settings.General.SettingsRsi.Length;
+        EditRsiOversold.Value = (decimal)settings.General.SettingsRsi.Oversold;
+        EditRsiOverbought.Value = (decimal)settings.General.SettingsRsi.Overbought;
 
-        EditBbStdDeviation.Value = (decimal)settings.General.BbStdDeviation;
+        // Stoch
+        EditStochLength.Value = settings.General.SettingsStoch.Length;
+        EditStochSmoothingD.Value = settings.General.SettingsStoch.SmoothingD;
+        EditStochSmoothingK.Value = settings.General.SettingsStoch.SmoothingK;
+        EditStochOversold.Value = (decimal)settings.General.SettingsStoch.Oversold;
+        EditStochOverbought.Value = (decimal)settings.General.SettingsStoch.Overbought;
+
+        // Bollinger Bands
+        EditBbLength.Value = settings.General.SettingsBb.Length;
+        EditBbStdDeviation.Value = (decimal)settings.General.SettingsBb.Deviation;
 
         UserControlTelegram.LoadConfig();
 
@@ -395,13 +403,21 @@ public partial class FrmSettings : Form
         settings.General.RemoveSignalAfterxCandles = (int)EditGlobalDataRemoveSignalAfterxCandles.Value;
         settings.General.HideSelectedRow = EditHideSelectedRow.Checked;
 
-        // Grenswaarden voor oversold en overbought
-        settings.General.RsiValueOversold = (double)EditRsiValueOversold.Value;
-        settings.General.RsiValueOverbought = (double)EditRsiValueOverbought.Value;
-        settings.General.StochValueOversold = (double)EditStochValueOversold.Value;
-        settings.General.StochValueOverbought = (double)EditStochValueOverbought.Value;
+        // RSI
+        settings.General.SettingsRsi.Length = (int)EditRsiLength.Value;
+        settings.General.SettingsRsi.Oversold = (double)EditRsiOversold.Value;
+        settings.General.SettingsRsi.Overbought = (double)EditRsiOverbought.Value;
 
-        settings.General.BbStdDeviation = (double)EditBbStdDeviation.Value;
+        // Stoch
+        settings.General.SettingsStoch.Length = (int)EditStochLength.Value;
+        settings.General.SettingsStoch.SmoothingD = (int)EditStochSmoothingD.Value;
+        settings.General.SettingsStoch.SmoothingK = (int)EditStochSmoothingK.Value;
+        settings.General.SettingsStoch.Oversold = (double)EditStochOversold.Value;
+        settings.General.SettingsStoch.Overbought = (double)EditStochOverbought.Value;
+
+        // Bollinger Bands
+        settings.General.SettingsBb.Length = (int)EditBbLength.Value;
+        settings.General.SettingsBb.Deviation = (double)EditBbStdDeviation.Value;
 
         UserControlTelegram.SaveConfig();
 

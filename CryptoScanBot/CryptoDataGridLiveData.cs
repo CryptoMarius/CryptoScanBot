@@ -356,9 +356,9 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     {
                         // Oversold/overbougt
                         double? value = liveData.Candle.CandleData?.Rsi;
-                        if (value < GlobalData.Settings.General.RsiValueOversold)
+                        if (value < GlobalData.Settings.General.SettingsRsi.Oversold)
                             foreColor = Color.Red;
-                        else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                        else if (value > GlobalData.Settings.General.SettingsRsi.Overbought)
                             foreColor = Color.Green;
                     }
                     break;
@@ -378,9 +378,9 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     {
                         // Oversold/overbougt
                         double? value = liveData.Candle.CandleData?.StochOscillator;
-                        if (value < GlobalData.Settings.General.StochValueOversold)
+                        if (value < GlobalData.Settings.General.SettingsStoch.Oversold)
                             foreColor = Color.Red;
-                        else if (value > GlobalData.Settings.General.StochValueOverbought)
+                        else if (value > GlobalData.Settings.General.SettingsStoch.Overbought)
                             foreColor = Color.Green;
                     }
                     break;

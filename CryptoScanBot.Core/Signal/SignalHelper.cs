@@ -5,12 +5,29 @@ namespace CryptoScanBot.Core.Signal;
 
 public static class SignalHelper
 {
+    public static bool IsStochSignalOversold(this CryptoCandle candle, int correction = 0)
+    {
+        // Stochastic oscillator %D (red)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+            return false;
+        return true;
+    }
+
+    public static bool IsStochOscillatorOversold(this CryptoCandle candle, int correction = 0)
+    {
+        // Stochastic oscillator %K (blue)
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+            return false;
+        return true;
+    }
+
+    
     public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.StochValueOversold - correction)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
             return false;
-        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.StochValueOversold - correction)
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
             return false;
         return true;
     }
@@ -18,17 +35,34 @@ public static class SignalHelper
 
     public static bool IsRsiOversold(this CryptoCandle candle, int correction = 0)
     {
-        if (candle.CandleData?.Rsi > GlobalData.Settings.General.RsiValueOversold - correction)
+        if (candle.CandleData?.Rsi > GlobalData.Settings.General.SettingsRsi.Oversold - correction)
             return false;
         return true;
     }
 
+    public static bool IsStochSignalOverbought(this CryptoCandle candle, int correction = 0)
+    {
+        // Stochastic oscillator %D (red)
+        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+            return false;
+        return true;
+    }
+
+    public static bool IsStochOscillatorOverbought(this CryptoCandle candle, int correction = 0)
+    {
+        // Stochastic oscillator %K (blue)
+        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+            return false;
+        return true;
+    }
+
+
     public static bool IsStochOverbought(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
-        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.StochValueOverbought + correction)
+        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
             return false;
-        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.StochValueOverbought + correction)
+        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
             return false;
         return true;
     }
@@ -36,7 +70,7 @@ public static class SignalHelper
 
     public static bool IsRsiOverbought(this CryptoCandle candle, int correction = 0)
     {
-        if (candle.CandleData?.Rsi < GlobalData.Settings.General.RsiValueOverbought + correction)
+        if (candle.CandleData?.Rsi < GlobalData.Settings.General.SettingsRsi.Overbought + correction)
             return false;
         return true;
     }

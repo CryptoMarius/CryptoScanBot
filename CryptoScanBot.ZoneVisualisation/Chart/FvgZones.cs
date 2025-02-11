@@ -76,8 +76,11 @@ public class ChartDrawFvgZones
     {
         if (zone.CloseTime != null)
         {
-            long allowedTime = interval.Duration * 60; // 60 candles?
+            long allowedTime = interval.Duration * 250; // 60 candles?
             long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+
+            //DateTime currentDate = CandleTools.GetUnixDate(currentTime);
+            //DateTime closeDate = CandleTools.GetUnixDate(zone.CloseTime);
 
             if (zone.CloseTime > currentTime - allowedTime)
                 return true;

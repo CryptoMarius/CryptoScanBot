@@ -213,7 +213,8 @@ public class CandleIndicatorData : CryptoData
         //List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(History, 20, 1);
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
-        List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi();
+        List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi(
+            lookbackPeriods: GlobalData.Settings.General.SettingsRsi.Length);
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
         //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
@@ -224,14 +225,19 @@ public class CandleIndicatorData : CryptoData
         //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
-        List<StochResult> stochList = (List<StochResult>)history.GetStoch(14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
+        List<StochResult> stochList = (List<StochResult>)history.GetStoch(
+            lookbackPeriods: GlobalData.Settings.General.SettingsStoch.Length,
+            signalPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingD,
+            smoothPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingK);
+            //14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
         //List<SlopeResult> slopeStochList = (List<SlopeResult>)stochList.GetSlope(SlopeCount);
 
         List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)history.GetParabolicSar();
 
         // dan kan nu ook met de stdDev * setting.... Maar komt het wel overeen?
         List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
-            standardDeviations: GlobalData.Settings.General.BbStdDeviation);
+            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
+            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
         AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);

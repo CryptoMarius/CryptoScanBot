@@ -43,20 +43,30 @@ partial class FrmSettings
         EditDoubleClickAction = new ComboBox();
         EditHideSelectedRow = new CheckBox();
         groupBox7 = new GroupBox();
+        label35 = new Label();
+        EditBbLength = new NumericUpDown();
         label22 = new Label();
         EditBbStdDeviation = new NumericUpDown();
         label15 = new Label();
         EditTradingAppInternExtern = new ComboBox();
         groupBoxStoch = new GroupBox();
-        EditStochValueOversold = new NumericUpDown();
+        label65 = new Label();
+        EditStochSmoothingK = new NumericUpDown();
+        label36 = new Label();
+        EditStochLength = new NumericUpDown();
+        label64 = new Label();
+        EditStochSmoothingD = new NumericUpDown();
+        EditStochOversold = new NumericUpDown();
         label88 = new Label();
         label89 = new Label();
-        EditStochValueOverbought = new NumericUpDown();
+        EditStochOverbought = new NumericUpDown();
         groupBoxRsi = new GroupBox();
-        EditRsiValueOversold = new NumericUpDown();
+        label67 = new Label();
+        EditRsiLength = new NumericUpDown();
+        EditRsiOversold = new NumericUpDown();
         label87 = new Label();
         label90 = new Label();
-        EditRsiValueOverbought = new NumericUpDown();
+        EditRsiOverbought = new NumericUpDown();
         EditExtraCaption = new TextBox();
         label74 = new Label();
         EditHideSymbolsOnTheLeft = new CheckBox();
@@ -234,6 +244,7 @@ partial class FrmSettings
         EditZoneStartApply = new CheckBox();
         label30 = new Label();
         EditZoneStartCandleCount = new NumericUpDown();
+        UserControlIntervalZonesDominant = new SettingsDialog.UserControlInterval();
         tabSignalZonesFvg = new TabPage();
         flowLayoutPanel10 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsZonesFvg = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
@@ -312,7 +323,6 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        UserControlIntervalZonesDominant = new SettingsDialog.UserControlInterval();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -320,13 +330,18 @@ partial class FrmSettings
         flowLayoutPanel5.SuspendLayout();
         groupBox1.SuspendLayout();
         groupBox7.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditBbLength).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).BeginInit();
         groupBoxStoch.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditStochValueOverbought).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochSmoothingK).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochLength).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochSmoothingD).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochOversold).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochOverbought).BeginInit();
         groupBoxRsi.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditRsiValueOversold).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditRsiValueOverbought).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiLength).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiOversold).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiOverbought).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
@@ -592,7 +607,7 @@ partial class FrmSettings
         groupBox1.Margin = new Padding(10);
         groupBox1.Name = "groupBox1";
         groupBox1.Padding = new Padding(10);
-        groupBox1.Size = new Size(631, 474);
+        groupBox1.Size = new Size(631, 506);
         groupBox1.TabIndex = 249;
         groupBox1.TabStop = false;
         groupBox1.Text = "Common";
@@ -631,29 +646,50 @@ partial class FrmSettings
         // 
         // groupBox7
         // 
+        groupBox7.Controls.Add(label35);
+        groupBox7.Controls.Add(EditBbLength);
         groupBox7.Controls.Add(label22);
         groupBox7.Controls.Add(EditBbStdDeviation);
-        groupBox7.Location = new Point(384, 255);
+        groupBox7.Location = new Point(384, 382);
         groupBox7.Name = "groupBox7";
-        groupBox7.Size = new Size(234, 58);
+        groupBox7.Size = new Size(234, 95);
         groupBox7.TabIndex = 177;
         groupBox7.TabStop = false;
         groupBox7.Text = "Bollinger bands";
         // 
+        // label35
+        // 
+        label35.AutoSize = true;
+        label35.Location = new Point(7, 28);
+        label35.Margin = new Padding(4, 0, 4, 0);
+        label35.Name = "label35";
+        label35.Size = new Size(44, 15);
+        label35.TabIndex = 292;
+        label35.Text = "Length";
+        // 
+        // EditBbLength
+        // 
+        EditBbLength.Location = new Point(132, 24);
+        EditBbLength.Margin = new Padding(4, 3, 4, 3);
+        EditBbLength.Name = "EditBbLength";
+        EditBbLength.Size = new Size(88, 23);
+        EditBbLength.TabIndex = 293;
+        EditBbLength.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
         // label22
         // 
         label22.AutoSize = true;
-        label22.Location = new Point(9, 26);
+        label22.Location = new Point(7, 56);
         label22.Margin = new Padding(4, 0, 4, 0);
         label22.Name = "label22";
-        label22.Size = new Size(106, 15);
+        label22.Size = new Size(57, 15);
         label22.TabIndex = 290;
-        label22.Text = "Standard deviation";
+        label22.Text = "Deviation";
         // 
         // EditBbStdDeviation
         // 
         EditBbStdDeviation.DecimalPlaces = 2;
-        EditBbStdDeviation.Location = new Point(130, 22);
+        EditBbStdDeviation.Location = new Point(130, 52);
         EditBbStdDeviation.Margin = new Padding(4, 3, 4, 3);
         EditBbStdDeviation.Name = "EditBbStdDeviation";
         EditBbStdDeviation.Size = new Size(88, 23);
@@ -683,31 +719,94 @@ partial class FrmSettings
         // 
         // groupBoxStoch
         // 
-        groupBoxStoch.Controls.Add(EditStochValueOversold);
+        groupBoxStoch.Controls.Add(label65);
+        groupBoxStoch.Controls.Add(EditStochSmoothingK);
+        groupBoxStoch.Controls.Add(label36);
+        groupBoxStoch.Controls.Add(EditStochLength);
+        groupBoxStoch.Controls.Add(label64);
+        groupBoxStoch.Controls.Add(EditStochSmoothingD);
+        groupBoxStoch.Controls.Add(EditStochOversold);
         groupBoxStoch.Controls.Add(label88);
         groupBoxStoch.Controls.Add(label89);
-        groupBoxStoch.Controls.Add(EditStochValueOverbought);
-        groupBoxStoch.Location = new Point(384, 143);
+        groupBoxStoch.Controls.Add(EditStochOverbought);
+        groupBoxStoch.Location = new Point(384, 181);
         groupBoxStoch.Name = "groupBoxStoch";
-        groupBoxStoch.Size = new Size(234, 96);
+        groupBoxStoch.Size = new Size(234, 180);
         groupBoxStoch.TabIndex = 285;
         groupBoxStoch.TabStop = false;
         groupBoxStoch.Text = "Stochastic";
         // 
-        // EditStochValueOversold
+        // label65
         // 
-        EditStochValueOversold.DecimalPlaces = 2;
-        EditStochValueOversold.Location = new Point(130, 30);
-        EditStochValueOversold.Margin = new Padding(4, 3, 4, 3);
-        EditStochValueOversold.Name = "EditStochValueOversold";
-        EditStochValueOversold.Size = new Size(88, 23);
-        EditStochValueOversold.TabIndex = 175;
-        EditStochValueOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        label65.AutoSize = true;
+        label65.Location = new Point(7, 80);
+        label65.Margin = new Padding(4, 0, 4, 0);
+        label65.Name = "label65";
+        label65.Size = new Size(24, 15);
+        label65.TabIndex = 298;
+        label65.Text = "%K";
+        // 
+        // EditStochSmoothingK
+        // 
+        EditStochSmoothingK.Location = new Point(130, 76);
+        EditStochSmoothingK.Margin = new Padding(4, 3, 4, 3);
+        EditStochSmoothingK.Name = "EditStochSmoothingK";
+        EditStochSmoothingK.Size = new Size(88, 23);
+        EditStochSmoothingK.TabIndex = 299;
+        EditStochSmoothingK.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
+        // label36
+        // 
+        label36.AutoSize = true;
+        label36.Location = new Point(7, 26);
+        label36.Margin = new Padding(4, 0, 4, 0);
+        label36.Name = "label36";
+        label36.Size = new Size(44, 15);
+        label36.TabIndex = 296;
+        label36.Text = "Length";
+        // 
+        // EditStochLength
+        // 
+        EditStochLength.Location = new Point(132, 22);
+        EditStochLength.Margin = new Padding(4, 3, 4, 3);
+        EditStochLength.Name = "EditStochLength";
+        EditStochLength.Size = new Size(88, 23);
+        EditStochLength.TabIndex = 297;
+        EditStochLength.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
+        // label64
+        // 
+        label64.AutoSize = true;
+        label64.Location = new Point(7, 54);
+        label64.Margin = new Padding(4, 0, 4, 0);
+        label64.Name = "label64";
+        label64.Size = new Size(25, 15);
+        label64.TabIndex = 294;
+        label64.Text = "%D";
+        // 
+        // EditStochSmoothingD
+        // 
+        EditStochSmoothingD.Location = new Point(130, 50);
+        EditStochSmoothingD.Margin = new Padding(4, 3, 4, 3);
+        EditStochSmoothingD.Name = "EditStochSmoothingD";
+        EditStochSmoothingD.Size = new Size(88, 23);
+        EditStochSmoothingD.TabIndex = 295;
+        EditStochSmoothingD.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
+        // EditStochOversold
+        // 
+        EditStochOversold.DecimalPlaces = 2;
+        EditStochOversold.Location = new Point(130, 114);
+        EditStochOversold.Margin = new Padding(4, 3, 4, 3);
+        EditStochOversold.Name = "EditStochOversold";
+        EditStochOversold.Size = new Size(88, 23);
+        EditStochOversold.TabIndex = 175;
+        EditStochOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // label88
         // 
         label88.AutoSize = true;
-        label88.Location = new Point(7, 33);
+        label88.Location = new Point(7, 116);
         label88.Margin = new Padding(4, 0, 4, 0);
         label88.Name = "label88";
         label88.Size = new Size(54, 15);
@@ -717,50 +816,71 @@ partial class FrmSettings
         // label89
         // 
         label89.AutoSize = true;
-        label89.Location = new Point(9, 58);
+        label89.Location = new Point(7, 143);
         label89.Margin = new Padding(4, 0, 4, 0);
         label89.Name = "label89";
         label89.Size = new Size(71, 15);
         label89.TabIndex = 174;
         label89.Text = "Overbought";
         // 
-        // EditStochValueOverbought
+        // EditStochOverbought
         // 
-        EditStochValueOverbought.DecimalPlaces = 2;
-        EditStochValueOverbought.Location = new Point(130, 56);
-        EditStochValueOverbought.Margin = new Padding(4, 3, 4, 3);
-        EditStochValueOverbought.Name = "EditStochValueOverbought";
-        EditStochValueOverbought.Size = new Size(88, 23);
-        EditStochValueOverbought.TabIndex = 176;
-        EditStochValueOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        EditStochOverbought.DecimalPlaces = 2;
+        EditStochOverbought.Location = new Point(130, 141);
+        EditStochOverbought.Margin = new Padding(4, 3, 4, 3);
+        EditStochOverbought.Name = "EditStochOverbought";
+        EditStochOverbought.Size = new Size(88, 23);
+        EditStochOverbought.TabIndex = 176;
+        EditStochOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // groupBoxRsi
         // 
-        groupBoxRsi.Controls.Add(EditRsiValueOversold);
+        groupBoxRsi.Controls.Add(label67);
+        groupBoxRsi.Controls.Add(EditRsiLength);
+        groupBoxRsi.Controls.Add(EditRsiOversold);
         groupBoxRsi.Controls.Add(label87);
         groupBoxRsi.Controls.Add(label90);
-        groupBoxRsi.Controls.Add(EditRsiValueOverbought);
+        groupBoxRsi.Controls.Add(EditRsiOverbought);
         groupBoxRsi.Location = new Point(384, 40);
         groupBoxRsi.Name = "groupBoxRsi";
-        groupBoxRsi.Size = new Size(234, 96);
+        groupBoxRsi.Size = new Size(234, 114);
         groupBoxRsi.TabIndex = 284;
         groupBoxRsi.TabStop = false;
         groupBoxRsi.Text = "RSI";
         // 
-        // EditRsiValueOversold
+        // label67
         // 
-        EditRsiValueOversold.DecimalPlaces = 2;
-        EditRsiValueOversold.Location = new Point(130, 30);
-        EditRsiValueOversold.Margin = new Padding(4, 3, 4, 3);
-        EditRsiValueOversold.Name = "EditRsiValueOversold";
-        EditRsiValueOversold.Size = new Size(88, 23);
-        EditRsiValueOversold.TabIndex = 175;
-        EditRsiValueOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        label67.AutoSize = true;
+        label67.Location = new Point(7, 29);
+        label67.Margin = new Padding(4, 0, 4, 0);
+        label67.Name = "label67";
+        label67.Size = new Size(44, 15);
+        label67.TabIndex = 298;
+        label67.Text = "Length";
+        // 
+        // EditRsiLength
+        // 
+        EditRsiLength.Location = new Point(132, 25);
+        EditRsiLength.Margin = new Padding(4, 3, 4, 3);
+        EditRsiLength.Name = "EditRsiLength";
+        EditRsiLength.Size = new Size(88, 23);
+        EditRsiLength.TabIndex = 299;
+        EditRsiLength.Value = new decimal(new int[] { 20, 0, 0, 65536 });
+        // 
+        // EditRsiOversold
+        // 
+        EditRsiOversold.DecimalPlaces = 2;
+        EditRsiOversold.Location = new Point(130, 54);
+        EditRsiOversold.Margin = new Padding(4, 3, 4, 3);
+        EditRsiOversold.Name = "EditRsiOversold";
+        EditRsiOversold.Size = new Size(88, 23);
+        EditRsiOversold.TabIndex = 175;
+        EditRsiOversold.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // label87
         // 
         label87.AutoSize = true;
-        label87.Location = new Point(7, 33);
+        label87.Location = new Point(7, 57);
         label87.Margin = new Padding(4, 0, 4, 0);
         label87.Name = "label87";
         label87.Size = new Size(54, 15);
@@ -770,22 +890,22 @@ partial class FrmSettings
         // label90
         // 
         label90.AutoSize = true;
-        label90.Location = new Point(9, 58);
+        label90.Location = new Point(7, 82);
         label90.Margin = new Padding(4, 0, 4, 0);
         label90.Name = "label90";
         label90.Size = new Size(71, 15);
         label90.TabIndex = 174;
         label90.Text = "Overbought";
         // 
-        // EditRsiValueOverbought
+        // EditRsiOverbought
         // 
-        EditRsiValueOverbought.DecimalPlaces = 2;
-        EditRsiValueOverbought.Location = new Point(130, 56);
-        EditRsiValueOverbought.Margin = new Padding(4, 3, 4, 3);
-        EditRsiValueOverbought.Name = "EditRsiValueOverbought";
-        EditRsiValueOverbought.Size = new Size(88, 23);
-        EditRsiValueOverbought.TabIndex = 176;
-        EditRsiValueOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
+        EditRsiOverbought.DecimalPlaces = 2;
+        EditRsiOverbought.Location = new Point(130, 80);
+        EditRsiOverbought.Margin = new Padding(4, 3, 4, 3);
+        EditRsiOverbought.Name = "EditRsiOverbought";
+        EditRsiOverbought.Size = new Size(88, 23);
+        EditRsiOverbought.TabIndex = 176;
+        EditRsiOverbought.Value = new decimal(new int[] { 25, 0, 0, 0 });
         // 
         // EditExtraCaption
         // 
@@ -1084,7 +1204,6 @@ partial class FrmSettings
         // groupBox10
         // 
         groupBox10.AutoSize = true;
-        groupBox10.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         groupBox10.Controls.Add(label46);
         groupBox10.Controls.Add(label27);
         groupBox10.Controls.Add(EditCheckVolumeOverDays);
@@ -1152,7 +1271,6 @@ partial class FrmSettings
         // groupBox9
         // 
         groupBox9.AutoSize = true;
-        groupBox9.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         groupBox9.Controls.Add(EditAnalysisMinChangePercentage);
         groupBox9.Controls.Add(EditAnalysisMaxChangePercentage);
         groupBox9.Controls.Add(label53);
@@ -1207,7 +1325,6 @@ partial class FrmSettings
         // GroupBoxXDaysEffective
         // 
         GroupBoxXDaysEffective.AutoSize = true;
-        GroupBoxXDaysEffective.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         GroupBoxXDaysEffective.Controls.Add(label44);
         GroupBoxXDaysEffective.Controls.Add(label43);
         GroupBoxXDaysEffective.Controls.Add(label31);
@@ -2793,6 +2910,16 @@ partial class FrmSettings
         EditZoneStartCandleCount.Size = new Size(56, 23);
         EditZoneStartCandleCount.TabIndex = 129;
         // 
+        // UserControlIntervalZonesDominant
+        // 
+        UserControlIntervalZonesDominant.AutoScroll = true;
+        UserControlIntervalZonesDominant.AutoSize = true;
+        UserControlIntervalZonesDominant.Location = new Point(810, 294);
+        UserControlIntervalZonesDominant.MinimumSize = new Size(100, 150);
+        UserControlIntervalZonesDominant.Name = "UserControlIntervalZonesDominant";
+        UserControlIntervalZonesDominant.Size = new Size(100, 150);
+        UserControlIntervalZonesDominant.TabIndex = 163;
+        // 
         // tabSignalZonesFvg
         // 
         tabSignalZonesFvg.Controls.Add(flowLayoutPanel10);
@@ -3658,16 +3785,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // UserControlIntervalZonesDominant
-        // 
-        UserControlIntervalZonesDominant.AutoScroll = true;
-        UserControlIntervalZonesDominant.AutoSize = true;
-        UserControlIntervalZonesDominant.Location = new Point(810, 294);
-        UserControlIntervalZonesDominant.MinimumSize = new Size(100, 150);
-        UserControlIntervalZonesDominant.Name = "UserControlIntervalZonesDominant";
-        UserControlIntervalZonesDominant.Size = new Size(100, 150);
-        UserControlIntervalZonesDominant.TabIndex = 163;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3690,15 +3807,20 @@ partial class FrmSettings
         groupBox1.PerformLayout();
         groupBox7.ResumeLayout(false);
         groupBox7.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditBbLength).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditBbStdDeviation).EndInit();
         groupBoxStoch.ResumeLayout(false);
         groupBoxStoch.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditStochValueOversold).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditStochValueOverbought).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochSmoothingK).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochLength).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochSmoothingD).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochOversold).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditStochOverbought).EndInit();
         groupBoxRsi.ResumeLayout(false);
         groupBoxRsi.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditRsiValueOversold).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditRsiValueOverbought).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiLength).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiOversold).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditRsiOverbought).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditGetCandleInterval).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
@@ -3927,15 +4049,15 @@ partial class FrmSettings
     private SettingsDialog.UserControlTelegram UserControlTelegram;
     private GroupBox groupBox1;
     private GroupBox groupBoxStoch;
-    private NumericUpDown EditStochValueOversold;
+    private NumericUpDown EditStochOversold;
     private Label label88;
     private Label label89;
-    private NumericUpDown EditStochValueOverbought;
+    private NumericUpDown EditStochOverbought;
     private GroupBox groupBoxRsi;
-    private NumericUpDown EditRsiValueOversold;
+    private NumericUpDown EditRsiOversold;
     private Label label87;
     private Label label90;
-    private NumericUpDown EditRsiValueOverbought;
+    private NumericUpDown EditRsiOverbought;
     private TextBox EditExtraCaption;
     private Label label74;
     private CheckBox EditHideSymbolsOnTheLeft;
@@ -4148,4 +4270,14 @@ partial class FrmSettings
     private CheckBox EditStobOnlyIfLux5m;
     private CheckBox EditStoRsiOnlyIfLux5m;
     private SettingsDialog.UserControlInterval UserControlIntervalZonesDominant;
+    private Label label35;
+    private NumericUpDown EditBbLength;
+    private Label label65;
+    private NumericUpDown EditStochSmoothingK;
+    private Label label36;
+    private NumericUpDown EditStochLength;
+    private Label label64;
+    private NumericUpDown EditStochSmoothingD;
+    private Label label67;
+    private NumericUpDown EditRsiLength;
 }

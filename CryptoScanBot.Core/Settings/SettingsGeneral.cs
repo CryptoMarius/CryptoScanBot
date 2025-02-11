@@ -13,6 +13,69 @@ public enum CryptoDoubleClickAction
 }
 
 [Serializable]
+/// Settings Bollingerbands indicator
+public class SettingsGeneralBB
+{
+    /// <summary>
+    /// Standard Length for the Bollingerbands indicator
+    /// </summary>
+    public int Length { get; set; } = 20;
+    /// <summary>
+    /// Standard Deviation for the Bollingerbands indicator
+    /// </summary>
+    public double Deviation { get; set; } = 2.0;
+}
+
+
+[Serializable]
+/// Settings RSI indicator
+public class SettingsGeneralRsi
+{
+    /// <summary>
+    /// Standard Length for the RSI indicator
+    /// </summary>
+    public int Length { get; set; } = 14;
+
+    /// <summary>
+    /// RSI oversold value (30)
+    /// </summary>
+    public double Oversold { get; set; } = 30;
+    /// <summary>
+    /// RSI overbought value (70)
+    /// </summary>
+    public double Overbought { get; set; } = 70;
+}
+
+
+[Serializable]
+/// Settings Stochastic indicator
+public class SettingsGeneralStoch
+{
+    /// <summary>
+    /// Stoch length K (14)
+    /// </summary>
+    public int Length { get; set; } = 14;
+    /// <summary>
+    /// Stoch Oscillator Smoothing %K (1) Blue (3?)
+    /// </summary>
+    public int SmoothingK { get; set; } = 1;
+    /// <summary>
+    /// Stoch Signal Smoothing %D (3) Orange
+    /// </summary>
+    public int SmoothingD { get; set; } = 3;
+
+
+    /// <summary>
+    /// Stochastic oversold value (20)
+    /// </summary>
+    public double Oversold { get; set; } = 20;
+    /// <summary>
+    /// Stochastic overbought value (80)
+    /// </summary>
+    public double Overbought { get; set; } = 80;
+}
+
+[Serializable]
 public class SettingsGeneral
 {
     public string ExtraCaption { get; set; } = "";
@@ -51,31 +114,15 @@ public class SettingsGeneral
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
 
-    // RSI instelbare oversold /overbought (op verzoek)
-    /// <summary>
-    /// RSI oversold, normally value = 30
-    /// </summary>
-    public double RsiValueOversold { get; set; } = 30;
-    /// <summary>
-    /// RSI overbought, normally value = 70
-    /// </summary>
-    public double RsiValueOverbought { get; set; } = 70;
-
-
-    // STOCH instelbare oversold /overbought (op verzoek)
-    /// <summary>
-    /// Stochastic oversold, normally value = 20
-    /// </summary>
-    public double StochValueOversold { get; set; } = 20;
-    /// <summary>
-    /// Stochastic overbought, normally value = 80
-    /// </summary>
-    public double StochValueOverbought { get; set; } = 80;
+    public SettingsGeneralRsi SettingsRsi { get; set; } = new();
+    public SettingsGeneralStoch SettingsStoch { get; set; } = new();
 
     /// <summary>
     /// Standard Deviation for the Bollingerbands indicator
     /// </summary>
     public double BbStdDeviation { get; set; } = 2.0;
+    public int BbLength{ get; set; } = 20;
+    public SettingsGeneralBB SettingsBb { get; set; } = new();
 
 
 

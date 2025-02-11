@@ -777,9 +777,9 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     {
                         // Oversold/overbougt
                         double? value = position.Rsi; // 0..100
-                        if (value < GlobalData.Settings.General.RsiValueOversold)
+                        if (value < GlobalData.Settings.General.SettingsRsi.Oversold)
                             foreColor = Color.Red;
-                        else if (value > GlobalData.Settings.General.RsiValueOverbought)
+                        else if (value > GlobalData.Settings.General.SettingsRsi.Overbought)
                             foreColor = Color.Green;
                     }
                     break;
@@ -809,9 +809,9 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     {
                         // Oversold/overbougt
                         double? value = position.StochOscillator;
-                        if (value < GlobalData.Settings.General.StochValueOversold)
+                        if (value < GlobalData.Settings.General.SettingsStoch.Oversold)
                             foreColor = Color.Red;
-                        else if (value > GlobalData.Settings.General.StochValueOverbought)
+                        else if (value > GlobalData.Settings.General.SettingsStoch.Overbought)
                             foreColor = Color.Green;
                     }
                     break;
