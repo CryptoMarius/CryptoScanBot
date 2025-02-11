@@ -17,6 +17,8 @@ public enum CryptoSignalStrategy
     StoRsi2 = 12, // = STORSI, repeated storsi
     StoRsi3 = 13, // = STORSI, 2, but different
 
+    Stoch = 20,
+
     BbRsiEngulfing = 50,
     SignalSma50Sma20Price = 52,
 

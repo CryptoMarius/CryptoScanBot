@@ -120,6 +120,15 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
+        // another combined with a higher timeframe
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stoch",
+            Strategy = CryptoSignalStrategy.Stoch,
+            AnalyzeLongType = typeof(SignalStochLong),
+            AnalyzeShortType = typeof(SignalStochShort),
+        });
+
 
         //***************************************************
         // Level approaching

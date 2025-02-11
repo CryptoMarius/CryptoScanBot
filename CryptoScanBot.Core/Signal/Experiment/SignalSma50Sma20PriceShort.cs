@@ -43,7 +43,7 @@ public class SignalSma50Sma20PriceShort : SignalCreateBase
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
-            ExtraText = "bb.width to small " + CandleLast.CandleData!.BollingerBandsPercentage?.ToString("N2");
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
