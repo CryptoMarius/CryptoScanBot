@@ -1129,6 +1129,9 @@ public class Migration
 
             // todo: Delete CryptoScanBot-weblinks.json?
         }
+
+
+        // todo: delete zone.LastSignalDate
     }
 
 }
