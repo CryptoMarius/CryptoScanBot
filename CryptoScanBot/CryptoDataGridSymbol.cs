@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Account;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Zones;
 
 namespace CryptoScanBot;
 
@@ -95,7 +96,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                     ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Name, b.Name),
                     ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
                     //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
-                    ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneDistance(a), ZoneDistance(b)),
+                    ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a), ZoneTools.ZoneDistance(b)),
                     //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
 
                     _ => 0
@@ -157,30 +158,11 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 ColumnsForGrid.Symbol => symbol.Name,
                 ColumnsForGrid.Volume => symbol.Volume.ToString("N0"),
                 //ColumnsForGrid.Price => symbol.LastPrice?.ToString(symbol.PriceDisplayFormat),
-                ColumnsForGrid.Distance => ZoneDistance(symbol),
+                ColumnsForGrid.Distance => ZoneTools.ZoneDistance(symbol),
                 //ColumnsForGrid.MarketTrend => MarketTrend(symbol),                
                 _ => '?',
             };
         }
-    }
-
-    private static decimal? ZoneDistance(CryptoSymbol symbol)
-    {
-        // Set the date of the last swing point for the automatic zone calculation
-        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-
-        // no data
-        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
-            return null;
-
-        // only one of them
-        if (symbolData.BestLongZone == null)
-            return symbolData.BestShortZone;
-        if (symbolData.BestShortZone == null)
-            return symbolData.BestLongZone;
-
-        // which of the two is closeby
-        return Math.Min(symbolData.BestLongZone.Value, symbolData.BestShortZone.Value);
     }
 
 

@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 05-02-2025 2.0.3
+- Scanner - Een Telegram commando geintroduceerd om de dichtbijzijnste top 10 zones te tonen
 - Scanner - RSI attributen nu instelbaar (length)
 - Scanner - Stoch attributen nu instelbaar (length, %d, %k)
 - Scanner - Bollinger band attributen nu instelbaar (length)

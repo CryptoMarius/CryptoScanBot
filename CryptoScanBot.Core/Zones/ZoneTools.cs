@@ -118,4 +118,23 @@ public class ZoneTools
     }
 
 
+    public static decimal? ZoneDistance(CryptoSymbol symbol)
+    {
+        // Set the date of the last swing point for the automatic zone calculation
+        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+
+        // no data
+        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
+            return null;
+
+        // only one of them
+        if (symbolData.BestLongZone == null)
+            return symbolData.BestShortZone;
+        if (symbolData.BestShortZone == null)
+            return symbolData.BestLongZone;
+
+        // which of the two is closeby
+        return Math.Min(symbolData.BestLongZone.Value, symbolData.BestShortZone.Value);
+    }
+
 }
