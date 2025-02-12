@@ -304,219 +304,6 @@ public class ThreadTelegramBotInstance
         }
     }
 
-    private static void StartBot(string arguments, StringBuilder stringbuilder)
-    {
-        bool soundSignal = false;
-        //bool balanceBot = false;
-        bool signalsBot = false;
-        //bool adviceOnly = false;
-        bool tradingBot = false;
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length > 1)
-        {
-            soundSignal = parameters[1].Trim().ToLower().Equals("sound");
-            //adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
-            signalsBot = parameters[1].Trim().ToLower().Equals("signals");
-            tradingBot = parameters[1].Trim().ToLower().Equals("trading");
-            //balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
-        }
-
-        if (soundSignal)
-        {
-            if (!GlobalData.Settings.Signal.SoundsActive)
-            {
-                GlobalData.Settings.Signal.SoundsActive = true;
-                stringbuilder.AppendLine("Sound started!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Sound is already active!");
-        }
-        //else if (balanceBot)
-        //{
-        //    if (!GlobalData.Settings.BalanceBot.Active)
-        //    {
-        //        GlobalData.Settings.BalanceBot.Active = true;
-        //        stringbuilder.AppendLine("Balance bot started!");
-        //        GlobalData.SaveSettings();
-        //GlobalData.TelegramHasChanged("");
-        //    }
-        //    else
-        //        stringbuilder.AppendLine("Balance bot already active!");
-        //}
-        //else if (adviceOnly)
-        //{
-        //    if (!GlobalData.Settings.BalanceBot.ShowAdviceOnly)
-        //    {
-        //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = true;
-        //        stringbuilder.AppendLine("Balance bot advice only started!");
-        //        GlobalData.SaveSettings();
-        //GlobalData.TelegramHasChanged("");
-        //    }
-        //    else
-        //        stringbuilder.AppendLine("Balance bot advice only already active!");
-        //}
-        else if (signalsBot)
-        {
-            if (!GlobalData.Settings.Signal.Active)
-            {
-                GlobalData.Settings.Signal.Active = true;
-                stringbuilder.AppendLine("Signal bot started!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Signal bot already active!");
-        }
-        else if (tradingBot)
-        {
-            if (!GlobalData.Settings.Trading.Active)
-            {
-                GlobalData.Settings.Trading.Active = true;
-                stringbuilder.AppendLine("Trading bot started!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Trading bot already active!");
-        }
-        else
-        {
-            if (!GlobalData.Settings.Trading.Active)
-            {
-                GlobalData.Settings.Trading.Active = true;
-                stringbuilder.AppendLine("Bot started!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Bot already active!");
-        }
-    }
-
-
-    private static void StopBot(string arguments, StringBuilder stringbuilder)
-    {
-        bool sound = false;
-        //bool balanceBot = false;
-        bool signalsBot = false;
-        //bool adviceOnly = false;
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length > 1)
-        {
-            sound = parameters[1].Trim().ToLower().Equals("sound");
-            //adviceOnly = parameters[1].Trim().ToLower().Equals("advice");
-            signalsBot = parameters[1].Trim().ToLower().Equals("signals");
-            //balanceBot = parameters[1].Trim().ToLower().Equals("balancing");
-        }
-
-        if (sound)
-        {
-            if (GlobalData.Settings.Signal.SoundsActive)
-            {
-                GlobalData.Settings.Signal.SoundsActive = false;
-                stringbuilder.AppendLine("Sound stopped!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Sound is already inactive!");
-        }
-        //else if (balanceBot)
-        //{
-        //    if (GlobalData.Settings.BalanceBot.Active)
-        //    {
-        //        GlobalData.Settings.BalanceBot.Active = false;
-        //        stringbuilder.AppendLine("Balance bot stopped!");
-        //        GlobalData.SaveSettings();
-        //GlobalData.TelegramHasChanged("");
-        //    }
-        //    else
-        //        stringbuilder.AppendLine("Balance bot already inactive!");
-        //}
-        //else if (adviceOnly)
-        //{
-        //    if (GlobalData.Settings.BalanceBot.ShowAdviceOnly)
-        //    {
-        //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = false;
-        //        stringbuilder.AppendLine("Balance bot advice only stopped!");
-        //        GlobalData.SaveSettings();
-        //GlobalData.TelegramHasChanged("");
-        //    }
-        //    else
-        //        stringbuilder.AppendLine("Balance bot advice only inactive!");
-        //}
-        else if (signalsBot)
-        {
-            if (GlobalData.Settings.Signal.Active)
-            {
-                // TODO: User interface ook updaten
-                GlobalData.Settings.Signal.Active = false;
-                stringbuilder.AppendLine("Signal bot stopped!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Signal bot already inactive!");
-        }
-        else
-        {
-            if (GlobalData.Settings.Trading.Active)
-            {
-                // TODO: User interface ook updaten
-                GlobalData.Settings.Trading.Active = false;
-                stringbuilder.AppendLine("Bot stopped!");
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Bot already inactive!");
-        }
-    }
-
-
-
-    private static void CommandSlots(string arguments, StringBuilder stringbuilder)
-    {
-        bool slotsLong = false;
-        bool slotsShort = false;
-        string[] parameters = arguments.Split(' ');
-        if (parameters.Length > 1)
-        {
-            slotsLong = parameters[1].Trim().ToLower().Equals("long");
-            slotsShort = parameters[1].Trim().ToLower().Equals("short");
-        }
-
-        if (slotsLong && parameters.Length > 2)
-        {
-            int slots = int.Parse(parameters[2].Trim());
-            if (slots >= 0)
-            {
-                stringbuilder.AppendLine($"Slots long = {slots}");
-                GlobalData.Settings.Trading.SlotsMaximalLong = slots;
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Not a valid number!");
-        }
-
-        if (slotsShort && parameters.Length > 2)
-        {
-            int slots = int.Parse(parameters[2].Trim());
-            if (slots >= 0)
-            {
-                stringbuilder.AppendLine($"Slots short = {slots}");
-                GlobalData.Settings.Trading.SlotsMaximalShort = slots;
-                GlobalData.SaveSettings();
-                GlobalData.TelegramHasChanged("");
-            }
-            else
-                stringbuilder.AppendLine("Not a valid number!");
-        }
-    }
-
 
     private static void CommandShowProfits(StringBuilder stringbuilder)
     {
@@ -637,28 +424,30 @@ public class ThreadTelegramBotInstance
                                             TelegramResetScanner.Execute(command, stringBuilder);
                                         else if (command == "CALCULATEZONES")
                                             TelegramCalculateZones.Execute(command, stringBuilder);
+                                        else if (command == "ZONES")
+                                            TelegramShowZones.Execute(command, stringBuilder);
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
                                             CommandShowProfits(stringBuilder);
                                         else if (command == "SLOTS")
-                                            CommandSlots(arguments, stringBuilder);
+                                            TelegramBotSlots.Execute(arguments, stringBuilder);
                                         else if (command == "START")
-                                            StartBot(arguments, stringBuilder);
+                                            TelegramBotStart.Execute(arguments, stringBuilder);
                                         else if (command == "SIGNALSTART")
-                                            StartBot("command signals", stringBuilder);
-                                        else if (command == "ADVICESTARTS")
-                                            StopBot("command advice", stringBuilder);
-                                        else if (command == "BALANCESTART")
-                                            StartBot("command balancing", stringBuilder);
+                                            TelegramBotStart.Execute("command signals", stringBuilder);
+                                        //else if (command == "ADVICESTARTS")
+                                        //    StopBot("command advice", stringBuilder);
+                                        //else if (command == "BALANCESTART")
+                                        //    TelegramBotStart.Execute("command balancing", stringBuilder);
                                         else if (command == "STOP")
-                                            StopBot(arguments, stringBuilder);
+                                            TelegramBotStop.Execute(arguments, stringBuilder);
                                         else if (command == "SIGNALSTOP")
-                                            StopBot("command signals", stringBuilder);
-                                        else if (command == "ADVICESTOP")
-                                            StopBot("command advice", stringBuilder);
-                                        else if (command == "BALANCESTOP")
-                                            StopBot("command balancing", stringBuilder);
+                                            TelegramBotStop.Execute("command signals", stringBuilder);
+                                        //else if (command == "ADVICESTOP")
+                                        //    StopBot("command advice", stringBuilder);
+                                        //else if (command == "BALANCESTOP")
+                                        //    StopBot("command balancing", stringBuilder);
                                         else if (command == "BAROMETER")
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                         else if (command == "ASSETS")
