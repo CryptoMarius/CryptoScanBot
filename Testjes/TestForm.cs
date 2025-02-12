@@ -2540,7 +2540,7 @@ public partial class TestForm : Form
                     signal.Symbol.LastPrice = signal.SignalPrice + 1;
 
                 signal.Last24HoursChange = 12345.12;
-                signal.Last24HoursEffective = 82345.12;
+                signal.LastXDaysEffective = 82345.12;
 
                 signal.Rsi = 12.12;
                 signal.Sma200 = 11.11;
