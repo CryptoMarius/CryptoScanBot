@@ -483,9 +483,16 @@ public class ZoneDlz
                 {
                     if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newCreatedZones (also the closed ones)
                     {
-                        decimal price = zigZag.Value;
+                        decimal boxLimit;
+                        if (zigZag.PointType == 'L')
+                            boxLimit = zigZag.Bottom;
+                        else
+                            boxLimit = zigZag.Top;
+                        decimal price = boxLimit;
+
                         long max = zigZag.Candle.OpenTime;
                         long min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * data.Interval.Duration;
+                        // Is it on the right of the last zigzag point?
                         if (min < previous.Candle.OpenTime)
                             min = previous.Candle.OpenTime;
                         while (min < max)
@@ -494,42 +501,22 @@ public class ZoneDlz
                             {
                                 if (zigZag.PointType == 'L')
                                 {
-                                    if (candle.High > zigZag.Value)
-                                    {
-                                        if (candle.High > price)
-                                            price = candle.High;
-                                    }
+                                    if (candle.High > price)
+                                        price = candle.High;
                                 }
                                 else
                                 {
-                                    if (candle.Low < zigZag.Value)
-                                    {
-                                        if (candle.Low < price)
-                                            price = candle.Low;
-                                    }
+                                    if (candle.Low < price)
+                                        price = candle.Low;
                                 }
                             }
                             min += data.SymbolInterval.Interval.Duration;
                         }
 
 
-                        //Problem Value is not the start of the box!!
-                        //double diff = (double)Math.Abs(zigZag.Value - price);
-                        //double perc = 100 * diff / (double)zigZag.Value;
-                        //if (perc >= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
-                        //{
-                        //    zigZag.NiceIntro = $"{perc:N2} !";
-                        //}
-                        //else
-                        //    zigZag.NiceIntro = $"{perc:N2}";
-
-                        decimal boxLimit;
-                        if (zigZag.PointType == 'L')
-                            boxLimit = zigZag.Candle.Low;
-                        else
-                            boxLimit = zigZag.Candle.High;
                         double perc = (double)(100 * Math.Abs(boxLimit - price) / Math.Min(boxLimit, price));
-                        zigZag.NiceIntro = $"(intro {perc:N2}%)"; // {price} {boxLimit}";
+                        zigZag.NiceIntro = $"\n\r(intro {perc:N2}%)";
+                        zigZag.NiceIntro += $"\n\r{price}\n\r{boxLimit}";
 
                         if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
                             zigZag.Strength = CryptoZoneStrength.Weak;
