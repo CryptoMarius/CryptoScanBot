@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 42;
+    public readonly static int CurrentDatabaseVersion = 43;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1130,8 +1130,28 @@ public class Migration
             // todo: Delete CryptoScanBot-weblinks.json?
         }
 
+        //***********************************************************
+        // 12-02-2025, mixed up some statistics fields
+        if (CurrentVersion > version.Version && version.Version == 42)
+        {
+            using var transaction = database.BeginTransaction();
 
-        // todo: delete zone.LastSignalDate
+            // Signals: mixed up statistics fields
+            try { database.Connection.Execute("alter table Signal add LastXDaysEffective Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("update Signal set LastXDaysEffective=Last10DaysEffective", transaction); } catch { } // ignore
+
+            try { database.Connection.Execute("alter table Signal drop column Last48Hours", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal drop column Last24HoursEffective", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal drop column Last10DaysEffective", transaction); } catch { } // ignore
+
+            // A never used field
+            try { database.Connection.Execute("alter table zone drop column LastSignalDate", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 
 }

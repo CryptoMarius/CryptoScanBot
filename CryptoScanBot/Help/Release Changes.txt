@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 05-02-2025 2.0.3
+- Scanner - Het veld 24h move is niet ingevuld c.q. bestaat al een poosje niet meer, veld is vervangen door de x day's effectief
 - Scanner - Een Telegram commando geintroduceerd om de dichtbijzijnste top 10 zones te tonen
 - Scanner - RSI attributen nu instelbaar (length)
 - Scanner - Stoch attributen nu instelbaar (length, %d, %k)

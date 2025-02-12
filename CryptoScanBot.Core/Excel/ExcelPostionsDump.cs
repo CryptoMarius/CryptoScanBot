@@ -137,7 +137,7 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
             WriteCell(sheet, column++, row, TrendTools.TrendIndicatorText(position.TrendIndicator));
             WriteCell(sheet, column++, row, position.TrendPercentage, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.Last24HoursChange, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, position.Last24HoursEffective, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, position.LastXDaysEffective, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.BollingerBandsPercentage, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.BollingerBandsUpperBand, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.BollingerBandsLowerBand, CellStyleDecimalNormal);

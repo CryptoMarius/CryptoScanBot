@@ -364,9 +364,7 @@ public class CryptoDatabase : IDisposable
                 "EventText TEXT NULL," +
 
                 "Last24HoursChange TEXT NULL," +
-                "Last48Hours TEXT NULL," +
-                "Last24HoursEffective TEXT NULL," +
-                "Last10DaysEffective TEXT NULL," +
+                "LastXDaysEffective TEXT NULL," +
 
                 "TrendIndicator INTEGER NULL," +
                 "TrendPercentage TEXT NULL," +
@@ -787,7 +785,7 @@ public class CryptoDatabase : IDisposable
                 "Bottom TEXT not null," +
                 "AlarmDate TEXT," +
                 "CloseTime TEXT NULL," +
-                "LastSignalDate TEXT NULL," +
+                //"LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +

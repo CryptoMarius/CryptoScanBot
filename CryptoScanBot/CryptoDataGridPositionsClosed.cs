@@ -46,7 +46,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
         TfTrend,
         MarketTrend,
         Change24h,
-        Move24h,
+        MoveLastXDaysEffective,
         BB,
         AvgBB,
         Rsi,
@@ -219,7 +219,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                 case ColumnsForGrid.Change24h:
                     CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
-                case ColumnsForGrid.Move24h:
+                case ColumnsForGrid.MoveLastXDaysEffective:
                     CreateColumn("24h Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.BB:
@@ -358,7 +358,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
                     ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
                     ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
-                    ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
+                    ColumnsForGrid.MoveLastXDaysEffective => ObjectCompare.Compare(a.LastXDaysEffective, b.LastXDaysEffective),
                     ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
                     ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.AvgBB, b.AvgBB),
                     ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
@@ -551,8 +551,8 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                 case ColumnsForGrid.Change24h:
                     e.Value = position.Last24HoursChange;
                     break;
-                case ColumnsForGrid.Move24h:
-                    e.Value = position.Last24HoursEffective;
+                case ColumnsForGrid.MoveLastXDaysEffective:
+                    e.Value = position.LastXDaysEffective;
                     break;
                 case ColumnsForGrid.BB:
                     e.Value = position.BollingerBandsPercentage;

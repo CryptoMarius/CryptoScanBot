@@ -24,7 +24,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         TfTrend,
         MarketTrend,
         Change24h,
-        Move24h,
+        MoveXDaysEffective,
         BB,
         AvgBB,
         Rsi,
@@ -156,8 +156,8 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.Change24h:
                     CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
-                case ColumnsForGrid.Move24h:
-                    CreateColumn("24h Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                case ColumnsForGrid.MoveXDaysEffective:
+                    CreateColumn("X days Move", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
                     break;
                 case ColumnsForGrid.BB:
                     CreateColumn("BB%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
@@ -282,7 +282,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
                     ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
                     ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
-                    ColumnsForGrid.Move24h => ObjectCompare.Compare(a.Last24HoursEffective, b.Last24HoursEffective),
+                    ColumnsForGrid.MoveXDaysEffective => ObjectCompare.Compare(a.LastXDaysEffective, b.LastXDaysEffective),
                     ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
                     ColumnsForGrid.AvgBB => ObjectCompare.Compare(a.AvgBB, b.AvgBB),
                     ColumnsForGrid.MacdValue => ObjectCompare.Compare(a.MacdValue, b.MacdValue),
@@ -436,8 +436,8 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.Change24h:
                     e.Value = signal.Last24HoursChange;
                     break;
-                case ColumnsForGrid.Move24h:
-                    e.Value = signal.Last24HoursEffective;
+                case ColumnsForGrid.MoveXDaysEffective:
+                    e.Value = signal.LastXDaysEffective;
                     break;
                 case ColumnsForGrid.BB:
                     e.Value = signal.BollingerBandsPercentage;

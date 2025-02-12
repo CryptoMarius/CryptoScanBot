@@ -58,7 +58,7 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
         WriteCell(sheet, columns++, row, "TfTrend");
         WriteCell(sheet, columns++, row, "MarketTrend");
         WriteCell(sheet, columns++, row, "Change24h");
-        WriteCell(sheet, columns++, row, "Move24h");
+        WriteCell(sheet, columns++, row, "MoveXDays");
         WriteCell(sheet, columns++, row, "BB%");
         WriteCell(sheet, columns++, row, "BB.Upper");
         WriteCell(sheet, columns++, row, "BB.Lower");
@@ -111,7 +111,7 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             WriteCell(sheet, column++, row, TrendTools.TrendIndicatorText(signal.TrendIndicator));
             WriteCell(sheet, column++, row, signal.TrendPercentage, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Last24HoursChange, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, signal.Last24HoursEffective, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, signal.LastXDaysEffective, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.BollingerBandsPercentage, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.BollingerBandsUpperBand, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.BollingerBandsLowerBand, CellStyleDecimalNormal);

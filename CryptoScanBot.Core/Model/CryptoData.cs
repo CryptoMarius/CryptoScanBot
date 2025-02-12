@@ -148,8 +148,7 @@ public class CryptoData2 : CryptoData
 
 
     public double Last24HoursChange { get; set; }
-    public double Last24HoursEffective { get; set; }
-    public double Last10DaysEffective { get; set; }
+    public double LastXDaysEffective { get; set; }
 
     public float TrendPercentage { get; set; }
     public CryptoTrendIndicator TrendIndicator { get; set; }
@@ -194,8 +193,7 @@ public class CryptoData2 : CryptoData
             SignalVolume = source2.SignalVolume;
 
             Last24HoursChange = source2.Last24HoursChange;
-            Last24HoursEffective = source2.Last24HoursEffective;
-            Last10DaysEffective = source2.Last10DaysEffective;
+            LastXDaysEffective = source2.LastXDaysEffective;
 
             TrendPercentage = source2.TrendPercentage;
             TrendIndicator = source2.TrendIndicator;

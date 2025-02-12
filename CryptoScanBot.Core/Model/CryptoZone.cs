@@ -41,8 +41,6 @@ public class CryptoZone
     // Create a signal when this price triggers (once)
     public DateTime? AlarmDate { get; set; }
 
-    public long? LastSignalDate { get; set; }
-
     // Percentage of the zone or other text
     public string Description { get; set; } = "";
 

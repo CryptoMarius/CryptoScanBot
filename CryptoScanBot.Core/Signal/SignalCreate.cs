@@ -340,12 +340,12 @@ public class SignalCreate
 
         // Check effictive over multiple day's
         int countInInterval6H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
-        signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H);
-        if (!HasOpenPosition() && !signal.Last10DaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
+        signal.LastXDaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H);
+        if (!HasOpenPosition() && !signal.LastXDaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)
             {
-                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.Last10DaysEffective.ToString("N2"),
+                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.LastXDaysEffective.ToString("N2"),
                     "0", GlobalData.Settings.Signal.AnalysisEffectivePercentage.ToString());
                 GlobalData.AddTextToLogTab(text);
             }
