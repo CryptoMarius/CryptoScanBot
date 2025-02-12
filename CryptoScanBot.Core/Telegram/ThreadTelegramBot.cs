@@ -425,7 +425,7 @@ public class ThreadTelegramBotInstance
                                         else if (command == "CALCULATEZONES")
                                             TelegramCalculateZones.Execute(command, stringBuilder);
                                         else if (command == "ZONES")
-                                            TelegramShowZones.Execute(command, stringBuilder);
+                                            TelegramShowZones.Execute(arguments, stringBuilder);
                                         else if (command == "POSITIONS")
                                             Helper.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")

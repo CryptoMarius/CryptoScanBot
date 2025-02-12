@@ -20,6 +20,7 @@ public class TelegramShowZones
             if (!int.TryParse(parameters[1].Trim(), out zoneCount))
                 zoneCount = 10;
         }
+
         if (zoneCount > 50)
             zoneCount = 50;
 
@@ -36,12 +37,19 @@ public class TelegramShowZones
                     list.Add(distance.Value, symbol);
             }
 
-            foreach (var zone in list)
+            if (list.Count == 0)
             {
-                zoneCount--;
-                if (zoneCount < 0)
-                    break;
-                stringbuilder.AppendLine($"{zone.Value.Name} {zone.Key:N2}");
+                stringbuilder.AppendLine($"not calculated?");
+            }
+            else
+            {
+                foreach (var zone in list)
+                {
+                    zoneCount--;
+                    if (zoneCount < 0)
+                        break;
+                    stringbuilder.AppendLine($"{zone.Value.Name} {zone.Key:N2}");
+                }
             }
         }
     }
