@@ -508,7 +508,7 @@ public class PositionMonitor //: IDisposable
                                 }
 
 
-                                // Get available assets from the exchange (as late as possible because of webcall)
+                                // GetSymbolData available assets from the exchange (as late as possible because of webcall)
                                 var resultFetchAssets = await AssetTools.FetchAssetsAsync(TradeAccount, true);
                                 if (!resultFetchAssets.success)
                                 {
@@ -1832,8 +1832,8 @@ public class PositionMonitor //: IDisposable
                             // Try to automaticly calculate zones
                             if (LastCandle1mCloseTime % interval.Duration == 0)
                             {
-                                AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-                                AccountSymbolIntervalData accountSymbolInterval = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                                AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
+                                AccountSymbolInterval accountSymbolInterval = symbolData.Get(interval.IntervalPeriod);
 
                                 // Scan for new zones if candle is outside of the previous primary trend
                                 decimal valueLow = LastCandle1m.GetLowValue(false);

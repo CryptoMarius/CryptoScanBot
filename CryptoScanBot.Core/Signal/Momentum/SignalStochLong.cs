@@ -98,10 +98,29 @@ public class SignalStochLong : SignalSbmBaseLong
     }
 
 
+    //private bool HasACoupleOfStochOversold(CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int oscValue, int limit)
+    //{
+    //    // Is a candle of the 5 last candles stoch oversold?
+    //    int count = 0;
+    //    while (candleCount > 0)
+    //    {
+    //        if (IndicatorsOkay(candle!) && candle!.CandleData!.StochOscillator < oscValue)
+    //            count++;
+    //        if (!GetPrevCandle(symbolInterval, candle, out candle))
+    //            return false;
+    //        candleCount--;
+    //    }
+    //    if (count < limit)
+    //        return false;
+
+    //    return true;
+    //}
+
 
     public override bool IsSignal()
     {
         ExtraText = "";
+
 
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
@@ -118,44 +137,87 @@ public class SignalStochLong : SignalSbmBaseLong
         }
 
 
-        // From oversold to not oversold after a stob or storsi
+        // From oversold to not oversold
 
-        if (CandleLast.IsStochOscillatorOversold(2))
+        // Crossing of Stoch Oscilator=18
+        int oscLimit = 18;
+        if (CandleLast.CandleData?.StochOscillator < oscLimit)
         {
-            ExtraText = "last stoch not oversold";
+            ExtraText = "last stoch oversold";
             return false;
         }
-
         if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
             return false;
-
-
-        if (!candlePrev!.IsStochOscillatorOversold(2))
+       
+        if (candlePrev!.CandleData?.StochOscillator > oscLimit)
         {
             ExtraText = "prev stoch not oversold";
             return false;
         }
 
-        // Needs to be be pretty oversold (not just slighly)
-        int limit = 10;
-        if (!HadStochOscillatorPrettyOversoldInThelastXCandles(10, limit))
-        {
-            ExtraText = $"stoch osc not oversold < {limit}";
-            return false;
-        }
-        
 
-
-        // Parameter BB...
-        // Parameter RSI ...
-        // Parameter candles
-        // Parameters Stoch/Storsi/Both
-
-        //if (HadStobbInThelastXCandles(SignalSide, 0, 40) == null && HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
+        //// Stoch Oscilator needs to have 3 candles to be < 10 in the last 10 candles)
+        //if (!HasACoupleOfStochOversold(SymbolInterval, CandleLast, 10, 10, 3))
         //{
-        //    ExtraText = "no prev stobb/storsi";
+        //    ExtraText = $"stoch osc not oversold < {10}";
         //    return false;
         //}
+
+        double stochSurface = StochOversoldSurface(SymbolInterval, CandleLast, 30, 10); // other limit
+        if (stochSurface < 5)
+        {
+            ExtraText = $"stoch osc not oversold < {10}";
+            return false;
+        }
+
+        // To higher interval
+        var result = CalculateIndicatorsForInterval(Symbol, Interval.IntervalPeriod + 1, Interval, CandleLast);
+        if (!result.result)
+            return false;
+        //// Stoch Oscilator on higher interval needs to have 2 candles to be < 15 in the last 10 candles)
+        //if (!HasACoupleOfStochOversold(result.higherInterval, CandleLast, 10, 15, 2))
+        //{
+        //    ExtraText = $"stoch osc not oversold < {15}";
+        //    return false;
+        //}
+
+
+        // does not work in higher interval, this needs extra work..
+        //if (!IsInLowerPartOfBollingerBands(3, 5.0m))
+        //{
+        //    ExtraText = "not in lower part of bb";
+        //    return false;
+        //}
+
+
+        //// storsi condition is too strong..
+        //if (!WasRsiOversoldInTheLast(30))
+        //{
+        //    ExtraText = "no prev rsi oversold";
+        //    return false;
+        //}
+
+        //if (HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
+        //{
+        //    ExtraText = "no prev storsi";
+        //    return false;
+        //}
+
+        //var x = CalculateBarometerIndicators(Symbol, Interval, CandleLast);
+        //if (!x.result)
+        //    return false;
+        //ExtraText = $"BM: RSI:{x.candle!.CandleData!.Rsi:N2} SIG:{x.candle!.CandleData!.StochOscillator:N2} HIS:{x.candle!.CandleData!.MacdHistogram:N2}";
+
+        double stochSurface2 = StochOversoldSurface(result.higherInterval, result.candle!, 30, 15); // other limit
+        if (stochSurface2 < 5)
+        {
+            ExtraText = $"stoch osc not oversold < {5}";
+            return false;
+        }
+
+        double rsiSurface = RsiOversoldSurface(SymbolInterval, CandleLast, 30);
+        double rsiSurface2 = RsiOversoldSurface(result.higherInterval, result.candle!, 30);
+        ExtraText = $"sto:{stochSurface:N2}/{stochSurface2:N2} rsi:{rsiSurface:N2}/{rsiSurface2:N2}";
 
         return true;
     }

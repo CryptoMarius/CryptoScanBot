@@ -18,26 +18,30 @@ public class CommandShowTrendInfo : CommandBase
             log.AppendLine($"Markettrend {symbol.Name}");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
-            _ = MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount, symbol, 0, 0, log);
+            AccountSymbol accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+            SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
+            _ = MarketTrend.CalculateMarketTrendAsync(symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, 0, log);
+
             log.AppendLine("");
             log.AppendLine("");
 
-            AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-            foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolIntervalDataList)
+            foreach (var interval in GlobalData.IntervalList)
             {
+                var intervalTrend = symbolTrend.Get(interval.IntervalPeriod);
+
                 string s;
-                if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bullish)
-                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bullish";
-                else if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bearish)
-                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=bearish";
+                if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)
+                    s = $"{symbol.Name} {interval.Name} trend=bullish";
+                else if (intervalTrend.Trend == CryptoTrendIndicator.Bearish)
+                    s = $"{symbol.Name} {interval.Name} trend=bearish";
                 else
-                    s = $"{symbol.Name} {accountSymbolIntervalData.Interval.Name} trend=sideway's";
+                    s = $"{symbol.Name} {interval.Name} trend=sideway's";
                 GlobalData.AddTextToLogTab(s);
                 log.AppendLine(s);
             }
 
             string t;
-            float marketTrend = (float)accountSymbolData.MarketTrendPercentage!;
+            float marketTrend = (float)symbolTrend.Percentage!;
             if (marketTrend < 0)
                 t = $"{symbol.Name} Markettrend={marketTrend:N2}% bearish";
             else if (marketTrend > 0)

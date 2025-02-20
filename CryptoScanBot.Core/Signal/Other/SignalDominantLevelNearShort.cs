@@ -20,18 +20,18 @@ public class SignalDominantLevelNearShort : SignalCreateBase
         bool result = false;
         
         decimal closestZone = 100;
-        AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
 
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListShort.Count}");
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
             {
-                var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 int index = 0;
                 decimal distance = 100m;
-                while (index < symbolIntervalData.DlzZones.ShortOpen.Count) // sorted on Zone.Bottom asscending
+                while (index < symbolIntervalData.DlzZones.ShortOpen.Count) // sorted on Zone.Bottom (ascending)
                 {
                     decimal? alarmPrice = null;
                     var zone = symbolIntervalData.DlzZones.ShortOpen[index];
@@ -52,11 +52,18 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                             {
                                 if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
                                 {
-                                    result = true;
-                                    zone.AlarmDate = CandleLast.Date;
-                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
-                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                    if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                    {
+                                        // nothing
+                                    }
+                                    else
+                                    {
+                                        result = true;
+                                        zone.AlarmDate = CandleLast.Date;
+                                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                        decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                        ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                    }
                                 }
                             }
 
@@ -64,7 +71,6 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                             // Close if the candle touched the zone..
                             if (CandleLast.High >= zone.Bottom)
                             {
-                                ExtraText += "....";
                                 zone.CloseTime = CandleLast.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                                 GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
@@ -74,9 +80,16 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                             // Show the distance to the next available zone (for the symbol grid)
                             if (zone.CloseTime == null)
                             {
-                                decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
-                                if (dist < distance)
-                                    distance = dist;
+                                if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                {
+                                    // nothing
+                                }
+                                else
+                                {
+                                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                    if (dist < distance)
+                                        distance = dist;
+                                }
                             }
                         }
                     }
@@ -90,7 +103,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                     else index++;
 
 
-                    // The list is sorted on zone.bottom and break if there are no more reachable zones (save some looping time)
+                    // The list is sorted on zone.bottom (ascending) and break if there are no more reachable zones (save some looping time)
                     if (alarmPrice != null && alarmPrice < zone.Bottom)
                         break;
                 }

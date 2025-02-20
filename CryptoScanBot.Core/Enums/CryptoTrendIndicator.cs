@@ -2,7 +2,7 @@
 
 public enum CryptoTrendIndicator
 {
-    Sideways = 0, // of onbekend (nieuwe coin, te weinig candles)
+    Sideways = 0, // New coins or non calculated coins
     Bullish = 1,
     Bearish = 2
 }

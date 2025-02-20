@@ -9,10 +9,16 @@ namespace CryptoScanBot.Core.Trend;
 // -Fib (should be via high/low)
 // -Dtb (experimental double top/bottom via points)
 
+public enum TrendType
+{
+    Primary,
+    Secondary
+}
+
 public class ZigZagIndicator
 {
     private bool UseHighLow { get; set; } = false; // Use High/Low or Open/Close
-    public bool ShowSecondary { get; set; } = false; // see more than primary trend
+    private TrendType TrendType { get; set; } = TrendType.Primary; // see more than primary trend
 
     public bool UseOptimizing { get; set; } = true; // Debug
     public long MaxTime { get; set; } = -1; // Debug
@@ -34,10 +40,11 @@ public class ZigZagIndicator
     private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
 
-    public ZigZagIndicator(bool useHighLow, decimal deviation)
+    public ZigZagIndicator(TrendType trendType, bool useHighLow, decimal deviation)
     {
-        Deviation = deviation;
+        TrendType = trendType;
         UseHighLow = useHighLow;
+        Deviation = deviation;
         ZigZagLanceBeggs = new(UseHighLow);
     }
 
@@ -47,7 +54,7 @@ public class ZigZagIndicator
     private bool GetLowFromBuffer(int minIndex, int maxIndex, out ZigZagResult? swing)
     {
         swing = null;
-        if (ShowSecondary)
+        if (TrendType == TrendType.Secondary)
             return false;
         for (int i = minIndex; i <= maxIndex; i++)
         {
@@ -65,7 +72,7 @@ public class ZigZagIndicator
     private bool GetHighFromBuffer(int minIndex, int maxIndex, out ZigZagResult? swing)
     {
         swing = null;
-        if (ShowSecondary)
+        if (TrendType == TrendType.Secondary)
             return false;
         for (int i = minIndex; i <= maxIndex; i++)
         {
@@ -129,7 +136,7 @@ public class ZigZagIndicator
 
     private bool CanAddNewHigh(decimal candleValue)
     {
-        if (ShowSecondary)
+        if (TrendType == TrendType.Secondary)
             return true;
         // no previous high
         if (LastSwingHigh == null)
@@ -165,7 +172,7 @@ public class ZigZagIndicator
                     // Create a new inbetween low calculated from the buffer
                     if (LastSwingHigh != null && GetLowFromBuffer(LastSwingHigh.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult? swing))
                     {
-                        if (ShowSecondary || (!ShowSecondary && GetLowValue(swing!.Candle!) < LastSwingHigh.Value))
+                        if (TrendType == TrendType.Secondary || (TrendType == TrendType.Primary && GetLowValue(swing!.Candle!) < LastSwingHigh.Value))
                             LastSwingLow = AddZigZagPoint(swing!.Candle!, 'L', dummy, swing.PivotIndex);
                     }
                     LastSwingHigh = AddZigZagPoint(candle, 'H', dummy, PivotList.Count - 1);
@@ -179,7 +186,7 @@ public class ZigZagIndicator
 
     private bool CanAddNewLow(decimal candleValue)
     {
-        if (ShowSecondary)
+        if (TrendType == TrendType.Secondary)
             return true;
         // no previous high
         if (LastSwingLow == null)
@@ -217,7 +224,7 @@ public class ZigZagIndicator
                     // Create a new inbetween high calculated from the buffer
                     if (LastSwingLow != null && GetHighFromBuffer(LastSwingLow.PivotIndex + 1, PivotList.Count - 2, out ZigZagResult? swing))
                     {
-                        if (ShowSecondary || (!ShowSecondary && GetHighValue(swing!.Candle) > LastSwingLow.Value))
+                        if (TrendType == TrendType.Secondary || (TrendType == TrendType.Primary && GetHighValue(swing!.Candle) > LastSwingLow.Value))
                             LastSwingHigh = AddZigZagPoint(swing!.Candle!, 'H', dummy, swing.PivotIndex);
                     }
                     LastSwingLow = AddZigZagPoint(candle, 'L', dummy, PivotList.Count - 1);
@@ -306,7 +313,7 @@ public class ZigZagIndicator
         }
     }
 
-    public void OptimizeList()
+    private void OptimizeList()
     {
         // TODO: problem, we only check 2 points...
         // there can be a huge jump before the first, invalidating everything!

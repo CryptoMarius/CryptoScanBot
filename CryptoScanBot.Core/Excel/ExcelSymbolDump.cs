@@ -142,7 +142,10 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 #endif
         WriteCell(sheet, columns++, row, "QuoteVolume");
 
-        //WriteCell(sheet, columns++, row, "SlopeRsi");
+        WriteCell(sheet, columns++, row, "Rsi");
+        WriteCell(sheet, columns++, row, "StochSignal");
+        WriteCell(sheet, columns++, row, "StochOscillator");
+        WriteCell(sheet, columns++, row, "Lux5mValue");
         //WriteCell(sheet, columns++, row, "SlopeMacd");
         //WriteCell(sheet, columns++, row, "SlopeStoch");
         //WriteCell(sheet, columns++, row, "SlopeSma20");
@@ -179,29 +182,32 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             else
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
 
-            //if (candle.CandleData != null)
-            //{
-            //    List<double?> bla = [];
-            //    bla.Add(candle.CandleData.SlopeRsi);
-            //    bla.Add(candle.CandleData.SlopeMacd);
-            //    bla.Add(candle.CandleData.SlopeStoch);
-            //    bla.Add(candle.CandleData.SlopeSma20);
-            //    bla.Add(candle.CandleData.SlopeSma50);
-            //    bla.Add(candle.CandleData.SlopeSma100);
-            //    bla.Add(candle.CandleData.SlopeSma200);
+            if (candle.CandleData != null)
+            {
+                List<double?> bla = [];
+                bla.Add(candle.CandleData.Rsi);
+                bla.Add(candle.CandleData.StochSignal);
+                bla.Add(candle.CandleData.StochOscillator);
+                bla.Add(candle.CandleData.Lux5mValue);
+                //    bla.Add(candle.CandleData.SlopeMacd);
+                //    bla.Add(candle.CandleData.SlopeStoch);
+                //    bla.Add(candle.CandleData.SlopeSma20);
+                //    bla.Add(candle.CandleData.SlopeSma50);
+                //    bla.Add(candle.CandleData.SlopeSma100);
+                //    bla.Add(candle.CandleData.SlopeSma200);
 
-            //    foreach (var value in bla)
-            //    {
-            //        if (value != null)
-            //        {
-            //            if (value <= 0)
-            //                WriteCell(sheet, column, row, value, CellStyleDecimalRed);
-            //            else
-            //                WriteCell(sheet, column, row, value, CellStyleDecimalGreen);
-            //        }
-            //        column++;
-            //    }
-            //}
+                foreach (var value in bla)
+                {
+                    if (value != null)
+                    {
+                        if (value <= 0)
+                            WriteCell(sheet, column, row, value, CellStyleDecimalRed);
+                        else
+                            WriteCell(sheet, column, row, value, CellStyleDecimalGreen);
+                    }
+                    column++;
+                }
+            }
 
             last = candle;
         }

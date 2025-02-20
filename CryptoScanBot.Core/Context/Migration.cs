@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 43;
+    public readonly static int CurrentDatabaseVersion = 44;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1146,6 +1146,44 @@ public class Migration
 
             // A never used field
             try { database.Connection.Execute("alter table zone drop column LastSignalDate", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+
+        //***********************************************************
+        // 19-02-2025, secondary trend, two extra variables for total surface area oversold stoch/rsi?
+        if (CurrentVersion > version.Version && version.Version == 43)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // signal, add StochSurface and RsiSurface
+            // Position and Signal table: TrendPercentage, split into primary or secundary trend
+            database.Connection.Execute("alter table Signal rename column TrendPercentage to TrendPercentagePrimary", transaction);
+            database.Connection.Execute("alter table Signal add column TrendPercentageSecondary TEXT null", transaction);
+            database.Connection.Execute("alter table Signal add column RsiSurface TEXT null", transaction);
+            database.Connection.Execute("alter table Signal add column StochSurface TEXT null", transaction);
+            database.Connection.Execute("alter table Signal add column RsiSurface2 TEXT null", transaction);
+            database.Connection.Execute("alter table Signal add column StochSurface2 TEXT null", transaction);
+
+            database.Connection.Execute("alter table Position rename column TrendPercentage to TrendPercentagePrimary", transaction);
+            database.Connection.Execute("alter table Position add column TrendPercentageSecondary TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column RsiSurface TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column StochSurface TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column RsiSurface2 TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column StochSurface2 TEXT null", transaction);
+
+            // Unused fields
+            database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
+            database.Connection.Execute("alter table Symbol drop column TrendPercentage", transaction);
+
+            // A much better fieldname
+            database.Connection.Execute("alter table Signal rename column TrendIndicator to TrendInterval", transaction);
+            database.Connection.Execute("alter table Position rename column TrendIndicator to TrendInterval", transaction);
 
             // update version
             version.Version += 1;

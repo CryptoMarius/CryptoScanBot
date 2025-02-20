@@ -40,11 +40,11 @@ namespace Testjes2
 
         public static void InitializeApplicationVariables()
         {
-            GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
-            GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
+            GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
             var assembly = Assembly.GetExecutingAssembly().GetName();
-            string appVersion = assembly.Version.ToString();
+            string appVersion = assembly.Version!.ToString();
             while (appVersion.EndsWith(".0.0"))
                 appVersion = appVersion[0..^2];
 

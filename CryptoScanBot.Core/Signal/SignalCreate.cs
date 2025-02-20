@@ -383,26 +383,25 @@ public class SignalCreate
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        await MarketTrend.CalculateMarketTrendAsync(TradeAccount, signal.Symbol, 0, LastCandle1mCloseTime);
-        AccountSymbolData accountSymbolData = TradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
-        if (accountSymbolData.MarketTrendPercentage.HasValue) // Kucoin causes a problem
-        {
-            signal.TrendPercentage = (float)accountSymbolData.MarketTrendPercentage;
+        AccountSymbol accountSymbol = TradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
+        SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
 
-            AccountSymbolIntervalData accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(signal.Interval.IntervalPeriod);
-            signal.TrendIndicator = accountSymbolIntervalData.Trend.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval15m);
-            signal.Trend15m = accountSymbolIntervalData.Trend.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval30m);
-            signal.Trend30m = accountSymbolIntervalData.Trend.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1h);
-            signal.Trend1h = accountSymbolIntervalData.Trend.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval4h);
-            signal.Trend4h = accountSymbolIntervalData.Trend.TrendIndicator;
-            accountSymbolIntervalData = accountSymbolData.GetAccountSymbolInterval(CryptoIntervalPeriod.interval1d);
-            signal.Trend1d = accountSymbolIntervalData.Trend.TrendIndicator;
+        await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, LastCandle1mCloseTime);
+        if (symbolTrend.Percentage.HasValue)
+        {
+            signal.TrendPercentagePrimary = (float)symbolTrend.Percentage!;
+            signal.TrendInterval = symbolTrend.Get(signal.Interval.IntervalPeriod).Trend;
+            signal.Trend15m = symbolTrend.Get(CryptoIntervalPeriod.interval15m).Trend;
+            signal.Trend30m = symbolTrend.Get(CryptoIntervalPeriod.interval30m).Trend;
+            signal.Trend1h = symbolTrend.Get(CryptoIntervalPeriod.interval1h).Trend;
+            signal.Trend4h = symbolTrend.Get(CryptoIntervalPeriod.interval4h).Trend;
+            signal.Trend1d = symbolTrend.Get(CryptoIntervalPeriod.interval1d).Trend;
         }
 
+        symbolTrend = accountSymbol.TrendSecondary;
+        await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, accountSymbol, symbolTrend, TrendType.Secondary, 0, LastCandle1mCloseTime);
+        if (symbolTrend.Percentage.HasValue)
+            signal.TrendPercentageSecondary = (float)symbolTrend.Percentage;
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
@@ -424,22 +423,6 @@ public class SignalCreate
                 signal.IsInvalid = true;
             }
 
-
-            // And additional for STOBB a check on markettrend (bit overkill)
-            if (signal.Strategy == CryptoSignalStrategy.Stobb)
-            {
-                if (signal.Side == CryptoTradeSide.Long && GlobalData.Settings.Signal.Stobb.TrendLong > -999m && (decimal)signal.TrendPercentage < GlobalData.Settings.Signal.Stobb.TrendLong)
-                {
-                    eventText.Add("markettrend% is too low");
-                    signal.IsInvalid = true;
-                }
-                // Die -99 begint verwarrend te werken
-                if (signal.Side == CryptoTradeSide.Short && GlobalData.Settings.Signal.Stobb.TrendShort > -999m && (decimal)signal.TrendPercentage > GlobalData.Settings.Signal.Stobb.TrendShort)
-                {
-                    eventText.Add("markettrend% is too high");
-                    signal.IsInvalid = true;
-                }
-            }
         }
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)

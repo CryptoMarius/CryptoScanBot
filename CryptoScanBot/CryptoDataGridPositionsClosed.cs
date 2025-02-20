@@ -44,7 +44,8 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
         SignalPrice,
         SignalVolume,
         TfTrend,
-        MarketTrend,
+        MarketTrendPrimary,
+        MarketTrendSecondary,
         Change24h,
         MoveLastXDaysEffective,
         BB,
@@ -213,8 +214,11 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                 case ColumnsForGrid.TfTrend:
                     CreateColumn("TF trend", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 50).Visible = false;
                     break;
-                case ColumnsForGrid.MarketTrend:
-                    CreateColumn("Market trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
+                case ColumnsForGrid.MarketTrendPrimary:
+                    CreateColumn("Market trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50);
+                    break;
+                case ColumnsForGrid.MarketTrendSecondary:
+                    CreateColumn("Market sec. trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
                 case ColumnsForGrid.Change24h:
                     CreateColumn("24h Change", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
@@ -355,8 +359,9 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     ColumnsForGrid.SignalDate => ObjectCompare.Compare(a.SignalEventTime, b.SignalEventTime),
                     ColumnsForGrid.SignalPrice => ObjectCompare.Compare(a.SignalPrice, b.SignalPrice),
                     ColumnsForGrid.SignalVolume => ObjectCompare.Compare(a.SignalVolume, b.SignalVolume),
-                    ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendIndicator, b.TrendIndicator),
-                    ColumnsForGrid.MarketTrend => ObjectCompare.Compare(a.TrendPercentage, b.TrendPercentage),
+                    ColumnsForGrid.TfTrend => ObjectCompare.Compare(a.TrendInterval, b.TrendInterval),
+                    ColumnsForGrid.MarketTrendPrimary => ObjectCompare.Compare(a.TrendPercentagePrimary, b.TrendPercentagePrimary),
+                    ColumnsForGrid.MarketTrendSecondary => ObjectCompare.Compare(a.TrendPercentageSecondary, b.TrendPercentageSecondary),
                     ColumnsForGrid.Change24h => ObjectCompare.Compare(a.Last24HoursChange, b.Last24HoursChange),
                     ColumnsForGrid.MoveLastXDaysEffective => ObjectCompare.Compare(a.LastXDaysEffective, b.LastXDaysEffective),
                     ColumnsForGrid.BB => ObjectCompare.Compare(a.BollingerBandsPercentage, b.BollingerBandsPercentage),
@@ -543,10 +548,13 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     e.Value = position.SignalVolume;
                     break;
                 case ColumnsForGrid.TfTrend:
-                    e.Value = TrendTools.TrendIndicatorText(position.TrendIndicator);
+                    e.Value = TrendTools.TrendIndicatorText(position.TrendInterval);
                     break;
-                case ColumnsForGrid.MarketTrend:
-                    e.Value = position.TrendPercentage;
+                case ColumnsForGrid.MarketTrendPrimary:
+                    e.Value = position.TrendPercentagePrimary;
+                    break;
+                case ColumnsForGrid.MarketTrendSecondary:
+                    e.Value = position.TrendPercentageSecondary;
                     break;
                 case ColumnsForGrid.Change24h:
                     e.Value = position.Last24HoursChange;

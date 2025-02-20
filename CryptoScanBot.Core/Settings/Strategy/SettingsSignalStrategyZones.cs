@@ -1,10 +1,16 @@
 ﻿using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
+    // Defaults for calculation
+    public TrendType TrendType { get; set; } = TrendType.Primary;
+    public bool UseHighLow { get; set; } = false;
+
+    // Show signals from
     public bool ShowSignalsLong { get; set; } = false;
     public bool ShowSignalsShort { get; set; } = false;
     public List<string> IntervalList { get; set; } = [];
@@ -29,6 +35,7 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
     public bool ZoneStartApply { get; set; } = false;
     public int ZoneStartCandleCount { get; set; } = 5; // 5 candles back
     public double ZoneStartPercentage { get; set; } = 2.5; // %
+
 
     public SettingsSignalStrategyZones() : base()
     {

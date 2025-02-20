@@ -38,10 +38,7 @@ public class ZigZagIndicator9TestsStet : TestBase
         LoadCandleDataFromDisk(symbolInterval.CandleList, Path.Combine(path, "Trend\\STETHUSDT\\STETHUSDT-1h.json"));
 
         // Trend via open/close
-        ZigZagIndicator indicator = new(false, 1.0m)
-        {
-            ShowSecondary = true
-        };
+        ZigZagIndicator indicator = new(TrendType.Primary, false, 1.0m);
 
 
         List<DataForTest> list =

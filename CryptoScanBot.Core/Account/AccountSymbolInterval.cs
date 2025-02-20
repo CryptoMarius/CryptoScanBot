@@ -8,7 +8,7 @@ public class ZoneDataList
     // Active zones (CloseTime = null)
     public OrderedList<CryptoZone> LongOpen { get; set; } = new(new CompareZoneDescending());
     public OrderedList<CryptoZone> ShortOpen { get; set; } = new(new CompareZoneAscending());
-    // Just for the display
+    // Active and closed zones (for display only, kind of polluted?)
     public OrderedList<CryptoZone> LongClosed { get; set; } = new(new CompareZoneDescending());
     public OrderedList<CryptoZone> ShortClosed { get; set; } = new(new CompareZoneAscending());
 
@@ -39,14 +39,16 @@ public class ZoneDataList
     }
 }
 
-public class AccountSymbolIntervalData
+public class AccountSymbolInterval
 {
+    // administration (overkill, not really needed)
     public required virtual CryptoInterval Interval { get; set; }
     public required CryptoIntervalPeriod IntervalPeriod { get; set; }
 
+    // zones
     public ZoneDataList DlzZones { get; internal set; } = new();
     public ZoneDataList FvgZones { get; internal set; } = new();
+
+    // ehh?
     public AccountZoneData Zones { get; internal set; } = new();
-    public AccountTrendData Trend { get; internal set; } = new();
-   
 }

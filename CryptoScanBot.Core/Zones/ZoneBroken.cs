@@ -48,8 +48,8 @@ public class ZoneBroken
     {
         // Collect all active newCreatedZones (FVG + DLZ zones)
         List<CryptoZone> zones = [];
-        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
         foreach (CryptoZone zone in symbolIntervalData.DlzZones.LongOpen)
             zones.Add(zone);
         foreach (CryptoZone zone in symbolIntervalData.DlzZones.ShortOpen)

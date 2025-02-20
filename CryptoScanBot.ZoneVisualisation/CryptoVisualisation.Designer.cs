@@ -63,6 +63,7 @@ partial class CryptoVisualisation
         EditShowPositions = new CheckBox();
         EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
+        EditUseHighLow = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
         panel1.SuspendLayout();
@@ -88,6 +89,7 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
         flowLayoutPanel1.Controls.Add(EditShowZigZag);
         flowLayoutPanel1.Controls.Add(EditShowSecondary);
+        flowLayoutPanel1.Controls.Add(EditUseHighLow);
         flowLayoutPanel1.Controls.Add(ButtonRefresh);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
@@ -256,7 +258,7 @@ partial class CryptoVisualisation
         // 
         // ButtonRefresh
         // 
-        ButtonRefresh.Location = new Point(6, 382);
+        ButtonRefresh.Location = new Point(6, 407);
         ButtonRefresh.Name = "ButtonRefresh";
         ButtonRefresh.Size = new Size(121, 23);
         ButtonRefresh.TabIndex = 31;
@@ -265,7 +267,7 @@ partial class CryptoVisualisation
         // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 411);
+        ButtonCalculate.Location = new Point(6, 436);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(121, 23);
         ButtonCalculate.TabIndex = 8;
@@ -274,7 +276,7 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 440);
+        ButtonZoomLast.Location = new Point(6, 465);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(121, 23);
         ButtonZoomLast.TabIndex = 14;
@@ -284,7 +286,7 @@ partial class CryptoVisualisation
         // EditShowFib
         // 
         EditShowFib.AutoSize = true;
-        EditShowFib.Location = new Point(6, 469);
+        EditShowFib.Location = new Point(6, 494);
         EditShowFib.Name = "EditShowFib";
         EditShowFib.Size = new Size(139, 19);
         EditShowFib.TabIndex = 20;
@@ -294,7 +296,7 @@ partial class CryptoVisualisation
         // EditShowFibZigZag
         // 
         EditShowFibZigZag.AutoSize = true;
-        EditShowFibZigZag.Location = new Point(6, 494);
+        EditShowFibZigZag.Location = new Point(6, 519);
         EditShowFibZigZag.Name = "EditShowFibZigZag";
         EditShowFibZigZag.Size = new Size(99, 19);
         EditShowFibZigZag.TabIndex = 24;
@@ -304,7 +306,7 @@ partial class CryptoVisualisation
         // EditShowFvgZones
         // 
         EditShowFvgZones.AutoSize = true;
-        EditShowFvgZones.Location = new Point(6, 519);
+        EditShowFvgZones.Location = new Point(6, 544);
         EditShowFvgZones.Name = "EditShowFvgZones";
         EditShowFvgZones.Size = new Size(108, 19);
         EditShowFvgZones.TabIndex = 32;
@@ -314,7 +316,7 @@ partial class CryptoVisualisation
         // EditShowDtb
         // 
         EditShowDtb.AutoSize = true;
-        EditShowDtb.Location = new Point(6, 544);
+        EditShowDtb.Location = new Point(6, 569);
         EditShowDtb.Name = "EditShowDtb";
         EditShowDtb.Size = new Size(77, 19);
         EditShowDtb.TabIndex = 33;
@@ -326,7 +328,7 @@ partial class CryptoVisualisation
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 569);
+        panel1.Location = new Point(6, 594);
         panel1.Name = "panel1";
         panel1.Size = new Size(95, 66);
         panel1.TabIndex = 21;
@@ -365,7 +367,7 @@ partial class CryptoVisualisation
         PanelPlayBack.Controls.Add(labelMaxTime);
         PanelPlayBack.Controls.Add(ButtonGoRight);
         PanelPlayBack.Controls.Add(ButtonGoLeft);
-        PanelPlayBack.Location = new Point(6, 641);
+        PanelPlayBack.Location = new Point(6, 666);
         PanelPlayBack.Name = "PanelPlayBack";
         PanelPlayBack.Size = new Size(95, 65);
         PanelPlayBack.TabIndex = 22;
@@ -402,7 +404,7 @@ partial class CryptoVisualisation
         // EditShowPositions
         // 
         EditShowPositions.AutoSize = true;
-        EditShowPositions.Location = new Point(6, 712);
+        EditShowPositions.Location = new Point(6, 737);
         EditShowPositions.Name = "EditShowPositions";
         EditShowPositions.Size = new Size(106, 19);
         EditShowPositions.TabIndex = 30;
@@ -412,7 +414,7 @@ partial class CryptoVisualisation
         // EditUseBatchProcess
         // 
         EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 737);
+        EditUseBatchProcess.Location = new Point(6, 762);
         EditUseBatchProcess.Name = "EditUseBatchProcess";
         EditUseBatchProcess.Size = new Size(99, 19);
         EditUseBatchProcess.TabIndex = 28;
@@ -432,6 +434,16 @@ partial class CryptoVisualisation
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
+        // 
+        // EditUseHighLow
+        // 
+        EditUseHighLow.AutoSize = true;
+        EditUseHighLow.Location = new Point(6, 382);
+        EditUseHighLow.Name = "EditUseHighLow";
+        EditUseHighLow.Size = new Size(96, 19);
+        EditUseHighLow.TabIndex = 34;
+        EditUseHighLow.Text = "Use HighLow";
+        EditUseHighLow.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -491,4 +503,5 @@ partial class CryptoVisualisation
     private Button ButtonRefresh;
     private CheckBox EditShowFvgZones;
     private CheckBox EditShowDtb;
+    private CheckBox EditUseHighLow;
 }

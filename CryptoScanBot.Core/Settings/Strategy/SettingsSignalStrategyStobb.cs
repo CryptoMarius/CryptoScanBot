@@ -20,8 +20,6 @@ public class SettingsSignalStrategyStobb : SettingsSignalStrategyBase
     public bool OnlyIfPreviousStobb { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
-    public decimal TrendLong { get; set; } = -999m;
-    public decimal TrendShort { get; set; } = -999m;
 
     public SettingsSignalStrategyStobb() : base()
     {

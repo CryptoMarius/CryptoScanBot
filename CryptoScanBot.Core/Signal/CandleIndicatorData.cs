@@ -58,12 +58,18 @@ public class CandleIndicatorData : CryptoData
         List<CryptoCandle> candlesForHistory = [];
 
 
+        // A fix for calculating indicators for the barometer symbol..
+        int duration = interval.Duration;
+        if (symbol.IsBarometerSymbol())
+            duration = 60; // alway's 1m!
+
+
         //Monitor.Enter(symbol.CandleList);await symbol.CandleLock.WaitAsync();
         //try
         //{
         // Geen verandering als het goed is (is reeds afgerond als het goed is)
-        long candleEndTime = firstCandleOpenTime - firstCandleOpenTime % interval.Duration;
-        long candleStartTime = candleEndTime - (maxCandles - 1) * interval.Duration;
+        long candleEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
+        long candleStartTime = candleEndTime - (maxCandles - 1) * duration;
 
         CryptoCandle? candleLast = null;
         long candleLoop = candleStartTime;
@@ -115,7 +121,7 @@ public class CandleIndicatorData : CryptoData
                 //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information (recreated) " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
             }
 
-            candleLoop += interval.Duration;
+            candleLoop += duration;
             candleLast = candle;
         }
 
@@ -239,8 +245,8 @@ public class CandleIndicatorData : CryptoData
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
-        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-        AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+        //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
 
         // Fill the last 60 candles with the indicator data
         int iteration = 0;

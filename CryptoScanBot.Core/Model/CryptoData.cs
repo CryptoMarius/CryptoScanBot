@@ -36,12 +36,18 @@ public class CryptoData
     /// Stoch Oscillator %K (blue), calculated from the last 14 candles
     /// </summary>
     public double? StochOscillator { get; set; } // Stochastic oscillator %K (blue)
+    public float RsiSurface { get; set; }
+    public float RsiSurface2 { get; set; }
     /// <summary>
     /// Stoch Signal %D (red), average from the last 3 %K values
     /// </summary>
     public double? StochSignal { get; set; } // Stochastic oscillator %D (red)
+    public float StochSurface { get; set; }
+    public float StochSurface2 { get; set; }
     //[Computed]
     //public double? SlopeStoch { get; set; }
+
+    //Where?
 
     // EMA (Exponential Moving Average) indicator values
 #if EXTRASTRATEGIES
@@ -97,10 +103,12 @@ public class CryptoData
         // Stochastic indicator values
         StochSignal = source.StochSignal;
         StochOscillator = source.StochOscillator;
+        StochSurface = source.StochSurface;
 
         // RSI indicator values
         Rsi = source.Rsi;
         //SlopeRsi = source.SlopeRsi;
+        RsiSurface = source.RsiSurface;
 
         // EMA indicator values
         //Ema9 = source.Ema9;
@@ -150,9 +158,6 @@ public class CryptoData2 : CryptoData
     public double Last24HoursChange { get; set; }
     public double LastXDaysEffective { get; set; }
 
-    public float TrendPercentage { get; set; }
-    public CryptoTrendIndicator TrendIndicator { get; set; }
-
     public int LuxIndicator5m { get; set; }
 
     // Wellicht introduceren en weghalen uit de "Alarm"?
@@ -168,12 +173,18 @@ public class CryptoData2 : CryptoData
     public decimal? Barometer4h { get; set; }
     public decimal? Barometer1d { get; set; }
 
+    // Market trend percentage (primary)
+    public float TrendPercentagePrimary { get; set; }
+    public float TrendPercentageSecondary { get; set; }
+    
     // Trend
     public CryptoTrendIndicator? Trend15m { get; set; }
     public CryptoTrendIndicator? Trend30m { get; set; }
     public CryptoTrendIndicator? Trend1h { get; set; }
     public CryptoTrendIndicator? Trend4h { get; set; }
     public CryptoTrendIndicator? Trend1d { get; set; }
+    // Trend on interval
+    public CryptoTrendIndicator TrendInterval { get; set; }
 
     // Statistics, the min and max differences against the signalprice
     public decimal PriceMin { get; set; }
@@ -195,9 +206,6 @@ public class CryptoData2 : CryptoData
             Last24HoursChange = source2.Last24HoursChange;
             LastXDaysEffective = source2.LastXDaysEffective;
 
-            TrendPercentage = source2.TrendPercentage;
-            TrendIndicator = source2.TrendIndicator;
-
             LuxIndicator5m = source2.LuxIndicator5m;
 
             // Wellicht introduceren en weghalen uit de "Alarm"?
@@ -206,12 +214,17 @@ public class CryptoData2 : CryptoData
             AboveBollingerBandsSma = source2.AboveBollingerBandsSma;
             AboveBollingerBandsUpper = source2.AboveBollingerBandsUpper;
 
-            // Een aantal trendindicatoren
+            // Trends
             Trend15m = source2.Trend15m;
             Trend30m = source2.Trend30m;
             Trend1h = source2.Trend1h;
             Trend4h = source2.Trend4h;
             Trend1d = source2.Trend1d;
+            TrendInterval = source2.TrendInterval;
+
+            // Market trends
+            TrendPercentagePrimary = source2.TrendPercentagePrimary;
+            TrendPercentageSecondary = source2.TrendPercentageSecondary;
 
             // Barometers
             Barometer15m = source2.Barometer15m;

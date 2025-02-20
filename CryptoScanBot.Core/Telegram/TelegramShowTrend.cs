@@ -23,22 +23,25 @@ public class TelegramShowTrend
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
+                AccountSymbol accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+                SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
+                await MarketTrend.CalculateMarketTrendAsync(symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, 0);
 
-                AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                foreach (AccountSymbolIntervalData accountSymbolIntervalData in accountSymbolData.SymbolIntervalDataList)
+                foreach (CryptoInterval interval in GlobalData.IntervalList)
                 {
+                    IntervalTrend intervalTrend = symbolTrend.Get(interval.IntervalPeriod);
+
                     string s;
-                    if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bullish)
+                    if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)
                         s = "trend=bullish";
-                    else if (accountSymbolIntervalData.Trend.TrendIndicator == CryptoTrendIndicator.Bearish)
+                    else if (intervalTrend.Trend == CryptoTrendIndicator.Bearish)
                         s = "trend=bearish";
                     else
                         s = "trend=sideway's?";
-                    stringbuilder.AppendLine($"{accountSymbolIntervalData.Interval.Name} {s}");
+                    stringbuilder.AppendLine($"{interval.Name} {s}");
                 }
 
-                float marketTrend = (float)accountSymbolData.MarketTrendPercentage!;
+                float marketTrend = (float)symbolTrend.Percentage!;
                 if (marketTrend < 0)
                     stringbuilder.AppendLine($"Symbol trend {marketTrend:N2}% bearish");
                 else if (marketTrend > 0)
@@ -50,3 +53,4 @@ public class TelegramShowTrend
     }
 
 }
+

@@ -1,8 +1,4 @@
-﻿using CryptoScanBot.Core.Signal;
-
-using Dapper.Contrib.Extensions;
-
-namespace CryptoScanBot.Core.Model;
+﻿namespace CryptoScanBot.Core.Model;
 
 public class CryptoLiveData
 {

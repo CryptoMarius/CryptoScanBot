@@ -8,19 +8,19 @@ Todo:
 - De documentatie bijwerken voor zover mogelijk..
 Marius: Experiment, de primaire en secondaire trend vergelijken
 Marius: Een dominant punt wordt eigenlijk pas geactiveerd als er een higher high ontstaat, de dlz een kan dus niet gebroken zijn voordat dit gebeurd (tenzij volledige candle?)
-JanM: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), 
-      Hij heeft de scanner maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
-      Technisch gezien zou de text-thread dus een probleem kunnen hebben (maar dan zou het euvel altijd moeten optreden, niet na verloop van tijd)
-Marco: Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien..
-EricN: 2e header regel van de chart verdwijnt? (met name als het scherm te klein is om de gehele regel te laten zien, blijkbaar kapt die 2e regel niet af of doet geen wordwrap) - geen oplossing
-Marius: Liquiditeit zones, als short uitgevinkt staat deze ook niet tonen en de afstand dan enkel tot de long zones berekenen (en/of indicatie of het long of short afstand is)
-Marius: De zones die niet voldoen aan het intro zone niet meer laten zien (ook hier wellicht een debug ding zodat je ze toch kan inzien indien nodig)
-Marius: Lux indicator, de ene keer wordt het gecombineerd tot een -100 .. 100, de andere keer is het afhankelijk van de trade richting, samennemen of toch afzonderlijk?
+Jan: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), 
+     Hij heeft de scanner maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
+     Technisch gezien zou de text-thread dus een probleem kunnen hebben (maar dan zou het euvel altijd moeten optreden, niet na verloop van tijd)
+Marco: Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien, keuze om trading via de exchange definitief te verwijderen?
+Eric: 2e header regel van de chart verdwijnt? (met name als het scherm te klein is om de gehele regel te laten zien, blijkbaar kapt die 2e regel niet af of doet geen wordwrap) - geen oplossing
 Marius: Okx, base of quote volume. kloppen de volumes wel in vergelijk met Altrady (zit ik wel op de juiste exchange ten opzichte van Altrady)
 Stijn: Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?)
-Marius: Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde nadat het uit de queue is gehaald?)
-Marius: CandleEngine, bijhouden welke data we eerder opgevraagd hebben (ook als er geen data terug komt), dan hoeven we dat niet 2x achter elkaar te vragen wat nu wel gebeurd
+Marius: Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
 Marius: Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig
+Marius: De zones lijken niet helemaal stabiel te zijn, hercalculatie vanuit het chart formulier maakt nieuwe recente zones aan die even later verwijderd worden?
+(via het chart formulier mogen alleen de geconfigureerde intervallen berekend worden en niet de andere!)
+Marius: Het chart formulier lijkt candles te herberekenen waardoor candles corrupt worden gemaakt (na de eerste $bmp kijk actie is de bm graph kapot)
+Marius: De Lux oversold/overbought waarde komt niet altijd overeen met wat de TV indicator berekend.
 
 Scanner:
 - Scanner - Oude bestanden in de Pivot directory verwijderen, dat zou ook voor de bestanden van de exchange kunnen (met name voor de verwijderde muntparen)

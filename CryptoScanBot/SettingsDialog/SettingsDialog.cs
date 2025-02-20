@@ -54,28 +54,23 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
-////#if !DEBUG
-//        EditDebugTrendCalculation.Visible = false;
-//        EditDebugKLineReceive.Visible = false;
-//        EditDebugSignalCreate.Visible = false;
-//        EditDebugSignalStrength.Visible = false;
-//        EditUseHighLowInTrendCalculation.Visible = false;
-//        EditDebugSymbol.Visible = false;
-//        LabelDebugSymbol.Visible = false;
-//        EditDebugAssetManagement.Visible = false;
-////#endif
+        ////#if !DEBUG
+        //        EditDebugTrendCalculation.Visible = false;
+        //        EditDebugKLineReceive.Visible = false;
+        //        EditDebugSignalCreate.Visible = false;
+        //        EditDebugSignalStrength.Visible = false;
+        //        EditUseHighLowInTrendCalculation.Visible = false;
+        //        EditDebugSymbol.Visible = false;
+        //        LabelDebugSymbol.Visible = false;
+        //        EditDebugAssetManagement.Visible = false;
+        ////#endif
         EditGlobalDataRemoveSignalAfterxCandles.Maximum = +120;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisEffectivePercentage.Maximum = +1000;
 
-        EditStobTrendLong.Minimum = -1000;
-        EditStobTrendShort.Minimum = -1000;
-
         EditStorsiAddRsiAmount.Minimum = -100;
         EditStorsiAddRsiAmount.Maximum = +100;
-        EditStorsiAddStochAmount.Minimum = -100;
-        EditStorsiAddStochAmount.Maximum = +100;
 
         // ------------------------------------------------------------------------------
         // General
@@ -128,7 +123,7 @@ public partial class FrmSettings : Form
 
         UserControlTelegram.LoadConfig();
 
-//#if DEBUG
+        //#if DEBUG
         EditDebugTrendCalculation.Checked = settings.General.DebugTrendCalculation;
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
@@ -136,7 +131,7 @@ public partial class FrmSettings : Form
         EditUseHighLowInTrendCalculation.Checked = settings.General.UseHighLowInTrendCalculation;
         EditDebugAssetManagement.Checked = settings.General.DebugAssetManagement;
         EditDebugSymbol.Text = settings.General.DebugSymbol.Trim();
-//#endif
+        //#endif
 
         // ------------------------------------------------------------------------------
         // Base coins
@@ -194,9 +189,6 @@ public partial class FrmSettings : Form
         EditStobOnlyIfPreviousStobb.Checked = settings.Signal.Stobb.OnlyIfPreviousStobb;
         EditStobOnlyIfLux5m.Checked = settings.Signal.Stobb.OnlyIfLux5m;
 
-        EditStobTrendLong.Value = settings.Signal.Stobb.TrendLong;
-        EditStobTrendShort.Value = settings.Signal.Stobb.TrendShort;
-
         // SBM algemeen
         UserControlSettingsSoundAndColorsSbm.LoadConfig("SBM", settings.Signal.Sbm);
 
@@ -236,7 +228,6 @@ public partial class FrmSettings : Form
         EditStorsiBBMaxPercentage.Value = (decimal)settings.Signal.StoRsi.BBMaxPercentage;
         UserControlSettingsSoundAndColorsStoRsi.LoadConfig("STORSI", settings.Signal.StoRsi);
         EditStorsiAddRsiAmount.Value = settings.Signal.StoRsi.AddRsiAmount;
-        EditStorsiAddStochAmount.Value = settings.Signal.StoRsi.AddStochAmount;
         EditSkipFirstSignal.Checked = settings.Signal.StoRsi.SkipFirstSignal;
         EditStorsiCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
         EditStoRsiOnlyIfLux5m.Checked = settings.Signal.StoRsi.OnlyIfLux5m;
@@ -422,7 +413,7 @@ public partial class FrmSettings : Form
         UserControlTelegram.SaveConfig();
 
 
-//#if DEBUG
+        //#if DEBUG
         settings.General.DebugTrendCalculation = EditDebugTrendCalculation.Checked;
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;
@@ -430,12 +421,12 @@ public partial class FrmSettings : Form
         settings.General.DebugAssetManagement = EditDebugAssetManagement.Checked;
         settings.General.UseHighLowInTrendCalculation = EditUseHighLowInTrendCalculation.Checked;
         settings.General.DebugSymbol = EditDebugSymbol.Text.Trim();
-//#else
-//        settings.General.DebugSymbol = "";
-//        settings.General.DebugKLineReceive = false;
-//        settings.General.DebugSignalCreate = false;
-//        settings.General.DebugSignalStrength = false;
-//#endif
+        //#else
+        //        settings.General.DebugSymbol = "";
+        //        settings.General.DebugKLineReceive = false;
+        //        settings.General.DebugSignalCreate = false;
+        //        settings.General.DebugSignalStrength = false;
+        //#endif
 
         // ------------------------------------------------------------------------------
         // Base coins
@@ -479,8 +470,6 @@ public partial class FrmSettings : Form
         settings.Signal.Stobb.OnlyIfPreviousStobb = EditStobOnlyIfPreviousStobb.Checked;
         settings.Signal.Stobb.OnlyIfLux5m = EditStobOnlyIfLux5m.Checked;
 
-        settings.Signal.Stobb.TrendLong = EditStobTrendLong.Value;
-        settings.Signal.Stobb.TrendShort = EditStobTrendShort.Value;
         settings.Signal.Stobb.UseLowHigh = EditStobbUseLowHigh.Checked;
 
 
@@ -520,7 +509,6 @@ public partial class FrmSettings : Form
         settings.Signal.StoRsi.BBMaxPercentage = (double)EditStorsiBBMaxPercentage.Value;
         UserControlSettingsSoundAndColorsStoRsi.SaveConfig(settings.Signal.StoRsi);
         settings.Signal.StoRsi.AddRsiAmount = (int)EditStorsiAddRsiAmount.Value;
-        settings.Signal.StoRsi.AddStochAmount = (int)EditStorsiAddStochAmount.Value;
         settings.Signal.StoRsi.SkipFirstSignal = EditSkipFirstSignal.Checked;
         settings.Signal.StoRsi.CheckBollingerBandsCondition = EditStorsiCheckBollingerBandsCondition.Checked;
         settings.Signal.StoRsi.OnlyIfLux5m = EditStoRsiOnlyIfLux5m.Checked;
@@ -681,4 +669,8 @@ public partial class FrmSettings : Form
         EditTradingAppInternExtern.Enabled = EditTradingApp.SelectedIndex >= 2;
     }
 
+    private void groupBox6_Enter(object sender, EventArgs e)
+    {
+
+    }
 }

@@ -29,7 +29,7 @@ public class DataStore
         string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
 
         // reset the previous collected trend data (once a day is preferred)
-        AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbol accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         accountSymbolData.ResetTrendData();
 
         // Laad in 1x alle intervallen 

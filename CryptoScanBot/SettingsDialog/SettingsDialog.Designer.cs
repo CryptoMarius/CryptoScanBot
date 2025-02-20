@@ -143,10 +143,6 @@ partial class FrmSettings
         label1 = new Label();
         EditStobbBBMinPercentage = new NumericUpDown();
         EditStobbBBMaxPercentage = new NumericUpDown();
-        label85 = new Label();
-        EditStobTrendShort = new NumericUpDown();
-        label66 = new Label();
-        EditStobTrendLong = new NumericUpDown();
         EditStobIncludeSbmPercAndCrossing = new CheckBox();
         EditStobIncludeSbmMaLines = new CheckBox();
         EditStobIncludeRsi = new CheckBox();
@@ -199,8 +195,6 @@ partial class FrmSettings
         EditStorsiBBMaxPercentage = new NumericUpDown();
         EditSkipFirstSignal = new CheckBox();
         EditStorsiCheckBollingerBandsCondition = new CheckBox();
-        label24 = new Label();
-        EditStorsiAddStochAmount = new NumericUpDown();
         label26 = new Label();
         EditStorsiAddRsiAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
@@ -371,8 +365,6 @@ partial class FrmSettings
         groupBox2.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMinPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMaxPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditStobTrendShort).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditStobTrendLong).BeginInit();
         tabSignalSbm.SuspendLayout();
         flowLayoutPanel7.SuspendLayout();
         flowLayoutPanel9.SuspendLayout();
@@ -397,7 +389,6 @@ partial class FrmSettings
         groupBox6.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditStorsiBBMinPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiBBMaxPercentage).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).BeginInit();
         tabSignalJump.SuspendLayout();
         flowLayoutPanel8.SuspendLayout();
@@ -1689,10 +1680,6 @@ partial class FrmSettings
         groupBox2.Controls.Add(label1);
         groupBox2.Controls.Add(EditStobbBBMinPercentage);
         groupBox2.Controls.Add(EditStobbBBMaxPercentage);
-        groupBox2.Controls.Add(label85);
-        groupBox2.Controls.Add(EditStobTrendShort);
-        groupBox2.Controls.Add(label66);
-        groupBox2.Controls.Add(EditStobTrendLong);
         groupBox2.Controls.Add(EditStobIncludeSbmPercAndCrossing);
         groupBox2.Controls.Add(EditStobIncludeSbmMaLines);
         groupBox2.Controls.Add(EditStobIncludeRsi);
@@ -1701,7 +1688,7 @@ partial class FrmSettings
         groupBox2.Margin = new Padding(10);
         groupBox2.Name = "groupBox2";
         groupBox2.Padding = new Padding(10);
-        groupBox2.Size = new Size(428, 320);
+        groupBox2.Size = new Size(428, 246);
         groupBox2.TabIndex = 158;
         groupBox2.TabStop = false;
         groupBox2.Text = "Settings";
@@ -1757,50 +1744,6 @@ partial class FrmSettings
         EditStobbBBMaxPercentage.Size = new Size(65, 23);
         EditStobbBBMaxPercentage.TabIndex = 166;
         EditStobbBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
-        // 
-        // label85
-        // 
-        label85.AutoSize = true;
-        label85.Location = new Point(18, 272);
-        label85.Margin = new Padding(4, 0, 4, 0);
-        label85.Name = "label85";
-        label85.Size = new Size(112, 15);
-        label85.TabIndex = 162;
-        label85.Text = "Minimal trend short";
-        // 
-        // EditStobTrendShort
-        // 
-        EditStobTrendShort.DecimalPlaces = 2;
-        EditStobTrendShort.Location = new Point(174, 268);
-        EditStobTrendShort.Margin = new Padding(4, 3, 4, 3);
-        EditStobTrendShort.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        EditStobTrendShort.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-        EditStobTrendShort.Name = "EditStobTrendShort";
-        EditStobTrendShort.Size = new Size(65, 23);
-        EditStobTrendShort.TabIndex = 163;
-        EditStobTrendShort.Value = new decimal(new int[] { 150, 0, 0, 131072 });
-        // 
-        // label66
-        // 
-        label66.AutoSize = true;
-        label66.Location = new Point(18, 242);
-        label66.Margin = new Padding(4, 0, 4, 0);
-        label66.Name = "label66";
-        label66.Size = new Size(109, 15);
-        label66.TabIndex = 160;
-        label66.Text = "Minimal trend long";
-        // 
-        // EditStobTrendLong
-        // 
-        EditStobTrendLong.DecimalPlaces = 2;
-        EditStobTrendLong.Location = new Point(174, 238);
-        EditStobTrendLong.Margin = new Padding(4, 3, 4, 3);
-        EditStobTrendLong.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
-        EditStobTrendLong.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
-        EditStobTrendLong.Name = "EditStobTrendLong";
-        EditStobTrendLong.Size = new Size(65, 23);
-        EditStobTrendLong.TabIndex = 161;
-        EditStobTrendLong.Value = new decimal(new int[] { 150, 0, 0, 131072 });
         // 
         // EditStobIncludeSbmPercAndCrossing
         // 
@@ -2331,23 +2274,22 @@ partial class FrmSettings
         groupBox6.Controls.Add(EditStorsiBBMaxPercentage);
         groupBox6.Controls.Add(EditSkipFirstSignal);
         groupBox6.Controls.Add(EditStorsiCheckBollingerBandsCondition);
-        groupBox6.Controls.Add(label24);
-        groupBox6.Controls.Add(EditStorsiAddStochAmount);
         groupBox6.Controls.Add(label26);
         groupBox6.Controls.Add(EditStorsiAddRsiAmount);
         groupBox6.Location = new Point(10, 186);
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(284, 243);
+        groupBox6.Size = new Size(284, 215);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
+        groupBox6.Enter += groupBox6_Enter;
         // 
         // EditStoRsiOnlyIfLux5m
         // 
         EditStoRsiOnlyIfLux5m.AutoSize = true;
-        EditStoRsiOnlyIfLux5m.Location = new Point(16, 146);
+        EditStoRsiOnlyIfLux5m.Location = new Point(16, 118);
         EditStoRsiOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
         EditStoRsiOnlyIfLux5m.Name = "EditStoRsiOnlyIfLux5m";
         EditStoRsiOnlyIfLux5m.Size = new Size(144, 19);
@@ -2358,7 +2300,7 @@ partial class FrmSettings
         // label28
         // 
         label28.AutoSize = true;
-        label28.Location = new Point(13, 195);
+        label28.Location = new Point(13, 167);
         label28.Margin = new Padding(4, 0, 4, 0);
         label28.Name = "label28";
         label28.Size = new Size(77, 15);
@@ -2368,7 +2310,7 @@ partial class FrmSettings
         // EditStorsiBBMinPercentage
         // 
         EditStorsiBBMinPercentage.DecimalPlaces = 2;
-        EditStorsiBBMinPercentage.Location = new Point(121, 191);
+        EditStorsiBBMinPercentage.Location = new Point(121, 163);
         EditStorsiBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMinPercentage.Name = "EditStorsiBBMinPercentage";
         EditStorsiBBMinPercentage.Size = new Size(65, 23);
@@ -2378,7 +2320,7 @@ partial class FrmSettings
         // EditStorsiBBMaxPercentage
         // 
         EditStorsiBBMaxPercentage.DecimalPlaces = 2;
-        EditStorsiBBMaxPercentage.Location = new Point(205, 191);
+        EditStorsiBBMaxPercentage.Location = new Point(205, 163);
         EditStorsiBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMaxPercentage.Name = "EditStorsiBBMaxPercentage";
         EditStorsiBBMaxPercentage.Size = new Size(65, 23);
@@ -2388,7 +2330,7 @@ partial class FrmSettings
         // EditSkipFirstSignal
         // 
         EditSkipFirstSignal.AutoSize = true;
-        EditSkipFirstSignal.Location = new Point(16, 121);
+        EditSkipFirstSignal.Location = new Point(16, 93);
         EditSkipFirstSignal.Margin = new Padding(4, 3, 4, 3);
         EditSkipFirstSignal.Name = "EditSkipFirstSignal";
         EditSkipFirstSignal.Size = new Size(217, 19);
@@ -2399,32 +2341,13 @@ partial class FrmSettings
         // EditStorsiCheckBollingerBandsCondition
         // 
         EditStorsiCheckBollingerBandsCondition.AutoSize = true;
-        EditStorsiCheckBollingerBandsCondition.Location = new Point(16, 96);
+        EditStorsiCheckBollingerBandsCondition.Location = new Point(16, 68);
         EditStorsiCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
         EditStorsiCheckBollingerBandsCondition.Name = "EditStorsiCheckBollingerBandsCondition";
         EditStorsiCheckBollingerBandsCondition.Size = new Size(223, 19);
         EditStorsiCheckBollingerBandsCondition.TabIndex = 169;
         EditStorsiCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
         EditStorsiCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
-        // 
-        // label24
-        // 
-        label24.AutoSize = true;
-        label24.Location = new Point(16, 60);
-        label24.Margin = new Padding(4, 0, 4, 0);
-        label24.Name = "label24";
-        label24.Size = new Size(103, 15);
-        label24.TabIndex = 127;
-        label24.Text = "Correction STOCH";
-        // 
-        // EditStorsiAddStochAmount
-        // 
-        EditStorsiAddStochAmount.Location = new Point(157, 58);
-        EditStorsiAddStochAmount.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiAddStochAmount.Maximum = new decimal(new int[] { 20, 0, 0, 0 });
-        EditStorsiAddStochAmount.Name = "EditStorsiAddStochAmount";
-        EditStorsiAddStochAmount.Size = new Size(56, 23);
-        EditStorsiAddStochAmount.TabIndex = 128;
         // 
         // label26
         // 
@@ -3861,8 +3784,6 @@ partial class FrmSettings
         groupBox2.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMinPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStobbBBMaxPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditStobTrendShort).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditStobTrendLong).EndInit();
         tabSignalSbm.ResumeLayout(false);
         tabSignalSbm.PerformLayout();
         flowLayoutPanel7.ResumeLayout(false);
@@ -3895,7 +3816,6 @@ partial class FrmSettings
         groupBox6.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditStorsiBBMinPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiBBMaxPercentage).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditStorsiAddStochAmount).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditStorsiAddRsiAmount).EndInit();
         tabSignalJump.ResumeLayout(false);
         tabSignalJump.PerformLayout();
@@ -4082,10 +4002,6 @@ partial class FrmSettings
     private Label label1;
     private NumericUpDown EditStobbBBMinPercentage;
     private NumericUpDown EditStobbBBMaxPercentage;
-    private Label label85;
-    private NumericUpDown EditStobTrendShort;
-    private Label label66;
-    private NumericUpDown EditStobTrendLong;
     private CheckBox EditStobIncludeSbmPercAndCrossing;
     private CheckBox EditStobIncludeSbmMaLines;
     private CheckBox EditStobIncludeRsi;
@@ -4182,8 +4098,6 @@ partial class FrmSettings
     private FlowLayoutPanel flowLayoutPanel3;
     private SettingsDialog.UserControlExchangeApi UserControlExchangeApi;
     private SettingsDialog.UserControlAltradyApi UserControlAltradyApi;
-    private Label label24;
-    private NumericUpDown EditStorsiAddStochAmount;
     private FlowLayoutPanel flowLayoutPanelQuotes;
     private SettingsDialog.UserControlQuoteHeader userControlQuoteHeader1;
     private CheckBox EditStorsiCheckBollingerBandsCondition;

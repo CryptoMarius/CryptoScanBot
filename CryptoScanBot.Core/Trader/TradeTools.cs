@@ -853,7 +853,7 @@ public class TradeTools
         // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
 
 
-        // Get available assets from the exchange (as late as possible because of webcall)
+        // GetSymbolData available assets from the exchange (as late as possible because of webcall)
         var (success, reaction) = await AssetTools.FetchAssetsAsync(position.Account, true);
         if (!success)
         {
@@ -861,7 +861,7 @@ public class TradeTools
             return;
         }
 
-        // Get asset amounts
+        // GetSymbolData asset amounts
         var info = AssetTools.GetAsset(position.Account, symbol);
         if (info.QuoteTotal <= 0)
         {

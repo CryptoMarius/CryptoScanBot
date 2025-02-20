@@ -56,7 +56,8 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
         WriteCell(sheet, columns++, row, "SignalPrice");
         WriteCell(sheet, columns++, row, "SignalVolume");
         WriteCell(sheet, columns++, row, "TfTrend");
-        WriteCell(sheet, columns++, row, "MarketTrend");
+        WriteCell(sheet, columns++, row, "MarketTrend Pri.");
+        WriteCell(sheet, columns++, row, "MarketTrend Sec.");
         WriteCell(sheet, columns++, row, "Change24h");
         WriteCell(sheet, columns++, row, "MoveXDays");
         WriteCell(sheet, columns++, row, "BB%");
@@ -108,8 +109,9 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             WriteCell(sheet, column++, row, signal.CloseDate.ToLocalTime(), CellStyleDate);
             WriteCell(sheet, column++, row, signal.SignalPrice, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.SignalVolume, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, TrendTools.TrendIndicatorText(signal.TrendIndicator));
-            WriteCell(sheet, column++, row, signal.TrendPercentage, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, TrendTools.TrendIndicatorText(signal.TrendInterval));
+            WriteCell(sheet, column++, row, signal.TrendPercentagePrimary, CellStyleDecimalNormal);
+            WriteCell(sheet, column++, row, signal.TrendPercentageSecondary, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Last24HoursChange, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.LastXDaysEffective, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.BollingerBandsPercentage, CellStyleDecimalNormal);

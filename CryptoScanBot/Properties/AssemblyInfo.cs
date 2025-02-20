@@ -10,7 +10,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Marius")]
 [assembly: AssemblyProduct("CryptoScanBot")]
-[assembly: AssemblyCopyright("CryptoScanBot © 2024")]
+[assembly: AssemblyCopyright("CryptoScanBot © 2025")]
 [assembly: AssemblyTrademark("https://t.me/+LiHJxgEUibg5YjE8")]
 [assembly: AssemblyCulture("")]
 
@@ -32,7 +32,7 @@ using System.Runtime.Versioning;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.2.0")]
-[assembly: AssemblyFileVersion("2.0.2.0")]
+[assembly: AssemblyVersion("2.0.3.0")]
+[assembly: AssemblyFileVersion("2.0.3.0")]
 
 [assembly: SupportedOSPlatform("windows")]

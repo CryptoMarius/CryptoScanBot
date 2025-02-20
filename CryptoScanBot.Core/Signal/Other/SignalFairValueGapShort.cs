@@ -18,14 +18,14 @@ public class SignalFairValueGapShort : SignalCreateBase
     {
         ExtraText = "";
         bool result = false;
-        AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
             {
-                var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 int index = 0;
                 while (index < symbolIntervalData.FvgZones.ShortOpen.Count) // sorted on Zone.Bottom asscending

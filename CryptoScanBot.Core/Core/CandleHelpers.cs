@@ -81,7 +81,7 @@ public static class Helper
     {
         // Een alternatief hievoor is de Normalize() functie herboven
         // (maar dat zal qua performance niet veel uitmaken denk ik)
-        string text = value.HasValue ? ((decimal)value).ToString(fmt) : "0"; //Get the stock string
+        string text = value.HasValue ? ((decimal)value).ToString(fmt) : "0"; //GetSymbolData the stock string
 
         //If there is a decimal point present
         string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
@@ -102,7 +102,7 @@ public static class Helper
     {
         // Een alternatief hievoor is de Normalize() functie herboven
         // (maar dat zal qua performance niet veel uitmaken denk ik)
-        string text = value.HasValue ? ((double)value).ToString(fmt) : "0"; //Get the stock string
+        string text = value.HasValue ? ((double)value).ToString(fmt) : "0"; //GetSymbolData the stock string
 
         //If there is a decimal point present
         string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
@@ -127,7 +127,7 @@ public static class Helper
     /// <returns></returns>
     public static string ToString0(this decimal value, string fmt = "N15")
     {
-        string text = value.ToString(fmt); //Get the stock string
+        string text = value.ToString(fmt); //GetSymbolData the stock string
 
         //If there is a decimal point present
         string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
@@ -147,7 +147,7 @@ public static class Helper
 
     public static string ToString0(this double value, string fmt = "N15")
     {
-        string text = value.ToString(fmt); //Get the stock string
+        string text = value.ToString(fmt); //GetSymbolData the stock string
 
         //If there is a decimal point present
         string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;

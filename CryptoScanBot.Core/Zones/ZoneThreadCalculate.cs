@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
 
 using System.Collections.Concurrent;
 
@@ -36,7 +37,7 @@ public class ZoneThreadCalculate
 
                 var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                var symbolDataInterval = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
 
 
                 ZoneSession session = new()
@@ -52,11 +53,12 @@ public class ZoneThreadCalculate
                     ShowFibZigZag = false,
                     ForceCalculation = true,
                     UseBatchProcess = true,
+                    TrendType = GlobalData.Settings.Signal.ZonesDlz.TrendType,
+                    UseHighLow = GlobalData.Settings.Signal.ZonesDlz.UseHighLow,
                     UseOptimizing = false,
-                    ShowSecondary = false,
                     Deviation = 1.0m,
                 };
-
+                
 
                 ZoneData data = new()
                 {
@@ -65,9 +67,8 @@ public class ZoneThreadCalculate
                     Symbol = symbol,
                     Interval = interval,
                     SymbolInterval = symbolInterval,
-                    Indicator = new(false, session.Deviation),
-                    IndicatorFib = new(true, session.Deviation),
                 };
+                data.IndicatorList.Add((session.TrendType, session.UseHighLow), new(session.TrendType, session.UseHighLow, session.Deviation));
 
 
 
@@ -82,7 +83,6 @@ public class ZoneThreadCalculate
                     session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
                     session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
                     session.MinDate = session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
-
                     await ZoneDlz.CalculateDlzZonesAsync(null, session, data, loadedCandlesInMemory);
                     await ZoneFvg.CalculateFvgZonesAsync(null, data.Account, data.Symbol, interval, loadedCandlesInMemory);
                 }

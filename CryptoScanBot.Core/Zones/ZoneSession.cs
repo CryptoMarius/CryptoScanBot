@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Json;
+using CryptoScanBot.Core.Trend;
 
 using System.Text.Json;
 
@@ -13,7 +14,7 @@ public class ZoneSession
     public string SymbolQuote { get; set; } = "USDT";
     public string IntervalName { get; set; } = "1h";
 
-    //public bool UseHighLow { get; set; } = false;
+    public bool UseHighLow { get; set; } = false;
     public decimal Deviation { get; set; } = 1m;
     // Period = UtcNow - X candles
     public long MinDate { get; set; }
@@ -28,7 +29,7 @@ public class ZoneSession
 
     public bool ShowFib { get; set; } = true;
     public bool ShowFibZigZag { get; set; } = false;
-    public bool ShowSecondary { get; set; } = false;
+    public TrendType TrendType { get; set; } = TrendType.Primary;
     public bool ShowPoints { get; set; } = false;
     public bool UseBatchProcess { get; set; } = false;
     public bool ForceCalculation { get; set; } = false;

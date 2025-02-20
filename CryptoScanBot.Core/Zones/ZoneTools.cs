@@ -121,7 +121,7 @@ public class ZoneTools
     public static decimal? ZoneDistance(CryptoSymbol symbol)
     {
         // Set the date of the last swing point for the automatic zone calculation
-        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
 
         // no data
         if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)

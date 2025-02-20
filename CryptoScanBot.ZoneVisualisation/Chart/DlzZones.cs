@@ -79,7 +79,7 @@ public class DlzZones
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
             {
-                var symbolDataInterval = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
                 foreach (var zone in symbolDataInterval.DlzZones.LongOpen)
                     DrawZone(chart, zone, minDate, maxDate);
                 foreach (var zone in symbolDataInterval.DlzZones.ShortOpen)

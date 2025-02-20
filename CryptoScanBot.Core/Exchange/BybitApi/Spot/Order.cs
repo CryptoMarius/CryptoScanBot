@@ -226,7 +226,7 @@ public class Order() : OrderBase(), IOrder
     //    Deze routine is internal, kom ik niet bij voor zover ik dat kan zien..
 
     //    return await client.V5Api.Trading.SendRequestAsync<BybitResponse<Bybit.Net.Objects.Models.V5.BybitOrder>>(
-    //        client.V5Api.Trading.GetUrl("v5/order/History"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+    //        client.V5Api.Trading.GetUrl("v5/order/History"), HttpMethod.GetSymbolData, ct, parameters, true).ConfigureAwait(false);
 
     //    // private readonly BybitRestClientApi _baseClient;
     //}

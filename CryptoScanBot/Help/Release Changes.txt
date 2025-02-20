@@ -1,7 +1,12 @@
 CryptoScanBot release historie:
 
-05-02-2025 2.0.3
+20-02-2025 2.0.3
+- Scanner - Naast de primaire trend is er nu een secondaire trend, deze is zichtbaar bij de kolommen van de signalen.
+- Scanner - Bij de storsi de "Correction STOCH" verwijderd, enkel de RSI is van belang om te finetunen
+- Scanner - Bij de stobb de optionele marktrend limieten verwijderd (die zijn dubbel op met andere filters)
+- Scanner - Geen melding geven op dlz zones die niet voldoen aan de intro filter (je ziet ze wel in de symbol chart)
 - Scanner - Het veld 24h move is niet ingevuld c.q. bestaat al een poosje niet meer, veld is vervangen door de x day's effectief
+- Scanner - De waarde van de Lux indicator wordt nu gecombineerd van -100 (oversold) tot 100 (overbought)
 - Scanner - Een Telegram commando geintroduceerd om de dichtbijzijnste top 10 zones te tonen
 - Scanner - RSI attributen nu instelbaar (length)
 - Scanner - Stoch attributen nu instelbaar (length, %d, %k)
@@ -18,6 +23,7 @@ CryptoScanBot release historie:
 - Scanner - De FVG create datum is verkeerd ingevuld (deze bevatte de candle.OpenTime ipv de CloseTime)
 - Scanner - De double top/bottom configuratie verwijderd (is niet bruikbaar om geautomatiseerd op te traden)
 - Scanner - De afgesloten FVG zones niet meer laten zien (enkel de recente afgesloten wat langer laten zien, 60 candles ofzo)
+- Scanner - Experimentele stoch welke een crossover is van de stoch 18 en 88 lijn gecombineerd met "oppervlakte" stoch en rsi (kan ook zo weer weg zijn als het niet bevalt)
 
 20-01-2025 2.0.2
 - Scanner - Extra instelling Lux 5m als extra conditie voor de Stob en Storsi (een voorlopig experiment)

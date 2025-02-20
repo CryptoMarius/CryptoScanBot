@@ -295,9 +295,6 @@ public class CryptoDatabase : IDisposable
 
                 "IsSpotTradingAllowed INTEGER NULL," +
                 "IsMarginTradingAllowed INTEGER NULL," +
-                //"LastPrice TEXT NULL," +
-                "TrendInfoDate TEXT NULL," +
-                "TrendPercentage TEXT NULL," +
                 "LastTradeDate TEXT NULL," +
 
                 // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
@@ -325,7 +322,7 @@ public class CryptoDatabase : IDisposable
     //            "SymbolId INTEGER NOT NULL," +
     //            "IntervalId INTEGER NOT NULL," +
     //            "TrendInfoDate TEXT NULL," +
-    //            "TrendIndicator INTEGER NULL," +
+    //            "TrendInterval INTEGER NULL," +
     //            "LastCandleSynchronized TEXT NULL," + // overlapt
     //            "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
     //            "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -366,8 +363,8 @@ public class CryptoDatabase : IDisposable
                 "Last24HoursChange TEXT NULL," +
                 "LastXDaysEffective TEXT NULL," +
 
-                "TrendIndicator INTEGER NULL," +
-                "TrendPercentage TEXT NULL," +
+                "TrendPercentagePrimary TEXT NULL," +
+                "TrendPercentageSecondary TEXT NULL," +
 
                 "BarcodePercentage TEXT NULL," +
                 "CandlesWithZeroVolume INTEGER NULL," +
@@ -377,6 +374,8 @@ public class CryptoDatabase : IDisposable
 
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
+                "StochSurface TEXT NULL," +
+                "StochSurface2 TEXT NULL," +
 
                 "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
@@ -391,6 +390,8 @@ public class CryptoDatabase : IDisposable
 
                 "Rsi TEXT NULL," +
                 "SlopeRsi TEXT NULL," +
+                "RsiSurface TEXT NULL," +
+                "RsiSurface2 TEXT NULL," +
 
                 "Psar TEXT NULL," +
 
@@ -419,6 +420,7 @@ public class CryptoDatabase : IDisposable
                 "Trend1h INTEGER NULL," +
                 "Trend4h INTEGER NULL," +
                 "Trend1d INTEGER NULL," +
+                "TrendInterval INTEGER NULL," +
 
                 "Barometer15m TEXT NULL," +
                 "Barometer30m TEXT NULL," +
@@ -497,8 +499,8 @@ public class CryptoDatabase : IDisposable
                 "Last24HoursEffective TEXT NULL," +
                 "Last10DaysEffective TEXT NULL," +
 
-                "TrendIndicator INTEGER NULL," +
-                "TrendPercentage TEXT NULL," +
+                "TrendPercentagePrimary TEXT NULL," +
+                "TrendPercentageSecondary TEXT NULL," +
 
                 "BarcodePercentage TEXT NULL," +
                 "CandlesWithZeroVolume INTEGER NULL," +
@@ -508,6 +510,8 @@ public class CryptoDatabase : IDisposable
 
                 "StochSignal TEXT NULL," +
                 "StochOscillator TEXT NULL," +
+                "StochSurface TEXT NULL," +
+                "StochSurface2 TEXT NULL," +
 
                 "AvgBb TEXT NULL," +
                 "BollingerBandsDeviation TEXT NULL," +
@@ -522,6 +526,8 @@ public class CryptoDatabase : IDisposable
 
                 "Rsi TEXT NULL," +
                 "SlopeRsi TEXT NULL," +
+                "RsiSurface TEXT NULL," +
+                "RsiSurface2 TEXT NULL," +
 
                 "Psar TEXT NULL," +
 
@@ -550,6 +556,7 @@ public class CryptoDatabase : IDisposable
                 "Trend1h INTEGER NULL," +
                 "Trend4h INTEGER NULL," +
                 "Trend1d INTEGER NULL," +
+                "TrendInterval INTEGER NULL," +
 
                 "Barometer15m TEXT NULL," +
                 "Barometer30m TEXT NULL," +
@@ -785,7 +792,6 @@ public class CryptoDatabase : IDisposable
                 "Bottom TEXT not null," +
                 "AlarmDate TEXT," +
                 "CloseTime TEXT NULL," +
-                //"LastSignalDate TEXT NULL," +
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
                 "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +

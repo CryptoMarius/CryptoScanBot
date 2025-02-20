@@ -49,6 +49,8 @@ public partial class CryptoVisualisation : Form
         Session = ZoneSession.LoadSessionSettings();
         Session.UseBatchProcess = true;
         Session.ShowPositions = false;
+        Session.TrendType = GlobalData.Settings.Signal.ZonesDlz.TrendType;
+        Session.UseHighLow = GlobalData.Settings.Signal.ZonesDlz.UseHighLow;
         LoadEdits();
 
         labelInterval.Text = "";
@@ -479,9 +481,11 @@ public partial class CryptoVisualisation : Form
             Symbol = symbol,
             Interval = interval,
             SymbolInterval = symbolInterval,
-            IndicatorFib = new(true, Session.Deviation),
-            Indicator = new(false, Session.Deviation),
         };
+        Data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, Session.Deviation)); // Primary trend, open/close
+        Data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, Session.Deviation)); // FIB Primary trend, high/low
+        Data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, Session.Deviation)); // Secondary trend, open/close
+        Data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, Session.Deviation)); // FIB? Secondary trend, high/low
 
 
         // reset dates
@@ -559,7 +563,8 @@ public partial class CryptoVisualisation : Form
         EditShowFib.Checked = Session.ShowFib;
         EditShowFibZigZag.Checked = Session.ShowFibZigZag;
         EditShowPivots.Checked = Session.ShowPoints;
-        EditShowSecondary.Checked = Session.ShowSecondary;
+        EditUseHighLow.Checked = Session.UseHighLow;
+        EditShowSecondary.Checked = Session.TrendType == TrendType.Secondary ? true : false;
         EditUseOptimizing.Checked = Session.UseOptimizing;
         EditShowSignals.Checked = Session.ShowSignals;
         EditShowFvgZones.Checked = Session.ShowFvgZones;
@@ -587,7 +592,8 @@ public partial class CryptoVisualisation : Form
         Session.Deviation = EditDeviation.Value;
         Session.ShowFib = EditShowFib.Checked;
         Session.ShowFibZigZag = EditShowFibZigZag.Checked;
-        Session.ShowSecondary = EditShowSecondary.Checked;
+        Session.TrendType = EditShowSecondary.Checked ? TrendType.Secondary: TrendType.Primary;
+        Session.UseHighLow = EditUseHighLow.Checked;
         Session.UseOptimizing = EditUseOptimizing.Checked;
         Session.ShowPoints = EditShowPivots.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
@@ -601,24 +607,16 @@ public partial class CryptoVisualisation : Form
     {
         if (GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong || GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort)
         {
-            AccountSymbolData symbolData = account!.Data.GetSymbolData(data.Symbol.Name);
+            AccountSymbol symbolData = account!.Data.GetSymbolData(data.Symbol.Name);
             try
             {
                 if (data.Symbol.Exchange.IsIntervalSupported(data.Interval.IntervalPeriod))
                 {
-                    data.Indicator = new(false, session.Deviation)
-                    {
-                        MaxTime = session.MaxDate,
-                        ShowSecondary = session.ShowSecondary,
-                        UseOptimizing = session.UseOptimizing
-                    };
-
-                    data.IndicatorFib = new(true, session.Deviation)
-                    {
-                        MaxTime = session.MaxDate,
-                        ShowSecondary = session.ShowSecondary,
-                        UseOptimizing = session.UseOptimizing
-                    };
+                    data.IndicatorList.Clear();
+                    data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
+                    data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
+                    data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
+                    data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
 
                     await ZoneDlz.CalculateDlzZonesAsync(showProgress, session, data, loadedCandlesInMemory);
                 }
@@ -630,6 +628,58 @@ public partial class CryptoVisualisation : Form
             }
         }
     }
+
+    private async Task CreateChartAndOverlays()
+    {
+        // Create the chart
+        var indicator = Data!.IndicatorList[(Session.TrendType, Session.UseHighLow)];
+        CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(indicator, null);
+        plotModel = Chart.Chart.Create(Data.Symbol, Data.Interval, out horizontalLine, out verticalLine);
+        plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
+        $"{trend} dev={indicator.Deviation} candles={indicator.CandleCount} points={indicator.ZigZagList.Count}";
+
+
+        // Draw candles in the selected interval
+        await ZoneCandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval);
+        Chart.Candles.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+
+        if (Session.ShowDtb) // Test double top/bottom
+            Chart.Dtb.Draw(plotModel, Data.Interval, indicator);
+        if (Session.ShowPoints)
+            Chart.Points.Draw(plotModel, indicator.PivotList, Session.MinDate, Session.MaxDate);
+        if (Session.ShowLiqZigZag)
+            Chart.ZigZag.Draw(plotModel, indicator.ZigZagList, "liq", OxyColors.White, Session.MinDate, Session.MaxDate);
+        if (Session.ShowLiqBoxes)
+            Chart.DlzZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
+        if (Session.ShowFvgZones)
+            Chart.ChartDrawFvgZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
+        if (Session.ShowFib)
+            Chart.FibRetracement.Draw(plotModel, Data.Symbol, Data.Interval, Data.IndicatorList[(TrendType.Primary, true)]);
+        if (Session.ShowFibZigZag)
+            Chart.ZigZag.Draw(plotModel, Data.IndicatorList[(TrendType.Primary, true)].ZigZagList, "fib", OxyColors.White, Session.MinDate, Session.MaxDate);
+        if (Session.ShowSignals)
+            Chart.Signals.Draw(plotModel, Data.Signals, Session.MinDate, Session.MaxDate);
+
+
+        // Change default 
+        plotView.Controller = new PlotController();
+        plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
+        //plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift, PlotCommands.ZoomRectangle);
+        plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
+        plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
+
+        plotView.Controller.UnbindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift);
+
+        plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
+        plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
+        plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
+        plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Shift, PlotCommands.SnapTrack);
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        plotModel.MouseDown += PlotModel_MouseDown; // Declarared obsolete, but since there is no suggested solution that is kind of ridiculous..
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
 
     private async Task CalculateZonesAndPlotZigZagAsync()
     {
@@ -652,68 +702,19 @@ public partial class CryptoVisualisation : Form
 
 
             Data.Symbol.CalculatingZones = true;
-            try // finally
+            try
             {
                 // Load and (re)calculate the dlz and fvg zones
                 ZoneDlz.LoadZonesForSymbol(Data.Symbol);
 
-                // calculate the FVG
+                // Calculate the FVG
                 if (Session.ForceCalculation)
                     await ZoneFvg.CalculateFvgZonesAsync(ShowProgress, Data.Account, Data.Symbol, Data.Interval, loadedCandlesInMemory);
 
-                // calculate the DLZ zones (alway's because of lines)
+                // Calculate the DLZ zones (alway's because of lines)
                 await CalculateAllDlzZonesAsync(ShowProgress, Data.Account, Session, Data, loadedCandlesInMemory);
 
-                CryptoTrendIndicator trend = TrendInterval.InterpretZigZagPoints(Data.Indicator, null);
-
-
-                // display data
-                plotModel = Chart.Chart.Create(Data.Symbol, Data.Interval, out horizontalLine, out verticalLine);
-                plotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
-                $"{trend} dev={Data.Indicator.Deviation} candles={Data.Indicator.CandleCount} points={Data.Indicator.ZigZagList.Count}";
-
-
-                // avoid candles being removed...
-                await ZoneCandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval);
-                Chart.Candles.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
-
-
-                if (Session.ShowDtb) // Test double top/bottom
-                    Chart.Dtb.Draw(plotModel, Data.Interval, Data.Indicator);
-                if (Session.ShowPoints)
-                    Chart.Points.Draw(plotModel, Data.Indicator.PivotList, Session.MinDate, Session.MaxDate);
-                if (Session.ShowLiqZigZag)
-                    Chart.ZigZag.Draw(plotModel, Data.Indicator.ZigZagList, "liq", OxyColors.White, Session.MinDate, Session.MaxDate);
-                if (Session.ShowLiqBoxes)
-                    Chart.DlzZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
-                if (Session.ShowFvgZones)
-                    Chart.ChartDrawFvgZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
-                if (Session.ShowFib)
-                    Chart.FibRetracement.Draw(plotModel, Data.Symbol, Data.Interval, Data.IndicatorFib);
-                if (Session.ShowFibZigZag)
-                    Chart.ZigZag.Draw(plotModel, Data.IndicatorFib.ZigZagList, "fib", OxyColors.White, Session.MinDate, Session.MaxDate);
-                if (Session.ShowSignals)
-                    Chart.Signals.Draw(plotModel, Data.Signals, Session.MinDate, Session.MaxDate);
-
-
-
-                plotView.Controller = new PlotController();
-                plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
-                //plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift, PlotCommands.ZoomRectangle);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
-
-                plotView.Controller.UnbindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift);
-
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
-                plotView.Controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Shift, PlotCommands.SnapTrack);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-                plotModel.MouseDown += PlotModel_MouseDown; // Declarared obsolete, there is no workaround/new method, kind of ridiculous?
-#pragma warning restore CS0618 // Type or member is obsolete
-
+                await CreateChartAndOverlays();
             }
             finally
             {

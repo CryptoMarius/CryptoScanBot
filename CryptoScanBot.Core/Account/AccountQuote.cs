@@ -4,7 +4,7 @@ using CryptoScanBot.Core.Enums;
 
 namespace CryptoScanBot.Core.Account;
 
-public class AccountQuoteData
+public class AccountQuote
 {
     public required string QuoteName { get; set; }
 
@@ -16,7 +16,7 @@ public class AccountQuoteData
 
 
 
-    public AccountQuoteData()
+    public AccountQuote()
     {
         // Initialize sides
         PauseBarometerList = new()

@@ -103,6 +103,30 @@ public class SignalCreateBase
     }
 
 
+    public bool GetPrevCandle(CryptoSymbolInterval symbolInterval, CryptoCandle? oldCandle, out CryptoCandle? newCandle)
+    {
+        if (oldCandle == null)
+        {
+            newCandle = null;
+            return false;
+        }
+
+        if (!symbolInterval.CandleList.TryGetValue(oldCandle.OpenTime - symbolInterval.Interval.Duration, out newCandle))
+        {
+            ExtraText = "No prev candle! " + oldCandle.DateLocal.ToString();
+            return false;
+        }
+
+        if (!IndicatorsOkay(newCandle))
+        {
+            ExtraText = "Prev problem indicators " + newCandle.DateLocal.ToString();
+            return false;
+        }
+
+        return true;
+    }
+
+
 
     /// <summary>
     /// Is de RSI oversold geweest in de laatste x candles
@@ -337,6 +361,221 @@ public class SignalCreateBase
         }
 
         return false;
+    }
+
+
+    public static (bool result, CryptoSymbolInterval higherInterval, CryptoCandle? candle) CalculateIndicatorsForInterval(
+        CryptoSymbol symbol, CryptoIntervalPeriod intervalPeriod,
+        CryptoInterval candleInterval, CryptoCandle lastCandle)
+    {
+        // Calculate the start of the last finished candle before lastCandle.OpenTime
+        CryptoSymbolInterval higherInterval = symbol.GetSymbolInterval(intervalPeriod);
+        long candleOpenTime = IntervalTools.StartOfIntervalCandle2(lastCandle.OpenTime, candleInterval.Duration, higherInterval.Interval.Duration);
+        if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+            return (false, higherInterval, null);
+
+        // Calculate indicators if needed
+        if (candle.CandleData == null)
+        {
+            List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, higherInterval.Interval, candleOpenTime, out string _);
+            if (history == null)
+                return (false, higherInterval, candle);
+            CandleIndicatorData.CalculateIndicators(symbol, higherInterval.Interval, history);
+        }
+
+        return (true, higherInterval, candle);
+    }
+
+
+    public static (bool result, CryptoCandle? candle) CalculateBarometerIndicators(CryptoSymbol symbol, CryptoInterval candleInterval, CryptoCandle candleLast)
+    {
+        // Calculate the indicators of the barometer
+        if (!symbol.Exchange.SymbolListName.TryGetValue(Const.Constants.SymbolNameBarometerPrice + symbol.QuoteData.Name, out CryptoSymbol? bmSymbol))
+            return (false, null);
+
+        // Calculate the last candle into the barometer list (the barometer is calculated each minute)
+        CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
+        long candleOpenTime = candleLast.OpenTime + candleInterval.Duration - 60;
+        if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+        {
+            // 1 minute back because it might nog have been calcuated yet
+            candleOpenTime -= 60;
+            if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out candle))
+                return (false, null);
+        }
+
+        // Calculate indicators if needed
+        if (candle.CandleData == null)
+        {
+            List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(bmSymbol, symbolInterval.Interval, candle.OpenTime, out string _);
+            if (history == null)
+                return (false, null);
+            CandleIndicatorData.CalculateIndicators(bmSymbol, symbolInterval.Interval, history);
+        }
+
+        return (true, candle);
+    }
+
+
+
+    /// <summary>
+    /// Calculate the RSI surface area of the oversold part
+    /// </summary>
+    protected double RsiOversoldSurface(CryptoSymbolInterval symbolInterval, CryptoCandle candleLast, int candleCount)
+    {
+        double surface = 0;
+        int candlesOversold = 0;
+        CryptoCandle? last = candleLast;
+
+        while (candleCount > 0)
+        {
+            if (last!.CandleData!.Rsi == null) // not calculated, exit!
+                return 0;
+
+            double result = GlobalData.Settings.General.SettingsRsi.Oversold - last.CandleData.Rsi.Value;
+
+            // We are still searching for an oversold area
+            if (result > 0)
+            {
+                surface += result;
+                candlesOversold++;
+            }
+            //else
+            //{
+            //    // not oversold, but what to do...
+            //    // temporary above oversold line?
+            //}
+
+
+
+            if (!GetPrevCandle(symbolInterval, last, out last)) // not present, exit!
+                return 0;
+            candleCount--;
+        }
+
+        return surface; // return the average of total surface? 
+    }
+
+
+    /// <summary>
+    /// Calculate the RSI surface area of the overbought part
+    /// </summary>
+    protected double RsiOverboughtSurface(CryptoSymbolInterval symbolInterval, CryptoCandle candleLast, int candleCount)
+    {
+        double surface = 0;
+        int candlesOversold = 0;
+        CryptoCandle? last = candleLast;
+
+        while (candleCount > 0)
+        {
+            if (last!.CandleData!.Rsi == null) // not calculated, exit!
+                return 0;
+
+            double result = last.CandleData.Rsi.Value - GlobalData.Settings.General.SettingsRsi.Overbought;
+
+            // We are still searching for an overbought area
+            if (result > 0)
+            {
+                surface += result;
+                candlesOversold++;
+            }
+            //else
+            //{
+            //    // not overbought, but what to do...
+            //    // temporary below overbought line?
+            //}
+
+
+
+            if (!GetPrevCandle(symbolInterval, last, out last)) // not present, exit!
+                return 0;
+            candleCount--;
+        }
+
+        return surface; // return the average of total surface? 
+    }
+
+
+
+
+
+
+
+    /// <summary>
+    /// Calculate the Stoch surface area of the oversold part
+    /// </summary>
+    protected double StochOversoldSurface(CryptoSymbolInterval symbolInterval, CryptoCandle candleLast, int candleCount, int stochOversoldLimit)
+    {
+        double surface = 0;
+        int candlesOversold = 0;
+        CryptoCandle? last = candleLast;
+
+        while (candleCount > 0)
+        {
+            if (last!.CandleData!.StochSignal == null) // not calculated, exit!
+                return 0;
+
+            double result = stochOversoldLimit - last.CandleData.StochSignal.Value;
+
+            // We are still searching for an oversold area
+            if (result > 0)
+            {
+                surface += result;
+                candlesOversold++;
+            }
+            //else
+            //{
+            //    // not oversold, but what to do...
+            //    // temporary above oversold line?
+            //}
+
+
+
+            if (!GetPrevCandle(symbolInterval, last, out last)) // not present, exit!
+                return 0;
+            candleCount--;
+        }
+
+        return surface; // return the average of total surface? 
+    }
+
+
+    /// <summary>
+    /// Calculate the RSI surface area of the overbought part
+    /// </summary>
+    protected double StochOverboughtSurface(CryptoSymbolInterval symbolInterval, CryptoCandle candleLast, int candleCount, int stochOverboughtLimit)
+    {
+        double surface = 0;
+        int candlesOversold = 0;
+        CryptoCandle? last = candleLast;
+
+        while (candleCount > 0)
+        {
+            if (last!.CandleData!.StochSignal == null) // not calculated, exit!
+                return 0;
+
+            double result = last.CandleData.StochSignal.Value - stochOverboughtLimit;
+
+            // We are still searching for an overbought area
+            if (result > 0)
+            {
+                surface += result;
+                candlesOversold++;
+            }
+            //else
+            //{
+            //    // not overbought, but what to do...
+            //    // temporary below overbought line?
+            //}
+
+
+
+            if (!GetPrevCandle(symbolInterval, last, out last)) // not present, exit!
+                return 0;
+            candleCount--;
+        }
+
+        return surface; // return the average of total surface? 
     }
 
 }

@@ -48,7 +48,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         }
         long unixDate = CandleLast.OpenTime;
 
-        //if (!CandleLast.IsStochOversold(GlobalData.Settings.Signal.StoRsi.AddStochAmount))
+        //if (!CandleLast.IsStochOversold(0))
         //{
         //    ExtraText = "stoch not oversold";
         //    return false;
@@ -80,7 +80,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
-            if (IndicatorsOkay(candle!) && candle.IsStochOversold(GlobalData.Settings.Signal.StoRsi.AddStochAmount) && candle.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(candle!) && candle.IsStochOversold(0) && candle.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';

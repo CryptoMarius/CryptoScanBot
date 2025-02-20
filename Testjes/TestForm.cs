@@ -345,7 +345,7 @@ public partial class TestForm : Form
         else
             stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " (backTest)"); //+ " notification " + notification 
 
-        string s = signal.Symbol.Name + " " + signal.Interval.Name + " " + CandleTools.GetUnixDate(signal.Candle.OpenTime).ToLocalTime() + " (" + signal.StrategyText + ") " + signal.EventText;
+        string s = signal.Symbol.Name + " " + signal.Interval.Name + " " + CandleTools.GetUnixDate(signal.Candle!.OpenTime).ToLocalTime() + " (" + signal.StrategyText + ") " + signal.EventText;
         stringBuilder.AppendLine(s);
 
         s = "Candle open " + signal.Candle.Open.ToString();
@@ -360,21 +360,21 @@ public partial class TestForm : Form
 
 
         s = "";
-        if (signal.TrendIndicator == CryptoTrendIndicator.Bullish)
+        if (signal.TrendInterval == CryptoTrendIndicator.Bullish)
             s = "interval trend=bullish";
-        else if (signal.TrendIndicator == CryptoTrendIndicator.Bearish)
+        else if (signal.TrendInterval == CryptoTrendIndicator.Bearish)
             s = "interval trend=bearish";
         else
             s = " interval trend=sideway's?";
         stringBuilder.AppendLine(s);
 
 
-        if (signal.TrendPercentage < 0)
-            stringBuilder.AppendLine(string.Format("Symbol trend {0} bearish", (-signal.TrendPercentage).ToString("N2")));
-        else if (signal.TrendPercentage > 0)
-            stringBuilder.AppendLine(string.Format("Symbol trend {0} bullish", signal.TrendPercentage.ToString("N2")));
+        if (signal.TrendPercentagePrimary < 0)
+            stringBuilder.AppendLine(string.Format("Symbol trend {0} bearish", (-signal.TrendPercentagePrimary).ToString("N2")));
+        else if (signal.TrendPercentagePrimary > 0)
+            stringBuilder.AppendLine(string.Format("Symbol trend {0} bullish", signal.TrendPercentagePrimary.ToString("N2")));
         else
-            stringBuilder.AppendLine(string.Format("Symbol trend {0} unknown", signal.TrendPercentage.ToString("N2")));
+            stringBuilder.AppendLine(string.Format("Symbol trend {0} unknown", signal.TrendPercentagePrimary.ToString("N2")));
 
 
         GlobalData.AddTextToLogTab("");
@@ -523,12 +523,12 @@ public partial class TestForm : Form
             item1.SubItems.Add(signal.EventText);
             item1.SubItems.Add(signal.SignalPrice.ToString0());
             item1.SubItems.Add(signal.SignalVolume.ToString0("N0"));
-            item1.SubItems.Add(signal.TrendIndicator.ToString());
+            item1.SubItems.Add(signal.TrendInterval.ToString());
 
-            if (signal.TrendPercentage < 0)
-                item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Red;
+            if (signal.TrendPercentagePrimary < 0)
+                item1.SubItems.Add(signal.TrendPercentagePrimary.ToString("N2")).ForeColor = Color.Red;
             else
-                item1.SubItems.Add(signal.TrendPercentage.ToString("N2")).ForeColor = Color.Green;
+                item1.SubItems.Add(signal.TrendPercentagePrimary.ToString("N2")).ForeColor = Color.Green;
 
             if (signal.Last24HoursChange < 0)
                 item1.SubItems.Add(signal.Last24HoursChange.ToString("N2")).ForeColor = Color.Red;
@@ -537,7 +537,7 @@ public partial class TestForm : Form
 
             item1.SubItems.Add(signal.BollingerBandsPercentage?.ToString("N2"));
 
-            float value = (float)signal.Rsi;
+            float value = (float)signal.Rsi!;
             if (value < 30)
                 item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
             else if (value > 70)
@@ -545,7 +545,7 @@ public partial class TestForm : Form
             else
                 item1.SubItems.Add(value.ToString("N2"));
 
-            value = (float)signal.StochOscillator;
+            value = (float)signal.StochOscillator!;
             if (value < 20)
                 item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
             else if (value > 80)
@@ -553,7 +553,7 @@ public partial class TestForm : Form
             else
                 item1.SubItems.Add(value.ToString("N2"));
 
-            value = (float)signal.StochSignal;
+            value = (float)signal.StochSignal!;
             if (value < 20)
                 item1.SubItems.Add(value.ToString("N2")).ForeColor = Color.Red;
             else if (value > 80)
@@ -840,7 +840,7 @@ public partial class TestForm : Form
         //            LoadSymbolCandles(symbol, interval, dateCandleStart, dateCandleEinde);
         //            //CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
 
-        //            TrendIndicator trendIndicatorClass = new(symbol, interval);
+        //            TrendInterval trendIndicatorClass = new(symbol, interval);
         //            CryptoTrendIndicator trendIndicator = trendIndicatorClass.CalculateTrend();
 
         //            if (trendIndicator == CryptoTrendIndicator.Bullish)
@@ -853,7 +853,7 @@ public partial class TestForm : Form
 
         //            // Ahh, dat gaat niet naar een tabel (zoals ik eerst dacht)
         //            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(intervalPeriod);
-        //            symbolInterval.TrendIndicator = trendIndicator;
+        //            symbolInterval.TrendInterval = trendIndicator;
         //        }
 
 
@@ -872,9 +872,9 @@ public partial class TestForm : Form
 
         //            // De trend van dit interval
         //            string s;
-        //            if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bullish)
+        //            if (symbolInterval.TrendInterval == CryptoTrendIndicator.Bullish)
         //                s = "trend=bullish";
-        //            else if (symbolInterval.TrendIndicator == CryptoTrendIndicator.Bearish)
+        //            else if (symbolInterval.TrendInterval == CryptoTrendIndicator.Bearish)
         //                s = "trend=bearish";
         //            else
         //                s = "trend=sideway's?";
@@ -2553,8 +2553,8 @@ public partial class TestForm : Form
 
                 symbol.Volume = SignalList.Count * 12345678.01m;
                 signal.SignalVolume = symbol.Volume;
-                signal.TrendIndicator = CryptoTrendIndicator.Bearish;
-                signal.TrendPercentage = 85.85f;
+                signal.TrendInterval = CryptoTrendIndicator.Bearish;
+                signal.TrendPercentagePrimary = 85.85f;
                 symbol.FundingRate = 0.0001m;
                 SymbolList.Add(symbol);
                 i++;

@@ -113,7 +113,7 @@ public class AssetTools
 
     public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(CryptoAccount tradeAccount, CryptoSymbol symbol)
     {
-        // Get asset amounts
+        // GetSymbolData asset amounts
         var info = GetAsset(tradeAccount, symbol);
         if (info.QuoteTotal <= 0)
             return (false, 0, info, $"No assets available for {symbol.Quote}");

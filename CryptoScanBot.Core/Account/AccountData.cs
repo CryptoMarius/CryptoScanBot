@@ -10,21 +10,22 @@ public class AccountData
     // Pausing because of trading rules
     public PauseTradingRule PauseTrading { get; } = new();
 
-    // Account data per quote
+    // Account data per quote for the barometer and pauzing rules
     // Key = QuoteName
-    public Dictionary<string, AccountQuoteData> QuoteDataList { get; set; } = [];
+    public Dictionary<string, AccountQuote> QuoteDataList { get; set; } = [];
 
-    // Assets + locking
+
+    // Assets + locking (unused as we are aiming for Altrady as platform)
     // Key = assetName
     public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
     public DateTime? LastRefreshAssets { get; set; } = null;
     public SortedList<string, CryptoAsset> AssetList { get; } = [];
 
-    // The data for each symbol (trend)
+    // Symbol data like trend and zones
     // Key = symbolName
-    public Dictionary<string, AccountSymbolData> SymbolDataList { get; set; } = [];
+    public Dictionary<string, AccountSymbol> SymbolDataList { get; set; } = [];
 
-    // Key = symbolName
+    // Open positions Key = symbolName
     public SortedList<string, CryptoPosition> PositionList { get; } = [];
 
 
@@ -46,9 +47,9 @@ public class AccountData
     }
 
 
-    private AccountQuoteData GetQuoteData(string quoteName)
+    private AccountQuote GetQuoteData(string quoteName)
     {
-        if (!QuoteDataList.TryGetValue(quoteName, out AccountQuoteData? quoteData))
+        if (!QuoteDataList.TryGetValue(quoteName, out AccountQuote? quoteData))
         {
             quoteData = new() { QuoteName = quoteName };
             QuoteDataList.TryAdd(quoteName, quoteData);
@@ -59,21 +60,21 @@ public class AccountData
 
     public BarometerData GetBarometer(string quoteName, CryptoIntervalPeriod intervalPeriod)
     {
-        AccountQuoteData quoteData = GetQuoteData(quoteName);
+        AccountQuote quoteData = GetQuoteData(quoteName);
         return quoteData.BarometerDataList[intervalPeriod];
     }
 
 
     public PauseBarometer GetPauseRule(string quoteName, CryptoTradeSide side)
     {
-        AccountQuoteData quoteData = GetQuoteData(quoteName);
+        AccountQuote quoteData = GetQuoteData(quoteName);
         return quoteData.PauseBarometerList[side];
     }
 
 
-    public AccountSymbolData GetSymbolData(string symbolName)
+    public AccountSymbol GetSymbolData(string symbolName)
     {
-        if (!SymbolDataList.TryGetValue(symbolName, out AccountSymbolData? symbolData))
+        if (!SymbolDataList.TryGetValue(symbolName, out AccountSymbol? symbolData))
         {
             symbolData = new() { SymbolName = symbolName };
             SymbolDataList.TryAdd(symbolName, symbolData);
@@ -82,11 +83,11 @@ public class AccountData
     }
 
 
-    public AccountSymbolIntervalData GetSymbolTrendData(string symbolName, CryptoIntervalPeriod intervalPeriod)
-    {
-        AccountSymbolData symbolData = GetSymbolData(symbolName);
-        return symbolData.GetAccountSymbolInterval(intervalPeriod);
-    }
+    //public AccountSymbolInterval GetSymbolTrendData(string symbolName, CryptoIntervalPeriod intervalPeriod)
+    //{
+    //    AccountSymbol symbolData = GetSymbolData(symbolName);
+    //    return symbolData.Get(intervalPeriod);
+    //}
 
 
     //public static void GetAssetsFromDatabase(CryptoDatabase database, CryptoPosition position)

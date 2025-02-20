@@ -19,7 +19,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
         ExtraText = "";
         bool result = false;
         decimal closestZone = 100;
-        AccountSymbolData symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
 
 
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
@@ -27,11 +27,11 @@ public class SignalDominantLevelNearLong : SignalCreateBase
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
             {
-                var symbolIntervalData = symbolData.GetAccountSymbolInterval(interval.IntervalPeriod);
+                var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 int index = 0;
                 decimal distance = 100m;
-                while (index < symbolIntervalData.DlzZones.LongOpen.Count) // sorted on Zone.Top descending
+                while (index < symbolIntervalData.DlzZones.LongOpen.Count) // sorted on Zone.Top (descending)
                 {
                     decimal? alarmPrice = null;
                     var zone = symbolIntervalData.DlzZones.LongOpen[index];
@@ -42,7 +42,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old dlz zone #{zone.Id} {zone.Side} {zone.Description}");
                         }
                         else
                         {
@@ -52,11 +52,18 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                             {
                                 if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
                                 {
-                                    result = true;
-                                    zone.AlarmDate = CandleLast.Date;
-                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                    decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
-                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                    if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                    {
+                                        // nothing
+                                    }
+                                    else
+                                    {
+                                        result = true;
+                                        zone.AlarmDate = CandleLast.Date;
+                                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                        decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                                        ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                    }
                                 }
                             }
 
@@ -64,19 +71,26 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                             // Close if the candle touched the zone..
                             if (CandleLast.Low <= zone.Top)
                             {
-                                ExtraText += "....";
                                 zone.CloseTime = CandleLast.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed zone #{zone.Id} {zone.Side} {zone.Description}");
+                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
                             }
 
 
                             // Show the distance to the next available zone (for the symbol grid)
                             if (zone.CloseTime == null)
                             {
-                                decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
-                                if (dist < distance)
-                                    distance = dist;
+                                if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                {
+                                    // nothing
+                                }
+                                else
+                                {
+
+                                    decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                                    if (dist < distance)
+                                        distance = dist;
+                                }
                             }
                         }
                     }
@@ -84,12 +98,12 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.DlzZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
                     }
                     else index++;
 
 
-                    // The list is sorted on zone.top and break if there are no more reachable zones (save some looping time)
+                    // The list is sorted on zone.top (descending) and break if there are no more reachable zones (save some looping time)
                     if (alarmPrice != null && alarmPrice > zone.Top)
                         break;
                 }

@@ -17,7 +17,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
         Volume,
         //Price
         Distance,
-        //MarketTrend, to much cpu needed
+        //MarketTrendPrimary, to much cpu needed
     }
 
     private System.Windows.Forms.Timer? TimerRefreshInformation = null;
@@ -75,7 +75,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 case ColumnsForGrid.Distance:
                     CreateColumn("Distance", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75).Visible = false;
                     break;
-                    //case ColumnsForGrid.MarketTrend:
+                    //case ColumnsForGrid.MarketTrendPrimary:
                     //    CreateColumn("M.Trend%", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 75);
                     //    break;
             }
@@ -97,7 +97,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                     ColumnsForGrid.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
                     //ColumnsForGrid.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
                     ColumnsForGrid.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a), ZoneTools.ZoneDistance(b)),
-                    //ColumnsForGrid.MarketTrend => ObjectCompare.Compare(MarketTrend(a), MarketTrend(b)),
+                    //ColumnsForGrid.MarketTrendPrimary => ObjectCompare.Compare(MarketTrendPrimary(a), MarketTrendPrimary(b)),
 
                     _ => 0
                 };
@@ -159,7 +159,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
                 ColumnsForGrid.Volume => symbol.Volume.ToString("N0"),
                 //ColumnsForGrid.Price => symbol.LastPrice?.ToString(symbol.PriceDisplayFormat),
                 ColumnsForGrid.Distance => ZoneTools.ZoneDistance(symbol),
-                //ColumnsForGrid.MarketTrend => MarketTrend(symbol),                
+                //ColumnsForGrid.MarketTrendPrimary => MarketTrendPrimary(symbol),                
                 _ => '?',
             };
         }
@@ -169,7 +169,7 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
     private static CryptoTradeSide? ZoneTradeSide(CryptoSymbol symbol)
     {
         // Set the date of the last swing point for the automatic zone calculation
-        AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
 
         // no data
         if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
@@ -189,11 +189,11 @@ public class CryptoDataGridSymbol<T>() : CryptoDataGrid<T>() where T : CryptoSym
             return CryptoTradeSide.Short;
     }
 
-    //private static float? MarketTrend(CryptoSymbol symbol)
+    //private static float? MarketTrendPrimary(CryptoSymbol symbol)
     //{
     //    // Set the date of the last swing point for the automatic zone calculation
     //    AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-    //    AccountSymbolIntervalData symbolIntervalData = symbolData.GetAccountSymbolInterval(GlobalData.Settings.Signal.ZonesDlz.Interval);
+    //    AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(GlobalData.Settings.Signal.ZonesDlz.Interval);
     //    return symbolData.MarketTrendPercentage;
     //}
 
