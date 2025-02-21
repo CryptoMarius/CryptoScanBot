@@ -141,9 +141,8 @@ public class ZoneThreadCalculate
         {
             foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
             {
-                for (int i = GlobalData.Settings.Signal.ZonesFvg.IntervalList.Count - 1; i >= 0; i--)
+                foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList.ToList())
                 {
-                    string intervalName = GlobalData.Settings.Signal.ZonesFvg.IntervalList[i];
                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                     {
                         GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);

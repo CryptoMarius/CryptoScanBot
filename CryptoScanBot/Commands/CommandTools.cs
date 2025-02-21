@@ -170,15 +170,7 @@ public class CommandTools
 
                         case Command.CalculateSymbolLiquidityZones:
                             if (symbol != null)
-                            {
-                                foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                                {
-                                    if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? intervalX))
-                                    {
-                                        GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, intervalX);
-                                    }
-                                }
-                            }
+                                new CommandCalculateDlzForSymbol().Execute(item, symbol);
                             break;
                     }
                 }
