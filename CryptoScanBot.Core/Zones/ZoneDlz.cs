@@ -128,14 +128,13 @@ public class ZoneDlz
     }
 
 
-    public static void SaveZonesForSymbol(ZoneData data, List<ZigZagResult> zigZagList)
+    public static void SaveZonesForSymbol(ZoneData data, List<ZigZagResult> zigZagList, DatabaseStatistics dbStats)
     {
         // We are going to rebuild all the dlz lists
         var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(data.Symbol.Name);
         var symbolIntervalData = symbolData.Get(data.Interval.IntervalPeriod);
 
         // Collect old zones
-        DatabaseStatistics dbStats = new();
         SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongOpen, dbStats);
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortOpen, dbStats);
@@ -150,10 +149,6 @@ public class ZoneDlz
         // Rebuild
         ZoneTools.AddZonesToInternalLists(symbolIntervalData.DlzZones, zonesFromDatabase, newCreatedZones, dbStats);
         ZoneTools.DeleteRemainingZones(zonesFromDatabase, dbStats);
-
-        GlobalData.AddTextToLogTab($"{data.Symbol.Name} {data.Interval.Name} Zones calculated, inserted={dbStats.Inserted} " +
-            $"modified={dbStats.Modified} deleted={dbStats.Deleted} " +
-            $"untouched={dbStats.Untouched} total={dbStats.Total}");
     }
 
 
@@ -605,7 +600,12 @@ public class ZoneDlz
                 await CalculateLiqBoxesAsync(sender, data, indicator, session.ZoomLiqBoxes, loadedCandlesInMemory);
                 CalculateIntroZone(data, indicator);
                 CalculateBrokenBoxes(data, indicator);
-                SaveZonesForSymbol(data, indicator.ZigZagList);
+
+                DatabaseStatistics dbStats = new();
+                SaveZonesForSymbol(data, indicator.ZigZagList, dbStats);
+                GlobalData.AddTextToLogTab($"{data.Symbol.Name} {data.Interval.Name} Zones calculated ({session.TrendType}, {session.UseHighLow}), inserted={dbStats.Inserted} " +
+                    $"modified={dbStats.Modified} deleted={dbStats.Deleted} " +
+                    $"untouched={dbStats.Untouched} total={dbStats.Total}");
             }
 
 

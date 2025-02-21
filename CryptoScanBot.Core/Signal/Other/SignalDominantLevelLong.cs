@@ -96,14 +96,20 @@ public class SignalDominantLevelLong : SignalCreateBase
                 }
 
                 symbolIntervalData.Zones.BestLongZone = distance;
+                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.LongOpen.Count} long zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }
         }
 
-        symbolData.BestLongZone = closestZone; 
+        symbolData.BestLongZone = closestZone;
+        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            ScannerLog.Logger.Info($"{Symbol.Name} closest long zone {closestZone}");
+
         return result;
     }
+
 
 
     public override bool AllowStepIn(CryptoSignal signal)

@@ -109,12 +109,17 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                 }
 
                 symbolIntervalData.Zones.BestShortZone = distance;
+                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.ShortOpen.Count} short zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }
         }
+
         symbolData.BestShortZone = closestZone;
-    
+        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            ScannerLog.Logger.Info($"{Symbol.Name} closest short zone {closestZone}");
+
         return result;
     }
 

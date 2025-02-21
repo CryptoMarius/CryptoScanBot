@@ -73,7 +73,6 @@ public class SignalDominantLevelShort : SignalCreateBase
                                 }
                                 else
                                 {
-
                                     decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
                                     if (dist < distance)
                                         distance = dist;
@@ -97,12 +96,17 @@ public class SignalDominantLevelShort : SignalCreateBase
                 }
 
                 symbolIntervalData.Zones.BestShortZone = distance;
+                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.ShortOpen.Count} short zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }
         }
+
         symbolData.BestShortZone = closestZone;
-    
+        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            ScannerLog.Logger.Info($"{Symbol.Name} closest short zone {closestZone}");
+
         return result;
     }
 
