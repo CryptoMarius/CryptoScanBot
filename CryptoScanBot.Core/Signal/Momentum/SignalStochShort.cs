@@ -130,7 +130,7 @@ public class SignalStochShort : SignalSbmBaseShort
         }
 
 
-        if (!IsRsiDecreasingInTheLast(2, 999))
+        if (!SymbolInterval.IsRsiDecreasingInTheLast(CandleLast, 2, 999))
         {
             ExtraText = "rsi not decreasing";
             return false;
@@ -161,7 +161,7 @@ public class SignalStochShort : SignalSbmBaseShort
         //    return false;
         //}
 
-        double stochSurface = StochOverboughtSurface(SymbolInterval, CandleLast, 30, 90); // other limit
+        double stochSurface = SymbolInterval.StochOverboughtSurface(CandleLast, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
         if (stochSurface < 5)
         {
             ExtraText = $"stoch osc not overbough < {90}";
@@ -199,15 +199,15 @@ public class SignalStochShort : SignalSbmBaseShort
         //    return false;
         //ExtraText = $"BM: RSI:{x.candle!.CandleData!.Rsi:N2} SIG:{x.candle!.CandleData!.StochOscillator:N2} HIS:{x.candle!.CandleData!.MacdHistogram:N2}";
 
-        double stochSurface2 = StochOverboughtSurface(result.higherInterval, result.candle!, 30, 85); // other limit
+        double stochSurface2 = result.higherInterval.StochOverboughtSurface(result.candle!, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
         if (stochSurface2 < 5)
         {
             ExtraText = $"stoch osc not overbough < {85}";
             return false;
         }
 
-        double rsiSurface = RsiOverboughtSurface(SymbolInterval, CandleLast, 70);
-        double rsiSurface2 = RsiOverboughtSurface(result.higherInterval, result.candle!, 70);
+        double rsiSurface = SymbolInterval.RsiOverboughtSurface(CandleLast, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
+        double rsiSurface2 = result.higherInterval.RsiOverboughtSurface(result.candle!, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
         ExtraText = $"sto:{stochSurface:N2}/{stochSurface2:N2} rsi:{rsiSurface:N2}/{rsiSurface2:N2}";
 
         //if (HadStobbInThelastXCandles(SignalSide, 0, 40) == null && HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)

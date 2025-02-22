@@ -130,7 +130,7 @@ public class SignalStochLong : SignalSbmBaseLong
         }
 
 
-        if (!IsRsiIncreasingInTheLast(2, 999))
+        if (!SymbolInterval.IsRsiIncreasingInTheLast(CandleLast, 2, 999))
         {
             ExtraText = "rsi not increasing";
             return false;
@@ -163,7 +163,7 @@ public class SignalStochLong : SignalSbmBaseLong
         //    return false;
         //}
 
-        double stochSurface = StochOversoldSurface(SymbolInterval, CandleLast, 30, 10); // other limit
+        double stochSurface = SymbolInterval.StochOversoldSurface(CandleLast, 30, GlobalData.Settings.General.SettingsStoch.Oversold);
         if (stochSurface < 5)
         {
             ExtraText = $"stoch osc not oversold < {10}";
@@ -208,15 +208,15 @@ public class SignalStochLong : SignalSbmBaseLong
         //    return false;
         //ExtraText = $"BM: RSI:{x.candle!.CandleData!.Rsi:N2} SIG:{x.candle!.CandleData!.StochOscillator:N2} HIS:{x.candle!.CandleData!.MacdHistogram:N2}";
 
-        double stochSurface2 = StochOversoldSurface(result.higherInterval, result.candle!, 30, 15); // other limit
+        double stochSurface2 = result.higherInterval.StochOversoldSurface(result.candle!, 30, GlobalData.Settings.General.SettingsStoch.Oversold);
         if (stochSurface2 < 5)
         {
             ExtraText = $"stoch osc not oversold < {5}";
             return false;
         }
 
-        double rsiSurface = RsiOversoldSurface(SymbolInterval, CandleLast, 30);
-        double rsiSurface2 = RsiOversoldSurface(result.higherInterval, result.candle!, 30);
+        double rsiSurface = SymbolInterval.RsiOversoldSurface(CandleLast, 30, GlobalData.Settings.General.SettingsRsi.Oversold);
+        double rsiSurface2 = result.higherInterval.RsiOversoldSurface(result.candle!, 30, GlobalData.Settings.General.SettingsRsi.Oversold);
         ExtraText = $"sto:{stochSurface:N2}/{stochSurface2:N2} rsi:{rsiSurface:N2}/{rsiSurface2:N2}";
 
         return true;
