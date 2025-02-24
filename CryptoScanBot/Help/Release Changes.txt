@@ -1,5 +1,10 @@
 CryptoScanBot release historie:
 
+xx-02-2025 2.0.4
+- Scanner - Telegram commando Zones voorzien van een link naar de trading applicatie en een kleurtje voor de long/short
+- Scanner - De strategie Stoch short aangepast, er is een verkeerde cross over gebruikt
+- Scanner - De strategie Stoch aangepast, er worden verkeerde getallen qua oppervlakte getoond (de signal is gebruikt ipv oscillator)
+
 20-02-2025 2.0.3
 - Scanner - Naast de primaire trend is er nu een secondaire trend, deze is zichtbaar bij de kolommen van de signalen.
 - Scanner - Bij de storsi de "Correction STOCH" verwijderd, enkel de RSI is van belang om te finetunen

@@ -16,7 +16,7 @@ Eric: 2e header regel van de chart verdwijnt? (met name als het scherm te klein 
 Marius: Okx, base of quote volume. kloppen de volumes wel in vergelijk met Altrady (zit ik wel op de juiste exchange ten opzichte van Altrady)
 Stijn: Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?)
 Marius: Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
-Marius: Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig
+Marius: Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig (alle tickers elk uur opvragen)
 Marius: De zones lijken niet helemaal stabiel te zijn, hercalculatie vanuit het chart formulier maakt nieuwe recente zones aan die even later verwijderd worden?
 (via het chart formulier mogen alleen de geconfigureerde intervallen berekend worden en niet de andere!)
 Marius: Het chart formulier lijkt candles te herberekenen waardoor candles corrupt worden gemaakt (na de eerste $bmp kijk actie is de bm graph kapot)
