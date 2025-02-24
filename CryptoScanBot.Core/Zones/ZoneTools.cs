@@ -137,4 +137,28 @@ public class ZoneTools
         return Math.Min(symbolData.BestLongZone.Value, symbolData.BestShortZone.Value);
     }
 
+
+    public static CryptoTradeSide? ZoneTradeSide(CryptoSymbol symbol)
+    {
+        // Set the date of the last swing point for the automatic zone calculation
+        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+
+        // no data
+        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
+            return null;
+
+        // only one of them
+        if (symbolData.BestLongZone == null)
+            return CryptoTradeSide.Short;
+        if (symbolData.BestShortZone == null)
+            return CryptoTradeSide.Long;
+
+
+        // which of the two is closeby
+        if (symbolData.BestLongZone.Value < symbolData.BestShortZone.Value)
+            return CryptoTradeSide.Long;
+        else
+            return CryptoTradeSide.Short;
+    }
+
 }
