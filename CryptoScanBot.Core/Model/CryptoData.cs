@@ -31,19 +31,18 @@ public class CryptoData
     //[Computed]
     //public double? SlopeMacd { get; set; }
 
+
     // Stochastic indicator values
     /// <summary>
     /// Stoch Oscillator %K (blue), calculated from the last 14 candles
     /// </summary>
-    public double? StochOscillator { get; set; } // Stochastic oscillator %K (blue)
-    public float RsiSurface { get; set; }
-    public float RsiSurface2 { get; set; }
+    public double? StochOscillator { get; set; } // Stochastic oscillator %K (blue, fast line)
     /// <summary>
-    /// Stoch Signal %D (red), average from the last 3 %K values
+    /// Stoch Signal %D (orange), average from the last 3 %K values
     /// </summary>
-    public double? StochSignal { get; set; } // Stochastic oscillator %D (red)
-    public float StochSurface { get; set; }
-    public float StochSurface2 { get; set; }
+    public double? StochSignal { get; set; } // Stochastic oscillator %D (orange, slow line)
+    //public float StochSurface { get; set; }
+    //public float StochSurface2 { get; set; }
     //[Computed]
     //public double? SlopeStoch { get; set; }
 
@@ -78,6 +77,8 @@ public class CryptoData
     // RSI indicator
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
+    //public float RsiSurface { get; set; }
+    //public float RsiSurface2 { get; set; }
 
     // Parabolic Sar indicator
     public double? PSar { get; set; }
@@ -103,12 +104,12 @@ public class CryptoData
         // Stochastic indicator values
         StochSignal = source.StochSignal;
         StochOscillator = source.StochOscillator;
-        StochSurface = source.StochSurface;
+        //StochSurface = source.StochSurface;
 
         // RSI indicator values
         Rsi = source.Rsi;
         //SlopeRsi = source.SlopeRsi;
-        RsiSurface = source.RsiSurface;
+        //RsiSurface = source.RsiSurface;
 
         // EMA indicator values
         //Ema9 = source.Ema9;

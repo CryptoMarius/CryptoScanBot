@@ -70,13 +70,16 @@ public static class IndicatorStochHelper
         double surface = 0;
         while (candleCount > 0)
         {
-            if (candle == null || candle!.CandleData == null || candle.CandleData.StochSignal == null) // not calculated, exit!
+            if (candle == null || candle!.CandleData == null || candle.CandleData.StochOscillator == null)
                 return 0;
 
-            double result = limit - candle.CandleData.StochSignal.Value;
+            double result = limit - candle.CandleData.StochOscillator.Value;
             if (result > 0)
                 surface += result;
 
+            // stop if almost halfway
+            if (candle.CandleData.StochOscillator.Value > 40)
+                break;
 
             if (!symbolInterval.GetPrevCandle(candle, out candle))
                 return 0;
@@ -95,12 +98,16 @@ public static class IndicatorStochHelper
         double surface = 0;
         while (candleCount > 0)
         {
-            if (candle == null || candle!.CandleData == null || candle.CandleData.StochSignal == null) // not calculated, exit!
+            if (candle == null || candle!.CandleData == null || candle.CandleData.StochOscillator == null)
                 return 0;
 
-            double result = candle.CandleData.StochSignal.Value - limit;
+            double result = candle.CandleData.StochOscillator.Value - limit;
             if (result > 0)
                 surface += result;
+
+            // stop if almost halfway
+            if (candle.CandleData.StochOscillator.Value < 60)
+                break;
 
             if (!symbolInterval.GetPrevCandle(candle, out candle))
                 return 0;

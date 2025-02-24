@@ -154,53 +154,6 @@ public class SignalSbmBaseShort(CryptoAccount account, CryptoSymbol symbol, Cryp
     }
 
 
-
-    //protected bool HadIncreasingVolume(out string reaction)
-    //{
-    //    // Het gemiddelde volume uitrekenen, als de vorige candle ~4* die avg-volume heeft en 
-    //    // de volgende candle heeft een flink lagere volume dan is er grote kans op een correctie
-
-    //    // Het probleem is alleen hoe we te lage volumes detecteren?
-
-    //    reaction = "";
-    //    decimal sumVolume = 0;
-
-    //    int count = 20;
-    //    for (int i = Candles.Count - 1; i > 0; i--)
-    //    {
-    //        CryptoCandle candle = Candles.Values[i];
-    //        sumVolume += candle.Volume;
-    //        count--;
-    //        if (count < 0)
-    //            break;
-    //    }
-    //    decimal avgVolume = sumVolume / 20;
-
-    //    // De volume van die laatste x candles moet boven de 1% volume van de munt zitten
-    //    if (sumVolume < 0.01m * Symbol.Volume)
-    //    {
-    //        reaction = string.Format("Geen volume {0:N8} volume(20)={0:N8} < 0.01m*Symbol.Volume {1:N8}", sumVolume, 0.01m * Symbol.Volume);
-    //        return false;
-    //    }
-
-
-    //    if (!GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
-    //    {
-    //        reaction = ExtraText;
-    //        return false;
-    //    }
-
-    //    if (candlePrev.Volume > 3 * avgVolume && CandleLast.Volume < avgVolume && CandleLast.Volume < candlePrev.Volume) 
-    //    {
-    //        reaction = string.Format("Volume spike prev={0:N8} last={1:N8}", candlePrev.Volume, CandleLast.Volume);
-    //        return true;
-    //    }
-
-
-    //    return false;
-    //}
-
-
     public override bool IsSignal()
     {
         ExtraText = "";
@@ -225,70 +178,6 @@ public class SignalSbmBaseShort(CryptoAccount account, CryptoSymbol symbol, Cryp
 
         return true;
     }
-
-
-    ///// <summary>
-    ///// Is de RSI oplopend in de laatste x candles
-    ///// 2e parameter geeft aan hoeveel afwijkend mogen zijn
-    ///// </summary>
-    //public bool IsRsiIncreasingInTheLast(int candleCount, int allowedDown)
-    //{
-    //    // We gaan van rechts naar links (van de nieuwste candle richting verleden)
-
-    //    int down = 0;
-    //    bool first = true;
-    //    //StringBuilder log = new();
-    //    CryptoCandle last = CandleLast;
-
-
-    //    // En van de candles daarvoor mag er een (of meer) afwijken
-    //    while (candleCount > 0)
-    //    {
-    //        if (!GetPrevCandle(last, out CryptoCandle? prev))
-    //            return false;
-
-    //        if (last.CandleData?.Rsi <= prev!.CandleData?.Rsi)
-    //        {
-    //            down++;
-    //            if (first)
-    //            {
-    //                //log.AppendLine(string.Format("RSI controle count={0} prev={1:N8} last={2:N8} down={3} (first)", candleCount, prev.CandleData?.Rsi, last.CandleData?.Rsi, down));
-    //                //GlobalData.AddTextToLogTab(log.ToString());
-    //                return false;
-    //            }
-
-    //            if (down > allowedDown)
-    //                return false;
-    //        }
-
-    //        //log.AppendLine(string.Format("RSI controle count={0} prev={1:N8} last={2:N8} down={3}", candleCount, prev.CandleData?.Rsi, last.CandleData?.Rsi, down));
-    //        last = prev;
-    //        candleCount--;
-    //        first = false;
-    //    }
-
-    //    //GlobalData.AddTextToLogTab(log.ToString());
-    //    //if (down > allowedDown)
-    //    //    return false;
-    //    return true;
-    //}
-
-    //// Check if price goes up even more
-    //public bool CheckPriceGoingUp(CryptoSignal signal)
-    //{
-    //    if (CandleLast.Close >= signal.LastPrice)
-    //    {
-    //        // suppress messages
-    //        if (Symbol.LastPrice != CandleLast.Close)
-    //            ExtraText = $"Price {Symbol.LastPrice:N8} goes up even more {CandleLast.Close:N8}";
-    //        signal.LastPrice = CandleLast.Close;
-    //        return true;
-    //    }
-
-    //    // remember
-    //    signal.LastPrice = CandleLast.Close;
-    //    return false;
-    //}
 
 
     public override bool AllowStepIn(CryptoSignal signal)

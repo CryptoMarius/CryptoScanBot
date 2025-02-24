@@ -138,8 +138,8 @@ public class SignalStochShort : SignalSbmBaseShort
 
         // From overbought to not overbought
 
-        // Crossing of Stoch Oscilator=88
-        int oscLimit = 88;
+        // Crossing of Stoch Oscilator=82
+        int oscLimit = 82;
         if (CandleLast.CandleData?.StochOscillator > oscLimit)
         {
             ExtraText = "last stoch overbough";
@@ -170,9 +170,15 @@ public class SignalStochShort : SignalSbmBaseShort
 
 
         // To higher interval
-        var result = CalculateIndicatorsForInterval(Symbol, Interval.IntervalPeriod + 1, Interval, CandleLast);
+        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+            return false;
+        CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod + 1);
+
+        // To higher interval
+        var result = SymbolInterval.CalculateIndicatorsForInterval(Symbol, CandleLast, higherInterval);
         if (!result.result)
             return false;
+
         //// Stoch Oscilator on higher interval needs to have 2 candles to be > 85 in the last 10 candles)
         //if (!HasACoupleOfStochOverbought(result.higherInterval, CandleLast, 10, 85, 2))
         //{

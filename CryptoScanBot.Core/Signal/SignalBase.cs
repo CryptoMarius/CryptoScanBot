@@ -238,29 +238,6 @@ public class SignalCreateBase
     }
 
 
-    public static (bool result, CryptoSymbolInterval higherInterval, CryptoCandle? candle) CalculateIndicatorsForInterval(
-        CryptoSymbol symbol, CryptoIntervalPeriod intervalPeriod,
-        CryptoInterval candleInterval, CryptoCandle lastCandle)
-    {
-        // Calculate the start of the last finished candle before lastCandle.OpenTime
-        CryptoSymbolInterval higherInterval = symbol.GetSymbolInterval(intervalPeriod);
-        long candleOpenTime = IntervalTools.StartOfIntervalCandle2(lastCandle.OpenTime, candleInterval.Duration, higherInterval.Interval.Duration);
-        if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-            return (false, higherInterval, null);
-
-        // Calculate indicators if needed
-        if (candle.CandleData == null)
-        {
-            List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, higherInterval.Interval, candleOpenTime, out string _);
-            if (history == null)
-                return (false, higherInterval, candle);
-            CandleIndicatorData.CalculateIndicators(symbol, higherInterval.Interval, history);
-        }
-
-        return (true, higherInterval, candle);
-    }
-
-
     //public static (bool result, CryptoCandle? candle) CalculateBarometerIndicators(CryptoSymbol symbol, CryptoInterval candleInterval, CryptoCandle candleLast)
     //{
     //    // Calculate the indicators of the barometer

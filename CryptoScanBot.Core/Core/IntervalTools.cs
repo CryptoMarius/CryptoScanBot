@@ -50,23 +50,22 @@ public class IntervalTools
         // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
         // Same as the 2 but with extended results to avoid unneccesary calculations
 
-        if (targetDuration == sourceDuration)
-            return (false, sourceStart);
+        //if (targetDuration == sourceDuration)
+        //    return (false, sourceStart);
 
         // This works for lower time frame to higher timeframe and wont work the other way
-        if (targetDuration < sourceDuration)
+        if (targetDuration <= sourceDuration)
             throw new Exception("Target interval should be higher than source interval");
 
-        // Calculate source (just in case)
+        // Calculate the start and end of source
         sourceStart -= sourceStart % sourceDuration;
-
-        // Calculate target
-        long targetStart = sourceStart - sourceStart % targetDuration;
-
-
-        // Test if the target candle is final/complete (not a in progress candle)
         long sourceDateEnd = sourceStart + sourceDuration;
+
+        // Calculate the start and end of target
+        long targetStart = sourceStart - sourceStart % targetDuration;
         long targetDateEnd = targetStart + targetDuration;
+
+        // Test if the target candle is final/complete (but not an in progress candle)
         bool targetComplete = targetDateEnd == sourceDateEnd;
 
         return (targetComplete, targetStart);

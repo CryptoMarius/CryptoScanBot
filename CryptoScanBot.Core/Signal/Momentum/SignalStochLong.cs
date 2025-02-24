@@ -170,10 +170,15 @@ public class SignalStochLong : SignalSbmBaseLong
             return false;
         }
 
+        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+            return false;
+        CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod + 1);
+
         // To higher interval
-        var result = CalculateIndicatorsForInterval(Symbol, Interval.IntervalPeriod + 1, Interval, CandleLast);
+        var result = SymbolInterval.CalculateIndicatorsForInterval(Symbol, CandleLast, higherInterval);
         if (!result.result)
             return false;
+
         //// Stoch Oscilator on higher interval needs to have 2 candles to be < 15 in the last 10 candles)
         //if (!HasACoupleOfStochOversold(result.higherInterval, CandleLast, 10, 15, 2))
         //{

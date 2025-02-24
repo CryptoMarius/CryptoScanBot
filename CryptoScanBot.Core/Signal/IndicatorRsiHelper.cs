@@ -36,6 +36,10 @@ public static class IndicatorRsiHelper
             if (result > 0)
                 surface += result;
 
+            // stop if almost halfway
+            if (candle.CandleData.Rsi.Value < 60)
+                break;
+
             if (!symbolInterval.GetPrevCandle(candle, out candle))
                 return 0;
             candleCount--;
@@ -60,6 +64,10 @@ public static class IndicatorRsiHelper
             double result = limit - candle.CandleData.Rsi.Value;
             if (result > 0)
                 surface += result;
+
+            // stop if almost halfway
+            if (candle.CandleData.Rsi.Value > 40)
+                break;
 
             if (!symbolInterval.GetPrevCandle(candle, out candle))
                 return 0;
