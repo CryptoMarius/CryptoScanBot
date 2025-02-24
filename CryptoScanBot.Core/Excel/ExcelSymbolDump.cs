@@ -143,8 +143,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "QuoteVolume");
 
         WriteCell(sheet, columns++, row, "Rsi");
-        WriteCell(sheet, columns++, row, "StochSignal");
         WriteCell(sheet, columns++, row, "StochOscillator");
+        WriteCell(sheet, columns++, row, "StochSignal");
         WriteCell(sheet, columns++, row, "Lux5mValue");
         //WriteCell(sheet, columns++, row, "SlopeMacd");
         //WriteCell(sheet, columns++, row, "SlopeStoch");
@@ -186,8 +186,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             {
                 List<double?> bla = [];
                 bla.Add(candle.CandleData.Rsi);
-                bla.Add(candle.CandleData.StochSignal);
                 bla.Add(candle.CandleData.StochOscillator);
+                bla.Add(candle.CandleData.StochSignal);
                 bla.Add(candle.CandleData.Lux5mValue);
                 //    bla.Add(candle.CandleData.SlopeMacd);
                 //    bla.Add(candle.CandleData.SlopeStoch);
