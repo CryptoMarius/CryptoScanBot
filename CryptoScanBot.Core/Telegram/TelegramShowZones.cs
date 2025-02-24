@@ -1,8 +1,6 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Zones;
 
 using System.Text;
@@ -11,7 +9,7 @@ namespace CryptoScanBot.Core.Telegram;
 
 public class TelegramShowZones
 {
-    public static void Execute(string arguments, StringBuilder stringbuilder)
+    public static bool Execute(string arguments, StringBuilder builder)
     {
         int zoneCount = 10;
         string[] parameters = arguments.Split(' ');
@@ -24,22 +22,26 @@ public class TelegramShowZones
         if (zoneCount > 50)
             zoneCount = 50;
 
-        stringbuilder.AppendLine($"Zones top {zoneCount}");
+        builder.AppendLine($"Zones top {zoneCount}");
 
         var exchange = GlobalData.Settings.General.Exchange;
         if (exchange != null)
         {
-            SortedList<Decimal, CryptoSymbol> list = [];
+            SortedList<decimal, (CryptoTradeSide side, CryptoSymbol symbol)> list = [];
             foreach (var symbol in exchange.SymbolListName.Values)
             {
                 decimal? distance = ZoneTools.ZoneDistance(symbol);
-                if (distance != null && distance != 100)
-                    list.Add(distance.Value, symbol);
+                CryptoTradeSide? side = ZoneTools.ZoneTradeSide(symbol);
+                if (distance != null && distance != 100 && side != null)
+                {
+                    list.Add(distance.Value, (side.Value, symbol));
+                }
             }
+
 
             if (list.Count == 0)
             {
-                stringbuilder.AppendLine($"not calculated?");
+                builder.AppendLine("not calculated?");
             }
             else
             {
@@ -48,9 +50,34 @@ public class TelegramShowZones
                     zoneCount--;
                     if (zoneCount < 0)
                         break;
-                    stringbuilder.AppendLine($"{zone.Value.Name} {zone.Key:N2}");
+
+                    var symbol = zone.Value.symbol;
+                    string c = zone.Value.side == CryptoTradeSide.Long ? "green" : "red";
+
+                    var interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h];
+                    //string text = Settings.CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, symbol.Exchange.Name);
+                    (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, symbol, interval);
+                    if (Url == "")
+                        builder.Append($"{symbol.Name}");
+                    else
+                        builder.Append($"<a href='{Url}'>{symbol.Name}</a>");
+
+
+                    builder.Append(' ');
+                    builder.Append($"{zone.Key:N2}");
+                    builder.Append(' ');
+
+                    if (zone.Value.side == CryptoTradeSide.Long)
+                        builder.Append("\U0001f7e2");
+                    else
+                        builder.Append("\U0001F534");
+
+                    builder.AppendLine();
+
                 }
             }
         }
+
+        return true;
     }
 }
