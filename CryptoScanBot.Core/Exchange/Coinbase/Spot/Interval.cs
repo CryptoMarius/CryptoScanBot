@@ -15,7 +15,7 @@ public class Interval
             CryptoIntervalPeriod.interval15m => KlineInterval.FifteenMinutes,
             CryptoIntervalPeriod.interval30m => KlineInterval.ThirtyMinutes,
             CryptoIntervalPeriod.interval1h => KlineInterval.OneHour,
-            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHour,
+            CryptoIntervalPeriod.interval2h => KlineInterval.TwoHours,
             CryptoIntervalPeriod.interval6h => KlineInterval.SixHours,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
             _ => null,

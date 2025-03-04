@@ -22,7 +22,8 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         //((KucoinSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToAllTickerUpdatesAsync
 
-        CallResult<UpdateSubscription> subscriptionResult = await ((KucoinSocketClient)TickerGroup.SocketClient).FuturesApi.SubscribeToTickerUpdatesAsync("", data =>
+        CallResult<UpdateSubscription> subscriptionResult = await ((KucoinSocketClient)
+            TickerGroup.SocketClient).FuturesApi.SubscribeToBookTickerUpdatesAsync("", data =>
         {
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
             {
