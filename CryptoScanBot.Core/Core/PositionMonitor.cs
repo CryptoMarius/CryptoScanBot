@@ -330,7 +330,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -339,7 +338,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -348,7 +346,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -360,7 +357,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -369,7 +365,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -379,7 +374,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -387,7 +381,6 @@ public class PositionMonitor //: IDisposable
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " " + algorithm.ExtraText + " giveup (removed)");
                         symbolInterval.SignalList.Remove(signal);
-                        //symbolInterval.Signal = null;
                         continue;
                     }
 
@@ -742,20 +735,20 @@ public class PositionMonitor //: IDisposable
             case CryptoEntryOrDcaPricing.SignalPrice:
                 price = CorrectBuyOrDcaPrice(position, price);
                 break;
-            case CryptoEntryOrDcaPricing.BidPrice:
-                if (position.Side == CryptoTradeSide.Long && part.Symbol.BidPrice.HasValue)
-                    price = part.Symbol.BidPrice ?? 0;
-                else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
-                    price = part.Symbol.BidPrice ?? 0;
-                price = CorrectBuyOrDcaPrice(position, price);
-                break;
-            case CryptoEntryOrDcaPricing.AskPrice:
-                if (position.Side == CryptoTradeSide.Long && part.Symbol.AskPrice.HasValue)
-                    price = part.Symbol.BidPrice ?? 0;
-                else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
-                    price = part.Symbol.BidPrice ?? 0;
-                price = CorrectBuyOrDcaPrice(position, price);
-                break;
+            //case CryptoEntryOrDcaPricing.BidPrice:
+            //    if (position.Side == CryptoTradeSide.Long && part.Symbol.BidPrice.HasValue)
+            //        price = part.Symbol.BidPrice ?? 0;
+            //    else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
+            //        price = part.Symbol.BidPrice ?? 0;
+            //    price = CorrectBuyOrDcaPrice(position, price);
+            //    break;
+            //case CryptoEntryOrDcaPricing.AskPrice:
+            //    if (position.Side == CryptoTradeSide.Long && part.Symbol.AskPrice.HasValue)
+            //        price = part.Symbol.BidPrice ?? 0;
+            //    else if (position.Side == CryptoTradeSide.Short && part.Symbol.AskPrice.HasValue)
+            //        price = part.Symbol.BidPrice ?? 0;
+            //    price = CorrectBuyOrDcaPrice(position, price);
+            //    break;
             case CryptoEntryOrDcaPricing.MarketPrice:
                 price = part.Symbol.LastPrice ?? 0;
                 break;

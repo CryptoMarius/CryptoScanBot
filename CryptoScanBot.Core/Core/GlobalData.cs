@@ -395,8 +395,8 @@ public static class GlobalData
             //    symbol.QuantityDisplayFormat = "N8";
 
             // reset last prices
-            symbol.AskPrice = null;
-            symbol.BidPrice = null;
+            //symbol.AskPrice = null;
+            //symbol.BidPrice = null;
             symbol.LastPrice = null;
         }
     }

@@ -14,6 +14,7 @@ public class SettingsTextual
         Strategy.Add("sbm2");
         Strategy.Add("sbm3");
         Strategy.Add("stobb");
+        Strategy.Add("storsi");
     }
 
     // Op welke interval

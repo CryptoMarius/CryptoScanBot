@@ -27,8 +27,8 @@ public class SettingsCompiled
 
     // Welke strategien zijn actief (en speciaal voor de CreateSignal een onderverdeling)
     public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = [];
-    public List<CryptoSignalStrategy> StrategySbmStob { get; set; } = [];
-    public List<CryptoSignalStrategy> StrategyOthers { get; set; } = [];
+    //public List<CryptoSignalStrategy> StrategySbmStob { get; set; } = [];
+    //public List<CryptoSignalStrategy> StrategyOthers { get; set; } = [];
 
 
     // Interval trend + Value (bullisch, bearish)
@@ -96,26 +96,14 @@ public class SettingsCompiled
 
 
         Strategy.Clear();
-        StrategySbmStob.Clear();
-        StrategyOthers.Clear();
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
             if (settings.Strategy.Contains(strategyDef.Name))
             {
-                bool addStrategy = false;
                 if (side == CryptoTradeSide.Long && strategyDef.AnalyzeLongType != null)
-                    addStrategy = true;
-                if (side == CryptoTradeSide.Short && strategyDef.AnalyzeShortType != null)
-                    addStrategy = true;
-
-                if (addStrategy)
-                {
                     Strategy.Add(strategyDef.Strategy, true);
-                    if (strategyDef.Strategy >= CryptoSignalStrategy.Sbm1 && strategyDef.Strategy <= CryptoSignalStrategy.Stobb)
-                        StrategySbmStob.Add(strategyDef.Strategy);
-                    else
-                        StrategyOthers.Add(strategyDef.Strategy);
-                }
+                if (side == CryptoTradeSide.Short && strategyDef.AnalyzeShortType != null)
+                    Strategy.Add(strategyDef.Strategy, true);
             }
         }
     }

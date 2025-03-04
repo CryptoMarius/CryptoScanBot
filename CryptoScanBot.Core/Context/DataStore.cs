@@ -20,8 +20,8 @@ public class DataStore
 
     public static void LoadCandleForSymbol(string exchangeStoragePath, CryptoSymbol symbol)
     {
-        symbol.AskPrice = null;
-        symbol.BidPrice = null;
+        //symbol.AskPrice = null;
+        //symbol.BidPrice = null;
         symbol.LastPrice = null;
         string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
 

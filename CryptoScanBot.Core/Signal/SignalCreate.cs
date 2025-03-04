@@ -442,7 +442,6 @@ public class SignalCreate
                     if (TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-                        //if (symbolInterval.Signal == null || symbolInterval.Signal?.EventTime != signal.EventTime) ????
                         {
                             SignalList.Add(signal);
                             symbolInterval.SignalList.Add(signal);
@@ -560,7 +559,7 @@ public class SignalCreate
     /// </summary>
     /// <param name="candleOpenTime"></param>
     /// <returns></returns>
-    private bool PrepareIndicators(long candleOpenTime, bool zones)
+    private bool PrepareIndicators(long candleOpenTime)
     {
         //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
 
@@ -596,7 +595,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
         // Eenmalig de indicators klaarzetten
-        if (CheckSymbol(candleIntervalOpenTime, false) && PrepareIndicators(candleIntervalOpenTime, false))
+        if (CheckSymbol(candleIntervalOpenTime, false) && PrepareIndicators(candleIntervalOpenTime))
         {
             // TODO: opnieuw activeren en controleren of het idee klopt:
 
@@ -645,9 +644,8 @@ public class SignalCreate
             }
 
 
-            // SBM en stobb zijn afhankelijk van elkaar, vandaar de break
-            // Ze staan alfabetisch, sbm1, sbm2, sbm3, stobb dat gaat per ongeluk goed
-            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
+            //foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
+            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].Strategy.Keys.ToList())
             {
                 if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
                 {
@@ -656,14 +654,14 @@ public class SignalCreate
                 }
             }
 
-            // En de overige waaronder de jump
-            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
-            {
-                if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
-                {
-                    await ExecuteAlgorithmAsync(strategyDefinition!);
-                }
-            }
+            //// En de overige waaronder de jump
+            //foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
+            //{
+            //    if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
+            //    {
+            //        await ExecuteAlgorithmAsync(strategyDefinition!);
+            //    }
+            //}
 
         }
         //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
@@ -679,7 +677,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
-        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime, true))
+        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
         {
             if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
                 await ExecuteAlgorithmAsync(algorithmDefinition!);
@@ -699,7 +697,7 @@ public class SignalCreate
         //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
         //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
-        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime, true))
+        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
         {
             if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.FairValueGap, out AlgorithmDefinition? algorithmDefinition))
             {

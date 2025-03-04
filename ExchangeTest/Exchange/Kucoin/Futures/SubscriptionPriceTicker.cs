@@ -41,9 +41,9 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                         //if (tick.LastPrice.HasValue)
                         //    symbol.LastPrice = tick.LastPrice;
                         //if (tick.BestBidPrice.HasValue)
-                        symbol.BidPrice = tick.BestBidPrice;
+                        //symbol.BidPrice = tick.BestBidPrice;
                         //if (tick.BestAskPrice.HasValue)
-                        symbol.AskPrice = tick.BestAskPrice;
+                        //symbol.AskPrice = tick.BestAskPrice;
                         //symbol.Volume = tick.BaseVolume; //?
                         //if (tick.LastQuantity.HasValue)
                         //    symbol.Volume = (decimal)tick.LastQuantity; //= Quoted = het volume * de prijs                                

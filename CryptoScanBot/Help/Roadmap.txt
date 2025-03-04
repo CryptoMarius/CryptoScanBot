@@ -6,6 +6,8 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 Todo:
 - Deze lijst doornemen en uitdunnen
 - De documentatie bijwerken voor zover mogelijk..
+Marius: Verwijderen van het invalid signal vinkje, dit maakt de scanner nodeloos ingewikkeld
+Marius: Verwijderen van volgorde sbm/stobb, toon ze beide maar als de gebruiker dat gevraagt heeft (werd nu onderdrukt)
 Marius: Experiment, de primaire en secondaire trend vergelijken
 Marius: Een dominant punt wordt eigenlijk pas geactiveerd als er een higher high ontstaat, de dlz een kan dus niet gebroken zijn voordat dit gebeurd (tenzij volledige candle?)
 Jan: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), 

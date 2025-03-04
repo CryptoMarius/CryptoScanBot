@@ -26,8 +26,8 @@ public partial class UserControlTradeEntry : UserControl
         // At which price
         PricingList.Add("Market price", CryptoEntryOrDcaPricing.MarketPrice);
         PricingList.Add("Signal price", CryptoEntryOrDcaPricing.SignalPrice);
-        PricingList.Add("Bid price", CryptoEntryOrDcaPricing.BidPrice);
-        PricingList.Add("Ask price", CryptoEntryOrDcaPricing.AskPrice);
+        //PricingList.Add("Bid price", CryptoEntryOrDcaPricing.BidPrice);
+        //PricingList.Add("Ask price", CryptoEntryOrDcaPricing.AskPrice);
     }
 
     public void LoadConfig(SettingsTrading settings)

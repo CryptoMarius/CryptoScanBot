@@ -101,8 +101,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             if (!GlobalData.BackTest)
                             {
                                 symbol.LastPrice = kline.ClosePrice;
-                                symbol.AskPrice = kline.ClosePrice;
-                                symbol.BidPrice = kline.ClosePrice;
+                                //symbol.AskPrice = kline.ClosePrice;
+                                //symbol.BidPrice = kline.ClosePrice;
                             }
                         }
                         finally

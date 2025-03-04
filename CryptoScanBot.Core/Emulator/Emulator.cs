@@ -149,8 +149,8 @@ public class Emulator
 
                 // This is the last know price
                 symbol.LastPrice = candle.Close;
-                symbol.AskPrice = candle.Close;
-                symbol.BidPrice = candle.Close;
+                //symbol.AskPrice = candle.Close;
+                //symbol.BidPrice = candle.Close;
 
                 GlobalData.BackTestCandle = candle;
                 GlobalData.BackTestDateTime = CandleTools.GetUnixDate(candle.OpenTime + 60);

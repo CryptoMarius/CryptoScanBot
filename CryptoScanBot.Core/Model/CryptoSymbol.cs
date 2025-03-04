@@ -88,14 +88,15 @@ public class CryptoSymbol
 
 
     // Last value from the symbol ticker or candle.Close
+    // TODO: Move to AccountSymbol, this ain't save between emulator and scanner
     [Computed]
     public decimal? LastPrice { get; set; } = null;
-    [Computed]
+    //[Computed]
     // Last value from the symbol ticker or candle.Close
-    public decimal? BidPrice { get; set; } = null;
-    [Computed]
+    //public decimal? BidPrice { get; set; } = null;
+    //[Computed]
     // Last value from the symbol ticker or candle.Close
-    public decimal? AskPrice { get; set; } = null;
+    //public decimal? AskPrice { get; set; } = null;
 
 
     /// <summary>

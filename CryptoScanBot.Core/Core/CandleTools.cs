@@ -273,8 +273,8 @@ public static class CandleTools
             if (!GlobalData.BackTest)
             {
                 symbol.LastPrice = close;
-                symbol.AskPrice = close;
-                symbol.BidPrice = close;
+                //symbol.AskPrice = close;
+                //symbol.BidPrice = close;
             }
 
             // Process the single 1m candle

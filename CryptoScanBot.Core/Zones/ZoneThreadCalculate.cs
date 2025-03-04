@@ -97,7 +97,7 @@ public class ZoneThreadCalculate
             }
         }
     }
-
+    
     public async Task ExecuteAsync()
     {
         //GlobalData.AddTextToLogTab("Starting task for calculating zones");
