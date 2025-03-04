@@ -1,6 +1,6 @@
 CryptoScanBot release historie:
 
-xx-02-2025 2.0.4
+04-03-2025 2.0.4
 - Scanner - De DLZ.Near, DLZ en FVG als mogelijkheid in de trading enigine aanbieden
 - Scanner - Telegram commando Zones voorzien van een link naar de trading applicatie en een kleurtje voor de long/short
 - Scanner - De strategie Stoch short aangepast, er is een verkeerde cross over gebruikt
