@@ -1,5 +1,9 @@
 CryptoScanBot release historie:
 
+06-04-2025 2.0.4
+- Scanner - Oplossing voor Binance Futures zodat de scanner bij het opstarten niet crashed
+            (er is in de opbouw van de json iets veranderd aan de kant van Binance waar de scanner slecht tegen kan)
+
 05-02-2025 2.0.3
 - Scanner - Een Telegram commando geintroduceerd om de dichtbijzijnste top 10 zones te tonen
 - Scanner - RSI attributen nu instelbaar (length)
