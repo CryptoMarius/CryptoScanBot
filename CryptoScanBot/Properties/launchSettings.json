@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoScanBot": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Bybit Spot\" -f \"CryptoScanBot\\CryptoScanBot 1.9.4\\Bybit Spot Alarm\"",
+      "commandLineArgs": "-e \"Binance Futures\" -f \"CryptoScanBot\\CryptoScanBot 2.0.0\\Test\"",
       "nativeDebugging": false
     }
   }
