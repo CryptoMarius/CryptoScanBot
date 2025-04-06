@@ -168,16 +168,16 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        // Bewaren voor debug werkzaamheden
-                        {
-                            string filename = GlobalData.GetBaseDir();
-                            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                            Directory.CreateDirectory(filename);
-                            filename += "symbols.json";
+                        //// Bewaren voor debug werkzaamheden
+                        //{
+                        //    string filename = GlobalData.GetBaseDir();
+                        //    filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
+                        //    Directory.CreateDirectory(filename);
+                        //    filename += "symbols.json";
 
-                            string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                            File.WriteAllText(filename, text);
-                        }
+                        //    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
+                        //    File.WriteAllText(filename, text);
+                        //}
 
 
 

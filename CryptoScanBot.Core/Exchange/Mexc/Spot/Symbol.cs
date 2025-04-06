@@ -36,15 +36,15 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (exchangeData == null)
                     throw new ExchangeException("No exchange data received");
 
-                // Save for debug purposes
-                {
-                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                    Directory.CreateDirectory(filename);
-                    filename += "symbols.json";
+                //// Save for debug purposes
+                //{
+                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                //    Directory.CreateDirectory(filename);
+                //    filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
-                    File.WriteAllText(filename, text);
-                }
+                //    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
+                //    File.WriteAllText(filename, text);
+                //}
 
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
@@ -56,16 +56,16 @@ public class Symbol() : SymbolBase(), ISymbol
                     throw new ExchangeException("No ticker data received");
 
 
-                // Save for debug purposes
-                {
-                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                    Directory.CreateDirectory(filename);
-                    filename += "tickers.json";
+                //// Save for debug purposes
+                //{
+                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                //    Directory.CreateDirectory(filename);
+                //    filename += "tickers.json";
 
-                    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
-                    //var accountFile = new FileInfo(filename);
-                    File.WriteAllText(filename, text);
-                }
+                //    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
+                //    //var accountFile = new FileInfo(filename);
+                //    File.WriteAllText(filename, text);
+                //}
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];
