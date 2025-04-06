@@ -21,7 +21,8 @@ public class TelegramShowHelp
 
         stringBuilder.AppendLine("value           show value BTC,BNB and ETH"); // todo, de juiste basismunten tonen
         stringBuilder.AppendLine("barometer       show barometer BTC/ETH/USDT"); // todo, de juiste basismunten tonen
-        stringBuilder.AppendLine("assets          show asset overview");
+        //stringBuilder.AppendLine("assets          show asset overview"); // ?
+        stringBuilder.AppendLine("trend symbol    show trend (trend ETHUSDT)");
         stringBuilder.AppendLine("chatid          ChatId configuratie");
         stringBuilder.AppendLine("help            this help screen");
     }

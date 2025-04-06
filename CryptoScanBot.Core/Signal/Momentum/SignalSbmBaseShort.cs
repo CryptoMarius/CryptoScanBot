@@ -92,7 +92,7 @@ public static class SignalSbmBaseOverboughtHelper
 }
 
 
-public class SignalSbmBaseShort(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(account, symbol, interval, candle)
+public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
 {
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
@@ -390,7 +390,7 @@ public class SignalSbmBaseShort(CryptoAccount account, CryptoSymbol symbol, Cryp
 
         // ********************************************************************
         // Barometer(s)
-        if (!BarometerHelper.ValidBarometerConditions(Account, Symbol.Quote, TradingConfig.Trading[CryptoTradeSide.Short].Barometer, out ExtraText))
+        if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, TradingConfig.Trading[CryptoTradeSide.Short].Barometer, out ExtraText))
             return true;
 
 

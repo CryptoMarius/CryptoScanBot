@@ -37,7 +37,7 @@ public class ScannerLog
         //fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
         //fileTarget.ArchiveFileName = logPrefix + "{#}.log";
         //fileTarget.ArchiveEvery = NLog.Targets.FileArchivePeriod.Day;
-        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date;
+        //fileTarget.ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Time;
         //var rule = new NLog.Config.LoggingRule("*", LogLevel.Info, fileTarget);
         //config.LoggingRules.Add(rule);
     }

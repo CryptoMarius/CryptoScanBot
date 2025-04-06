@@ -313,7 +313,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     public (string Url, CryptoExternalUrlType Execute) GetExternalRef(CryptoTradingApp externalApp, bool telegram, CryptoSymbol symbol, CryptoInterval interval)
     {
         if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ActivateExchangeName, out Model.CryptoExchange? exchange))
-            exchange = GlobalData.Settings.General.Exchange;
+            exchange = GlobalData.ActiveExchange;
         return GetExternalRef(exchange!, externalApp, telegram, symbol, interval);
     }
 
@@ -354,9 +354,14 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             urlTemplate = urlTemplate.Replace("{BASE}", symbol.Base.ToUpper());
             urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
 
+            // Interval: amount of minutes
             string intervalCode = ((int)(interval.Duration / 60)).ToString();
             urlTemplate = urlTemplate.Replace("{interval}", intervalCode.ToLower());
             urlTemplate = urlTemplate.Replace("{INTERVAL}", intervalCode.ToUpper());
+
+            // Interval: name 1h, 2h etc..
+            urlTemplate = urlTemplate.Replace("{intervalname}", interval.Name.ToLower());
+            urlTemplate = urlTemplate.Replace("{INTERVALNAME}", interval.Name.ToUpper());
             return (urlTemplate, externalUrl.Execute);
         }
 

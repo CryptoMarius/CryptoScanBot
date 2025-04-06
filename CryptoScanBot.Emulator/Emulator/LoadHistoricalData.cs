@@ -3,6 +3,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+using CryptoScanBot.Emulator;
 
 namespace CryptoScanBot.Core.Emulator;
 
@@ -50,7 +51,7 @@ public class LoadHistoricalData
 
         // fetch additional candles
         long fetchEndUnix = CandleTools.GetUnixTime(end, 60);
-        var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+        var api = GlobalData.ActiveExchange!.GetApiInstance();
         await api.Candle.GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
 
         // restore LastCandleSynchronized

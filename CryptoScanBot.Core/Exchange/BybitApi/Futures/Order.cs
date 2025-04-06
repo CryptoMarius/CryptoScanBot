@@ -60,13 +60,11 @@ public class Order() : OrderBase(), IOrder
         return localOrderStatus;
     }
 
-    public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
+    public static void PickupOrder(CryptoSymbol symbol, CryptoOrder order, Bybit.Net.Objects.Models.V5.BybitOrderUpdate item)
     {
         order.CreateTime = item.CreateTime;
         order.UpdateTime = item.UpdateTime;
 
-        order.TradeAccount = tradeAccount;
-        order.TradeAccountId = tradeAccount.Id;
         order.Exchange = symbol.Exchange;
         order.ExchangeId = symbol.ExchangeId;
         order.Symbol = symbol;
@@ -121,7 +119,7 @@ public class Order() : OrderBase(), IOrder
                     {
                         var oldStatus = order.Status;
                         var oldQuoteQuantityFilled = order.QuoteQuantityFilled;
-                        PickupOrder(position.Account, position.Symbol, order, (BybitOrderUpdate)item);
+                        PickupOrder(position.Symbol, order, (BybitOrderUpdate)item);
                         database.Connection.Update(order);
 
                         if (oldStatus != order.Status || oldQuoteQuantityFilled != order.QuoteQuantityFilled)
@@ -139,11 +137,10 @@ public class Order() : OrderBase(), IOrder
 
                         order = new()
                         {
-                            TradeAccount = position.Account!,
                             Exchange = position.Exchange,
                             Symbol = position.Symbol,
                         };
-                        PickupOrder(position.Account, position.Symbol, order, (BybitOrderUpdate)item);
+                        PickupOrder(position.Symbol, order, (BybitOrderUpdate)item);
                         database.Connection.Insert(order);
                         position.OrderList.AddOrder(order);
                         count++;

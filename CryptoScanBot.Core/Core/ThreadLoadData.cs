@@ -38,7 +38,7 @@ public class ThreadLoadData
     //                try
     //                {
     //                    // Van laag naar hoog zodat de hogere intervallen worden berekend
-    //                    foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
+    //                    foreach (CryptoSymbolInterval symbolPeriod in symbol.SymbolIntervalList)
     //                    {
     //                        CryptoInterval interval = symbolPeriod.Interval;
     //                        if (interval.ConstructFrom != null)
@@ -107,7 +107,7 @@ public class ThreadLoadData
     //                        {
     //                            if ((symbol.Status == 1) && !symbol.IsBarometerSymbol() && symbol.IsSpotTradingAllowed)
     //                            {
-    //                                //foreach (CryptoSymbolInterval period in symbol.IntervalPeriodList)
+    //                                //foreach (CryptoSymbolInterval period in symbol.SymbolIntervalList)
     //                                //{
     //                                //    GlobalData.AddTextToLogTab(string.Format("{0} {1} candles={2}", symbol.Name, period.Interval.Name, period.CandleList.Count));
     //                                //}
@@ -207,15 +207,15 @@ public class ThreadLoadData
 
             // TODO: controleren of we de info van de juiste exchange halen (of juist bewust multi exchyange laten zien)
 
-            if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out Model.CryptoExchange? exchange))
+            if (GlobalData.ActiveExchange != null)
             {
                 //************************************************************************************
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (!exchange.LastTimeFetched.HasValue || exchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
-                    await GlobalData.Settings.General.Exchange!.GetApiInstance().Symbol.GetSymbolsAsync();
-                IndexQuoteDataSymbols(exchange);
+                if (!GlobalData.ActiveExchange.LastTimeFetched.HasValue || GlobalData.ActiveExchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
+                    await GlobalData.ActiveExchange!.GetApiInstance().Symbol.GetSymbolsAsync();
+                IndexQuoteDataSymbols(GlobalData.ActiveExchange);
 
                 // Na het inlezen van de symbols de lijsten alsnog goed zetten
                 TradingConfig.InitWhiteAndBlackListSettings();
@@ -236,9 +236,9 @@ public class ThreadLoadData
 
 
                 int aantalTotaal = 0;
-                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                foreach (CryptoSymbol symbol in GlobalData.ActiveExchange.SymbolListName.Values)
                 {
-                    foreach (CryptoSymbolInterval symbolPeriod in symbol.IntervalPeriodList)
+                    foreach (CryptoSymbolInterval symbolPeriod in symbol.Data.SymbolIntervalList)
                     {
                         aantalTotaal += symbolPeriod.CandleList.Count;
                     }
@@ -282,14 +282,14 @@ public class ThreadLoadData
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
                 //************************************************************************************
-                var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+                var api = GlobalData.ActiveExchange!.GetApiInstance();
                 await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
 
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
 
                 long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-                TradingRules.CheckTradingRules(GlobalData.ActiveAccount!.Data.PauseTrading, currentTime, 60);
+                TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, currentTime, 60);
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
@@ -327,7 +327,7 @@ public class ThreadLoadData
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
-                    await api.Asset.GetAssets(GlobalData.ActiveAccount!);
+                    await api.Asset.GetAssets(GlobalData.ActiveExchange!);
                 }
 
                 // Toon de ingelezen posities
@@ -356,10 +356,10 @@ public class ThreadLoadData
                 //RecalculateLastXCandles(1);
 
 
-                if (!checkPositions && GlobalData.ActiveAccount != null)
+                if (!checkPositions)
                 {
-                    if (GlobalData.Settings.Trading.TradeVia != CryptoAccountType.RealTrading)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
+                    if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveExchange!);
                 }
 
                 // Assume we now can run

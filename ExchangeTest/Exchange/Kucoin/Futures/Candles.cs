@@ -87,7 +87,7 @@ public class Candles
             // Remember
             long? startFetchDate = symbolInterval.LastCandleSynchronized;
 
-            await symbol.CandleLock.WaitAsync();
+            await symbol.Data.CandleLock.WaitAsync();
             try
             {
                 long last = long.MinValue;
@@ -123,7 +123,7 @@ public class Candles
             }
             finally
             {
-                symbol.CandleLock.Release();
+                symbol.Data.CandleLock.Release();
             }
 
 
@@ -156,7 +156,7 @@ public class Candles
                     break;
             }
 
-            await symbol.CandleLock.WaitAsync();
+            await symbol.Data.CandleLock.WaitAsync();
             try
             {
                 // Fill missing candles (the only place we know fore it can be done)
@@ -225,7 +225,7 @@ public class Candles
             }
             finally
             {
-                symbol.CandleLock.Release();
+                symbol.Data.CandleLock.Release();
             }
         }
     }
@@ -256,7 +256,7 @@ public class Candles
                 }
 
                 // Er is niet geswicthed van exchange (omdat het ophalen zo lang duurt)
-                if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                if (symbol.ExchangeId == GlobalData.ActiveExchange!.Id)
                 {
                     CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
                     await FetchCandlesInternal(client, symbol, fetchEndUnix);

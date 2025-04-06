@@ -24,8 +24,6 @@ public class PaperTrading
 
         CryptoOrder order = new()
         {
-            TradeAccount = position.Account,
-            TradeAccountId = position.TradeAccountId,
             Exchange = symbol.Exchange,
             ExchangeId = position.ExchangeId,
             Symbol = position.Symbol,
@@ -60,8 +58,6 @@ public class PaperTrading
 
         CryptoTrade trade = new()
         {
-            TradeAccount = position.Account,
-            TradeAccountId = position.TradeAccountId,
             Exchange = symbol.Exchange,
             ExchangeId = position.ExchangeId,
             Symbol = position.Symbol,
@@ -109,16 +105,16 @@ public class PaperTrading
     /// <summary>
     /// Controle van alle posities na het opnieuw opstarten
     /// </summary>
-    public static async Task CheckPositionsAfterRestart(CryptoAccount tradeAccount)
+    public static async Task CheckPositionsAfterRestart(Model.CryptoExchange activeExchange)
     {
         // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
 
-        if (tradeAccount.Data.PositionList.Count != 0)
+        if (activeExchange.Data.PositionList.Count != 0)
         {
             CryptoDatabase database = new();
             database.Open();
 
-            foreach (var position in tradeAccount.Data.PositionList.Values.ToList())
+            foreach (var position in activeExchange.Data.PositionList.Values.ToList())
             {
                 SortedList<DateTime, (CryptoPositionPart part, CryptoPositionStep step)> indexList = [];
 
@@ -142,7 +138,7 @@ public class PaperTrading
                 foreach (var (part, step) in indexList.Values)
                 {
                     long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
-                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(tradeAccount), 60);
+                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact
@@ -190,12 +186,12 @@ public class PaperTrading
     }
 
 
-    public static async Task PaperTradingCheckOrders(CryptoDatabase database, CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    public static async Task PaperTradingCheckOrders(CryptoDatabase database, Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoCandle lastCandle1m)
     {
         // Is er iets gekocht of verkocht?
         // Zoja dan de HandleTrade aanroepen.
 
-        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out var position))
+        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out var position))
         {
             foreach (CryptoPositionPart part in position.PartList.Values.ToList())
             {

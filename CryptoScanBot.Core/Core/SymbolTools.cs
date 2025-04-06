@@ -193,7 +193,7 @@ public class SymbolTools
     //}
 
 
-    //public static bool CheckAvailableSlotsQuote(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    //public static bool CheckAvailableSlotsQuote(CryptoTradeAccount activeExchange, CryptoSymbol symbol, int slotLimit, out string reaction)
     //{
     //    // Zijn er slots beschikbaar?
 
@@ -221,12 +221,12 @@ public class SymbolTools
     /// <summary>
     /// Is er nog een slot beschikbaar (het aantal openstaande posities in 1 munt)
     /// </summary>
-    public static bool CheckAvailableSlotsSymbol(CryptoAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsSymbol(Model.CryptoExchange activeExchange, CryptoSymbol symbol, int slotLimit, out string reaction)
     {
         // Zijn er slots beschikbaar?
 
         int slotsOccupied = 0;
-        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out _))
+        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out _))
         {
             slotsOccupied++;
         }
@@ -244,10 +244,10 @@ public class SymbolTools
     /// <summary>
     /// Is er nog een slot beschikbaar (het aantal openstaande posities ten opzichte van de configuratie)
     /// </summary>
-    public static bool CheckAvailableSlotsLongShort(CryptoAccount tradeAccount, CryptoTradeSide side, int slotLimit, out string reaction)
+    public static bool CheckAvailableSlotsLongShort(Model.CryptoExchange activeExchange, CryptoTradeSide side, int slotLimit, out string reaction)
     {
         int slotsOccupied = 0;
-        foreach (var position in tradeAccount.Data.PositionList.Values)
+        foreach (var position in activeExchange.Data.PositionList.Values)
         {
             if (position.Side == side)
                 slotsOccupied++;
@@ -264,14 +264,14 @@ public class SymbolTools
     }
 
 
-    public static bool CheckAvailableSlots(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
+    public static bool CheckAvailableSlots(Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoTradeSide side, out string reaction)
     {
         //if (!CheckAvailableSlotsExchange(tradeAccount, GlobalData.Settings.Trading.SlotsMaximalExchange, out reaction))
         //    return false;
 
         //if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalSymbol, out reaction))
         //    return false;
-        if (!CheckAvailableSlotsSymbol(tradeAccount, symbol, 1, out reaction))
+        if (!CheckAvailableSlotsSymbol(activeExchange, symbol, 1, out reaction))
             return false;
 
         //if (!CheckAvailableSlotsBase(tradeAccount, symbol, GlobalData.Settings.Trading.SlotsMaximalBase, out reaction))
@@ -280,10 +280,10 @@ public class SymbolTools
         //if (!CheckAvailableSlotsQuote(tradeAccount, symbol, symbol.QuoteData.SlotsMaximal, out reaction))
         //    return false;
 
-        if (side == CryptoTradeSide.Long && !CheckAvailableSlotsLongShort(tradeAccount, side, GlobalData.Settings.Trading.SlotsMaximalLong, out reaction))
+        if (side == CryptoTradeSide.Long && !CheckAvailableSlotsLongShort(activeExchange, side, GlobalData.Settings.Trading.SlotsMaximalLong, out reaction))
             return false;
 
-        if (side == CryptoTradeSide.Short && !CheckAvailableSlotsLongShort(tradeAccount, side, GlobalData.Settings.Trading.SlotsMaximalShort, out reaction))
+        if (side == CryptoTradeSide.Short && !CheckAvailableSlotsLongShort(activeExchange, side, GlobalData.Settings.Trading.SlotsMaximalShort, out reaction))
             return false;
 
         reaction = "";
@@ -328,7 +328,7 @@ public class SymbolTools
         // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
         // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))

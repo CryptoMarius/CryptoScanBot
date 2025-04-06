@@ -93,7 +93,6 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("where PositionStep.status in (1, 2)");
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (0,1,2,3)");
-        builder.AppendLine($"and position.TradeAccountId ={GlobalData.ActiveAccount!.Id}");
         builder.AppendLine("group by symbol.quote");
         builder.AppendLine("order by count(symbol.quote) desc");
 
@@ -130,7 +129,6 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("where PositionStep.status in (1, 2) and PositionStep.Side = 0");
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
-        builder.AppendLine($"and position.TradeAccountId ={GlobalData.ActiveAccount!.Id}");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
         builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime,'localtime') desc, PositionStep.Status, symbol.quote");
@@ -159,7 +157,6 @@ public partial class DashBoardControl : UserControl
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
-        builder.AppendLine($"and position.TradeAccountId ={GlobalData.ActiveAccount!.Id}");
         builder.AppendLine("group by date(PositionStep.CloseTime,'localtime'), PositionStep.Status, symbol.quote");
         builder.AppendLine("order by date(PositionStep.CloseTime,'localtime') desc, PositionStep.Status, symbol.quote");
 
@@ -206,7 +203,6 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         builder.AppendLine($"where symbol.quote = '{QuoteData!.Name}'");
         builder.AppendLine("and position.Invested > 0");
         builder.AppendLine("and position.Status in (1,2)");
-        builder.AppendLine($"and position.TradeAccountId ={GlobalData.ActiveAccount!.Id}");
         builder.AppendLine("group by date(position.CloseTime,'localtime'), position.Status, symbol.quote");
         builder.AppendLine("order by date(position.CloseTime,'localtime') asc, position.Status, symbol.quote");
 
@@ -267,7 +263,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
     //    QueryTradeDataList.Clear();
     //    foreach (QueryTradeData data in databaseThread.Connection.Query<QueryTradeData>(builder.ToString()))
     //    {
-    //        if (data.TradeTime.Date > new DateTime(2000, 01, 01))
+    //        if (data.TradeTime.Time > new DateTime(2000, 01, 01))
     //        {
     //            QueryTradeDataList.Add(data);
     //        }
@@ -371,8 +367,8 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
         {
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
             {
-                //if (!lastDate.HasValue || data.CloseTime.Date < lastDate)
-                //    lastDate = data.CloseTime.Date;
+                //if (!lastDate.HasValue || data.CloseTime.Time < lastDate)
+                //    lastDate = data.CloseTime.Time;
                 //if (data.Positions > max)
                 //    max = data.Positions;
                 series1.Points.AddXY(data.CloseTime.Date, data.Positions);
@@ -666,7 +662,7 @@ order by date(PositionStep.CloseTime) desc, PositionStep.Status, symbol.quote
 
         // Als je de openstaande posities zou verkopen, wat krijg je dan terug?
         decimal currentValue = 0;
-        foreach (var position in GlobalData.ActiveAccount!.Data.PositionList.Values)
+        foreach (var position in GlobalData.ActiveExchange!.Data.PositionList.Values)
         {
             if (position.Symbol.Quote.Equals(QuoteData.Name))
                 currentValue += position.CurrentValue();

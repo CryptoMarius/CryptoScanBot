@@ -219,51 +219,6 @@ public class CryptoDatabase : IDisposable
         }
     }
 
-    private static void CreateTableTradeAccount(CryptoDatabase connection)
-    {
-        if (MissingTable(connection, "TradeAccount"))
-        {
-            connection.Connection.Execute("CREATE TABLE [TradeAccount] (" +
-                "Id INTEGER primary key autoincrement not null," +
-                "ExchangeId INTEGER NOT NULL," +
-                "AccountType INTEGER not NULL," +
-                "CanTrade INTEGER CanTrade not NULL DEFAULT 0," +
-
-                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
-            ")");
-            connection.Connection.Execute("CREATE INDEX IdxTradeAccountId ON TradeAccount(Id)");
-            connection.Connection.Execute("CREATE INDEX IdxTradeAccountExchangeId ON TradeAccount(ExchangeId)");
-
-
-            // De exchanges moeten aanwezig zijn na initialisatie
-            using var transaction = connection.Connection.BeginTransaction();
-
-            List<Model.CryptoExchange> list = [];
-            foreach (Model.CryptoExchange exchange in connection.Connection.GetAll<Model.CryptoExchange>())
-                list.Add(exchange);
-
-            foreach (var exchange in list)
-            {
-                foreach (CryptoAccountType accountType in Enum.GetValues(typeof(CryptoAccountType)))
-                {
-                    CryptoAccount tradeAccount = new()
-                    {
-                        ExchangeId = exchange.Id,
-                        Exchange = exchange,
-                        CanTrade = exchange.IsSupported,
-                        AccountType = accountType,
-                    };
-
-                    // Only Bybit has been tested sofar
-                    if (exchange.ExchangeType != CryptoExchangeType.Bybit && tradeAccount.AccountType == CryptoAccountType.RealTrading)
-                        tradeAccount.CanTrade = false;
-
-                    connection.Connection.Insert(tradeAccount, transaction);
-                }
-            }
-            transaction.Commit();
-        }
-    }
 
     private static void CreateTableSymbol(CryptoDatabase connection)
     {
@@ -452,8 +407,7 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
                 "Id INTEGER primary key autoincrement not null," +
-                "TradeAccountId INTEGER," + //"AccountId integer," +
-
+                
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
@@ -570,7 +524,6 @@ public class CryptoDatabase : IDisposable
                 "PriceMinPerc TEXT NULL," +
                 "PriceMaxPerc TEXT NULL," +
 
-                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
@@ -580,8 +533,6 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX IdxPositionSymbolId ON Position(SymbolId)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionCreateTime ON Position(CreateTime)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionCloseTime ON Position(CloseTime)", transaction);
-            connection.Connection.Execute("CREATE INDEX IdxPositionTradeAccountId ON Position(TradeAccountId)", transaction);
-            //connection.Connection.Execute("CREATE INDEX IdxPositionAccountId ON Position(AccountId)", transaction);
         }
     }
 
@@ -686,7 +637,6 @@ public class CryptoDatabase : IDisposable
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
 
-                "TradeAccountId INTEGER NOT NULL," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
 
@@ -706,7 +656,6 @@ public class CryptoDatabase : IDisposable
                 "Commission TEXT NULL," +
                 "CommissionAsset TEXT NULL," +
 
-                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
             ")");
@@ -726,7 +675,6 @@ public class CryptoDatabase : IDisposable
                 "Id INTEGER primary key autoincrement not null," +
                 "TradeTime TEXT NOT NULL," +
 
-                "TradeAccountId INTEGER NOT NULL," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
 
@@ -739,7 +687,6 @@ public class CryptoDatabase : IDisposable
                 "Commission TEXT NOT NULL," +
                 "CommissionAsset TEXT NULL," +
 
-                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
             ")");
@@ -747,7 +694,6 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX IdxTradeExchangeId ON [Trade](ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxTradeSymbolId ON [Trade](SymbolId)");
             connection.Connection.Execute("CREATE INDEX IdxTradeTradeTime ON [Trade](TradeTime)");
-            connection.Connection.Execute("CREATE INDEX IdxTradeTradeAccountId ON [Trade](TradeAccountId)");
         }
 
     }
@@ -758,17 +704,13 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Asset] (" +
                 "Id INTEGER primary key autoincrement not null," +
-                "TradeAccountId integer," +
 
                 "Name TEXT NOT NULL," +
                 "Total TEXT NOT NULL," +
                 "Free TEXT NOT NULL," +
-                "Locked TEXT NOT NULL," +
-
-                "FOREIGN KEY(TradeAccountId) REFERENCES TradeAccount(Id)" +
+                "Locked TEXT NOT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxAssetId ON Asset(Id)");
-            connection.Connection.Execute("CREATE INDEX IdxAssetTradeAccountId ON Asset(TradeAccountId)");
         }
     }
 
@@ -780,7 +722,6 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE TABLE [Zone] (" +
                 "Id INTEGER primary key autoincrement not null," +
                 "CreateTime TEXT not NULL," +
-                "AccountId INTEGER NOT NULL," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NOT NULL," +
@@ -794,7 +735,6 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
-                "FOREIGN KEY(AccountId) REFERENCES TradeAccount(Id)," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
@@ -803,7 +743,6 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX IdxZoneExchangeId ON Zone(ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneSymbolId ON Zone(SymbolId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneIntervalId ON Zone(IntervalId)");
-            connection.Connection.Execute("CREATE INDEX IdxZoneAccountId ON Zone(AccountId)");
         }
     }
 
@@ -883,10 +822,31 @@ public class CryptoDatabase : IDisposable
         }
     }
 
+    public static void CreateTables(CryptoDatabase connection)
+    {
+        CreateTableInterval(connection); // (+hardcoded list)
+        CreateTableExchange(connection); // (+hardcoded list)
+
+        CreateTableSymbol(connection);
+        CreateTableSignal(connection);
+
+        CreateTablePosition(connection);
+        CreateTablePositionPart(connection);
+        CreateTablePositionStep(connection);
+
+        CreateTableOrder(connection);
+        CreateTableTrade(connection);
+        CreateTableAsset(connection);
+
+        CreateTableZone(connection);
+
+        CreateTableSequence(connection); // Fake-ID's for orders en trades
+        CreateTableVersion(connection); // Administration database & migration
+    }
 
     public static void CreateDatabase()
     {
-        // Sqlite gaat afwijkend met datatypes om, zie https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/types
+        // https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/types
         //SqlMapper.RemoveTypeMap(typeof(DateTimeOffset));
         //SqlMapper.AddTypeHandler(new DateTimeHandler());
 
@@ -900,38 +860,13 @@ public class CryptoDatabase : IDisposable
         using var connection = new CryptoDatabase();
         connection.Open();
 
-        //connection.Connection.ServerVersion
-
-        //connection.Connection.ForceDateTimesToUtc = true;
-
-        CreateTableInterval(connection); // (met een hardcoded lijst, voorlopig prima)
-        CreateTableExchange(connection); // (met een hardcoded lijst, voorlopig prima)
-
-        CreateTableSymbol(connection);
-        //CreateTableSymbolInterval(connection); -- opgeslagen in files, prima zo
-        CreateTableSignal(connection);
-
-        CreateTableTradeAccount(connection);
-        CreateTablePosition(connection);
-        CreateTablePositionPart(connection);
-        CreateTablePositionStep(connection);
-
-        CreateTableOrder(connection);
-        CreateTableTrade(connection);
-        CreateTableAsset(connection);
-
-        CreateTableZone(connection);
-
-        //CreateTableBalancing(connection); -- todo ooit
-        CreateTableSequence(connection); // Fake-ID's for orders en trades
-        CreateTableVersion(connection); // Administration database & migration
-
+        CreateTables(connection);
 
         // Indien noodzakelijk database upgraden 
         Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
-        // Frequently dropped
-        CreateTableZone(connection);
+        // Tables are sometimes dropped
+        CreateTables(connection);
 
         CleanUpDatabase();
 

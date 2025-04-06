@@ -15,6 +15,9 @@ using ExchangeTest.Exchange.Altrady;
 
 using Mexc.Net.Clients;
 
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 
 
@@ -37,7 +40,7 @@ public partial class Form1 : Form
         {
             ApplicationParams.InitApplicationOptions();
 
-            string? exchangeName = ApplicationParams.Options.ExchangeName;
+            string? exchangeName = ApplicationParams.Options!.ExchangeName;
             if (exchangeName != null)
             {
                 // De default exchange is Binance (geen goede keuze in NL op dit moment)
@@ -45,8 +48,7 @@ public partial class Form1 : Form
                     exchangeName = "Bybit Spot";
                 if (GlobalData.ExchangeListName.TryGetValue(exchangeName, out var exchange))
                 {
-                    GlobalData.Settings.General.Exchange = exchange;
-                    GlobalData.Settings.General.ExchangeId = exchange.Id;
+                    GlobalData.ActiveExchange = exchange;
                     GlobalData.Settings.General.ExchangeName = exchange.Name;
                 }
                 else throw new Exception($"Exchange {exchangeName} bestaat niet");
@@ -57,17 +59,15 @@ public partial class Form1 : Form
         GlobalData.LoadSettings();
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
-        GlobalData.SetTradingAccounts();
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
 
-        GlobalData.LoadAccounts();
         GlobalData.LoadSymbols();
         BarometerTools.InitBarometerSymbols();
         TradingConfig.InitWhiteAndBlackListSettings(); // after loading symbols
 
-        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
-        ThreadLoadData.IndexQuoteDataSymbols(GlobalData.Settings.General.Exchange!);
+        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
+        ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange!);
 
 
 
@@ -77,6 +77,7 @@ public partial class Form1 : Form
         GlobalData.TradingApi.Secret = "";
         GlobalData.TradingApi.PassPhrase = "";
 
+        Button1_Click(null, null);
     }
 
     private void AddTextToLogTab(string text)
@@ -108,11 +109,11 @@ public partial class Form1 : Form
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                GlobalData.TradingApi = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
+                GlobalData.TradingApi = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions)!;
             }
             else
                 throw new Exception($"file not found {filename}");
-            GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
+            GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
         }
         catch (Exception error)
         {
@@ -128,7 +129,7 @@ public partial class Form1 : Form
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
-                GlobalData.AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
+                GlobalData.AltradyApi = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions)!;
             }
             else
                 throw new Exception($"file not found {filename}");
@@ -141,38 +142,15 @@ public partial class Form1 : Form
     }
 
 
-    private async void Button1_Click(object? sender, EventArgs? e)
+    private async void DoSomethingWithLux()
     {
-        // just a general purpose test place
-        ScannerLog.Logger.Info("Testing....");
-        ScannerLog.Logger.Trace("Testing....");
-        ScannerLog.Logger.Error("Testing....");
-
-
-        //LoadExchangeSettings(" - Bybit UTA api");
-        //LoadExchangeSettings(" - Bybit Spot - Main account");
-        //LoadExchangeSettings(" - Bybit Spot - DcaBot account");
-
-        //BinanceTestAsync();
-        //ByBitUtaSpotTestAsync();
-        //KucoinTest();
-        //MexcTest();
-
-        // EmulatorTest();
-
-        // Be carefull, this one places active/live orders on the exchange
-        //await ExchangeTest.Exchange.Bybit.Spot.Test.BybitTestAsync();
-        //int loop = 10;
-        //string prefix = "JUPUSDT 5m";
-        //using MexcRestClient client = new();
-
 
         DateTime dateMax = DateTime.UtcNow.AddMinutes(5);
         DateTime dateMin = dateMax.AddDays(-2);
         long timeMin = CandleTools.GetUnixTime(dateMin, 5 * 60);
         long timeMax = CandleTools.GetUnixTime(dateMax, 5 * 60);
 
-        var exchange = GlobalData.Settings.General.Exchange!;
+        var exchange = GlobalData.ActiveExchange!;
         if (exchange.SymbolListName.TryGetValue("JUPUSDT", out CryptoSymbol? symbol))
         {
             CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
@@ -194,6 +172,88 @@ public partial class Form1 : Form
             }
             GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} done...");
         }
+
+    }
+
+
+    private static CryptoPosition? SetupPosition()
+    {
+        string symbolName = "NAKAUSDT";
+        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out Core.Model.CryptoExchange? exchange))
+        {
+            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            {
+                CryptoPosition position = new()
+                {
+                    Exchange = symbol.Exchange,
+                    Symbol = symbol,
+                    Interval = GlobalData.IntervalList[3]
+                };
+                return position;
+            }
+        }
+
+        return null;
+    }
+
+    private void ButtonAltradyOpenClick(object? sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        if (position != null)
+            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
+    }
+
+    private void ButtonAltradyIncreasePositionClick(object? sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        if (position != null)
+            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
+    }
+
+    private void ButtonAltradyAddTpClick(object? sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        if (position != null)
+            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
+    }
+
+    private void ButtonAltradyCancelClick(object? sender, EventArgs e)
+    {
+        CryptoPosition? position = SetupPosition();
+        if (position != null)
+            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position cancel");
+    }
+
+
+
+    private async void Button1_Click(object? sender, EventArgs? e)
+    {
+        // just a general purpose test place
+        ScannerLog.Logger.Info("Testing....");
+        ScannerLog.Logger.Trace("Testing....");
+        ScannerLog.Logger.Error("Testing....");
+
+        //https://api.vantage.sh/v2/workspaces
+
+
+
+        //LoadExchangeSettings(" - Bybit UTA api");
+        //LoadExchangeSettings(" - Bybit Spot - Main account");
+        //LoadExchangeSettings(" - Bybit Spot - DcaBot account");
+
+        //BinanceTestAsync();
+        //ByBitUtaSpotTestAsync();
+        //KucoinTest();
+        //MexcTest();
+
+        // EmulatorTest();
+
+        // Be carefull, this one places active/live orders on the exchange
+        //await ExchangeTest.Exchange.Bybit.Spot.Test.BybitTestAsync();
+        //int loop = 10;
+        //string prefix = "JUPUSDT 5m";
+        //using MexcRestClient client = new();
+
 
 
         //// Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
@@ -256,7 +316,6 @@ public partial class Form1 : Form
         //// );
 
 
-
         //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
         //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null, 
         //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null, 
@@ -265,54 +324,25 @@ public partial class Form1 : Form
         //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null, 
         //////    SelfMatchPreventionType? selfMatchPreventionType = null, MarketUnit? marketUnit = null, CancellationToken ct = default(CancellationToken));
 
-    }
 
-    private static CryptoPosition? SetupPosition()
-    {
-        string symbolName = "NAKAUSDT";
-        if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out Core.Model.CryptoExchange? exchange))
+        string token = "KHW58SAIQTA3XXQR";
+        //Get candles? (open/high/low/close, maar geen volume)
+        //string url = $"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=IBM&interval=5min&apikey={token}";
+        //voorbeeld: https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=EUR&to_symbol=USD&interval=5min&apikey=demo
+
+        string url = $"https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=EUR&to_symbol=USD&interval=5min&apikey={token}";
+        using (var client = new HttpClient()) // { BaseAddress = new Uri(url) }
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            //client.DefaultRequestHeaders.Add("authorization", $"Bearer {token}");
+
+            using (var response = await client.GetAsync(url))
             {
-                CryptoPosition position = new()
-                {
-                    Account = null,
-                    Exchange = symbol.Exchange,
-                    Symbol = symbol,
-                    Interval = GlobalData.IntervalList[3]
-                };
-                return position;
+                string responseData = await response.Content.ReadAsStringAsync();
+                GlobalData.AddTextToLogTab(url);
+                GlobalData.AddTextToLogTab(responseData);
             }
         }
-
-        return null;
     }
 
-    private void ButtonAltradyOpenClick(object? sender, EventArgs e)
-    {
-        CryptoPosition? position = SetupPosition();
-        if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
-    }
-
-    private void ButtonAltradyIncreasePositionClick(object? sender, EventArgs e)
-    {
-        CryptoPosition? position = SetupPosition();
-        if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
-    }
-
-    private void ButtonAltradyAddTpClick(object? sender, EventArgs e)
-    {
-        CryptoPosition? position = SetupPosition();
-        if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
-    }
-
-    private void ButtonAltradyCancelClick(object? sender, EventArgs e)
-    {
-        CryptoPosition? position = SetupPosition();
-        if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position cancel");
-    }
 }

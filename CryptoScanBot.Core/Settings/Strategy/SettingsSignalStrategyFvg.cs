@@ -3,8 +3,6 @@
 [Serializable]
 public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
 {
-    public bool ShowSignalsLong { get; set; } = false;
-    public bool ShowSignalsShort { get; set; } = false;
     public List<string> IntervalList { get; set; } = [];
 
     public double MinimumPercentage { get; set; } = 0.25;

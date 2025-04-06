@@ -3,28 +3,25 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
 
-Todo:
-- Deze lijst doornemen en uitdunnen
-- De documentatie bijwerken voor zover mogelijk..
-Marius: Verwijderen van het invalid signal vinkje, dit maakt de scanner nodeloos ingewikkeld
-Marius: Verwijderen van volgorde sbm/stobb, toon ze beide maar als de gebruiker dat gevraagt heeft (werd nu onderdrukt)
-Marius: Experiment, de primaire en secondaire trend vergelijken
-Marius: Een dominant punt wordt eigenlijk pas geactiveerd als er een higher high ontstaat, de dlz een kan dus niet gebroken zijn voordat dit gebeurd (tenzij volledige candle?)
-Jan: Laatste regel van de trend (met het % marktrend) ziet hij soms (?) niet (ik kan het niet herproduceren op dit moment), 
-     Hij heeft de scanner maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
-     Technisch gezien zou de text-thread dus een probleem kunnen hebben (maar dan zou het euvel altijd moeten optreden, niet na verloop van tijd)
-Marco: Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien, keuze om trading via de exchange definitief te verwijderen?
-Eric: 2e header regel van de chart verdwijnt? (met name als het scherm te klein is om de gehele regel te laten zien, blijkbaar kapt die 2e regel niet af of doet geen wordwrap) - geen oplossing
-Marius: Okx, base of quote volume. kloppen de volumes wel in vergelijk met Altrady (zit ik wel op de juiste exchange ten opzichte van Altrady)
-Stijn: Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?)
-Marius: Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
-Marius: Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig (alle tickers elk uur opvragen)
-Marius: De zones lijken niet helemaal stabiel te zijn, hercalculatie vanuit het chart formulier maakt nieuwe recente zones aan die even later verwijderd worden?
-(via het chart formulier mogen alleen de geconfigureerde intervallen berekend worden en niet de andere!)
-Marius: Het chart formulier lijkt candles te herberekenen waardoor candles corrupt worden gemaakt (na de eerste $bmp kijk actie is de bm graph kapot)
-Marius: De Lux oversold/overbought waarde komt niet altijd overeen met wat de TV indicator berekend.
+Instellingen, traden via Altrady/Exchange/Papertrading (met backtest kun je enkel papertraden)
+Het is onduidelijk voor de gebruikers hoe intervallen voor de DLZ en DLZ.Near en FVG werkt (altijd 1m en hoe en wat dan bij zones en signals)
+De fvg en dlz accentueren met een * ter indicatie dat de  interval niet van belang is (of we schuiven de intervallen door naar de strategien, liever niet?)
+Studie van orderblock, supply en demand en wat de verschillen tussen die twee nu eigenlijk zijn
 
 Scanner:
+- Scanner - Een dominant punt wordt pas geactiveerd als er een higher high ontstaat, de dlz zone kan dus niet gebroken zijn voordat dit gebeurd
+- Scanner - De laatste regel van de trend (met het % marktrend) wordt soms niet getoond (ik kan het niet herproduceren op dit moment), 
+            Heeft de scanner weken/maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
+- Scanner - Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien, keuze om trading via de exchange definitief te verwijderen? - M.
+- Scanner - Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
+- Scanner - Overweging - Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig (alle tickers elk uur opvragen)
+- Scanner - Soms geen extra informatie in de live data (omdat deze intern reeds vervallen is na een bepaalde timeout)
+- Scanner - Overweging: Verwijderen van het invalid signal vinkje, dit maakt de scanner nodeloos ingewikkeld
+- Scanner - De sounds voor de fvg, dlz en dlz.near melding zijn hetzelfde (en worden niet bijgeleverd)
+- Scanner - Chart formulier - De 2e header regel van de chart verdwijnt als deze te lang is - geen oplossing voor nu
+- Scanner - Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?) -> S.
+- Scanner - Het chart formulier lijkt candles te herberekenen waardoor candles corrupt worden gemaakt (na de eerste $bmp kijk actie is de bm graph kapot)
+- Scanner - De Lux oversold/overbought waarde komt niet altijd overeen met wat de TV indicator berekend.
 - Scanner - Oude bestanden in de Pivot directory verwijderen, dat zou ook voor de bestanden van de exchange kunnen (met name voor de verwijderde muntparen)
 - Scanner - Dashboards, de grafieken vervangen met de Oxyplot library
 - Scanner - Dashboards, grafiek van de barometer wellicht vervangen met oxyplot?
@@ -87,14 +84,6 @@ Scanner:
 - Scanner - (low priority) De laatst bekende Rsi, Stoch, enzovoort bij de munt opnemen zodat je ook een pair scanner oid van kunt maken.
             Dan moeten alle coins continue berekend worden en dat betekend heel veel meer cpu en geheugen (voorlopig niet, wel leuke gedachte..)
 
-Emulator:
-- Emulator - De trading rulez worden niet correct berekend (worden waarschijnlijk niet correct gereset bij een nieuwe sessie)
-- Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
-- Emulator - Als de emulator draait de menu optie onbereikbaar maken (anders 2 emulator sessies)
-- Emulator - Een "beter" algoritme ontwikkelen voor het ophalen en bewaren van de candles, hetzelfde geld ook voor het bepalen van de liquiditeit zones.
-             Uiteindelijk heb de candles verzameld over een lange tijd en dat wilde ik juist voorkomen.... bah..
-- Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus
-
 Trading:
 - Trading - Dominante zones: De laatste open of gesloten posities laten zien (bij papertrading)
 - Trading - Als verklikker van trading rulez een geluidje laten horen
@@ -146,3 +135,15 @@ Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
 Scanner:
 - Exchange OKX - Okx Spot ARUSDT 6h error getting klines [OKXRestApiError] 51001: Instrument ID does not exist (maar volgens de symbols.json is ie er wel, wellicht een conflict europe en worldwide, verkeerde url's?)
 - Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min
+
+
+
+
+Emulator:
+- Emulator - Emulator moet een eigen applicatie worden en een eigen database krijgen (dan zijn er veel minder conflicten)
+- Emulator - De trading rulez worden niet correct berekend (worden waarschijnlijk niet correct gereset bij een nieuwe sessie)
+- Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
+- Emulator - Als de emulator draait de menu optie onbereikbaar maken (anders 2 emulator sessies)
+- Emulator - Een "beter" algoritme ontwikkelen voor het ophalen en bewaren van de candles, hetzelfde geld ook voor het bepalen van de liquiditeit zones.
+             Uiteindelijk heb de candles verzameld over een lange tijd en dat wilde ik juist voorkomen.... bah..
+- Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus

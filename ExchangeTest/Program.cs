@@ -29,11 +29,11 @@ internal static class Program
         GlobalData.AppName = "CryptoScanBot"; // Assembly.GetExecutingAssembly().GetName().Name;
 
         // Path of the executable
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location!)!;
 
         // Version stuff
         var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version.ToString();
+        string appVersion = assembly.Version!.ToString();
         while (appVersion.EndsWith(".0.0"))
             appVersion = appVersion[0..^2];
         GlobalData.AppVersion = appVersion;

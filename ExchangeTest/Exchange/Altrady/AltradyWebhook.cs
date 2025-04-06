@@ -149,7 +149,7 @@ public class AltradyWebhook
         try
         {
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
-            if (externalUrls == null || externalUrls.Altrady.Code == "")
+            if (externalUrls == null || externalUrls.Altrady!.Code == "")
             {
                 GlobalData.AddTextToLogTab($"error webhook {position.Symbol.Name} {position.Interval!.Name} no exchange code available");
                 return;

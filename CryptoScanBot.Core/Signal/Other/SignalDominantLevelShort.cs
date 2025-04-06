@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -7,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalDominantLevelShort : SignalCreateBase
 {
-    public SignalDominantLevelShort(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalDominantLevelShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Short;
         SignalStrategy = CryptoSignalStrategy.DominantLevel;
@@ -20,7 +19,7 @@ public class SignalDominantLevelShort : SignalCreateBase
         bool result = false;
         
         decimal closestZone = 100;
-        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        CryptoSymbolData symbolData = Symbol.Data;
 
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListShort.Count}");
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
@@ -95,7 +94,7 @@ public class SignalDominantLevelShort : SignalCreateBase
                         break;
                 }
 
-                symbolIntervalData.Zones.BestShortZone = distance;
+                symbolIntervalData.DlzZoneDistance.BestShortZone = distance;
                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                     ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.ShortOpen.Count} short zones, closest {distance}");
                 if (distance < closestZone)
@@ -103,7 +102,7 @@ public class SignalDominantLevelShort : SignalCreateBase
             }
         }
 
-        symbolData.BestShortZone = closestZone;
+        symbolData.DlzZoneDistance.BestShortZone = closestZone;
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
             ScannerLog.Logger.Info($"{Symbol.Name} closest short zone {closestZone}");
 

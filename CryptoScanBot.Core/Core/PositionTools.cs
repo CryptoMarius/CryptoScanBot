@@ -1,8 +1,8 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Trend;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -64,13 +64,11 @@ public static class PositionTools
         return null;
     }
 
-    public static CryptoPosition CreatePosition(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
+    public static CryptoPosition CreatePosition(CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
         CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {
-            Account = tradeAccount,
-            TradeAccountId = tradeAccount.Id,
             CreateTime = currentDate,
             UpdateTime = currentDate,
             Data = symbol.Name, // mag vervallen (maar is ook best handig)
@@ -173,9 +171,8 @@ public static class PositionTools
         return step;
     }
 
-    public static void AddPosition(CryptoAccount tradeAccount, CryptoPosition position)
+    public static void AddPosition(CryptoPosition position)
     {
-        position.Account = tradeAccount;
         if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
         {
             position.Exchange = exchange;
@@ -185,7 +182,7 @@ public static class PositionTools
                 if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
                     position.Interval = interval;
 
-                tradeAccount.Data.PositionList.TryAdd(symbol.Name, position);
+                exchange.Data.PositionList.TryAdd(symbol.Name, position);
             }
         }
     }
@@ -214,30 +211,26 @@ public static class PositionTools
 
     public static void AddPositionClosed(CryptoPosition position)
     {
-        if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
+        if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
         {
-            position.Account = tradeAccount;
-            if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
+            position.Exchange = exchange;
+            if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
             {
-                position.Exchange = exchange;
-                if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
-                {
-                    position.Symbol = symbol;
-                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
-                        position.Interval = interval!;
+                position.Symbol = symbol;
+                if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
+                    position.Interval = interval!;
 
-                    GlobalData.PositionsClosed.Add(position);
-                }
+                GlobalData.PositionsClosed.Add(position);
             }
         }
     }
 
 
-    public static void RemovePosition(CryptoAccount tradeAccount, CryptoPosition position, bool addToClosed)
+    public static void RemovePosition(Model.CryptoExchange activeExchange, CryptoPosition position, bool addToClosed)
     {
-        if (tradeAccount.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
+        if (activeExchange.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
         {
-            tradeAccount.Data.PositionList.Remove(positionFound.Symbol.Name);
+            activeExchange.Data.PositionList.Remove(positionFound.Symbol.Name);
 
             if (addToClosed)
             {
@@ -271,9 +264,9 @@ public static class PositionTools
     }
 
 
-    public static CryptoPosition? HasPosition(CryptoAccount tradeAccount, CryptoSymbol symbol)
+    public static CryptoPosition? HasPosition(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
     {
-        if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+        if (activeExchange.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             return position;
         }
@@ -286,12 +279,8 @@ public static class PositionTools
     /// </summary>
     public static bool HasPosition(CryptoSymbol symbol)
     {
-        foreach (CryptoAccount tradeAccount in GlobalData.TradeAccountList.Values.ToList())
-        {
-            if (tradeAccount.Data.PositionList.TryGetValue(symbol.Name, out var _))
-                return true;
-        }
-
+        if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(symbol.Name, out var _))
+             return true;
         return false;
     }
 
@@ -299,15 +288,16 @@ public static class PositionTools
     /// <summary>
     /// Zijn de aangevinkte intervallen UP?
     /// </summary>
-    public static bool ValidTrendConditions(CryptoAccount tradeAccount, string symbolName, 
+    public static bool ValidTrendConditions(CryptoSymbol symbol, TrendType trendType,
         Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> trend, out string reaction)
     {
-        SymbolTrend symbolTrend = tradeAccount.Data.GetSymbolData(symbolName).TrendPrimary;
+        CryptoTrendData symbolTrend = trendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
 
         foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in trend)
         {
-            var intervalTrend = symbolTrend.Get(entry.Key);
             var interval = GlobalData.IntervalListPeriod[entry.Key];
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(entry.Key);
+            CryptoTrendData intervalTrend = trendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
 
             if (intervalTrend.Trend != entry.Value)
             {
@@ -321,12 +311,13 @@ public static class PositionTools
     }
 
 
-    public static bool ValidMarketTrendConditions(CryptoAccount tradeAccount, CryptoSymbol symbol, 
+    public static bool ValidMarketTrendConditions(CryptoSymbol symbol, TrendType trendType,
         List<(decimal minValue, decimal maxValue)> marketTrend, out string reaction)
     {
         if (marketTrend.Count != 0)
         {
-            SymbolTrend symbolTrend = tradeAccount.Data.GetSymbolData(symbol.Name).TrendPrimary;
+            CryptoTrendData symbolTrend = trendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
+
             if (!symbolTrend.Percentage.HasValue)
             {
                 reaction = $"Markettrend {symbol.Name} is not calculated";

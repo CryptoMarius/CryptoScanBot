@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public class SignalSbm3Long : SignalSbmBaseLong
 {
-    public SignalSbm3Long(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalSbm3Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.Sbm3;

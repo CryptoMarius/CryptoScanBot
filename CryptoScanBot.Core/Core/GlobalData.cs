@@ -40,6 +40,8 @@ public static class GlobalData
     public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
 
+
+    // todo, uitfaseren want backtest komt in een seperaat product
     // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
     // (staat op de nominatie om te vervallen dmv de Trading.TradeVia == BackTest of GlobalData.ActiveAccount)
     // todo cleanup? (more and more properties voor backtest for the candle and candle.Close date)
@@ -47,9 +49,9 @@ public static class GlobalData
     public static DateTime BackTestDateTime { get; set; }
     public static CryptoCandle? BackTestCandle { get; set; }
 
-    public static DateTime GetCurrentDateTime(CryptoAccount account)
+    public static DateTime GetCurrentDateTime()
     {
-        if (account.AccountType == CryptoAccountType.BackTest)
+        if (GlobalData.BackTest)
             return BackTestDateTime; // or BackTestCandle.OpenTime + 1 minute
         else
             return DateTime.UtcNow;
@@ -127,9 +129,9 @@ public static class GlobalData
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
 
-    // All possible account (overkill)
-    public static readonly SortedList<int, CryptoAccount> TradeAccountList = [];
-    public static CryptoAccount? ActiveAccount { get; set; }
+    // Active exchange
+    public static Model.CryptoExchange? ActiveExchange { get; set; }
+    public static string ActivateExchangeName { get; set; } = "";
 
 
     // Some running tasks/threads
@@ -163,45 +165,6 @@ public static class GlobalData
         }
     }
 
-    public static void LoadAccounts()
-    {
-        // Load & index the accounts
-        //AddTextToLogTab("Reading account information");
-
-        TradeAccountList.Clear();
-
-        using var database = new CryptoDatabase();
-        foreach (CryptoAccount tradeAccount in database.Connection.GetAll<CryptoAccount>())
-        {
-            if (ExchangeListId.TryGetValue(tradeAccount.ExchangeId, out var exchange))
-            {
-                TradeAccountList.Add(tradeAccount.Id, tradeAccount);
-                tradeAccount.Exchange = exchange;
-            }
-        }
-
-        SetTradingAccounts();
-    }
-
-    public static void SetTradingAccounts()
-    {
-        ActiveAccount = null;
-        foreach (CryptoAccount tradeAccount in TradeAccountList.Values)
-        {
-            // There are 3 accounts per exchange
-            if (tradeAccount.ExchangeId == Settings.General.ExchangeId)
-            {
-                if (BackTest && tradeAccount.AccountType == CryptoAccountType.BackTest) // ignore the GlobalData.Settings.Trading.TradeVia in this case
-                    ActiveAccount = tradeAccount;
-                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.PaperTrade && Settings.Trading.TradeVia == CryptoAccountType.PaperTrade)
-                    ActiveAccount = tradeAccount;
-                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.RealTrading && Settings.Trading.TradeVia == CryptoAccountType.RealTrading)
-                    ActiveAccount = tradeAccount;
-                if (!BackTest && tradeAccount.AccountType == CryptoAccountType.Altrady && Settings.Trading.TradeVia == CryptoAccountType.Altrady)
-                    ActiveAccount = tradeAccount;
-            }
-        }
-    }
 
 
     public static void LoadIntervals()
@@ -240,9 +203,9 @@ public static class GlobalData
         // De symbols uit de database lezen (ook van andere exchanges)
         // Dat doen we om de symbol van voorgaande signalen en/of posities te laten zien
         //AddTextToLogTab("Reading symbol information");
-        string sql = "select * from symbol";
+        string sql = "select * from symbol where exchangeid=@exchangeid";
         using var database = new CryptoDatabase();
-        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql))
+        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id}))
             AddSymbol(symbol);
     }
 
@@ -252,10 +215,10 @@ public static class GlobalData
 
         if (BackTest)
         {
-            string sql = "select * from signal where BackTest=1 order by OpenDate";
+            string sql = "select * from signal where exchangeid=@exchangeid and BackTest=1 order by OpenDate";
 
             using var database = new CryptoDatabase();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
@@ -277,8 +240,8 @@ public static class GlobalData
         {
 
             using var database = new CryptoDatabase();
-            string sql = "select * from signal where BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))
+            string sql = "select * from signal where exchangeid=@exchangeid and BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
@@ -430,6 +393,7 @@ public static class GlobalData
             if (Settings!.General.GetCandleInterval < 30)
                 Settings.General.GetCandleInterval = 30;
 
+            // Fill in empty activate exchange
             if (Settings.General.ActivateExchangeName == "")
                 Settings.General.ActivateExchangeName = Settings.General.ExchangeName;
 
@@ -812,19 +776,14 @@ public static class GlobalData
             string? found = ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
             if (found != null)
                 exchangeName = found;
-
-            // New exchange
             Settings.General.ExchangeName = exchangeName;
         }
 
 
         if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out var exchange))
-        {
-            Settings.General.Exchange = exchange;
-            Settings.General.ExchangeId = exchange.Id;
-            Settings.General.ExchangeName = exchange.Name;
-        }
-        else throw new Exception($"Exchange {exchangeName} bestaat niet");
+            GlobalData.ActiveExchange = exchange;
+        else 
+            throw new Exception($"Exchange {Settings.General.ExchangeName} does not exist");
     }
 
 
@@ -835,7 +794,7 @@ public static class GlobalData
     //        int candleCount = 0;
     //        foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
     //        {
-    //            foreach (Model.CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList.ToList())
+    //            foreach (Model.CryptoSymbolInterval symbolInterval in symbol.SymbolIntervalList.ToList())
     //            {
     //                candleCount += symbolInterval.CandleList.Count;
     //                if (symbolInterval.CandleList.Count > 0)

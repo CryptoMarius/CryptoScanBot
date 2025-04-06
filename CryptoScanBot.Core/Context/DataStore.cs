@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
@@ -29,7 +28,7 @@ public class DataStore
         string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
 
         // reset the previous collected trend data (once a day is preferred)
-        AccountSymbol accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        CryptoSymbolData accountSymbolData = symbol.Data;
         accountSymbolData.ResetTrendData();
 
         // Laad in 1x alle intervallen 
@@ -128,7 +127,7 @@ public class DataStore
 
         //int aantaltotaal = 0;
         string baseStoragePath = GlobalData.GetBaseDir();
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
@@ -172,12 +171,12 @@ public class DataStore
                         }
 
                         long count = 0;
-                        foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.IntervalPeriodList)
+                        foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.Data.SymbolIntervalList)
                             count += cryptoSymbolInterval.CandleList.Count;
 
                         if (count > 0)
                         {
-                            await symbol.CandleLock.WaitAsync();
+                            await symbol.Data.CandleLock.WaitAsync();
                             try
                             {
                                 using (var memoryStream = new MemoryStream(2 * 1024 * 1024))
@@ -188,7 +187,7 @@ public class DataStore
                                         binaryWriter.Write(version);
                                         binaryWriter.Write(symbol.Name);
 
-                                        foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+                                        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
                                         {
                                             binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
                                             if (symbolInterval.LastCandleSynchronized.HasValue)
@@ -229,7 +228,7 @@ public class DataStore
                             }
                             finally
                             {
-                                symbol.CandleLock.Release();
+                                symbol.Data.CandleLock.Release();
                             }
                         }
                     }

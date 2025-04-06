@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 
 using System.Text;
 
@@ -9,18 +9,17 @@ namespace CryptoScanBot.Core.Trend;
 
 public class MarketTrend
 {
-    public static async Task CalculateMarketTrendAsync(
-        CryptoSymbol symbol, AccountSymbol accountSymbol,
-        SymbolTrend symbolTrend, TrendType trendType,
-        long candleIntervalStart, long candleIntervalEnd,
+    public static async Task<CryptoTrendData> CalculateMarketTrendAsync(CryptoSymbol symbol,
+        SettingsZigZag trend, long candleIntervalStart, long candleIntervalEnd,
         StringBuilder? log = null)
     {
+        CryptoTrendData symbolTrend = trend.TrendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
         try
         {
-            await accountSymbol.TrendLock.WaitAsync();
+            await symbol.Data.TrendLock.WaitAsync();
             try
             {
-                if (symbolTrend.Date == null || symbolTrend.Date < candleIntervalEnd || log != null)
+                if (symbolTrend.Time == null || symbolTrend.Time < candleIntervalEnd || log != null)
                 {
                     string text;
                     int weightSum1 = 0;
@@ -31,11 +30,11 @@ public class MarketTrend
 
                     foreach (var interval in GlobalData.IntervalList)
                     {
-                        var intervalTrend = symbolTrend.Get(interval.IntervalPeriod);
+                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                        CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
 
                         //iterarator++;
-                        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                        await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trendType, candleIntervalStart, candleIntervalEnd, log);
+                        await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trend, candleIntervalStart, candleIntervalEnd, log);
 
                         int weight1 = interval.Duration;
                         if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)
@@ -59,7 +58,7 @@ public class MarketTrend
                     //float marketTrendPercentage1 = 100 * (float)weightSum1 / weightMax1;
                     //float marketTrendPercentage2 = 100 * (float)weightSum2 / weightMax2;
                     //GlobalData.AddTextToLogTab($"Markettrend debug {symbol.Name} {marketTrendPercentage1:N2}={weightSum1}/{weightMax1}  {marketTrendPercentage2:N2}={weightSum2}/{weightMax2}");
-                    symbolTrend.Date = candleIntervalEnd;
+                    symbolTrend.Time = candleIntervalEnd;
                     symbolTrend.Percentage = 100 * (float)weightSum1 / weightMax1; // marketTrendPercentage1; // 
 
                     log?.AppendLine("");
@@ -71,7 +70,7 @@ public class MarketTrend
             }
             finally
             {
-                accountSymbol.TrendLock.Release();
+                symbol.Data.TrendLock.Release();
             }
 
         }
@@ -81,5 +80,6 @@ public class MarketTrend
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString());
         }
+        return symbolTrend;
     }
 }

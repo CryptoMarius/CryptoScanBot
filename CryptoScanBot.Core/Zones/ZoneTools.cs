@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -37,7 +36,7 @@ public class ZoneTools
     }
 
 
-    //public static void CollectAllZones(ZoneDataList zoneData,
+    //public static void CollectAllZones(CryptoZones zoneData,
     //    SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase,
     //    DatabaseStatistics dbStats)
     //{
@@ -49,7 +48,7 @@ public class ZoneTools
 
 
 
-    public static void AddZonesToInternalLists(ZoneDataList zoneData,
+    public static void AddZonesToInternalLists(CryptoSymbolIntervalZones zoneData,
         SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase,
         IList<CryptoZone> newCalculatedZones, DatabaseStatistics dbStats)
     {
@@ -121,41 +120,41 @@ public class ZoneTools
     public static decimal? ZoneDistance(CryptoSymbol symbol)
     {
         // Set the date of the last swing point for the automatic zone calculation
-        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        CryptoSymbolData symbolData = symbol.Data;
 
         // no data
-        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
+        if (symbolData.DlzZoneDistance.BestLongZone == null && symbolData.DlzZoneDistance.BestShortZone == null)
             return null;
 
         // only one of them
-        if (symbolData.BestLongZone == null)
-            return symbolData.BestShortZone;
-        if (symbolData.BestShortZone == null)
-            return symbolData.BestLongZone;
+        if (symbolData.DlzZoneDistance.BestLongZone == null)
+            return symbolData.DlzZoneDistance.BestShortZone;
+        if (symbolData.DlzZoneDistance.BestShortZone == null)
+            return symbolData.DlzZoneDistance.BestLongZone;
 
         // which of the two is closeby
-        return Math.Min(symbolData.BestLongZone.Value, symbolData.BestShortZone.Value);
+        return Math.Min(symbolData.DlzZoneDistance.BestLongZone.Value, symbolData.DlzZoneDistance.BestShortZone.Value);
     }
 
 
     public static CryptoTradeSide? ZoneTradeSide(CryptoSymbol symbol)
     {
         // Set the date of the last swing point for the automatic zone calculation
-        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        CryptoSymbolData symbolData = symbol.Data;
 
         // no data
-        if (symbolData.BestLongZone == null && symbolData.BestShortZone == null)
+        if (symbolData.DlzZoneDistance.BestLongZone == null && symbolData.DlzZoneDistance.BestShortZone == null)
             return null;
 
         // only one of them
-        if (symbolData.BestLongZone == null)
+        if (symbolData.DlzZoneDistance.BestLongZone == null)
             return CryptoTradeSide.Short;
-        if (symbolData.BestShortZone == null)
+        if (symbolData.DlzZoneDistance.BestShortZone == null)
             return CryptoTradeSide.Long;
 
 
         // which of the two is closeby
-        if (symbolData.BestLongZone.Value < symbolData.BestShortZone.Value)
+        if (symbolData.DlzZoneDistance.BestLongZone.Value < symbolData.DlzZoneDistance.BestShortZone.Value)
             return CryptoTradeSide.Long;
         else
             return CryptoTradeSide.Short;

@@ -91,7 +91,7 @@ public class ChartDrawFvgZones
 
     public static void Draw(PlotModel chart, CryptoSymbol symbol, long minDate, long maxDate)
     {
-        var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        var symbolData = symbol.Data;
         foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))

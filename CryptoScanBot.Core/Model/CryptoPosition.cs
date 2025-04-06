@@ -17,10 +17,6 @@ public class CryptoPosition : CryptoData2
     public DateTime? UpdateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 
-    public int TradeAccountId { get; set; }
-    [Computed]
-    public required virtual CryptoAccount Account { get; set; }
-
     public int ExchangeId { get; set; }
     [Computed]
     public required virtual CryptoExchange Exchange { get; set; }

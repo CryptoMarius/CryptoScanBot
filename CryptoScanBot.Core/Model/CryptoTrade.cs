@@ -10,10 +10,6 @@ public class CryptoTrade
 
     public DateTime TradeTime { get; set; }
 
-    public int TradeAccountId { get; set; }
-    [Computed]
-    public required CryptoAccount? TradeAccount { get; set; }
-
     public int ExchangeId { get; set; }
     [Computed]
     public required CryptoExchange? Exchange { get; set; }

@@ -1,7 +1,5 @@
-﻿using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trader;
 
@@ -155,7 +153,8 @@ public class ThreadTelegramBotInstance
         databaseThread.Open();
 
         foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
-            "where CloseTime >= @fromDate and status=2", new { fromDate = DateTime.Today.ToUniversalTime() }))
+            "where CloseTime >= @fromDate and status=2 and exchangeid=@exchangeid", 
+            new { fromDate = DateTime.Today.ToUniversalTime(), exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             sumPositions++;
             sumProfit += position.Profit;
@@ -252,7 +251,7 @@ public class ThreadTelegramBotInstance
                                             stringBuilder.AppendLine();
                                             CommandShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
-                                            Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
+                                            Helper.ShowAssets(GlobalData.ActiveExchange!, stringBuilder, out decimal _, out decimal _);
                                             stringBuilder.AppendLine();
                                             TelegramShowValue.ShowValue(command, stringBuilder);
                                         }
@@ -293,11 +292,11 @@ public class ThreadTelegramBotInstance
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                         else if (command == "ASSETS")
                                         {
-                                            await AssetTools.FetchAssetsAsync(GlobalData.ActiveAccount!);
-                                            Helper.ShowAssets(GlobalData.ActiveAccount!, stringBuilder, out decimal _, out decimal _);
+                                            await AssetTools.FetchAssetsAsync(GlobalData.ActiveExchange!);
+                                            Helper.ShowAssets(GlobalData.ActiveExchange!, stringBuilder, out decimal _, out decimal _);
                                         }
                                         else if (command == "TREND")
-                                            await TelegramShowTrend.ShowTrendAsync(arguments, stringBuilder);
+                                            await TelegramShowTrend.ShowTrendAsync(arguments, GlobalData.Settings.Trend.Primary, stringBuilder);
                                         else if (command == "HELP")
                                             TelegramShowHelp.ShowHelp(stringBuilder);
                                         else if (command == "CHATID")

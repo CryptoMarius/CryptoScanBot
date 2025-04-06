@@ -85,7 +85,7 @@ public class Api : ExchangeBase
         };
         if (orderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
-        if (position.Account.AccountType != CryptoAccountType.RealTrading)
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
         {
             tradeParams.OrderId = database.CreateNewUniqueId();
             return (true, tradeParams);
@@ -196,7 +196,7 @@ public class Api : ExchangeBase
         if (step.OrderType == CryptoOrderType.StopLimit)
             tradeParams.QuoteQuantity = (tradeParams.StopPrice ?? 0) * tradeParams.Quantity;
 
-        if (position.Account.AccountType != CryptoAccountType.RealTrading)
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
             return (true, tradeParams);
 
 

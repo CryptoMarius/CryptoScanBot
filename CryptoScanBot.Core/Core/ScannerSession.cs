@@ -323,7 +323,7 @@ public static class ScannerSession
         // restart tickers if errors
         Task.Run(async () =>
         {
-            var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+            var api = GlobalData.ActiveExchange!.GetApiInstance();
 
             await api.Symbol.GetSymbolsAsync();
 

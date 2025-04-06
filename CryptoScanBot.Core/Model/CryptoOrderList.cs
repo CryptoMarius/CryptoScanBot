@@ -6,28 +6,23 @@ public class CryptoOrderList : SortedList<string, CryptoOrder>
 {
     public void AddOrder(CryptoOrder order, bool log = true)
     {
-        if (GlobalData.TradeAccountList.TryGetValue(order.TradeAccountId, out CryptoAccount? tradeAccount))
+        if (GlobalData.ExchangeListId.TryGetValue(order.ExchangeId, out Model.CryptoExchange? exchange))
         {
-            order.TradeAccount = tradeAccount;
+            order.Exchange = exchange;
 
-            if (GlobalData.ExchangeListId.TryGetValue(order.ExchangeId, out Model.CryptoExchange? exchange))
+            if (exchange.SymbolListId.TryGetValue(order.SymbolId, out CryptoSymbol? symbol))
             {
-                order.Exchange = exchange;
+                order.Symbol = symbol;
 
-                if (exchange.SymbolListId.TryGetValue(order.SymbolId, out CryptoSymbol? symbol))
+                if (order.OrderId != null && !ContainsKey(order.OrderId))
                 {
-                    order.Symbol = symbol;
-
-                    if (order.OrderId != null && !ContainsKey(order.OrderId))
-                    {
-                        this.TryAdd(order.OrderId, order);
-                        if (log)
-                            GlobalData.AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
-                    }
-
+                    this.TryAdd(order.OrderId, order);
+                    if (log)
+                        GlobalData.AddTextToLogTab($"{order.Symbol.Name} added order {order.CreateTime} {order.OrderId} {order.Status} (#{order.Id})");
                 }
 
             }
+
         }
     }
 

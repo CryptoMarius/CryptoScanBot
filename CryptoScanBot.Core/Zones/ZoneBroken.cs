@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -48,7 +47,7 @@ public class ZoneBroken
     {
         // Collect all active newCreatedZones (FVG + DLZ zones)
         List<CryptoZone> zones = [];
-        AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+        CryptoSymbolData symbolData = symbol.Data;
         var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
         foreach (CryptoZone zone in symbolIntervalData.DlzZones.LongOpen)
             zones.Add(zone);
@@ -102,11 +101,11 @@ public class ZoneBroken
     public static Task CalculateBrokenZonesForAllSymbols()
     {
         // Called at startup..
-        if (GlobalData.Settings.General.Exchange != null)
+        if (GlobalData.ActiveExchange != null)
         {
-            foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
+            foreach (var symbol in GlobalData.ActiveExchange.SymbolListName.Values)
             {
-                var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+                var symbolData = symbol.Data;
                 foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                 {
                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))

@@ -47,10 +47,11 @@ public class TradeToolsTest : TestBase
 
         DeleteAllPositionRelatedStuff(database);
 
-        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb,
-            CryptoTradeSide.Long, symbol.IntervalPeriodList[0], lastCandle1mCloseTimeDate);
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
+            CryptoTradeSide.Long, symbolInterval, lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
-        position.Account.Data.PositionList.Add(symbol.Name, position);
+        GlobalData.ActiveExchange!.Data.PositionList.Add(symbol.Name, position);
 
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 
@@ -88,7 +89,7 @@ public class TradeToolsTest : TestBase
         CheckAfterMarketBuy(position, entryPart, step, CryptoOrderStatus.PartiallyAndClosed);
 
         // TODO: Verkeerde datum in de stepo voor emulator /backtest, dat moet de laatste datum van de order of trade zijn!
-        //step.CloseTime = lastCandle.Date.AddMinutes(1); // CloseTime
+        //step.CloseTime = lastCandle.Time.AddMinutes(1); // CloseTime
 
 
 
@@ -102,7 +103,7 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
@@ -134,7 +135,7 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
@@ -183,7 +184,7 @@ public class TradeToolsTest : TestBase
 
         task = Task.Run(() =>
         {
-            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
+            PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
             _ = positionMonitor.CheckThePosition(position);
         });
         task.Wait();
@@ -218,7 +219,7 @@ public class TradeToolsTest : TestBase
 
             task = Task.Run(() =>
             {
-                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle);
+                PositionMonitor positionMonitor = new(position.Symbol, lastCandle);
                 _ = positionMonitor.CheckThePosition(position);
             });
             task.Wait();

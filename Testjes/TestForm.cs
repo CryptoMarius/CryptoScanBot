@@ -56,12 +56,12 @@ public partial class TestForm : Form
 
     //private bool ProgramExit; // = false; //Mislukte manier om excepties bij afsluiten te voorkomen (todo)
 
-    //AttackTypeSet a = AttackTypeSet.Melee | AttackTypeSet.Poison;
-    //a = AttackTypeSet.Poison;
+    //AttackTypeSet list = AttackTypeSet.Melee | AttackTypeSet.Poison;
+    //list = AttackTypeSet.Poison;
 
-    //AttackTypeSet a;
-    //a=4;
-    //a += AttackTypeSet.Melee;
+    //AttackTypeSet list;
+    //list=4;
+    //list += AttackTypeSet.Melee;
 
 
     //[Flags]
@@ -162,14 +162,12 @@ public partial class TestForm : Form
         GlobalData.LoadIntervals();
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
-        GlobalData.LoadAccounts();
-        GlobalData.Settings.Trading.TradeVia = CryptoAccountType.PaperTrade;
-        GlobalData.SetTradingAccounts();
+        GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
         GlobalData.LoadSymbols();
         //ZoneTools.LoadAllZones();
 
         // Na het selecteren van een account
-        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
+        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
 
         databaseMain = new();
         databaseMain.Open();
@@ -288,7 +286,7 @@ public partial class TestForm : Form
 
                 //int aantaltotaal = 0;
                 string baseStoragePath = GlobalData.GetBaseDir();
-                var exchange = GlobalData.Settings.General.Exchange;
+                var exchange = GlobalData.ActiveExchange;
                 if (exchange != null)
                 {
                     string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
@@ -415,7 +413,7 @@ public partial class TestForm : Form
 
         //listView1.HotTracking = true; // verstoord de kleuren en is onrustig
 
-        // Specify that each item appears on a separate line.
+        // Specify that each item appears on list separate line.
         listView1.View = View.Details; // Voor display van de subitems
 
 
@@ -630,7 +628,7 @@ public partial class TestForm : Form
 
     private async void Button2_Click(object? sender, EventArgs? e)
     {
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("ETHUSDT", out CryptoSymbol? symbol))
@@ -771,7 +769,7 @@ public partial class TestForm : Form
         if (System.IO.File.Exists(filename))
         {
             string text = System.IO.File.ReadAllText(filename);
-            config = JsonSerializer.Deserialize<CryptoBackConfig>(text, JsonTools.DeSerializerOptions);
+            config = JsonSerializer.Deserialize<CryptoBackConfig>(text, JsonTools.DeSerializerOptions)!;
         }
     }
 
@@ -902,6 +900,8 @@ public partial class TestForm : Form
         public double stddev;
         //public double stddev1h;
         public decimal Volume;
+
+        public decimal Wicks;
     }
 
 
@@ -914,9 +914,9 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab("Lijstjes");
         GlobalData.AddTextToLogTab("");
-        List<VolatiteitStat> a = [];
+        List<VolatiteitStat> list = [];
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
@@ -924,7 +924,7 @@ public partial class TestForm : Form
             {
                 if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
                 {
-                    CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval3m;
+                    CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval5m;
                     CryptoInterval interval = GlobalData.IntervalListPeriod[intervalPeriod];
                     LoadSymbolCandles(symbol, interval);
                     CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
@@ -968,7 +968,7 @@ public partial class TestForm : Form
                     }
                     item.stddev = 100 * values.StdDev();
                     //item.stddev1h = values1h.StdDev();
-                    a.Add(item);
+                    list.Add(item);
 
                     candles.Clear();
                 }
@@ -978,8 +978,8 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab("");
         GlobalData.AddTextToLogTab("Sortering");
         GlobalData.AddTextToLogTab("");
-        a.Sort((x, y) => y.avgDiff.CompareTo(x.avgDiff));
-        foreach (VolatiteitStat item in a)
+        list.Sort((x, y) => y.avgDiff.CompareTo(x.avgDiff));
+        foreach (VolatiteitStat item in list)
         {
             GlobalData.AddTextToLogTab(string.Format("{0}/{1};{2:N2}%;{3:N2};{4:N2} ", item.Base, item.Quote, item.avgDiff, item.stddev, item.Volume));
         }
@@ -988,8 +988,8 @@ public partial class TestForm : Form
         //GlobalData.AddTextToLogTab("");
         //GlobalData.AddTextToLogTab("Tradeview lijst");
         //GlobalData.AddTextToLogTab("");
-        ////a.Sort((x, y) => x.Base.CompareTo(y.Base));
-        //foreach (VolatiteitStat item in a)
+        ////list.Sort((x, y) => x.Base.CompareTo(y.Base));
+        //foreach (VolatiteitStat item in list)
         //{
         //    GlobalData.AddTextToLogTab(string.Format("BINANCE:{0}{1},", item.Base, item.Quote));
         //}
@@ -1015,7 +1015,7 @@ public partial class TestForm : Form
         //GlobalData.AddTextToLogTab("");
         //GlobalData.AddTextToLogTab("Lijstjes");
         //GlobalData.AddTextToLogTab("");
-        ////List<VolatiteitStat> a = new List<VolatiteitStat>();
+        ////List<VolatiteitStat> list = new List<VolatiteitStat>();
 
 
 
@@ -1349,7 +1349,7 @@ public partial class TestForm : Form
         //GlobalData.Settings.Signal.AnalysisShowCandleJumpUp = false;
 
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("WANBTC", out CryptoSymbol? symbol))
@@ -1391,22 +1391,23 @@ public partial class TestForm : Form
                 //            throw new Exception("Could not calculate SAR!");
                 //        }
                 //    }
-
-
-
-                int count = -250;
-                foreach (CryptoCandle candle in candleList.Values)
+                var algorithm = RegisterAlgorithms.AlgorithmDefinitionList[CryptoSignalStrategy.Stobb];
+                if (algorithm != null)
                 {
-                    //candleList.Add(candle.OpenTime, candle);
 
-                    if (++count > 0)
+                    int count = -250;
+                    foreach (CryptoCandle candle in candleList.Values)
                     {
-                        //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
-                        SignalCreate createSignal = new(null, symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
-                        await createSignal.AnalyzeAsync(candle.OpenTime);
+                        //candleList.Add(candle.OpenTime, candle);
+
+                        if (++count > 0)
+                        {
+                            //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.Format) + " " + candle.Id.ToString());
+                            SignalCreate createSignal = new(symbol, interval, CryptoTradeSide.Long, candle.OpenTime + 60);
+                            await createSignal.ExecuteAlgorithmAsync(algorithm);
+                        }
                     }
                 }
-
                 GlobalData.AddTextToLogTab("Done..");
 
             }
@@ -1429,7 +1430,7 @@ public partial class TestForm : Form
         // normal drawing
         //DrawStuff(e.Graphics);
 
-        // for the movable zoom we want a small correction
+        // for the movable zoom we want list small correction
         //Rectangle cr = pictureBox.ClientRectangle;
         //float pcw = cr.Width / (cr.Width - ZoomTgtArea.Width / 2f);
         //float pch = cr.Height / (cr.Height - ZoomTgtArea.Height / 2f);
@@ -1512,7 +1513,7 @@ public partial class TestForm : Form
     //            float offsetX = 0; // start in the left of the picture
     //            float offsetY = scaleY * 0.5f * screenY; // center of picture
 
-    //            // flix y (specific for winform - what a crap)
+    //            // flix y (specific for winform - what list crap)
     //            scaleY = -1 * scaleY;
 
     //            System.Drawing.Image bmp = new Bitmap(intWidth, intHeight);
@@ -1765,7 +1766,7 @@ public partial class TestForm : Form
     //            //float offsetX = 0; // start in the left of the picture
     //            //float offsetY = scaleY * 0.5f * screenY; // center of picture
 
-    //            //// flix y (something specific with winform? what a crap)
+    //            //// flix y (something specific with winform? what list crap)
     //            //scaleY = -1 * scaleY;
 
     //            //System.Drawing.Image bmp = new System.Drawing.Bitmap(intWidth, intHeight);
@@ -2057,7 +2058,7 @@ public partial class TestForm : Form
     //            //ZipFile.CreateFromDirectory("source", "destination.zip", CompressionLevel.Optimal, false);
 
     //            // Extract the directory we just created.
-    //            // ... Store the results in a new folder called "destination".
+    //            // ... Store the results in list new folder called "destination".
     //            // ... The new folder must not exist.
     //            System.IO.File.Delete(downLoadFolder + name + ".csv");
     //            ZipFile.ExtractToDirectory(downLoadFolder + name + ".zip", downLoadFolder);
@@ -2097,7 +2098,7 @@ public partial class TestForm : Form
     //                            //SaveCandle?
 
     //                            // Vul het aan met andere attributen
-    //                            CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, candleTmp.Date,
+    //                            CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, candleTmp.Time,
     //                                candleTmp.Open, candleTmp.High, candleTmp.Low, candleTmp.Close, candleTmp.SignalVolume, false);
     //                            candleCache.Add(candle);
     //                        }
@@ -2259,11 +2260,11 @@ public partial class TestForm : Form
 
         CryptoBackConfig config = new();
         LoadConfig(ref config);
-        if (!GlobalData.IntervalListPeriod.TryGetValue(config.IntervalPeriod, out CryptoInterval interval))
+        if (!GlobalData.IntervalListPeriod.TryGetValue(config.IntervalPeriod, out CryptoInterval? interval))
             return;
 
         //SignalCreate.AnalyseNotificationList.Clear();
-        GlobalData.ActiveAccount.Data.PositionList.Clear();
+        GlobalData.ActiveExchange!.Data.PositionList.Clear();
 
         // Pittige configuratie geworden zie ik ;-)
         GlobalData.Settings.Signal.Active = true;
@@ -2302,7 +2303,7 @@ public partial class TestForm : Form
         GlobalData.Settings.General.SoundTradeNotification = false;
 
         GlobalData.BackTest = true;
-        GlobalData.Settings.Trading.TradeVia = CryptoAccountType.PaperTrade;
+        GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
         // Instap
         GlobalData.Settings.Trading.CheckIncreasingRsi = false;
@@ -2350,7 +2351,7 @@ public partial class TestForm : Form
                 Results.ShowHeader(header, false);
                 GlobalData.AddTextToLogTab(header.ToString());
 
-                var exchange = GlobalData.Settings.General.Exchange;
+                var exchange = GlobalData.ActiveExchange;
                 if (exchange != null)
                 {
                     string baseFolder = GlobalData.GetBaseDir();
@@ -2424,7 +2425,7 @@ public partial class TestForm : Form
                                 try
                                 {
                                     // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
-                                    // "An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full"
+                                    // "An operation on list socket could not be performed because the system lacked sufficient buffer space or because list queue was full"
                                     using BinanceRestClient client = new();
                                     {
                                         while (true)
@@ -2504,7 +2505,7 @@ public partial class TestForm : Form
     {
         tabControl.SelectedTab = tabPage1;
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             int i = 0;
@@ -2571,7 +2572,7 @@ public partial class TestForm : Form
 
     private void Button2_Click_2(object? sender, EventArgs? e)
     {
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue("ADAUSDT", out CryptoSymbol? symbol))

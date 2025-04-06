@@ -310,7 +310,7 @@ public class BackTest
     //    //    return;
 
 
-    //    //if (candle.Date >= DateTime.SpecifyKind(new DateTime(2023, 02, 03, 17, 58, 00), DateTimeKind.Utc))
+    //    //if (candle.Time >= DateTime.SpecifyKind(new DateTime(2023, 02, 03, 17, 58, 00), DateTimeKind.Utc))
     //    //    candle = candle; // debug; 2022-07-19 13:12-13:15
 
     //    //string s = candle.OhlcText(Symbol, Interval, Symbol.PriceDisplayFormat, false, false, Config.LogIncludeVolume) + " " + cryptoBackTest.DisplayText();

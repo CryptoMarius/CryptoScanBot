@@ -453,7 +453,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     for (int index = List.Count - 1; index >= 0; index--)
                     {
                         CryptoLiveData liveData = List[index];
-                        if (liveData.Candle.CandleData == null)
+                        if (liveData.Candle != null && liveData.Candle.CandleData == null)
                         {
                             List.Remove((T)liveData);
                             if (GlobalData.LiveDataQueueAdded.ContainsKey((liveData.Symbol.Name, liveData.Interval.IntervalPeriod)))

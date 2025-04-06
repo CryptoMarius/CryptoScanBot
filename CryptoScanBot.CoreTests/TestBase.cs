@@ -31,7 +31,6 @@ public class TestBase
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
             GlobalData.LoadIntervals();
-            GlobalData.LoadAccounts();
             GlobalData.LoadSymbols();
             GlobalData.BackTest = true;
         }
@@ -50,7 +49,7 @@ public class TestBase
 
     internal static CryptoSymbol CreateTestSymbol(CryptoDatabase database)
     {
-        if (GlobalData.ExchangeListId.TryGetValue(GlobalData.Settings.General.ExchangeId, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
             if (!exchange.SymbolListName.TryGetValue("TESTUSDT", out CryptoSymbol? symbol))
             {
@@ -82,7 +81,7 @@ public class TestBase
             }
 
 
-            foreach (var symbolInterval in symbol.IntervalPeriodList)
+            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
                 symbolInterval.CandleList.Clear();
             return symbol;
         }
@@ -155,7 +154,7 @@ public class TestBase
         database.Connection.Execute($"delete from [Order]");
         database.Connection.Execute($"delete from [Trade]");
 
-        GlobalData.ActiveAccount?.Data.Clear();
+        GlobalData.ActiveExchange!.Data.Clear();
     }
 
     /// <summary>

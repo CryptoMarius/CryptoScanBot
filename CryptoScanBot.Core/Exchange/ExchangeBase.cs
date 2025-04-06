@@ -21,7 +21,7 @@ public interface ITrade
 
 public interface IAsset
 {
-    public Task GetAssets(CryptoAccount tradeAccount);
+    public Task GetAssets(Model.CryptoExchange activeExchange);
 }
 
 public interface ISymbol

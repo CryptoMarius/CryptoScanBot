@@ -1,13 +1,10 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Context;
+﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Zones;
 
 using Dapper.Contrib.Extensions;
 
@@ -15,11 +12,6 @@ namespace CryptoScanBot.Core.Core;
 
 public class PositionMonitor //: IDisposable
 {
-    // Tellertje die getoond wordt in applicatie (indicatie van aantal meldingen)
-    private static int analyseCount;
-    public static int AnalyseCount { get { return analyseCount; } }
-
-    public CryptoAccount TradeAccount { get; set; }
     public CryptoSymbol Symbol { get; set; }
     private static readonly SemaphoreSlim Semaphore = new(1);
 
@@ -33,9 +25,8 @@ public class PositionMonitor //: IDisposable
     public bool PauseBecauseOfTradingRules { get; set; } = false;
 
 
-    public PositionMonitor(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoCandle lastCandle1m)
+    public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m)
     {
-        TradeAccount = tradeAccount;
         Symbol = symbol;
         LastCandle1m = lastCandle1m;
 
@@ -46,27 +37,10 @@ public class PositionMonitor //: IDisposable
         Database.Open();
     }
 
-    //public void Dispose()
-    //{
-    //    Dispose(true);
-    //    GC.SuppressFinalize(this);
-    //}
-
-    //protected virtual void Dispose(bool disposing)
-    //{
-    //    if (disposing)
-    //    {
-    //        if (Database != null)
-    //        {
-    //            Database.Close();
-    //            Database.Dispose();
-    //        }
-    //    }
-    //}
 
     public void ClearSignals()
     {
-        foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList)
+        foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList)
             symbolInterval.SignalList.Clear();
     }
 
@@ -297,9 +271,9 @@ public class PositionMonitor //: IDisposable
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
-        if (!TradingRules.CheckTradingRules(TradeAccount.Data.PauseTrading, LastCandle1m.OpenTime, 60))
+        if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60))
         {
-            reaction = $"the bot is paused because {TradeAccount.Data.PauseTrading.Text}";
+            reaction = $"the bot is paused because {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
             ClearSignals();
             return;
@@ -311,7 +285,7 @@ public class PositionMonitor //: IDisposable
         // ***************************************************************************
         // Per interval kan een signaal aanwezig zijn, regel de aankoop of de bijkoop
         // ***************************************************************************
-        foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList)
+        foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList)
         {
             // alleen voor de intervallen waar de candle net gesloten is
             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
@@ -369,7 +343,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // Bestaan het gekozen strategy wel, klinkt raar, maar is (op dit moment) niet altijd geimplementeerd
-                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy, TradeAccount, signal.Symbol, signal.Interval, candleInterval);
+                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy, signal.Symbol, signal.Interval, candleInterval);
                     if (algorithm == null)
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -397,7 +371,7 @@ public class PositionMonitor //: IDisposable
                     //******************************************
 
                     {
-                        CryptoPosition? position = PositionTools.HasPosition(TradeAccount, Symbol);
+                        CryptoPosition? position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
                         if (position == null)
                         {
                             if (GlobalData.Settings.Trading.DisableNewPositions)
@@ -413,7 +387,7 @@ public class PositionMonitor //: IDisposable
                             // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
 
                             // Is de barometer goed genoeg dat we willen traden?
-                            if (!TradingRules.CheckBarometerConditions(TradeAccount, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
+                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -461,7 +435,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                            if (!PositionTools.ValidTrendConditions(TradeAccount, signal.Symbol.Name, TradingConfig.Trading[signal.Side].Trend, out reaction))
+                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
                             {
                                 if (TradingConfig.Trading[signal.Side].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
@@ -470,7 +444,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                            if (!PositionTools.ValidMarketTrendConditions(TradeAccount, signal.Symbol, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
+                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -479,9 +453,9 @@ public class PositionMonitor //: IDisposable
 
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
                             // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
-                            if (!TradeAccount.CanTrade)
+                            if (!GlobalData.ActiveExchange!.IsSupported)
                             {
-                                GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {TradeAccount.AccountType} (removed)");
+                                GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {GlobalData.ActiveExchange.Name} (removed)");
                                 ClearSignals();
                                 return;
                             }
@@ -493,7 +467,7 @@ public class PositionMonitor //: IDisposable
                             try
                             {
                                 // We willen 1 slot per symbol en x slots voor de long en shorts
-                                if (!SymbolTools.CheckAvailableSlots(TradeAccount, Symbol, signal.Side, out reaction))
+                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
                                     ClearSignals();
@@ -502,7 +476,7 @@ public class PositionMonitor //: IDisposable
 
 
                                 // GetSymbolData available assets from the exchange (as late as possible because of webcall)
-                                var resultFetchAssets = await AssetTools.FetchAssetsAsync(TradeAccount, true);
+                                var resultFetchAssets = await AssetTools.FetchAssetsAsync(GlobalData.ActiveExchange, true);
                                 if (!resultFetchAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
@@ -511,7 +485,7 @@ public class PositionMonitor //: IDisposable
                                 }
 
                                 // Enough stuff to take position? + entryAmount
-                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
+                                var resultAvailableAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange, Symbol);
                                 if (!resultAvailableAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
@@ -553,7 +527,7 @@ public class PositionMonitor //: IDisposable
                                         return;
                                     }
 
-                                    if (TradeAccount.AccountType == CryptoAccountType.RealTrading && TradeAccount.Exchange.TradingType == CryptoTradingType.Spot)
+                                    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && GlobalData.ActiveExchange.TradingType == CryptoTradingType.Spot)
                                     {
                                         if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
                                         {
@@ -566,10 +540,10 @@ public class PositionMonitor //: IDisposable
 
 
                                 // Create position + entry part
-                                position = PositionTools.CreatePosition(TradeAccount, Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
+                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
-                                PositionTools.AddPosition(TradeAccount, position);
+                                PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
                                     CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, LastCandle1mCloseTimeDate);
                             }
@@ -603,7 +577,7 @@ public class PositionMonitor //: IDisposable
                                 }
 
                                 // Zo laat mogelijk controleren vanwege extra calls naar de exchange
-                                var (success, reaction2) = await AssetTools.FetchAssetsAsync(TradeAccount);
+                                var (success, reaction2) = await AssetTools.FetchAssetsAsync(GlobalData.ActiveExchange);
                                 if (!success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + reaction2);
@@ -611,7 +585,7 @@ public class PositionMonitor //: IDisposable
                                     return;
                                 }
 
-                                var resultCheckAssets = AssetTools.CheckAvailableAssets(TradeAccount, Symbol);
+                                var resultCheckAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, Symbol);
                                 if (!resultCheckAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
@@ -652,7 +626,7 @@ public class PositionMonitor //: IDisposable
 
 
         // Die indicator berekening had ik niet verwacht (cooldown?)
-        await position.Symbol.CandleLock.WaitAsync();
+        await position.Symbol.Data.CandleLock.WaitAsync();
         try
         {
             // Niet zomaar een laatste candle nemen in verband met Backtesting
@@ -683,7 +657,7 @@ public class PositionMonitor //: IDisposable
         }
         finally
         {
-            position.Symbol.CandleLock.Release();
+            position.Symbol.Data.CandleLock.Release();
         }
 
 
@@ -832,7 +806,7 @@ public class PositionMonitor //: IDisposable
     //                Database.Connection.Update<CryptoPosition>(position);
 
     //                if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-    //                    PaperAssets.Change(position.TradeAccount, position.Symbol, result.tradeParams.OrderSide, 
+    //                    PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, result.tradeParams.OrderSide, 
     //                        step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity);
 
     //            }
@@ -870,7 +844,7 @@ public class PositionMonitor //: IDisposable
 
         // Put the SL above/below the dca... (what else is the point of the dca......)
 
-        if (position.Account.AccountType == CryptoAccountType.PaperTrade && GlobalData.Settings.Trading.StopLossPercentage > 0 && GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade && GlobalData.Settings.Trading.StopLossPercentage > 0 && GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
             GlobalData.Settings.Trading.StopLossPercentage < GlobalData.Settings.Trading.StopLossLimitPercentage)
         {
             CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
@@ -1004,9 +978,9 @@ public class PositionMonitor //: IDisposable
             {
                 // Bepaal het entry bedrag, dat kan een vast bedrag of een perc van de totaal beschikbare quote asset zijn
                 decimal currentAssetQuantity = 0;
-                if (position.Account.Data.AssetList.TryGetValue(Symbol.Quote, out var asset))
+                if (GlobalData.ActiveExchange!.Data.AssetList.TryGetValue(Symbol.Quote, out var asset))
                     currentAssetQuantity = asset.Total;
-                entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity, position.Account.AccountType);
+                entryValue = TradeTools.GetEntryAmount(Symbol, currentAssetQuantity);
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} entry {part.PartNumber} value={entryValue}");
             }
             else
@@ -1098,7 +1072,7 @@ public class PositionMonitor //: IDisposable
                     //break;
             }
 
-            if (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady)
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
             {
                 part.CloseTime = LastCandle1mCloseTimeDate;
                 Database.Connection.Update(part);
@@ -1116,7 +1090,7 @@ public class PositionMonitor //: IDisposable
             else
             {
                 // Place the entry order (paper trading, exchange trading or backtest)
-                var exchangeApi = GlobalData.Settings.General.Exchange!.GetApiInstance();
+                var exchangeApi = GlobalData.ActiveExchange!.GetApiInstance();
                 (bool result, TradeParams? tradeParams) result = await exchangeApi.PlaceOrder(Database,
                     position, part, LastCandle1mCloseTimeDate,
                     entryOrderType, entryOrderSide, entryQuantity, price, stop, limit);
@@ -1139,11 +1113,11 @@ public class PositionMonitor //: IDisposable
                         ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
 
                         // Reserve the assets on papertrading/emulator
-                        PaperAssets.Change(position.Account, position.Symbol, position.Side, result.tradeParams.OrderSide,
+                        PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, result.tradeParams.OrderSide,
                             step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "HandleEntryPart.HandleEntryPart");
 
                         // Een eventuele market order direct laten vullen
-                        if (position.Account.AccountType != CryptoAccountType.RealTrading && step.OrderType == CryptoOrderType.Market)
+                        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && step.OrderType == CryptoOrderType.Market)
                         {
                             await PaperTrading.CreatePaperTradeObject(Database, position, part, step, LastCandle1m.Close, LastCandle1mCloseTimeDate);
                             position.Reposition = false; // anders twee keer achter elkaar indien papertrading of backtesting!
@@ -1290,7 +1264,7 @@ public class PositionMonitor //: IDisposable
     //        //            Database.Connection.Update<CryptoPosition>(position);
 
     //        //            if (position.TradeAccount.TradeAccountType == CryptoTradeAccountType.PaperTrade)
-    //        //                PaperAssets.Change(position.TradeAccount, position.Symbol, tradeParams.OrderSide,
+    //        //                PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, tradeParams.OrderSide,
     //        //                    step.Status, tradeParams.Quantity, tradeParams.QuoteQuantity);
     //        //        }
 
@@ -1333,7 +1307,7 @@ public class PositionMonitor //: IDisposable
                 string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
 
                 // Zo laat mogelijk controleren vanwege extra calls naar de exchange
-                var (success, reaction) = await AssetTools.FetchAssetsAsync(position.Account);
+                var (success, reaction) = await AssetTools.FetchAssetsAsync(GlobalData.ActiveExchange);
                 if (!success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + reaction);
@@ -1341,7 +1315,7 @@ public class PositionMonitor //: IDisposable
                     return;
                 }
 
-                var resultCheckAssets = AssetTools.CheckAvailableAssets(position.Account, Symbol);
+                var resultCheckAssets = AssetTools.CheckAvailableAssets(GlobalData.ActiveExchange!, Symbol);
                 if (!resultCheckAssets.success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
@@ -1549,7 +1523,7 @@ public class PositionMonitor //: IDisposable
             // Pas verplaatsen als ALLE DCA orders zijn geannuleerd (een poging daartoe tenminste)
             if (!hasOpenOrder)
             {
-                PositionTools.RemovePosition(position.Account, position, true);
+                PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
                 if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                     GlobalData.PositionsHaveChanged("");
             }
@@ -1644,7 +1618,7 @@ public class PositionMonitor //: IDisposable
             // Always create a separate take profit part (if it didn't exist)
             CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
             takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
-                position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.GetCurrentDateTime(position.Account));
+                position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.GetCurrentDateTime());
             CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
 
             (decimal price, decimal? stop, decimal? limit) tp = CalculateTpPrices(position);
@@ -1739,128 +1713,100 @@ public class PositionMonitor //: IDisposable
         //}
     }
 
+   
 
-    public async Task<List<CryptoSignal>> CreateSignalsAsync()
-    {
-        List<CryptoSignal> signalList = [];
-        //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-        if (GlobalData.Settings.Signal.Active && Symbol.QuoteData!.FetchCandles && Symbol.Status == 1)
-        {
-            // Is de munt te nieuw? (hebben we vertrouwen in nieuwe munten?)
-            if (!SymbolTools.CheckNewCoin(Symbol, out string reaction))
-            {
-                if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
-                    GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-                ClearSignals();
-                return [];
-            }
+    //public async Task<List<CryptoSignal>> CreateSignalsAsync()
+    //{
+    //    List<CryptoSignal> signalList = [];
+    //    //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
+    //    if (GlobalData.Settings.Signal.Active && Symbol.QuoteData!.FetchCandles && Symbol.Status == 1 && Symbol.LastPrice != null)
+    //    {
+    //        // TODO: !!! This is different than te previous version (was not executed for zones) !!!
+    //        // not really sure if we want this for zones? The same goes for trend and barometer????
+    //        if (Symbol.QuoteData.MinimalVolume == 0 || Symbol.Volume <= Symbol.QuoteData.MinimalVolume)
+    //        {
+    //            ClearSignals();
+    //            return [];
+    //        }
 
+    //        // Is the symbol a new one?
+    //        if (!SymbolTools.CheckNewCoin(Symbol, out string reaction))
+    //        {
+    //            if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
+    //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
+    //            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
+    //            ClearSignals();
+    //            return [];
+    //        }
 
-            foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
-            {
-                // Barometer check
-                if (!BarometerHelper.ValidBarometerConditions(TradeAccount, Symbol.Quote, TradingConfig.Signals[side].Barometer, out reaction))
-                {
-                    if (TradingConfig.Signals[side].BarometerLog)
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
-                }
-                else
-                {
-                    // Only for certain strategies and intervals
-                    foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
-                    {
-                        // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
-                        if (LastCandle1mCloseTime % interval.Duration == 0)
-                        {
-                            //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
-
-                            // We geven als tijd het begin van de "laatste" candle (van dat interval)
-                            SignalCreate createSignal = new(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
-                            if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
-                                signalList.AddRange(createSignal.SignalList);
-
-                            // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
-                            Interlocked.Increment(ref analyseCount);
-                        }
-                    }
-                }
+    //        // prepare indicators, fvg and dlz zones (dlz will be delayed because of background fetching & zooming)
+    //        SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
 
 
-                // FVG - Fair Value Gaps Zones
-                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
-                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
-                {
-                    // Automaticly calculate new fvg zones
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
-                    {
-                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
-                        {
-                            // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
-                            if (LastCandle1mCloseTime % interval.Duration == 0)
-                            {
-                                if (Symbol.QuoteData.MinimalVolume == 0 || Symbol.Volume >= Symbol.QuoteData.MinimalVolume)
-                                    ZoneFvg.ScanForNew(TradeAccount, Symbol, interval, side, LastCandle1mCloseTime);
-                            }
-                        }
-                    }
 
-                    // Signal if the 1m candles touches a fvg zone
-                    SignalCreate createSignal2 = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
-                    if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
-                        signalList.AddRange(createSignal2.SignalList);
-                }
+    //        foreach (CryptoTradeSide side in Enum.GetValues(typeof(CryptoTradeSide)))
+    //        {
+    //            // Barometer check
+    //            if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, TradingConfig.Signals[side].Barometer, out reaction))
+    //            {
+    //                if (TradingConfig.Signals[side].BarometerLog)
+    //                    GlobalData.AddTextToLogTab($"{Symbol.Name} {side} {reaction}");
+    //            }
+    //            else
+    //            {
+    //                // Only for certain strategies and intervals
+    //                foreach (CryptoInterval interval in TradingConfig.Signals[side].Interval.ToList())
+    //                {
+    //                    // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
+    //                    if (LastCandle1mCloseTime % interval.Duration == 0)
+    //                    {
+    //                        //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, false, true));
+
+    //                        // We geven als tijd het begin van de "laatste" candle (van dat interval)
+    //                        SignalCreate createSignal = new(Symbol, interval, side, LastCandle1mCloseTime);
+    //                        if (await createSignal.AnalyzeAsync(LastCandle1mCloseTime - interval.Duration))
+    //                            signalList.AddRange(createSignal.SignalList);
+
+    //                        // Teller voor op het beeldscherm zodat je ziet dat deze thread iets doet en actief blijft.
+    //                        Interlocked.Increment(ref analyseCount);
+    //                    }
+    //                }
+    //            }
 
 
-                // DLZ - Dominant Liquidity Zones
-                if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong) ||
-                    (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort))
-                {
-                    // Automaticly calculate new dlz zones (if price is outside last swing points)
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                    {
-                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
-                        {
-                            // Try to automaticly calculate zones
-                            if (LastCandle1mCloseTime % interval.Duration == 0)
-                            {
-                                AccountSymbol symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-                                AccountSymbolInterval accountSymbolInterval = symbolData.Get(interval.IntervalPeriod);
+    //            // FVG - Fair Value Gaps DlzAdmin
+    //            if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsLong) ||
+    //                (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesFvg.ShowSignalsShort))
+    //            {
+    //                // Signal if the 1m candles touches a fvg zone
+    //                SignalCreate createSignal2 = new(Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
+    //                if (await createSignal2.AnalyzeFairValueGapAsync(LastCandle1mCloseTime))
+    //                    signalList.AddRange(createSignal2.SignalList);
+    //            }
 
-                                // Scan for new zones if candle is outside of the previous primary trend
-                                decimal valueLow = LastCandle1m.GetLowValue(false);
-                                decimal valueHigh = LastCandle1m.GetHighValue(false);
-                                if (accountSymbolInterval.Zones.LastSwingLow == null || valueLow < accountSymbolInterval.Zones.LastSwingLow ||
-                                   accountSymbolInterval.Zones.LastSwingHigh == null || valueHigh > accountSymbolInterval.Zones.LastSwingHigh)
-                                {
-                                    // avoid duplicate calculation (kind of a weak attemp)
-                                    accountSymbolInterval.Zones.LastSwingLow = valueLow;
-                                    accountSymbolInterval.Zones.LastSwingHigh = valueHigh;
-                                    GlobalData.ThreadZoneCalculate?.AddToQueue(Symbol, interval);
-                                }
-                            }
 
-                        }
-                    }
+    //            // DLZ - Dominant Liquidity DlzAdmin
+    //            if ((side == CryptoTradeSide.Long && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsLong) ||
+    //                (side == CryptoTradeSide.Short && GlobalData.Settings.Signal.ZonesDlz.ShowSignalsShort))
+    //            {
+    //                // Signal if the 1m candles approaches or touches a dlz zone
+    //                SignalCreate createSignal = new(Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
+    //                if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
+    //                    signalList.AddRange(createSignal.SignalList);
+    //            }
+    //        }
+    //    }
+    //    //GlobalData.Logger.Info($"CreateSignals(stop):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
 
-                    // Signal if the 1m candles approaches or touches a dlz zone
-                    SignalCreate createSignal = new(TradeAccount, Symbol, GlobalData.IntervalList[0], side, LastCandle1mCloseTime);
-                    if (await createSignal.AnalyzeZonesAsync(LastCandle1mCloseTime - GlobalData.IntervalList[0].Duration))
-                        signalList.AddRange(createSignal.SignalList);
-                }
-            }
-        }
-        //GlobalData.Logger.Info($"CreateSignals(stop):" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-
-        return signalList;
-    }
+    //    return signalList;
+    //}
 
 
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
-        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(position.Account.Data.PauseTrading, LastCandle1m.OpenTime, 60);
+        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60);
 
         //Monitor.Enter(position);
         try
@@ -1893,7 +1839,11 @@ public class PositionMonitor //: IDisposable
     {
         try
         {
-            if (!Symbol.IsSpotTradingAllowed || Symbol.Status == 0)
+            if (!GlobalData.Settings.Signal.Active || 
+                !Symbol.QuoteData!.FetchCandles || 
+                !Symbol.IsSpotTradingAllowed || 
+                Symbol.Status == 0 || 
+                !Symbol.LastPrice.HasValue)
                 return;
 
             //AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
@@ -1907,31 +1857,37 @@ public class PositionMonitor //: IDisposable
 
             // Create signals per interval
             //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
-            List<CryptoSignal> signalList = await CreateSignalsAsync();
+            //List<CryptoSignal> signalList = await CreateSignalsAsync();
+
+            // Calculate indicators, zones etc
+            var lastCandleList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+
+            // Calculate signals and break of zones
+            List<CryptoSignal> signalList = await SignalExecute.ExecuteAsync(Symbol, lastCandleList, LastCandle1mCloseTime);
 
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
             // Simulate Trade indien openstaande orders gevuld zijn
             //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
-            if (TradeAccount.AccountType != CryptoAccountType.RealTrading)
-                await PaperTrading.PaperTradingCheckOrders(Database, TradeAccount, Symbol, LastCandle1m);
+            if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, Symbol, LastCandle1m);
 
             // Pause becuase of trading rules or low barometer
-            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(TradeAccount.Data.PauseTrading, LastCandle1m.OpenTime, 60);
+            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60);
 
             // Open or extend a position
             if (signalList.Count > 0)
                 await CreateOrExtendPositionAsync(); // todo: introduce parameter signalList (if possible) and remove Signal reference?
 
             // Check the positions
-            if (TradeAccount.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
+            if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 
             // Remove old candles or CandleData
-            if (!GlobalData.BackTest && !Symbol.CalculatingZones)
+            if (!GlobalData.BackTest && !Symbol.Data.CalculatingZones)
                 await CandleTools.CleanCandleDataAsync(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);
@@ -1944,7 +1900,4 @@ public class PositionMonitor //: IDisposable
         }
     }
 
-
-    public static void ResetAnalyseCount() =>
-        analyseCount = 0;
 }

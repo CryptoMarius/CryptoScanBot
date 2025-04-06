@@ -1,11 +1,24 @@
 ﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Settings;
 
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace CryptoScanBot;
 
 static class Program
 {
+    //public static IServiceProvider? ServiceProvider { get; set; }
+
+    //static void ConfigureServices()
+    //{
+    //    var services = new ServiceCollection();
+    //    //services.AddTransient<ISomeThing, SomeThing>();
+    //    services.AddSingleton<ISettings, SettingsBasic>();
+    //    ServiceProvider = services.BuildServiceProvider();
+    //}
+
+
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -29,17 +42,18 @@ static class Program
         Application.EnableVisualStyles();
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.SetCompatibleTextRenderingDefault(false);
+        //ConfigureServices();
         Application.Run(new FrmMain());
     }
 
 
     public static void InitializeApplicationVariables()
     {
-        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name;
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
         var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version.ToString();
+        string appVersion = assembly.Version!.ToString();
         while (appVersion.EndsWith(".0.0"))
             appVersion = appVersion[0..^2];
 

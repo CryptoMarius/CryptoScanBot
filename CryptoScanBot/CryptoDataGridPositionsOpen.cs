@@ -20,7 +20,6 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
         Created,
         Updated,
         Duration,
-        Account,
         Exchange,
         Symbol,
         Interval,
@@ -151,9 +150,6 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     break;
                 case ColumnsForGrid.Duration:
                     CreateColumn("Duration", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 55);
-                    break;
-                case ColumnsForGrid.Account:
-                    CreateColumn("Account", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
                     break;
                 case ColumnsForGrid.Exchange:
                     CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125).Visible = false;
@@ -356,7 +352,6 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
                     ColumnsForGrid.Updated => ObjectCompare.Compare(a.UpdateTime, b.UpdateTime),
                     ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
-                    ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
                     ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
                     ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
                     ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
@@ -501,9 +496,6 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                     break;
                 case ColumnsForGrid.Duration:
                     e.Value = position.DurationText();
-                    break;
-                case ColumnsForGrid.Account:
-                    e.Value = position.Account.AccountType;
                     break;
                 case ColumnsForGrid.Exchange:
                     e.Value = position.Symbol.Exchange.Name;
@@ -963,7 +955,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                 transaction.Commit();
 
                 List.Remove((T)position);
-                PositionTools.RemovePosition(position.Account, position, false);
+                PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, false);
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig positie {position.Id} uit de database verwijderd");
                 GlobalData.PositionsHaveChanged("");
             }
@@ -1030,7 +1022,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
 
                 // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
                 PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
-                    CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(position.Account), true);
+                    CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(), true);
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
                 //FillItemOpen(position, item);
@@ -1042,7 +1034,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                 if (symbolPeriod.CandleList.Count > 0)
                 {
                     var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                    PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
+                    PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                     await positionMonitor.HandlePosition(position);
                 }
             }
@@ -1071,7 +1063,7 @@ public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : Cr
                 long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
                 DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
 
-                PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
+                PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                 await positionMonitor.HandlePosition(position);
 
 

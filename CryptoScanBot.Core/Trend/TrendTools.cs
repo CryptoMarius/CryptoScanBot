@@ -21,7 +21,7 @@ public class TrendTools
 
     //public static void CreateAllTrendIndicators(AccountSymbolIntervalData accountSymbolIntervalData, CryptoCandleList candleList)
     //{
-    //    // We create a lot of ZigZag indicator with different deviations
+    //    // We create a lot of Primary indicator with different deviations
     //    if (accountSymbolIntervalData.ZigZagIndicators == null)
     //    {
     //        accountSymbolIntervalData.ZigZagIndicators = [];
@@ -43,10 +43,10 @@ public class TrendTools
         long? zigZagLastCandleAdded = null;
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
-            // Add candles to all the ZigZag indicators
+            // Add candles to all the Primary indicators
             long loop = min;
             while (loop <= max)
             {
@@ -65,7 +65,7 @@ public class TrendTools
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
 
         return zigZagLastCandleAdded;
@@ -108,7 +108,7 @@ public class TrendTools
     //            break;
     //        }
     //    }
-    //    // Fallback on the last ZigZag with deviation=1%, which should have the most pivots (not alway's the case!)
+    //    // Fallback on the last Primary with deviation=1%, which should have the most pivots (not alway's the case!)
     //    bestIndicator ??= accountSymbolIntervalData.ZigZagIndicators.Last();
     //    accountSymbolIntervalData.BestZigZagIndicator = bestIndicator;
 
@@ -120,7 +120,7 @@ public class TrendTools
     //        log.AppendLine($"Best indicator with deviation={bestIndicator.Deviation} {bestIndicator.ZigZagList.Count} pivots");
     //        foreach (var zigZag in bestIndicator.ZigZagList)
     //        {
-    //            string s = string.Format("date={0} H {1:N8} rsi={2:N8}", zigZag.Candle.Date.ToLocalTime(), zigZag.Value, zigZag.Candle.CandleData?.Rsi);
+    //            string s = string.Format("date={0} H {1:N8} rsi={2:N8}", zigZag.Candle.Time.ToLocalTime(), zigZag.Value, zigZag.Candle.CandleData?.Rsi);
     //            log.AppendLine(s);
     //        }
     //    }

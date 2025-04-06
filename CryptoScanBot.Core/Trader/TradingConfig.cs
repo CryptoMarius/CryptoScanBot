@@ -1,6 +1,8 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Signal;
 
 namespace CryptoScanBot.Core.Trader;
 
@@ -9,6 +11,13 @@ public static class TradingConfig
 {
     public static Dictionary<CryptoTradeSide, SettingsCompiled> Signals { get; } = [];
     public static Dictionary<CryptoTradeSide, SettingsCompiled> Trading { get; } = [];
+
+
+
+    //// signals/trading
+    //// advantage 1: seperate intervals per strategy (which I prefer in the end)
+    //// advantage 2: dlz and fvg can be run on seperate 1m interval
+    //public static Dictionary<CryptoSignalStrategy, List<CryptoInterval>> Signaling { get; set; } = [];
 
 
     static TradingConfig()
@@ -47,7 +56,7 @@ public static class TradingConfig
                     if (!target.ContainsKey(symbol))
                         target.Add(symbol, true);
 
-                    var exchange = GlobalData.Settings.General.Exchange;
+                    var exchange = GlobalData.ActiveExchange;
                     if (exchange != null)
                     {
                         if (!exchange.SymbolListName.ContainsKey(symbol))
@@ -75,5 +84,6 @@ public static class TradingConfig
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Trading[CryptoTradeSide.Short].BlackList, "BlackList.Short");
         InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Trading[CryptoTradeSide.Short].WhiteList, "WhiteList.Short");
     }
+
 
 }

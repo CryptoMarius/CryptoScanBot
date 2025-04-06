@@ -58,15 +58,15 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (exchangeData == null)
                     throw new ExchangeException("No exchange data received");
 
-                // Save for debug purposes
-                {
-                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                    Directory.CreateDirectory(filename);
-                    filename += "symbols.json";
+                //// Save for debug purposes
+                //{
+                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                //    Directory.CreateDirectory(filename);
+                //    filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
-                    File.WriteAllText(filename, text);
-                }
+                //    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
+                //    File.WriteAllText(filename, text);
+                //}
 
 
                 /* ticker
@@ -99,15 +99,15 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (tickerData == null)
                     throw new ExchangeException("No ticker data received");
 
-                // Save for debug purposes
-                {
-                    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                    Directory.CreateDirectory(filename);
-                    filename += "tickers.json";
+                //// Save for debug purposes
+                //{
+                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
+                //    Directory.CreateDirectory(filename);
+                //    filename += "tickers.json";
 
-                    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
-                    File.WriteAllText(filename, text);
-                }
+                //    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
+                //    File.WriteAllText(filename, text);
+                //}
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];

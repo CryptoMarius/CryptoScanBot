@@ -16,22 +16,18 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
     public void LoadPositions(string sql)
     {
         using var database = new CryptoDatabase();
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
-            if (GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
+            if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
             {
-                position.Account = tradeAccount;
-                if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
+                position.Exchange = exchange;
+                if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
                 {
-                    position.Exchange = exchange;
-                    if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
-                    {
-                        position.Symbol = symbol;
-                        if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
-                            position.Interval = interval!;
+                    position.Symbol = symbol;
+                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
+                        position.Interval = interval!;
 
-                        PositionList.Add(position);
-                    }
+                    PositionList.Add(position);
                 }
             }
         }
@@ -176,8 +172,8 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
         GlobalData.AddTextToLogTab($"Dumping positions to Excel");
         try
         {
-            LoadPositions("select * from position where closetime is null and status < 2 and TradeAccountId=@TradeAccountId");
-            LoadPositions("select * from position where not closetime is null and TradeAccountId=@TradeAccountId order by id desc");
+            LoadPositions("select * from position where exchangeid=@exchangeid and closetime is null and status < 2");
+            LoadPositions("select * from position where exchangeid=@exchangeid and not closetime is null order by id desc");
             DumpPositions();
 
             StartExcell("position", "Positions");

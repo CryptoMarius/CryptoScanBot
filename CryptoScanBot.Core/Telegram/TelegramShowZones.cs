@@ -24,7 +24,7 @@ public class TelegramShowZones
 
         builder.AppendLine($"Zones top {zoneCount}");
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             SortedList<decimal, (CryptoTradeSide side, CryptoSymbol symbol)> list = [];

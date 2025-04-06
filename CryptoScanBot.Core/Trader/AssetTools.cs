@@ -22,12 +22,12 @@ public struct AssetInfo
 
 public class AssetTools
 {
-    public static async Task<(bool success, string reaction)> FetchAssetsAsync(CryptoAccount tradeAccount, bool forceRefresh = false)
+    public static async Task<(bool success, string reaction)> FetchAssetsAsync(Model.CryptoExchange? activeExchange, bool forceRefresh = false)
     {
-        if (tradeAccount == null)
+        if (activeExchange == null)
             return (false, "Invalid trade account");
 
-        if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
         {
             if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
                 return (false, "No Exchange API credentials available");
@@ -35,7 +35,7 @@ public class AssetTools
             // TODO: Make check in the space of the exchange
         }
 
-        if (tradeAccount.AccountType == CryptoAccountType.Altrady)
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
         {
             if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
                 return (false, "No Altrady API credentials available");
@@ -45,16 +45,16 @@ public class AssetTools
 
         // Refresh assets?
         // Niet bij iedere keer de assets verversen (hammering) - difficult when not to refresh.. not to repeat the same action..
-        if (forceRefresh || tradeAccount.Data.LastRefreshAssets == null || tradeAccount.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime(tradeAccount))
+        if (forceRefresh || GlobalData.ActiveExchange!.Data.LastRefreshAssets == null || GlobalData.ActiveExchange.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime())
         {
-            if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
             {
-                var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
-                await api.Asset.GetAssets(tradeAccount); // from exchange
+                var api = GlobalData.ActiveExchange!.GetApiInstance();
+                await api.Asset.GetAssets(activeExchange); // from exchange
             }
             else
-                PaperAssets.LoadAssets(tradeAccount); // from db
-            tradeAccount.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime(tradeAccount);
+                PaperAssets.LoadAssets(activeExchange); // from db
+            GlobalData.ActiveExchange!.Data.LastRefreshAssets = GlobalData.GetCurrentDateTime();
         }
 
 
@@ -63,18 +63,18 @@ public class AssetTools
     }
 
 
-    public static AssetInfo GetAsset(CryptoAccount tradeAccount, CryptoSymbol symbol)
+    public static AssetInfo GetAsset(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
     {
         // Hoeveel muntjes hebben we op dit moment van deze munt?
         // (Opmerking: een gedeelte hiervan kan in orders zitten!)
         AssetInfo info = new();
 
-        tradeAccount.Data.AssetListSemaphore.Wait();
+        activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
-            if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
             {
-                if (tradeAccount.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
+                if (activeExchange.Data.AssetList.TryGetValue(symbol.Base, out CryptoAsset? asset))
                 {
                     info.BaseFree = asset.Free;
                     info.BaseTotal = asset.Total;
@@ -87,9 +87,9 @@ public class AssetTools
                 info.BaseTotal = 1000000m;
             }
 
-            if (tradeAccount.AccountType == CryptoAccountType.RealTrading)
+            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading)
             {
-                if (tradeAccount.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
+                if (activeExchange.Data.AssetList.TryGetValue(symbol.Quote, out CryptoAsset? asset))
                 {
                     info.QuoteFree = asset.Free;
                     info.QuoteTotal = asset.Total;
@@ -105,22 +105,22 @@ public class AssetTools
         }
         finally
         {
-            tradeAccount.Data.AssetListSemaphore.Release();
+            activeExchange.Data.AssetListSemaphore.Release();
         }
         return info;
     }
 
 
-    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(CryptoAccount tradeAccount, CryptoSymbol symbol)
+    public static (bool success, decimal entryQuoteAsset, AssetInfo info, string reaction) CheckAvailableAssets(Model.CryptoExchange activeExchange, CryptoSymbol symbol)
     {
         // GetSymbolData asset amounts
-        var info = GetAsset(tradeAccount, symbol);
+        var info = GetAsset(activeExchange, symbol);
         if (info.QuoteTotal <= 0)
             return (false, 0, info, $"No assets available for {symbol.Quote}");
 
 
         // The entry value (in quote)
-        decimal entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteTotal, tradeAccount.AccountType);
+        decimal entryQuoteAsset = TradeTools.GetEntryAmount(symbol, info.QuoteTotal);
         if (entryQuoteAsset <= 0)
             return (false, entryQuoteAsset, info, "No amount/percentage given");
 

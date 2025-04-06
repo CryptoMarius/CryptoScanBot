@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.TradingView;
 using CryptoScanBot.Intern;
 
@@ -373,7 +374,7 @@ public partial class DashBoardInformation : UserControl
                 {
 
                     Color color;
-                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+                    BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
                     if (barometerData != null)
                     {
                         if (barometerData.PriceBarometer < 0)
@@ -440,7 +441,7 @@ public partial class DashBoardInformation : UserControl
             BarometerTools barometerTools = new();
             barometerTools.ExecuteAsync();
 
-            if (GlobalData.Settings.General.Exchange == null)
+            if (GlobalData.ActiveExchange == null)
                 return;
 
             string baseCoin = "";
@@ -465,8 +466,8 @@ public partial class DashBoardInformation : UserControl
             if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
                 return;
 
-            BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
-            CreateBarometerBitmap(GlobalData.Settings.General.Exchange, quoteData, interval);
+            BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+            CreateBarometerBitmap(GlobalData.ActiveExchange, quoteData, interval);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -612,7 +613,7 @@ public partial class DashBoardInformation : UserControl
             }
 
             // Toon de prijzen en volume van een aantal symbols
-            var exchange = GlobalData.Settings.General.Exchange;
+            var exchange = GlobalData.ActiveExchange;
             if (exchange != null)
             {
                 string baseCoin = "";
@@ -638,7 +639,7 @@ public partial class DashBoardInformation : UserControl
                         ShowSymbolPrice(SymbolHistList[1], InformationRowList[1], exchange, quoteData, symbol, "Kline ticker count", text);
                     }
 
-                    text = PositionMonitor.AnalyseCount.ToString("N0");
+                    text = SignalExecute.AnalyseCount.ToString("N0");
                     symbol = GlobalData.Settings.ShowSymbolInformation[2];
                     ShowSymbolPrice(SymbolHistList[2], InformationRowList[2], exchange, quoteData, symbol, "Scanner analyse count", text);
 
@@ -649,16 +650,12 @@ public partial class DashBoardInformation : UserControl
                     symbol = GlobalData.Settings.ShowSymbolInformation[4];
                     if (GlobalData.Settings.Trading.Active)
                     {
-                        int positionCount = 0; // hmm, in welk tradeAccount? Even quick en dirty
-                        foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
+                        int positionCount = 0;
+                        if (GlobalData.ActiveExchange!.Data.PositionList.Count != 0)
                         {
-                            if (tradeAccount.Data.PositionList.Count != 0)
+                            foreach (var position in GlobalData.ActiveExchange!.Data.PositionList.Values)
                             {
-                                //De muntparen toevoegen aan de userinterface
-                                foreach (var position in tradeAccount.Data.PositionList.Values)
-                                {
-                                    positionCount++;
-                                }
+                                positionCount++;
                             }
                         }
                         text = $"({GlobalData.Settings.Trading.SlotsMaximalLong}/{GlobalData.Settings.Trading.SlotsMaximalShort}) {positionCount}";
@@ -681,9 +678,9 @@ public partial class DashBoardInformation : UserControl
                 if (x.SymbolName == target || x.SymbolPrice == target || x.SymbolVolume == target)
                 {
                     string symbolName = x.SymbolName.Text;
-                    if (GlobalData.Settings.General.Exchange != null)
+                    if (GlobalData.ActiveExchange != null)
                     {
-                        if (GlobalData.Settings.General.Exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                        if (GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                         {
                             if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
                                 return;
@@ -709,8 +706,8 @@ public partial class DashBoardInformation : UserControl
                     if (href != null)
                     {
                         Uri uri = new(href);
-                        LinkTools.WebViewTradingView.Browser.Source = uri;
-                        LinkTools.TabControl.SelectedTab = LinkTools.TabPageBrowser;
+                        LinkTools.WebViewTradingView.Browser!.Source = uri;
+                        LinkTools.TabControl!.SelectedTab = LinkTools.TabPageBrowser;
                     }
                 }
 
@@ -741,10 +738,16 @@ public partial class DashBoardInformation : UserControl
         else
             pictureBoxScanner.Image = Resource1.ButtonOnOffRed;
 
-        var pause = GlobalData.ActiveAccount!.Data.PauseTrading;
-        if (!pause.Calculated.HasValue || (pause.Until.HasValue && pause.Until > DateTime.UtcNow))
-            pictureBoxRulez.Image = Resource1.ButtonOnOffRed;
-        else
-            pictureBoxRulez.Image = Resource1.ButtonOnOffGreen;
+        var pic = Resource1.ButtonOnOffRed;
+        if (GlobalData.ActiveExchange != null)
+        {
+            var pause = GlobalData.ActiveExchange.Data.PauseTrading;
+            if (!pause.Calculated.HasValue || (pause.Until.HasValue && pause.Until > DateTime.UtcNow))
+                pic = Resource1.ButtonOnOffRed;
+            else
+                pic = Resource1.ButtonOnOffGreen;
+        }
+
+        pictureBoxRulez.Image = pic;
     }
 }

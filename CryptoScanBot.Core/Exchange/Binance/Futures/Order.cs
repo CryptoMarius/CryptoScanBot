@@ -54,13 +54,11 @@ public class Order() : OrderBase(), IOrder
         return localOrderStatus;
     }
 
-    public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, BinanceFuturesStreamOrderUpdateData item)
+    public static void PickupOrder(CryptoSymbol symbol, CryptoOrder order, BinanceFuturesStreamOrderUpdateData item)
     {
         order.CreateTime = item.UpdateTime; //  CreateTime; ????????????????
         order.UpdateTime = item.UpdateTime;
 
-        order.TradeAccount = tradeAccount;
-        order.TradeAccountId = tradeAccount.Id;
         order.Exchange = symbol.Exchange;
         order.ExchangeId = symbol.ExchangeId;
         order.Symbol = symbol;

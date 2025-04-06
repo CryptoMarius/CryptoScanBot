@@ -211,14 +211,14 @@ public static class RegisterAlgorithms
     /// <summary>
     /// Return an instance of the algorithm (long/short)
     /// </summary>
-    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide mode, CryptoSignalStrategy strategy, CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide side, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
     {
         if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
-            if (mode == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [tradeAccount, symbol, interval, candle]);
-            if (mode == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [tradeAccount, symbol, interval, candle]);
+            if (side == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [symbol, interval, candle]);
+            if (side == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
+                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [symbol, interval, candle]);
         }
         return null;
     }

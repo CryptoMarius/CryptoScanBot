@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalSma50Sma20PriceLong : SignalCreateBase
 {
-    public SignalSma50Sma20PriceLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalSma50Sma20PriceLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.SignalSma50Sma20Price;

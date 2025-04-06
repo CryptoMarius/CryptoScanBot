@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Barometer;
+﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -13,38 +12,22 @@ public delegate void AnalyseEvent(CryptoSignal signal);
 
 public class SignalCreate
 {
-    private CryptoAccount TradeAccount { get; set; }
     private CryptoSymbol Symbol { get; set; }
     private CryptoInterval Interval { get; set; }
     private CryptoTradeSide Side { get; set; }
     private long LastCandle1mCloseTime { get; set; }
 
-    private CryptoCandle? Candle { get; set; }
+    public CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? History { get; set; }
 
     public List<CryptoSignal> SignalList { get; set; } = [];
 
-    bool hasOpenPosistion = false;
-    bool hasOpenPosistionCalculated = false;
-
-    public SignalCreate(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
+    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
     {
-        TradeAccount = tradeAccount;
         Symbol = symbol;
         Interval = interval;
         Side = side;
         LastCandle1mCloseTime = lastCandle1mCloseTime;
-    }
-
-    private bool HasOpenPosition()
-    {
-        // Signalen blijven maken als er een positie openstaat (en het volume e.d. sterk afgenomen is)
-        if (!hasOpenPosistionCalculated)
-        {
-            hasOpenPosistionCalculated = true;
-            hasOpenPosistion = GlobalData.Settings.Trading.Active && PositionTools.HasPosition(Symbol) && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.AfterNextSignal;
-        }
-        return hasOpenPosistion;
     }
 
     public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
@@ -262,7 +245,7 @@ public class SignalCreate
 
         // Extra attributen erbij halen (dat lukt niet bij een backtest vanwege het ontbreken van een "History list")
         CalculateAdditionalSignalProperties(signal, History!, 60);
-        if (!HasOpenPosition() && !CheckAdditionalAlarmProperties(signal, out string response))
+        if (!CheckAdditionalAlarmProperties(signal, out string response))
         {
             eventText.Add(response);
             signal.IsInvalid = true;
@@ -277,7 +260,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de blacklist?
-        if (!HasOpenPosition() && TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
+        if (TradingConfig.Signals[signal.Side].InBlackList(Symbol.Name) == MatchBlackAndWhiteList.Present)
         {
             // Als de muntpaar op de black lijst staat dan dit signaal overslagen
             eventText.Add("blacklisted");
@@ -285,7 +268,7 @@ public class SignalCreate
         }
 
         // Extra controles, staat de symbol op de whitelist?
-        if (!HasOpenPosition() && TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
+        if (TradingConfig.Signals[signal.Side].InWhiteList(Symbol.Name) == MatchBlackAndWhiteList.NotPresent)
         {
             // Als de muntpaar niet in de white lijst staat dan dit signaal overslagen
             eventText.Add("not whitelisted");
@@ -293,31 +276,31 @@ public class SignalCreate
         }
 
         // Barometers
-        BarometerData barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval15m);
+        BarometerData barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval15m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer15m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer15m = null;
 
-        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval30m);
+        barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval30m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer30m = barometerData.PriceBarometer.Value;
         else
             signal.Barometer30m = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1h);
+        barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer1h = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval4h);
+        barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval4h);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer4h = barometerData.PriceBarometer.Value;
         else
             signal.Barometer4h = 0;
 
-        barometerData = TradeAccount.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1d);
+        barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval1d);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer1d = barometerData.PriceBarometer.Value;
         else
@@ -326,7 +309,7 @@ public class SignalCreate
 
         // de 24 change moet in een bepaald interval zitten
         signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
-        if (!HasOpenPosition() && !signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
+        if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
             {
@@ -341,7 +324,7 @@ public class SignalCreate
         // Check effictive over multiple day's
         int countInInterval6H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
         signal.LastXDaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H);
-        if (!HasOpenPosition() && !signal.LastXDaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
+        if (!signal.LastXDaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)
             {
@@ -355,17 +338,14 @@ public class SignalCreate
 
 
         // Check "Barcode" charts
-        if (!HasOpenPosition())
+        decimal barcodePercentage = 100 * Symbol.PriceTickSize / Symbol.LastPrice ?? 0;
+        if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
         {
-            decimal barcodePercentage = 100 * Symbol.PriceTickSize / Symbol.LastPrice ?? 0;
-            if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
-            {
-                // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
-                if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
-                    GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} De tick size percentage is te hoog {barcodePercentage:N3}");
-                eventText.Add("tick perc to high");
-                signal.IsInvalid = true;
-            }
+            // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
+            if (GlobalData.Settings.Signal.LogMinimumTickPercentage)
+                GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} De tick size percentage is te hoog {barcodePercentage:N3}");
+            eventText.Add("tick perc to high");
+            signal.IsInvalid = true;
         }
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
@@ -383,47 +363,39 @@ public class SignalCreate
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
-        AccountSymbol accountSymbol = TradeAccount!.Data.GetSymbolData(signal.Symbol.Name);
-        SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
-
-        await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, LastCandle1mCloseTime);
-        if (symbolTrend.Percentage.HasValue)
+        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary, 0, LastCandle1mCloseTime);
+        if (signal.Symbol.Data.TrendPrimary.Percentage.HasValue)
         {
-            signal.TrendPercentagePrimary = (float)symbolTrend.Percentage!;
-            signal.TrendInterval = symbolTrend.Get(signal.Interval.IntervalPeriod).Trend;
-            signal.Trend15m = symbolTrend.Get(CryptoIntervalPeriod.interval15m).Trend;
-            signal.Trend30m = symbolTrend.Get(CryptoIntervalPeriod.interval30m).Trend;
-            signal.Trend1h = symbolTrend.Get(CryptoIntervalPeriod.interval1h).Trend;
-            signal.Trend4h = symbolTrend.Get(CryptoIntervalPeriod.interval4h).Trend;
-            signal.Trend1d = symbolTrend.Get(CryptoIntervalPeriod.interval1d).Trend;
+            signal.TrendPercentagePrimary = (float)signal.Symbol.Data.TrendPrimary.Percentage!;
+            signal.TrendInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod).TrendPrimary.Trend;
+            signal.Trend15m = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval15m).TrendPrimary.Trend;
+            signal.Trend30m = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval30m).TrendPrimary.Trend;
+            signal.Trend1h = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h).TrendPrimary.Trend;
+            signal.Trend4h = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval4h).TrendPrimary.Trend;
+            signal.Trend1d = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).TrendPrimary.Trend;
         }
 
-        symbolTrend = accountSymbol.TrendSecondary;
-        await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, accountSymbol, symbolTrend, TrendType.Secondary, 0, LastCandle1mCloseTime);
-        if (symbolTrend.Percentage.HasValue)
-            signal.TrendPercentageSecondary = (float)symbolTrend.Percentage;
+        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary, 0, LastCandle1mCloseTime);
+        if (signal.Symbol.Data.TrendSecondary.Percentage.HasValue)
+            signal.TrendPercentageSecondary = (float)signal.Symbol.Data.TrendSecondary.Percentage!;
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        if (!HasOpenPosition())
+        // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
+        if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Signals[signal.Side].Trend, out string reaction))
         {
-            // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
-
-            if (!PositionTools.ValidTrendConditions(TradeAccount, signal.Symbol.Name, TradingConfig.Signals[signal.Side].Trend, out string reaction))
-            {
-                eventText.Add(reaction);
-                signal.IsInvalid = true;
-            }
-
-
-            // Filter op de markettrend waarvan je wil dat die qua percentage bullisch of bearisch zijn
-            if (!PositionTools.ValidMarketTrendConditions(TradeAccount, signal.Symbol, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
-            {
-                eventText.Add(reaction);
-                signal.IsInvalid = true;
-            }
-
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
         }
+
+
+        // Filter op de markettrend waarvan je wil dat die qua percentage bullisch of bearisch zijn
+        if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Signals[signal.Side].MarketTrend, out reaction))
+        {
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
+        }
+
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;
@@ -504,11 +476,42 @@ public class SignalCreate
     }
 
 
-    private async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
+    private void AddToLiveData()
     {
-        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, TradeAccount, Symbol, Interval, Candle!);
+        if (!GlobalData.LiveDataQueueAdded.TryGetValue((Symbol.Name, Interval.IntervalPeriod), out CryptoLiveData? liveData))
+        {
+            if (Monitor.TryEnter(GlobalData.LiveDataQueue))
+            {
+                try
+                {
+                    liveData = new()
+                    {
+                        Symbol = Symbol,
+                        Interval = Interval,
+                        Candle = Candle!,
+                    };
+                    GlobalData.LiveDataQueue.Enqueue(liveData);
+                    GlobalData.LiveDataQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), liveData);
+                }
+                finally
+                {
+                    Monitor.Exit(GlobalData.LiveDataQueue);
+                }
+            }
+        }
+        else
+        {
+            liveData.Candle = Candle!;
+        }
+    }
+
+    public async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
+    {
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, Symbol, Interval, Candle!);
         if (algorithm != null)
         {
+            AddToLiveData();
+
             if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                 GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
             //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} {strategyDefinition.Name} {Side}");
@@ -520,192 +523,170 @@ public class SignalCreate
     }
 
 
-    private bool CheckSymbol(long candleOpenTime, bool zones)
-    {
-        if (!Symbol.LastPrice.HasValue)
-        {
-            // LastPrice is filled in the price tickers, but can be delayed..
-            GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} No last price available");
-            return false;
-        }
+    //private bool CheckSymbol(long candleOpenTime, bool zones)
+    //{
+    //    if (!Symbol.LastPrice.HasValue)
+    //    {
+    //        // LastPrice is filled in the price tickers, but can be delayed..
+    //        GlobalData.AddTextToLogTab($"Analyse {Symbol.Name} No last price available");
+    //        return false;
+    //    }
 
 
-        // Is the volume within a certain minimal limit
-        if (!HasOpenPosition() && !Symbol.CheckValidMinimalVolume(zones, candleOpenTime, Interval.Duration, out string response))
-        {
-            if (GlobalData.Settings.Signal.LogMinimalVolume)
-                GlobalData.AddTextToLogTab("Analyse " + response);
-            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab("Analyse " + response);
+    //    // Is the volume within a certain minimal limit
+    //    if (!Symbol.CheckValidMinimalVolume(zones, candleOpenTime, Interval.Duration, out string response))
+    //    {
+    //        if (GlobalData.Settings.Signal.LogMinimalVolume)
+    //            GlobalData.AddTextToLogTab("Analyse " + response);
+    //        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //            GlobalData.AddTextToLogTab("Analyse " + response);
 
-            return false;
-        }
+    //        return false;
+    //    }
 
-        // Is the price within a certain minimal limit
-        if (!HasOpenPosition() && !Symbol.CheckValidMinimalPrice(out response))
-        {
-            if (GlobalData.Settings.Signal.LogMinimalPrice)
-                GlobalData.AddTextToLogTab("Analyse " + response);
-            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab("Analyse " + response);
-            return false;
-        }
-        return true;
-    }
-
-
-    /// <summary>
-    /// Zet de de laatste x candles op een rijtje en bereken de indicators
-    /// </summary>
-    /// <param name="candleOpenTime"></param>
-    /// <returns></returns>
-    private bool PrepareIndicators(long candleOpenTime)
-    {
-        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
-
-        Candle = null;
-        string response = "";
-
-        // Build a list of candles
-        History ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
-        if (History == null)
-        {
-#if DEBUG
-            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
-            GlobalData.AddTextToLogTab($"Analyse {response}");
-#endif
-            return false;
-        }
-
-        // Eenmalig de indicators klaarzetten
-        Candle = History[^1];
-        if (Candle.CandleData == null)
-            CandleIndicatorData.CalculateIndicators(Symbol, Interval, History);
-
-        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Stop {Symbol.Name} {Interval.Name} {Side}");
-        return true;
-    }
+    //    // Is the price within a certain minimal limit
+    //    if (!Symbol.CheckValidMinimalPrice(out response))
+    //    {
+    //        if (GlobalData.Settings.Signal.LogMinimalPrice)
+    //            GlobalData.AddTextToLogTab("Analyse " + response);
+    //        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //            GlobalData.AddTextToLogTab("Analyse " + response);
+    //        return false;
+    //    }
+    //    return true;
+    //}
 
 
+    //    /// <summary>
+    //    /// Zet de de laatste x candles op een rijtje en bereken de indicators
+    //    /// </summary>
+    //    /// <param name="candleOpenTime"></param>
+    //    /// <returns></returns>
+    //    private bool PrepareIndicators(long candleOpenTime)
+    //    {
+    //        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
 
-    public async Task<bool> AnalyzeAsync(long candleIntervalOpenTime)
-    {
-        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side}");
-        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
-        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
-        // Eenmalig de indicators klaarzetten
-        if (CheckSymbol(candleIntervalOpenTime, false) && PrepareIndicators(candleIntervalOpenTime))
-        {
-            // TODO: opnieuw activeren en controleren of het idee klopt:
+    //        Candle = null;
+    //        string response = "";
 
-            // Indien we ongeldige signalen laten zien moeten we deze controle overslagen.
-            // (verderop in het process wordt alsnog hierop gecontroleerd)
-
-            //if (!GlobalData.Settings.General.ShowInvalidSignals && !BackTest)
-            //{
-            // Dan kunnen we direct de controles hier afkappen (scheelt wat cpu)
-            // Weer een extra controle, staat de symbol op de black of whitelist?
-            //    if (TradingConfig.Config[tradeDirection].InBlackList(Symbol.Name))
-            //    {
-            //        // Als de muntpaar op de black lijst staat dit signaal overslagen
-            //        continue;
-            //    }
-            //    else if (!TradingConfig.Config[tradeDirection].InWhiteList(Symbol.Name))
-            //    {
-            //        // Als de muntpaar niet op de white lijst staat dit signaal overslagen
-            //        continue;
-            //    }
-            //}
-            if (!GlobalData.LiveDataQueueAdded.TryGetValue((Symbol.Name, Interval.IntervalPeriod), out CryptoLiveData? liveData))
-            {
-                if (Monitor.TryEnter(GlobalData.LiveDataQueue))
-                {
-                    try
-                    {
-                        liveData = new()
-                        {
-                            Symbol = this.Symbol,
-                            Interval = this.Interval,
-                            Candle = Candle!,
-                        };
-                        GlobalData.LiveDataQueue.Enqueue(liveData);
-                        GlobalData.LiveDataQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), liveData);
-                    }
-                    finally
-                    {
-                        Monitor.Exit(GlobalData.LiveDataQueue);
-                    }
-                }
-            }
-            else
-            {
-                liveData.Candle = Candle!;
-            }
+    //        // TODO: Avoid the CalculateCandles if we can by checking the last candle.CandleData
+    //        //CryptoSymbolInterval symbolPeriod = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
+    //        //CryptoCandleList intervalCandles = symbolPeriod.CandleList;
+    //        //long candleEndTime = candleOpenTime - candleOpenTime % Interval.Duration;
 
 
-            //foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategySbmStob.ToList())
-            foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].Strategy.Keys.ToList())
-            {
-                if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
-                {
-                    if (await ExecuteAlgorithmAsync(strategyDefinition!))
-                        break;
-                }
-            }
+    //        // Build a list of candles
+    //        History ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+    //        if (History == null)
+    //        {
+    //#if DEBUG
+    //            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
+    //            GlobalData.AddTextToLogTab($"Analyse {response}");
+    //#endif
+    //            return false;
+    //        }
 
-            //// En de overige waaronder de jump
-            //foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].StrategyOthers.ToList())
-            //{
-            //    if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
-            //    {
-            //        await ExecuteAlgorithmAsync(strategyDefinition!);
-            //    }
-            //}
+    //        // Eenmalig de indicators klaarzetten
+    //        Candle = History[^1];
+    //        if (Candle.CandleData == null)
+    //            CandleIndicatorData.CalculateIndicators(Symbol, Interval, History);
 
-        }
-        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
-        return SignalList.Count > 0;
-    }
+    //        //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Stop {Symbol.Name} {Interval.Name} {Side}");
+    //        return true;
+    //    }
 
 
 
-    public async Task<bool> AnalyzeZonesAsync(long candleIntervalOpenTime)
-    {
-        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} dlz zones");
-        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
-        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
+    //public async Task<bool> AnalyzeAsync(long candleIntervalOpenTime)
+    //{
+    //    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //        GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side}");
+    //    //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name}");
+    //    //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side}");
 
-        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
-        {
-            if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
-                await ExecuteAlgorithmAsync(algorithmDefinition!);
+    //    if (CheckSymbol(candleIntervalOpenTime, false)) // && PrepareIndicators(candleIntervalOpenTime))
+    //    {
+    //        if (!GlobalData.LiveDataQueueAdded.TryGetValue((Symbol.Name, Interval.IntervalPeriod), out CryptoLiveData? liveData))
+    //        {
+    //            if (Monitor.TryEnter(GlobalData.LiveDataQueue))
+    //            {
+    //                try
+    //                {
+    //                    liveData = new()
+    //                    {
+    //                        Symbol = this.Symbol,
+    //                        Interval = this.Interval,
+    //                        Candle = Candle!,
+    //                    };
+    //                    GlobalData.LiveDataQueue.Enqueue(liveData);
+    //                    GlobalData.LiveDataQueueAdded.TryAdd((Symbol.Name, Interval.IntervalPeriod), liveData);
+    //                }
+    //                finally
+    //                {
+    //                    Monitor.Exit(GlobalData.LiveDataQueue);
+    //                }
+    //            }
+    //        }
+    //        else
+    //        {
+    //            liveData.Candle = Candle!;
+    //        }
 
-            if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevelNear, out AlgorithmDefinition? algorithmDefinitionNear))
-                await ExecuteAlgorithmAsync(algorithmDefinitionNear!);
-        }
-        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
-        return SignalList.Count > 0;
-    }
+
+    //        foreach (CryptoSignalStrategy strategy in TradingConfig.Signals[Side].Strategy.Keys.ToList())
+    //        {
+    //            if (RegisterAlgorithms.GetAlgorithm(strategy, out AlgorithmDefinition? strategyDefinition))
+    //            {
+    //                if (await ExecuteAlgorithmAsync(strategyDefinition!))
+    //                    break;
+    //            }
+    //        }
 
 
-    public async Task<bool> AnalyzeFairValueGapAsync(long candleIntervalOpenTime)
-    {
-        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} fvg zones");
-        //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
-        //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
 
-        if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
-        {
-            if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.FairValueGap, out AlgorithmDefinition? algorithmDefinition))
-            {
-                await ExecuteAlgorithmAsync(algorithmDefinition!);
-                //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
-            }
-        }
-        //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
-        return SignalList.Count > 0;
-    }
+    //    }
+    //    //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name}");
+    //    return SignalList.Count > 0;
+    //}
+
+
+
+    //public async Task<bool> AnalyzeZonesAsync(long candleIntervalOpenTime)
+    //{
+    //    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //        GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} dlz zones");
+    //    //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
+    //    //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
+
+    //    if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
+    //    {
+    //        if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevel, out AlgorithmDefinition? algorithmDefinition))
+    //            await ExecuteAlgorithmAsync(algorithmDefinition!);
+
+    //        if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.DominantLevelNear, out AlgorithmDefinition? algorithmDefinitionNear))
+    //            await ExecuteAlgorithmAsync(algorithmDefinitionNear!);
+    //    }
+    //    //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
+    //    return SignalList.Count > 0;
+    //}
+
+
+    //public async Task<bool> AnalyzeFairValueGapAsync(long candleIntervalOpenTime)
+    //{
+    //    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+    //        GlobalData.AddTextToLogTab($"Debug Signal create {Symbol.Name} {Interval.Name} {Side} fvg zones");
+    //    //ScannerLog.Logger.Trace($"SignalCreate.Start {Symbol.Name} {Interval.Name} zones");
+    //    //GlobalData.AddTextToLogTab($"SignalCreate.Start {Symbol.Name} {Interval.Name} {Side} zones");
+
+    //    if (CheckSymbol(candleIntervalOpenTime, true) && PrepareIndicators(candleIntervalOpenTime))
+    //    {
+    //        if (RegisterAlgorithms.AlgorithmDefinitionList.TryGetValue(CryptoSignalStrategy.FairValueGap, out AlgorithmDefinition? algorithmDefinition))
+    //        {
+    //            await ExecuteAlgorithmAsync(algorithmDefinition!);
+    //            //await MarketTrend.CalculateMarketTrendAsync(GlobalData.ActiveAccount!, symbol, 0, 0);
+    //        }
+    //    }
+    //    //GlobalData.Logger.Trace($"SignalCreate.Done {Symbol.Name} {Interval.Name} zones");
+    //    return SignalList.Count > 0;
+    //}
 }

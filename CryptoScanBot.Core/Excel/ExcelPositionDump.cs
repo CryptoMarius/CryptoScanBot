@@ -365,7 +365,7 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
         column = 0;
         WriteCell(sheet, row, column++, position.Id);
         WriteCell(sheet, row, column++, position.Exchange.Name);
-        WriteCell(sheet, row, column++, position.Account.AccountType.ToString());
+        WriteCell(sheet, row, column++, ""); // remove?
         WriteCell(sheet, row, column++, position.Symbol.Name);
         WriteCell(sheet, row, column++, position.Symbol.Id);
         WriteCell(sheet, row, column++, position.Symbol.Volume, CellStyleDecimalNormal);

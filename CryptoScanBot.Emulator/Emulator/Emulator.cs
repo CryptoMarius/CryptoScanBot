@@ -94,7 +94,7 @@ public class Emulator
     {
         try
         {
-            if (GlobalData.ActiveAccount!.AccountType != CryptoAccountType.BackTest)
+            if (!GlobalData.BackTest)
                 return;
 
 
@@ -109,7 +109,7 @@ public class Emulator
             symbol.LastTradeDate = null;
             GlobalData.BackTestCandle = null;
             GlobalData.BackTestDateTime = start;
-            GlobalData.ActiveAccount!.Data.Clear();
+            //GlobalData.ActiveAccount!.Data.Clear();
 
 
             // Load the historic candles
@@ -141,8 +141,8 @@ public class Emulator
                     GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
                 }
 
-                //string t = $"Emulator execute {candle.Date}";
-                //GlobalData.AddTextToLogTab($"Emulator execute {candle.Date}");
+                //string t = $"Emulator execute {candle.Time}";
+                //GlobalData.AddTextToLogTab($"Emulator execute {candle.Time}");
                 //if (t.Equals("Emulator execute 2024-05-01 00:36:00"))
                 //    t = t;
 
@@ -176,8 +176,8 @@ public class Emulator
                 }
                 symbol.Volume = volume;
 
-                PositionMonitor positionMonitor = new(GlobalData.ActiveAccount!, symbol, candle);
-                await positionMonitor.NewCandleArrivedAsync();
+                //PositionMonitor positionMonitor = new(GlobalData.ActiveAccount!, symbol, candle);
+                //await positionMonitor.NewCandleArrivedAsync();
 
             }
             GlobalData.BackTestCandle = null;

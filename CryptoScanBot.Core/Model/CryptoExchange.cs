@@ -20,14 +20,16 @@ public class CryptoExchange
     public CryptoExchangeType ExchangeType { get; set; }
     public CryptoTradingType TradingType { get; set; }
 
-    // Coins indexed on id and name
+    // Coins indexed on id
     [Computed]
     public SortedList<int, CryptoSymbol> SymbolListId { get; } = [];
 
+    // Coins indexed on name
     [Computed]
     public SortedList<string, CryptoSymbol> SymbolListName { get; } = [];
-
-
+    
+    [Computed]
+    public CryptoExchangeData Data { get; } = new();
 
     /// <summary>
     /// Clear symbol information (after change of exchange)

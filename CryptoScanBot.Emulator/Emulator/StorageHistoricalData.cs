@@ -5,7 +5,7 @@ using CryptoScanBot.Core.Model;
 
 using System.Text.Json;
 
-namespace CryptoScanBot.Core.Emulator;
+namespace CryptoScanBot.Emulator;
 
 public class StorageHistoricalData
 {

@@ -19,12 +19,10 @@ namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 /// </summary>
 public class Trade() : TradeBase(), ITrade
 {
-    public static void PickupTrade(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
+    public static void PickupTrade(CryptoSymbol symbol, CryptoTrade trade, KrakenUserTrade item)
     {
         trade.TradeTime = item.Timestamp;
 
-        trade.TradeAccount = tradeAccount;
-        trade.TradeAccountId = tradeAccount.Id;
         trade.Exchange = symbol.Exchange;
         trade.ExchangeId = symbol.ExchangeId;
         trade.Symbol = symbol;
@@ -90,11 +88,10 @@ public class Trade() : TradeBase(), ITrade
                             {
                                 trade = new()
                                 {
-                                    TradeAccount = position.Account!,
                                     Exchange = position.Exchange,
                                     Symbol = position.Symbol,
                                 };
-                                PickupTrade(position.Account, position.Symbol, trade, item);
+                                PickupTrade(position.Symbol, trade, item);
                                 string text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
                                 ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 

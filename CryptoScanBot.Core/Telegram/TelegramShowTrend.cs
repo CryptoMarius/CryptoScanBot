@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trend;
 
 using System.Text;
@@ -10,7 +10,7 @@ namespace CryptoScanBot.Core.Telegram;
 
 public class TelegramShowTrend
 {
-    public static async Task ShowTrendAsync(string arguments, StringBuilder stringbuilder)
+    public static async Task ShowTrendAsync(string arguments, SettingsZigZag trend, StringBuilder stringbuilder)
     {
         string symbolName = "";
         string[] parameters = arguments.Split(' ');
@@ -18,18 +18,17 @@ public class TelegramShowTrend
             symbolName = parameters[1].Trim().ToUpper();
         stringbuilder.AppendLine($"Trend {symbolName}");
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
-                AccountSymbol accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-                SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
-                await MarketTrend.CalculateMarketTrendAsync(symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, 0);
+                CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend, 0, 0);
 
                 foreach (CryptoInterval interval in GlobalData.IntervalList)
                 {
-                    IntervalTrend intervalTrend = symbolTrend.Get(interval.IntervalPeriod);
+                    CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                    CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
 
                     string s;
                     if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)

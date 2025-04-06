@@ -8,8 +8,6 @@ public class CryptoAsset
     [Key]
     public int Id { get; set; }
 
-    public int TradeAccountId { get; set; }
-
     // De basismunt (BTC, ETH, USDT enzovoort)
     public string Name { get; set; } = "";
 

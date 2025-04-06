@@ -19,7 +19,6 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
         Created,
         Closed,
         Duration,
-        Account,
         Exchange,
         Symbol,
         Interval,
@@ -142,9 +141,6 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     break;
                 case ColumnsForGrid.Duration:
                     CreateColumn("Duration", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 55);
-                    break;
-                case ColumnsForGrid.Account:
-                    CreateColumn("Account", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 100);
                     break;
                 case ColumnsForGrid.Exchange:
                     CreateColumn("Exchange", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleLeft, 125).Visible = false;
@@ -335,7 +331,6 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     ColumnsForGrid.Created => ObjectCompare.Compare(a.CreateTime, b.CreateTime),
                     ColumnsForGrid.Closed => ObjectCompare.Compare(a.CloseTime, b.CloseTime),
                     ColumnsForGrid.Duration => ObjectCompare.Compare(a.Duration().TotalSeconds, b.Duration().TotalSeconds),
-                    ColumnsForGrid.Account => ObjectCompare.Compare(a.Account.AccountType, b.Account.AccountType),
                     ColumnsForGrid.Exchange => ObjectCompare.Compare(a.Exchange.Name, b.Exchange.Name),
                     ColumnsForGrid.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
                     ColumnsForGrid.Interval => ObjectCompare.Compare(a.Interval!.IntervalPeriod, b.Interval!.IntervalPeriod),
@@ -476,9 +471,6 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     break;
                 case ColumnsForGrid.Duration:
                     e.Value = position.DurationText();
-                    break;
-                case ColumnsForGrid.Account:
-                    e.Value = position.Account.AccountType;
                     break;
                 case ColumnsForGrid.Exchange:
                     e.Value = position.Symbol.Exchange.Name;
@@ -934,7 +926,7 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                 try
                 {
                     SortFunction();
-                    //Grid.InvalidateColumn((int)ColumnsForGrid.Distance);
+                    //Grid.InvalidateColumn((int)ColumnsForGrid.DlzZoneDistance);
                     //Grid.InvalidateColumn((int)ColumnsForGrid.Volume);
                 }
                 finally

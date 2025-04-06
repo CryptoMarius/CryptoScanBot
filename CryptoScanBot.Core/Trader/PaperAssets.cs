@@ -14,35 +14,35 @@ namespace CryptoScanBot.Core.Trader;
 /// </summary>
 public class PaperAssets
 {
-    public static void LoadAssets(CryptoAccount tradeAccount)
+    public static void LoadAssets(Model.CryptoExchange activeExchange)
     {
-        ScannerLog.Logger.Trace($"PaperAssets.LoadAssets: account {tradeAccount.AccountType}");
+        ScannerLog.Logger.Trace($"PaperAssets.LoadAssets: account {activeExchange.Name}");
 
-        tradeAccount.Data.AssetListSemaphore.Wait();
+        activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
             using CryptoDatabase database = new();
             database.Open();
 
-            tradeAccount.Data.AssetList.Clear();
+            activeExchange.Data.AssetList.Clear();
 
             foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
             {
-                tradeAccount.Data.AssetList.TryAdd(asset.Name, asset);
+                activeExchange.Data.AssetList.TryAdd(asset.Name, asset);
             }
 
-            CreateAsset(tradeAccount, "BTC", 10);
-            CreateAsset(tradeAccount, "USDT", 10000);
+            CreateAsset(activeExchange, "BTC", 10);
+            CreateAsset(activeExchange, "USDT", 10000);
         }
         finally
         {
-            tradeAccount.Data.AssetListSemaphore.Release();
+            activeExchange.Data.AssetListSemaphore.Release();
         }
     }
 
-    public static CryptoAsset CreateAsset(CryptoAccount tradeAccount, string name, decimal defaultTotal)
+    public static CryptoAsset CreateAsset(Model.CryptoExchange activeExchange, string name, decimal defaultTotal)
     {
-        if (!tradeAccount.Data.AssetList.TryGetValue(name, out CryptoAsset? asset))
+        if (!activeExchange.Data.AssetList.TryGetValue(name, out CryptoAsset? asset))
         {
             asset = new()
             {
@@ -50,9 +50,8 @@ public class PaperAssets
                 Locked = 0,
                 Free = defaultTotal,
                 Total = defaultTotal,
-                TradeAccountId = tradeAccount.Id,
             };
-            tradeAccount.Data.AssetList.Add(asset.Name, asset);
+            activeExchange.Data.AssetList.Add(asset.Name, asset);
 
             using CryptoDatabase database = new();
             database.Open();
@@ -65,9 +64,9 @@ public class PaperAssets
         return asset;
     }
 
-    internal static CryptoAsset FindOrCreateAsset(CryptoAccount tradeAccount, string name)
+    internal static CryptoAsset FindOrCreateAsset(Model.CryptoExchange activeExchange, string name)
     {
-        if (!tradeAccount.Data.AssetList.TryGetValue(name, out CryptoAsset? assetBase))
+        if (!activeExchange.Data.AssetList.TryGetValue(name, out CryptoAsset? assetBase))
         {
             assetBase = new()
             {
@@ -75,9 +74,8 @@ public class PaperAssets
                 Free = 0,
                 Total = 0,
                 Locked = 0,
-                TradeAccountId = tradeAccount.Id,
             };
-            tradeAccount.Data.AssetList.Add(assetBase.Name, assetBase);
+            activeExchange.Data.AssetList.Add(assetBase.Name, assetBase);
         }
 
         return assetBase;
@@ -93,7 +91,7 @@ public class PaperAssets
             asset.Locked -= value;
     }
 
-    public static void UpdateAsset(CryptoAccount tradeAccount, CryptoDatabase database, SqliteTransaction transaction, CryptoAsset asset)
+    public static void UpdateAsset(Model.CryptoExchange activeExchange, CryptoDatabase database, SqliteTransaction transaction, CryptoAsset asset)
     {
         // Quote
         if (asset.Total < 0)
@@ -104,7 +102,7 @@ public class PaperAssets
 
         if (asset.Total == 0)
         {
-            tradeAccount.Data.AssetList.Remove(asset.Name);
+            activeExchange.Data.AssetList.Remove(asset.Name);
             if (asset.Id > 0)
                 database.Connection.Delete(asset, transaction);
         }
@@ -117,18 +115,18 @@ public class PaperAssets
         }
     }
 
-    public static void Change(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side,
+    public static void Change(Model.CryptoExchange activeExchange, CryptoSymbol symbol, CryptoTradeSide tradeSide, CryptoOrderSide side,
         CryptoOrderStatus status, decimal quantity, decimal quoteQuantity, string debugText)
     {
         // No asset management for these available (although, would be very nice for Altraady)
-        if (tradeAccount.AccountType == CryptoAccountType.RealTrading || tradeAccount.AccountType == CryptoAccountType.Altrady)
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
             return;
 
-        tradeAccount.Data.AssetListSemaphore.Wait();
+        activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
-            CryptoAsset assetBase = FindOrCreateAsset(tradeAccount, symbol.Base); // Base asset (BTC)
-            CryptoAsset assetQuote = FindOrCreateAsset(tradeAccount, symbol.Quote); // Quote asset (USDT)
+            CryptoAsset assetBase = FindOrCreateAsset(activeExchange, symbol.Base); // Base asset (BTC)
+            CryptoAsset assetQuote = FindOrCreateAsset(activeExchange, symbol.Quote); // Quote asset (USDT)
             if (GlobalData.Settings.General.DebugAssetManagement)
                 GlobalData.AddTextToLogTab($"Debug asset before {symbol.Name} {tradeSide} {side} {assetBase.Name} total={assetBase.Total} locked={assetBase.Locked}  {assetQuote.Name} total={assetQuote.Total} locked={assetQuote.Locked} {debugText}");
 
@@ -199,8 +197,8 @@ public class PaperAssets
             using CryptoDatabase database = new();
             database.Open();
             using var transaction = database.BeginTransaction();
-            UpdateAsset(tradeAccount, database, transaction, assetBase);
-            UpdateAsset(tradeAccount, database, transaction, assetQuote);
+            UpdateAsset(activeExchange, database, transaction, assetBase);
+            UpdateAsset(activeExchange, database, transaction, assetQuote);
 
             // Base
             //if (assetBase.Total < 0)
@@ -252,7 +250,7 @@ public class PaperAssets
         }
         finally
         {
-            tradeAccount.Data.AssetListSemaphore.Release();
+            activeExchange.Data.AssetListSemaphore.Release();
         }
     }
 

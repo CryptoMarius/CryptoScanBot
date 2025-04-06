@@ -73,7 +73,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
 
         long fetchedUpTo = long.MinValue;
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
             foreach (var kline in result.Data)
@@ -110,7 +110,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
 
 

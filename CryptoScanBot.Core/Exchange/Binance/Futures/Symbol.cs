@@ -165,16 +165,17 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        // Bewaren voor debug werkzaamheden
-                        {
-                            string filename = GlobalData.GetBaseDir();
-                            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                            Directory.CreateDirectory(filename);
-                            filename += "symbols.json";
+                        // 20250405 - The serialisation crashes with a stack overflow
+                        //// Bewaren voor debug werkzaamheden
+                        //{
+                        //    string filename = GlobalData.GetBaseDir();
+                        //    filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
+                        //    Directory.CreateDirectory(filename);
+                        //    filename += "symbols.json";
 
-                            string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                            File.WriteAllText(filename, text);
-                        }
+                        //    string text = JsonSerializer.Serialize(exchangeInfo.Data.Symbols, JsonTools.JsonSerializerIndented);
+                        //    File.WriteAllText(filename, text);
+                        //}
 
 
                         // De nieuwe symbols toevoegen aan de lijst

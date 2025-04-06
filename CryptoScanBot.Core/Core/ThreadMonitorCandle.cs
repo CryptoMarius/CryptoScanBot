@@ -39,7 +39,7 @@ public class ThreadMonitorCandle
                     try
                     {
                         // Er is een 1m candle gearriveerd, acties adhv deze candle..
-                        PositionMonitor positionMonitor = new(GlobalData.ActiveAccount!, symbol, candle);
+                        PositionMonitor positionMonitor = new(symbol, candle);
                         await positionMonitor.NewCandleArrivedAsync();
                     }
                     finally

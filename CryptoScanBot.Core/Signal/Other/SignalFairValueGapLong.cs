@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -7,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalFairValueGapLong : SignalCreateBase
 {
-    public SignalFairValueGapLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalFairValueGapLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.FairValueGap;
@@ -18,7 +17,7 @@ public class SignalFairValueGapLong : SignalCreateBase
     {
         ExtraText = "";
         bool result = false;
-        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        CryptoSymbolData symbolData = Symbol.Data;
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)

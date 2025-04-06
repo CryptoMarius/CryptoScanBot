@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -17,7 +17,8 @@
 
   <ItemGroup>
 	  <PackageReference Include="JK.Mexc.Net" Version="2.1.0" />
-	  <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.2" />
+	  <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+	  <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,14 +1,14 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Zones;
 
 
 
-public class ZoneData
+public class ZoneConfig
 {
     // basic information
-    public required CryptoAccount Account { get; set; }
     public required Model.CryptoExchange Exchange { get; set; }
     public required CryptoSymbol Symbol { get; set; }
     public required CryptoInterval Interval { get; set; }

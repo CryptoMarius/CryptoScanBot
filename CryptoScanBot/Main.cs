@@ -1,12 +1,12 @@
 ﻿using CryptoScanBot.Commands;
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Emulator;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
+using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Intern;
@@ -23,6 +23,8 @@ namespace CryptoScanBot;
 
 public partial class FrmMain : Form
 {
+
+
     private readonly ColorSchemeTest theme = new();
 
     public class ColorSchemeTest
@@ -49,11 +51,13 @@ public partial class FrmMain : Form
     private readonly ToolStripMenuItemCommand ApplicationPlaySounds;
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
-    private readonly ToolStripMenuItemCommand ApplicationBackTestMode;
-    private readonly ToolStripMenuItemCommand ApplicationBackTestExec;
+
+    //private readonly ISettings _settings;
 
     public FrmMain()
     {
+        //_settings = (ISettings)Program.ServiceProvider.GetService(typeof(ISettings));
+    
         InitializeComponent();
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
@@ -74,10 +78,6 @@ public partial class FrmMain : Form
         MenuMain.AddCommand(null, "Export all exchange information to Excel", Command.ExcelExchangeInformation);
         MenuMain.AddCommand(null, "Export all signal information to Excel", Command.ExcelSignalsInformation);
         MenuMain.AddCommand(null, "Export all position information to Excel", Command.ExcelPositionsInformation);
-
-        MenuMain.AddSeperator();
-        ApplicationBackTestMode = MenuMain.AddCommand(null, "Backtest mode", Command.None, ApplicationBackTestMode_Click);
-        ApplicationBackTestExec = MenuMain.AddCommand(null, "Backtest exec", Command.None, BacktestToolStripMenuItem_Click);
 
 #if DEBUG
         MenuMain.AddSeperator();
@@ -207,8 +207,7 @@ public partial class FrmMain : Form
     {
         ApplicationTools.WindowLocationRestore(this, GlobalData.SettingsUser.MainForm);
 
-        GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
-        GlobalData.LoadAccounts();
+        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
         ApplySettings();
 
         GlobalData.LoadSymbols();
@@ -229,13 +228,8 @@ public partial class FrmMain : Form
         // Is done multiple times, but that is okay
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
-            GlobalData.Settings.General.Exchange = exchange;
-            GlobalData.Settings.General.ExchangeId = exchange.Id;
-            GlobalData.Settings.General.ExchangeName = exchange.Name;
+            GlobalData.ActiveExchange = exchange;
         }
-
-        // Het juiste trading coount in de globale variabelen zetten
-        GlobalData.SetTradingAccounts();
 
         // Eventueel de nieuwe quotes zetten enz.
         dashBoardInformation1.InitializeBarometer();
@@ -257,6 +251,9 @@ public partial class FrmMain : Form
 
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
+
+        SignalPrepare.Prepare();
+        SignalExecute.Prepare();
 
         // De timertjes goed zetten
         ScannerSession.SetTimerDefaults();
@@ -289,11 +286,7 @@ public partial class FrmMain : Form
 
     private void SetApplicationTitle()
     {
-        string text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
-        if (GlobalData.BackTest)
-            text += " (backtest mode)";
-        // Adjust the application title
-        Text = text;
+        Text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
     }
 
     private void OnPowerChange(object s, PowerModeChangedEventArgs e)
@@ -416,7 +409,7 @@ public partial class FrmMain : Form
     {
         Task.Run(async () =>
         {
-            var api = GlobalData.Settings.General.Exchange!.GetApiInstance();
+            var api = GlobalData.ActiveExchange!.GetApiInstance();
             await api.Symbol.GetSymbolsAsync(); // niet wachten tot deze klaar is
             if (ExchangeBase.KLineTicker != null)
                 await ExchangeBase.KLineTicker!.CheckTickers(); // herstarten van ticker indien errors
@@ -445,7 +438,7 @@ public partial class FrmMain : Form
         SettingsBasic oldSettings = GlobalData.Settings;
 
         GetReloadRelatedSettings(out string activeQuotes);
-        Core.Model.CryptoExchange? oldExchange = GlobalData.Settings.General.Exchange;
+        Core.Model.CryptoExchange? oldExchange = GlobalData.ActiveExchange;
 
         // Dan wordt de basecoin en coordinaten etc. bewaard voor een volgende keer
         GlobalData.Settings.Trading.Active = ApplicationTradingBot.Checked;
@@ -470,7 +463,7 @@ public partial class FrmMain : Form
 
             // Detectie of we hebben gewisseld van Exchange (reload) of QuoteData (reload)
             bool reloadQuoteChange = activeQuotes != activeQuotes2;
-            bool reloadExchangeChange = dialog.NewExchange?.Id != GlobalData.Settings.General.ExchangeId;
+            bool reloadExchangeChange = dialog.NewExchange?.Name != GlobalData.Settings.General.ExchangeName;
             if (reloadQuoteChange || reloadExchangeChange)
             {
                 GlobalData.AddTextToLogTab("");
@@ -482,32 +475,29 @@ public partial class FrmMain : Form
                 //_ = Task.Run(() => ScannerSession.StopAsync());
                 //_ = Task.Run(async () => await ScannerSession.StopAsync());
 
-                GlobalData.Settings.General.Exchange = dialog.NewExchange;
-                GlobalData.Settings.General.ExchangeId = dialog.NewExchange!.Id;
-                GlobalData.Settings.General.ExchangeName = dialog.NewExchange.Name;
+                GlobalData.ActiveExchange = dialog.NewExchange;
+                GlobalData.Settings.General.ExchangeName = dialog.NewExchange!.Name;
                 GlobalData.SaveSettings();
 
                 // Standaard timers e.d.
                 ApplySettings();
 
-                if (reloadExchangeChange)
+                if (reloadExchangeChange && GlobalData.ActiveExchange != null)
                 {
-                    // Exchange: Symbols clearen
                     oldExchange?.Clear();
+                    oldExchange?.Data.Clear();
 
-                    // TradingAccount: Posities en Assets clearen!
-                    foreach (CryptoAccount ta in GlobalData.TradeAccountList.Values)
-                        ta.Data.Clear();
+                    // TODO: Delete symbols, assets, orders, trades, positions, parts, steps from database!
                 }
 
                 // Clear candle data
                 if (reloadQuoteChange || reloadExchangeChange)
                 {
-                    foreach (var symbol in GlobalData.Settings.General.Exchange!.SymbolListId.Values)
+                    foreach (var symbol in GlobalData.ActiveExchange!.SymbolListId.Values)
                     {
                         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
                         {
-                            foreach (var x in symbol.IntervalPeriodList)
+                            foreach (var x in symbol.Data.SymbolIntervalList)
                             {
                                 if (x.CandleList.Count != 0)
                                 {
@@ -527,7 +517,7 @@ public partial class FrmMain : Form
                     await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
                 ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
 
-                GlobalData.Settings.General.Exchange!.GetApiInstance().ExchangeDefaults();
+                GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
                 MainMenuClearAll_Click(null, null);
                 // Schedule een reload of data
                 ScannerSession.ScheduleRefresh();
@@ -548,7 +538,7 @@ public partial class FrmMain : Form
         TextBoxLog.Clear();
         GlobalData.CreatedSignalCount = 0;
 
-        PositionMonitor.ResetAnalyseCount();
+        SignalExecute.ResetAnalyseCount();
         ExchangeBase.KLineTicker!.Reset();
         ExchangeBase.PriceTicker!.Reset();
     }
@@ -1028,10 +1018,10 @@ public partial class FrmMain : Form
 
     private void PositionsHaveChangedEvent(string text)
     {
-        if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveAccount != null)
+        if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveExchange!= null)
         {
             List<CryptoPosition> list = [];
-            foreach (var position in GlobalData.ActiveAccount.Data.PositionList.Values)
+            foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
             {
                 list.Add(position);
             }
@@ -1083,7 +1073,7 @@ public partial class FrmMain : Form
         {
             string symbolname = "BTCUSDT";
             CryptoInterval interval = GlobalData.IntervalListPeriod[0];
-            if (GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue(symbolname, out CryptoSymbol? symbol))
+            if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolname, out CryptoSymbol? symbol))
                 Invoke((System.Windows.Forms.MethodInvoker)(() =>
                 LinkTools.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false)));
         }
@@ -1123,7 +1113,7 @@ public partial class FrmMain : Form
 
         string symbolname = "XRPUSDT";
         CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m];
-        if (GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue(symbolname, out CryptoSymbol? symbol))
+        if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolname, out CryptoSymbol? symbol))
         {
             StringBuilder stringBuilder = new();
             stringBuilder.AppendLine("<html>");
@@ -1172,7 +1162,7 @@ public partial class FrmMain : Form
         GridSignalView.Grid.Invalidate();
 
         // another weird queue
-        GlobalData.ActiveAccount!.Data.PositionList.Clear();
+        GlobalData.ActiveExchange!.Data.PositionList.Clear();
         TradeTools.LoadOpenPositions();
         TradeTools.LoadClosedPositions();
         PositionsHaveChangedEvent("");
@@ -1180,28 +1170,16 @@ public partial class FrmMain : Form
 
     private void ApplicationBackTestMode_Click(object? sender, EventArgs? e)
     {
-        ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
-        if (ApplicationBackTestMode.Checked)
-        {
-            GlobalData.BackTest = true;
-            GlobalData.BackTestDateTime = GlobalData.Settings.BackTest.BackTestStartTime;
-            GlobalData.Settings.Trading.ActiveBackup = GlobalData.Settings.Trading.Active;
-            GlobalData.Settings.Trading.Active = true;
-        }
-        else
-        {
-            GlobalData.BackTest = false;
-            GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
-        }
+        GlobalData.BackTest = false;
+        GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
+
         ApplicationTradingBot.Enabled = !GlobalData.BackTest;
         ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
         ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
-        ApplicationBackTestExec.Enabled = GlobalData.BackTest;
 
         GlobalData.SaveSettings();
         SetApplicationTitle();
 
-        GlobalData.SetTradingAccounts();
         RefreshDataGrids();
 
         // Resume scanner session, fill missing information
@@ -1209,76 +1187,6 @@ public partial class FrmMain : Form
             ToolStripMenuItemRefresh_Click_1(null, null);
     }
 
-    private async void BacktestToolStripMenuItem_Click(object? sender, EventArgs? e)
-    {
-        /// TODO: Deze code verhuizen naar aparte class of het dialoog zelf?
-        /// Probleem: Door recente aanpassingen lopen de meldingen en accounts 
-        /// allemaal door elkaar (misschien een extra tabsheet met de resultaten?)
-        /// (waarschijnlijk werkt het niets eens meer! was tijdelijk experiment)
-
-        try
-        {
-            AskSymbolDialog form = new()
-            {
-                StartPosition = FormStartPosition.CenterParent
-            };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                GlobalData.SaveSettings();
-
-                if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
-                {
-                    MessageBox.Show("Exchange bestaat niet");
-                    return;
-                }
-
-                // Bestaat de coin? (uiteraard, net geladen)
-                if (!exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol? symbol))
-                {
-                    MessageBox.Show("Symbol bestaat niet");
-                    return;
-                }
-
-                if (!GlobalData.BackTest)
-                {
-                    ApplicationBackTestMode_Click(sender, e);
-                    if (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.PaperTrade)
-                        await PaperTrading.CheckPositionsAfterRestart(GlobalData.ActiveAccount!);
-                }
-
-                BackTestAsync();
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
-        }
-
-    }
-
-    public void BackTestAsync()
-    {
-        if (!GlobalData.BackTest)
-            return;
-        if (!GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? btcSymbol))
-            return;
-        if (!GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol? symbol))
-            return;
-
-        MainMenuClearAll_Click(null, null);
-        GlobalData.ActiveAccount!.Data.Clear();
-        Emulator.DeletePreviousData();
-        RefreshDataGrids();
-
-        var _ = Task.Run(async () =>
-        {
-            await Emulator.Execute(btcSymbol, symbol);
-            PositionsHaveChangedEvent("");
-            RefreshDataGrids();
-        });
-        return;
-    }
 
 
     private void SplitContainerSplitterMoved(object? sender, SplitterEventArgs e)

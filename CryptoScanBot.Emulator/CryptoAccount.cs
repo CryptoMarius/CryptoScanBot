@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Enums;
+﻿using CryptoScanBot.Core.Enums;
 
 using Dapper.Contrib.Extensions;
 
@@ -22,6 +21,6 @@ public class CryptoAccount
     // All kind of data for this account
     // (emulator can run simultanious with scanner, paper or exchange trading)
     [Computed]
-    public AccountData Data { get; } = new();
+    public CryptoExchangeData Data { get; } = new();
 
 }

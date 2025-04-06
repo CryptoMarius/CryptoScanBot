@@ -84,8 +84,8 @@ public class SettingsSignal
         Short.Barometer.List.Add("1h", (-999m, 1.5m));
 
         // Geeft vragen.. (aansluiting oude scanner)
-        //Long.IntervalTrend.List.Add("1h");
-        //Short.IntervalTrend.List.Add("1h");
+        //Long.CryptoTrendData.List.Add("1h");
+        //Short.CryptoTrendData.List.Add("1h");
 
         //Long.MarketTrend.List.Add((0m, 100m));
         //Short.MarketTrend.List.Add((-100m, 0));

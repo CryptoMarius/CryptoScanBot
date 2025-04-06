@@ -18,12 +18,10 @@ internal class Test
             if (exchange.SymbolListName.TryGetValue("BTCEUR", out CryptoSymbol? symbol))
             {
                 //CryptoAccount? tradeAccount = GlobalData.TradeAccountList.Values.FirstOrDefault(x => x.Name.Equals("Bybit Spot trading"));
-                CryptoAccount? tradeAccount = null; // todo
-                if (tradeAccount != null)
+                //if (tradeAccount != null)
                 {
                     CryptoPosition position = new()
                     {
-                        Account = tradeAccount,
                         Exchange = exchange,
                         Symbol = symbol,
                         Interval = GlobalData.IntervalList[3],

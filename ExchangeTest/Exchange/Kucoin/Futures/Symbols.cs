@@ -27,16 +27,16 @@ public class Symbols
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}");
 
-                // Save for debugging
-                {
-                    string filename = GlobalData.GetBaseDir();
-                    filename += $@"\{exchange.Name}\";
-                    Directory.CreateDirectory(filename);
-                    filename += "symbols.json";
+                //// Save for debugging
+                //{
+                //    string filename = GlobalData.GetBaseDir();
+                //    filename += $@"\{exchange.Name}\";
+                //    Directory.CreateDirectory(filename);
+                //    filename += "symbols.json";
 
-                    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                    File.WriteAllText(filename, text);
-                }
+                //    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
+                //    File.WriteAllText(filename, text);
+                //}
 
 
 

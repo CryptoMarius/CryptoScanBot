@@ -56,7 +56,7 @@ public static class LinkTools
         if (WebViewTradingView != null)
         {
             CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
-            if (GlobalData.Settings.General.Exchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? symbol))
+            if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? symbol))
                 ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
         }
     }

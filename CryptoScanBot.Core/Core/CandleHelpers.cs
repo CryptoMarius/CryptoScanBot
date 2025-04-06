@@ -8,6 +8,15 @@ namespace CryptoScanBot.Core.Core;
 
 public static class Helper
 {
+
+    public static DateTime ToDateTime(this long? unixDate)
+    {
+        if (unixDate == null)
+            throw new Exception("GetUnixDate null argument");
+        DateTime datetime = DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
+        return datetime;
+    }
+
     public static DateTime GetExpirationDate(this CryptoSignal signal, CryptoInterval interval)
     {
         // Keep these longer
@@ -348,15 +357,15 @@ public static class Helper
     }
 
 
-    public static void ShowAssets(CryptoAccount tradeAccount, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
+    public static void ShowAssets(Model.CryptoExchange activeExchange, StringBuilder stringBuilder, out decimal valueUsdt, out decimal valueBtc)
     {
         valueBtc = 0;
         valueUsdt = 0;
 
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
-            tradeAccount.Data.AssetListSemaphore.Wait();
+            activeExchange.Data.AssetListSemaphore.Wait();
             {
                 try
                 {
@@ -365,7 +374,7 @@ public static class Helper
                         stringBuilder.AppendLine("Assets:");
 
                         //AddTextToLogTab("Assets changed");
-                        foreach (CryptoAsset asset in tradeAccount.Data.AssetList.Values)
+                        foreach (CryptoAsset asset in activeExchange.Data.AssetList.Values)
                         {
                             if (asset.Total.ToString0() == asset.Free.ToString0())
                                 stringBuilder.AppendLine(string.Format("{0} {1}", asset.Name, asset.Total.ToString0()));
@@ -413,7 +422,7 @@ public static class Helper
                 }
                 finally
                 {
-                    tradeAccount.Data.AssetListSemaphore.Release();
+                    activeExchange.Data.AssetListSemaphore.Release();
                 }
             }
         }
@@ -436,13 +445,12 @@ public static class Helper
     public static void ShowPositions(StringBuilder stringBuilder)
     {
         int positionTotal = 0;
-        foreach (var tradeAccount in GlobalData.TradeAccountList.Values)
+        if (GlobalData.ActiveExchange != null)
         {
-            if (tradeAccount.Data.PositionList.Count != 0)
+            if (GlobalData.ActiveExchange.Data.PositionList.Count != 0)
             {
                 int positionCount = 0;
-                stringBuilder.AppendLine(tradeAccount.AccountType.ToString());
-                foreach (var position in tradeAccount.Data.PositionList.Values)
+                foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
                 {
                     //De muntparen toevoegen aan de userinterface
                     ShowPosition(stringBuilder, position);

@@ -2,8 +2,13 @@
 
 namespace CryptoScanBot.Core.Settings;
 
+//public interface ISettings 
+//{
+//    public SettingsGeneral General { get; set; }
+//}
+
 [Serializable]
-public class SettingsBasic
+public class SettingsBasic //: ISettings
 {
     /// <summary>
     /// Standaard instellingen
@@ -11,9 +16,14 @@ public class SettingsBasic
     public SettingsGeneral General { get; set; } = new();
 
     /// <summary>
-    /// Scanner gerelateerde instellingen
+    /// Signal related
     /// </summary>
     public SettingsSignal Signal { get; set; } = new();
+
+    /// <summary>
+    /// Trend related
+    /// </summary>
+    public SettingsTrend Trend { get; set; } = new();
 
     /// <summary>
     /// Trading gerelateerde instellingen

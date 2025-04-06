@@ -14,7 +14,7 @@ public static class TradeHandler
     public static async Task HandleTradeAsync(CryptoSymbol symbol, CryptoOrderStatus orderStatus, CryptoOrder order)
     {
         // Find the open position
-        if (order.TradeAccount.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
+        if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             // could also be done in ThreadDoubleCheckPosition
             if (!GlobalData.BackTest && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
@@ -22,12 +22,12 @@ public static class TradeHandler
 
             // De actie doorgeven naar een andere thread
             position.ForceCheckPosition = true;
-            position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
+            position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
             if (GlobalData.ThreadCheckPosition != null)
                 await GlobalData.ThreadCheckPosition.AddToQueue(position, order.OrderId, order.Status);
 
             // Moved to ThreadCheckPosition (we need the trades for the exact fees)
-            //PaperAssets.Change(position.Account, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
+            //PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, order.Side, CryptoOrderStatus.Filled, order.Quantity, order.QuoteQuantity);
         }
     }
 }

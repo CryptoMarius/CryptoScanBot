@@ -67,21 +67,21 @@ public class ThreadCheckFinishedPosition
 
     private static async Task<bool> UpdatePositionStatisticsAsync(CryptoPosition position)
     {
-        if (position.CloseTime == null && position.Account.AccountType != CryptoAccountType.BackTest)
+        if (position.CloseTime == null && GlobalData.BackTest)
         {
             CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
             if (symbolInterval.CandleList.Count > 0)
             {
                 // Lock to avoid problems
                 CryptoCandle candle;
-                await position.Symbol.CandleLock.WaitAsync();
+                await position.Symbol.Data.CandleLock.WaitAsync();
                 try
                 {
                     candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                 }
                 finally
                 {
-                    position.Symbol.CandleLock.Release();
+                    position.Symbol.Data.CandleLock.Release();
                 }
 
 
@@ -125,14 +125,14 @@ public class ThreadCheckFinishedPosition
                     string cancelReason = "cancel";
                     ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {cancelReason}");
                     var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step,
-                        GlobalData.GetCurrentDateTime(position.Account), CryptoOrderStatus.PositionClosed, cancelReason);
+                        GlobalData.GetCurrentDateTime(), CryptoOrderStatus.PositionClosed, cancelReason);
                     if (!succes)
                     {
                         // nog nooit gezien, maar kan geen kwaad
                         ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {cancelReason} failed");
                         ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (retry)");
                         position.ForceCheckPosition = true;
-                        position.DelayUntil = GlobalData.GetCurrentDateTime(position.Account).AddSeconds(10);
+                        position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
                         await AddToQueue(position); // doe nog maar een keer... Endless loop?
                         removePosition = false;
                     }
@@ -144,7 +144,7 @@ public class ThreadCheckFinishedPosition
         if (removePosition)
         {
             // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
-            PositionTools.RemovePosition(position.Account, position, true);
+            PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
             if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             {
                 GlobalData.PositionsHaveChanged("");
@@ -165,7 +165,7 @@ public class ThreadCheckFinishedPosition
 
             // Deze routine is vanwege de Last() niet geschikt voor de emulator
             // Hoe lossen we dat nu weer op, want wordt strakt een echt probleem.
-            await position.Symbol.CandleLock.WaitAsync();
+            await position.Symbol.Data.CandleLock.WaitAsync();
             try
             {
                 if (GlobalData.BackTest)
@@ -179,11 +179,11 @@ public class ThreadCheckFinishedPosition
             }
             finally
             {
-                position.Symbol.CandleLock.Release();
+                position.Symbol.Data.CandleLock.Release();
             }
 
             ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {position.Symbol.Name} CheckThePosition {orderId}");
-            PositionMonitor positionMonitor = new(position.Account, position.Symbol, lastCandle1m);
+            PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
             await positionMonitor.CheckThePosition(position); // CancelOrdersIfClosedOrTimeoutOrReposition?
 
             // Bij nader inzien kan die status hier nooit ready zijn...
@@ -209,7 +209,7 @@ public class ThreadCheckFinishedPosition
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime(position.Account))
+                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime())
                 {
                     //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
                     await AddToQueue(position, orderId, status); // opnieuw, na een vertraging

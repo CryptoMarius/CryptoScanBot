@@ -98,7 +98,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Last");
         WriteCell(sheet, columns++, row, "Synchronized");
 
-        foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
+        foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList.ToList())
         {
             row++;
             int column = 0;
@@ -269,7 +269,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         {
             DumpInformation();
 
-            foreach (CryptoSymbolInterval symbolInterval in Symbol.IntervalPeriodList.ToList())
+            foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList.ToList())
                 DumpInterval(symbolInterval);
 
             //AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);

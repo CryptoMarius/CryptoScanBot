@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Const;
+﻿using CryptoScanBot.Core.Const;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -67,40 +66,24 @@ public class CandleIndicatorData : CryptoData
         //Monitor.Enter(symbol.CandleList);await symbol.CandleLock.WaitAsync();
         //try
         //{
-        // Geen verandering als het goed is (is reeds afgerond als het goed is)
-        long candleEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
-        long candleStartTime = candleEndTime - (maxCandles - 1) * duration;
+        // No change (is already handles)
+        long periodEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
+        long periodStartTime = periodEndTime - (maxCandles - 1) * duration;
 
         CryptoCandle? candleLast = null;
-        long candleLoop = candleStartTime;
-        while (candleLoop <= candleEndTime)
+        long candleLoop = periodStartTime;
+        while (candleLoop <= periodEndTime)
         {
 #if DEBUG
             DateTime candleLoopDate = CandleTools.GetUnixDate(candleLoop);
 #endif
             if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle? candle))
             {
-                //if (!candlesForHistory.ContainsKey(candle.OpenTime))
                 candlesForHistory.Add(candle);
-                //else
-                //    // Hoe kun je hier een duplicate key op krijgen? Dan zou de inhoud van de candles lijst corrupt moeten zijn?
-                //    // dwz, de candle.opentime en de key[x] zijn dan niet synchroon (kan dat? uberhaupt)
-                //    GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Duplicate candle information " + CandleTools.GetUnixDate(candle.OpenTime).ToLocalTime());
             }
             else
             {
-                //// De laatste candle is niet altijd aanwezig (wellicht een kwestie van timing, maar ik ben hier onzeker over...)
-                //if (firstCandleOpenTime != candleLoop) // && candleLoop != candleEndTime
-                //{
-                //    // In de hoop dat dit het automatisch zou kunnen fixen?
-                //    //symbolPeriod.IsChanged = true;
-                //    //if (symbolPeriod.LastCandleSynchronized > candleLoop - interval.Duration)
-                //    //    symbolPeriod.LastCandleSynchronized = candleLoop - interval.Duration;
-                //    GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
-                //    //ScannerSession.ConnectionWasRestored(""); // A quick fix (dont like it)?
-                //}
-
-                // Genereer dan maar een dummy candle
+                // Generate a dummy for the calculation
                 if (candleLast != null)
                 {
                     candle = new()
@@ -453,7 +436,7 @@ public class CandleIndicatorData : CryptoData
 //        {
 //            KeltnerResult x = tpList[i];
 
-//            SlopeResult r = new(x.Date);
+//            SlopeResult r = new(x.Time);
 //            results.Add(r);
 
 //            // skip initialization period

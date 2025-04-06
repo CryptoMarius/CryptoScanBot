@@ -1,8 +1,10 @@
-﻿using CryptoScanBot.Core.Json;
-
-using Dapper.Contrib.Extensions;
+﻿using Dapper.Contrib.Extensions;
 
 using System.Text.Json.Serialization;
+using CryptoScanBot.Core.Barometer;
+using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Json;
 
 namespace CryptoScanBot.Core.Model;
 
@@ -28,6 +30,30 @@ public class CryptoQuoteData
     [Computed]
     [JsonIgnore]
     public List<CryptoSymbol> SymbolList { get; } = [];
+
+    // The pausing values for each side
+    [Computed]
+    [JsonIgnore]
+    public Dictionary<CryptoTradeSide, PauseBarometer> PauseBarometerList { get; set; } = [];
+
+    // The barometer values for each interval 
+    [Computed]
+    [JsonIgnore]
+    public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerDataList { get; set; } = [];
+
+
+
+    public CryptoQuoteData()
+    {
+        // Initialize sides
+        PauseBarometerList = new()
+        {
+            { CryptoTradeSide.Long, new PauseBarometer() },
+            { CryptoTradeSide.Short, new PauseBarometer() }
+        };
+
+        // Initialize intervals
+        for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval1m; interval <= CryptoIntervalPeriod.interval1d; interval++)
+            BarometerDataList[interval] = new BarometerData();
+    }
 }
-
-

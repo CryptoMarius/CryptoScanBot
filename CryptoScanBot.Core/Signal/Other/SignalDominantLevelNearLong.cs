@@ -1,5 +1,4 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -7,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalDominantLevelNearLong : SignalCreateBase
 {
-    public SignalDominantLevelNearLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalDominantLevelNearLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.DominantLevelNear;
@@ -19,7 +18,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
         ExtraText = "";
         bool result = false;
         decimal closestZone = 100;
-        AccountSymbol symbolData = Account.Data.GetSymbolData(Symbol.Name);
+        CryptoSymbolData symbolData = Symbol.Data;
 
 
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
@@ -108,7 +107,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                         break;
                 }
 
-                symbolIntervalData.Zones.BestLongZone = distance;
+                symbolIntervalData.DlzZoneDistance.BestLongZone = distance;
                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                     ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.LongOpen.Count} long zones, closest {distance}");
                 if (distance < closestZone)
@@ -116,7 +115,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
             }
         }
 
-        symbolData.BestLongZone = closestZone;
+        symbolData.DlzZoneDistance.BestLongZone = closestZone;
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
             ScannerLog.Logger.Info($"{Symbol.Name} closest long zone {closestZone}");
 

@@ -174,7 +174,7 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
     {
         // https://stackoverflow.com/questions/35214250/c-sharp-using-icomparer-to-sort-x-number-of-columns
 
-        typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(Grid, true, null);
+        typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(Grid, true, null);
 
         //DefaultFont = new Font(Grid.DefaultCellStyle.Font.Name, Grid.DefaultCellStyle.Font.Size);
         //SelectedFont = new Font(Grid.DefaultCellStyle.Font.Name, Grid.DefaultCellStyle.Font.Size, FontStyle.Underline); // | FontStyle.Bold | FontStyle.Italic
@@ -482,10 +482,10 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     public void InitCommandCaptions()
     {
-        if (GlobalData.Settings.General.Exchange == null)
+        if (GlobalData.ActiveExchange == null)
             return;
 
-        string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.Settings.General.Exchange.Name);
+        string text = CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, GlobalData.ActiveExchange.Name);
         Grid.ContextMenuStrip!.Items[1].Text = text;
         if (GlobalData.Settings.General.HideSelectedRow)
         {

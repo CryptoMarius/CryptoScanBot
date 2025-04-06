@@ -45,7 +45,7 @@ public class ZigZag
         chart.Series.Add(seriesDummyHigh);
 
         //string format = symbol.PriceDisplayFormat[1..];
-        //string text = "Date: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
+        //string text = "Time: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
         //text = text.Replace("$", format);
         //seriesLong.TrackerFormatString = text;
         //seriesShort.TrackerFormatString = text;

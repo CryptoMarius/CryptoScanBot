@@ -264,7 +264,7 @@ public static class CandleTools
         decimal open, decimal high, decimal low, decimal close,
         decimal baseVolume, decimal quoteVolume)
     {
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
             //if (symbol.Name == "BTCUSDT")
@@ -304,7 +304,7 @@ public static class CandleTools
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
     }
 
@@ -415,7 +415,7 @@ public static class CandleTools
             if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
             {
                 //await symbol.Lock("CleanCandleDataAsync");
-                await symbol.CandleLock.WaitAsync();
+                await symbol.Data.CandleLock.WaitAsync();
                 try
                 {
                     CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
@@ -470,7 +470,7 @@ public static class CandleTools
                 finally
                 {
                     //symbol.Unlock("CleanCandleDataAsync");
-                    symbol.CandleLock.Release();
+                    symbol.Data.CandleLock.Release();
                 }
             }
         }

@@ -1,6 +1,16 @@
 CryptoScanBot release historie:
 
-04-03-2025 2.0.4
+
+??-03-2025 2.1
+Attentie vanwege database migraties worden de lopende posities, signalen en zones verwijderd
+- Scanner - De extra vinkjes weghalen voor de short en long bij de fvg en dlz (aansturen via de strategien met een * als indicatie voor interval niet van belang)
+- Scanner - Toegevoegd als experiment, de waarden van de primaire en secondaire markttrend toegevoegd
+- Scanner - Visualisatie formulier uitgebreid met primaire en secondaire trend (idem voor fib)
+- Scanner - Instellingen voor de berekening van de zones (kunnen kiezen uit primair/secondair en high/low vs open/high)
+- Scanner - Instellingen voor de primaire en secondaire trend (kunnen kiezen uit primair/secondair en high/low vs open/high)
+- Scanner - Refactoring om de multi account opzet binnen de scanner te kunnen verwijderen (database problemen)
+- Scanner - De emulator verwijderd, deze komt later in een apart product (en heeft niet de conflicten die er nu zijn)
+- Scanner - Het helpscherm van Telegram uitgebreid met een ontbrekende opdracht "trend symbol"
 - Scanner - De DLZ.Near, DLZ en FVG als mogelijkheid in de trading enigine aanbieden
 - Scanner - Telegram commando Zones voorzien van een link naar de trading applicatie en een kleurtje voor de long/short
 - Scanner - De strategie Stoch short aangepast, er is een verkeerde cross over gebruikt

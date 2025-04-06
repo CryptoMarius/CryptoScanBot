@@ -1,18 +1,14 @@
-﻿using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Trend;
+﻿using CryptoScanBot.Core.Core;
 
 namespace CryptoScanBot.Core.Settings.Strategy;
 
 [Serializable]
 public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 {
-    // Defaults for calculation
-    public TrendType TrendType { get; set; } = TrendType.Primary;
-    public bool UseHighLow { get; set; } = false;
+    // Defaults for zigzag calculation
+    public SettingsZigZag ZigZag { get; set; } = new(false, TrendType.Primary);
 
     // Show signals from
-    public bool ShowSignalsLong { get; set; } = false;
-    public bool ShowSignalsShort { get; set; } = false;
     public List<string> IntervalList { get; set; } = [];
 
     public int CandleCount { get; set; } = 500; // 3000; // 3000=150 day's back, 500=20.8 day's

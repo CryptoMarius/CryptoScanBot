@@ -34,26 +34,25 @@ public class PaperAssetsTests : TestBase
         CryptoAsset assetQuote = new()
         {
             Name = symbol.Quote,
-            TradeAccountId = GlobalData.ActiveAccount!.Id,
             Total = 1000,
             Free = 1000,
             Locked = 0,
         };
-        GlobalData.ActiveAccount!.Data.AssetList.Add(assetQuote.Name, assetQuote);
+        GlobalData.ActiveExchange!.Data.AssetList.Add(assetQuote.Name, assetQuote);
         database.Connection.Insert(assetQuote);
 
-        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, symbol, CryptoSignalStrategy.Stobb,
-            CryptoTradeSide.Long, symbol.IntervalPeriodList[0], startTime);
+        CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
+            CryptoTradeSide.Long, symbol.Data.SymbolIntervalList[0], startTime);
 
         // act
         TradeParams tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, 5.6261m, 0.53m);
-        PaperAssets.Change(position.Account, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
+        PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
             CryptoOrderStatus.New, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.1");
         Assert.AreEqual(assetQuote.Total, 1000m);
         Assert.AreEqual(assetQuote.Locked, 2.981833m);
         Assert.AreEqual(assetQuote.Free, 997.018167m);
 
-        PaperAssets.Change(position.Account, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
+        PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
             CryptoOrderStatus.Filled, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.2");
         Assert.AreEqual(assetQuote.Total, 1000m - 2.981833m);
         Assert.AreEqual(assetQuote.Locked, 0);

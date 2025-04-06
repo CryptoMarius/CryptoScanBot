@@ -79,17 +79,8 @@ public class SettingsGeneralStoch
 public class SettingsGeneral
 {
     public string ExtraCaption { get; set; } = "";
-
-    // What exchange
     public string ExchangeName { get; set; } = "Bybit Spot";
-    [Computed]
-    public int ExchangeId { get; set; } = 2;
-    [Computed]
-    [JsonIgnore]
-    public virtual Model.CryptoExchange? Exchange { get; set; }
-
     public string ActivateExchangeName { get; set; } = "";
-
 
     public bool BlackTheming { get; set; } = false;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
@@ -113,19 +104,10 @@ public class SettingsGeneral
     public int SoundHeartBeatMinutes { get; set; } = 0;
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
-
+    public SettingsGeneralBB SettingsBb { get; set; } = new();
     public SettingsGeneralRsi SettingsRsi { get; set; } = new();
     public SettingsGeneralStoch SettingsStoch { get; set; } = new();
-
-    /// <summary>
-    /// Standard Deviation for the Bollingerbands indicator
-    /// </summary>
-    public double BbStdDeviation { get; set; } = 2.0;
-    public int BbLength{ get; set; } = 20;
-    public SettingsGeneralBB SettingsBb { get; set; } = new();
-
-
-
+    
     public string DebugSymbol { get; set; } = "";
     public bool DebugKLineReceive { get; set; } = false;
     public bool DebugSignalCreate { get; set; } = false;

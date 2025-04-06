@@ -10,7 +10,7 @@ public partial class FrmSettings : Form
 {
     private SettingsBasic? settings;
 
-    private readonly SortedList<string, CryptoAccountType> TradeVia = [];
+    private readonly SortedList<string, CryptoTradeVia> TradeVia = [];
 
 
     public Core.Model.CryptoExchange? NewExchange { get; set; }
@@ -39,9 +39,9 @@ public partial class FrmSettings : Form
 
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
-        TradeVia.Add("Papertrading", CryptoAccountType.PaperTrade);
+        TradeVia.Add("Papertrading", CryptoTradeVia.PaperTrade);
         //TradeVia.Add("Trading exchange", CryptoAccountType.RealTrading); removed until further notice
-        TradeVia.Add("Altrady webhook", CryptoAccountType.Altrady);
+        TradeVia.Add("Altrady webhook", CryptoTradeVia.Altrady);
 
         EditTradeVia.DataSource = new BindingSource(TradeVia, null);
         EditTradeVia.DisplayMember = "Key";
@@ -80,16 +80,16 @@ public partial class FrmSettings : Form
         EditExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
         EditExchange.DisplayMember = "Key";
         EditExchange.ValueMember = "Value";
-        try { EditExchange.SelectedValue = settings.General.Exchange; } catch { }
+        try { EditExchange.SelectedValue = GlobalData.ActiveExchange; } catch { }
 
 
         EditActivateExchange.DataSource = new BindingSource(GlobalData.ExchangeListName, null);
         EditActivateExchange.DisplayMember = "Key";
         EditActivateExchange.ValueMember = "Value";
-        if (GlobalData.ExchangeListName.TryGetValue(settings.General.ActivateExchangeName, out Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ActivateExchangeName, out Core.Model.CryptoExchange? exchange))
             try { EditActivateExchange.SelectedValue = exchange; } catch { }
         else
-            try { EditActivateExchange.SelectedValue = settings.General.Exchange; } catch { }
+            try { EditActivateExchange.SelectedValue = GlobalData.ActiveExchange; } catch { }
 
 
         EditBlackTheming.Checked = settings.General.BlackTheming;
@@ -121,6 +121,11 @@ public partial class FrmSettings : Form
         EditBbLength.Value = settings.General.SettingsBb.Length;
         EditBbStdDeviation.Value = (decimal)settings.General.SettingsBb.Deviation;
 
+        // Trend calculation
+        UserControlTrendPrimary.LoadConfig("Primary trend", settings.Trend.Primary);
+        UserControlTrendSecondary.LoadConfig("Secondary trend", settings.Trend.Secondary);
+
+        // Telegram
         UserControlTelegram.LoadConfig();
 
         //#if DEBUG
@@ -241,9 +246,8 @@ public partial class FrmSettings : Form
         // Dominant ZonesDlz
         UserControlIntervalZonesDominant.LoadConfig(settings.Signal.ZonesDlz.IntervalList);
         UserControlSettingsSoundAndColorsZonesDominant.LoadConfig("Zones", settings.Signal.ZonesDlz);
+        UserControlZoneZigZagSettings.LoadConfig("Zone calculation", settings.Signal.ZonesDlz.ZigZag);
 
-        EditShowZoneSignalsLong.Checked = settings.Signal.ZonesDlz.ShowSignalsLong;
-        EditShowZoneSignalsShort.Checked = settings.Signal.ZonesDlz.ShowSignalsShort;
         EditZonesCandleCount.Value = settings.Signal.ZonesDlz.CandleCount;
         EditZonesWarnPercentage.Value = (decimal)settings.Signal.ZonesDlz.WarnPercentage;
         //EditZonesInterval.Value = settings.Signal.ZonesDlz.Interval; hardcoded 1h for now
@@ -264,8 +268,6 @@ public partial class FrmSettings : Form
         // ZonesDlz FVG
         UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.ZonesFvg);
-        EditShowFvgSignalsLong.Checked = settings.Signal.ZonesFvg.ShowSignalsLong;
-        EditShowFvgSignalsShort.Checked = settings.Signal.ZonesFvg.ShowSignalsShort;
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
 
         // --------------------------------------------------------------------------------
@@ -370,9 +372,9 @@ public partial class FrmSettings : Form
         NewExchange = (Core.Model.CryptoExchange)EditExchange.SelectedValue;
         Core.Model.CryptoExchange? NewActivateExchange = (Core.Model.CryptoExchange)EditActivateExchange.SelectedValue;
         if (NewActivateExchange != null)
-            settings.General.ActivateExchangeName = NewActivateExchange.Name;
+            GlobalData.Settings.General.ActivateExchangeName = NewActivateExchange.Name;
         else
-            settings.General.ActivateExchangeName = NewExchange.Name;
+            GlobalData.Settings.General.ActivateExchangeName = NewExchange.Name;
 
         // Don't save immediately, lots of data still in memory etc
         //settings.General.ActivateExchange = EditActivateExchange.SelectedIndex;
@@ -410,6 +412,11 @@ public partial class FrmSettings : Form
         settings.General.SettingsBb.Length = (int)EditBbLength.Value;
         settings.General.SettingsBb.Deviation = (double)EditBbStdDeviation.Value;
 
+        // Trend calculation
+        UserControlTrendPrimary.SaveConfig(settings.Trend.Primary);
+        UserControlTrendSecondary.SaveConfig(settings.Trend.Secondary);
+
+        // Telegram
         UserControlTelegram.SaveConfig();
 
 
@@ -523,9 +530,8 @@ public partial class FrmSettings : Form
         // Dominant ZonesDlz
         UserControlIntervalZonesDominant.SaveConfig(settings.Signal.ZonesDlz.IntervalList);
         UserControlSettingsSoundAndColorsZonesDominant.SaveConfig(settings.Signal.ZonesDlz);
+        UserControlZoneZigZagSettings.SaveConfig(settings.Signal.ZonesDlz.ZigZag);
 
-        settings.Signal.ZonesDlz.ShowSignalsLong = EditShowZoneSignalsLong.Checked;
-        settings.Signal.ZonesDlz.ShowSignalsShort = EditShowZoneSignalsShort.Checked;
         settings.Signal.ZonesDlz.CandleCount = (int)EditZonesCandleCount.Value;
         settings.Signal.ZonesDlz.WarnPercentage = EditZonesWarnPercentage.Value;
         settings.Signal.ZonesDlz.CandleCountZoom = (int)EditZonesCandleCountZoom.Value;
@@ -546,8 +552,6 @@ public partial class FrmSettings : Form
         // FVG
         UserControlIntervalZonesFvg.SaveConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.SaveConfig(settings.Signal.ZonesFvg);
-        settings.Signal.ZonesFvg.ShowSignalsLong = EditShowFvgSignalsLong.Checked;
-        settings.Signal.ZonesFvg.ShowSignalsShort = EditShowFvgSignalsShort.Checked;
         settings.Signal.ZonesFvg.MinimumPercentage = (double)EditZonesFvgMinimumPercentage.Value;
 
         // --------------------------------------------------------------------------------
@@ -592,7 +596,7 @@ public partial class FrmSettings : Form
         // --------------------------------------------------------------------------------
         // Trade bot
         // --------------------------------------------------------------------------------
-        settings.Trading.TradeVia = (CryptoAccountType)EditTradeVia.SelectedValue;
+        settings.Trading.TradeVia = (CryptoTradeVia)EditTradeVia.SelectedValue;
         settings.Trading.DisableNewPositions = EditDisableNewPositions.Checked;
         settings.General.SoundTradeNotification = EditSoundTradeNotification.Checked;
 
@@ -673,4 +677,5 @@ public partial class FrmSettings : Form
     {
 
     }
+
 }

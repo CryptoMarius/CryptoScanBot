@@ -89,7 +89,7 @@ public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experime
 //            CryptoCandle candle = History[i];
 
 //            newLine = string.Format("{0};{1};{2};{3};{4};{5};{6}",
-//            candle.Date.ToString(),
+//            candle.Time.ToString(),
 //            candle.IntervalId.ToString(),
 //            candle.Open.ToString(),
 //            candle.High.ToString(),

@@ -1,31 +1,33 @@
 ﻿using CryptoScanBot.Core.Barometer;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Account;
+namespace CryptoScanBot.Core.Model;
 
-public class AccountData
+public class CryptoExchangeData
 {
+    // Trade rulez
     // Pausing because of trading rules
     public PauseTradingRule PauseTrading { get; } = new();
 
+
+    // Quotes
     // Account data per quote for the barometer and pauzing rules
     // Key = QuoteName
-    public Dictionary<string, AccountQuote> QuoteDataList { get; set; } = [];
+    public Dictionary<string, CryptoQuoteData> QuoteDataList { get; set; } = [];
 
 
+    // Assets
     // Assets + locking (unused as we are aiming for Altrady as platform)
     // Key = assetName
     public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
     public DateTime? LastRefreshAssets { get; set; } = null;
     public SortedList<string, CryptoAsset> AssetList { get; } = [];
 
-    // Symbol data like trend and zones
-    // Key = symbolName
-    public Dictionary<string, AccountSymbol> SymbolDataList { get; set; } = [];
 
+    // Open positions
     // Open positions Key = symbolName
+    // (for speed we have removed this from the symbol data)
     public SortedList<string, CryptoPosition> PositionList { get; } = [];
 
 
@@ -43,15 +45,14 @@ public class AccountData
         QuoteDataList.Clear();
 
         PositionList.Clear();
-        SymbolDataList.Clear();
     }
 
 
-    private AccountQuote GetQuoteData(string quoteName)
+    private CryptoQuoteData GetQuoteData(string quoteName)
     {
-        if (!QuoteDataList.TryGetValue(quoteName, out AccountQuote? quoteData))
+        if (!QuoteDataList.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
         {
-            quoteData = new() { QuoteName = quoteName };
+            quoteData = new() { Name = quoteName };
             QuoteDataList.TryAdd(quoteName, quoteData);
         }
         return quoteData;
@@ -60,27 +61,27 @@ public class AccountData
 
     public BarometerData GetBarometer(string quoteName, CryptoIntervalPeriod intervalPeriod)
     {
-        AccountQuote quoteData = GetQuoteData(quoteName);
+        CryptoQuoteData quoteData = GetQuoteData(quoteName);
         return quoteData.BarometerDataList[intervalPeriod];
     }
 
 
     public PauseBarometer GetPauseRule(string quoteName, CryptoTradeSide side)
     {
-        AccountQuote quoteData = GetQuoteData(quoteName);
+        CryptoQuoteData quoteData = GetQuoteData(quoteName);
         return quoteData.PauseBarometerList[side];
     }
 
 
-    public AccountSymbol GetSymbolData(string symbolName)
-    {
-        if (!SymbolDataList.TryGetValue(symbolName, out AccountSymbol? symbolData))
-        {
-            symbolData = new() { SymbolName = symbolName };
-            SymbolDataList.TryAdd(symbolName, symbolData);
-        }
-        return symbolData;
-    }
+    //public CryptoSymbolData GetSymbolData(string symbolName)
+    //{
+    //    if (!SymbolDataList.TryGetValue(symbolName, out CryptoSymbolData? symbolData))
+    //    {
+    //        symbolData = new() { SymbolName = symbolName };
+    //        SymbolDataList.TryAdd(symbolName, symbolData);
+    //    }
+    //    return symbolData;
+    //}
 
 
     //public AccountSymbolInterval GetSymbolTrendData(string symbolName, CryptoIntervalPeriod intervalPeriod)

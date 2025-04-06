@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalBbRsiEngulfingLong : SignalCreateBase
 {
-    public SignalBbRsiEngulfingLong(CryptoAccount account, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(account, symbol, interval, candle)
+    public SignalBbRsiEngulfingLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         SignalSide = CryptoTradeSide.Long;
         SignalStrategy = CryptoSignalStrategy.BbRsiEngulfing;

@@ -25,7 +25,7 @@ public class Order() : OrderBase(), IOrder
     }
 
 
-    public static void PickupOrder(CryptoAccount tradeAccount, CryptoSymbol symbol, CryptoOrder order, OrderStatus item)
+    public static void PickupOrder(CryptoSymbol symbol, CryptoOrder order, OrderStatus item)
     {
         throw new NotImplementedException();
     }

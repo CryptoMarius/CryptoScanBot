@@ -13,10 +13,6 @@ public class CryptoOrder
     public DateTime CreateTime { get; set; }
     public DateTime UpdateTime { get; set; }
 
-    public int TradeAccountId { get; set; }
-    [Computed]
-    public virtual required CryptoAccount TradeAccount { get; set; }
-
     public int ExchangeId { get; set; }
     [Computed]
     public virtual required CryptoExchange Exchange { get; set; }

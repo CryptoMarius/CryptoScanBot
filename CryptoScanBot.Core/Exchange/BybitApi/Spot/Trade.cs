@@ -210,12 +210,11 @@ public class Trade() : TradeBase(), ITrade
     //                        {
     //                            trade = new()
     //                            {
-    //                                TradeAccount = position.Account!,
     //                                Exchange = position.Exchange,
     //                                Symbol = position.Symbol,
     //                            };
 
-    //                            PickupTrade(position.Account, position.Symbol, trade, item);
+    //                            PickupTrade(position.Symbol, trade, item);
     //                            string text = JsonSerializer.Serialize(item, JsonTools.JsonSerializerNotIndented).Trim();
     //                            ScannerLog.Logger.Trace($"{item.Symbol} Trade added json={text}");
 

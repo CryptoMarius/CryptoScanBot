@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
 public class Asset() : AssetBase(), IAsset
 {
-    public Task GetAssets(CryptoAccount tradeAccount)
+    public Task GetAssets(Model.CryptoExchange activeExchange)
     {
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
         {

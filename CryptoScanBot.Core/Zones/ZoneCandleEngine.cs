@@ -13,7 +13,7 @@ public class ZoneCandleEngine
     private static async Task ReadFromBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
     {
         // json does take a lot of memory
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
@@ -39,7 +39,7 @@ public class ZoneCandleEngine
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
     }
 
@@ -63,7 +63,7 @@ public class ZoneCandleEngine
         // json does take a lot of memory
         CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
             //using ZipArchive zipStream = new(writeStream, ZipArchiveMode.Create, true);
@@ -95,7 +95,7 @@ public class ZoneCandleEngine
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
     }
 
@@ -103,7 +103,7 @@ public class ZoneCandleEngine
 
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        foreach (CryptoSymbolInterval symbolInterval in symbol.IntervalPeriodList)
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
@@ -132,10 +132,10 @@ public class ZoneCandleEngine
     /// </summary>
     public static async Task CleanLoadedCandlesAsync(CryptoSymbol symbol)
     {
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
-            foreach (var symbolInterval in symbol.IntervalPeriodList)
+            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
             {
                 //int cleaned = symbolInterval.CandleList.Count;
                 // Remove old candles
@@ -181,7 +181,7 @@ public class ZoneCandleEngine
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
     }
 

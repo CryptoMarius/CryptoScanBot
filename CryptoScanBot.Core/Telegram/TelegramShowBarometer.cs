@@ -26,7 +26,7 @@ public class TelegramShowBarometer
                 if (intervalPeriod == CryptoIntervalPeriod.interval5m || intervalPeriod == CryptoIntervalPeriod.interval15m || intervalPeriod == CryptoIntervalPeriod.interval30m ||
                      intervalPeriod == CryptoIntervalPeriod.interval1h || intervalPeriod == CryptoIntervalPeriod.interval4h || intervalPeriod == CryptoIntervalPeriod.interval1d)
                 {
-                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+                    BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
                     stringbuilder.AppendLine(string.Format("{0} {1:N2}", intervalPeriod, barometerData.PriceBarometer));
                 }
             }

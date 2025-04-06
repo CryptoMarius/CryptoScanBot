@@ -14,21 +14,21 @@ namespace CryptoScanBot.Core.Exchange.Binance.Spot;
 
 public class Asset() : AssetBase(), IAsset
 {
-    public static void PickupAssets(CryptoAccount tradeAccount, IEnumerable<BinanceStreamBalance> balances)
+    public static void PickupAssets(Model.CryptoExchange activeExchange, IEnumerable<BinanceStreamBalance> balances)
     {
-        tradeAccount.Data.AssetListSemaphore.Wait();
+        activeExchange.Data.AssetListSemaphore.Wait();
         {
             try
             {
                 foreach (var assetInfo in balances)
                 {
-                    if (!tradeAccount.Data.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
+                    if (!activeExchange.Data.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                     {
                         asset = new CryptoAsset()
                         {
                             Name = assetInfo.Asset,
                         };
-                        tradeAccount.Data.AssetList.Add(asset.Name, asset);
+                        activeExchange.Data.AssetList.Add(asset.Name, asset);
                     }
                     asset.Free = assetInfo.Available;
                     asset.Total = assetInfo.Total;
@@ -36,28 +36,28 @@ public class Asset() : AssetBase(), IAsset
                 }
 
                 // remove assets with total=0
-                foreach (var asset in tradeAccount.Data.AssetList.Values.ToList())
+                foreach (var asset in activeExchange.Data.AssetList.Values.ToList())
                 {
                     if (asset.Total == 0)
                     {
                         //TODO: Save in database?
 
-                        tradeAccount.Data.AssetList.Remove(asset.Name);
+                        activeExchange.Data.AssetList.Remove(asset.Name);
                     }
                 }
 
             }
             finally
             {
-                tradeAccount.Data.AssetListSemaphore.Release();
+                activeExchange.Data.AssetListSemaphore.Release();
             }
         }
     }
 
 
-    public static void PickupAssets(CryptoAccount tradeAccount, IEnumerable<BinanceBalance> balances)
+    public static void PickupAssets(Model.CryptoExchange activeExchange, IEnumerable<BinanceBalance> balances)
     {
-        tradeAccount.Data.AssetListSemaphore.Wait();
+        activeExchange.Data.AssetListSemaphore.Wait();
         try
         {
             using CryptoDatabase databaseThread = new();
@@ -70,14 +70,13 @@ public class Asset() : AssetBase(), IAsset
                 {
                     if (assetInfo.Total > 0)
                     {
-                        if (!tradeAccount.Data.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
+                        if (!activeExchange.Data.AssetList.TryGetValue(assetInfo.Asset, out CryptoAsset? asset))
                         {
                             asset = new CryptoAsset()
                             {
                                 Name = assetInfo.Asset,
-                                TradeAccountId = tradeAccount.Id,
                             };
-                            tradeAccount.Data.AssetList.Add(asset.Name, asset);
+                            activeExchange.Data.AssetList.Add(asset.Name, asset);
                         }
                         asset.Free = assetInfo.Available;
                         asset.Total = assetInfo.Total;
@@ -90,12 +89,12 @@ public class Asset() : AssetBase(), IAsset
                 }
 
                 // remove assets with total=0
-                foreach (var asset in tradeAccount.Data.AssetList.Values.ToList())
+                foreach (var asset in activeExchange.Data.AssetList.Values.ToList())
                 {
                     if (asset.Total == 0)
                     {
                         databaseThread.Connection.Delete(asset, transaction);
-                        tradeAccount.Data.AssetList.Remove(asset.Name);
+                        activeExchange.Data.AssetList.Remove(asset.Name);
                     }
                 }
 
@@ -112,13 +111,13 @@ public class Asset() : AssetBase(), IAsset
         }
         finally
         {
-            tradeAccount.Data.AssetListSemaphore.Release();
+            activeExchange.Data.AssetListSemaphore.Release();
         }
     }
 
 
 
-    public async Task GetAssets(CryptoAccount tradeAccount)
+    public async Task GetAssets(Model.CryptoExchange activeExchange)
     {
         //ScannerLog.Logger.Trace($"Exchange.Binance.GetAssetsForAccountAsync: Positie {tradeAccount.Name}");
         //if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out Model.CryptoExchange? exchange))
@@ -144,7 +143,7 @@ public class Asset() : AssetBase(), IAsset
 
                     try
                     {
-                        PickupAssets(tradeAccount, accountInfo.Data.Balances);
+                        PickupAssets(activeExchange, accountInfo.Data.Balances);
                         GlobalData.AssetsHaveChanged("");
                     }
                     catch (Exception error)

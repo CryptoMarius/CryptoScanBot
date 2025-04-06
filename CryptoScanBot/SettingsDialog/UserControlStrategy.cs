@@ -16,8 +16,8 @@ public partial class UserControlStrategy : UserControl
     {
         foreach (var signalDefinition in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
-            if (!isForTrading && signalDefinition.Strategy >= CryptoSignalStrategy.DominantLevelNear)
-                continue;
+            //if (!isForTrading && signalDefinition.Strategy >= CryptoSignalStrategy.DominantLevelNear)
+            //    continue;
             if (isForTrading && signalDefinition.Strategy == CryptoSignalStrategy.Jump)
                 continue;
 
@@ -30,6 +30,9 @@ public partial class UserControlStrategy : UserControl
                 UseVisualStyleBackColor = true,
                 Text = RegisterAlgorithms.GetAlgorithm(signalDefinition.Strategy),
             };
+            // Add an asterix for the DLZ, DLZ.Near en FVG (interval related)
+            //if (signalDefinition.Strategy >= CryptoSignalStrategy.DominantLevelNear)
+            //    checkbox.Text += '*';
             flowLayoutPanel1.Controls.Add(checkbox);
 
             if (validStrategy)

@@ -1048,7 +1048,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     //    // De rest van de commando's heeft een object nodig
     //    var (succes, _, _, signal, _, _) = CommandTools.GetAttributesFromSender(SelectedObject);
-    //    if (succes && (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.Altrady))
+    //    if (succes && (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.CryptoAccountType.Altrady))
     //    {
     //        CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
     //        CryptoPosition position = PositionTools.CreatePosition(GlobalData.ActiveAccount!, signal.Symbol, signal.Strategy, signal.Side, symbolInterval, signal.CloseTime);

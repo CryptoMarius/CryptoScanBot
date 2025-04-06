@@ -77,7 +77,7 @@ public class SettingsTrading
     // Account - Positie gerelateerd
 
     // De 3 account types zijn raar gekozen
-    public CryptoAccountType TradeVia { get; set; } = CryptoAccountType.PaperTrade;
+    public CryptoTradeVia TradeVia { get; set; } = CryptoTradeVia.PaperTrade;
 
     // Trade via exchange (instelling enkel omdat we nu keuze hebben)
     public bool TradeViaExchange { get; set; } = false;

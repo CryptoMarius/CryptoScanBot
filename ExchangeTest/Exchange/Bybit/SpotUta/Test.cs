@@ -8,7 +8,7 @@ namespace ExchangeTest.Exchange.Bybit.SpotUta;
 internal class Test
 {
 
-    public static async void ByBitUtaSpotTestAsync()
+    public static void ByBitUtaSpotTestAsync()
     {
         GlobalData.LoadSettings();
 

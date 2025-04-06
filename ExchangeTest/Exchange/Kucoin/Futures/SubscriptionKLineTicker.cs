@@ -27,7 +27,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     //}
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
@@ -157,8 +157,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //                        {
         //                            klineListTemp.Remove(candle.OpenTime);
 
-        //                            //Process1mCandle(Symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
-        //                            CandleTools.CreateCandle(Symbol, interval, candle.Date, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        //                            //Process1mCandle(Symbol, candle.Time, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        //                            CandleTools.CreateCandle(Symbol, interval, candle.Time, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
         //                            //SaveCandleAndUpdateHigherTimeFrames(Symbol, candle);
         //                            // Calculate higher timeframes
         //                            long candle1mCloseTime = candle.OpenTime + interval.Duration;

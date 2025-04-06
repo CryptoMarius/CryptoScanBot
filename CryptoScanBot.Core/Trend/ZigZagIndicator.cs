@@ -3,18 +3,6 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Trend;
 
-// 3 purposes
-// -Primary trend (rough trend)
-// -Secondary trend (fine trend)
-// -Fib (should be via high/low)
-// -Dtb (experimental double top/bottom via points)
-
-public enum TrendType
-{
-    Primary,
-    Secondary
-}
-
 public class ZigZagIndicator
 {
     private bool UseHighLow { get; set; } = false; // Use High/Low or Open/Close
@@ -33,9 +21,9 @@ public class ZigZagIndicator
     public List<ZigZagResult> PivotList = []; // All l/h points (for determining high/low)
     public List<ZigZagResult> ZigZagList { get; set; } = []; // The resulting zigzag points
 
-    public ZigZagResult? LastSwingLow = null; // the last Low ZigZag
-    public ZigZagResult? LastSwingHigh = null; // the last High ZigZag
-    public ZigZagResult? LastSwingPoint = null; // the last ZigZag added
+    public ZigZagResult? LastSwingLow = null; // the last Low Primary
+    public ZigZagResult? LastSwingHigh = null; // the last High Primary
+    public ZigZagResult? LastSwingPoint = null; // the last Primary added
 
     private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
@@ -240,7 +228,7 @@ public class ZigZagIndicator
     private void RemoveDummyPoints()
     {
         // Fixes because of unnoticed BOS at the right
-        // Remove the dummy ZigZag points
+        // Remove the dummy Primary points
         if (AddedDummyZigZag.Count > 0)
         {
             foreach (var zigZag in AddedDummyZigZag)
@@ -416,7 +404,7 @@ public class ZigZagIndicator
     public void Calculate(CryptoCandle candle, bool batchProcess)
     {
         CandleCount++;
-        //if (candle!.Date >= new DateTime(2024, 11, 15, 5+2, 00, 0, DateTimeKind.Utc))
+        //if (candle!.Time >= new DateTime(2024, 11, 15, 5+2, 00, 0, DateTimeKind.Utc))
         //    candle = candle; // debug 
 
         // we need buffer of 8 candles to detect a low or high point

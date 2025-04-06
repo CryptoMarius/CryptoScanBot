@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Barometer;
 public static class BarometerHelper
 {
 
-    public static bool CheckValidBarometer(CryptoAccount account, string quoteName, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
+    public static bool CheckValidBarometer(Model.CryptoExchange activeExchange, string quoteName, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
         if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
         {
@@ -16,7 +16,7 @@ public static class BarometerHelper
         }
 
         // We gaan ervan uit dat alles in 1x wordt berekend
-        BarometerData? barometerData = account.Data.GetBarometer(quoteName, intervalPeriod);
+        BarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, intervalPeriod);
         if (!barometerData.PriceBarometer.HasValue)
         {
             reaction = $"Barometer {interval.Name} not calculated";
@@ -41,11 +41,11 @@ public static class BarometerHelper
     }
 
 
-    public static bool ValidBarometerConditions(CryptoAccount account, string quoteName, Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> barometer, out string reaction)
+    public static bool ValidBarometerConditions(Model.CryptoExchange activeExchange, string quoteName, Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> barometer, out string reaction)
     {
         foreach (KeyValuePair<CryptoIntervalPeriod, (decimal, decimal)> item in barometer)
         {
-            if (!CheckValidBarometer(account, quoteName, item.Key, item.Value, out reaction))
+            if (!CheckValidBarometer(activeExchange, quoteName, item.Key, item.Value, out reaction))
                 return false;
         }
 

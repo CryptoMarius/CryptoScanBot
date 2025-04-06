@@ -36,7 +36,7 @@ public class ZoneThreadCalculate
                 //GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name} {interval.Name}");
 
                 var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                var symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
+                var symbolData = symbol.Data;
                 var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
 
 
@@ -46,29 +46,29 @@ public class ZoneThreadCalculate
                     SymbolQuote = symbol.Quote,
                     IntervalName = interval.Name,
                     ActiveInterval = interval.IntervalPeriod,
-                    ShowLiqBoxes = true,
-                    ZoomLiqBoxes = GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames,
-                    ShowLiqZigZag = false,
-                    ShowFib = false,
-                    ShowFibZigZag = false,
+                    DlzShowBoxes = true,
+                    DlzZoomBoxes = GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames,
+                    FibShowRetracement = false,
+                    FibShowZigZag = false,
                     ForceCalculation = true,
                     UseBatchProcess = true,
-                    TrendType = GlobalData.Settings.Signal.ZonesDlz.TrendType,
-                    UseHighLow = GlobalData.Settings.Signal.ZonesDlz.UseHighLow,
                     UseOptimizing = false,
                     Deviation = 1.0m,
+                    TrendType = TrendType.Primary,
                 };
                 
 
-                ZoneData data = new()
+                ZoneConfig data = new()
                 {
-                    Account = GlobalData.ActiveAccount!,
                     Exchange = symbol.Exchange,
                     Symbol = symbol,
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                 };
-                data.IndicatorList.Add((session.TrendType, session.UseHighLow), new(session.TrendType, session.UseHighLow, session.Deviation));
+                //var trend = session.ShowPrimary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
+                data.IndicatorList.Add((trend.TrendType, trend.UseHighLow), 
+                    new(trend.TrendType, trend.UseHighLow, 1.0m));
 
 
 
@@ -77,21 +77,21 @@ public class ZoneThreadCalculate
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
                 // avoid candles being removed...
-                symbol.CalculatingZones = true;
+                symbol.Data.CalculatingZones = true;
                 try
                 {
                     session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
                     session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
                     session.MinDate = session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
-                    await ZoneDlz.CalculateDlzZonesAsync(null, session, data, loadedCandlesInMemory);
-                    await ZoneFvg.CalculateFvgZonesAsync(null, data.Account, data.Symbol, interval, loadedCandlesInMemory);
+                    await ZoneDlz.CalculateDlzBoxesAsync(null, session, data, loadedCandlesInMemory);
+                    await ZoneFvg.CalculateFvgZonesAsync(null, data.Symbol, interval, loadedCandlesInMemory);
                 }
                 finally
                 {
                     await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
                     loadedCandlesInMemory.Clear();
                     _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
-                    symbol.CalculatingZones = false;
+                    symbol.Data.CalculatingZones = false;
                 }
 
             }
@@ -137,9 +137,9 @@ public class ZoneThreadCalculate
 
     public static void CalculateZonesForAllSymbolsAsync()
     {
-        if (GlobalData.Settings.General.Exchange != null)
+        if (GlobalData.ActiveExchange != null)
         {
-            foreach (var symbol in GlobalData.Settings.General.Exchange.SymbolListName.Values)
+            foreach (var symbol in GlobalData.ActiveExchange.SymbolListName.Values)
             {
                 foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList.ToList())
                 {

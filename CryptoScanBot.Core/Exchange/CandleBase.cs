@@ -95,7 +95,7 @@ public class CandleBase(ExchangeBase api)
                                     }
 
                                     // Er is niet geswitched van exchange (omdat het ophalen zo lang duurt)
-                                    if (symbol.ExchangeId == GlobalData.Settings.General.ExchangeId)
+                                    if (symbol.ExchangeId == GlobalData.ActiveExchange!.Id)
                                     {
                                         CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
                                         await GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
@@ -156,7 +156,7 @@ public class CandleBase(ExchangeBase api)
         }
 
 
-        await symbol.CandleLock.WaitAsync();
+        await symbol.Data.CandleLock.WaitAsync();
         try
         {
             // Add missing candles (the only place we know it can be done safely)
@@ -172,7 +172,7 @@ public class CandleBase(ExchangeBase api)
         }
         finally
         {
-            symbol.CandleLock.Release();
+            symbol.Data.CandleLock.Release();
         }
 
 

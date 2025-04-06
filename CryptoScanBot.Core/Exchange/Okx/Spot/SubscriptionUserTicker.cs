@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Exchange.Okx.Spot;
 
 public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         throw new NotImplementedException();
     }

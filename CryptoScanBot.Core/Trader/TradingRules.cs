@@ -10,7 +10,7 @@ public static class TradingRules
     private static void CalculateTradingRules(PauseTradingRule pause, long candleUnixDate, int candleDuration)
     {
         // Als een munt (met name BTC) snel gedaald is dan stoppen
-        var exchange = GlobalData.Settings.General.Exchange;
+        var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
             int index = 0;
@@ -108,10 +108,10 @@ public static class TradingRules
 
 
     /// Check barometer(s) and cache that value
-    public static bool CheckBarometerConditions(CryptoAccount tradeAccount, string quoteName, CryptoTradeSide side, long candleUnixDate, uint candleDuration, out string reaction)
+    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, string quoteName, CryptoTradeSide side, long candleUnixDate, uint candleDuration, out string reaction)
     {
         reaction = "";
-        PauseBarometer? pause = tradeAccount.Data.GetPauseRule(quoteName, side);
+        PauseBarometer? pause = activeExchange.Data.GetPauseRule(quoteName, side);
 
         // Ongeveer iedere minuut c.q. candle berekenen
         DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(candleUnixDate + candleDuration);
@@ -123,7 +123,7 @@ public static class TradingRules
             pause.Text = "";
             pause.Calculated = lastCandle1mCloseTime;
 
-            if (!BarometerHelper.ValidBarometerConditions(tradeAccount, quoteName, TradingConfig.Trading[side].Barometer, out reaction))
+            if (!BarometerHelper.ValidBarometerConditions(activeExchange, quoteName, TradingConfig.Trading[side].Barometer, out reaction))
                 pause.Text = reaction;
             if (pause.Text != "")
             {

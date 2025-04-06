@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Core.Account;
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Trend;
 
 using System.Text;
@@ -10,24 +10,26 @@ namespace CryptoScanBot.Commands;
 
 public class CommandShowTrendInfo : CommandBase
 {
-    public override void Execute(ToolStripMenuItemCommand item, object sender)
+    public override async void Execute(ToolStripMenuItemCommand item, object sender)
     {
         if (sender is CryptoSymbol symbol)
         {
+            SettingsZigZag trend = GlobalData.Settings.Trend.Primary;
+
             StringBuilder log = new();
             log.AppendLine($"Markettrend {symbol.Name}");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
-            AccountSymbol accountSymbol = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
-            SymbolTrend symbolTrend = accountSymbol.TrendPrimary;
-            _ = MarketTrend.CalculateMarketTrendAsync(symbol, accountSymbol, symbolTrend, TrendType.Primary, 0, 0, log);
+
+            CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend, 0, 0, log);
 
             log.AppendLine("");
             log.AppendLine("");
 
             foreach (var interval in GlobalData.IntervalList)
             {
-                var intervalTrend = symbolTrend.Get(interval.IntervalPeriod);
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
 
                 string s;
                 if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)

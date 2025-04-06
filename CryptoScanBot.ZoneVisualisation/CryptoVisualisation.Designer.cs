@@ -29,29 +29,24 @@ partial class CryptoVisualisation
     private void InitializeComponent()
     {
         flowLayoutPanel1 = new FlowLayoutPanel();
-        EditTransparant = new CheckBox();
-        EditShowPivots = new CheckBox();
-        EditShowSignals = new CheckBox();
+        groupBox2 = new GroupBox();
         label1 = new Label();
-        EditSymbolBase = new ComboBox();
-        label3 = new Label();
-        EditSymbolQuote = new ComboBox();
-        labelInterval2 = new Label();
         EditIntervalName = new ComboBox();
-        label4 = new Label();
-        EditDeviation = new NumericUpDown();
-        EditUseOptimizing = new CheckBox();
-        EditShowLiqBoxes = new CheckBox();
-        EditZoomLiqBoxes = new CheckBox();
-        EditShowZigZag = new CheckBox();
-        EditShowSecondary = new CheckBox();
-        ButtonRefresh = new Button();
-        ButtonCalculate = new Button();
-        ButtonZoomLast = new Button();
-        EditShowFib = new CheckBox();
-        EditShowFibZigZag = new CheckBox();
-        EditShowFvgZones = new CheckBox();
-        EditShowDtb = new CheckBox();
+        labelInterval2 = new Label();
+        EditSymbolQuote = new ComboBox();
+        label3 = new Label();
+        EditSymbolBase = new ComboBox();
+        groupBox5 = new GroupBox();
+        EditTrendShowZigZag = new CheckBox();
+        EditTrendType = new ComboBox();
+        groupBox3 = new GroupBox();
+        EditDlzShow = new CheckBox();
+        EditDlzShowZigZag = new CheckBox();
+        EditDlzZoom = new CheckBox();
+        groupBox4 = new GroupBox();
+        EditFibTrend = new ComboBox();
+        EditFibShow = new CheckBox();
+        EditFibZhowZigZag = new CheckBox();
         panel1 = new Panel();
         labelInterval = new Label();
         ButtonPlus = new Button();
@@ -60,283 +55,244 @@ partial class CryptoVisualisation
         labelMaxTime = new Label();
         ButtonGoRight = new Button();
         ButtonGoLeft = new Button();
-        EditShowPositions = new CheckBox();
+        ButtonRefresh = new Button();
+        ButtonCalculate = new Button();
+        ButtonZoomLast = new Button();
+        groupBox1 = new GroupBox();
+        EditTransparant = new CheckBox();
+        EditShowPivots = new CheckBox();
+        EditShowSignals = new CheckBox();
+        EditShowDtb = new CheckBox();
+        EditShowFvgZones = new CheckBox();
         EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        EditUseHighLow = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditDeviation).BeginInit();
+        groupBox2.SuspendLayout();
+        groupBox5.SuspendLayout();
+        groupBox3.SuspendLayout();
+        groupBox4.SuspendLayout();
         panel1.SuspendLayout();
         PanelPlayBack.SuspendLayout();
+        groupBox1.SuspendLayout();
         SuspendLayout();
         // 
         // flowLayoutPanel1
         // 
         flowLayoutPanel1.AutoSize = true;
-        flowLayoutPanel1.Controls.Add(EditTransparant);
-        flowLayoutPanel1.Controls.Add(EditShowPivots);
-        flowLayoutPanel1.Controls.Add(EditShowSignals);
-        flowLayoutPanel1.Controls.Add(label1);
-        flowLayoutPanel1.Controls.Add(EditSymbolBase);
-        flowLayoutPanel1.Controls.Add(label3);
-        flowLayoutPanel1.Controls.Add(EditSymbolQuote);
-        flowLayoutPanel1.Controls.Add(labelInterval2);
-        flowLayoutPanel1.Controls.Add(EditIntervalName);
-        flowLayoutPanel1.Controls.Add(label4);
-        flowLayoutPanel1.Controls.Add(EditDeviation);
-        flowLayoutPanel1.Controls.Add(EditUseOptimizing);
-        flowLayoutPanel1.Controls.Add(EditShowLiqBoxes);
-        flowLayoutPanel1.Controls.Add(EditZoomLiqBoxes);
-        flowLayoutPanel1.Controls.Add(EditShowZigZag);
-        flowLayoutPanel1.Controls.Add(EditShowSecondary);
-        flowLayoutPanel1.Controls.Add(EditUseHighLow);
+        flowLayoutPanel1.Controls.Add(groupBox2);
+        flowLayoutPanel1.Controls.Add(groupBox5);
+        flowLayoutPanel1.Controls.Add(groupBox3);
+        flowLayoutPanel1.Controls.Add(groupBox4);
+        flowLayoutPanel1.Controls.Add(panel1);
+        flowLayoutPanel1.Controls.Add(PanelPlayBack);
         flowLayoutPanel1.Controls.Add(ButtonRefresh);
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
-        flowLayoutPanel1.Controls.Add(EditShowFib);
-        flowLayoutPanel1.Controls.Add(EditShowFibZigZag);
-        flowLayoutPanel1.Controls.Add(EditShowFvgZones);
-        flowLayoutPanel1.Controls.Add(EditShowDtb);
-        flowLayoutPanel1.Controls.Add(panel1);
-        flowLayoutPanel1.Controls.Add(PanelPlayBack);
-        flowLayoutPanel1.Controls.Add(EditShowPositions);
+        flowLayoutPanel1.Controls.Add(groupBox1);
         flowLayoutPanel1.Controls.Add(EditUseBatchProcess);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
         flowLayoutPanel1.Name = "flowLayoutPanel1";
         flowLayoutPanel1.Padding = new Padding(3);
-        flowLayoutPanel1.Size = new Size(151, 802);
+        flowLayoutPanel1.Size = new Size(212, 802);
         flowLayoutPanel1.TabIndex = 0;
         // 
-        // EditTransparant
+        // groupBox2
         // 
-        EditTransparant.AutoSize = true;
-        EditTransparant.Location = new Point(6, 6);
-        EditTransparant.Name = "EditTransparant";
-        EditTransparant.Size = new Size(87, 19);
-        EditTransparant.TabIndex = 23;
-        EditTransparant.Text = "Transparant";
-        EditTransparant.UseVisualStyleBackColor = true;
-        // 
-        // EditShowPivots
-        // 
-        EditShowPivots.AutoSize = true;
-        EditShowPivots.Location = new Point(6, 31);
-        EditShowPivots.Name = "EditShowPivots";
-        EditShowPivots.Size = new Size(91, 19);
-        EditShowPivots.TabIndex = 27;
-        EditShowPivots.Text = "Show points";
-        EditShowPivots.UseVisualStyleBackColor = true;
-        // 
-        // EditShowSignals
-        // 
-        EditShowSignals.AutoSize = true;
-        EditShowSignals.Location = new Point(6, 56);
-        EditShowSignals.Name = "EditShowSignals";
-        EditShowSignals.Size = new Size(94, 19);
-        EditShowSignals.TabIndex = 29;
-        EditShowSignals.Text = "Show signals";
-        EditShowSignals.UseVisualStyleBackColor = true;
+        groupBox2.Controls.Add(label1);
+        groupBox2.Controls.Add(EditIntervalName);
+        groupBox2.Controls.Add(labelInterval2);
+        groupBox2.Controls.Add(EditSymbolQuote);
+        groupBox2.Controls.Add(label3);
+        groupBox2.Controls.Add(EditSymbolBase);
+        groupBox2.Location = new Point(6, 6);
+        groupBox2.Name = "groupBox2";
+        groupBox2.Size = new Size(200, 100);
+        groupBox2.TabIndex = 37;
+        groupBox2.TabStop = false;
+        groupBox2.Text = "Symbol";
         // 
         // label1
         // 
         label1.AutoSize = true;
-        label1.Location = new Point(6, 78);
+        label1.Location = new Point(5, 19);
         label1.Name = "label1";
-        label1.Size = new Size(74, 15);
-        label1.TabIndex = 2;
-        label1.Text = "Symbol base";
+        label1.Size = new Size(31, 15);
+        label1.TabIndex = 3;
+        label1.Text = "Base";
         // 
-        // EditSymbolBase
+        // EditIntervalName
         // 
-        EditSymbolBase.Location = new Point(6, 96);
-        EditSymbolBase.Name = "EditSymbolBase";
-        EditSymbolBase.Size = new Size(121, 23);
-        EditSymbolBase.TabIndex = 9;
-        // 
-        // label3
-        // 
-        label3.AutoSize = true;
-        label3.Location = new Point(6, 122);
-        label3.Name = "label3";
-        label3.Size = new Size(81, 15);
-        label3.TabIndex = 13;
-        label3.Text = "Symbol quote";
-        // 
-        // EditSymbolQuote
-        // 
-        EditSymbolQuote.Location = new Point(6, 140);
-        EditSymbolQuote.Name = "EditSymbolQuote";
-        EditSymbolQuote.Size = new Size(120, 23);
-        EditSymbolQuote.TabIndex = 12;
+        EditIntervalName.FormattingEnabled = true;
+        EditIntervalName.Location = new Point(75, 70);
+        EditIntervalName.Name = "EditIntervalName";
+        EditIntervalName.Size = new Size(100, 23);
+        EditIntervalName.TabIndex = 9;
         // 
         // labelInterval2
         // 
         labelInterval2.AutoSize = true;
-        labelInterval2.Location = new Point(6, 166);
+        labelInterval2.Location = new Point(5, 72);
         labelInterval2.Name = "labelInterval2";
         labelInterval2.Size = new Size(46, 15);
         labelInterval2.TabIndex = 3;
         labelInterval2.Text = "Interval";
         // 
-        // EditIntervalName
+        // EditSymbolQuote
         // 
-        EditIntervalName.FormattingEnabled = true;
-        EditIntervalName.Location = new Point(6, 184);
-        EditIntervalName.Name = "EditIntervalName";
-        EditIntervalName.Size = new Size(121, 23);
-        EditIntervalName.TabIndex = 9;
+        EditSymbolQuote.Location = new Point(75, 44);
+        EditSymbolQuote.Name = "EditSymbolQuote";
+        EditSymbolQuote.Size = new Size(100, 23);
+        EditSymbolQuote.TabIndex = 12;
         // 
-        // label4
+        // label3
         // 
-        label4.AutoSize = true;
-        label4.Location = new Point(6, 210);
-        label4.Name = "label4";
-        label4.Size = new Size(57, 15);
-        label4.TabIndex = 16;
-        label4.Text = "Deviation";
+        label3.AutoSize = true;
+        label3.Location = new Point(5, 45);
+        label3.Name = "label3";
+        label3.Size = new Size(40, 15);
+        label3.TabIndex = 13;
+        label3.Text = "Quote";
         // 
-        // EditDeviation
+        // EditSymbolBase
         // 
-        EditDeviation.DecimalPlaces = 2;
-        EditDeviation.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditDeviation.Location = new Point(6, 228);
-        EditDeviation.Name = "EditDeviation";
-        EditDeviation.Size = new Size(120, 23);
-        EditDeviation.TabIndex = 1;
+        EditSymbolBase.Location = new Point(75, 18);
+        EditSymbolBase.Name = "EditSymbolBase";
+        EditSymbolBase.Size = new Size(100, 23);
+        EditSymbolBase.TabIndex = 9;
         // 
-        // EditUseOptimizing
+        // groupBox5
         // 
-        EditUseOptimizing.AutoSize = true;
-        EditUseOptimizing.Location = new Point(6, 257);
-        EditUseOptimizing.Name = "EditUseOptimizing";
-        EditUseOptimizing.Size = new Size(92, 19);
-        EditUseOptimizing.TabIndex = 26;
-        EditUseOptimizing.Text = "Optimize list";
-        EditUseOptimizing.UseVisualStyleBackColor = true;
+        groupBox5.Controls.Add(EditTrendShowZigZag);
+        groupBox5.Controls.Add(EditTrendType);
+        groupBox5.Location = new Point(6, 112);
+        groupBox5.Name = "groupBox5";
+        groupBox5.Size = new Size(200, 82);
+        groupBox5.TabIndex = 40;
+        groupBox5.TabStop = false;
+        groupBox5.Text = "Trend";
         // 
-        // EditShowLiqBoxes
+        // EditTrendShowZigZag
         // 
-        EditShowLiqBoxes.AutoSize = true;
-        EditShowLiqBoxes.Location = new Point(6, 282);
-        EditShowLiqBoxes.Name = "EditShowLiqBoxes";
-        EditShowLiqBoxes.Size = new Size(111, 19);
-        EditShowLiqBoxes.TabIndex = 5;
-        EditShowLiqBoxes.Text = "Show Liq. boxes";
-        EditShowLiqBoxes.UseVisualStyleBackColor = true;
+        EditTrendShowZigZag.AutoSize = true;
+        EditTrendShowZigZag.Location = new Point(9, 51);
+        EditTrendShowZigZag.Name = "EditTrendShowZigZag";
+        EditTrendShowZigZag.Size = new Size(91, 19);
+        EditTrendShowZigZag.TabIndex = 36;
+        EditTrendShowZigZag.Text = "Show zigzag";
+        EditTrendShowZigZag.UseVisualStyleBackColor = true;
         // 
-        // EditZoomLiqBoxes
+        // EditTrendType
         // 
-        EditZoomLiqBoxes.AutoSize = true;
-        EditZoomLiqBoxes.Location = new Point(6, 307);
-        EditZoomLiqBoxes.Name = "EditZoomLiqBoxes";
-        EditZoomLiqBoxes.Size = new Size(111, 19);
-        EditZoomLiqBoxes.TabIndex = 4;
-        EditZoomLiqBoxes.Text = "Zoom liq. boxes";
-        EditZoomLiqBoxes.UseVisualStyleBackColor = true;
+        EditTrendType.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditTrendType.FormattingEnabled = true;
+        EditTrendType.Items.AddRange(new object[] { "Primary trend", "Secondary trend" });
+        EditTrendType.Location = new Point(11, 22);
+        EditTrendType.Name = "EditTrendType";
+        EditTrendType.Size = new Size(121, 23);
+        EditTrendType.TabIndex = 35;
         // 
-        // EditShowZigZag
+        // groupBox3
         // 
-        EditShowZigZag.AutoSize = true;
-        EditShowZigZag.Location = new Point(6, 332);
-        EditShowZigZag.Name = "EditShowZigZag";
-        EditShowZigZag.Size = new Size(101, 19);
-        EditShowZigZag.TabIndex = 7;
-        EditShowZigZag.Text = "Show liq. lines";
-        EditShowZigZag.UseVisualStyleBackColor = true;
+        groupBox3.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox3.Controls.Add(EditDlzShow);
+        groupBox3.Controls.Add(EditDlzShowZigZag);
+        groupBox3.Controls.Add(EditDlzZoom);
+        groupBox3.Location = new Point(6, 200);
+        groupBox3.Name = "groupBox3";
+        groupBox3.Size = new Size(200, 100);
+        groupBox3.TabIndex = 38;
+        groupBox3.TabStop = false;
+        groupBox3.Text = "DLZ";
         // 
-        // EditShowSecondary
+        // EditDlzShow
         // 
-        EditShowSecondary.AutoSize = true;
-        EditShowSecondary.Location = new Point(6, 357);
-        EditShowSecondary.Name = "EditShowSecondary";
-        EditShowSecondary.Size = new Size(115, 19);
-        EditShowSecondary.TabIndex = 25;
-        EditShowSecondary.Text = "Show secondairy";
-        EditShowSecondary.UseVisualStyleBackColor = true;
+        EditDlzShow.AutoSize = true;
+        EditDlzShow.Location = new Point(5, 22);
+        EditDlzShow.Name = "EditDlzShow";
+        EditDlzShow.Size = new Size(89, 19);
+        EditDlzShow.TabIndex = 5;
+        EditDlzShow.Text = "Show boxes";
+        EditDlzShow.UseVisualStyleBackColor = true;
         // 
-        // ButtonRefresh
+        // EditDlzShowZigZag
         // 
-        ButtonRefresh.Location = new Point(6, 407);
-        ButtonRefresh.Name = "ButtonRefresh";
-        ButtonRefresh.Size = new Size(121, 23);
-        ButtonRefresh.TabIndex = 31;
-        ButtonRefresh.Text = "Refresh screen";
-        ButtonRefresh.UseVisualStyleBackColor = true;
+        EditDlzShowZigZag.AutoSize = true;
+        EditDlzShowZigZag.Location = new Point(5, 72);
+        EditDlzShowZigZag.Name = "EditDlzShowZigZag";
+        EditDlzShowZigZag.Size = new Size(91, 19);
+        EditDlzShowZigZag.TabIndex = 7;
+        EditDlzShowZigZag.Text = "Show zigzag";
+        EditDlzShowZigZag.UseVisualStyleBackColor = true;
         // 
-        // ButtonCalculate
+        // EditDlzZoom
         // 
-        ButtonCalculate.Location = new Point(6, 436);
-        ButtonCalculate.Name = "ButtonCalculate";
-        ButtonCalculate.Size = new Size(121, 23);
-        ButtonCalculate.TabIndex = 8;
-        ButtonCalculate.Text = "Calculate zones";
-        ButtonCalculate.UseVisualStyleBackColor = true;
+        EditDlzZoom.AutoSize = true;
+        EditDlzZoom.Location = new Point(5, 47);
+        EditDlzZoom.Name = "EditDlzZoom";
+        EditDlzZoom.Size = new Size(92, 19);
+        EditDlzZoom.TabIndex = 4;
+        EditDlzZoom.Text = "Zoom boxes";
+        EditDlzZoom.UseVisualStyleBackColor = true;
         // 
-        // ButtonZoomLast
+        // groupBox4
         // 
-        ButtonZoomLast.Location = new Point(6, 465);
-        ButtonZoomLast.Name = "ButtonZoomLast";
-        ButtonZoomLast.Size = new Size(121, 23);
-        ButtonZoomLast.TabIndex = 14;
-        ButtonZoomLast.Text = "Zoom last";
-        ButtonZoomLast.UseVisualStyleBackColor = true;
+        groupBox4.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        groupBox4.Controls.Add(EditFibTrend);
+        groupBox4.Controls.Add(EditFibShow);
+        groupBox4.Controls.Add(EditFibZhowZigZag);
+        groupBox4.Location = new Point(6, 306);
+        groupBox4.Name = "groupBox4";
+        groupBox4.Size = new Size(200, 107);
+        groupBox4.TabIndex = 39;
+        groupBox4.TabStop = false;
+        groupBox4.Text = "FIB";
         // 
-        // EditShowFib
+        // EditFibTrend
         // 
-        EditShowFib.AutoSize = true;
-        EditShowFib.Location = new Point(6, 494);
-        EditShowFib.Name = "EditShowFib";
-        EditShowFib.Size = new Size(139, 19);
-        EditShowFib.TabIndex = 20;
-        EditShowFib.Text = "Show fib retracement";
-        EditShowFib.UseVisualStyleBackColor = true;
+        EditFibTrend.DropDownStyle = ComboBoxStyle.DropDownList;
+        EditFibTrend.FormattingEnabled = true;
+        EditFibTrend.Items.AddRange(new object[] { "Primary trend", "Secondary trend" });
+        EditFibTrend.Location = new Point(5, 22);
+        EditFibTrend.Name = "EditFibTrend";
+        EditFibTrend.Size = new Size(121, 23);
+        EditFibTrend.TabIndex = 36;
         // 
-        // EditShowFibZigZag
+        // EditFibShow
         // 
-        EditShowFibZigZag.AutoSize = true;
-        EditShowFibZigZag.Location = new Point(6, 519);
-        EditShowFibZigZag.Name = "EditShowFibZigZag";
-        EditShowFibZigZag.Size = new Size(99, 19);
-        EditShowFibZigZag.TabIndex = 24;
-        EditShowFibZigZag.Text = "Show fib lines";
-        EditShowFibZigZag.UseVisualStyleBackColor = true;
+        EditFibShow.AutoSize = true;
+        EditFibShow.Location = new Point(5, 48);
+        EditFibShow.Name = "EditFibShow";
+        EditFibShow.Size = new Size(139, 19);
+        EditFibShow.TabIndex = 20;
+        EditFibShow.Text = "Show fib retracement";
+        EditFibShow.UseVisualStyleBackColor = true;
         // 
-        // EditShowFvgZones
+        // EditFibZhowZigZag
         // 
-        EditShowFvgZones.AutoSize = true;
-        EditShowFvgZones.Location = new Point(6, 544);
-        EditShowFvgZones.Name = "EditShowFvgZones";
-        EditShowFvgZones.Size = new Size(108, 19);
-        EditShowFvgZones.TabIndex = 32;
-        EditShowFvgZones.Text = "Show fvg zones";
-        EditShowFvgZones.UseVisualStyleBackColor = true;
-        // 
-        // EditShowDtb
-        // 
-        EditShowDtb.AutoSize = true;
-        EditShowDtb.Location = new Point(6, 569);
-        EditShowDtb.Name = "EditShowDtb";
-        EditShowDtb.Size = new Size(77, 19);
-        EditShowDtb.TabIndex = 33;
-        EditShowDtb.Text = "Show Dtb";
-        EditShowDtb.UseVisualStyleBackColor = true;
+        EditFibZhowZigZag.AutoSize = true;
+        EditFibZhowZigZag.Location = new Point(6, 72);
+        EditFibZhowZigZag.Name = "EditFibZhowZigZag";
+        EditFibZhowZigZag.Size = new Size(91, 19);
+        EditFibZhowZigZag.TabIndex = 24;
+        EditFibZhowZigZag.Text = "Show zigzag";
+        EditFibZhowZigZag.UseVisualStyleBackColor = true;
         // 
         // panel1
         // 
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 594);
+        panel1.Location = new Point(6, 419);
         panel1.Name = "panel1";
-        panel1.Size = new Size(95, 66);
+        panel1.Size = new Size(200, 30);
         panel1.TabIndex = 21;
         // 
         // labelInterval
         // 
         labelInterval.AutoSize = true;
-        labelInterval.Location = new Point(11, 43);
+        labelInterval.Location = new Point(83, 9);
         labelInterval.Name = "labelInterval";
         labelInterval.Size = new Size(38, 15);
         labelInterval.TabIndex = 21;
@@ -344,7 +300,7 @@ partial class CryptoVisualisation
         // 
         // ButtonPlus
         // 
-        ButtonPlus.Location = new Point(47, 10);
+        ButtonPlus.Location = new Point(47, 5);
         ButtonPlus.Name = "ButtonPlus";
         ButtonPlus.Size = new Size(25, 23);
         ButtonPlus.TabIndex = 20;
@@ -354,7 +310,7 @@ partial class CryptoVisualisation
         // 
         // ButtonMinus
         // 
-        ButtonMinus.Location = new Point(13, 10);
+        ButtonMinus.Location = new Point(13, 5);
         ButtonMinus.Name = "ButtonMinus";
         ButtonMinus.Size = new Size(25, 23);
         ButtonMinus.TabIndex = 19;
@@ -367,15 +323,15 @@ partial class CryptoVisualisation
         PanelPlayBack.Controls.Add(labelMaxTime);
         PanelPlayBack.Controls.Add(ButtonGoRight);
         PanelPlayBack.Controls.Add(ButtonGoLeft);
-        PanelPlayBack.Location = new Point(6, 666);
+        PanelPlayBack.Location = new Point(6, 455);
         PanelPlayBack.Name = "PanelPlayBack";
-        PanelPlayBack.Size = new Size(95, 65);
+        PanelPlayBack.Size = new Size(200, 30);
         PanelPlayBack.TabIndex = 22;
         // 
         // labelMaxTime
         // 
         labelMaxTime.AutoSize = true;
-        labelMaxTime.Location = new Point(13, 40);
+        labelMaxTime.Location = new Point(83, 7);
         labelMaxTime.Name = "labelMaxTime";
         labelMaxTime.Size = new Size(38, 15);
         labelMaxTime.TabIndex = 23;
@@ -383,7 +339,7 @@ partial class CryptoVisualisation
         // 
         // ButtonGoRight
         // 
-        ButtonGoRight.Location = new Point(49, 8);
+        ButtonGoRight.Location = new Point(49, 3);
         ButtonGoRight.Name = "ButtonGoRight";
         ButtonGoRight.Size = new Size(25, 23);
         ButtonGoRight.TabIndex = 22;
@@ -393,7 +349,7 @@ partial class CryptoVisualisation
         // 
         // ButtonGoLeft
         // 
-        ButtonGoLeft.Location = new Point(13, 8);
+        ButtonGoLeft.Location = new Point(13, 3);
         ButtonGoLeft.Name = "ButtonGoLeft";
         ButtonGoLeft.Size = new Size(25, 23);
         ButtonGoLeft.TabIndex = 21;
@@ -401,20 +357,101 @@ partial class CryptoVisualisation
         ButtonGoLeft.UseVisualStyleBackColor = true;
         ButtonGoLeft.Click += ButtonGoLeftClick;
         // 
-        // EditShowPositions
+        // ButtonRefresh
         // 
-        EditShowPositions.AutoSize = true;
-        EditShowPositions.Location = new Point(6, 737);
-        EditShowPositions.Name = "EditShowPositions";
-        EditShowPositions.Size = new Size(106, 19);
-        EditShowPositions.TabIndex = 30;
-        EditShowPositions.Text = "Show positions";
-        EditShowPositions.UseVisualStyleBackColor = true;
+        ButtonRefresh.Location = new Point(6, 491);
+        ButtonRefresh.Name = "ButtonRefresh";
+        ButtonRefresh.Size = new Size(121, 23);
+        ButtonRefresh.TabIndex = 31;
+        ButtonRefresh.Text = "Refresh screen";
+        ButtonRefresh.UseVisualStyleBackColor = true;
+        // 
+        // ButtonCalculate
+        // 
+        ButtonCalculate.Location = new Point(6, 520);
+        ButtonCalculate.Name = "ButtonCalculate";
+        ButtonCalculate.Size = new Size(121, 23);
+        ButtonCalculate.TabIndex = 8;
+        ButtonCalculate.Text = "Calculate zones";
+        ButtonCalculate.UseVisualStyleBackColor = true;
+        // 
+        // ButtonZoomLast
+        // 
+        ButtonZoomLast.Location = new Point(6, 549);
+        ButtonZoomLast.Name = "ButtonZoomLast";
+        ButtonZoomLast.Size = new Size(121, 23);
+        ButtonZoomLast.TabIndex = 14;
+        ButtonZoomLast.Text = "Zoom last";
+        ButtonZoomLast.UseVisualStyleBackColor = true;
+        // 
+        // groupBox1
+        // 
+        groupBox1.Controls.Add(EditTransparant);
+        groupBox1.Controls.Add(EditShowPivots);
+        groupBox1.Controls.Add(EditShowSignals);
+        groupBox1.Controls.Add(EditShowDtb);
+        groupBox1.Controls.Add(EditShowFvgZones);
+        groupBox1.Location = new Point(6, 578);
+        groupBox1.Name = "groupBox1";
+        groupBox1.Size = new Size(200, 150);
+        groupBox1.TabIndex = 36;
+        groupBox1.TabStop = false;
+        groupBox1.Text = "Misc";
+        // 
+        // EditTransparant
+        // 
+        EditTransparant.AutoSize = true;
+        EditTransparant.Location = new Point(5, 22);
+        EditTransparant.Name = "EditTransparant";
+        EditTransparant.Size = new Size(87, 19);
+        EditTransparant.TabIndex = 30;
+        EditTransparant.Text = "Transparant";
+        EditTransparant.UseVisualStyleBackColor = true;
+        // 
+        // EditShowPivots
+        // 
+        EditShowPivots.AutoSize = true;
+        EditShowPivots.Location = new Point(5, 47);
+        EditShowPivots.Name = "EditShowPivots";
+        EditShowPivots.Size = new Size(91, 19);
+        EditShowPivots.TabIndex = 31;
+        EditShowPivots.Text = "Show points";
+        EditShowPivots.UseVisualStyleBackColor = true;
+        // 
+        // EditShowSignals
+        // 
+        EditShowSignals.AutoSize = true;
+        EditShowSignals.Location = new Point(5, 72);
+        EditShowSignals.Name = "EditShowSignals";
+        EditShowSignals.Size = new Size(94, 19);
+        EditShowSignals.TabIndex = 32;
+        EditShowSignals.Text = "Show signals";
+        EditShowSignals.UseVisualStyleBackColor = true;
+        // 
+        // EditShowDtb
+        // 
+        EditShowDtb.AutoSize = true;
+        EditShowDtb.Location = new Point(5, 97);
+        EditShowDtb.Name = "EditShowDtb";
+        EditShowDtb.Size = new Size(77, 19);
+        EditShowDtb.TabIndex = 33;
+        EditShowDtb.Text = "Show Dtb";
+        EditShowDtb.UseVisualStyleBackColor = true;
+        // 
+        // EditShowFvgZones
+        // 
+        EditShowFvgZones.AutoSize = true;
+        EditShowFvgZones.Location = new Point(5, 122);
+        EditShowFvgZones.Name = "EditShowFvgZones";
+        EditShowFvgZones.Size = new Size(108, 19);
+        EditShowFvgZones.TabIndex = 32;
+        EditShowFvgZones.Text = "Show fvg zones";
+        EditShowFvgZones.UseVisualStyleBackColor = true;
         // 
         // EditUseBatchProcess
         // 
         EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 762);
+        EditUseBatchProcess.Location = new Point(6, 734);
         EditUseBatchProcess.Name = "EditUseBatchProcess";
         EditUseBatchProcess.Size = new Size(99, 19);
         EditUseBatchProcess.TabIndex = 28;
@@ -425,25 +462,15 @@ partial class CryptoVisualisation
         // 
         plotView.BackColor = Color.Black;
         plotView.Dock = DockStyle.Fill;
-        plotView.Location = new Point(151, 0);
+        plotView.Location = new Point(212, 0);
         plotView.Name = "plotView";
         plotView.PanCursor = Cursors.Hand;
-        plotView.Size = new Size(1190, 802);
+        plotView.Size = new Size(1129, 802);
         plotView.TabIndex = 1;
         plotView.Text = "plotView1";
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
-        // 
-        // EditUseHighLow
-        // 
-        EditUseHighLow.AutoSize = true;
-        EditUseHighLow.Location = new Point(6, 382);
-        EditUseHighLow.Name = "EditUseHighLow";
-        EditUseHighLow.Size = new Size(96, 19);
-        EditUseHighLow.TabIndex = 34;
-        EditUseHighLow.Text = "Use HighLow";
-        EditUseHighLow.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -457,11 +484,20 @@ partial class CryptoVisualisation
         Text = "Form1";
         flowLayoutPanel1.ResumeLayout(false);
         flowLayoutPanel1.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditDeviation).EndInit();
+        groupBox2.ResumeLayout(false);
+        groupBox2.PerformLayout();
+        groupBox5.ResumeLayout(false);
+        groupBox5.PerformLayout();
+        groupBox3.ResumeLayout(false);
+        groupBox3.PerformLayout();
+        groupBox4.ResumeLayout(false);
+        groupBox4.PerformLayout();
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
         PanelPlayBack.ResumeLayout(false);
         PanelPlayBack.PerformLayout();
+        groupBox1.ResumeLayout(false);
+        groupBox1.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -469,21 +505,18 @@ partial class CryptoVisualisation
     #endregion
 
     private FlowLayoutPanel flowLayoutPanel1;
-    private Label label1;
     private ComboBox EditSymbolBase;
     private Label labelInterval2;
-    private CheckBox EditZoomLiqBoxes;
-    private CheckBox EditShowLiqBoxes;
-    private CheckBox EditShowZigZag;
+    private CheckBox EditDlzZoom;
+    private CheckBox EditDlzShow;
+    private CheckBox EditDlzShowZigZag;
     private Button ButtonCalculate;
     private ComboBox EditIntervalName;
     private Label label3;
     private ComboBox EditSymbolQuote;
-    private Label label4;
-    private NumericUpDown EditDeviation;
     private Button ButtonZoomLast;
     private OxyPlot.WindowsForms.PlotView plotView;
-    private CheckBox EditShowFib;
+    private CheckBox EditFibShow;
     private Panel panel1;
     private Button ButtonPlus;
     private Button ButtonMinus;
@@ -492,16 +525,21 @@ partial class CryptoVisualisation
     private Button ButtonGoLeft;
     private Label labelInterval;
     private Label labelMaxTime;
-    private CheckBox EditTransparant;
-    private CheckBox EditShowFibZigZag;
-    private CheckBox EditShowSecondary;
-    private CheckBox EditUseOptimizing;
-    private CheckBox EditShowPivots;
+    private CheckBox EditFibZhowZigZag;
     private CheckBox EditUseBatchProcess;
-    private CheckBox EditShowSignals;
-    private CheckBox EditShowPositions;
     private Button ButtonRefresh;
     private CheckBox EditShowFvgZones;
     private CheckBox EditShowDtb;
-    private CheckBox EditUseHighLow;
+    private ComboBox EditTrendType;
+    private GroupBox groupBox2;
+    private Label label1;
+    private GroupBox groupBox1;
+    private CheckBox EditTransparant;
+    private CheckBox EditShowPivots;
+    private CheckBox EditShowSignals;
+    private GroupBox groupBox3;
+    private GroupBox groupBox4;
+    private ComboBox EditFibTrend;
+    private GroupBox groupBox5;
+    private CheckBox EditTrendShowZigZag;
 }

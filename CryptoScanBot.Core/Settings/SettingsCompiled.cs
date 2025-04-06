@@ -27,8 +27,6 @@ public class SettingsCompiled
 
     // Welke strategien zijn actief (en speciaal voor de CreateSignal een onderverdeling)
     public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = [];
-    //public List<CryptoSignalStrategy> StrategySbmStob { get; set; } = [];
-    //public List<CryptoSignalStrategy> StrategyOthers { get; set; } = [];
 
 
     // Interval trend + Value (bullisch, bearish)
@@ -53,6 +51,7 @@ public class SettingsCompiled
 
     public void IndexStrategyInternally(SettingsTextual settings, CryptoTradeSide side)
     {
+        // Old setup
         Interval.Clear();
         IntervalPeriod.Clear();
 

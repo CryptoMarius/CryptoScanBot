@@ -10,10 +10,6 @@ public class CryptoZone
     [Key]
     public int Id { get; set; }
 
-    public int AccountId { get; set; }
-    [Computed]
-    public required virtual CryptoAccount Account { get; set; }
-
     public required int ExchangeId { get; set; }
     [Computed]
     public required virtual CryptoExchange Exchange { get; set; }
