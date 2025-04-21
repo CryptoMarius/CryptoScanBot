@@ -135,18 +135,18 @@ public static class RegisterAlgorithms
         //***************************************************
         Register(new AlgorithmDefinition()
         {
-            Name = "dlz.near",
-            Strategy = CryptoSignalStrategy.DominantLevelNear,
-            AnalyzeLongType = typeof(SignalDominantLevelNearLong),
-            AnalyzeShortType = typeof(SignalDominantLevelNearShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
             Name = "dlz",
             Strategy = CryptoSignalStrategy.DominantLevel,
             AnalyzeLongType = typeof(SignalDominantLevelLong),
             AnalyzeShortType = typeof(SignalDominantLevelShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "dlz.near",
+            Strategy = CryptoSignalStrategy.DominantLevelNear,
+            AnalyzeLongType = typeof(SignalDominantLevelNearLong),
+            AnalyzeShortType = typeof(SignalDominantLevelNearShort),
         });
 
         //#if DEBUG

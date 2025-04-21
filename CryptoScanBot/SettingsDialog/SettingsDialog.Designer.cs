@@ -85,12 +85,12 @@ partial class FrmSettings
         EditSoundHeartBeatMinutes = new NumericUpDown();
         label2 = new Label();
         EditTradingApp = new ComboBox();
-        UserControlTrendPrimary = new SettingsDialog.UserControlZigZagSettings();
-        UserControlTrendSecondary = new SettingsDialog.UserControlZigZagSettings();
-        UserControlTelegram = new SettingsDialog.UserControlTelegram();
+        UserControlTrendPrimary = new CryptoScanBot.SettingsDialog.UserControlZigZagSettings();
+        UserControlTrendSecondary = new CryptoScanBot.SettingsDialog.UserControlZigZagSettings();
+        UserControlTelegram = new CryptoScanBot.SettingsDialog.UserControlTelegram();
         tabBasecoin = new TabPage();
         flowLayoutPanelQuotes = new FlowLayoutPanel();
-        userControlQuoteHeader1 = new SettingsDialog.UserControlQuoteHeader();
+        userControlQuoteHeader1 = new CryptoScanBot.SettingsDialog.UserControlQuoteHeader();
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
@@ -133,12 +133,12 @@ partial class FrmSettings
         EditSymbolMustExistsDays = new NumericUpDown();
         label25 = new Label();
         tabSignalsLong = new TabPage();
-        UserControlSignalLong = new SettingsDialog.UserControlEverything();
+        UserControlSignalLong = new CryptoScanBot.SettingsDialog.UserControlEverything();
         tabSignalsShort = new TabPage();
-        UserControlSignalShort = new SettingsDialog.UserControlEverything();
+        UserControlSignalShort = new CryptoScanBot.SettingsDialog.UserControlEverything();
         tabSignalStobb = new TabPage();
         flowLayoutPanel6 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsStobb = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsStobb = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox2 = new GroupBox();
         EditStobOnlyIfLux5m = new CheckBox();
         EditStobOnlyIfPreviousStobb = new CheckBox();
@@ -151,7 +151,7 @@ partial class FrmSettings
         EditStobbUseLowHigh = new CheckBox();
         tabSignalSbm = new TabPage();
         flowLayoutPanel7 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsSbm = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsSbm = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         flowLayoutPanel9 = new FlowLayoutPanel();
         groupBox3 = new GroupBox();
         EditSbmUseLowHigh = new CheckBox();
@@ -189,7 +189,7 @@ partial class FrmSettings
         EditSbmMa200AndMa20Crossing = new CheckBox();
         tabSignalStoRsi = new TabPage();
         flowLayoutPanel2 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsStoRsi = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsStoRsi = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
         EditStoRsiOnlyIfLux5m = new CheckBox();
         label28 = new Label();
@@ -201,7 +201,7 @@ partial class FrmSettings
         EditStorsiAddRsiAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
         flowLayoutPanel8 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsJump = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsJump = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox5 = new GroupBox();
         label5 = new Label();
         EditJumpCandlesLookbackCount = new NumericUpDown();
@@ -210,7 +210,7 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabSignalZones = new TabPage();
         flowLayoutPanel4 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsZonesDominant = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsZonesDominant = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox11 = new GroupBox();
         label32 = new Label();
         label33 = new Label();
@@ -238,23 +238,23 @@ partial class FrmSettings
         EditZoneStartApply = new CheckBox();
         label30 = new Label();
         EditZoneStartCandleCount = new NumericUpDown();
-        UserControlIntervalZonesDominant = new SettingsDialog.UserControlInterval();
-        UserControlZoneZigZagSettings = new SettingsDialog.UserControlZigZagSettings();
+        UserControlIntervalZonesDominant = new CryptoScanBot.SettingsDialog.UserControlInterval();
+        UserControlZoneZigZagSettings = new CryptoScanBot.SettingsDialog.UserControlZigZagSettings();
         tabSignalZonesFvg = new TabPage();
         flowLayoutPanel10 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsZonesFvg = new SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        UserControlSettingsSoundAndColorsZonesFvg = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox14 = new GroupBox();
         label34 = new Label();
         EditZonesFvgMinimumPercentage = new NumericUpDown();
-        UserControlIntervalZonesFvg = new SettingsDialog.UserControlInterval();
+        UserControlIntervalZonesFvg = new CryptoScanBot.SettingsDialog.UserControlInterval();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
         flowLayoutPanel1 = new FlowLayoutPanel();
-        UserControlTradeEntry = new SettingsDialog.UserControlTradeEntry();
-        UserControlTradeTakeProfit = new SettingsDialog.UserControlTradeTakeProfit();
-        UserControlTradeStopLoss = new SettingsDialog.UserControlTradeStopLoss();
-        UserControlTradeDca = new SettingsDialog.UserControlTradeDca();
+        UserControlTradeEntry = new CryptoScanBot.SettingsDialog.UserControlTradeEntry();
+        UserControlTradeTakeProfit = new CryptoScanBot.SettingsDialog.UserControlTradeTakeProfit();
+        UserControlTradeStopLoss = new CryptoScanBot.SettingsDialog.UserControlTradeStopLoss();
+        UserControlTradeDca = new CryptoScanBot.SettingsDialog.UserControlTradeDca();
         panel7 = new Panel();
         label83 = new Label();
         EditTradeVia = new ComboBox();
@@ -279,16 +279,16 @@ partial class FrmSettings
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
         tabTradingLong = new TabPage();
-        UserControlTradingLong = new SettingsDialog.UserControlEverything();
+        UserControlTradingLong = new CryptoScanBot.SettingsDialog.UserControlEverything();
         tabTradingShort = new TabPage();
-        UserControlTradingShort = new SettingsDialog.UserControlEverything();
+        UserControlTradingShort = new CryptoScanBot.SettingsDialog.UserControlEverything();
         tabPageTradingRules = new TabPage();
-        UserControlTradeRules = new SettingsDialog.UserControlTradeRule();
+        UserControlTradeRules = new CryptoScanBot.SettingsDialog.UserControlTradeRule();
         label59 = new Label();
         tabApi = new TabPage();
         flowLayoutPanel3 = new FlowLayoutPanel();
-        UserControlExchangeApi = new SettingsDialog.UserControlExchangeApi();
-        UserControlAltradyApi = new SettingsDialog.UserControlAltradyApi();
+        UserControlExchangeApi = new CryptoScanBot.SettingsDialog.UserControlExchangeApi();
+        UserControlAltradyApi = new CryptoScanBot.SettingsDialog.UserControlAltradyApi();
         tabWhiteBlack = new TabPage();
         tabControlWhiteBlack = new TabControl();
         tabLongWhiteList = new TabPage();
@@ -316,6 +316,7 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
+        EditDebugZoneCandles = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -3588,6 +3589,7 @@ partial class FrmSettings
         // 
         // tabPageOptions
         // 
+        tabPageOptions.Controls.Add(EditDebugZoneCandles);
         tabPageOptions.Controls.Add(EditDebugAssetManagement);
         tabPageOptions.Controls.Add(EditUseHighLowInTrendCalculation);
         tabPageOptions.Controls.Add(EditDebugTrendCalculation);
@@ -3688,6 +3690,17 @@ partial class FrmSettings
         EditDebugKLineReceive.TabIndex = 297;
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
+        // 
+        // EditDebugZoneCandles
+        // 
+        EditDebugZoneCandles.AutoSize = true;
+        EditDebugZoneCandles.Location = new Point(23, 236);
+        EditDebugZoneCandles.Margin = new Padding(4, 3, 4, 3);
+        EditDebugZoneCandles.Name = "EditDebugZoneCandles";
+        EditDebugZoneCandles.Size = new Size(206, 19);
+        EditDebugZoneCandles.TabIndex = 305;
+        EditDebugZoneCandles.Text = "Debug candle management zones";
+        EditDebugZoneCandles.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -4174,4 +4187,5 @@ partial class FrmSettings
     private SettingsDialog.UserControlZigZagSettings UserControlTrendPrimary;
     private SettingsDialog.UserControlZigZagSettings UserControlTrendSecondary;
     private SettingsDialog.UserControlZigZagSettings UserControlZoneZigZagSettings;
+    private CheckBox EditDebugZoneCandles;
 }

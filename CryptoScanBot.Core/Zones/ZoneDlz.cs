@@ -280,7 +280,6 @@ public class ZoneDlz
             long unixEinde = zigZag.Candle.OpenTime + interval.Duration;
             //DateTime unixStartDebug = CandleTools.GetUnixDate(unixStart);
             //DateTime unixEindeDebug = CandleTools.GetUnixDate(unixEinde);
-            int durationForThisCandle = (int)(unixEinde - unixStart);
 
             while (zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage && zoom > CryptoIntervalPeriod.interval1m)
             {
@@ -291,15 +290,15 @@ public class ZoneDlz
                 CryptoSymbolInterval zoomInterval = symbol!.GetSymbolInterval(zoom);
                 if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
-                    // Load candles from disk
+                    // Load candles from disk if needed
                     if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
                         await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
-                    loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, false); // in memory, nothing zoneExistsInDatabase
+                    loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, true); // in memory, alway's save
 
-                    // Load candles from the exchange
-                    int count = durationForThisCandle / zoomInterval.Interval.Duration;
+                    // Load candles from the exchange if needed
+                    int count = interval.Duration / zoomInterval.Interval.Duration;
                     if (await ZoneCandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
-                        loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true;
+                        loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true; // in memory, alway's save
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)

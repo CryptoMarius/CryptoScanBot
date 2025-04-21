@@ -109,6 +109,7 @@ public class SettingsGeneral
     public SettingsGeneralStoch SettingsStoch { get; set; } = new();
     
     public string DebugSymbol { get; set; } = "";
+    public bool DebugZoneCandles { get; set; } = false;
     public bool DebugKLineReceive { get; set; } = false;
     public bool DebugSignalCreate { get; set; } = false;
     public bool DebugSignalStrength { get; set; } = false;

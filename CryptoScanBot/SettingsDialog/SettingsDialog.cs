@@ -129,6 +129,7 @@ public partial class FrmSettings : Form
         UserControlTelegram.LoadConfig();
 
         //#if DEBUG
+        EditDebugZoneCandles.Checked = settings.General.DebugZoneCandles;        
         EditDebugTrendCalculation.Checked = settings.General.DebugTrendCalculation;
         EditDebugKLineReceive.Checked = settings.General.DebugKLineReceive;
         EditDebugSignalCreate.Checked = settings.General.DebugSignalCreate;
@@ -421,6 +422,7 @@ public partial class FrmSettings : Form
 
 
         //#if DEBUG
+        settings.General.DebugZoneCandles = EditDebugZoneCandles.Checked;
         settings.General.DebugTrendCalculation = EditDebugTrendCalculation.Checked;
         settings.General.DebugKLineReceive = EditDebugKLineReceive.Checked;
         settings.General.DebugSignalCreate = EditDebugSignalCreate.Checked;

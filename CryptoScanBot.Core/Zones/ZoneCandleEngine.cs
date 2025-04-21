@@ -12,7 +12,6 @@ public class ZoneCandleEngine
 {
     private static async Task ReadFromBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
     {
-        // json does take a lot of memory
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
@@ -20,7 +19,6 @@ public class ZoneCandleEngine
             using FileStream readStream = new(filename, FileMode.Open, FileAccess.Read, FileShare.None, 65536);
             using BinaryReader binaryReader = new(readStream, Encoding.UTF8, false);
 
-            // Iets met een version
             int version = binaryReader.ReadInt32();
             int candleCount = binaryReader.ReadInt32();
             while (candleCount-- > 0)
@@ -50,7 +48,6 @@ public class ZoneCandleEngine
         // load candles (kind of quick and dirty)
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
         string filenameBin = baseFolder + $"{symbol.Name}-{interval.Name}.bin";
-        //string filenameTxt = baseFolder + $"{symbol.Name}-{interval.Name}.json";
         if (File.Exists(filenameBin))
             await ReadFromBin(symbol, interval, filenameBin);
         //else if (File.Exists(filenameTxt))
@@ -58,9 +55,10 @@ public class ZoneCandleEngine
         //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
     }
 
+
+
     public static async Task WriteToBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
     {
-        // json does take a lot of memory
         CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
         await symbol.Data.CandleLock.WaitAsync();
@@ -71,7 +69,6 @@ public class ZoneCandleEngine
             using FileStream writeStream = new(filename, FileMode.Create, FileAccess.Write, FileShare.None, 65536);
             using BinaryWriter binaryWriter = new(writeStream, Encoding.UTF8, false);
 
-            // Iets met een version
             int version = 1;
             binaryWriter.Write(version);
             int count = symbolInterval.CandleList.Count;
@@ -90,8 +87,6 @@ public class ZoneCandleEngine
                     binaryWriter.Write(candle.Volume);
                 }
             }
-
-
         }
         finally
         {
@@ -228,10 +223,14 @@ public class ZoneCandleEngine
 
     public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long fetchFrom, int fetchCount)
     {
+        bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
+
+        if (debug)
+            GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+                $"{CandleTools.GetUnixDate(fetchFrom).ToLocalTime()}");
+
         if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
             throw new Exception("Not supported interval");
-
-        //CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         (long unixMin, long unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
         (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
@@ -239,9 +238,19 @@ public class ZoneCandleEngine
             return false;
         try
         {
-            //string text3 = $"need={candleCount}"; 
-            //GlobalData.AddTextToLogTab($"Fetch historical data {symbol.Name} {symbolInterval.Interval!.Name} need more data {text3} {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()}");
-            return await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);
+            if (debug)
+                GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+                    $"{CandleTools.GetUnixDate(unixMin).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}");
+
+            bool result = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);
+
+            // check!!!
+            (unixLoop, dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
+            if (!dataAllLocal && debug)
+                GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+                    $"{CandleTools.GetUnixDate(unixMin).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()} not everything local!");
+
+            return result;
         }
         catch (Exception error)
         {

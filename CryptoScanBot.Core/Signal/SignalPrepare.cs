@@ -42,7 +42,7 @@ public class SignalPrepare
             // long or short does not matter for the prepare
             if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) || GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
             {
-                if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevelNear)
+                if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevel)
                 {
                     foreach (string intervalName in GlobalData.Settings.Signal.Long.Interval)
                     {

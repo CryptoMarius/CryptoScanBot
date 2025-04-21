@@ -359,11 +359,11 @@ public class ZoneFvg
                     // Load candles from disk
                     if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
                         await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, interval);
-                    loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, nothing changed (save alway's)
+                    loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
                     
                     // Load candles from the exchange
                     if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
-                        loadedCandlesInMemory[interval.IntervalPeriod] = true;
+                        loadedCandlesInMemory[interval.IntervalPeriod] = true; // in memory, alway's save
 
                     CalculateFvg(symbol, interval, fetchFrom, symbolIntervalData);
                 }

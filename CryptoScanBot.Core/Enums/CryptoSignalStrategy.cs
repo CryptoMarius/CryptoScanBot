@@ -22,7 +22,7 @@ public enum CryptoSignalStrategy
     BbRsiEngulfing = 50,
     SignalSma50Sma20Price = 52,
 
-    DominantLevelNear = 1000,
-    FairValueGap = 1001,
-    DominantLevel = 1002,
+    DominantLevel = 1000,
+    DominantLevelNear = 1001,
+    FairValueGap = 1003,
 }
