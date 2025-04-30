@@ -186,6 +186,12 @@ public class ZoneCandleEngine
     /// </summary>
     private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long minTime, long maxTime, CryptoSymbol symbol, CryptoInterval interval)
     {
+        bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
+        if (debug)
+            GlobalData.AddTextToLogTab($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
+                $"{CandleTools.GetUnixDate(minTime)}, " +
+                $"{CandleTools.GetUnixDate(maxTime)} (call)");
+
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         while (symbolInterval.CandleList!.ContainsKey(minTime))
         {
@@ -199,6 +205,11 @@ public class ZoneCandleEngine
             }
             minTime += interval.Duration;
         }
+
+        if (debug)
+            GlobalData.AddTextToLogTab($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
+                $"{CandleTools.GetUnixDate(minTime)} not present ");
+
         return (minTime, false);
     }
 
@@ -214,8 +225,8 @@ public class ZoneCandleEngine
         long unixNowTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo, emulator date?
         unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, interval.Duration);
 
-        if (unixMaxTime > unixNowTime)
-            return (unixMinTime, unixNowTime);
+        if (unixMaxTime >= unixNowTime)
+            return (unixMinTime, unixNowTime); // 1 to much?
         else
             return (unixMinTime, unixMaxTime);
     }
@@ -223,11 +234,11 @@ public class ZoneCandleEngine
 
     public static async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long fetchFrom, int fetchCount)
     {
-        bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
+        //bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
 
-        if (debug)
-            GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
-                $"{CandleTools.GetUnixDate(fetchFrom).ToLocalTime()}");
+        //if (debug)
+        //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+        //        $"{CandleTools.GetUnixDate(fetchFrom)}");
 
         if (!symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
             throw new Exception("Not supported interval");
@@ -238,17 +249,22 @@ public class ZoneCandleEngine
             return false;
         try
         {
+            //if (debug)
+            //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+            //        $"{CandleTools.GetUnixDate(unixMin)}, {CandleTools.GetUnixDate(unixMax)}");
+
+            bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
             if (debug)
-                GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
-                    $"{CandleTools.GetUnixDate(unixMin).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}");
+                GlobalData.AddTextToLogTab($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +
+                    $"{CandleTools.GetUnixDate(unixLoop)} .. {CandleTools.GetUnixDate(unixMax)}");
 
             bool result = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);
 
-            // check!!!
-            (unixLoop, dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
-            if (!dataAllLocal && debug)
-                GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
-                    $"{CandleTools.GetUnixDate(unixMin).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()} not everything local!");
+            //// check!!!
+            //(unixLoop, dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
+            //if (!dataAllLocal && debug)
+            //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, {fetchCount}, " +
+            //        $"{CandleTools.GetUnixDate(unixMin)}, {CandleTools.GetUnixDate(unixMax)} not everything local!");
 
             return result;
         }

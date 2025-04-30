@@ -191,9 +191,9 @@ public class CandleBase(ExchangeBase api)
         // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because 
         // of the symbolInterval.LastCandleSynchronized and calculation of higher interval candles
 
-        if (GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, " +
-                $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()})");
+        //if (GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+        //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, " +
+        //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()})");
 
         int totalFetched = 0;
         if (unixLoop < unixMax)
@@ -220,6 +220,12 @@ public class CandleBase(ExchangeBase api)
                 int added = symbolInterval.CandleList.Count - countBefore;
                 totalFetched += added;
 
+                bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
+                if (debug)
+                    GlobalData.AddTextToLogTab($"Core.Exchange.FetchFrom({symbol.Name}, {interval!.Name}, " +
+                        $"{CandleTools.GetUnixDate(minTime)} .. {CandleTools.GetUnixDate(maxTime)} limit={ExchangeBase.ExchangeOptions.CandleLimit} added={added}");
+
+
                 //string text3 = $"{text} retrieved={added} total={candleList.Count}";
                 //ScannerLog.Logger.Info(text3);
                 //GlobalData.AddTextToLogTab(text3);
@@ -233,9 +239,9 @@ public class CandleBase(ExchangeBase api)
         }
 
 
-        if (GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, " +
-                $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}) fetched {totalFetched}");
+        //if (GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+        //    GlobalData.AddTextToLogTab($"Fetch historical data FetchFrom({symbol.Name}, {interval!.Name}, " +
+        //        $"{CandleTools.GetUnixDate(unixLoop).ToLocalTime()}, {CandleTools.GetUnixDate(unixMax).ToLocalTime()}) fetched {totalFetched}");
 
         return totalFetched > 0;
     }

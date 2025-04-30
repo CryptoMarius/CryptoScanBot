@@ -183,8 +183,11 @@ public class TrendInterval
             //intervalTrend.DlzAdmin.Reset();
             intervalTrend.Reset();
 #if DEBUG
-            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
-            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
+            if (intervalTrend.Time != null)
+            {
+                log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
+                ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
+            }
 #endif
             return;
         }

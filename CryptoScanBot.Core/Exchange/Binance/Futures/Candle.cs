@@ -71,6 +71,10 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             return minFetch;
         }
 
+        bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
+        if (debug)
+            GlobalData.AddTextToLogTab($"Binance.Futures.GetCandlesForInterval({symbol.Name}, {interval!.Name}, {result.RequestUrl} result={result.Data.Count()}");
+
 
         long fetchedUpTo = long.MinValue;
         await symbol.Data.CandleLock.WaitAsync();
