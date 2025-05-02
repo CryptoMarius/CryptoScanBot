@@ -16,6 +16,14 @@ Attentie vanwege database migraties worden de lopende posities, signalen en zone
 - Scanner - De strategie Stoch short aangepast, er is een verkeerde cross over gebruikt
 - Scanner - De strategie Stoch aangepast, er worden verkeerde getallen qua oppervlakte getoond (de signal is gebruikt ipv oscillator)
 
+30-04-2025 2.0.5
+- Scanner - Oplossing voor wederom een Binance Futures aanpassing zodat de scanner de candles correct ophaalt (we verlagen de workload van 1 groep)
+  (Foutmelding: Message to send exceeds the max server message size (4000 bytes). Split the request into batches to keep below this limit)
+
+06-04-2025 2.0.4
+- Scanner - Oplossing voor Binance Futures zodat de scanner bij het opstarten niet crashed
+  (er is in de opbouw van de json iets veranderd aan de kant van Binance waar de scanner slecht tegen kan)
+
 20-02-2025 2.0.3
 - Scanner - Naast de primaire trend is er nu een secondaire trend, deze is zichtbaar bij de kolommen van de signalen.
 - Scanner - Bij de storsi de "Correction STOCH" verwijderd, enkel de RSI is van belang om te finetunen
