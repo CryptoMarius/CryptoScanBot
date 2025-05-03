@@ -98,7 +98,7 @@ public class Api : ExchangeBase
     {
         ExchangeOptions.ExchangeName = "Binance Futures";
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 100; // was 200
+        ExchangeOptions.SymbolLimitPerSubscription = 50; // was 200
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
