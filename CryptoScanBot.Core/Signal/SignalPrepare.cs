@@ -93,48 +93,59 @@ public class SignalPrepare
         Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> lastCandleList = [];
 
         // Automaticly scan for new dlz zones
-        foreach (var interval in Preparing[SignalPrepareKind.Dlz].Values)
+        if (Preparing.TryGetValue(SignalPrepareKind.Dlz, out SortedList<string, CryptoInterval>? dlzList))
         {
-            if (lastCandle1mCloseTime % interval.Duration == 0)
+            foreach (var interval in dlzList.Values)
             {
-                CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
-
-                // Scan for new zones if candle is outside of the previous primary trend
-                decimal valueLow = lastCandle1m.GetLowValue(false);
-                decimal valueHigh = lastCandle1m.GetHighValue(false);
-                if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
-                   symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
+                if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    // avoid duplicate calculation (kind of a weak attemp)
-                    symbolInterval.DlzAdmin.LastSwingLow = valueLow;
-                    symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
-                    GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
+                    CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
+
+                    // Scan for new zones if candle is outside of the previous primary trend
+                    decimal valueLow = lastCandle1m.GetLowValue(false);
+                    decimal valueHigh = lastCandle1m.GetHighValue(false);
+                    if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
+                       symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
+                    {
+                        // avoid duplicate calculation (kind of a weak attemp)
+                        symbolInterval.DlzAdmin.LastSwingLow = valueLow;
+                        symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
+                        GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
+                    }
                 }
             }
         }
 
+
         // Automaticly scan for new fvg zones
-        foreach (var interval in Preparing[SignalPrepareKind.Fvg].Values)
+        if (Preparing.TryGetValue(SignalPrepareKind.Fvg, out SortedList<string, CryptoInterval>? fvgList))
         {
-            if (lastCandle1mCloseTime % interval.Duration == 0)
+            foreach (var interval in fvgList.Values)
             {
-                ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
+                if (lastCandle1mCloseTime % interval.Duration == 0)
+                {
+                    ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
+                }
             }
         }
 
-        // Prepare all the indicators on each interval
-        foreach (var interval in Preparing[SignalPrepareKind.Indicator].Values)
-        {
-            if (lastCandle1mCloseTime % interval.Duration == 0)
-            {
-                // candle of interval starts at
-                long candleOpenTime = lastCandle1mCloseTime - lastCandle1mCloseTime % interval.Duration;
-                List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, interval, candleOpenTime, out string _);
 
-                if (history != null)
+        // Prepare all the indicators on each interval
+        if (Preparing.TryGetValue(SignalPrepareKind.Indicator, out SortedList<string, CryptoInterval>? indList))
+        {
+            foreach (var interval in indList.Values)
                 {
-                    lastCandleList.TryAdd(interval.IntervalPeriod, history);
-                    CandleIndicatorData.CalculateIndicators(symbol, interval, history);
+                if (lastCandle1mCloseTime % interval.Duration == 0)
+                {
+                    // candle of interval starts at
+                    long candleOpenTime = lastCandle1mCloseTime - lastCandle1mCloseTime % interval.Duration;
+                    List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, interval, candleOpenTime, out string _);
+
+                    if (history != null)
+                    {
+                        lastCandleList.TryAdd(interval.IntervalPeriod, history);
+                        CandleIndicatorData.CalculateIndicators(symbol, interval, history);
+                    }
                 }
             }
         }
