@@ -14,9 +14,7 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
         SoundFileShort = "sound-fvg-short.wav";
 
         IntervalList.Add("1h");
-        IntervalList.Add("2h");
         IntervalList.Add("4h");
-        IntervalList.Add("12h");
         IntervalList.Add("1d");
     }
 }
