@@ -1,7 +1,15 @@
 CryptoScanBot release historie:
 
 
-??-03-2025 2.1
+03-05-2025 2.1.1
+- Scanner - Bij een migratie van de 2.0.x versie naar de 2.1 komt er continue een foutmelding "The given key 'Dlz' was not present in the dictionary"
+            (dit is met name een probleem als je de types FVG en/of DLZ niet aan hebt staan)
+            Doordat de scanner iedere keer crasht krijg je geen signalen
+- Scanner - Bij een migratie zijn de FVG intervallen aangevinkt: 1h, 2h, 4h, 12h en 1d, aangepast naar 1h, 4h en 1d
+- Scanner - Groepering voor de klines van Binance voor de zekerheid nog een keer gehalveerd (nu max 50 symbols per groep)
+            (Foutmelding: Message to send exceeds the max server message size (4000 bytes). Split the request into batches to keep below this limit)
+
+02-05-2025 2.1
 Attentie vanwege database migraties worden de lopende posities, signalen en zones verwijderd
 - Scanner - De extra vinkjes weghalen voor de short en long bij de fvg en dlz (aansturen via de strategien met een * als indicatie voor interval niet van belang)
 - Scanner - Toegevoegd als experiment, de waarden van de primaire en secondaire markttrend toegevoegd
@@ -17,12 +25,12 @@ Attentie vanwege database migraties worden de lopende posities, signalen en zone
 - Scanner - De strategie Stoch aangepast, er worden verkeerde getallen qua oppervlakte getoond (de signal is gebruikt ipv oscillator)
 
 30-04-2025 2.0.5
-- Scanner - Oplossing voor wederom een Binance Futures aanpassing zodat de scanner de candles correct ophaalt (we verlagen de workload van 1 groep)
-  (Foutmelding: Message to send exceeds the max server message size (4000 bytes). Split the request into batches to keep below this limit)
+- Scanner - Oplossing voor wederom een Binance Futures aanpassing zodat de scanner de candles correct ophaalt (nu max 100 symbols per groep)
+            (Foutmelding: Message to send exceeds the max server message size (4000 bytes). Split the request into batches to keep below this limit)
 
 06-04-2025 2.0.4
 - Scanner - Oplossing voor Binance Futures zodat de scanner bij het opstarten niet crashed
-  (er is in de opbouw van de json iets veranderd aan de kant van Binance waar de scanner slecht tegen kan)
+            (er is in de opbouw van de json iets veranderd aan de kant van Binance waar de scanner slecht tegen kan)
 
 20-02-2025 2.0.3
 - Scanner - Naast de primaire trend is er nu een secondaire trend, deze is zichtbaar bij de kolommen van de signalen.
