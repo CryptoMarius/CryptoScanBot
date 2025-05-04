@@ -1,5 +1,7 @@
 CryptoScanBot release historie:
 
+04-05-2025 2.1.2
+- Scanner - De scanner rapporteert toekomstige candles door een slordigheid in een berekening
 
 03-05-2025 2.1.1
 - Scanner - Bij een migratie van de 2.0.x versie naar de 2.1 komt er continue een foutmelding "The given key 'Dlz' was not present in the dictionary"
