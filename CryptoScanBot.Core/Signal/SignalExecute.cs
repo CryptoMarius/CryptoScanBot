@@ -85,7 +85,10 @@ public class SignalExecute
     }
 
 
-    public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol, Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> lastCandleList, long lastCandle1mCloseTime)
+    public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol, 
+        Dictionary<CryptoIntervalPeriod, 
+        List<CryptoCandle>> preparedHistoryCandles, 
+        long lastCandle1mCloseTime)
     {
         List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
@@ -146,7 +149,7 @@ public class SignalExecute
                         SignalCreate createSignal = new(symbol, interval, side, lastCandle1mCloseTime);
 
                         // The candle list can be missing in action, too little candles for example
-                        if (lastCandleList.TryGetValue(interval.IntervalPeriod, out var history))
+                        if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
                         {
                             createSignal.History = history;
                             createSignal.Candle = history[^1];
