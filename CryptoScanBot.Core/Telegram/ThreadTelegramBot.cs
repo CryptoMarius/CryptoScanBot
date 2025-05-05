@@ -130,9 +130,9 @@ public class ThreadTelegramBotInstance
 
         try
         {
-            StringBuilder builder = new();
-            await TelegramShowSignal.Execute(signal, builder);
-            await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, disableWebPagePreview: true);
+            string text = TelegramGenerateSignalText.Execute(signal);
+            if (text != string.Empty)
+                _ = await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, text, parseMode: ParseMode.Html, disableWebPagePreview: true);
         }
         catch (Exception error)
         {

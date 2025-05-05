@@ -7,7 +7,7 @@ using System.Text;
 
 namespace CryptoScanBot.Core.Telegram;
 
-public class TelegramShowSignal
+internal class TelegramGenerateSignalText
 {
 
     private static string GetEmoiFromMarketTrend(float trend)
@@ -71,10 +71,10 @@ public class TelegramShowSignal
 
 
 
-    public static Task<bool> Execute(CryptoSignal signal, StringBuilder stringbuilder)
+    public static string Execute(CryptoSignal signal)
     {
-        if (signal == null || ThreadTelegramBot.ChatId == "")
-            return Task.FromResult(false);
+        if (ThreadTelegramBot.ChatId == "")
+            return string.Empty;
 
         try
         {
@@ -178,7 +178,8 @@ public class TelegramShowSignal
             //var DisableLink = new LinkPreviewOptions { IsDisabled = true };
             //await bot.SendMessage(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, linkPreviewOptions: DisableLink);
             //await bot.SendTextMessageAsync(ThreadTelegramBot.ChatId, builder.ToString(), parseMode: ParseMode.Html, disableWebPagePreview: true);
-            return Task.FromResult(true);
+            //return Task.FromResult((StringBuilder?)builder);
+            return builder.ToString();
         }
         catch (Exception error)
         {
@@ -187,7 +188,7 @@ public class TelegramShowSignal
             GlobalData.AddTextToLogTab("\r\n" + "\r\n" + " error telegram thread(1)\r\n" + error.ToString());
         }
 
-        return Task.FromResult(false);
+        return string.Empty;
     }
 
 }
