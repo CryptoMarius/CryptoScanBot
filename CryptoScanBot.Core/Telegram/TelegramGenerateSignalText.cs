@@ -100,7 +100,7 @@ internal class TelegramGenerateSignalText
                     builder.Append($" {signal.SideText}");
             }
 
-            string text = Settings.CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, signal.Exchange.Name);
+            string text = Settings.CryptoExternalUrlList.GetTradingAppName(GlobalData.Settings.General.TradingApp, "").Trim();
             (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, true, signal.Symbol, signal.Interval);
             if (Url != "")
                 builder.Append($" <a href='{Url}'>{text}</a>");
@@ -126,7 +126,7 @@ internal class TelegramGenerateSignalText
             a.TryAdd(CryptoIntervalPeriod.interval30m, ("30m", signal.Trend30m));
             a.TryAdd(CryptoIntervalPeriod.interval1h, ("1h", signal.Trend1h));
             a.TryAdd(CryptoIntervalPeriod.interval4h, ("4h", signal.Trend4h));
-            a.TryAdd(CryptoIntervalPeriod.interval12h, ("12h", signal.Trend1d));
+            a.TryAdd(CryptoIntervalPeriod.interval12h, ("1d", signal.Trend1d));
 
             builder.Append("Trend: ");
             builder.Append(GetEmoiFromMarketTrend(signal.TrendPercentagePrimary));
