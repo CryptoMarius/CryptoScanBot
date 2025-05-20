@@ -54,12 +54,12 @@
     <PackageReference Include="JKorf.Coinbase.Net" Version="1.9.1" />
     <PackageReference Include="KrakenExchange.Net" Version="5.7.1" />
     <PackageReference Include="Kucoin.Net" Version="6.1.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
     <PackageReference Include="NLog" Version="5.4.0" />
     <PackageReference Include="NPOI" Version="2.7.3" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.6.1" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.3" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.5" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
 
