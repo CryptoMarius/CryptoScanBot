@@ -47,7 +47,6 @@ public class ZoneThreadCalculate
                     IntervalName = interval.Name,
                     ActiveInterval = interval.IntervalPeriod,
                     DlzShowBoxes = true,
-                    DlzZoomBoxes = GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames,
                     FibShowRetracement = false,
                     FibShowZigZag = false,
                     ForceCalculation = true,

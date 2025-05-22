@@ -38,7 +38,6 @@ public class ZoneSession
 
     // dlz
     public bool DlzShowBoxes { get; set; } = true;
-    public bool DlzZoomBoxes { get; set; } = true;
 
     // fib
     public TrendType FibTrend { get; set; } = TrendType.Primary;

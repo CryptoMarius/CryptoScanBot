@@ -203,7 +203,7 @@ public class ZoneDlz
 
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagResult zigZag, decimal top, decimal bottom, bool zoomFurther,
+        ZigZagResult zigZag, decimal top, decimal bottom, 
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         zigZag.Top = top;
@@ -273,7 +273,7 @@ public class ZoneDlz
 
 
         // If the found percentage is obove 0.7% zoom in on the lower intervals (withing the boundaries of the current candle)
-        if (zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage && zoomFurther)
+        if (GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
         {
             CryptoIntervalPeriod zoom = interval!.IntervalPeriod;
             long unixStart = zigZag.Candle.OpenTime;
@@ -356,7 +356,7 @@ public class ZoneDlz
     }
 
     public static async Task CalculateDlzZonesAsync(AddTextEvent? sender, ZoneConfig data, ZigZagIndicator indicator, 
-        bool zoomLiqBoxes, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newCreatedZones");
 
@@ -371,12 +371,12 @@ public class ZoneDlz
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, zoomLiqBoxes, loadedCandlesInMemory);
+                        Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, loadedCandlesInMemory);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
                     await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
-                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), zoomLiqBoxes, loadedCandlesInMemory);
+                        previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), loadedCandlesInMemory);
             }
             previous2 = previous;
             previous = zigZag;
@@ -593,7 +593,7 @@ public class ZoneDlz
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
                 //var trend = session.TrendType == TrendType.Primary? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
                 var indicator = data.IndicatorList[(trend.TrendType, trend.UseHighLow)];
-                await CalculateDlzZonesAsync(sender, data, indicator, session.DlzZoomBoxes, loadedCandlesInMemory);
+                await CalculateDlzZonesAsync(sender, data, indicator, loadedCandlesInMemory);
                 CalculateIntroZone(data, indicator);
                 CalculateBrokenBoxes(data, indicator);
 
