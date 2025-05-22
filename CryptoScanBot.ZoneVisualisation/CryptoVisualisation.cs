@@ -553,7 +553,6 @@ public partial class CryptoVisualisation : Form
         // dlz
         EditDlzShow.Checked = Session.DlzShowBoxes;
         EditDlzZoom.Checked = Session.DlzZoomBoxes;
-        EditDlzShowZigZag.Checked = Session.DlzShowZigZag;
 
         // fib
         EditFibTrend.SelectedIndex = (int)Session.FibTrend;
@@ -588,7 +587,6 @@ public partial class CryptoVisualisation : Form
         // dlz
         Session.DlzShowBoxes = EditDlzShow.Checked;
         Session.DlzZoomBoxes = EditDlzZoom.Checked;
-        Session.DlzShowZigZag = EditDlzShowZigZag.Checked;
 
         // fib
         Session.FibTrend = (TrendType)EditFibTrend.SelectedIndex;

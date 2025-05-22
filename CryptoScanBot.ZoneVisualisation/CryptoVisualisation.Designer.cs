@@ -41,7 +41,6 @@ partial class CryptoVisualisation
         EditTrendType = new ComboBox();
         groupBox3 = new GroupBox();
         EditDlzShow = new CheckBox();
-        EditDlzShowZigZag = new CheckBox();
         EditDlzZoom = new CheckBox();
         groupBox4 = new GroupBox();
         EditFibTrend = new ComboBox();
@@ -197,11 +196,10 @@ partial class CryptoVisualisation
         // 
         groupBox3.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         groupBox3.Controls.Add(EditDlzShow);
-        groupBox3.Controls.Add(EditDlzShowZigZag);
         groupBox3.Controls.Add(EditDlzZoom);
         groupBox3.Location = new Point(6, 200);
         groupBox3.Name = "groupBox3";
-        groupBox3.Size = new Size(200, 100);
+        groupBox3.Size = new Size(200, 76);
         groupBox3.TabIndex = 38;
         groupBox3.TabStop = false;
         groupBox3.Text = "DLZ";
@@ -215,16 +213,6 @@ partial class CryptoVisualisation
         EditDlzShow.TabIndex = 5;
         EditDlzShow.Text = "Show boxes";
         EditDlzShow.UseVisualStyleBackColor = true;
-        // 
-        // EditDlzShowZigZag
-        // 
-        EditDlzShowZigZag.AutoSize = true;
-        EditDlzShowZigZag.Location = new Point(5, 72);
-        EditDlzShowZigZag.Name = "EditDlzShowZigZag";
-        EditDlzShowZigZag.Size = new Size(91, 19);
-        EditDlzShowZigZag.TabIndex = 7;
-        EditDlzShowZigZag.Text = "Show zigzag";
-        EditDlzShowZigZag.UseVisualStyleBackColor = true;
         // 
         // EditDlzZoom
         // 
@@ -242,7 +230,7 @@ partial class CryptoVisualisation
         groupBox4.Controls.Add(EditFibTrend);
         groupBox4.Controls.Add(EditFibShow);
         groupBox4.Controls.Add(EditFibZhowZigZag);
-        groupBox4.Location = new Point(6, 306);
+        groupBox4.Location = new Point(6, 282);
         groupBox4.Name = "groupBox4";
         groupBox4.Size = new Size(200, 107);
         groupBox4.TabIndex = 39;
@@ -284,7 +272,7 @@ partial class CryptoVisualisation
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 419);
+        panel1.Location = new Point(6, 395);
         panel1.Name = "panel1";
         panel1.Size = new Size(200, 30);
         panel1.TabIndex = 21;
@@ -323,7 +311,7 @@ partial class CryptoVisualisation
         PanelPlayBack.Controls.Add(labelMaxTime);
         PanelPlayBack.Controls.Add(ButtonGoRight);
         PanelPlayBack.Controls.Add(ButtonGoLeft);
-        PanelPlayBack.Location = new Point(6, 455);
+        PanelPlayBack.Location = new Point(6, 431);
         PanelPlayBack.Name = "PanelPlayBack";
         PanelPlayBack.Size = new Size(200, 30);
         PanelPlayBack.TabIndex = 22;
@@ -359,7 +347,7 @@ partial class CryptoVisualisation
         // 
         // ButtonRefresh
         // 
-        ButtonRefresh.Location = new Point(6, 491);
+        ButtonRefresh.Location = new Point(6, 467);
         ButtonRefresh.Name = "ButtonRefresh";
         ButtonRefresh.Size = new Size(121, 23);
         ButtonRefresh.TabIndex = 31;
@@ -368,7 +356,7 @@ partial class CryptoVisualisation
         // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 520);
+        ButtonCalculate.Location = new Point(6, 496);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(121, 23);
         ButtonCalculate.TabIndex = 8;
@@ -377,7 +365,7 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 549);
+        ButtonZoomLast.Location = new Point(6, 525);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(121, 23);
         ButtonZoomLast.TabIndex = 14;
@@ -391,7 +379,7 @@ partial class CryptoVisualisation
         groupBox1.Controls.Add(EditShowSignals);
         groupBox1.Controls.Add(EditShowDtb);
         groupBox1.Controls.Add(EditShowFvgZones);
-        groupBox1.Location = new Point(6, 578);
+        groupBox1.Location = new Point(6, 554);
         groupBox1.Name = "groupBox1";
         groupBox1.Size = new Size(200, 150);
         groupBox1.TabIndex = 36;
@@ -451,7 +439,7 @@ partial class CryptoVisualisation
         // EditUseBatchProcess
         // 
         EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 734);
+        EditUseBatchProcess.Location = new Point(6, 710);
         EditUseBatchProcess.Name = "EditUseBatchProcess";
         EditUseBatchProcess.Size = new Size(99, 19);
         EditUseBatchProcess.TabIndex = 28;
@@ -509,7 +497,6 @@ partial class CryptoVisualisation
     private Label labelInterval2;
     private CheckBox EditDlzZoom;
     private CheckBox EditDlzShow;
-    private CheckBox EditDlzShowZigZag;
     private Button ButtonCalculate;
     private ComboBox EditIntervalName;
     private Label label3;
