@@ -115,6 +115,5 @@ public class SettingsGeneral
     public bool DebugSignalStrength { get; set; } = false;
     public bool DebugTrendCalculation { get; set; } = false;
     public bool DebugAssetManagement { get; set; } = false;
-    public bool UseHighLowInTrendCalculation { get; set; } = false;
 }
 

@@ -308,15 +308,14 @@ partial class FrmSettings
         panel6 = new Panel();
         label49 = new Label();
         tabPageOptions = new TabPage();
+        EditDebugZoneCandles = new CheckBox();
         EditDebugAssetManagement = new CheckBox();
-        EditUseHighLowInTrendCalculation = new CheckBox();
         EditDebugTrendCalculation = new CheckBox();
         EditDebugSymbol = new TextBox();
         LabelDebugSymbol = new Label();
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        EditDebugZoneCandles = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -3591,7 +3590,6 @@ partial class FrmSettings
         // 
         tabPageOptions.Controls.Add(EditDebugZoneCandles);
         tabPageOptions.Controls.Add(EditDebugAssetManagement);
-        tabPageOptions.Controls.Add(EditUseHighLowInTrendCalculation);
         tabPageOptions.Controls.Add(EditDebugTrendCalculation);
         tabPageOptions.Controls.Add(EditDebugSymbol);
         tabPageOptions.Controls.Add(LabelDebugSymbol);
@@ -3606,10 +3604,21 @@ partial class FrmSettings
         tabPageOptions.Text = "Debug";
         tabPageOptions.UseVisualStyleBackColor = true;
         // 
+        // EditDebugZoneCandles
+        // 
+        EditDebugZoneCandles.AutoSize = true;
+        EditDebugZoneCandles.Location = new Point(21, 205);
+        EditDebugZoneCandles.Margin = new Padding(4, 3, 4, 3);
+        EditDebugZoneCandles.Name = "EditDebugZoneCandles";
+        EditDebugZoneCandles.Size = new Size(206, 19);
+        EditDebugZoneCandles.TabIndex = 305;
+        EditDebugZoneCandles.Text = "Debug candle management zones";
+        EditDebugZoneCandles.UseVisualStyleBackColor = true;
+        // 
         // EditDebugAssetManagement
         // 
         EditDebugAssetManagement.AutoSize = true;
-        EditDebugAssetManagement.Location = new Point(23, 211);
+        EditDebugAssetManagement.Location = new Point(21, 180);
         EditDebugAssetManagement.Margin = new Padding(4, 3, 4, 3);
         EditDebugAssetManagement.Name = "EditDebugAssetManagement";
         EditDebugAssetManagement.Size = new Size(296, 19);
@@ -3617,21 +3626,10 @@ partial class FrmSettings
         EditDebugAssetManagement.Text = "Debug asset management (papertrading/emulator)";
         EditDebugAssetManagement.UseVisualStyleBackColor = true;
         // 
-        // EditUseHighLowInTrendCalculation
-        // 
-        EditUseHighLowInTrendCalculation.AutoSize = true;
-        EditUseHighLowInTrendCalculation.Location = new Point(25, 24);
-        EditUseHighLowInTrendCalculation.Margin = new Padding(4, 3, 4, 3);
-        EditUseHighLowInTrendCalculation.Name = "EditUseHighLowInTrendCalculation";
-        EditUseHighLowInTrendCalculation.Size = new Size(327, 19);
-        EditUseHighLowInTrendCalculation.TabIndex = 303;
-        EditUseHighLowInTrendCalculation.Text = "Use High/Low in trend calculation instead of Open/Close";
-        EditUseHighLowInTrendCalculation.UseVisualStyleBackColor = true;
-        // 
         // EditDebugTrendCalculation
         // 
         EditDebugTrendCalculation.AutoSize = true;
-        EditDebugTrendCalculation.Location = new Point(25, 50);
+        EditDebugTrendCalculation.Location = new Point(23, 19);
         EditDebugTrendCalculation.Margin = new Padding(4, 3, 4, 3);
         EditDebugTrendCalculation.Name = "EditDebugTrendCalculation";
         EditDebugTrendCalculation.Size = new Size(322, 19);
@@ -3642,7 +3640,7 @@ partial class FrmSettings
         // EditDebugSymbol
         // 
         EditDebugSymbol.CharacterCasing = CharacterCasing.Upper;
-        EditDebugSymbol.Location = new Point(23, 132);
+        EditDebugSymbol.Location = new Point(21, 101);
         EditDebugSymbol.Margin = new Padding(4, 3, 4, 3);
         EditDebugSymbol.Name = "EditDebugSymbol";
         EditDebugSymbol.Size = new Size(103, 23);
@@ -3651,7 +3649,7 @@ partial class FrmSettings
         // LabelDebugSymbol
         // 
         LabelDebugSymbol.AutoSize = true;
-        LabelDebugSymbol.Location = new Point(134, 135);
+        LabelDebugSymbol.Location = new Point(132, 104);
         LabelDebugSymbol.Margin = new Padding(4, 0, 4, 0);
         LabelDebugSymbol.Name = "LabelDebugSymbol";
         LabelDebugSymbol.Size = new Size(273, 15);
@@ -3661,7 +3659,7 @@ partial class FrmSettings
         // EditDebugSignalStrength
         // 
         EditDebugSignalStrength.AutoSize = true;
-        EditDebugSignalStrength.Location = new Point(25, 75);
+        EditDebugSignalStrength.Location = new Point(23, 44);
         EditDebugSignalStrength.Margin = new Padding(4, 3, 4, 3);
         EditDebugSignalStrength.Name = "EditDebugSignalStrength";
         EditDebugSignalStrength.Size = new Size(394, 19);
@@ -3672,7 +3670,7 @@ partial class FrmSettings
         // EditDebugSignalCreate
         // 
         EditDebugSignalCreate.AutoSize = true;
-        EditDebugSignalCreate.Location = new Point(23, 186);
+        EditDebugSignalCreate.Location = new Point(21, 155);
         EditDebugSignalCreate.Margin = new Padding(4, 3, 4, 3);
         EditDebugSignalCreate.Name = "EditDebugSignalCreate";
         EditDebugSignalCreate.Size = new Size(269, 19);
@@ -3683,24 +3681,13 @@ partial class FrmSettings
         // EditDebugKLineReceive
         // 
         EditDebugKLineReceive.AutoSize = true;
-        EditDebugKLineReceive.Location = new Point(23, 161);
+        EditDebugKLineReceive.Location = new Point(21, 130);
         EditDebugKLineReceive.Margin = new Padding(4, 3, 4, 3);
         EditDebugKLineReceive.Name = "EditDebugKLineReceive";
         EditDebugKLineReceive.Size = new Size(258, 19);
         EditDebugKLineReceive.TabIndex = 297;
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
-        // 
-        // EditDebugZoneCandles
-        // 
-        EditDebugZoneCandles.AutoSize = true;
-        EditDebugZoneCandles.Location = new Point(23, 236);
-        EditDebugZoneCandles.Margin = new Padding(4, 3, 4, 3);
-        EditDebugZoneCandles.Name = "EditDebugZoneCandles";
-        EditDebugZoneCandles.Size = new Size(206, 19);
-        EditDebugZoneCandles.TabIndex = 305;
-        EditDebugZoneCandles.Text = "Debug candle management zones";
-        EditDebugZoneCandles.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -4111,7 +4098,6 @@ partial class FrmSettings
     private NumericUpDown EditStorsiBBMinPercentage;
     private NumericUpDown EditStorsiBBMaxPercentage;
     private GroupBox GroupBoxXDaysEffective;
-    private CheckBox EditUseHighLowInTrendCalculation;
     private CheckBox EditDebugAssetManagement;
     private TabPage tabSignalZones;
     private FlowLayoutPanel flowLayoutPanel4;
