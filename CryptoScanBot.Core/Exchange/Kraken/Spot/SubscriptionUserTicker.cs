@@ -34,7 +34,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     //    bool? snapshotTrades = null,
     //    CancellationToken ct = default);
 
-    private void OnOrderUpdate(DataEvent<IEnumerable<KrakenOrderUpdate>> dataList)
+    private void OnOrderUpdate(DataEvent<KrakenOrderUpdate[]> dataList)
     {
         try
         {

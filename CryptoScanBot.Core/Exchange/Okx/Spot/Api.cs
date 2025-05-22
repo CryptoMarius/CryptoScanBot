@@ -86,7 +86,7 @@ public class Api : ExchangeBase
             //options.Environment = BybitEnvironment.Testnet;
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new OKXApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
         OKXSocketClient.SetDefaultOptions(options =>
@@ -100,7 +100,7 @@ public class Api : ExchangeBase
             //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new OKXApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
 
             //options.AddLogging(x =>
             //{

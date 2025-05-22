@@ -1,5 +1,6 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
+using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
@@ -22,7 +23,7 @@ public class SubscriptionUserTicker(ExchangeOptions exchangeOptions) : Subscript
     }
 
 
-    private void OnOrderUpdate(DataEvent<IEnumerable<Bybit.Net.Objects.Models.V5.BybitOrderUpdate>> dataList)
+    private void OnOrderUpdate(DataEvent<BybitOrderUpdate[]> dataList)
     {
         try
         {

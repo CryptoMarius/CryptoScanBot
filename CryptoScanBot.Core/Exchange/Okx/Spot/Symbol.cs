@@ -119,7 +119,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                symbol.QuantityTickSize = symbolData.LotSize;
+                                if (symbolData.LotSize.HasValue)
+                                    symbol.QuantityTickSize = symbolData.LotSize.Value;
                                 //symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
@@ -133,7 +134,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolData.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolData.LotSizeFilter.MaxOrderValue;
 
-                                symbol.PriceTickSize = symbolData.TickSize;
+                                if (symbolData.TickSize.HasValue)
+                                    symbol.PriceTickSize = symbolData.TickSize.Value;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
