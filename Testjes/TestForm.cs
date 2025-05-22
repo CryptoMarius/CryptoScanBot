@@ -901,7 +901,7 @@ public partial class TestForm : Form
         //public double stddev1h;
         public decimal Volume;
 
-        public decimal Wicks;
+        //public decimal Wicks;
     }
 
 

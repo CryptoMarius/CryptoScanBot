@@ -551,7 +551,7 @@ public class ZoneDlz
                     {
                         foreach (var indicatorX in data.IndicatorList.Values)
                         {
-                            indicatorX.Calculate(candle, session.UseBatchProcess);
+                            indicatorX.Calculate(candle, true);
                         }
                     }
                 }
@@ -574,7 +574,7 @@ public class ZoneDlz
                         symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
                 }
 
-                if (session.UseBatchProcess)
+                if (true) //session.UseBatchProcess
                 {
                     foreach (var indicatorX in data.IndicatorList.Values)
                         indicatorX.FinishBatch();

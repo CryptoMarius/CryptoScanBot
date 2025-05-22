@@ -39,8 +39,6 @@ partial class CryptoVisualisation
         groupBox5 = new GroupBox();
         EditTrendShowZigZag = new CheckBox();
         EditTrendType = new ComboBox();
-        groupBox3 = new GroupBox();
-        EditDlzShow = new CheckBox();
         groupBox4 = new GroupBox();
         EditFibTrend = new ComboBox();
         EditFibShow = new CheckBox();
@@ -57,17 +55,16 @@ partial class CryptoVisualisation
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
         groupBox1 = new GroupBox();
+        EditDlzShow = new CheckBox();
         EditTransparant = new CheckBox();
         EditShowPivots = new CheckBox();
         EditShowSignals = new CheckBox();
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
-        EditUseBatchProcess = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
-        groupBox3.SuspendLayout();
         groupBox4.SuspendLayout();
         panel1.SuspendLayout();
         PanelPlayBack.SuspendLayout();
@@ -79,7 +76,6 @@ partial class CryptoVisualisation
         flowLayoutPanel1.AutoSize = true;
         flowLayoutPanel1.Controls.Add(groupBox2);
         flowLayoutPanel1.Controls.Add(groupBox5);
-        flowLayoutPanel1.Controls.Add(groupBox3);
         flowLayoutPanel1.Controls.Add(groupBox4);
         flowLayoutPanel1.Controls.Add(panel1);
         flowLayoutPanel1.Controls.Add(PanelPlayBack);
@@ -87,7 +83,6 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
         flowLayoutPanel1.Controls.Add(groupBox1);
-        flowLayoutPanel1.Controls.Add(EditUseBatchProcess);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -191,34 +186,13 @@ partial class CryptoVisualisation
         EditTrendType.Size = new Size(121, 23);
         EditTrendType.TabIndex = 35;
         // 
-        // groupBox3
-        // 
-        groupBox3.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        groupBox3.Controls.Add(EditDlzShow);
-        groupBox3.Location = new Point(6, 200);
-        groupBox3.Name = "groupBox3";
-        groupBox3.Size = new Size(200, 54);
-        groupBox3.TabIndex = 38;
-        groupBox3.TabStop = false;
-        groupBox3.Text = "DLZ";
-        // 
-        // EditDlzShow
-        // 
-        EditDlzShow.AutoSize = true;
-        EditDlzShow.Location = new Point(5, 22);
-        EditDlzShow.Name = "EditDlzShow";
-        EditDlzShow.Size = new Size(89, 19);
-        EditDlzShow.TabIndex = 5;
-        EditDlzShow.Text = "Show boxes";
-        EditDlzShow.UseVisualStyleBackColor = true;
-        // 
         // groupBox4
         // 
         groupBox4.AutoSizeMode = AutoSizeMode.GrowAndShrink;
         groupBox4.Controls.Add(EditFibTrend);
         groupBox4.Controls.Add(EditFibShow);
         groupBox4.Controls.Add(EditFibZhowZigZag);
-        groupBox4.Location = new Point(6, 260);
+        groupBox4.Location = new Point(6, 200);
         groupBox4.Name = "groupBox4";
         groupBox4.Size = new Size(200, 107);
         groupBox4.TabIndex = 39;
@@ -260,7 +234,7 @@ partial class CryptoVisualisation
         panel1.Controls.Add(labelInterval);
         panel1.Controls.Add(ButtonPlus);
         panel1.Controls.Add(ButtonMinus);
-        panel1.Location = new Point(6, 373);
+        panel1.Location = new Point(6, 313);
         panel1.Name = "panel1";
         panel1.Size = new Size(200, 30);
         panel1.TabIndex = 21;
@@ -299,7 +273,7 @@ partial class CryptoVisualisation
         PanelPlayBack.Controls.Add(labelMaxTime);
         PanelPlayBack.Controls.Add(ButtonGoRight);
         PanelPlayBack.Controls.Add(ButtonGoLeft);
-        PanelPlayBack.Location = new Point(6, 409);
+        PanelPlayBack.Location = new Point(6, 349);
         PanelPlayBack.Name = "PanelPlayBack";
         PanelPlayBack.Size = new Size(200, 30);
         PanelPlayBack.TabIndex = 22;
@@ -335,7 +309,7 @@ partial class CryptoVisualisation
         // 
         // ButtonRefresh
         // 
-        ButtonRefresh.Location = new Point(6, 445);
+        ButtonRefresh.Location = new Point(6, 385);
         ButtonRefresh.Name = "ButtonRefresh";
         ButtonRefresh.Size = new Size(121, 23);
         ButtonRefresh.TabIndex = 31;
@@ -344,7 +318,7 @@ partial class CryptoVisualisation
         // 
         // ButtonCalculate
         // 
-        ButtonCalculate.Location = new Point(6, 474);
+        ButtonCalculate.Location = new Point(6, 414);
         ButtonCalculate.Name = "ButtonCalculate";
         ButtonCalculate.Size = new Size(121, 23);
         ButtonCalculate.TabIndex = 8;
@@ -353,7 +327,7 @@ partial class CryptoVisualisation
         // 
         // ButtonZoomLast
         // 
-        ButtonZoomLast.Location = new Point(6, 503);
+        ButtonZoomLast.Location = new Point(6, 443);
         ButtonZoomLast.Name = "ButtonZoomLast";
         ButtonZoomLast.Size = new Size(121, 23);
         ButtonZoomLast.TabIndex = 14;
@@ -362,17 +336,28 @@ partial class CryptoVisualisation
         // 
         // groupBox1
         // 
+        groupBox1.Controls.Add(EditDlzShow);
         groupBox1.Controls.Add(EditTransparant);
         groupBox1.Controls.Add(EditShowPivots);
         groupBox1.Controls.Add(EditShowSignals);
         groupBox1.Controls.Add(EditShowDtb);
         groupBox1.Controls.Add(EditShowFvgZones);
-        groupBox1.Location = new Point(6, 532);
+        groupBox1.Location = new Point(6, 472);
         groupBox1.Name = "groupBox1";
-        groupBox1.Size = new Size(200, 150);
+        groupBox1.Size = new Size(200, 173);
         groupBox1.TabIndex = 36;
         groupBox1.TabStop = false;
         groupBox1.Text = "Misc";
+        // 
+        // EditDlzShow
+        // 
+        EditDlzShow.AutoSize = true;
+        EditDlzShow.Location = new Point(5, 96);
+        EditDlzShow.Name = "EditDlzShow";
+        EditDlzShow.Size = new Size(106, 19);
+        EditDlzShow.TabIndex = 5;
+        EditDlzShow.Text = "Show dlz zones";
+        EditDlzShow.UseVisualStyleBackColor = true;
         // 
         // EditTransparant
         // 
@@ -407,32 +392,22 @@ partial class CryptoVisualisation
         // EditShowDtb
         // 
         EditShowDtb.AutoSize = true;
-        EditShowDtb.Location = new Point(5, 97);
+        EditShowDtb.Location = new Point(5, 144);
         EditShowDtb.Name = "EditShowDtb";
-        EditShowDtb.Size = new Size(77, 19);
+        EditShowDtb.Size = new Size(156, 19);
         EditShowDtb.TabIndex = 33;
-        EditShowDtb.Text = "Show Dtb";
+        EditShowDtb.Text = "Show dtb (experimental)";
         EditShowDtb.UseVisualStyleBackColor = true;
         // 
         // EditShowFvgZones
         // 
         EditShowFvgZones.AutoSize = true;
-        EditShowFvgZones.Location = new Point(5, 122);
+        EditShowFvgZones.Location = new Point(5, 120);
         EditShowFvgZones.Name = "EditShowFvgZones";
         EditShowFvgZones.Size = new Size(108, 19);
         EditShowFvgZones.TabIndex = 32;
         EditShowFvgZones.Text = "Show fvg zones";
         EditShowFvgZones.UseVisualStyleBackColor = true;
-        // 
-        // EditUseBatchProcess
-        // 
-        EditUseBatchProcess.AutoSize = true;
-        EditUseBatchProcess.Location = new Point(6, 688);
-        EditUseBatchProcess.Name = "EditUseBatchProcess";
-        EditUseBatchProcess.Size = new Size(99, 19);
-        EditUseBatchProcess.TabIndex = 28;
-        EditUseBatchProcess.Text = "Batch process";
-        EditUseBatchProcess.UseVisualStyleBackColor = true;
         // 
         // plotView
         // 
@@ -459,13 +434,10 @@ partial class CryptoVisualisation
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Form1";
         flowLayoutPanel1.ResumeLayout(false);
-        flowLayoutPanel1.PerformLayout();
         groupBox2.ResumeLayout(false);
         groupBox2.PerformLayout();
         groupBox5.ResumeLayout(false);
         groupBox5.PerformLayout();
-        groupBox3.ResumeLayout(false);
-        groupBox3.PerformLayout();
         groupBox4.ResumeLayout(false);
         groupBox4.PerformLayout();
         panel1.ResumeLayout(false);
@@ -500,7 +472,6 @@ partial class CryptoVisualisation
     private Label labelInterval;
     private Label labelMaxTime;
     private CheckBox EditFibZhowZigZag;
-    private CheckBox EditUseBatchProcess;
     private Button ButtonRefresh;
     private CheckBox EditShowFvgZones;
     private CheckBox EditShowDtb;
@@ -511,7 +482,6 @@ partial class CryptoVisualisation
     private CheckBox EditTransparant;
     private CheckBox EditShowPivots;
     private CheckBox EditShowSignals;
-    private GroupBox groupBox3;
     private GroupBox groupBox4;
     private ComboBox EditFibTrend;
     private GroupBox groupBox5;

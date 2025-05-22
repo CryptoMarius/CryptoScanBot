@@ -5,6 +5,7 @@ xx-xx-2025 2.1.4
 - Scanner - Het percentage effectief wordt berekend op basis van de 4h candles maar de laatste uren/minuten worden niet meegenomen in de berekening.
 - Scanner - Zone visualisatie - Een niet gebruikte instelling verwijderd (dlz Zoom boxes)
 - Scanner - Zone visualisatie - Een niet gebruikte instelling verwijderd (dlz Show ZigZag)
+- Scanner - Zone visualisatie - Een niet gebruikte instelling verwijderd (dlz Use Batch Process) - debug only
 - Scanner - Een niet gebruikte instelling verwijderd van de instellingen debug tabblad (trend)
 
 05-05-2025 2.1.3

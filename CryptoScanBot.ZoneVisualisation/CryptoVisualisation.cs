@@ -48,7 +48,6 @@ public partial class CryptoVisualisation : Form
             InitializeStandAloneStuff();
 
         Session = ZoneSession.LoadSessionSettings();
-        Session.UseBatchProcess = true;
         Session.UseOptimizing = false;
 
         LoadEdits();
@@ -559,10 +558,8 @@ public partial class CryptoVisualisation : Form
         EditFibZhowZigZag.Checked = Session.FibShowZigZag;
 
 #if DEBUGZIGZAG
-        EditUseBatchProcess.Checked = Session.UseBatchProcess;
 #else
         PanelPlayBack.Visible = false;
-        EditUseBatchProcess.Visible = false;
 #endif
         EditShowPivots.Checked = Session.ShowPoints;
         EditShowSignals.Checked = Session.ShowSignals;
@@ -591,11 +588,6 @@ public partial class CryptoVisualisation : Form
         Session.FibShowRetracement = EditFibShow.Checked;
         Session.FibShowZigZag = EditFibZhowZigZag.Checked;
 
-#if DEBUGZIGZAG
-        Session.UseBatchProcess = EditUseBatchProcess.Checked;
-#else
-        Session.UseBatchProcess = true;
-#endif
         Session.ShowPoints = EditShowPivots.Checked;
         Session.ShowSignals = EditShowSignals.Checked;
         Session.ShowFvgZones = EditShowFvgZones.Checked;

@@ -46,7 +46,6 @@ public class ZoneSession
 
     // misc
     public bool ShowPoints { get; set; } = false;
-    public bool UseBatchProcess { get; set; } = false;
     public bool ForceCalculation { get; set; } = false;
     public bool ShowSignals { get; set; } = false;
     public bool ShowFvgZones { get; set; } = false;

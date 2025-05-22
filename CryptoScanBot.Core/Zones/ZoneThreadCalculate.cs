@@ -50,7 +50,6 @@ public class ZoneThreadCalculate
                     FibShowRetracement = false,
                     FibShowZigZag = false,
                     ForceCalculation = true,
-                    UseBatchProcess = true,
                     UseOptimizing = false,
                     Deviation = 1.0m,
                     TrendType = TrendType.Primary,
