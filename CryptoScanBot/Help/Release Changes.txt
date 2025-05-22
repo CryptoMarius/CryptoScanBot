@@ -1,5 +1,9 @@
 CryptoScanBot release historie:
 
+xx-xx-2025 2.1.4
+- Scanner - De scanner houdt geen rekening meer met het aantal dagen dat de munt bestaat.
+- Scanner - Het percentage effectief wordt berekend op basis van de 4h candles maar de laatste uren/minuten worden niet meegenomen in de berekening.
+
 05-05-2025 2.1.3
 - Scanner - De signalen worden niet verstuurd via Telegram (geeft intern een foutmelding)
 - Scanner - Aanpassingen Telegram tekst, trend 12h moest qua caption 1d zijn en de naam van de exchange verwijderd

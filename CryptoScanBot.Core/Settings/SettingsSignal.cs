@@ -21,12 +21,12 @@ public class SettingsSignal
     public decimal MinimumTickPercentage { get; set; } = 0.25m;
     public bool LogMinimumTickPercentage { get; set; } = false;
 
-    // de 24 change moet binnen dit interval zitten (niet presentatief)
+    // de 24 change moet binnen dit interval zitten (start/end price)
     public double AnalysisMinChangePercentage { get; set; } = -25;
     public double AnalysisMaxChangePercentage { get; set; } = 25;
     public bool LogAnalysisMinMaxChangePercentage { get; set; } = false;
 
-    // de x dagen effectief moet binnen dit interval zitten (de echte beweging)
+    // de x dagen effectief moet binnen dit interval zitten (full effective move)
     public int AnalysisEffectiveDays { get; set; } = 5;
     public double AnalysisEffectivePercentage { get; set; } = 35;
     public bool AnalysisMaxEffectiveLog { get; set; } = false;

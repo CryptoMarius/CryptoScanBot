@@ -14,7 +14,8 @@ Scanner:
             Heeft de scanner weken/maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
 - Scanner - Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien, keuze om trading via de exchange definitief te verwijderen? - M.
 - Scanner - Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
-- Scanner - Overweging - Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers wel weg (overhead). We hebben enkel een verversing van het volume nodig (alle tickers elk uur opvragen)
+- Scanner - Overweging - Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers weg (overhead). 
+            We hebben enkel een verversing van het volume nodig (alle tickers ieder uur opvragen zoals we nu ook doen voor Kucoin)
 - Scanner - Soms geen extra informatie in de live data (omdat deze intern reeds vervallen is na een bepaalde timeout)
 - Scanner - Overweging: Verwijderen van het invalid signal vinkje, dit maakt de scanner nodeloos ingewikkeld
 - Scanner - De sounds voor de fvg, dlz en dlz.near melding zijn hetzelfde (en worden niet bijgeleverd)
@@ -127,6 +128,7 @@ Trading:
 - Trading - Bybit Futures - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
 
 Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
+*** alle trading via Altrady, onderstaande dus niet meer relevant
 - Trading - userdate stream implementeren (detectie van trade)
 - Trading - ophalen trades implementeren
 - Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
@@ -135,8 +137,6 @@ Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
 Scanner:
 - Exchange OKX - Okx Spot ARUSDT 6h error getting klines [OKXRestApiError] 51001: Instrument ID does not exist (maar volgens de symbols.json is ie er wel, wellicht een conflict europe en worldwide, verkeerde url's?)
 - Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min
-
-
 
 
 Emulator:

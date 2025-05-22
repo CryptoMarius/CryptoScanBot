@@ -85,39 +85,48 @@ public class SignalExecute
     }
 
 
-    public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol, 
-        Dictionary<CryptoIntervalPeriod, 
-        List<CryptoCandle>> preparedHistoryCandles, 
+    public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol,
+        Dictionary<CryptoIntervalPeriod,
+        List<CryptoCandle>> preparedHistoryCandles,
         long lastCandle1mCloseTime)
     {
         List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
-        //if (GlobalData.Settings.Signal.Active && symbol.QuoteData!.FetchCandles && symbol.Status == 1)
-        //{
 
-            // TODO: CHECK: This is something different than before (parameter false/true combined with zones!)
-            // I'm not sure if this is really such a bad thing, you do not want to trade an inconsistent volume
-            // But lets keep the parameter for now..
+        // TODO: CHECK: This is something different than before (parameter false/true combined with zones!)
+        // I'm not sure if this is really such a bad thing, you do not want to trade an inconsistent volume
+        // But lets keep the parameter for now..
 
-            // Is the volume valid within a certain minimal limit
-            if (!symbol.CheckValidMinimalVolume(false, lastCandle1mCloseTime, 60, out string response))
-            {
-                if (GlobalData.Settings.Signal.LogMinimalVolume)
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                return [];
-            }
+        // Is the symbol a new one?
+        if (!SymbolTools.CheckNewCoin(symbol, out string response))
+        {
+            if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            return [];
+        }
 
-            // Is the price valid within a certain minimal limit
-            if (!symbol.CheckValidMinimalPrice(out response))
-            {
-                if (GlobalData.Settings.Signal.LogMinimalPrice)
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    GlobalData.AddTextToLogTab("Analyse " + response);
-                return [];
-            }
+        // Is the volume valid within a certain minimal limit
+        if (!symbol.CheckValidMinimalVolume(lastCandle1mCloseTime, 60, out response))
+        {
+            if (GlobalData.Settings.Signal.LogMinimalVolume)
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            return [];
+        }
+
+        // Is the price valid within a certain minimal limit
+        if (!symbol.CheckValidMinimalPrice(out response))
+        {
+            if (GlobalData.Settings.Signal.LogMinimalPrice)
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
+            return [];
+        }
+
 
         foreach (var entry in Executing)
         {
@@ -167,7 +176,7 @@ public class SignalExecute
                 }
             }
         }
- 
+
         return signalList;
     }
 

@@ -193,40 +193,36 @@ public class SignalCreate
     }
 
 
-    private double CalculateMaxMovementInInterval(long startTime, CryptoIntervalPeriod intervalPeriod, long candleCount)
+    private double CalculateMaxMovementInInterval(decimal? lastPrice, long startTime, CryptoIntervalPeriod intervalPeriod, long candleCount)
     {
-        // Op een iets hoger interval gaan we x candles naar achteren en meten de echte beweging
-        // (de 24% change is wat effectief overblijft, maar dat is duidelijk niet de echte beweging)
+        if (lastPrice == null)
+            return 0;
+
+        decimal min = lastPrice.Value;
+        decimal max = lastPrice.Value;
+
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
-        CryptoCandleList candles = symbolInterval.CandleList;
-
-
-        double min = double.MaxValue;
-        double max = double.MinValue;
-
-        // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
         long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval.Duration);
 
         while (candleCount-- > 0)
         {
-            if (candles.TryGetValue(unix, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
             {
-                if ((double)candle.Low < min)
-                    min = (double)candle.Low;
+                if (candle.Low < min)
+                    min = candle.Low;
 
-                if ((double)candle.High > max)
-                    max = (double)candle.High;
+                if (candle.High > max)
+                    max = candle.High;
             }
 
             unix -= symbolInterval.Interval.Duration;
         }
 
-        double diff = max - min;
+        decimal diff = max - min;
         if (!max.Equals(0))
-            return 100.0 * (diff / max);
+            return (double)(100.0m * (diff / max));
         else
             return 0;
-        //signal.Last10DaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, 1 * 40);
     }
 
 
@@ -321,9 +317,9 @@ public class SignalCreate
         }
 
 
-        // Check effictive over multiple day's
-        int countInInterval6H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 4; // 40 * 6 = 240 = day's (check)
-        signal.LastXDaysEffective = CalculateMaxMovementInInterval(signal.EventTime, CryptoIntervalPeriod.interval6h, countInInterval6H);
+        // Check the % effective over multiple day's
+        int countInInterval4H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 6;
+        signal.LastXDaysEffective = CalculateMaxMovementInInterval(Symbol.LastPrice, signal.EventTime, CryptoIntervalPeriod.interval4h, countInInterval4H);
         if (!signal.LastXDaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)

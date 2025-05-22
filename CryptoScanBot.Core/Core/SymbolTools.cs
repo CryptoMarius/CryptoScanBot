@@ -68,7 +68,7 @@ public class SymbolTools
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren
         //In principe is dit bij de CC signals al gedaan, maar een tweede keer kan geen kwaad
-        if (!symbol.CheckValidMinimalVolume(false, candleStart, candleDuration, out string text))
+        if (!symbol.CheckValidMinimalVolume(candleStart, candleDuration, out string text))
         {
             reaction = text;
             return false;

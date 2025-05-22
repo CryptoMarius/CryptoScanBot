@@ -222,7 +222,7 @@ public static class Helper
     }
 
 
-    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, bool zones, long candleStart, int candleDuration, out string text)
+    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, int candleDuration, out string text)
     {
         if (symbol.QuoteData!.MinimalVolume > 0)
         {
@@ -241,7 +241,7 @@ public static class Helper
             }
 
             // Check the volume of multiple day's (so we know its not just a stupid temporary spike in volume)
-            if (!zones && GlobalData.Settings.Signal.CheckVolumeOverPeriod) // Need setting?
+            if (GlobalData.Settings.Signal.CheckVolumeOverPeriod) // Need setting?
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
                 if (symbolInterval.CandleList.Count > 0)
