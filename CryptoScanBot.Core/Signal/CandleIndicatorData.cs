@@ -172,7 +172,9 @@ public class CandleIndicatorData : CryptoData
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
-        //List<SmaResult> smaList8 = (List<SmaResult>)Indicator.GetSma(History, 8);
+        //List<SmaResult> smaList05 = (List<SmaResult>)history.GetSma(05);
+        //List<SmaResult> smaList08 = (List<SmaResult>)history.GetSma(08);
+        //List<SmaResult> smaList10 = (List<SmaResult>)history.GetSma(10);
         List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
