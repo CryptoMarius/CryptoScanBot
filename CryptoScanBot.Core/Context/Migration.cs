@@ -1178,8 +1178,8 @@ public class Migration
             database.Connection.Execute("alter table Position add column StochSurface2 TEXT null", transaction);
 
             // Unused fields
-            database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
-            database.Connection.Execute("alter table Symbol drop column TrendPercentage", transaction);
+            try { database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Symbol drop column TrendPercentage", transaction); } catch { } // ignore
 
             // A much better fieldname
             database.Connection.Execute("alter table Signal rename column TrendIndicator to TrendInterval", transaction);
