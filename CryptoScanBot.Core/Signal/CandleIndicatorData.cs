@@ -171,10 +171,21 @@ public class CandleIndicatorData : CryptoData
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
+        // https://dotnet.stockindicators.dev/utilities/#content
+        //List<SmaResult> smaList05Low = (List<SmaResult>)history.Use(CandlePart.Low).GetSma(05);
+        //List<SmaResult> smaList05High = (List<SmaResult>)history.Use(CandlePart.High).GetSma(05);
+        //List<SmaResult> smaList10Low = (List<SmaResult>)history.Use(CandlePart.Low).GetSma(10);
+        //List<SmaResult> smaList10High = (List<SmaResult>)history.Use(CandlePart.High).GetSma(10);
 
-        //List<SmaResult> smaList05 = (List<SmaResult>)history.GetSma(05);
+        // or collect items first (is this faster/better?), a lot more coding)
+        //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
+        //List<SmaResult> smaList05Low = (List<SmaResult>)historyLast05.Use(CandlePart.Low).GetSma(05);
+        //List<SmaResult> smaList05High = (List<SmaResult>)historyLast05.Use(CandlePart.High).GetSma(05);
+        //List<CryptoCandle> historyLast10 = (List<CryptoCandle>)history.TakeLast(10);
+        //List<SmaResult> smaList10Low = (List<SmaResult>)historyLast10.Use(CandlePart.Low).GetSma(10);
+        //List<SmaResult> smaList10High = (List<SmaResult>)historyLast10.Use(CandlePart.High).GetSma(10);
+
         //List<SmaResult> smaList08 = (List<SmaResult>)history.GetSma(08);
-        //List<SmaResult> smaList10 = (List<SmaResult>)history.GetSma(10);
         List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
         List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
         List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
