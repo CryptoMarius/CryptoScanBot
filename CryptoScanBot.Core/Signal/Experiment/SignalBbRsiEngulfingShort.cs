@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Signal.Other;
+namespace CryptoScanBot.Core.Signal.Experiment;
 
 public class SignalBbRsiEngulfingShort : SignalCreateBase
 {
