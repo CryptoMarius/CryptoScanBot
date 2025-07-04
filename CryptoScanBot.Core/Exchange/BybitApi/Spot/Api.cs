@@ -93,15 +93,16 @@ public class Api : ExchangeBase
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
             options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            //options.Environment = when is bybit.eu coming? ;-)
             //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
-        PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
+        //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
-        UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+        //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
 
 

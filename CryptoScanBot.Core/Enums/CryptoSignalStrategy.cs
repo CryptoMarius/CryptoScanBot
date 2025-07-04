@@ -19,6 +19,10 @@ public enum CryptoSignalStrategy
 
     Stoch = 20,
 
+    BbMa = 30, // still studying, complicated Oma Ally strategy
+
+    Trend = 31,
+
     BbRsiEngulfing = 50,
     SignalSma50Sma20Price = 52,
 

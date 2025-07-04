@@ -27,7 +27,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 database.Open();
 
                 using var client = new KrakenRestClient();
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var exchangeInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync(newAssetNameResponse: true) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error);
                 if (exchangeInfo.Data == null)
@@ -53,9 +53,10 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //"QuoteAsset": "ZEUR", ????????
 
 
-                                string name = symbolData.WebsocketName; // AlternateName; // symbolData.BaseAsset + symbolData.QuoteAsset;
-                                string[] nameParts = name.Split('/');
-                                name = nameParts[0] + nameParts[1];
+                                //string name = symbolData.WebsocketName; // AlternateName; // symbolData.BaseAsset + symbolData.QuoteAsset;
+                                //string[] nameParts = name.Split('/');
+                                //name = nameParts[0] + nameParts[1];
+                                string name = symbolData.BaseAsset + symbolData.QuoteAsset;
 
 
                                 /*
@@ -75,9 +76,12 @@ public class Symbol() : SymbolBase(), ISymbol
                                     {
                                         Exchange = exchange,
                                         ExchangeId = exchange.Id,
-                                        Name = name,
-                                        Base = nameParts[0],  // symbolData.BaseAsset,
-                                        Quote = nameParts[1], //symbolData.QuoteAsset,
+                                        //Name = name,
+                                        //Base = nameParts[0],  // symbolData.BaseAsset,
+                                        //Quote = nameParts[1], //symbolData.QuoteAsset,
+                                        Name = symbolData.BaseAsset+ symbolData.QuoteAsset,
+                                        Base = symbolData.BaseAsset,
+                                        Quote = symbolData.QuoteAsset,
                                         QuoteData = quoteData,
                                         Status = 1,
                                     };
@@ -147,16 +151,21 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        //// Bewaren voor debug werkzaamheden
-                        //{
-                        //    string filename = GlobalData.GetBaseDir();
-                        //    filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                        //    Directory.CreateDirectory(filename);
-                        //    filename += "symbols.json";
+                        // Save for debug purpose
+                        try
+                        {
+                            string filename = GlobalData.GetBaseDir();
+                            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
+                            Directory.CreateDirectory(filename);
+                            filename += "symbols.json";
 
-                        //    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                        //    File.WriteAllText(filename, text);
-                        //}
+                            string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
+                            File.WriteAllText(filename, text);
+                        }
+                        catch
+                        {
+                            // ignore everything
+                        }
 
 
 

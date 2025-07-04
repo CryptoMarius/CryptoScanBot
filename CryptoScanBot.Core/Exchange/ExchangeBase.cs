@@ -86,9 +86,9 @@ public abstract class ExchangeBase
     public abstract IDisposable GetClient();
     public abstract void ExchangeDefaults();
 
-    public static Ticker? PriceTicker { get; set; }
+    //public static Ticker? PriceTicker { get; set; }
     public static Ticker? KLineTicker { get; set; }
-    public static Ticker? UserTicker { get; set; }
+    //public static Ticker? UserTicker { get; set; }
 
     public static ExchangeOptions ExchangeOptions { get; } = new() { ExchangeName = "?", }; // made public for ExchangeTest project
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();

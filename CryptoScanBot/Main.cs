@@ -167,8 +167,8 @@ public partial class FrmMain : Form
     private void TestShowTickerInformationClick(object? sender, EventArgs? e)
     {
         ExchangeBase.KLineTicker?.DumpTickerInfo();
-        ExchangeBase.PriceTicker?.DumpTickerInfo();
-        ExchangeBase.UserTicker?.DumpTickerInfo();
+        //ExchangeBase.PriceTicker?.DumpTickerInfo();
+        //ExchangeBase.UserTicker?.DumpTickerInfo();
     }
 #endif
 
@@ -413,10 +413,10 @@ public partial class FrmMain : Form
             await api.Symbol.GetSymbolsAsync(); // niet wachten tot deze klaar is
             if (ExchangeBase.KLineTicker != null)
                 await ExchangeBase.KLineTicker!.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeBase.PriceTicker != null)
-                await ExchangeBase.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeBase.UserTicker != null)
-                await ExchangeBase.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
+            //if (ExchangeBase.PriceTicker != null)
+            //    await ExchangeBase.PriceTicker!.CheckTickers(); // herstarten van ticker indien errors
+            //if (ExchangeBase.UserTicker != null)
+            //    await ExchangeBase.UserTicker!.CheckTickers(); // herstarten van ticker indien errors
             await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync(); // niet wachten tot deze klaar is
         });
     }
@@ -540,7 +540,7 @@ public partial class FrmMain : Form
 
         SignalExecute.ResetAnalyseCount();
         ExchangeBase.KLineTicker!.Reset();
-        ExchangeBase.PriceTicker!.Reset();
+        //ExchangeBase.PriceTicker!.Reset();
     }
 
 

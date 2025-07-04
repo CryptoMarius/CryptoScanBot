@@ -81,8 +81,8 @@ public static class ScannerSession
                 GlobalData.ThreadCheckPosition = new ThreadCheckFinishedPosition();
                 GlobalData.ThreadZoneCalculate = new ZoneThreadCalculate();
 
-                if (GlobalData.TradingApi.Key != "")
-                    _ = ExchangeBase.UserTicker!.StartAsync();
+                //if (GlobalData.TradingApi.Key != "")
+                //    _ = ExchangeBase.UserTicker!.StartAsync();
                 // Vanuit hybernate wachten ivm netwerk verbindingen..
                 if (delay > 0)
                     Thread.Sleep(delay);
@@ -144,11 +144,11 @@ public static class ScannerSession
                 task = Task.Run(() => { GlobalData.ThreadZoneCalculate?.Stop(); });
                 taskList.Add(task);
 
-                if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
-                {
-                    task = Task.Run(async () => { await ExchangeBase.UserTicker.StopAsync(); });
-                    taskList.Add(task);
-                }
+                //if (ExchangeBase.UserTicker != null && !GlobalData.ApplicationIsClosing)
+                //{
+                //    task = Task.Run(async () => { await ExchangeBase.UserTicker.StopAsync(); });
+                //    taskList.Add(task);
+                //}
 
                 if (ExchangeBase.KLineTicker != null && !GlobalData.ApplicationIsClosing)
                 {
@@ -157,12 +157,12 @@ public static class ScannerSession
                     taskList.Add(task);
                 }
 
-                if (ExchangeBase.PriceTicker != null && !GlobalData.ApplicationIsClosing)
-                {
-                    //await ExchangeHelper.PriceTicker?.Stop();
-                    task = Task.Run(() => { ExchangeBase.PriceTicker?.StopAsync(); });
-                    taskList.Add(task);
-                }
+                //if (ExchangeBase.PriceTicker != null && !GlobalData.ApplicationIsClosing)
+                //{
+                //    //await ExchangeHelper.PriceTicker?.Stop();
+                //    task = Task.Run(() => { ExchangeBase.PriceTicker?.StopAsync(); });
+                //    taskList.Add(task);
+                //}
 
                 task = Task.Run(DataStore.SaveCandlesAsync);
                 taskList.Add(task);
@@ -329,10 +329,10 @@ public static class ScannerSession
 
             if (ExchangeBase.KLineTicker != null)
                 await ExchangeBase.KLineTicker.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeBase.PriceTicker != null)
-                await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
-            if (ExchangeBase.UserTicker != null)
-                await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
+            //if (ExchangeBase.PriceTicker != null)
+            //    await ExchangeBase.PriceTicker.CheckTickers(); // herstarten van ticker indien errors
+            //if (ExchangeBase.UserTicker != null)
+            //    await ExchangeBase.UserTicker.CheckTickers(); // herstarten van ticker indien errors
 
             await api.Candle.GetCandlesForAllSymbolsAndIntervalsAsync();
         });

@@ -277,7 +277,7 @@ public class ThreadLoadData
                 //************************************************************************************
                 // Om het volume per symbol en laatste prijs te achterhalen
                 //************************************************************************************
-                await ExchangeBase.PriceTicker!.StartAsync();
+                //await ExchangeBase.PriceTicker!.StartAsync();
 
                 //************************************************************************************
                 // De (ontbrekende) candles downloaden (en de achterstand inhalen, blocking!)
@@ -320,7 +320,7 @@ public class ThreadLoadData
                     //************************************************************************************
                     // Alle data van de exchange monitoren
                     //************************************************************************************
-                    _ = ExchangeBase.UserTicker!.StartAsync();
+                    //_ = ExchangeBase.UserTicker!.StartAsync();
 
 
                     //************************************************************************************              
