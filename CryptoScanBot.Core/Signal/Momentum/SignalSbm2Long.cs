@@ -18,7 +18,7 @@ public class SignalSbm2Long : SignalSbmBaseLong
         if (!base.IsSignal())
             return false;
 
-        if (!IsInLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
+        if (!InLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
         {
             ExtraText = "geen lage prijs in de laatste x candles";
             return false;

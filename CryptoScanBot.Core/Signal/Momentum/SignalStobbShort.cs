@@ -74,7 +74,7 @@ public class SignalStobbShort : SignalSbmBaseShort
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOverbought())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOverbought())
         {
             response = "rsi not overbought";
             return false;
@@ -102,14 +102,14 @@ public class SignalStobbShort : SignalSbmBaseShort
         }
 
         // Er een candle onder de bb opent of sluit
-        if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+        if (!CandleLast.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
             ExtraText = "not above bb.upper";
             return false;
         }
 
         // Sprake van een overbought situatie (beide moeten onder de 20 zitten)
-        if (!CandleLast.IsStochOverbought())
+        if (!CandleLast.StochOverbought())
         {
             ExtraText = "stoch not overbought";
             return false;

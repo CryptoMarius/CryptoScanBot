@@ -48,4 +48,42 @@ public static class IndicatorHelper
 
         return (true, higherInterval, higherCandle);
     }
+
+
+
+    public static bool MacdRecoveryLong(this CryptoSymbolInterval symbolInterval, CryptoCandle? candleLast, int candleCount)
+    {
+        CryptoCandle last = candleLast!;
+
+        while (candleCount-- > 0)
+        {
+            if (!GetPrevCandle(symbolInterval, last, out CryptoCandle? prev))
+                return false;
+
+            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
+                return false;
+
+            last = prev;
+        }
+
+        return true;
+    }
+
+    public static bool MacdRecoveryShort(this CryptoSymbolInterval symbolInterval, CryptoCandle? candleLast, int candleCount)
+    {
+        CryptoCandle last = candleLast!;
+
+        while (candleCount-- > 0)
+        {
+            if (!GetPrevCandle(symbolInterval, last, out CryptoCandle? prev))
+                return false;
+
+            if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)
+                return false;
+
+            last = prev;
+        }
+
+        return true;
+    }
 }

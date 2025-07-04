@@ -52,7 +52,7 @@ public class SignalStobbLong : SignalSbmBaseLong
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
-            if (!CandleLast!.IsSbmConditionsOversold(false))
+            if (!CandleLast!.SbmConditionsOversold(false))
             {
                 response = "no sbm conditions";
                 return false;
@@ -62,11 +62,11 @@ public class SignalStobbLong : SignalSbmBaseLong
         // Controle op de ma-kruisingen
         if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
-            if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -74,7 +74,7 @@ public class SignalStobbLong : SignalSbmBaseLong
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOversold())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOversold())
         {
             response = "rsi not oversold";
             return false;
@@ -109,7 +109,7 @@ public class SignalStobbLong : SignalSbmBaseLong
         }
 
         // Sprake van een oversold situatie (beide moeten onder de 20 zitten)
-        if (!CandleLast.IsStochOversold())
+        if (!CandleLast.StochOversold())
         {
             ExtraText = "stoch not oversold";
             return false;

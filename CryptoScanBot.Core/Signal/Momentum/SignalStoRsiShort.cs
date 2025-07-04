@@ -47,8 +47,8 @@ public class SignalStoRsiShort : SignalSbmBaseShort
         // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
-            //if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
-            if (!IsInUpperPartOfBollingerBands(3, 5.0m))
+            //if (!CandleLast.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
+            if (!InUpperPartOfBollingerBands(3, 5.0m))
             {
                 response = "not in upper part of bb";
                 return false;
@@ -78,13 +78,13 @@ public class SignalStoRsiShort : SignalSbmBaseShort
             return false;
         }
 
-        if (!CandleLast.IsStochOverbought(0))
+        if (!CandleLast.StochOverbought(0))
         {
             ExtraText = "stoch not overbought";
             return false;
         }
 
-        if (!CandleLast.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+        if (!CandleLast.RsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
         {
             ExtraText = "rsi not overbought";
             return false;

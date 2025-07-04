@@ -110,8 +110,8 @@ public class SignalCreateBase
         while (candleCount > 0)
         {
             skipCandleCount--;
-            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(false) && candle.IsStochOversold();
-            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(false) && candle.IsStochOverbought();
+            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(false) && candle.StochOversold();
+            bool isOverBought = candle is not null && candle.AboveBollingerBands(false) && candle.StochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
@@ -145,8 +145,8 @@ public class SignalCreateBase
         while (candleCount > 0)
         {
             skipCandleCount--; // GlobalData.Settings.Signal.StoRsi.AddRsiAmount
-            bool isOverSold = candle is not null && candle.IsRsiOversold(0) && candle.IsStochOversold();
-            bool isOverBought = candle is not null && candle.IsRsiOverbought() && candle.IsStochOverbought();
+            bool isOverSold = candle is not null && candle.RsiOversold(0) && candle.StochOversold();
+            bool isOverBought = candle is not null && candle.RsiOverbought() && candle.StochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
@@ -176,7 +176,7 @@ public class SignalCreateBase
 
 
 
-    protected bool IsInLowerPartOfBollingerBands(int candleCount, decimal percentage)
+    protected bool InLowerPartOfBollingerBands(int candleCount, decimal percentage)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
 
@@ -206,7 +206,7 @@ public class SignalCreateBase
     }
 
 
-    protected bool IsInUpperPartOfBollingerBands(int candleCount, decimal percentage)
+    protected bool InUpperPartOfBollingerBands(int candleCount, decimal percentage)
     {
         // Is de prijs onlangs dicht bij de bovenste bb geweest?
 

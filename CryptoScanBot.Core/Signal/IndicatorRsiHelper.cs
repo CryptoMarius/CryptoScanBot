@@ -5,7 +5,7 @@ namespace CryptoScanBot.Core.Signal;
 
 public static class IndicatorRsiHelper
 {
-    public static bool IsRsiOversold(this CryptoCandle candle, int correction = 0)
+    public static bool RsiOversold(this CryptoCandle candle, int correction = 0)
     {
         if (candle.CandleData?.Rsi > GlobalData.Settings.General.SettingsRsi.Oversold - correction)
             return false;
@@ -13,7 +13,7 @@ public static class IndicatorRsiHelper
     }
 
 
-    public static bool IsRsiOverbought(this CryptoCandle candle, int correction = 0)
+    public static bool RsiOverbought(this CryptoCandle candle, int correction = 0)
     {
         if (candle.CandleData?.Rsi < GlobalData.Settings.General.SettingsRsi.Overbought + correction)
             return false;
@@ -87,7 +87,7 @@ public static class IndicatorRsiHelper
     //    // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
     //    while (candleCount >= 0)
     //    {
-    //        if (candle is not null && candle.IsRsiOversold())
+    //        if (candle is not null && candle.RsiOversold())
     //            return true;
 
     //        if (!symbolInterval.GetPrevCandle(candle, out candle))
@@ -106,7 +106,7 @@ public static class IndicatorRsiHelper
     //    // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
     //    while (candleCount >= 0)
     //    {
-    //        if (candle is not null && candle.IsRsiOverbought())
+    //        if (candle is not null && candle.RsiOverbought())
     //            return true;
 
     //        if (!symbolInterval.GetPrevCandle(candle, out candle))
@@ -121,7 +121,7 @@ public static class IndicatorRsiHelper
     /// Is de RSI oplopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public static bool IsRsiIncreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
+    public static bool RsiIncreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
     {
         // from right to left
         int down = 0;
@@ -154,7 +154,7 @@ public static class IndicatorRsiHelper
     /// Is de RSI aflopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public static bool IsRsiDecreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
+    public static bool RsiDecreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;

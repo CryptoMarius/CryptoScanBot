@@ -49,7 +49,7 @@ public class SignalStoRsiLong : SignalSbmBaseLong
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
             //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
-            if (!IsInLowerPartOfBollingerBands(3, 5.0m))
+            if (!InLowerPartOfBollingerBands(3, 5.0m))
             {
                 response = "not in lower part of bb";
                 return false;
@@ -79,13 +79,13 @@ public class SignalStoRsiLong : SignalSbmBaseLong
             return false;
         }
 
-        if (!CandleLast.IsStochOversold(0))
+        if (!CandleLast.StochOversold(0))
         {
             ExtraText = "stoch not oversold";
             return false;
         }
 
-        if (!CandleLast.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+        if (!CandleLast.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
         {
             ExtraText = "rsi not oversold";
             return false;

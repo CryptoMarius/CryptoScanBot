@@ -74,6 +74,15 @@ public class CryptoData
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
+    [Computed]
+    public double? Wma05Low { get; set; }
+    [Computed]
+    public double? Wma05High { get; set; }
+    [Computed]
+    public double? Wma10Low { get; set; }
+    [Computed]
+    public double? Wma10High { get; set; }
+
     // RSI indicator
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
@@ -133,6 +142,11 @@ public class CryptoData
         //SlopeSma100 = source.SlopeSma100;
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
+
+        Wma05Low = source.Wma05Low;
+        Wma05High = source.Wma05High;
+        Wma10Low = source.Wma10Low;
+        Wma10High = source.Wma10High;
 
         // Parabolic SAR indicator value
         PSar = source.PSar;

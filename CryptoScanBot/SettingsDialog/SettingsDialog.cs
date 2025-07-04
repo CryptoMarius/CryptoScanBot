@@ -235,6 +235,7 @@ public partial class FrmSettings : Form
         EditSkipFirstSignal.Checked = settings.Signal.StoRsi.SkipFirstSignal;
         EditStorsiCheckBollingerBandsCondition.Checked = settings.Signal.StoRsi.CheckBollingerBandsCondition;
         EditStoRsiOnlyIfLux5m.Checked = settings.Signal.StoRsi.OnlyIfLux5m;
+        EditStorsiCheckMacdRecovery.Checked = settings.Signal.StoRsi.CheckMacdRecovery;
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.LoadConfig("Jump", settings.Signal.Jump);
@@ -331,8 +332,8 @@ public partial class FrmSettings : Form
         UserControlTradingShort.LoadConfig(settings.Trading.Short);
         UserControlTradeRules.LoadConfig(settings.Trading);
         UserControlAltradyApi.LoadConfig(GlobalData.AltradyApi);
-        UserControlExchangeApi.LoadConfig(GlobalData.TradingApi);
-        UserControlExchangeApi.Visible = false;
+        //UserControlExchangeApi.LoadConfig(GlobalData.TradingApi);
+        //UserControlExchangeApi.Visible = false;
 
         // --------------------------------------------------------------------------------
         // Black & White list
@@ -518,6 +519,7 @@ public partial class FrmSettings : Form
         settings.Signal.StoRsi.SkipFirstSignal = EditSkipFirstSignal.Checked;
         settings.Signal.StoRsi.CheckBollingerBandsCondition = EditStorsiCheckBollingerBandsCondition.Checked;
         settings.Signal.StoRsi.OnlyIfLux5m = EditStoRsiOnlyIfLux5m.Checked;
+        settings.Signal.StoRsi.CheckMacdRecovery = EditStorsiCheckMacdRecovery.Checked;
 
         // JUMP
         UserControlSettingsSoundAndColorsJump.SaveConfig(settings.Signal.Jump);
@@ -629,7 +631,7 @@ public partial class FrmSettings : Form
         UserControlTradingShort.SaveConfig(settings.Trading.Short);
         UserControlTradeRules.SaveConfig(settings.Trading);
         UserControlAltradyApi.SaveConfig(GlobalData.AltradyApi);
-        UserControlExchangeApi.SaveConfig(GlobalData.TradingApi);
+        //UserControlExchangeApi.SaveConfig(GlobalData.TradingApi);
 
 
         DialogResult = DialogResult.OK;

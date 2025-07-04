@@ -239,7 +239,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
                 return false;
             }
 
-            //if (!IsRsiDecreasingInTheLast(3, 1))
+            //if (!RsiDecreasingInTheLast(3, 1))
             //{
             //    ExtraText = string.Format("RSI not descreasing in the last 3,1");
             //    return false;
@@ -380,7 +380,7 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         //}
 
         // 2023-04-29 12:15 toegevoegd: Neergaande rsi meldingen vermijden.
-        //if (!IsRsiDecreasingInTheLast(3, 1))
+        //if (!RsiDecreasingInTheLast(3, 1))
         //{
         //    ExtraText = string.Format("RSI aflopend in de laatste 3,1, laat maar");
         //    return true;

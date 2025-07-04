@@ -42,7 +42,7 @@ public class SignalStochLong : SignalSbmBaseLong
         //// Controle op de ma-lijnen
         //if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         //{
-        //    if (!CandleLast!.IsSbmConditionsOversold(false))
+        //    if (!CandleLast!.SbmConditionsOversold(false))
         //    {
         //        response = "no sbm conditions";
         //        return false;
@@ -52,11 +52,11 @@ public class SignalStochLong : SignalSbmBaseLong
         //// Controle op de ma-kruisingen
         //if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         //{
-        //    if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+        //    if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
         //        return false;
-        //    if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+        //    if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
         //        return false;
-        //    if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+        //    if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
         //        return false;
 
         //    if (!CheckMaCrossings(out response))
@@ -64,7 +64,7 @@ public class SignalStochLong : SignalSbmBaseLong
         //}
 
         //// Controle op de RSI
-        //if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOversold())
+        //if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOversold())
         //{
         //    response = "rsi not oversold";
         //    return false;
@@ -130,7 +130,7 @@ public class SignalStochLong : SignalSbmBaseLong
         }
 
 
-        if (!SymbolInterval.IsRsiIncreasingInTheLast(CandleLast, 2, 999))
+        if (!SymbolInterval.RsiIncreasingInTheLast(CandleLast, 2, 999))
         {
             ExtraText = "rsi not increasing";
             return false;
@@ -188,7 +188,7 @@ public class SignalStochLong : SignalSbmBaseLong
 
 
         // does not work in higher interval, this needs extra work..
-        //if (!IsInLowerPartOfBollingerBands(3, 5.0m))
+        //if (!InLowerPartOfBollingerBands(3, 5.0m))
         //{
         //    ExtraText = "not in lower part of bb";
         //    return false;

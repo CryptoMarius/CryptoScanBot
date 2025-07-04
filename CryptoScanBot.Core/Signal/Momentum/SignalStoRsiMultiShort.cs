@@ -48,13 +48,13 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         }
         long unixDate = CandleLast.OpenTime;
 
-        //if (!CandleLast.IsStochOversold(0))
+        //if (!CandleLast.StochOversold(0))
         //{
         //    ExtraText = "stoch not oversold";
         //    return false;
         //}
 
-        //if (!CandleLast.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+        //if (!CandleLast.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
         //{
         //    ExtraText = "rsi not oversold";
         //    return false;
@@ -80,7 +80,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
-            if (IndicatorsOkay(candle!) && candle.IsStochOversold(0) && candle.IsRsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(candle!) && candle.StochOversold(0) && candle.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -106,7 +106,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
 
 
         //// close date shouw be in the lower part of the bb
-        //if (!IsInLowerPartOfBollingerBands(1, 10.0m))
+        //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;
 
         ExtraText = "";

@@ -6,7 +6,7 @@ namespace CryptoScanBot.Core.Signal;
 public static class IndicatorStochHelper
 {
 
-    public static bool IsStochOversold(this CryptoCandle candle, int correction = 0)
+    public static bool StochOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
         if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
@@ -16,7 +16,7 @@ public static class IndicatorStochHelper
         return true;
     }
 
-    public static bool IsStochSignalOversold(this CryptoCandle candle, int correction = 0)
+    public static bool StochSignalOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic oscillator %D (red)
         if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
@@ -25,7 +25,7 @@ public static class IndicatorStochHelper
     }
 
 
-    public static bool IsStochOscillatorOversold(this CryptoCandle candle, int correction = 0)
+    public static bool StochOscillatorOversold(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic oscillator %K (blue)
         if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
@@ -34,7 +34,7 @@ public static class IndicatorStochHelper
     }
 
 
-    public static bool IsStochSignalOverbought(this CryptoCandle candle, int correction = 0)
+    public static bool StochSignalOverbought(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic oscillator %D (red)
         if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
@@ -42,7 +42,7 @@ public static class IndicatorStochHelper
         return true;
     }
 
-    public static bool IsStochOscillatorOverbought(this CryptoCandle candle, int correction = 0)
+    public static bool StochOscillatorOverbought(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic oscillator %K (blue)
         if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
@@ -51,7 +51,7 @@ public static class IndicatorStochHelper
     }
 
 
-    public static bool IsStochOverbought(this CryptoCandle candle, int correction = 0)
+    public static bool StochOverbought(this CryptoCandle candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
         if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)

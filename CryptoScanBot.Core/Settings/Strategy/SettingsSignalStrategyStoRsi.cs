@@ -8,9 +8,10 @@ public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
 
     public int AddRsiAmount { get; set; } = 0;
 
-    public bool SkipFirstSignal { get; set; } = false;
     public bool CheckBollingerBandsCondition { get; set; } = false;
+    public bool CheckMacdRecovery { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
+    public bool SkipFirstSignal { get; set; } = false;
 
     public SettingsSignalStrategyStoRsi() : base()
     {

@@ -9,7 +9,7 @@ namespace CryptoScanBot.Core.Signal.Momentum;
 
 public static class SignalSbmBaseOversoldHelper
 {
-    public static bool IsSbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck)
+    public static bool SbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck)
     {
         // Optimalisatie, zou naar de SignalSbmBaseOversold kunnen, maar de stobb gebruikt deze routine ook
 
@@ -41,7 +41,7 @@ public static class SignalSbmBaseOversoldHelper
         return true;
     }
 
-    public static bool IsSma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    public static bool Sma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
         decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma50;
@@ -58,7 +58,7 @@ public static class SignalSbmBaseOversoldHelper
     }
 
 
-    public static bool IsSma50AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    public static bool Sma50AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
         decimal? value = (decimal?)candle.CandleData?.Sma50 - (decimal?)candle.CandleData?.Sma20;
         decimal? value2 = ((decimal?)candle.CandleData?.Sma50 + (decimal?)candle.CandleData?.Sma20) / 2;
@@ -74,7 +74,7 @@ public static class SignalSbmBaseOversoldHelper
     }
 
 
-    public static bool IsSma200AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    public static bool Sma200AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
     {
         // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
         decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma20;
@@ -97,11 +97,11 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 {
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+        if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
             return false;
-        if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+        if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
             return false;
-        if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+        if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
             return false;
 
         if (!CheckMaCrossings(out response))
@@ -110,7 +110,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         return true;
     }
 
-    public bool IsMacdRecoveryOversold(int candleCount)
+    public bool MacdRecoveryOversold(int candleCount)
     {
         CryptoCandle last = CandleLast!;
 
@@ -167,14 +167,14 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         }
 
         // De ma lijnen en psar goed staan
-        if (!CandleLast!.IsSbmConditionsOversold(true))
+        if (!CandleLast!.SbmConditionsOversold(true))
         {
             ExtraText = "geen sbm condities";
             return false;
         }
 
         // Er recovery is via de macd
-        if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             return false;
 
         return true;
@@ -211,7 +211,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // MACD
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
-            if (!IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+            if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             {
                 // ExtraText is al ingevuld
                 return false;
@@ -238,7 +238,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
                 return false;
             }
 
-            //if (!IsRsiIncreasingInTheLast(3, 1))
+            //if (!RsiIncreasingInTheLast(3, 1))
             //{
             //    ExtraText = string.Format("RSI not increasing in the last 3,1");
             //    return false;
@@ -379,7 +379,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         //}
 
         // 2023-04-29 12:15 toegevoegd: Neergaande rsi meldingen vermijden.
-        //if (!IsRsiDecreasingInTheLast(3, 1))
+        //if (!RsiDecreasingInTheLast(3, 1))
         //{
         //    ExtraText = string.Format("RSI aflopend in de laatste 3,1, laat maar");
         //    return true;

@@ -66,7 +66,7 @@ public class SignalStochShort : SignalSbmBaseShort
         //}
 
         //// Controle op de RSI
-        //if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOverbought())
+        //if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOverbought())
         //{
         //    response = "rsi not overbought";
         //    return false;
@@ -130,7 +130,7 @@ public class SignalStochShort : SignalSbmBaseShort
         }
 
 
-        if (!SymbolInterval.IsRsiDecreasingInTheLast(CandleLast, 2, 999))
+        if (!SymbolInterval.RsiDecreasingInTheLast(CandleLast, 2, 999))
         {
             ExtraText = "rsi not decreasing";
             return false;

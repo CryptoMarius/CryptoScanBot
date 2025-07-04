@@ -44,7 +44,7 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
 
 
         // Prev above BB
-        //if (!prev!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+        //if (!prev!.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         if (prev!.Close <= (decimal)prev!.CandleData!.BollingerBandsUpperBand!)
         {
             ExtraText = "not below bb.upper";
@@ -52,7 +52,7 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
         }
 
         // Rsi oversold
-        if (!prev!.IsRsiOverbought(0))
+        if (!prev!.RsiOverbought(0))
         {
             ExtraText = "rsi not overbought";
             return false;

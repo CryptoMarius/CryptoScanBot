@@ -49,7 +49,7 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
         }
 
         // Rsi oversold
-        if (!prev!.IsRsiOversold(0))
+        if (!prev!.RsiOversold(0))
         {
             ExtraText = "rsi not oversold";
             return false;

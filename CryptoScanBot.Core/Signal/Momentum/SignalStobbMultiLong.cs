@@ -44,7 +44,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
-            if (!CandleLast!.IsSbmConditionsOversold(false))
+            if (!CandleLast!.SbmConditionsOversold(false))
             {
                 response = "geen sbm condities";
                 return false;
@@ -54,11 +54,11 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         // Controle op de ma-kruisingen
         if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
-            if (!candle.IsSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (!candle.IsSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (!candle.IsSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -66,7 +66,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOversold())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOversold())
         {
             response = "rsi niet oversold";
             return false;
@@ -101,7 +101,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         //}
 
         //// Sprake van een oversold situatie (beide moeten onder de 20 zitten)
-        //if (!CandleLast.IsStochOversold())
+        //if (!CandleLast.StochOversold())
         //{
         //    ExtraText = "stoch niet oversold";
         //    return false;
@@ -128,7 +128,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
-            if (IndicatorsOkay(candle!) && candle.IsStochOversold() && candle.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            if (IndicatorsOkay(candle!) && candle.StochOversold() && candle.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -154,7 +154,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
 
 
         //// close date shouw be in the lower part of the bb
-        //if (!IsInLowerPartOfBollingerBands(1, 10.0m))
+        //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;
 
         ExtraText = "";
@@ -259,7 +259,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
     //        // 2023-04-28 15:11 Afgesterd, hierdoor stappen we te laat in?
     //        // 2023-04-29 12:15 Weer geactiveerd: Het vermijden van glijbanen.
     //        // Dus we stappen nu later in, maar met een beetje meer zekerheid?
-    //        if (!IsRsiIncreasingInTheLast(3, 1))
+    //        if (!RsiIncreasingInTheLast(3, 1))
     //        {
     //            ExtraText = string.Format("RSI niet oplopend in de laatste 3,1");
     //            return false;

@@ -67,7 +67,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
-            if (IndicatorsOkay(candle!) && candle.IsStochOverbought(0) && candle.IsRsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(candle!) && candle.StochOverbought(0) && candle.RsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -93,7 +93,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
 
 
         //// close date shouw be in the lower part of the bb
-        //if (!IsInLowerPartOfBollingerBands(1, 10.0m))
+        //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;
 
         ExtraText = "";
@@ -197,7 +197,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
     //        // 2023-04-28 15:11 Afgesterd, hierdoor stappen we te laat in?
     //        // 2023-04-29 12:15 Weer geactiveerd: Het vermijden van glijbanen.
     //        // Dus we stappen nu later in, maar met een beetje meer zekerheid?
-    //        if (!IsRsiIncreasingInTheLast(3, 1))
+    //        if (!RsiIncreasingInTheLast(3, 1))
     //        {
     //            ExtraText = string.Format("RSI niet oplopend in de laatste 3,1");
     //            return false;

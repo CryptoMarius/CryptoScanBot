@@ -172,18 +172,18 @@ public class CandleIndicatorData : CryptoData
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
         // https://dotnet.stockindicators.dev/utilities/#content
-        //List<SmaResult> smaList05Low = (List<SmaResult>)history.Use(CandlePart.Low).GetSma(05);
-        //List<SmaResult> smaList05High = (List<SmaResult>)history.Use(CandlePart.High).GetSma(05);
-        //List<SmaResult> smaList10Low = (List<SmaResult>)history.Use(CandlePart.Low).GetSma(10);
-        //List<SmaResult> smaList10High = (List<SmaResult>)history.Use(CandlePart.High).GetSma(10);
+        List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
+        List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
+        List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
+        List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
 
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
-        //List<SmaResult> smaList05Low = (List<SmaResult>)historyLast05.Use(CandlePart.Low).GetSma(05);
-        //List<SmaResult> smaList05High = (List<SmaResult>)historyLast05.Use(CandlePart.High).GetSma(05);
+        //List<WmaResult> wmaList05Low = (List<WmaResult>)historyLast05.Use(CandlePart.Low).GetWma(05);
+        //List<WmaResult> wmaList05High = (List<WmaResult>)historyLast05.Use(CandlePart.High).GetWma(05);
         //List<CryptoCandle> historyLast10 = (List<CryptoCandle>)history.TakeLast(10);
-        //List<SmaResult> smaList10Low = (List<SmaResult>)historyLast10.Use(CandlePart.Low).GetSma(10);
-        //List<SmaResult> smaList10High = (List<SmaResult>)historyLast10.Use(CandlePart.High).GetSma(10);
+        //List<WmaResult> wmaList10Low = (List<WmaResult>)historyLast10.Use(CandlePart.Low).GetWma(10);
+        //List<WmaResult> wmaList10High = (List<WmaResult>)historyLast10.Use(CandlePart.High).GetWma(10);
 
         //List<SmaResult> smaList08 = (List<SmaResult>)history.GetSma(08);
         List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
@@ -291,6 +291,12 @@ public class CandleIndicatorData : CryptoData
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
+                // BbMa
+                candleData.Wma05Low = wmaList05Low[index].Wma;
+                candleData.Wma05High = wmaList05High[index].Wma;
+                candleData.Wma10Low = wmaList10Low[index].Wma;
+                candleData.Wma10High = wmaList10High[index].Wma;
+
                 candleData.Rsi = rsiList[index].Rsi;
                 //if (slopeRsiList != null && index < slopeRsiList.Count)
                 //    candleData.SlopeRsi = slopeRsiList[index].Slope;
@@ -356,7 +362,6 @@ public class CandleIndicatorData : CryptoData
     // We need 1 day + X hours because of the barometr calculation (we show ~5 hours in the display)
     // As soon as the barometer has been calculated it will be lowered to 1 day + 10 candles..
     private static long InitialCandleCountFetch = (24 + Constants.BarometerGraphHours) * 60;
-
 
     public static void SetInitialCandleCountFetch(long value)
     {

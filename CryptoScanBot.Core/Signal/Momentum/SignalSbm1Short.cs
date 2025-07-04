@@ -22,7 +22,7 @@ public class SignalSbm1Short : SignalSbmBaseShort
             if (last == null)
                 return false;
             // Er een candle onder de bb opent of sluit & een overbought situatie (beide moeten onder de 20 zitten)
-            if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.IsStochOverbought())
+            if (last!.AboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought())
                 return true;
 
             if (!GetPrevCandle(last, out last))

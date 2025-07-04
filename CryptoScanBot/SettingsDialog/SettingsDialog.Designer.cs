@@ -316,6 +316,7 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
+        EditStorsiCheckMacdRecovery = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -2287,6 +2288,7 @@ partial class FrmSettings
         // groupBox6
         // 
         groupBox6.AutoSize = true;
+        groupBox6.Controls.Add(EditStorsiCheckMacdRecovery);
         groupBox6.Controls.Add(EditStoRsiOnlyIfLux5m);
         groupBox6.Controls.Add(label28);
         groupBox6.Controls.Add(EditStorsiBBMinPercentage);
@@ -2299,7 +2301,7 @@ partial class FrmSettings
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
-        groupBox6.Size = new Size(284, 215);
+        groupBox6.Size = new Size(284, 222);
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
@@ -2308,7 +2310,7 @@ partial class FrmSettings
         // EditStoRsiOnlyIfLux5m
         // 
         EditStoRsiOnlyIfLux5m.AutoSize = true;
-        EditStoRsiOnlyIfLux5m.Location = new Point(16, 118);
+        EditStoRsiOnlyIfLux5m.Location = new Point(16, 145);
         EditStoRsiOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
         EditStoRsiOnlyIfLux5m.Name = "EditStoRsiOnlyIfLux5m";
         EditStoRsiOnlyIfLux5m.Size = new Size(144, 19);
@@ -2319,7 +2321,7 @@ partial class FrmSettings
         // label28
         // 
         label28.AutoSize = true;
-        label28.Location = new Point(13, 167);
+        label28.Location = new Point(13, 174);
         label28.Margin = new Padding(4, 0, 4, 0);
         label28.Name = "label28";
         label28.Size = new Size(77, 15);
@@ -2329,7 +2331,7 @@ partial class FrmSettings
         // EditStorsiBBMinPercentage
         // 
         EditStorsiBBMinPercentage.DecimalPlaces = 2;
-        EditStorsiBBMinPercentage.Location = new Point(121, 163);
+        EditStorsiBBMinPercentage.Location = new Point(121, 170);
         EditStorsiBBMinPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMinPercentage.Name = "EditStorsiBBMinPercentage";
         EditStorsiBBMinPercentage.Size = new Size(65, 23);
@@ -2339,7 +2341,7 @@ partial class FrmSettings
         // EditStorsiBBMaxPercentage
         // 
         EditStorsiBBMaxPercentage.DecimalPlaces = 2;
-        EditStorsiBBMaxPercentage.Location = new Point(205, 163);
+        EditStorsiBBMaxPercentage.Location = new Point(205, 170);
         EditStorsiBBMaxPercentage.Margin = new Padding(4, 3, 4, 3);
         EditStorsiBBMaxPercentage.Name = "EditStorsiBBMaxPercentage";
         EditStorsiBBMaxPercentage.Size = new Size(65, 23);
@@ -2365,7 +2367,7 @@ partial class FrmSettings
         EditStorsiCheckBollingerBandsCondition.Name = "EditStorsiCheckBollingerBandsCondition";
         EditStorsiCheckBollingerBandsCondition.Size = new Size(223, 19);
         EditStorsiCheckBollingerBandsCondition.TabIndex = 169;
-        EditStorsiCheckBollingerBandsCondition.Text = "Check if price is outside the BB bands";
+        EditStorsiCheckBollingerBandsCondition.Text = "Check if price is near the BB band";
         EditStorsiCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
         // 
         // label26
@@ -3689,6 +3691,17 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
+        // EditStorsiCheckMacdRecovery
+        // 
+        EditStorsiCheckMacdRecovery.AutoSize = true;
+        EditStorsiCheckMacdRecovery.Location = new Point(16, 118);
+        EditStorsiCheckMacdRecovery.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiCheckMacdRecovery.Name = "EditStorsiCheckMacdRecovery";
+        EditStorsiCheckMacdRecovery.Size = new Size(200, 19);
+        EditStorsiCheckMacdRecovery.TabIndex = 175;
+        EditStorsiCheckMacdRecovery.Text = "Only when macd shows recovery";
+        EditStorsiCheckMacdRecovery.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -4174,4 +4187,5 @@ partial class FrmSettings
     private SettingsDialog.UserControlZigZagSettings UserControlTrendSecondary;
     private SettingsDialog.UserControlZigZagSettings UserControlZoneZigZagSettings;
     private CheckBox EditDebugZoneCandles;
+    private CheckBox EditStorsiCheckMacdRecovery;
 }

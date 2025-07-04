@@ -26,7 +26,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
     }
 
 
-    private static bool IsInLowerPartOfBollingerBands(CryptoCandle candle, decimal percentage)
+    private static bool InLowerPartOfBollingerBands(CryptoCandle candle, decimal percentage)
     {
         decimal? value = (decimal?)candle?.CandleData?.BollingerBandsLowerBand;
         value += (decimal?)candle?.CandleData?.BollingerBandsDeviation * percentage / 100m;
@@ -51,7 +51,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
         if (CandleLast.CandleData!.Sma50 >= CandleLast.CandleData.Sma20)
             return false;
 
-        if (!IsInLowerPartOfBollingerBands(1, 7.5m))
+        if (!InLowerPartOfBollingerBands(1, 7.5m))
             return false;
 
 
@@ -73,7 +73,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
 
             if (!IndicatorsOkay(candle))
                 return false;
-            if (!IsInLowerPartOfBollingerBands(candle, 30m))
+            if (!InLowerPartOfBollingerBands(candle, 30m))
                 return false;
         }
 

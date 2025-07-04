@@ -64,7 +64,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.IsRsiOverbought())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOverbought())
         {
             response = "rsi niet overbought";
             return false;
@@ -100,7 +100,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         //}
 
         //// Sprake van een oversold situatie (beide moeten onder de 20 zitten)
-        //if (!CandleLast.IsStochOversold())
+        //if (!CandleLast.StochOversold())
         //{
         //    ExtraText = "stoch niet oversold";
         //    return false;
@@ -127,7 +127,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
             }
 
-            if (IndicatorsOkay(candle!) && candle.IsStochOverbought() && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            if (IndicatorsOkay(candle!) && candle.StochOverbought() && candle.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -153,7 +153,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
 
 
         //// close date shouw be in the lower part of the bb
-        //if (!IsInLowerPartOfBollingerBands(1, 10.0m))
+        //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;
 
         ExtraText = "";
