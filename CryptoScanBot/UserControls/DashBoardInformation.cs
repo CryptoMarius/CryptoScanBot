@@ -622,13 +622,13 @@ public partial class DashBoardInformation : UserControl
                 {
                     string text, symbol;
                     string e = GlobalData.Settings.General.ExchangeName;
-                    if (ExchangeBase.PriceTicker != null)
+                    //if (ExchangeBase.PriceTicker != null)
                     {
                         // The heavy cpu strain of the Kucoin priceticker is killing the scanner, so its disabled
-                        if (!ExchangeBase.PriceTicker.Enabled)
-                            text = "disabled";
-                        else
-                            text = ExchangeBase.PriceTicker.Count().ToString("N0");
+                        //if (!ExchangeBase.PriceTicker.Enabled)
+                        text = "disabled";
+                        //else
+                        //    text = ExchangeBase.PriceTicker.Count().ToString("N0");
                         symbol = GlobalData.Settings.ShowSymbolInformation[0];
                         ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Price ticker count", text);
                     }
