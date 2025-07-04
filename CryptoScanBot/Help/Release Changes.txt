@@ -1,5 +1,12 @@
 CryptoScanBot release historie:
 
+
+xx-xx-2025 2.1.5
+- Scanner - Nieuw algoritme, poging tot trend reversal (primary trend)
+- Scanner - Nieuw algoritme, BBMA Oma Ally, maar die is technisch moelijk om uit te leggen laat staan te signaleren (gaat waarschijnlijjk weg)
+- Scanner - De user- en price ticker uitgeschakeld, realtime wijzigingen in prijzen zijn niet echt van belang voor de scanner
+- Scanner - De Exchange API uitgeschakeld (aangezien alle trading via Altrady zal gaan verlopen)
+
 29-05-2025 2.1.4
 - Scanner - De scanner houdt geen rekening meer met het aantal dagen dat de munt bestaat.
 - Scanner - Het percentage effectief wordt berekend op basis van de 4h candles maar de laatste uren/minuten worden niet meegenomen in de berekening.

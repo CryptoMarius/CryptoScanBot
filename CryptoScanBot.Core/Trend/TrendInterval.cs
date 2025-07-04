@@ -220,6 +220,9 @@ public class TrendInterval
         var bestIndicator = indicator;
         //var bestIndicator = intervalTrend.BestZigZagIndicator!;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
+
+        intervalTrend.PrevTrend = intervalTrend.Trend;
+        intervalTrend.PrevTime = intervalTrend.Time;
         intervalTrend.Trend = trendIndicator;
         intervalTrend.Time = maxDate;
 

@@ -1,5 +1,6 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal.Experiment;
 using CryptoScanBot.Core.Signal.Momentum;
 using CryptoScanBot.Core.Signal.Other;
 
@@ -179,7 +180,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalFairValueGapShort),
         });
 
-
+        // Double top/bottom
         //Register(new AlgorithmDefinition()
         //{
         //    Name = "dtb",
@@ -187,6 +188,24 @@ public static class RegisterAlgorithms
         //    AnalyzeLongType = typeof(SignalDoubleTopBottomLong),
         //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
         //});
+
+        // BBMA - Oma Ally
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma",
+            Strategy = CryptoSignalStrategy.BbMa,
+            AnalyzeLongType = typeof(SignalBbMaLong),
+            AnalyzeShortType = typeof(SignalBbMaShort),
+        });
+
+        // Trend reversal
+        Register(new AlgorithmDefinition()
+        {
+            Name = "trend",
+            Strategy = CryptoSignalStrategy.Trend,
+            AnalyzeLongType = typeof(SignalTrendLong),
+            AnalyzeShortType = typeof(SignalTrendShort),
+        });
     }
 
 
