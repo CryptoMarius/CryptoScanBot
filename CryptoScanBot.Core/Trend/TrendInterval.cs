@@ -212,7 +212,7 @@ public class TrendInterval
         //intervalTrend.ZigZagLastCandleAdded = 
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
 
-        // Deterimine the best indicator based on avg count of pivots
+        // Determine the best indicator based on avg count of pivots
         //TrendTools.GetBestTrendIndicator(intervalTrend, symbol, log);
 
 

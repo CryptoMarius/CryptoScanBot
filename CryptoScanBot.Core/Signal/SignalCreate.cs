@@ -358,7 +358,7 @@ public class SignalCreate
 
 
 
-        // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and thatswhy it is on the end of the routine)
+        // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and that is why it is on the end of the routine)
         _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary, 0, LastCandle1mCloseTime);
         if (signal.Symbol.Data.TrendPrimary.Percentage.HasValue)
         {
@@ -371,6 +371,7 @@ public class SignalCreate
             signal.Trend1d = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d).TrendPrimary.Trend;
         }
 
+        // This is for comparison only
         _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary, 0, LastCandle1mCloseTime);
         if (signal.Symbol.Data.TrendSecondary.Percentage.HasValue)
             signal.TrendPercentageSecondary = (float)signal.Symbol.Data.TrendSecondary.Percentage!;
