@@ -65,11 +65,13 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         PriceMinPerc,
         PriceMaxPerc,
 
+#if StrategyBbma
         // Debug
         Wma05Low,
         Wma05High,
         Wma10Low,
         Wma10High,
+#endif
     }
 
     private System.Windows.Forms.Timer? TimerClearOldSignals = null;
@@ -279,6 +281,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+#if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     CreateColumn("Wma05Low", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -291,6 +294,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.Wma10High:
                     CreateColumn("Wma10High", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+#endif
                 default:
                     throw new NotImplementedException();
             }
@@ -356,10 +360,12 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
                     ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
                     ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+#if StrategyBbma
                     ColumnsForGrid.Wma05Low => ObjectCompare.Compare(a.Wma05Low, b.Wma05Low),
                     ColumnsForGrid.Wma05High => ObjectCompare.Compare(a.Wma05High, b.Wma05High),
                     ColumnsForGrid.Wma10Low => ObjectCompare.Compare(a.Wma10Low, b.Wma10Low),
                     ColumnsForGrid.Wma10High => ObjectCompare.Compare(a.Wma10High, b.Wma10High),
+#endif
                     _ => 0
                 };
 
@@ -596,6 +602,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
                     break;
+#if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     if (signal.Wma05Low! != 0)
                         e.Value = signal.Wma05Low?.ToString(signal.Symbol.PriceDisplayFormat);
@@ -612,6 +619,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     if (signal.Wma10High! != 0)
                         e.Value = signal.Wma10High?.ToString(signal.Symbol.PriceDisplayFormat);
                     break;
+#endif
                 default:
                     e.Value = '?';
                     break;

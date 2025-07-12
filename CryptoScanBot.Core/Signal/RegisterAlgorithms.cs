@@ -189,6 +189,7 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
         //});
 
+#if StrategyBbma
         // BBMA - Oma Ally
         Register(new AlgorithmDefinition()
         {
@@ -197,6 +198,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalBbMaLong),
             AnalyzeShortType = typeof(SignalBbMaShort),
         });
+#endif
 
         // Trend reversal
         Register(new AlgorithmDefinition()

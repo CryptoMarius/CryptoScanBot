@@ -1,3 +1,4 @@
+#if StrategyBbma
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -114,3 +115,4 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 }
+#endif

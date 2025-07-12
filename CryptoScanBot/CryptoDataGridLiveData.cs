@@ -31,12 +31,13 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         Sma20,
         PSar,
         FundingRate,
-
+#if StrategyBbma
         // Debug
         Wma05Low,
         ma05High,
         Wma10Low,
         Wma10High,
+#endif
     }
 
     private System.Windows.Forms.Timer? TimerRefreshInformation = null;
@@ -152,6 +153,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.FundingRate:
                     CreateColumn("Funding Rate", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     break;
+#if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     CreateColumn("Wma05Low", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -164,6 +166,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                 case ColumnsForGrid.Wma10High:
                     CreateColumn("Wma10High", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+#endif
                 default:
                     throw new NotImplementedException();
             }
@@ -202,10 +205,12 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     ColumnsForGrid.PSar => ObjectCompare.Compare(a.Candle.CandleData?.PSar, b.Candle.CandleData?.PSar),
                     ColumnsForGrid.Lux5m => ObjectCompare.Compare(a.Candle.CandleData?.Lux5mValue, b.Candle.CandleData?.Lux5mValue),
                     ColumnsForGrid.FundingRate => ObjectCompare.Compare(a.Symbol.FundingRate, b.Symbol.FundingRate),
+#if StrategyBbma
                     ColumnsForGrid.Wma05Low => ObjectCompare.Compare(a.Candle.CandleData?.Wma05Low, b.Candle.CandleData?.Wma05Low),
                     ColumnsForGrid.ma05High => ObjectCompare.Compare(a.Candle.CandleData?.Wma05High, b.Candle.CandleData?.Wma05High),
                     ColumnsForGrid.Wma10Low => ObjectCompare.Compare(a.Candle.CandleData?.Wma10Low, b.Candle.CandleData?.Wma10Low),
                     ColumnsForGrid.Wma10High => ObjectCompare.Compare(a.Candle.CandleData?.Wma10High, b.Candle.CandleData?.Wma10High),
+#endif
                     _ => 0
                 };
                 // extend lux with rsi if needed
@@ -352,6 +357,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                         if (liveData.Symbol.FundingRate != 0.0m)
                             e.Value = liveData.Symbol.FundingRate;
                         break;
+#if StrategyBbma
                     case ColumnsForGrid.Wma05Low:
                         e.Value = liveData.Candle.CandleData?.Wma05Low?.ToString(liveData.Symbol.PriceDisplayFormat);
                         break;
@@ -364,6 +370,7 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                     case ColumnsForGrid.Wma10High:
                         e.Value = liveData.Candle.CandleData?.Wma10High?.ToString(liveData.Symbol.PriceDisplayFormat);
                         break;
+#endif
                     default:
                         e.Value = '?';
                         break;
