@@ -1,4 +1,5 @@
-﻿using Bybit.Net.Clients;
+﻿using Bybit.Net;
+using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 
@@ -50,6 +51,7 @@ public class Api : ExchangeBase
             //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            options.Environment = BybitEnvironment.Netherlands;
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
