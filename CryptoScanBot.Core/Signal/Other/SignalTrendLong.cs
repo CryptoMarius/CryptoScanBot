@@ -18,10 +18,16 @@ public class SignalTrendLong : SignalCreateBase
     {
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary, 0, 0, null).Result;
 
-        if (SymbolInterval.TrendPrimary.PrevTime + Interval.Duration == SymbolInterval.TrendPrimary.Time && 
-            SymbolInterval.TrendPrimary.PrevTrend == CryptoTrendIndicator.Bearish &&
-            SymbolInterval.TrendPrimary.Trend == CryptoTrendIndicator.Bullish)
-            return true;
+        CryptoTrendData data = SymbolInterval.TrendPrimary;
+        if ( SymbolInterval.TrendPrimary.PrevTime + Interval.Duration == SymbolInterval.TrendPrimary.Time && 
+            data.PrevTime > 0 && data.PrevTrend == CryptoTrendIndicator.Bearish && data.Trend == CryptoTrendIndicator.Bullish)
+        {
+            if (!data.ReversalSignaled)
+            {
+                data.ReversalSignaled = true;
+                return true;
+            }
+        }
 
         ExtraText = "no trend change";
         return false;
