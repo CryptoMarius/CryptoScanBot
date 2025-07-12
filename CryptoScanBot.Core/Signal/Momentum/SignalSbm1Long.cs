@@ -15,17 +15,16 @@ public class SignalSbm1Long : SignalSbmBaseLong
 
     public bool HadStobbInThelastXCandles(int candleCount)
     {
-        // Is de prijs onlangs dicht bij de onderste bb geweest?
+        // Was price close to the edge of the bb?
         CryptoCandle? last = CandleLast;
-        while (candleCount > 0)
+        while (candleCount-- > 0)
         {
-            // Er een candle onder de bb opent of sluit & een oversold situatie (beide moeten onder de 20 zitten)
+            // Closes or opens below the bb & stochastic oversold situation 
             if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last!.StochOversold())
                 return true;
 
             if (!GetPrevCandle(last, out last))
                 return false;
-            candleCount--;
         }
 
         return false;
@@ -40,7 +39,7 @@ public class SignalSbm1Long : SignalSbmBaseLong
 
         if (!HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
         {
-            ExtraText = "geen stob in de laatste x candles";
+            ExtraText = "no stob in the last x candles";
             return false;
         }
 

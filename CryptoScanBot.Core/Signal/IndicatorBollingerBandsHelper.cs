@@ -21,7 +21,7 @@ public static class IndicatorBollingerBandsHelper
 
     public static bool IsBelowBollingerBands(this CryptoCandle candle, bool useLowHigh)
     {
-        // Geopend of gesloten onder de bollinger band
+        // Opens or closes below the bollinger band
         decimal value;
         if (useLowHigh)
             value = candle.Low;
@@ -36,7 +36,7 @@ public static class IndicatorBollingerBandsHelper
 
     public static bool AboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
     {
-        // Geopend of gesloten boven de bollinger band
+        // Opens or closes above the bollinger band
         decimal value;
         if (useLowHigh)
             value = candle.High;

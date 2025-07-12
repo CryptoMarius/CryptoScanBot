@@ -78,7 +78,7 @@ public class SignalStoRsiShort : SignalSbmBaseShort
             return false;
         }
 
-        if (!CandleLast.StochOverbought(0))
+        if (!CandleLast.StochOverbought())
         {
             ExtraText = "stoch not overbought";
             return false;

@@ -6,57 +6,57 @@ namespace CryptoScanBot.Core.Signal;
 public static class IndicatorStochHelper
 {
 
-    public static bool StochOversold(this CryptoCandle candle, int correction = 0)
+    public static bool StochOversold(this CryptoCandle candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold)
             return false;
-        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
-            return false;
-        return true;
-    }
-
-    public static bool StochSignalOversold(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic oscillator %D (red)
-        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold)
             return false;
         return true;
     }
 
-
-    public static bool StochOscillatorOversold(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic oscillator %K (blue)
-        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
-            return false;
-        return true;
-    }
-
-
-    public static bool StochSignalOverbought(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic oscillator %D (red)
-        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
-            return false;
-        return true;
-    }
-
-    public static bool StochOscillatorOverbought(this CryptoCandle candle, int correction = 0)
-    {
-        // Stochastic oscillator %K (blue)
-        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
-            return false;
-        return true;
-    }
+    //public static bool StochSignalOversold(this CryptoCandle candle, int correction = 0)
+    //{
+    //    // Stochastic oscillator %D (red)
+    //    if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+    //        return false;
+    //    return true;
+    //}
 
 
-    public static bool StochOverbought(this CryptoCandle candle, int correction = 0)
+    //public static bool StochOscillatorOversold(this CryptoCandle candle, int correction = 0)
+    //{
+    //    // Stochastic oscillator %K (blue)
+    //    if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
+    //        return false;
+    //    return true;
+    //}
+
+
+    //public static bool StochSignalOverbought(this CryptoCandle candle, int correction = 0)
+    //{
+    //    // Stochastic oscillator %D (red)
+    //    if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+    //        return false;
+    //    return true;
+    //}
+
+    //public static bool StochOscillatorOverbought(this CryptoCandle candle, int correction = 0)
+    //{
+    //    // Stochastic oscillator %K (blue)
+    //    if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+    //        return false;
+    //    return true;
+    //}
+
+
+    public static bool StochOverbought(this CryptoCandle candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
-        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought)
             return false;
-        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
+        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought)
             return false;
         return true;
     }

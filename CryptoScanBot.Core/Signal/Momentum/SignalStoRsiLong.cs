@@ -79,7 +79,7 @@ public class SignalStoRsiLong : SignalSbmBaseLong
             return false;
         }
 
-        if (!CandleLast.StochOversold(0))
+        if (!CandleLast.StochOversold())
         {
             ExtraText = "stoch not oversold";
             return false;

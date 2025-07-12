@@ -30,10 +30,11 @@ public static class SignalSbmBaseOversoldHelper
 
         if (includePsarCheck)
         {
+            // wait at least until it is below the sma20
             if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
                 return false;
 
-            // Dan is de psar omgeslagen (hoort hier niet)
+            // psar switched to the opposite side
             if ((decimal?)candle.CandleData?.PSar <= candle.Close)
                 return false;
         }
@@ -97,11 +98,21 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 {
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+        // Er recovery is via de macd
+        if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        {
+            response = "no macd recovery";
             return false;
-        if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+        }
+
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
+            !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
             return false;
-        if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage && 
+            !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            return false;
+        if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage && 
+            !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
             return false;
 
         if (!CheckMaCrossings(out response))
@@ -112,18 +123,9 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
     public bool MacdRecoveryOversold(int candleCount)
     {
+        // Is there "recovery" (a lighter macd bar)
         CryptoCandle last = CandleLast!;
-
-        //// Hoe positief wil je het hebben?
-        //if (last.CandleData?.MacdHistogram >= 0)
-        //{
-        //    //ExtraText = string.Format("De MACD.Hist is groen {0:N8}", last.CandleData.MacdHistogram);
-        //    return true;
-        //}
-
-        // Is er "herstel" ten opzichte van de vorige macd histogram candle?
-        int iterator = 0;
-        while (candleCount > 0)
+        while (candleCount-- > 0)
         {
             if (!GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
@@ -131,24 +133,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
                 return false;
 
-            //if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram || last.CandleData?.MacdHistogram >= 0)
-            //{
-            //    // Vermeld ik wel de juiste kleur(en)? 
-            //    if (last.CandleData.MacdHistogram >= 0)
-            //    {
-            //        // Hoe positief wil je het hebben?
-            //        //ExtraText = string.Format("De MACD[{0:N0}].Hist is groen {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
-            //    }
-            //    else
-            //    {
-            //        //ExtraText = string.Format("De MACD[{0:N0}].Hist is niet roze {1:N8} {2:N8}", iterator, prev.CandleData.MacdHistogram, last.CandleData.MacdHistogram);
-            //        return false;
-            //    }
-            //}
-
-            iterator--;
             last = prev;
-            candleCount--;
         }
 
         return true;
@@ -169,13 +154,9 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // De ma lijnen en psar goed staan
         if (!CandleLast!.SbmConditionsOversold(true))
         {
-            ExtraText = "geen sbm condities";
+            ExtraText = "no sbm conditions";
             return false;
         }
-
-        // Er recovery is via de macd
-        if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
-            return false;
 
         return true;
     }

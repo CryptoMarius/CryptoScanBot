@@ -175,11 +175,8 @@ partial class FrmSettings
         label17 = new Label();
         EditSbmBBMinPercentage = new NumericUpDown();
         EditSbmBBMaxPercentage = new NumericUpDown();
-        label4 = new Label();
         EditSbmMa200AndMa20Percentage = new NumericUpDown();
-        label8 = new Label();
         EditSbmMa50AndMa20Percentage = new NumericUpDown();
-        label7 = new Label();
         EditSbmMa200AndMa50Percentage = new NumericUpDown();
         EditSbmMa50AndMa20Lookback = new NumericUpDown();
         EditSbmMa50AndMa20Crossing = new CheckBox();
@@ -191,6 +188,7 @@ partial class FrmSettings
         flowLayoutPanel2 = new FlowLayoutPanel();
         UserControlSettingsSoundAndColorsStoRsi = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
+        EditStorsiCheckMacdRecovery = new CheckBox();
         EditStoRsiOnlyIfLux5m = new CheckBox();
         label28 = new Label();
         EditStorsiBBMinPercentage = new NumericUpDown();
@@ -316,7 +314,9 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        EditStorsiCheckMacdRecovery = new CheckBox();
+        EditCheckSbmMa200AndMa50Percentage = new CheckBox();
+        EditCheckSbmMa200AndMa20Percentage = new CheckBox();
+        EditCheckSbmMa50AndMa20Percentage = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -2045,16 +2045,16 @@ partial class FrmSettings
         // groupBox4
         // 
         groupBox4.AutoSize = true;
+        groupBox4.Controls.Add(EditCheckSbmMa200AndMa50Percentage);
+        groupBox4.Controls.Add(EditCheckSbmMa200AndMa20Percentage);
+        groupBox4.Controls.Add(EditCheckSbmMa50AndMa20Percentage);
         groupBox4.Controls.Add(label39);
         groupBox4.Controls.Add(EditSbmCandlesForMacdRecovery);
         groupBox4.Controls.Add(label17);
         groupBox4.Controls.Add(EditSbmBBMinPercentage);
         groupBox4.Controls.Add(EditSbmBBMaxPercentage);
-        groupBox4.Controls.Add(label4);
         groupBox4.Controls.Add(EditSbmMa200AndMa20Percentage);
-        groupBox4.Controls.Add(label8);
         groupBox4.Controls.Add(EditSbmMa50AndMa20Percentage);
-        groupBox4.Controls.Add(label7);
         groupBox4.Controls.Add(EditSbmMa200AndMa50Percentage);
         groupBox4.Controls.Add(EditSbmMa50AndMa20Lookback);
         groupBox4.Controls.Add(EditSbmMa50AndMa20Crossing);
@@ -2074,7 +2074,7 @@ partial class FrmSettings
         // label39
         // 
         label39.AutoSize = true;
-        label39.Location = new Point(18, 79);
+        label39.Location = new Point(18, 81);
         label39.Margin = new Padding(4, 0, 4, 0);
         label39.Name = "label39";
         label39.Size = new Size(133, 15);
@@ -2121,16 +2121,6 @@ partial class FrmSettings
         EditSbmBBMaxPercentage.TabIndex = 158;
         EditSbmBBMaxPercentage.Value = new decimal(new int[] { 6, 0, 0, 0 });
         // 
-        // label4
-        // 
-        label4.AutoSize = true;
-        label4.Location = new Point(16, 242);
-        label4.Margin = new Padding(4, 0, 4, 0);
-        label4.Name = "label4";
-        label4.Size = new Size(254, 15);
-        label4.TabIndex = 153;
-        label4.Text = "Minimal percentage between ma200 and ma20";
-        // 
         // EditSbmMa200AndMa20Percentage
         // 
         EditSbmMa200AndMa20Percentage.DecimalPlaces = 2;
@@ -2142,16 +2132,6 @@ partial class FrmSettings
         EditSbmMa200AndMa20Percentage.TabIndex = 154;
         EditSbmMa200AndMa20Percentage.Value = new decimal(new int[] { 3, 0, 0, 65536 });
         // 
-        // label8
-        // 
-        label8.AutoSize = true;
-        label8.Location = new Point(16, 267);
-        label8.Margin = new Padding(4, 0, 4, 0);
-        label8.Name = "label8";
-        label8.Size = new Size(248, 15);
-        label8.TabIndex = 151;
-        label8.Text = "Minimal percentage between ma50 and ma20";
-        // 
         // EditSbmMa50AndMa20Percentage
         // 
         EditSbmMa50AndMa20Percentage.DecimalPlaces = 2;
@@ -2162,16 +2142,6 @@ partial class FrmSettings
         EditSbmMa50AndMa20Percentage.Size = new Size(57, 23);
         EditSbmMa50AndMa20Percentage.TabIndex = 152;
         EditSbmMa50AndMa20Percentage.Value = new decimal(new int[] { 3, 0, 0, 65536 });
-        // 
-        // label7
-        // 
-        label7.AutoSize = true;
-        label7.Location = new Point(16, 213);
-        label7.Margin = new Padding(4, 0, 4, 0);
-        label7.Name = "label7";
-        label7.Size = new Size(254, 15);
-        label7.TabIndex = 149;
-        label7.Text = "Minimal percentage between ma200 and ma50";
         // 
         // EditSbmMa200AndMa50Percentage
         // 
@@ -2198,7 +2168,7 @@ partial class FrmSettings
         // EditSbmMa50AndMa20Crossing
         // 
         EditSbmMa50AndMa20Crossing.AutoSize = true;
-        EditSbmMa50AndMa20Crossing.Location = new Point(18, 170);
+        EditSbmMa50AndMa20Crossing.Location = new Point(18, 172);
         EditSbmMa50AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa50AndMa20Crossing.Name = "EditSbmMa50AndMa20Crossing";
         EditSbmMa50AndMa20Crossing.Size = new Size(360, 19);
@@ -2220,7 +2190,7 @@ partial class FrmSettings
         // EditSbmMa200AndMa50Crossing
         // 
         EditSbmMa200AndMa50Crossing.AutoSize = true;
-        EditSbmMa200AndMa50Crossing.Location = new Point(18, 119);
+        EditSbmMa200AndMa50Crossing.Location = new Point(18, 120);
         EditSbmMa200AndMa50Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa50Crossing.Name = "EditSbmMa200AndMa50Crossing";
         EditSbmMa200AndMa50Crossing.Size = new Size(366, 19);
@@ -2242,7 +2212,7 @@ partial class FrmSettings
         // EditSbmMa200AndMa20Crossing
         // 
         EditSbmMa200AndMa20Crossing.AutoSize = true;
-        EditSbmMa200AndMa20Crossing.Location = new Point(18, 145);
+        EditSbmMa200AndMa20Crossing.Location = new Point(18, 146);
         EditSbmMa200AndMa20Crossing.Margin = new Padding(4, 3, 4, 3);
         EditSbmMa200AndMa20Crossing.Name = "EditSbmMa200AndMa20Crossing";
         EditSbmMa200AndMa20Crossing.Size = new Size(366, 19);
@@ -2307,6 +2277,17 @@ partial class FrmSettings
         groupBox6.Text = "Settings";
         groupBox6.Enter += groupBox6_Enter;
         // 
+        // EditStorsiCheckMacdRecovery
+        // 
+        EditStorsiCheckMacdRecovery.AutoSize = true;
+        EditStorsiCheckMacdRecovery.Location = new Point(16, 118);
+        EditStorsiCheckMacdRecovery.Margin = new Padding(4, 3, 4, 3);
+        EditStorsiCheckMacdRecovery.Name = "EditStorsiCheckMacdRecovery";
+        EditStorsiCheckMacdRecovery.Size = new Size(200, 19);
+        EditStorsiCheckMacdRecovery.TabIndex = 175;
+        EditStorsiCheckMacdRecovery.Text = "Only when macd shows recovery";
+        EditStorsiCheckMacdRecovery.UseVisualStyleBackColor = true;
+        // 
         // EditStoRsiOnlyIfLux5m
         // 
         EditStoRsiOnlyIfLux5m.AutoSize = true;
@@ -2365,7 +2346,7 @@ partial class FrmSettings
         EditStorsiCheckBollingerBandsCondition.Location = new Point(16, 68);
         EditStorsiCheckBollingerBandsCondition.Margin = new Padding(4, 3, 4, 3);
         EditStorsiCheckBollingerBandsCondition.Name = "EditStorsiCheckBollingerBandsCondition";
-        EditStorsiCheckBollingerBandsCondition.Size = new Size(223, 19);
+        EditStorsiCheckBollingerBandsCondition.Size = new Size(202, 19);
         EditStorsiCheckBollingerBandsCondition.TabIndex = 169;
         EditStorsiCheckBollingerBandsCondition.Text = "Check if price is near the BB band";
         EditStorsiCheckBollingerBandsCondition.UseVisualStyleBackColor = true;
@@ -3691,16 +3672,38 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // EditStorsiCheckMacdRecovery
+        // EditCheckSbmMa200AndMa50Percentage
         // 
-        EditStorsiCheckMacdRecovery.AutoSize = true;
-        EditStorsiCheckMacdRecovery.Location = new Point(16, 118);
-        EditStorsiCheckMacdRecovery.Margin = new Padding(4, 3, 4, 3);
-        EditStorsiCheckMacdRecovery.Name = "EditStorsiCheckMacdRecovery";
-        EditStorsiCheckMacdRecovery.Size = new Size(200, 19);
-        EditStorsiCheckMacdRecovery.TabIndex = 175;
-        EditStorsiCheckMacdRecovery.Text = "Only when macd shows recovery";
-        EditStorsiCheckMacdRecovery.UseVisualStyleBackColor = true;
+        EditCheckSbmMa200AndMa50Percentage.AutoSize = true;
+        EditCheckSbmMa200AndMa50Percentage.Location = new Point(18, 214);
+        EditCheckSbmMa200AndMa50Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa200AndMa50Percentage.Name = "EditCheckSbmMa200AndMa50Percentage";
+        EditCheckSbmMa200AndMa50Percentage.Size = new Size(273, 19);
+        EditCheckSbmMa200AndMa50Percentage.TabIndex = 165;
+        EditCheckSbmMa200AndMa50Percentage.Text = "Minimal percentage between ma200 and ma50";
+        EditCheckSbmMa200AndMa50Percentage.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckSbmMa200AndMa20Percentage
+        // 
+        EditCheckSbmMa200AndMa20Percentage.AutoSize = true;
+        EditCheckSbmMa200AndMa20Percentage.Location = new Point(18, 240);
+        EditCheckSbmMa200AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa200AndMa20Percentage.Name = "EditCheckSbmMa200AndMa20Percentage";
+        EditCheckSbmMa200AndMa20Percentage.Size = new Size(273, 19);
+        EditCheckSbmMa200AndMa20Percentage.TabIndex = 164;
+        EditCheckSbmMa200AndMa20Percentage.Text = "Minimal percentage between ma200 and ma20";
+        EditCheckSbmMa200AndMa20Percentage.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckSbmMa50AndMa20Percentage
+        // 
+        EditCheckSbmMa50AndMa20Percentage.AutoSize = true;
+        EditCheckSbmMa50AndMa20Percentage.Location = new Point(18, 267);
+        EditCheckSbmMa50AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa50AndMa20Percentage.Name = "EditCheckSbmMa50AndMa20Percentage";
+        EditCheckSbmMa50AndMa20Percentage.Size = new Size(267, 19);
+        EditCheckSbmMa50AndMa20Percentage.TabIndex = 166;
+        EditCheckSbmMa50AndMa20Percentage.Text = "Minimal percentage between ma50 and ma20";
+        EditCheckSbmMa50AndMa20Percentage.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -4031,11 +4034,8 @@ partial class FrmSettings
     private Label label17;
     private NumericUpDown EditSbmBBMinPercentage;
     private NumericUpDown EditSbmBBMaxPercentage;
-    private Label label4;
     private NumericUpDown EditSbmMa200AndMa20Percentage;
-    private Label label8;
     private NumericUpDown EditSbmMa50AndMa20Percentage;
-    private Label label7;
     private NumericUpDown EditSbmMa200AndMa50Percentage;
     private NumericUpDown EditSbmMa50AndMa20Lookback;
     private CheckBox EditSbmMa50AndMa20Crossing;
@@ -4188,4 +4188,7 @@ partial class FrmSettings
     private SettingsDialog.UserControlZigZagSettings UserControlZoneZigZagSettings;
     private CheckBox EditDebugZoneCandles;
     private CheckBox EditStorsiCheckMacdRecovery;
+    private CheckBox EditCheckSbmMa200AndMa50Percentage;
+    private CheckBox EditCheckSbmMa200AndMa20Percentage;
+    private CheckBox EditCheckSbmMa50AndMa20Percentage;
 }

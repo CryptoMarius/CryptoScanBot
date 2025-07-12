@@ -20,6 +20,9 @@ public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
     // SBM algemene 
     public int CandlesForMacdRecovery { get; set; } = 2;
 
+    public bool CheckMa200AndMa50Percentage { get; set; } = true;
+    public bool CheckMa50AndMa20Percentage { get; set; } = true;
+    public bool CheckMa200AndMa20Percentage { get; set; } = true;
     public decimal Ma200AndMa50Percentage { get; set; } = 0.25m;
     public decimal Ma50AndMa20Percentage { get; set; } = 0.25m;
     public decimal Ma200AndMa20Percentage { get; set; } = 0.50m;

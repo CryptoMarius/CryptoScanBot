@@ -54,11 +54,14 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         // Controle op de ma-kruisingen
         if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
-            if (!candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
+                !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
-            if (!candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
+                !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
-            if (!candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
+                !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))

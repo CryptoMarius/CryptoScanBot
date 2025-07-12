@@ -212,11 +212,14 @@ public partial class FrmSettings : Form
         EditSbm3CandlesForBBRecovery.Value = settings.Signal.Sbm.Sbm3CandlesLookbackCount;
         EditSbm3CandlesForBBRecoveryPercentage.Value = settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage;
 
-        // SBM aanvullend
+        // SBM common
         EditSbmCandlesForMacdRecovery.Value = settings.Signal.Sbm.CandlesForMacdRecovery;
 
+        EditCheckSbmMa200AndMa50Percentage.Checked = settings.Signal.Sbm.CheckMa200AndMa50Percentage;
         EditSbmMa200AndMa50Percentage.Value = settings.Signal.Sbm.Ma200AndMa50Percentage;
+        EditCheckSbmMa50AndMa20Percentage.Checked = settings.Signal.Sbm.CheckMa50AndMa20Percentage;
         EditSbmMa50AndMa20Percentage.Value = settings.Signal.Sbm.Ma50AndMa20Percentage;
+        EditCheckSbmMa200AndMa20Percentage.Checked = settings.Signal.Sbm.CheckMa200AndMa20Percentage;
         EditSbmMa200AndMa20Percentage.Value = settings.Signal.Sbm.Ma200AndMa20Percentage;
 
         EditSbmMa200AndMa20Crossing.Checked = settings.Signal.Sbm.Ma200AndMa20Crossing;
@@ -499,11 +502,16 @@ public partial class FrmSettings : Form
         settings.Signal.Sbm.Sbm3CandlesLookbackCount = (int)EditSbm3CandlesForBBRecovery.Value;
         settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage = EditSbm3CandlesForBBRecoveryPercentage.Value;
 
-        // SBM aanvullend
+        // SBM common
         settings.Signal.Sbm.CandlesForMacdRecovery = (int)EditSbmCandlesForMacdRecovery.Value;
+
+        settings.Signal.Sbm.CheckMa200AndMa50Percentage = EditCheckSbmMa200AndMa50Percentage.Checked;
         settings.Signal.Sbm.Ma200AndMa50Percentage = EditSbmMa200AndMa50Percentage.Value;
+        settings.Signal.Sbm.CheckMa50AndMa20Percentage = EditCheckSbmMa50AndMa20Percentage.Checked;
         settings.Signal.Sbm.Ma50AndMa20Percentage = EditSbmMa50AndMa20Percentage.Value;
+        settings.Signal.Sbm.CheckMa200AndMa20Percentage = EditCheckSbmMa200AndMa20Percentage.Checked;
         settings.Signal.Sbm.Ma200AndMa20Percentage = EditSbmMa200AndMa20Percentage.Value;
+
         settings.Signal.Sbm.Ma200AndMa20Crossing = EditSbmMa200AndMa20Crossing.Checked;
         settings.Signal.Sbm.Ma200AndMa20Lookback = (int)EditSbmMa200AndMa20Lookback.Value;
         settings.Signal.Sbm.Ma200AndMa50Crossing = EditSbmMa200AndMa50Crossing.Checked;
