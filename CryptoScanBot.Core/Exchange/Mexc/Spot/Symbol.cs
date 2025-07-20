@@ -1,14 +1,11 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
 using Mexc.Net.Clients;
 using Mexc.Net.Enums;
-
-using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
 
@@ -36,15 +33,8 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (exchangeData == null)
                     throw new ExchangeException("No exchange data received");
 
-                //// Save for debug purposes
-                //{
-                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                //    Directory.CreateDirectory(filename);
-                //    filename += "symbols.json";
+                SaveExchangeInfo(exchangeData); // Save for debug
 
-                //    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
-                //    File.WriteAllText(filename, text);
-                //}
 
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)

@@ -1,14 +1,11 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
-
-using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Spot;
 
@@ -151,21 +148,8 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        // Save for debug purpose
-                        try
-                        {
-                            string filename = GlobalData.GetBaseDir();
-                            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                            Directory.CreateDirectory(filename);
-                            filename += "symbols.json";
+                        SaveExchangeInfo(exchangeInfo); // Save for debug
 
-                            string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                            File.WriteAllText(filename, text);
-                        }
-                        catch
-                        {
-                            // ignore everything
-                        }
 
 
 

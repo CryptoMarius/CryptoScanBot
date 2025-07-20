@@ -1,13 +1,10 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
-
-using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
@@ -58,15 +55,8 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (exchangeData == null)
                     throw new ExchangeException("No exchange data received");
 
-                //// Save for debug purposes
-                //{
-                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                //    Directory.CreateDirectory(filename);
-                //    filename += "symbols.json";
 
-                //    string text = JsonSerializer.Serialize(exchangeData, JsonTools.JsonSerializerIndented);
-                //    File.WriteAllText(filename, text);
-                //}
+                SaveExchangeInfo(exchangeData); // Save for debug
 
 
                 /* ticker

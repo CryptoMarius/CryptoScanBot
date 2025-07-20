@@ -1,11 +1,8 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using System.Text.Json;
 
 using Coinbase.Net.Clients;
 using Coinbase.Net.Enums;
@@ -169,16 +166,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        //// Bewaren voor debug werkzaamheden
-                        //{
-                        //    string filename = GlobalData.GetBaseDir();
-                        //    filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                        //    Directory.CreateDirectory(filename);
-                        //    filename += "symbols.json";
-
-                        //    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                        //    File.WriteAllText(filename, text);
-                        //}
+                        SaveExchangeInfo(exchangeInfo); // Save for debug
 
 
 

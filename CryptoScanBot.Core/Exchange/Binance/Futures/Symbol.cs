@@ -3,12 +3,9 @@ using Binance.Net.Enums;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange.Binance.Futures;
 
@@ -165,17 +162,9 @@ public class Symbol() : SymbolBase(), ISymbol
                         transaction.Commit();
 
 
-                        // 20250405 - The serialisation crashes with a stack overflow
-                        //// Bewaren voor debug werkzaamheden
-                        //{
-                        //    string filename = GlobalData.GetBaseDir();
-                        //    filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-                        //    Directory.CreateDirectory(filename);
-                        //    filename += "symbols.json";
+                        
+                        SaveExchangeInfo(exchangeInfo); // Save for debug
 
-                        //    string text = JsonSerializer.Serialize(exchangeInfo.Data.Symbols, JsonTools.JsonSerializerIndented);
-                        //    File.WriteAllText(filename, text);
-                        //}
 
 
                         // De nieuwe symbols toevoegen aan de lijst
