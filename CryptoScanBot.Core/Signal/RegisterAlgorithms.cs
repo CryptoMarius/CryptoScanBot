@@ -189,6 +189,15 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
         //});
 
+        
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe",
+            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelope,
+            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelope),
+            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
+        });
+
 #if StrategyBbma
         // BBMA - Oma Ally
         Register(new AlgorithmDefinition()
@@ -236,10 +245,19 @@ public static class RegisterAlgorithms
     {
         if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
+            Type? analyzeClass = null;
             if (side == CryptoTradeSide.Long && definition!.AnalyzeLongType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeLongType, [symbol, interval, candle]);
+                analyzeClass = definition!.AnalyzeLongType;
             if (side == CryptoTradeSide.Short && definition!.AnalyzeShortType != null)
-                return (SignalCreateBase?)Activator.CreateInstance(definition!.AnalyzeShortType, [symbol, interval, candle]);
+                analyzeClass = definition!.AnalyzeShortType;
+
+            if (analyzeClass != null)
+            {
+                SignalCreateBase? x = (SignalCreateBase?)Activator.CreateInstance(analyzeClass, [symbol, interval, candle]);
+                x!.SignalStrategy = strategy;
+                x!.SignalSide = side;
+                return x;
+            }
         }
         return null;
     }

@@ -9,8 +9,7 @@ public class SignalTrendLong : SignalCreateBase
 {
     public SignalTrendLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.Trend;
+        // nothing
     }
 
 

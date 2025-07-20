@@ -8,8 +8,7 @@ public class SignalCandleJumpShort : SignalCreateBase
 {
     public SignalCandleJumpShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.Jump;
+        // nothing
     }
 
 

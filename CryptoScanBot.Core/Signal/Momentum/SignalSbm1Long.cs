@@ -8,8 +8,7 @@ public class SignalSbm1Long : SignalSbmBaseLong
 {
     public SignalSbm1Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.Sbm1;
+        // nothing
     }
 
 

@@ -8,8 +8,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
 {
     public SignalStobbMultiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.StobbMulti;
+        // nothing
     }
 
 

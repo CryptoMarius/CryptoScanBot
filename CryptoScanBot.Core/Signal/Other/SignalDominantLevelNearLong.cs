@@ -8,8 +8,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
 {
     public SignalDominantLevelNearLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.DominantLevelNear;
+        // nothing
     }
 
 

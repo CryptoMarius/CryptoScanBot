@@ -19,6 +19,8 @@ public enum CryptoSignalStrategy
 
     Stoch = 20,
 
+    NadarayaWatsonEnvelope = 25,
+
     BbMa = 30, // still studying, complicated Oma Ally strategy
 
     Trend = 31,

@@ -8,8 +8,7 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
 {
     public SignalBbRsiEngulfingShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.BbRsiEngulfing;
+        // nothing
     }
 
 

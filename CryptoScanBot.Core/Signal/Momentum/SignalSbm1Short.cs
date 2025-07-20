@@ -8,8 +8,7 @@ public class SignalSbm1Short : SignalSbmBaseShort
 {
     public SignalSbm1Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.Sbm1;
+        // nothing
     }
 
 
@@ -22,7 +21,7 @@ public class SignalSbm1Short : SignalSbmBaseShort
             if (last == null)
                 return false;
             // Closes or opens above the bb & stochastic overbought situation 
-            if (last!.AboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought())
+            if (last!.AboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought()) 
                 return true;
 
             if (!GetPrevCandle(last, out last))

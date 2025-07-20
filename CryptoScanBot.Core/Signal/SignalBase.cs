@@ -171,35 +171,27 @@ public class SignalCreateBase
         return null;
     }
 
-
-
-
-
-
     protected bool InLowerPartOfBollingerBands(int candleCount, decimal percentage)
     {
-        // Is de prijs onlangs dicht bij de onderste bb geweest?
+        // Was the price near the lower bb?
 
         CryptoCandle? last = CandleLast;
-        while (candleCount > 0)
+        while (candleCount-- > 0)
         {
-            decimal? value = (decimal?)last?.CandleData?.BollingerBandsLowerBand;
-            value += (decimal?)last?.CandleData?.BollingerBandsDeviation * percentage / 100m;
+            decimal band = (decimal)last!.CandleData?.BollingerBandsLowerBand!;
+            band += (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
 
+            decimal value;
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
-            {
-                if (last?.Low <= value)
-                    return true;
-            }
+                value = last.Low;
             else
-            {
-                if (last?.Open <= value || last?.Close <= value)
-                    return true;
-            }
+                value = Math.Max(last.Open, last.Close);
+
+            if (value <= band)
+                return true;
 
             if (!GetPrevCandle(last, out last))
                 return false;
-            candleCount--;
         }
 
         return false;
@@ -208,62 +200,30 @@ public class SignalCreateBase
 
     protected bool InUpperPartOfBollingerBands(int candleCount, decimal percentage)
     {
-        // Is de prijs onlangs dicht bij de bovenste bb geweest?
+        // Was the price near the upper bb?
 
         CryptoCandle? last = CandleLast;
-        while (candleCount > 0)
+        while (candleCount-- > 0)
         {
-            decimal value = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
-            value -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
+            decimal band = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
+            band -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
 
+            decimal value;
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
-            {
-                if (last.High >= value)
-                    return true;
-            }
+                value = last.High;
             else
-            {
-                if (last.Open >= value || last.Close >= value)
-                    return true;
-            }
+                value = Math.Max(last.Open, last.Close);
+
+            if (value >= band)
+                return true;
 
             if (!GetPrevCandle(last, out last))
                 return false;
-            candleCount--;
         }
 
         return false;
     }
 
-
-    //public static (bool result, CryptoCandle? candle) CalculateBarometerIndicators(CryptoSymbol symbol, CryptoInterval candleInterval, CryptoCandle candleLast)
-    //{
-    //    // Calculate the indicators of the barometer
-    //    if (!symbol.Exchange.SymbolListName.TryGetValue(Const.Constants.SymbolNameBarometerPrice + symbol.QuoteData.Name, out CryptoSymbol? bmSymbol))
-    //        return (false, null);
-
-    //    // Calculate the last candle into the barometer list (the barometer is calculated each minute)
-    //    CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
-    //    long candleOpenTime = candleLast.OpenTime + candleInterval.Duration - 60;
-    //    if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-    //    {
-    //        // 1 minute back because it might nog have been calcuated yet
-    //        candleOpenTime -= 60;
-    //        if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out candle))
-    //            return (false, null);
-    //    }
-
-    //    // Calculate indicators if needed
-    //    if (candle.CandleData == null)
-    //    {
-    //        List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(bmSymbol, symbolInterval.Interval, candle.OpenTime, out string _);
-    //        if (history == null)
-    //            return (false, null);
-    //        CandleIndicatorData.CalculateIndicators(bmSymbol, symbolInterval.Interval, history);
-    //    }
-
-    //    return (true, candle);
-    //}
 
 
 }

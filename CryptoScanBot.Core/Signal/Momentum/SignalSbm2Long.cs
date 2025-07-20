@@ -8,8 +8,7 @@ public class SignalSbm2Long : SignalSbmBaseLong
 {
     public SignalSbm2Long(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.Sbm2;
+        // nothing
     }
 
 
@@ -20,7 +19,7 @@ public class SignalSbm2Long : SignalSbmBaseLong
 
         if (!InLowerPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
         {
-            ExtraText = "geen lage prijs in de laatste x candles";
+            ExtraText = "no low price in the last x candles";
             return false;
         }
 

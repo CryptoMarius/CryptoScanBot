@@ -120,12 +120,13 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
         return true;
     }
 
+
+
     public bool IsMacdRecoveryOverbought(int candleCount)
     {
         // Is there "recovery" (a lighter macd bar)
         CryptoCandle? last = CandleLast;
 
-        int iterator = 0;
         while (candleCount-- > 0)
         {
             if (!GetPrevCandle(last, out CryptoCandle? prev))
@@ -134,7 +135,6 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
             if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)
                 return false;
 
-            iterator--;
             last = prev;
         }
 
