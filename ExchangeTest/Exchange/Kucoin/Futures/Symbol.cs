@@ -1,24 +1,19 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Json;
+using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
 using Kucoin.Net.Clients;
 
-using System.Text.Json;
-
 namespace ExchangeTest.Exchange.Kucoin.Futures;
 
-public class Symbols
+public class Symbol() : SymbolBase(), ISymbol
 {
-    const string ExchangeName = "Kucoin Futures";
-
-
-    public static async Task ExecuteAsync()
+    public async Task GetSymbolsAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             try
             {
@@ -27,16 +22,8 @@ public class Symbols
                 if (!exchangeInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}");
 
-                //// Save for debugging
-                //{
-                //    string filename = GlobalData.GetBaseDir();
-                //    filename += $@"\{exchange.Name}\";
-                //    Directory.CreateDirectory(filename);
-                //    filename += "symbols.json";
 
-                //    string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
-                //    File.WriteAllText(filename, text);
-                //}
+                SaveExchangeInfo(exchangeInfo); // Save for debug
 
 
 
