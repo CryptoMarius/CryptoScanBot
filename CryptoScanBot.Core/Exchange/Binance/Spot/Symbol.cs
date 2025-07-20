@@ -17,31 +17,49 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-
+                using var client = new BinanceRestClient();
                 using CryptoDatabase database = new();
                 database.Open();
 
-                using var client = new BinanceRestClient();
-                var exchangeInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error);
-                if (exchangeInfo.Data == null)
+
+                // Tickers for the 24h volume
+                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await client.SpotApi.ExchangeData.GetTickersAsync();
+                if (!tickerInfo.Success)
+                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
+                if (tickerInfo == null)
+                    throw new ExchangeException("No ticker data received");
+                SaveExchangeInfo(tickerInfo, "tickers.json");
+
+                // Create dictionary for the volume
+                SortedList<string, decimal> volumeTicker = [];
+                if (tickerInfo.Data != null && tickerInfo.Data != null)
+                {
+                    foreach (var tickerData in tickerInfo.Data)
+                        volumeTicker.Add(tickerData.Symbol, tickerData.QuoteVolume);
+                }
+
+
+                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                LimitRate.WaitForFairWeight(1);
+                var symbolInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                if (!symbolInfo.Success)
+                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                if (symbolInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
+                SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
                 List<string> reportSymbols = [];
                 SortedList<string, CryptoSymbol> activeSymbols = [];
-
-
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        foreach (var symbolData in exchangeInfo.Data.Symbols)
+                        foreach (var symbolData in symbolInfo.Data.Symbols)
                         {
                             ////
                             //// Summary:
@@ -121,6 +139,12 @@ public class Symbol() : SymbolBase(), ISymbol
                             symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
                             symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
+                            // volume from the tickers
+                            if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                symbol.Volume = volume;
+                            else
+                                symbol.Volume = 0;
+
                             if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
                                 symbol.Status = 1;
                             else
@@ -160,12 +184,6 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                         transaction.Commit();
-
-
-                        
-                        SaveExchangeInfo(exchangeInfo); // Save for debug
-
-
 
 
                         // De nieuwe symbols toevoegen aan de lijst

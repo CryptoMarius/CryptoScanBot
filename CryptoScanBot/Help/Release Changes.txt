@@ -3,9 +3,13 @@ CryptoScanBot release historie:
 
 xx-xx-2025 2.1.5
 - Scanner - Nieuw algoritme, poging tot trend reversal (primary trend)
+- Scanner - Nieuw algoritme, Nadaraya Watson Envelope (een technisch manier van BB/KC)
 - Scanner - Nieuw algoritme, BBMA Oma Ally, maar die is technisch moelijk om uit te leggen laat staan te signaleren (gaat waarschijnlijjk weg)
-- Scanner - De user- en price ticker zijn uitgeschakeld en zullen gaan vervallen, realtime wijzigingen in prijzen zijn niet van belang voor de scanner
+- Scanner - De user- en price ticker zijn uitgeschakeld en zullen gaan vervallen, realtime wijzigingen in prijzen zijn niet (meer) van belang voor de scanner
+- Scanner - Ivm wegvallen price ticker GetTickers geimplementeerd om het wegvallen van het 24h volume op te vangen (1x in het uur de informatie verversen)
 - Scanner - De Exchange API uitgeschakeld (aangezien alle trading via Altrady zal gaan verlopen)
+
+testen: Volume munten op alle exchanges (bybit spot is okay)
 
 29-05-2025 2.1.4
 - Scanner - De scanner houdt geen rekening meer met het aantal dagen dat de munt bestaat.

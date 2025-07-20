@@ -16,13 +16,37 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                KucoinWeights.WaitForFairWeight(1);
-
+                using var client = new KucoinRestClient();
                 using CryptoDatabase database = new();
                 database.Open();
 
-                using var client = new KucoinRestClient();
+
+
+                // Tickers for the 24h volume
+                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                KucoinWeights.WaitForFairWeight(1);
+                var tickerInfo = await client.SpotApi.ExchangeData.GetTickersAsync();
+                if (!tickerInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                if (tickerInfo == null)
+                    throw new ExchangeException("No ticker data received");
+                SaveExchangeInfo(tickerInfo, "tickers.json");
+
+                // Create dictionary for the volume
+                SortedList<string, decimal> volumeTicker = [];
+                if (tickerInfo.Data != null && tickerInfo.Data.Data != null)
+                {
+                    foreach (var tickerData in tickerInfo.Data.Data)
+                    {
+                        if (tickerData.QuoteVolume.HasValue)
+                        {
+                            string symbolName = tickerData.Symbol.Replace("-", "");
+                            volumeTicker.Add(symbolName, tickerData.QuoteVolume.Value);
+                        }
+                    }
+                }
+
+
 
                 /*
                 "Data": [
@@ -49,14 +73,14 @@ public class Symbol() : SymbolBase(), ISymbol
                 ]
                 */
 
-                var exchangeData = await client.SpotApi.ExchangeData.GetSymbolsAsync();
-                if (!exchangeData.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}");
-                if (exchangeData == null)
+                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                KucoinWeights.WaitForFairWeight(1);
+                var symbolInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
+                if (!symbolInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
+                if (symbolInfo == null)
                     throw new ExchangeException("No exchange data received");
-
-
-                SaveExchangeInfo(exchangeData); // Save for debug
+                SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
                 /* ticker
@@ -81,40 +105,9 @@ public class Symbol() : SymbolBase(), ISymbol
                   },
                 */
 
-                // tickers for volumes... (need volume because of filtered kline and price tickers)
-                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                var tickerData = await client.SpotApi.ExchangeData.GetTickersAsync();
-                if (!tickerData.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
-                if (tickerData == null)
-                    throw new ExchangeException("No ticker data received");
-
-                //// Save for debug purposes
-                //{
-                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                //    Directory.CreateDirectory(filename);
-                //    filename += "tickers.json";
-
-                //    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
-                //    File.WriteAllText(filename, text);
-                //}
-
-                // index volume
-                SortedList<string, decimal> volumeTicker = [];
-                if (tickerData.Data != null && tickerData.Data.Data != null)
-                {
-                    foreach (var tickerInfo in tickerData.Data.Data)
-                    {
-                        if (tickerInfo.QuoteVolume.HasValue)
-                        {
-                            string symbolName = tickerInfo.Symbol.Replace("-", "");
-                            volumeTicker.Add(symbolName, tickerInfo.QuoteVolume.Value);
-                        }
-                    }
-                }
 
 
-                if (exchangeData.Data != null)
+                if (symbolInfo.Data != null)
                 {
 
                     // Om achteraf de niet aangeboden munten te deactiveren
@@ -126,7 +119,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         List<CryptoSymbol> cache = [];
                         try
                         {
-                            foreach (var symbolData in exchangeData.Data)
+                            foreach (var symbolData in symbolInfo.Data)
                             {
                                 // https://docs.kucoin.com/#symbols-amp-ticker
                                 // https://api.kucoin.com/api/v1/symbols
@@ -135,7 +128,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 if (symbolName != symbolData.BaseAsset + symbolData.QuoteAsset)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
                                     continue;
                                 }
 
@@ -182,14 +175,16 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
+                                // volume from the tickers
+                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    symbol.Volume = volume;
+                                else
+                                    symbol.Volume = 0;
+
                                 if (symbolData.EnableTrading)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
-
-                                // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = volume;
 
                                 if (symbol.Id == 0)
                                 {

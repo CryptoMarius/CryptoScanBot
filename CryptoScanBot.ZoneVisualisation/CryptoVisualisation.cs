@@ -658,6 +658,8 @@ public partial class CryptoVisualisation : Form
         if (Session.ShowSignals)
             Chart.Signals.Draw(plotModel, Data.Signals, Session.MinDate, Session.MaxDate);
 
+        // test
+        Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
 
         // Change default 
         plotView.Controller = new PlotController();

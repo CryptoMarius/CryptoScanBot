@@ -7,7 +7,7 @@ namespace CryptoScanBot.Core.Exchange;
 
 public class SymbolBase()
 {
-    internal static void SaveExchangeInfo(object exchangeInfo)
+    internal static void SaveExchangeInfo(object exchangeInfo, string name = "symbols.json")
     {
         // Save for debug
         try
@@ -15,7 +15,7 @@ public class SymbolBase()
             string filename = GlobalData.GetBaseDir();
             filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
             Directory.CreateDirectory(filename);
-            filename += "symbols.json";
+            filename += name;
 
             string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
             File.WriteAllText(filename, text);

@@ -18,18 +18,15 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new KucoinRestClient();
-                var exchangeInfo = await client.FuturesApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeInfo.Error}");
+                var symbolData = await client.FuturesApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                if (!symbolData.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolData.Error}");
+                SaveExchangeInfo(symbolData, "symbols.json");
 
 
-                SaveExchangeInfo(exchangeInfo); // Save for debug
-
-
-
-                //if (exchangeInfo.Data == null)
-                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {exchangeInfo.Error}");
-                if (exchangeInfo.Data != null)
+                //if (symbolData.Data == null)
+                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {symbolData.Error}");
+                if (symbolData.Data != null)
                 {
                     using CryptoDatabase database = new();
                     database.Open();
@@ -43,7 +40,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         List<CryptoSymbol> cache = [];
                         try
                         {
-                            foreach (var symbolData in exchangeInfo.Data)
+                            foreach (var symbolData in symbolData.Data)
                             {
                                 // https://docs.kucoin.com/#symbols-amp-ticker
                                 // https://api.kucoin.com/api/v1/symbols

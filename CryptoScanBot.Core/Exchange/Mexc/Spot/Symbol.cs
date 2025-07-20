@@ -17,66 +17,51 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-
-                using CryptoDatabase database = new();
-                database.Open();
-
                 using var client = new MexcRestClient();
                 client.ClientOptions.OutputOriginalData = true;
-
-                // exchangeInfo for symbols...
-                var exchangeData = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
-                if (!exchangeData.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {exchangeData.Error}");
-                if (exchangeData == null)
-                    throw new ExchangeException("No exchange data received");
-
-                SaveExchangeInfo(exchangeData); // Save for debug
-
+                using CryptoDatabase database = new();
+                database.Open();
 
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                var tickerData = await client.SpotApi.ExchangeData.GetTickersAsync();
-                if (!tickerData.Success)
-                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerData.Error}");
-                if (tickerData == null)
+                LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await client.SpotApi.ExchangeData.GetTickersAsync();
+                if (!tickerInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-
-
-                //// Save for debug purposes
-                //{
-                //    string filename = $@"{GlobalData.GetBaseDir()}\{exchange.Name}\";
-                //    Directory.CreateDirectory(filename);
-                //    filename += "tickers.json";
-
-                //    string text = JsonSerializer.Serialize(tickerData, JsonTools.JsonSerializerIndented);
-                //    //var accountFile = new FileInfo(filename);
-                //    File.WriteAllText(filename, text);
-                //}
+                SaveExchangeInfo(tickerInfo, "tickers.json");
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];
-                if (tickerData.Data != null && tickerData.Data != null)
+                if (tickerInfo.Data != null && tickerInfo.Data != null)
                 {
-                    foreach (var tickerInfo in tickerData.Data)
+                    foreach (var tickerData in tickerInfo.Data)
                     {
-                        if (tickerInfo.QuoteVolume.HasValue)
+                        if (tickerData.QuoteVolume.HasValue)
                         {
-                            string symbolName = tickerInfo.Symbol.Replace("-", "");
-                            volumeTicker.Add(symbolName, tickerInfo.QuoteVolume.Value);
+                            string symbolName = tickerData.Symbol.Replace("-", "");
+                            volumeTicker.Add(symbolName, tickerData.QuoteVolume.Value);
                         }
                     }
                 }
 
 
 
+                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                LimitRate.WaitForFairWeight(1);
+                var symbolInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync();
+                if (!symbolInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
+                if (symbolInfo == null)
+                    throw new ExchangeException("No exchange data received");
+                SaveExchangeInfo(symbolInfo, "symbols.json");
+
+
+
                 // Om achteraf de niet aangeboden munten te deactiveren
                 SortedList<string, CryptoSymbol> activeSymbols = [];
-
-
                 using (var transaction = database.BeginTransaction())
                 {
                     List<CryptoSymbol> cache = [];
@@ -84,7 +69,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         //BybitSpotSymbol
                         //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
-                        foreach (var symbolData in exchangeData.Data.Symbols)
+                        foreach (var symbolData in symbolInfo.Data.Symbols)
                         {
                             //if (coin != "")
                             {
@@ -127,7 +112,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
                                     continue;
                                 }
 
@@ -154,35 +139,36 @@ public class Symbol() : SymbolBase(), ISymbol
                                 for (int x = symbolData.BaseAssetPrecision; x > 0; x--)
                                     symbol.QuantityTickSize /= 10;
 
-                                //symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
-                                //symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
+                                //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
-                                //symbol.QuoteValueMinimum = symbolData.LotSizeFilter?.MinOrderValue ?? 0;
+                                //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;
                                 symbol.QuoteValueMaximum = symbolData.MaxQuoteQuantity;
 
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                //symbol.PriceMinimum = symbolData.LotSizeFilter.MinOrderValue;
-                                //symbol.PriceMaximum = symbolData.LotSizeFilter.MaxOrderValue;
+                                //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
+                                //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
                                 symbol.PriceTickSize = 1;
                                 for (int x = symbolData.QuoteAssetPrecision; x > 0; x--)
                                     symbol.PriceTickSize /= 10;
 
-                                symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed; // confusing, there is a Permissions flag as well (read doumentation once..)
+                                symbol.IsSpotTradingAllowed = true; // symbolInfo.IsSpotTradingAllowed; // confusing, there is a Permissions flag as well (read doumentation once..)
                                 symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
+
+                                // volume from the tickers
+                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    symbol.Volume = volume;
+                                else
+                                    symbol.Volume = 0;
 
                                 if (symbolData.Status == SymbolStatus.Enabled)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
-
-
-                                // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = volume;
 
                                 if (symbol.Id == 0)
                                 {
@@ -228,7 +214,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     }
                 }
 
-                if (tickerData.Success && tickerData.Success)
+                if (tickerInfo.Success && tickerInfo.Success)
                 {
                     exchange.LastTimeFetched = DateTime.UtcNow;
                     database.Connection.Update(exchange);

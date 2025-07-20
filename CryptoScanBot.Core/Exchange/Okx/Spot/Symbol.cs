@@ -20,18 +20,42 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
-
+                using var client = new OKXRestClient();
                 using CryptoDatabase database = new();
                 database.Open();
 
-                using var client = new OKXRestClient();
-                var exchangeInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!exchangeInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + exchangeInfo.Error);
-                if (exchangeInfo.Data == null)
+
+                // tickers for volumes... (need volume because of filtered kline and price tickers)
+                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                //LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await client.UnifiedApi.ExchangeData.GetTickersAsync(InstrumentType.Spot);
+                if (!tickerInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                if (tickerInfo == null)
+                    throw new ExchangeException("No ticker data received");
+                SaveExchangeInfo(tickerInfo, "tickers.json");
+
+                // index volume
+                SortedList<string, decimal> volumeTicker = [];
+                if (tickerInfo.Data != null && tickerInfo.Data != null)
+                {
+                    foreach (var tickerData in tickerInfo.Data)
+                    {
+                        string symbolName = tickerData.Symbol.Replace("-", "");
+                        volumeTicker.Add(symbolName, tickerData.QuoteVolume);
+                    }
+                }
+
+
+
+                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                //LimitRate.WaitForFairWeight(1);
+                var symbolInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                if (!symbolInfo.Success)
+                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                if (symbolInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
+                SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren
@@ -45,7 +69,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         //BybitSpotSymbol
                         //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
-                        foreach (var symbolData in exchangeInfo.Data)
+                        foreach (var symbolData in symbolInfo.Data)
                         {
                             //if (coin != "")
                             {
@@ -83,7 +107,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 if (symbolData.Symbol != symbolData.BaseAsset + '-' + symbolData.QuoteAsset)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
                                     continue;
                                 }
                                 string symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
@@ -118,24 +142,30 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // min, max en tick (in base amount)
                                 if (symbolData.LotSize.HasValue)
                                     symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                //symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinOrderQuantity ?? 0;
-                                //symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxOrderQuantity ?? 0;
+                                //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
+                                //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
-                                //symbol.QuoteValueMinimum = symbolData.LotSizeFilter?.MinOrderValue ?? 0;
-                                //symbol.QuoteValueMaximum = symbolData.LotSizeFilter?.MaxOrderValue ?? 0;
+                                //symbol.QuoteValueMinimum = symbolInfo.LotSizeFilter?.MinOrderValue ?? 0;
+                                //symbol.QuoteValueMaximum = symbolInfo.LotSizeFilter?.MaxOrderValue ?? 0;
 
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                //symbol.PriceMinimum = symbolData.LotSizeFilter.MinOrderValue;
-                                //symbol.PriceMaximum = symbolData.LotSizeFilter.MaxOrderValue;
+                                //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
+                                //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
                                 if (symbolData.TickSize.HasValue)
                                     symbol.PriceTickSize = symbolData.TickSize.Value;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+
+                                // volume from the tickers
+                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    symbol.Volume = volume;
+                                else
+                                    symbol.Volume = 0;
 
                                 if (symbolData.State == InstrumentState.Live)
                                     symbol.Status = 1;
@@ -168,11 +198,6 @@ public class Symbol() : SymbolBase(), ISymbol
                             GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
 
                         transaction.Commit();
-
-
-                        SaveExchangeInfo(exchangeInfo); // Save for debug
-
-
 
 
                         // De nieuwe symbols toevoegen aan de lijst
