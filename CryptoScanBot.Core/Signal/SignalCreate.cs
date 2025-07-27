@@ -324,11 +324,10 @@ public class SignalCreate
         {
             if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)
             {
-                string text = string.Format("Analyse {0} 10d change effective {1} not between {2} .. {3}", Symbol.Name, signal.LastXDaysEffective.ToString("N2"),
-                    "0", GlobalData.Settings.Signal.AnalysisEffectivePercentage.ToString());
+                string text = $"Analyse {Symbol.Name} {GlobalData.Settings.Signal.AnalysisEffectiveDays}d change effective {signal.LastXDaysEffective:N2} not between 0 .. {GlobalData.Settings.Signal.AnalysisEffectivePercentage:N2}";
                 GlobalData.AddTextToLogTab(text);
             }
-            eventText.Add("10d effective% to high");
+            eventText.Add($"{GlobalData.Settings.Signal.AnalysisEffectiveDays}d effective% to high");
             signal.IsInvalid = true;
         }
 
