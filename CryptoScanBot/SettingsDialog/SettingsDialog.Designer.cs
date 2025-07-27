@@ -170,6 +170,9 @@ partial class FrmSettings
         label11 = new Label();
         EditSbm2CandlesLookbackCount = new NumericUpDown();
         groupBox4 = new GroupBox();
+        EditCheckSbmMa200AndMa50Percentage = new CheckBox();
+        EditCheckSbmMa200AndMa20Percentage = new CheckBox();
+        EditCheckSbmMa50AndMa20Percentage = new CheckBox();
         label39 = new Label();
         EditSbmCandlesForMacdRecovery = new NumericUpDown();
         label17 = new Label();
@@ -245,6 +248,14 @@ partial class FrmSettings
         label34 = new Label();
         EditZonesFvgMinimumPercentage = new NumericUpDown();
         UserControlIntervalZonesFvg = new CryptoScanBot.SettingsDialog.UserControlInterval();
+        tabSignalZonesNwe = new TabPage();
+        flowLayoutPanel11 = new FlowLayoutPanel();
+        UserControlSettingsSoundAndColorsNwe = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
+        groupBox15 = new GroupBox();
+        label7 = new Label();
+        EditNweCandleLookback = new NumericUpDown();
+        label4 = new Label();
+        EditNweIgnorePercentage = new NumericUpDown();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -314,9 +325,6 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        EditCheckSbmMa200AndMa50Percentage = new CheckBox();
-        EditCheckSbmMa200AndMa20Percentage = new CheckBox();
-        EditCheckSbmMa50AndMa20Percentage = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -414,6 +422,11 @@ partial class FrmSettings
         flowLayoutPanel10.SuspendLayout();
         groupBox14.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).BeginInit();
+        tabSignalZonesNwe.SuspendLayout();
+        flowLayoutPanel11.SuspendLayout();
+        groupBox15.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)EditNweCandleLookback).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweIgnorePercentage).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -1173,7 +1186,8 @@ partial class FrmSettings
         tabControlSignals.Controls.Add(tabSignalJump);
         tabControlSignals.Controls.Add(tabSignalZones);
         tabControlSignals.Controls.Add(tabSignalZonesFvg);
-        tabControlSignals.Dock = DockStyle.Fill;
+        tabControlSignals.Controls.Add(tabSignalZonesNwe);
+        tabControlSignals.Dock = DockStyle.Bottom;
         tabControlSignals.Location = new Point(4, 3);
         tabControlSignals.Name = "tabControlSignals";
         tabControlSignals.SelectedIndex = 0;
@@ -2071,6 +2085,39 @@ partial class FrmSettings
         groupBox4.TabStop = false;
         groupBox4.Text = "Settings for SBM methods";
         // 
+        // EditCheckSbmMa200AndMa50Percentage
+        // 
+        EditCheckSbmMa200AndMa50Percentage.AutoSize = true;
+        EditCheckSbmMa200AndMa50Percentage.Location = new Point(18, 214);
+        EditCheckSbmMa200AndMa50Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa200AndMa50Percentage.Name = "EditCheckSbmMa200AndMa50Percentage";
+        EditCheckSbmMa200AndMa50Percentage.Size = new Size(273, 19);
+        EditCheckSbmMa200AndMa50Percentage.TabIndex = 165;
+        EditCheckSbmMa200AndMa50Percentage.Text = "Minimal percentage between ma200 and ma50";
+        EditCheckSbmMa200AndMa50Percentage.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckSbmMa200AndMa20Percentage
+        // 
+        EditCheckSbmMa200AndMa20Percentage.AutoSize = true;
+        EditCheckSbmMa200AndMa20Percentage.Location = new Point(18, 240);
+        EditCheckSbmMa200AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa200AndMa20Percentage.Name = "EditCheckSbmMa200AndMa20Percentage";
+        EditCheckSbmMa200AndMa20Percentage.Size = new Size(273, 19);
+        EditCheckSbmMa200AndMa20Percentage.TabIndex = 164;
+        EditCheckSbmMa200AndMa20Percentage.Text = "Minimal percentage between ma200 and ma20";
+        EditCheckSbmMa200AndMa20Percentage.UseVisualStyleBackColor = true;
+        // 
+        // EditCheckSbmMa50AndMa20Percentage
+        // 
+        EditCheckSbmMa50AndMa20Percentage.AutoSize = true;
+        EditCheckSbmMa50AndMa20Percentage.Location = new Point(18, 267);
+        EditCheckSbmMa50AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
+        EditCheckSbmMa50AndMa20Percentage.Name = "EditCheckSbmMa50AndMa20Percentage";
+        EditCheckSbmMa50AndMa20Percentage.Size = new Size(267, 19);
+        EditCheckSbmMa50AndMa20Percentage.TabIndex = 166;
+        EditCheckSbmMa50AndMa20Percentage.Text = "Minimal percentage between ma50 and ma20";
+        EditCheckSbmMa50AndMa20Percentage.UseVisualStyleBackColor = true;
+        // 
         // label39
         // 
         label39.AutoSize = true;
@@ -2910,6 +2957,97 @@ partial class FrmSettings
         UserControlIntervalZonesFvg.Size = new Size(100, 150);
         UserControlIntervalZonesFvg.TabIndex = 161;
         // 
+        // tabSignalZonesNwe
+        // 
+        tabSignalZonesNwe.Controls.Add(flowLayoutPanel11);
+        tabSignalZonesNwe.Location = new Point(4, 27);
+        tabSignalZonesNwe.Name = "tabSignalZonesNwe";
+        tabSignalZonesNwe.Padding = new Padding(3);
+        tabSignalZonesNwe.Size = new Size(1442, 578);
+        tabSignalZonesNwe.TabIndex = 14;
+        tabSignalZonesNwe.Text = "NWE";
+        tabSignalZonesNwe.UseVisualStyleBackColor = true;
+        // 
+        // flowLayoutPanel11
+        // 
+        flowLayoutPanel11.AutoScroll = true;
+        flowLayoutPanel11.AutoSize = true;
+        flowLayoutPanel11.Controls.Add(UserControlSettingsSoundAndColorsNwe);
+        flowLayoutPanel11.Controls.Add(groupBox15);
+        flowLayoutPanel11.Dock = DockStyle.Fill;
+        flowLayoutPanel11.FlowDirection = FlowDirection.TopDown;
+        flowLayoutPanel11.Location = new Point(3, 3);
+        flowLayoutPanel11.Name = "flowLayoutPanel11";
+        flowLayoutPanel11.Size = new Size(1436, 572);
+        flowLayoutPanel11.TabIndex = 162;
+        // 
+        // UserControlSettingsSoundAndColorsNwe
+        // 
+        UserControlSettingsSoundAndColorsNwe.AutoScroll = true;
+        UserControlSettingsSoundAndColorsNwe.AutoSize = true;
+        UserControlSettingsSoundAndColorsNwe.Location = new Point(0, 0);
+        UserControlSettingsSoundAndColorsNwe.Margin = new Padding(0);
+        UserControlSettingsSoundAndColorsNwe.Name = "UserControlSettingsSoundAndColorsNwe";
+        UserControlSettingsSoundAndColorsNwe.Padding = new Padding(10);
+        UserControlSettingsSoundAndColorsNwe.Size = new Size(807, 176);
+        UserControlSettingsSoundAndColorsNwe.TabIndex = 158;
+        // 
+        // groupBox15
+        // 
+        groupBox15.AutoSize = true;
+        groupBox15.Controls.Add(label7);
+        groupBox15.Controls.Add(EditNweCandleLookback);
+        groupBox15.Controls.Add(label4);
+        groupBox15.Controls.Add(EditNweIgnorePercentage);
+        groupBox15.Location = new Point(10, 186);
+        groupBox15.Margin = new Padding(10);
+        groupBox15.Name = "groupBox15";
+        groupBox15.Size = new Size(279, 102);
+        groupBox15.TabIndex = 160;
+        groupBox15.TabStop = false;
+        groupBox15.Text = "Settings NWE Slope";
+        // 
+        // label7
+        // 
+        label7.AutoSize = true;
+        label7.Location = new Point(7, 59);
+        label7.Margin = new Padding(4, 0, 4, 0);
+        label7.Name = "label7";
+        label7.Size = new Size(95, 15);
+        label7.TabIndex = 164;
+        label7.Text = "Candle lookback";
+        // 
+        // EditNweCandleLookback
+        // 
+        EditNweCandleLookback.Location = new Point(215, 57);
+        EditNweCandleLookback.Margin = new Padding(4, 3, 4, 3);
+        EditNweCandleLookback.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
+        EditNweCandleLookback.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        EditNweCandleLookback.Name = "EditNweCandleLookback";
+        EditNweCandleLookback.Size = new Size(57, 23);
+        EditNweCandleLookback.TabIndex = 165;
+        EditNweCandleLookback.Value = new decimal(new int[] { 8, 0, 0, 0 });
+        // 
+        // label4
+        // 
+        label4.AutoSize = true;
+        label4.Location = new Point(7, 30);
+        label4.Margin = new Padding(4, 0, 4, 0);
+        label4.Name = "label4";
+        label4.Size = new Size(122, 15);
+        label4.TabIndex = 125;
+        label4.Text = "Minimum percentage";
+        // 
+        // EditNweIgnorePercentage
+        // 
+        EditNweIgnorePercentage.DecimalPlaces = 2;
+        EditNweIgnorePercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditNweIgnorePercentage.Location = new Point(215, 28);
+        EditNweIgnorePercentage.Margin = new Padding(4, 3, 4, 3);
+        EditNweIgnorePercentage.Name = "EditNweIgnorePercentage";
+        EditNweIgnorePercentage.Size = new Size(56, 23);
+        EditNweIgnorePercentage.TabIndex = 126;
+        // 
         // tabTrading
         // 
         tabTrading.Controls.Add(tabControlTrading);
@@ -3672,39 +3810,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // EditCheckSbmMa200AndMa50Percentage
-        // 
-        EditCheckSbmMa200AndMa50Percentage.AutoSize = true;
-        EditCheckSbmMa200AndMa50Percentage.Location = new Point(18, 214);
-        EditCheckSbmMa200AndMa50Percentage.Margin = new Padding(4, 3, 4, 3);
-        EditCheckSbmMa200AndMa50Percentage.Name = "EditCheckSbmMa200AndMa50Percentage";
-        EditCheckSbmMa200AndMa50Percentage.Size = new Size(273, 19);
-        EditCheckSbmMa200AndMa50Percentage.TabIndex = 165;
-        EditCheckSbmMa200AndMa50Percentage.Text = "Minimal percentage between ma200 and ma50";
-        EditCheckSbmMa200AndMa50Percentage.UseVisualStyleBackColor = true;
-        // 
-        // EditCheckSbmMa200AndMa20Percentage
-        // 
-        EditCheckSbmMa200AndMa20Percentage.AutoSize = true;
-        EditCheckSbmMa200AndMa20Percentage.Location = new Point(18, 240);
-        EditCheckSbmMa200AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
-        EditCheckSbmMa200AndMa20Percentage.Name = "EditCheckSbmMa200AndMa20Percentage";
-        EditCheckSbmMa200AndMa20Percentage.Size = new Size(273, 19);
-        EditCheckSbmMa200AndMa20Percentage.TabIndex = 164;
-        EditCheckSbmMa200AndMa20Percentage.Text = "Minimal percentage between ma200 and ma20";
-        EditCheckSbmMa200AndMa20Percentage.UseVisualStyleBackColor = true;
-        // 
-        // EditCheckSbmMa50AndMa20Percentage
-        // 
-        EditCheckSbmMa50AndMa20Percentage.AutoSize = true;
-        EditCheckSbmMa50AndMa20Percentage.Location = new Point(18, 267);
-        EditCheckSbmMa50AndMa20Percentage.Margin = new Padding(4, 3, 4, 3);
-        EditCheckSbmMa50AndMa20Percentage.Name = "EditCheckSbmMa50AndMa20Percentage";
-        EditCheckSbmMa50AndMa20Percentage.Size = new Size(267, 19);
-        EditCheckSbmMa50AndMa20Percentage.TabIndex = 166;
-        EditCheckSbmMa50AndMa20Percentage.Text = "Minimal percentage between ma50 and ma20";
-        EditCheckSbmMa50AndMa20Percentage.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -3850,6 +3955,14 @@ partial class FrmSettings
         groupBox14.ResumeLayout(false);
         groupBox14.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditZonesFvgMinimumPercentage).EndInit();
+        tabSignalZonesNwe.ResumeLayout(false);
+        tabSignalZonesNwe.PerformLayout();
+        flowLayoutPanel11.ResumeLayout(false);
+        flowLayoutPanel11.PerformLayout();
+        groupBox15.ResumeLayout(false);
+        groupBox15.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)EditNweCandleLookback).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweIgnorePercentage).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -4191,4 +4304,12 @@ partial class FrmSettings
     private CheckBox EditCheckSbmMa200AndMa50Percentage;
     private CheckBox EditCheckSbmMa200AndMa20Percentage;
     private CheckBox EditCheckSbmMa50AndMa20Percentage;
+    private TabPage tabSignalZonesNwe;
+    private FlowLayoutPanel flowLayoutPanel11;
+    private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsNwe;
+    private GroupBox groupBox15;
+    private Label label7;
+    private NumericUpDown EditNweCandleLookback;
+    private Label label4;
+    private NumericUpDown EditNweIgnorePercentage;
 }

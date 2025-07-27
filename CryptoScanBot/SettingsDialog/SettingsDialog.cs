@@ -36,7 +36,7 @@ public partial class FrmSettings : Form
 
         UserControlIntervalZonesDominant.InitControls(CryptoIntervalPeriod.interval1h);
         UserControlIntervalZonesFvg.InitControls(CryptoIntervalPeriod.interval1h);
-
+        
         // Trading (excluding the backtest)
         //TradeVia.Add("Backtest", CryptoTradeAccountType.BackTest);
         TradeVia.Add("Papertrading", CryptoTradeVia.PaperTrade);
@@ -272,6 +272,11 @@ public partial class FrmSettings : Form
         UserControlIntervalZonesFvg.LoadConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.LoadConfig("FVG Zones", settings.Signal.ZonesFvg);
         EditZonesFvgMinimumPercentage.Value = (decimal)settings.Signal.ZonesFvg.MinimumPercentage;
+
+        // Nadaraya Watson Envelope
+        UserControlSettingsSoundAndColorsNwe.LoadConfig("NWE", settings.Signal.Nwe);
+        EditNweIgnorePercentage.Value = settings.Signal.Nwe.IgnorePercentage;
+        EditNweCandleLookback.Value = settings.Signal.Nwe.CandleCountSlope;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -562,6 +567,11 @@ public partial class FrmSettings : Form
         UserControlIntervalZonesFvg.SaveConfig(settings.Signal.ZonesFvg.IntervalList);
         UserControlSettingsSoundAndColorsZonesFvg.SaveConfig(settings.Signal.ZonesFvg);
         settings.Signal.ZonesFvg.MinimumPercentage = (double)EditZonesFvgMinimumPercentage.Value;
+
+        // Nadaraya Watson Envelope
+        UserControlSettingsSoundAndColorsNwe.SaveConfig(settings.Signal.Nwe);
+        settings.Signal.Nwe.IgnorePercentage = EditNweIgnorePercentage.Value;
+        settings.Signal.Nwe.CandleCountSlope = (int)EditNweCandleLookback.Value;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

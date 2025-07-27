@@ -22,8 +22,8 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         }
 
         // configuration:
-        double h = 8f;
-        double mult = 3.0f;
+        double h = GlobalData.Settings.Signal.Nwe.BandWidth;
+        double mult = GlobalData.Settings.Signal.Nwe.Multiplication;
 
         // Iterate the last 500 candles
         int maxlen = 500;
@@ -69,18 +69,39 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         decimal lowerband = nwevalue - sae;
 
         // buy alert
-        if (SignalSide == CryptoTradeSide.Long && candlePrev!.Close > lowerband && CandleLast.Close <= lowerband)
+        if (SignalSide == CryptoTradeSide.Long)
         {
-            ExtraText = "";
-            return true;
+            // Candle outside the band
+            if (CandleLast!.Open <= lowerband && CandleLast.Close <= lowerband)
+            {
+                ExtraText = "";
+                return true;
+            }
+            // Candle sticking pearsing trough the band
+            if (candlePrev!.Close > lowerband && CandleLast.Close <= lowerband)
+            {
+                ExtraText = "";
+                return true;
+            }
         }
 
         // sell alert
-        if (SignalSide == CryptoTradeSide.Short && candlePrev!.Close < upperband && CandleLast.Close >= upperband)
+        if (SignalSide == CryptoTradeSide.Short) 
         {
-            ExtraText = "";
-            return true;
+            // Candle outside the band
+            if (CandleLast!.Open >= upperband && CandleLast.Close >= upperband)
+            {
+                ExtraText = "";
+                return true;
+            }
+            // Candle sticking pearsing trough the band
+            if (candlePrev!.Close < upperband && CandleLast.Close >= upperband)
+            {
+                ExtraText = "";
+                return true;
+            }
         }
+
 
         ExtraText = "";
         return false;

@@ -198,6 +198,14 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe.slope",
+            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeSlope,
+            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeSlope),
+            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeSlope),
+        });
+
 #if StrategyBbma
         // BBMA - Oma Ally
         Register(new AlgorithmDefinition()

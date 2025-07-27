@@ -49,6 +49,10 @@ public class SettingsSignal
     // Fair Value gap zones
     public SettingsSignalStrategyFvg ZonesFvg = new();
 
+    // Nadaraya Watson Envelope
+    public SettingsSignalStrategyNwe Nwe = new ();
+
+
     // Logging
     public bool LogMinimalVolume { get; set; } = false;
     public bool LogMinimalPrice { get; set; } = false;
