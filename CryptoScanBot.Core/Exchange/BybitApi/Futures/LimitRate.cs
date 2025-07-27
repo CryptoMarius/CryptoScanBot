@@ -58,7 +58,7 @@ public static class LimitRate
 
                 // Het is nu een beetje gokken, 120*5 = 600 calls, met 300 per 20 sec blijven we daar RUIM onder lijkt me
                 // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
-                if (CurrentWeight > 300)
+                if (CurrentWeight > 200)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
                     Thread.Sleep(2500);
