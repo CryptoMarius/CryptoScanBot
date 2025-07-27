@@ -626,11 +626,12 @@ public partial class DashBoardInformation : UserControl
                     {
                         // The heavy cpu strain of the Kucoin priceticker is killing the scanner, so its disabled
                         //if (!ExchangeBase.PriceTicker.Enabled)
-                        text = "disabled";
+                        //text = "disabled";
                         //else
                         //    text = ExchangeBase.PriceTicker.Count().ToString("N0");
+                        text = GlobalData.PriceMinPerc.ToString("N2") + " " + GlobalData.PriceMaxPerc.ToString("N2");
                         symbol = GlobalData.Settings.ShowSymbolInformation[0];
-                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Price ticker count", text);
+                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Average min/max", text);
                     }
                     if (ExchangeBase.KLineTicker != null)
                     {

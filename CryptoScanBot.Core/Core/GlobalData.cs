@@ -31,6 +31,9 @@ public delegate void SetCandleTimerEnable(bool value);
 
 public static class GlobalData
 {
+    public static double PriceMinPerc = 0;
+    public static double PriceMaxPerc = 0;
+
     public static string AppName { get; set; } = "";
     public static string AppPath { get; set; } = "";
     public static string LogName { get; set; } = "";

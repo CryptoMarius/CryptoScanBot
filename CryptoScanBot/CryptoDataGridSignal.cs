@@ -1024,10 +1024,11 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     static long LastStatisticUpdate = 0;
 
+ 
     private void UpdateStatistics()
     {
         // statistics (not sure where to put it right now)
-        if (GlobalData.BackTest)
+        if (GlobalData.BackTest || !GlobalData.Settings.General.DebugSignalStrength)
             return;
 
         // Avoid frequent updates
@@ -1038,21 +1039,37 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         // Avoid duplicate calls (when the list is serious long)
         if (Monitor.TryEnter(List))
         {
+            int count = 0;
             LastStatisticUpdate = x;
             try
             {
                 if (List.Count > 0)
                 {
+                    double priceMinPerc = 0;
+                    double priceMaxPerc = 0;
                     for (int index = List.Count - 1; index >= 0; index--)
                     {
                         CryptoSignal signal = List[index];
-                        if (GlobalData.Settings.General.DebugSignalStrength)
+                        if (UpdateSignalStatistics(signal))
+                            GlobalData.ThreadSaveObjects!.AddToQueue(signal);
+
+                        if (!signal.IsInvalid && signal.Strategy < CryptoSignalStrategy.DominantLevel) 
                         {
-                            if (UpdateSignalStatistics(signal))
-                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
+                            if (signal.Side == CryptoTradeSide.Long)
+                            {
+                                priceMinPerc += signal.PriceMinPerc;
+                                priceMaxPerc += signal.PriceMaxPerc;
+                            }
+                            else
+                            {
+                                priceMinPerc += signal.PriceMaxPerc;
+                                priceMaxPerc += signal.PriceMinPerc;
+                            }
+                            count++;
                         }
                     }
-
+                    GlobalData.PriceMinPerc = priceMinPerc / count;
+                    GlobalData.PriceMaxPerc = priceMaxPerc / count;
                 }
             }
             finally
