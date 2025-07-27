@@ -1,4 +1,5 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanBot.Core.Core;
+using CryptoScanBot.Core.Model;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -9,14 +10,14 @@ public class NadarayaWatsonEnvelope
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate)
     {
-        var seriesHigh = new LineSeries { Title = "n high", MarkerSize = 2, MarkerFill = OxyColors.White };
-        var seriesLow = new LineSeries { Title = "n low", MarkerSize = 2, MarkerFill = OxyColors.White };
-        var seriesBuy = new ScatterSeries { Title = "n buy", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
-        var seriesSell = new ScatterSeries { Title = "n sell", MarkerSize = 2, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
+        var seriesHigh = new LineSeries { Title = "n high", MarkerSize = 1, MarkerFill = OxyColors.DarkGray, Color = OxyColors.DarkGray };
+        var seriesLow = new LineSeries { Title = "n low", MarkerSize = 1, MarkerFill = OxyColors.DarkGray, Color = OxyColors.DarkGray };
+        var seriesBuy = new ScatterSeries { Title = "n buy", MarkerSize = 3, MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5 };
+        var seriesSell = new ScatterSeries { Title = "n sell", MarkerSize = 3, MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5 };
 
         // configuration:
-        double h = 8f;
-        double mult = 3.0f;
+        double h = GlobalData.Settings.Signal.Nwe.BandWidth;
+        double mult = GlobalData.Settings.Signal.Nwe.Multiplication;
 
         // Iterate the last 500 candles
         int maxlen = 500;
@@ -69,6 +70,13 @@ public class NadarayaWatsonEnvelope
                 seriesHigh.Points.Add(new DataPoint(candleLast.OpenTime, (double)upperband));
 
                 // buy alert
+                // Candle outside the band
+                if (candleLast!.Open <= lowerband && candleLast.Close <= lowerband)
+                {
+                    nwevalue = candleLast.Low * 0.995m;
+                    seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
+                }
+                // Candle sticking pearsing trough the band
                 if (candlePrev!.Close > lowerband && candleLast.Close <= lowerband)
                 {
                     nwevalue = candleLast.Low * 0.995m;
@@ -76,6 +84,13 @@ public class NadarayaWatsonEnvelope
                 }
 
                 // sell alert
+                // Candle outside the band
+                if (candleLast!.Open >= upperband && candleLast.Close >= upperband)
+                {
+                    nwevalue = candleLast.High * 1.005m;
+                    seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
+                }
+                // Candle sticking pearsing trough the band
                 if (candlePrev!.Close < upperband && candleLast.Close >= upperband)
                 {
                     nwevalue = candleLast.High * 1.005m;

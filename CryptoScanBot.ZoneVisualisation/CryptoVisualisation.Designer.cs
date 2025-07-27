@@ -62,6 +62,8 @@ partial class CryptoVisualisation
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
+        EditShowBollingerBand = new CheckBox();
+        EditShowNadarayaWatsonEnvelope = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -336,6 +338,8 @@ partial class CryptoVisualisation
         // 
         // groupBox1
         // 
+        groupBox1.Controls.Add(EditShowNadarayaWatsonEnvelope);
+        groupBox1.Controls.Add(EditShowBollingerBand);
         groupBox1.Controls.Add(EditDlzShow);
         groupBox1.Controls.Add(EditTransparant);
         groupBox1.Controls.Add(EditShowPivots);
@@ -344,7 +348,7 @@ partial class CryptoVisualisation
         groupBox1.Controls.Add(EditShowFvgZones);
         groupBox1.Location = new Point(6, 472);
         groupBox1.Name = "groupBox1";
-        groupBox1.Size = new Size(200, 173);
+        groupBox1.Size = new Size(200, 220);
         groupBox1.TabIndex = 36;
         groupBox1.TabStop = false;
         groupBox1.Text = "Misc";
@@ -423,6 +427,26 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
+        // EditShowBollingerBand
+        // 
+        EditShowBollingerBand.AutoSize = true;
+        EditShowBollingerBand.Location = new Point(6, 169);
+        EditShowBollingerBand.Name = "EditShowBollingerBand";
+        EditShowBollingerBand.Size = new Size(72, 19);
+        EditShowBollingerBand.TabIndex = 34;
+        EditShowBollingerBand.Text = "Show BB";
+        EditShowBollingerBand.UseVisualStyleBackColor = true;
+        // 
+        // EditShowNadarayaWatsonEnvelope
+        // 
+        EditShowNadarayaWatsonEnvelope.AutoSize = true;
+        EditShowNadarayaWatsonEnvelope.Location = new Point(5, 194);
+        EditShowNadarayaWatsonEnvelope.Name = "EditShowNadarayaWatsonEnvelope";
+        EditShowNadarayaWatsonEnvelope.Size = new Size(84, 19);
+        EditShowNadarayaWatsonEnvelope.TabIndex = 35;
+        EditShowNadarayaWatsonEnvelope.Text = "Show NWE";
+        EditShowNadarayaWatsonEnvelope.UseVisualStyleBackColor = true;
+        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -486,4 +510,6 @@ partial class CryptoVisualisation
     private ComboBox EditFibTrend;
     private GroupBox groupBox5;
     private CheckBox EditTrendShowZigZag;
+    private CheckBox EditShowNadarayaWatsonEnvelope;
+    private CheckBox EditShowBollingerBand;
 }

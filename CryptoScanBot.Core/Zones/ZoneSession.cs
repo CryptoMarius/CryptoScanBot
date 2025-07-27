@@ -50,6 +50,8 @@ public class ZoneSession
     public bool ShowSignals { get; set; } = false;
     public bool ShowFvgZones { get; set; } = false;
     public bool ShowDtb { get; set; } = false;
+    public bool ShowNadarayaWatsonEnvelope { get; set; } = true;
+    public bool ShowBollingerBand { get; set; } = false;
 
 
     public static ZoneSession LoadSessionSettings()

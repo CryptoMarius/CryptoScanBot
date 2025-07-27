@@ -565,6 +565,8 @@ public partial class CryptoVisualisation : Form
         EditShowSignals.Checked = Session.ShowSignals;
         EditShowFvgZones.Checked = Session.ShowFvgZones;
         EditShowDtb.Checked = Session.ShowDtb;
+        EditShowBollingerBand.Checked = Session.ShowBollingerBand;
+        EditShowNadarayaWatsonEnvelope.Checked = Session.ShowNadarayaWatsonEnvelope;
     }
 
 
@@ -592,13 +594,15 @@ public partial class CryptoVisualisation : Form
         Session.ShowSignals = EditShowSignals.Checked;
         Session.ShowFvgZones = EditShowFvgZones.Checked;
         Session.ShowDtb = EditShowDtb.Checked;
+        Session.ShowBollingerBand = EditShowBollingerBand.Checked;
+        Session.ShowNadarayaWatsonEnvelope = EditShowNadarayaWatsonEnvelope.Checked;
     }
 
 
     private static async Task CalculateAllDlzZonesAsync(AddTextEvent? showProgress, ZoneSession session,
         Core.Zones.ZoneConfig data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        if (SignalPrepare.ZoneDlzActive())
+        //if (SignalPrepare.ZoneDlzActive()) also used for fib, primary and secondary zigzag
         {
             CryptoSymbolData symbolData = data.Symbol.Data;
             try
@@ -654,12 +658,12 @@ public partial class CryptoVisualisation : Form
             Chart.DlzZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
         if (Session.ShowFvgZones)
             Chart.ChartDrawFvgZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
-
         if (Session.ShowSignals)
             Chart.Signals.Draw(plotModel, Data.Signals, Session.MinDate, Session.MaxDate);
-
-        // test
-        Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+        if (Session.ShowNadarayaWatsonEnvelope)
+            Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+        if (Session.ShowBollingerBand)
+            Chart.Bollingerbands.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
 
         // Change default 
         plotView.Controller = new PlotController();
