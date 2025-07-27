@@ -569,8 +569,12 @@ public partial class FrmMain : Form
     private long LastSignalSoundCandleJumpDown = 0;
     private long LastSignalSoundStoRsiOversold = 0;
     private long LastSignalSoundStoRsiOverbought = 0;
-    private long LastSignalSoundZonesOversold = 0;
-    private long LastSignalSoundZonesOverbought = 0;
+    private long LastSignalSoundNweOversold = 0;
+    private long LastSignalSoundNweOverbought = 0;
+    private long LastSignalSoundZonesFvgOversold = 0;
+    private long LastSignalSoundZonesFvgOverbought = 0;
+    private long LastSignalSoundZonesDlzOversold = 0;
+    private long LastSignalSoundZonesDlzOverbought = 0;
 
 
     private readonly Queue<string> logQueue = new();
@@ -742,6 +746,8 @@ public partial class FrmMain : Form
         // Speech and/or sound
         if (!signal.IsInvalid)
         {
+            // TODO: Cleanup this mess, ask the strategy for the soundfile
+
             switch (signal.Strategy)
             {
                 case CryptoSignalStrategy.Jump:
@@ -782,13 +788,32 @@ public partial class FrmMain : Form
                             GlobalData.Settings.Signal.StoRsi.SoundFileShort, ref LastSignalSoundStoRsiOverbought);
                     break;
 
+                case CryptoSignalStrategy.NadarayaWatsonEnvelope:
+                case CryptoSignalStrategy.NadarayaWatsonEnvelopeSlope:
+                    if (signal.Side == CryptoTradeSide.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.Nwe.PlaySound, GlobalData.Settings.Signal.Nwe.PlaySpeech,
+                            GlobalData.Settings.Signal.Nwe.SoundFileLong, ref LastSignalSoundNweOversold);
+                    if (signal.Side == CryptoTradeSide.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.Nwe.PlaySound, GlobalData.Settings.Signal.Nwe.PlaySpeech,
+                            GlobalData.Settings.Signal.Nwe.SoundFileShort, ref LastSignalSoundNweOverbought);
+                    break;
+
+                case CryptoSignalStrategy.FairValueGap:
+                    if (signal.Side == CryptoTradeSide.Long)
+                        PlaySound(signal, GlobalData.Settings.Signal.ZonesFvg.PlaySound, GlobalData.Settings.Signal.ZonesFvg.PlaySpeech,
+                            GlobalData.Settings.Signal.ZonesFvg.SoundFileLong, ref LastSignalSoundZonesFvgOversold);
+                    if (signal.Side == CryptoTradeSide.Short)
+                        PlaySound(signal, GlobalData.Settings.Signal.ZonesFvg.PlaySound, GlobalData.Settings.Signal.ZonesFvg.PlaySpeech,
+                            GlobalData.Settings.Signal.ZonesFvg.SoundFileShort, ref LastSignalSoundZonesFvgOverbought);
+                    break;
+
                 case CryptoSignalStrategy.DominantLevelNear:
                     if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.ZonesDlz.PlaySound, GlobalData.Settings.Signal.ZonesDlz.PlaySpeech,
-                            GlobalData.Settings.Signal.ZonesDlz.SoundFileLong, ref LastSignalSoundZonesOversold);
+                            GlobalData.Settings.Signal.ZonesDlz.SoundFileLong, ref LastSignalSoundZonesDlzOversold);
                     if (signal.Side == CryptoTradeSide.Short)
                         PlaySound(signal, GlobalData.Settings.Signal.ZonesDlz.PlaySound, GlobalData.Settings.Signal.ZonesDlz.PlaySpeech,
-                            GlobalData.Settings.Signal.ZonesDlz.SoundFileShort, ref LastSignalSoundZonesOverbought);
+                            GlobalData.Settings.Signal.ZonesDlz.SoundFileShort, ref LastSignalSoundZonesDlzOverbought);
                     break;
             }
 
