@@ -359,33 +359,33 @@ public static class CandleTools
 
             long firstCandle = candleSourceInterval.Keys.First();
             var (firstComplete, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle, sourceInterval.Duration, targetInterval.Duration);
-            //firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+            //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             if (!firstComplete || firstCandleDate < firstCandle) // Has candles targetComplete and will not be complete and will be flagged as error
             {
                 firstCandleDate += targetInterval.Duration;
-                //firstCandleDateDebug = CandleTools.GetUnixDate(firstCandleDate);
+                //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             }
 
             long lastCandle = candleSourceInterval.Keys.Last();
             var (lastComplete, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle, sourceInterval.Duration, targetInterval.Duration);
-            //lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+            //lastCandleDateDebug = GetUnixDate(lastCandleDate);
             if (!lastComplete || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles targetComplete and will not be complete and will be flagged as error (also future candle)
             {
                 lastCandleDate -= targetInterval.Duration;
-                //lastCandleDateDebug = CandleTools.GetUnixDate(lastCandleDate);
+                //lastCandleDateDebug = GetUnixDate(lastCandleDate);
             }
 
             // Bulk calculate all higher interval candles (ranging from the firstLowerCandle to the last candle)
             long loop = firstCandleDate;
             while (loop <= lastCandleDate)
             {
-                CryptoCandle? candle = CandleTools.CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
+                CryptoCandle? candle = CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
                 loop += targetInterval.Duration;
                 //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                 //    GlobalData.AddTextToLogTab($"Debug calculating candle {candle?.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}");
             }
 
-            CandleTools.UpdateCandleFetched(symbol, targetInterval);
+            UpdateCandleFetched(symbol, targetInterval);
         }
     }
 
