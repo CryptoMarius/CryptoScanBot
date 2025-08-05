@@ -10,6 +10,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <Optimize>False</Optimize>
+    <DefineConstants>$(DefineConstants);DEBUGZIGZAG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

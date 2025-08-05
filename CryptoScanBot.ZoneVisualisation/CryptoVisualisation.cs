@@ -1,10 +1,8 @@
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trend;
 using CryptoScanBot.Core.Zones;
 
@@ -138,8 +136,8 @@ public partial class CryptoVisualisation : Form
         // Question: Why not add only the checked intervals of the zone configuration?
         foreach (var interval in GlobalData.IntervalList)
         {
-            if (GlobalData.ActiveExchange!.IsIntervalSupported(interval.IntervalPeriod))
-                EditIntervalName.Items.Add(interval.Name);
+            //if (GlobalData.ActiveExchange!.IsIntervalSupported(interval.IntervalPeriod))
+            EditIntervalName.Items.Add(interval.Name);
         }
     }
 
@@ -181,7 +179,7 @@ public partial class CryptoVisualisation : Form
         KeyDown -= FormKeyDown;
         plotView.MouseMove -= PlotView_MouseMove;
 
-        PickupEdits();
+        PickupUserInput();
         Session.SaveSessionSettings();
     }
 
@@ -232,7 +230,7 @@ public partial class CryptoVisualisation : Form
                 string s;
                 if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
                 {
-                    s = $"{candle.Date:ddd yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                    s = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " (O: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " H: " + candle.High.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " L: " + candle.Low.ToString(Data.Symbol.PriceDisplayFormat);
@@ -241,8 +239,8 @@ public partial class CryptoVisualisation : Form
                 }
                 else
                 {
-                    DateTime date = CandleTools.GetUnixDate(unix); //.ToLocalTime();
-                    s = $"{date:yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
+                    DateTime date = CandleTools.GetUnixDate(unix);
+                    s = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
                 }
                 //long u = (long)x % Data.Interval.Duration;
                 //DateTime date2 = CandleTools.GetUnixDate(unix); //.ToLocalTime();
@@ -388,6 +386,7 @@ public partial class CryptoVisualisation : Form
     {
         if (Data != null && plotModel != null)
         {
+            PickupUserInput();
             Session.MaxDate += direction * Data.Interval.Duration;
             _ = CalculateAsync();
         }
@@ -462,12 +461,12 @@ public partial class CryptoVisualisation : Form
         ScannerLog.Logger.Info($"Interval {interval.Name}");
 
         // Is the Interval supported on the Exchange?
-        if (!exchange.IsIntervalSupported(interval.IntervalPeriod))
-        {
-            reason = "Exchange interval not supported";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
+        //if (!exchange.IsIntervalSupported(interval.IntervalPeriod))
+        //{
+        //    reason = "Exchange interval not supported";
+        //    ScannerLog.Logger.Info($"{reason}");
+        //    return false;
+        //}
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         Data = new()
@@ -497,7 +496,7 @@ public partial class CryptoVisualisation : Form
             Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
 
             labelInterval.Text = Session.ActiveInterval.ToString();
-            labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
+            labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToLocalTime().ToString("dd MMM HH:mm");
         }
 
 
@@ -522,11 +521,24 @@ public partial class CryptoVisualisation : Form
         if (current is CryptoSymbol symbolx)
             symbol = symbolx;
         else if (current is CryptoSignal signal)
+        {
             symbol = signal.Symbol;
+            if (signal.Strategy >= CryptoSignalStrategy.DominantLevel)
+                Session.IntervalName = "1h";
+            else
+                Session.IntervalName = signal.Interval.Name;
+        }
         else if (current is CryptoPosition position)
+        {
             symbol = position.Symbol;
+            if (position.Interval != null)
+                Session.IntervalName = position.Interval.Name;
+        }
         else if (current is CryptoLiveData liveData)
+        {
             symbol = liveData.Symbol;
+            Session.IntervalName = liveData.Interval.Name;
+        }
         if (symbol == null)
             return;
 
@@ -540,6 +552,19 @@ public partial class CryptoVisualisation : Form
     // Fill the edits with the information from the last session
     private void LoadEdits()
     {
+        EditTrendShowZigZag.CheckedChanged -= ButtonRefreshClick;
+        EditFibShow.CheckedChanged -= ButtonRefreshClick;
+        EditFibZhowZigZag.CheckedChanged -= ButtonRefreshClick;
+        EditShowPivots.CheckedChanged -= ButtonRefreshClick;
+        EditShowSignals.CheckedChanged -= ButtonRefreshClick;
+        EditShowFvgZones.CheckedChanged -= ButtonRefreshClick;
+        EditShowDlzZones.CheckedChanged -= ButtonRefreshClick;
+        EditShowDtb.CheckedChanged -= ButtonRefreshClick;
+        EditShowSmaLinesSbm.CheckedChanged -= ButtonRefreshClick;
+        EditShowBollingerBand.CheckedChanged -= ButtonRefreshClick;
+        EditShowNadarayaWatsonEnvelope.CheckedChanged -= ButtonRefreshClick;
+        EditIntervalName.SelectedIndexChanged -= ButtonRefreshClick;
+
         // symbol
         EditSymbolBase.Text = Session.SymbolBase;
         EditSymbolQuote.Text = Session.SymbolQuote;
@@ -550,7 +575,7 @@ public partial class CryptoVisualisation : Form
         EditTrendShowZigZag.Checked = Session.TrendShowZigZag;
 
         // dlz
-        EditDlzShow.Checked = Session.DlzShowBoxes;
+        EditShowDlzZones.Checked = Session.DlzShowBoxes;
 
         // fib
         EditFibTrend.SelectedIndex = (int)Session.FibTrend;
@@ -566,12 +591,26 @@ public partial class CryptoVisualisation : Form
         EditShowFvgZones.Checked = Session.ShowFvgZones;
         EditShowDtb.Checked = Session.ShowDtb;
         EditShowBollingerBand.Checked = Session.ShowBollingerBand;
+        EditShowSmaLinesSbm.Checked = Session.ShowSmaLinesSbm;
         EditShowNadarayaWatsonEnvelope.Checked = Session.ShowNadarayaWatsonEnvelope;
+
+        EditTrendShowZigZag.CheckedChanged += ButtonRefreshClick;
+        EditFibShow.CheckedChanged += ButtonRefreshClick;
+        EditFibZhowZigZag.CheckedChanged += ButtonRefreshClick;
+        EditShowPivots.CheckedChanged += ButtonRefreshClick;
+        EditShowSignals.CheckedChanged += ButtonRefreshClick;
+        EditShowDlzZones.CheckedChanged += ButtonRefreshClick;
+        EditShowFvgZones.CheckedChanged += ButtonRefreshClick;
+        EditShowDtb.CheckedChanged += ButtonRefreshClick;
+        EditShowSmaLinesSbm.CheckedChanged += ButtonRefreshClick;
+        EditShowBollingerBand.CheckedChanged += ButtonRefreshClick;
+        EditShowNadarayaWatsonEnvelope.CheckedChanged += ButtonRefreshClick;
+        EditIntervalName.SelectedIndexChanged += ButtonRefreshClick;
     }
 
 
     // Save the edits to the session configuration
-    private void PickupEdits()
+    private void PickupUserInput()
     {
         // symbol
         Session.SymbolBase = EditSymbolBase.Text.ToUpper().Trim();
@@ -583,7 +622,7 @@ public partial class CryptoVisualisation : Form
         Session.TrendShowZigZag = EditTrendShowZigZag.Checked;
 
         // dlz
-        Session.DlzShowBoxes = EditDlzShow.Checked;
+        Session.DlzShowBoxes = EditShowDlzZones.Checked;
 
         // fib
         Session.FibTrend = (TrendType)EditFibTrend.SelectedIndex;
@@ -595,6 +634,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowFvgZones = EditShowFvgZones.Checked;
         Session.ShowDtb = EditShowDtb.Checked;
         Session.ShowBollingerBand = EditShowBollingerBand.Checked;
+        Session.ShowSmaLinesSbm = EditShowSmaLinesSbm.Checked;
         Session.ShowNadarayaWatsonEnvelope = EditShowNadarayaWatsonEnvelope.Checked;
     }
 
@@ -602,27 +642,24 @@ public partial class CryptoVisualisation : Form
     private static async Task CalculateAllDlzZonesAsync(AddTextEvent? showProgress, ZoneSession session,
         Core.Zones.ZoneConfig data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        //if (SignalPrepare.ZoneDlzActive()) also used for fib, primary and secondary zigzag
+        CryptoSymbolData symbolData = data.Symbol.Data;
+        try
         {
-            CryptoSymbolData symbolData = data.Symbol.Data;
-            try
+            //if (data.Symbol.Exchange.IsIntervalSupported(data.Interval.IntervalPeriod))
             {
-                if (data.Symbol.Exchange.IsIntervalSupported(data.Interval.IntervalPeriod))
-                {
-                    data.IndicatorList.Clear();
-                    data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
-                    data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
-                    data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
-                    data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
+                data.IndicatorList.Clear();
+                data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
+                data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
+                data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
+                data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
 
-                    await ZoneDlz.CalculateDlzBoxesAsync(showProgress, session, data, loadedCandlesInMemory);
-                }
+                await ZoneDlz.CalculateDlzBoxesAsync(showProgress, session, data, loadedCandlesInMemory);
             }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Info($"ERROR {error}");
-                GlobalData.AddTextToLogTab($"ERROR {error}");
-            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Info($"ERROR {error}");
+            GlobalData.AddTextToLogTab($"ERROR {error}");
         }
     }
 
@@ -664,6 +701,13 @@ public partial class CryptoVisualisation : Form
             Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
         if (Session.ShowBollingerBand)
             Chart.Bollingerbands.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+        if (Session.ShowSmaLinesSbm)
+            Chart.Sma.Draw(plotModel, Data.Symbol, Data.Interval, 200, OxyColors.Red, Session.MinDate, Session.MaxDate);
+        if (Session.ShowSmaLinesSbm)
+            Chart.Sma.Draw(plotModel, Data.Symbol, Data.Interval, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate);
+        if (Session.ShowSmaLinesSbm)
+            Chart.Sma.Draw(plotModel, Data.Symbol, Data.Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate);
+
 
         // Change default 
         plotView.Controller = new PlotController();
@@ -739,9 +783,8 @@ public partial class CryptoVisualisation : Form
 
     private async Task CalculateAsync()
     {
-        PickupEdits();
         labelInterval.Text = Session.ActiveInterval.ToString();
-        labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToString("dd MMM HH:mm");
+        labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToLocalTime().ToString("dd MMM HH:mm");
 
         UseWaitCursor = true;
         ButtonZoomLast.Enabled = false;
@@ -779,7 +822,7 @@ public partial class CryptoVisualisation : Form
     {
         try
         {
-            PickupEdits();
+            PickupUserInput();
             CryptoInterval interval = GlobalData.IntervalListPeriodName[Session.IntervalName];
             Session.ActiveInterval = interval.IntervalPeriod;
             Session.ForceCalculation = forceCalculation;

@@ -13,7 +13,7 @@ public class Bollingerbands
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate)
     {
         var seriesHigh = new LineSeries { Title = "bb.upper", MarkerSize = 1, MarkerFill = OxyColors.Blue, Color = OxyColors.Blue };
-        var seriesMiddle = new LineSeries { Title = "bb.middle", MarkerSize = 1, MarkerFill = OxyColors.Blue, Color = OxyColors.Blue };
+        var seriesMiddle = new LineSeries { Title = "bb.middle", MarkerSize = 1, MarkerFill = OxyColors.DarkBlue, Color = OxyColors.DarkBlue };
         var seriesLow = new LineSeries { Title = "bb.lower", MarkerSize = 1, MarkerFill = OxyColors.Blue, Color = OxyColors.Blue };
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -28,18 +28,19 @@ public class Bollingerbands
         foreach (var bb in bollingerBandsList)
         {
             long openTime = CandleTools.GetUnixTime(bb.Date, interval.Duration);
+            if (openTime >= minDate && openTime <= maxDate)
+            {
+                double? upperBand = bb.UpperBand;
+                double? middleBand = bb.Sma;
+                double? lowerBand = bb.LowerBand;
 
-            double? upperBand = bb.UpperBand;
-            double? middleBand = bb.Sma;
-            double? lowerBand = bb.LowerBand;
-
-
-            if (lowerBand.HasValue)
-                seriesLow.Points.Add(new DataPoint(openTime, lowerBand.Value));
-            if (upperBand.HasValue)
-                seriesHigh.Points.Add(new DataPoint(openTime, upperBand.Value));
-            if (middleBand.HasValue)
-                seriesMiddle.Points.Add(new DataPoint(openTime, middleBand.Value));
+                if (lowerBand.HasValue)
+                    seriesLow.Points.Add(new DataPoint(openTime, lowerBand.Value));
+                if (upperBand.HasValue)
+                    seriesHigh.Points.Add(new DataPoint(openTime, upperBand.Value));
+                if (middleBand.HasValue)
+                    seriesMiddle.Points.Add(new DataPoint(openTime, middleBand.Value));
+            }
         }
 
         chart.Series.Add(seriesLow);

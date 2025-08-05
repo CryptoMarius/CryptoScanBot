@@ -55,15 +55,16 @@ partial class CryptoVisualisation
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
         groupBox1 = new GroupBox();
-        EditDlzShow = new CheckBox();
+        EditShowNadarayaWatsonEnvelope = new CheckBox();
+        EditShowBollingerBand = new CheckBox();
+        EditShowDlzZones = new CheckBox();
         EditTransparant = new CheckBox();
         EditShowPivots = new CheckBox();
         EditShowSignals = new CheckBox();
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        EditShowBollingerBand = new CheckBox();
-        EditShowNadarayaWatsonEnvelope = new CheckBox();
+        EditShowSmaLinesSbm = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -338,9 +339,10 @@ partial class CryptoVisualisation
         // 
         // groupBox1
         // 
+        groupBox1.Controls.Add(EditShowSmaLinesSbm);
         groupBox1.Controls.Add(EditShowNadarayaWatsonEnvelope);
         groupBox1.Controls.Add(EditShowBollingerBand);
-        groupBox1.Controls.Add(EditDlzShow);
+        groupBox1.Controls.Add(EditShowDlzZones);
         groupBox1.Controls.Add(EditTransparant);
         groupBox1.Controls.Add(EditShowPivots);
         groupBox1.Controls.Add(EditShowSignals);
@@ -348,20 +350,40 @@ partial class CryptoVisualisation
         groupBox1.Controls.Add(EditShowFvgZones);
         groupBox1.Location = new Point(6, 472);
         groupBox1.Name = "groupBox1";
-        groupBox1.Size = new Size(200, 220);
+        groupBox1.Size = new Size(200, 245);
         groupBox1.TabIndex = 36;
         groupBox1.TabStop = false;
         groupBox1.Text = "Misc";
         // 
-        // EditDlzShow
+        // EditShowNadarayaWatsonEnvelope
         // 
-        EditDlzShow.AutoSize = true;
-        EditDlzShow.Location = new Point(5, 96);
-        EditDlzShow.Name = "EditDlzShow";
-        EditDlzShow.Size = new Size(106, 19);
-        EditDlzShow.TabIndex = 5;
-        EditDlzShow.Text = "Show dlz zones";
-        EditDlzShow.UseVisualStyleBackColor = true;
+        EditShowNadarayaWatsonEnvelope.AutoSize = true;
+        EditShowNadarayaWatsonEnvelope.Location = new Point(5, 194);
+        EditShowNadarayaWatsonEnvelope.Name = "EditShowNadarayaWatsonEnvelope";
+        EditShowNadarayaWatsonEnvelope.Size = new Size(84, 19);
+        EditShowNadarayaWatsonEnvelope.TabIndex = 35;
+        EditShowNadarayaWatsonEnvelope.Text = "Show NWE";
+        EditShowNadarayaWatsonEnvelope.UseVisualStyleBackColor = true;
+        // 
+        // EditShowBollingerBand
+        // 
+        EditShowBollingerBand.AutoSize = true;
+        EditShowBollingerBand.Location = new Point(6, 169);
+        EditShowBollingerBand.Name = "EditShowBollingerBand";
+        EditShowBollingerBand.Size = new Size(72, 19);
+        EditShowBollingerBand.TabIndex = 34;
+        EditShowBollingerBand.Text = "Show BB";
+        EditShowBollingerBand.UseVisualStyleBackColor = true;
+        // 
+        // EditShowDlzZones
+        // 
+        EditShowDlzZones.AutoSize = true;
+        EditShowDlzZones.Location = new Point(5, 96);
+        EditShowDlzZones.Name = "EditDlzShow";
+        EditShowDlzZones.Size = new Size(106, 19);
+        EditShowDlzZones.TabIndex = 5;
+        EditShowDlzZones.Text = "Show dlz zones";
+        EditShowDlzZones.UseVisualStyleBackColor = true;
         // 
         // EditTransparant
         // 
@@ -427,25 +449,15 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // EditShowBollingerBand
+        // EditShowSmaLinesSbm
         // 
-        EditShowBollingerBand.AutoSize = true;
-        EditShowBollingerBand.Location = new Point(6, 169);
-        EditShowBollingerBand.Name = "EditShowBollingerBand";
-        EditShowBollingerBand.Size = new Size(72, 19);
-        EditShowBollingerBand.TabIndex = 34;
-        EditShowBollingerBand.Text = "Show BB";
-        EditShowBollingerBand.UseVisualStyleBackColor = true;
-        // 
-        // EditShowNadarayaWatsonEnvelope
-        // 
-        EditShowNadarayaWatsonEnvelope.AutoSize = true;
-        EditShowNadarayaWatsonEnvelope.Location = new Point(5, 194);
-        EditShowNadarayaWatsonEnvelope.Name = "EditShowNadarayaWatsonEnvelope";
-        EditShowNadarayaWatsonEnvelope.Size = new Size(84, 19);
-        EditShowNadarayaWatsonEnvelope.TabIndex = 35;
-        EditShowNadarayaWatsonEnvelope.Text = "Show NWE";
-        EditShowNadarayaWatsonEnvelope.UseVisualStyleBackColor = true;
+        EditShowSmaLinesSbm.AutoSize = true;
+        EditShowSmaLinesSbm.Location = new Point(5, 219);
+        EditShowSmaLinesSbm.Name = "EditShowSmaLinesSbm";
+        EditShowSmaLinesSbm.Size = new Size(110, 19);
+        EditShowSmaLinesSbm.TabIndex = 36;
+        EditShowSmaLinesSbm.Text = "Show SBM SMA";
+        EditShowSmaLinesSbm.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -479,7 +491,7 @@ partial class CryptoVisualisation
     private FlowLayoutPanel flowLayoutPanel1;
     private ComboBox EditSymbolBase;
     private Label labelInterval2;
-    private CheckBox EditDlzShow;
+    private CheckBox EditShowDlzZones;
     private Button ButtonCalculate;
     private ComboBox EditIntervalName;
     private Label label3;
@@ -512,4 +524,5 @@ partial class CryptoVisualisation
     private CheckBox EditTrendShowZigZag;
     private CheckBox EditShowNadarayaWatsonEnvelope;
     private CheckBox EditShowBollingerBand;
+    private CheckBox EditShowSmaLinesSbm;
 }

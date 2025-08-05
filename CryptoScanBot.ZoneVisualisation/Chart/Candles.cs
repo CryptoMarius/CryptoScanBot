@@ -83,7 +83,7 @@ public class Candles
                         newCandle.Close = c.Close;
                         loop1m += symbolInterval1m.Interval.Duration;
                     }
-                    if (newCandle.OpenTime > 0)
+                    if (newCandle.OpenTime > 0 && newCandle.OpenTime >= minDate && newCandle.OpenTime <= maxDate)
                     {
                         var c = newCandle;
                         var curHighLow = new HighLowItem(newCandle.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
