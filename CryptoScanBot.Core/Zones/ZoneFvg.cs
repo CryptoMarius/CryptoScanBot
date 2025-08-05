@@ -1,6 +1,5 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
@@ -346,7 +345,7 @@ public class ZoneFvg
             CryptoSymbolData symbolData = symbol.Data;
             try
             {
-                if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
+                //if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
                 {
                     sender?.Invoke($"Calculating fvg zones {symbol.Exchange.Name} {symbol.Name} {interval.Name}");
                     var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
@@ -356,15 +355,16 @@ public class ZoneFvg
                     long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, interval.Duration);
                     fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
                     
-                    // Load candles from disk
-                    if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
-                        await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, interval);
-                    loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
+                    //// Load candles from disk
+                    //if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
+                    //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, interval);
+                    //loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
                     
-                    // Load candles from the exchange
-                    if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
-                        loadedCandlesInMemory[interval.IntervalPeriod] = true; // in memory, alway's save
+                    //// Load candles from the exchange
+                    //if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
+                    //    loadedCandlesInMemory[interval.IntervalPeriod] = true; // in memory, alway's save
 
+                    await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount);
                     CalculateFvg(symbol, interval, fetchFrom, symbolIntervalData);
                 }
             }

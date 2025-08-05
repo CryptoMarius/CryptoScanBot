@@ -1,7 +1,6 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Trend;
 
@@ -288,17 +287,20 @@ public class ZoneDlz
 
                 // Is IntervalList supported by Exchange
                 CryptoSymbolInterval zoomInterval = symbol!.GetSymbolInterval(zoom);
-                if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
+                //if (symbol.Exchange.IsIntervalSupported(zoomInterval.IntervalPeriod))
                 {
-                    // Load candles from disk if needed
-                    if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
-                        await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
-                    loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, true); // in memory, alway's save
+                    //// Load candles from disk if needed
+                    //if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
+                    //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
+                    //loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, true); // in memory, alway's save
 
-                    // Load candles from the exchange if needed
+                    //// Load candles from the exchange if needed
+                    //int count = interval.Duration / zoomInterval.Interval.Duration;
+                    //if (await ZoneCandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
+                    //    loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true; // in memory, alway's save
+
                     int count = interval.Duration / zoomInterval.Interval.Duration;
-                    if (await ZoneCandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
-                        loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true; // in memory, alway's save
+                    await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, zoomInterval.Interval, unixStart, count);
 
                     long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
@@ -526,17 +528,21 @@ public class ZoneDlz
     {
         try
         {
-            // Determine dates
-            long unixStartUp = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
-            long fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, data.SymbolInterval.Interval.Duration);
+            // Determine the period
+            long unixCurrentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
+            long fetchFrom = IntervalTools.StartOfIntervalCandle(unixCurrentTime, data.SymbolInterval.Interval.Duration);
             fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * data.SymbolInterval.Interval.Duration;
-            // Load candles from disk
-            if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
-                await ZoneCandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
-            loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // in memory, nothing zoneExistsInDatabase (save alway's)
-                                                                              // Load candles from the exchange
-            if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
-                loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
+
+            //// Load candles from disk
+            //if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
+            //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
+            //loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // save alway's because of new candles
+
+            //// Load candles from exchange
+            //if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
+            //    loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
+
+            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount);
             if (data.SymbolInterval.CandleList.Count == 0)
                 return;
 
