@@ -1,4 +1,4 @@
-using CryptoScanBot.Core.Core;
+ï»¿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -6,9 +6,9 @@ using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.Core.Signal.Other;
 
-public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
+public class SignalLuxNadarayaWatsonEnvelopeCross: SignalCreateBase
 {
-    public SignalLuxNadarayaWatsonEnvelope(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
+    public SignalLuxNadarayaWatsonEnvelopeCross(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
         // nothing, implements both long and short
     }
@@ -63,6 +63,16 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         // en x = 1 verwijst naar de vorige candle.
         long offsett = CandleLast.OpenTime; // - max * Interval.Duration;
 
+        // TODO: apply ratio? so we have the right "angle and degrees"
+        double tijdRange = 500 * Interval.Duration / 60;
+        double prijsRange = 22000.0 - 20000.0;
+        double chartBreedte = 100.0;
+        double chartHoogte = 100.0;
+
+        double xPerPixel = tijdRange / chartBreedte;
+        double yPerPixel = prijsRange / chartHoogte;
+        double verhouding = xPerPixel / yPerPixel;
+
         List<CryptoCandle> nwe = [];
         decimal sae = 0;
 
@@ -114,42 +124,27 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             return false;
 
 
-        decimal nwevalue = nwe[max - 1].Close;
-        decimal upperband = nwevalue + sae;
-        decimal lowerband = nwevalue - sae;
 
-        // buy alert
-        if (SignalSide == CryptoTradeSide.Long)
+        // Buy alert when the nwe.lower crosses the sma20 upwards
+        if (SignalSide == CryptoTradeSide.Long 
+            && candlePrev.Close - sae < (decimal)candlePrev.CandleData!.BollingerBandsLowerBand!
+            && candleLast.Close - sae >= (decimal)candleLast.CandleData!.BollingerBandsLowerBand!
+            && EnoughMomentum(nwe, max, out decimal perc1)
+            && HadStobbInThelastXCandles(CryptoTradeSide.Long, 0, 15) != null) //&& angle_degrees2 > 0 
         {
-            // Candle outside the band
-            if (CandleLast!.Open <= lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal perc1))
-            {
-                ExtraText = $"{angle_degrees2:N2}°, {perc1:N2}%";
-                return true;
-            }
-            // Candle sticking pearsing trough the band
-            if (candlePrev!.Close > lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal perc2))
-            {
-                ExtraText = $"{angle_degrees2:N2}°, {perc2:N2}%";
-                return true;
-            }
+            ExtraText = $"nwe.lower crossed bb.lower upwards {angle_degrees2:N2}Â°, {perc1:N2}%";
+            return true;
         }
 
-        // sell alert
-        if (SignalSide == CryptoTradeSide.Short) 
+        // Sell alert when the nwe.upper crosses the bb.upper downwards
+        if (SignalSide == CryptoTradeSide.Short
+            && candlePrev.Close + sae > (decimal)candlePrev.CandleData!.BollingerBandsUpperBand!
+            && candleLast.Close + sae <= (decimal)candleLast.CandleData!.BollingerBandsUpperBand!
+            && EnoughMomentum(nwe, max, out decimal perc2)
+            && HadStobbInThelastXCandles(CryptoTradeSide.Short, 0, 15) != null) // && angle_degrees2 < 0 
         {
-            // Candle outside the band
-            if (CandleLast!.Open >= upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal perc3))
-            {
-                ExtraText = $"{angle_degrees2:N2}°, {perc3:N2}%";
-                return true;
-            }
-            // Candle sticking pearsing trough the band
-            if (candlePrev!.Close < upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal perc4))
-            {
-                ExtraText = $"{angle_degrees2:N2}°, {perc4:N2}%";
-                return true;
-            }
+            ExtraText = $"nwe.upper crossed bb.upper downwards {angle_degrees2:N2}Â°, {perc2:N2}%";
+            return true;
         }
 
         return false;

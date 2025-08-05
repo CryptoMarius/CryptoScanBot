@@ -52,6 +52,7 @@ public class ZoneSession
     public bool ShowDtb { get; set; } = false;
     public bool ShowNadarayaWatsonEnvelope { get; set; } = true;
     public bool ShowBollingerBand { get; set; } = false;
+    public bool ShowSmaLinesSbm { get; set; } = true;
 
 
     public static ZoneSession LoadSessionSettings()

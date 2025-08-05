@@ -14,15 +14,13 @@ public enum CryptoSignalStrategy
 
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
-    //StoRsi2 = 12, // = STORSI, repeated storsi
-    //StoRsi3 = 13, // = STORSI, 2, but different
 
     Stoch = 20,
 
     NadarayaWatsonEnvelope = 25,
-    NadarayaWatsonEnvelopeSlope = 26,
+    NadarayaWatsonEnvelopeCross = 27,
 
-    BbMa = 30, // still studying, complicated Oma Ally strategy
+    BbMa = 30, // still studying, its quite complicated that Oma Ally strategy
 
     Trend = 31,
 

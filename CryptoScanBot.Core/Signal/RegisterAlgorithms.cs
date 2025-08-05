@@ -198,12 +198,13 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
+        
         Register(new AlgorithmDefinition()
         {
-            Name = "nwe.slope",
-            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeSlope,
-            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeSlope),
-            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeSlope),
+            Name = "nwe.cross",
+            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeCross,
+            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
+            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
         });
 
 #if StrategyBbma
@@ -217,14 +218,17 @@ public static class RegisterAlgorithms
         });
 #endif
 
-        // Trend reversal
-        Register(new AlgorithmDefinition()
-        {
-            Name = "trend",
-            Strategy = CryptoSignalStrategy.Trend,
-            AnalyzeLongType = typeof(SignalTrendLong),
-            AnalyzeShortType = typeof(SignalTrendShort),
-        });
+        // does not work properly afaict
+        //// Trend reversal
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "trend",
+        //    Strategy = CryptoSignalStrategy.Trend,
+        //    AnalyzeLongType = typeof(SignalTrendLong),
+        //    AnalyzeShortType = typeof(SignalTrendShort),
+        //});
+
+
     }
 
 

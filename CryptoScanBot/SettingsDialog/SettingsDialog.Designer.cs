@@ -253,9 +253,9 @@ partial class FrmSettings
         UserControlSettingsSoundAndColorsNwe = new CryptoScanBot.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox15 = new GroupBox();
         label7 = new Label();
-        EditNweCandleLookback = new NumericUpDown();
+        EditNweMultiplication = new NumericUpDown();
         label4 = new Label();
-        EditNweIgnorePercentage = new NumericUpDown();
+        EditNweBandWidth = new NumericUpDown();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -425,8 +425,8 @@ partial class FrmSettings
         tabSignalZonesNwe.SuspendLayout();
         flowLayoutPanel11.SuspendLayout();
         groupBox15.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)EditNweCandleLookback).BeginInit();
-        ((System.ComponentModel.ISupportInitialize)EditNweIgnorePercentage).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweMultiplication).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweBandWidth).BeginInit();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -2322,7 +2322,6 @@ partial class FrmSettings
         groupBox6.TabIndex = 160;
         groupBox6.TabStop = false;
         groupBox6.Text = "Settings";
-        groupBox6.Enter += groupBox6_Enter;
         // 
         // EditStorsiCheckMacdRecovery
         // 
@@ -2996,16 +2995,16 @@ partial class FrmSettings
         // 
         groupBox15.AutoSize = true;
         groupBox15.Controls.Add(label7);
-        groupBox15.Controls.Add(EditNweCandleLookback);
+        groupBox15.Controls.Add(EditNweMultiplication);
         groupBox15.Controls.Add(label4);
-        groupBox15.Controls.Add(EditNweIgnorePercentage);
+        groupBox15.Controls.Add(EditNweBandWidth);
         groupBox15.Location = new Point(10, 186);
         groupBox15.Margin = new Padding(10);
         groupBox15.Name = "groupBox15";
         groupBox15.Size = new Size(279, 102);
         groupBox15.TabIndex = 160;
         groupBox15.TabStop = false;
-        groupBox15.Text = "Settings NWE Slope";
+        groupBox15.Text = "Settings Nadaraya Watson Envelope";
         // 
         // label7
         // 
@@ -3013,20 +3012,20 @@ partial class FrmSettings
         label7.Location = new Point(7, 59);
         label7.Margin = new Padding(4, 0, 4, 0);
         label7.Name = "label7";
-        label7.Size = new Size(95, 15);
+        label7.Size = new Size(81, 15);
         label7.TabIndex = 164;
-        label7.Text = "Candle lookback";
+        label7.Text = "Multiplication";
         // 
-        // EditNweCandleLookback
+        // EditNweMultiplication
         // 
-        EditNweCandleLookback.Location = new Point(215, 57);
-        EditNweCandleLookback.Margin = new Padding(4, 3, 4, 3);
-        EditNweCandleLookback.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
-        EditNweCandleLookback.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-        EditNweCandleLookback.Name = "EditNweCandleLookback";
-        EditNweCandleLookback.Size = new Size(57, 23);
-        EditNweCandleLookback.TabIndex = 165;
-        EditNweCandleLookback.Value = new decimal(new int[] { 8, 0, 0, 0 });
+        EditNweMultiplication.Location = new Point(215, 57);
+        EditNweMultiplication.Margin = new Padding(4, 3, 4, 3);
+        EditNweMultiplication.Maximum = new decimal(new int[] { 60, 0, 0, 0 });
+        EditNweMultiplication.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        EditNweMultiplication.Name = "EditNweMultiplication";
+        EditNweMultiplication.Size = new Size(57, 23);
+        EditNweMultiplication.TabIndex = 165;
+        EditNweMultiplication.Value = new decimal(new int[] { 8, 0, 0, 0 });
         // 
         // label4
         // 
@@ -3034,19 +3033,21 @@ partial class FrmSettings
         label4.Location = new Point(7, 30);
         label4.Margin = new Padding(4, 0, 4, 0);
         label4.Name = "label4";
-        label4.Size = new Size(122, 15);
+        label4.Size = new Size(66, 15);
         label4.TabIndex = 125;
-        label4.Text = "Minimum percentage";
+        label4.Text = "BandWidth";
         // 
-        // EditNweIgnorePercentage
+        // EditNweBandWidth
         // 
-        EditNweIgnorePercentage.DecimalPlaces = 2;
-        EditNweIgnorePercentage.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
-        EditNweIgnorePercentage.Location = new Point(215, 28);
-        EditNweIgnorePercentage.Margin = new Padding(4, 3, 4, 3);
-        EditNweIgnorePercentage.Name = "EditNweIgnorePercentage";
-        EditNweIgnorePercentage.Size = new Size(56, 23);
-        EditNweIgnorePercentage.TabIndex = 126;
+        EditNweBandWidth.DecimalPlaces = 2;
+        EditNweBandWidth.Increment = new decimal(new int[] { 25, 0, 0, 131072 });
+        EditNweBandWidth.Location = new Point(215, 28);
+        EditNweBandWidth.Margin = new Padding(4, 3, 4, 3);
+        EditNweBandWidth.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+        EditNweBandWidth.Name = "EditNweBandWidth";
+        EditNweBandWidth.Size = new Size(56, 23);
+        EditNweBandWidth.TabIndex = 126;
+        EditNweBandWidth.Value = new decimal(new int[] { 1, 0, 0, 0 });
         // 
         // tabTrading
         // 
@@ -3961,8 +3962,8 @@ partial class FrmSettings
         flowLayoutPanel11.PerformLayout();
         groupBox15.ResumeLayout(false);
         groupBox15.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)EditNweCandleLookback).EndInit();
-        ((System.ComponentModel.ISupportInitialize)EditNweIgnorePercentage).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweMultiplication).EndInit();
+        ((System.ComponentModel.ISupportInitialize)EditNweBandWidth).EndInit();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -4309,7 +4310,7 @@ partial class FrmSettings
     private SettingsDialog.UserControlSettingsPlaySoundAndColors UserControlSettingsSoundAndColorsNwe;
     private GroupBox groupBox15;
     private Label label7;
-    private NumericUpDown EditNweCandleLookback;
+    private NumericUpDown EditNweMultiplication;
     private Label label4;
-    private NumericUpDown EditNweIgnorePercentage;
+    private NumericUpDown EditNweBandWidth;
 }

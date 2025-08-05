@@ -4,12 +4,12 @@
 public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
 {
     // configuration:
-    public double BandWidth { get; set; } = 8.0f;
-    public double Multiplication { get; set; } = 3.0f;
+    public decimal BandWidth { get; set; } = 8.0m;
+    public decimal Multiplication { get; set; } = 3.0m;
 
-    // Slope: Candes back + percentage
-    public int CandleCountSlope { get; set; } = 15;
-    public decimal IgnorePercentage { get; set; } = 0.75m;
+    //// Slope: Candes back + percentage
+    //public int CandleCountSlope { get; set; } = 15;
+    //public decimal IgnorePercentage { get; set; } = 0.75m;
 
     public SettingsSignalStrategyNwe() : base()
     {

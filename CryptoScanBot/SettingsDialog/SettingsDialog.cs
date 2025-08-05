@@ -275,8 +275,9 @@ public partial class FrmSettings : Form
 
         // Nadaraya Watson Envelope
         UserControlSettingsSoundAndColorsNwe.LoadConfig("NWE", settings.Signal.Nwe);
-        EditNweIgnorePercentage.Value = settings.Signal.Nwe.IgnorePercentage;
-        EditNweCandleLookback.Value = settings.Signal.Nwe.CandleCountSlope;
+        EditNweBandWidth.Value = (decimal)settings.Signal.Nwe.BandWidth;
+        EditNweMultiplication.Value = (decimal)settings.Signal.Nwe.Multiplication;
+
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -570,8 +571,8 @@ public partial class FrmSettings : Form
 
         // Nadaraya Watson Envelope
         UserControlSettingsSoundAndColorsNwe.SaveConfig(settings.Signal.Nwe);
-        settings.Signal.Nwe.IgnorePercentage = EditNweIgnorePercentage.Value;
-        settings.Signal.Nwe.CandleCountSlope = (int)EditNweCandleLookback.Value;
+        settings.Signal.Nwe.BandWidth = EditNweBandWidth.Value;
+        settings.Signal.Nwe.Multiplication = EditNweMultiplication.Value;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -692,9 +693,6 @@ public partial class FrmSettings : Form
         EditTradingAppInternExtern.Enabled = EditTradingApp.SelectedIndex >= 2;
     }
 
-    private void groupBox6_Enter(object sender, EventArgs e)
-    {
-
-    }
+    
 
 }

@@ -40,7 +40,7 @@ public static class IndicatorHelper
         // Calculate indicators if needed
         if (higherCandle.CandleData == null)
         {
-            List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, higherInterval.Interval, targetStart, out string _);
+            List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(symbol, higherInterval.Interval, targetStart, out string _);
             if (history == null)
                 return (false, higherInterval, higherCandle);
             CandleIndicatorData.CalculateIndicators(symbol, higherInterval.Interval, history);
