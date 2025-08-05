@@ -565,14 +565,14 @@ public class SignalCreate
     //        Candle = null;
     //        string response = "";
 
-    //        // TODO: Avoid the CalculateCandles if we can by checking the last candle.CandleData
+    //        // TODO: Avoid the CollectCandles if we can by checking the last candle.CandleData
     //        //CryptoSymbolInterval symbolPeriod = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
     //        //CryptoCandleList intervalCandles = symbolPeriod.CandleList;
     //        //long candleEndTime = candleOpenTime - candleOpenTime % Interval.Duration;
 
 
     //        // Build a list of candles
-    //        History ??= CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+    //        History ??= CandleIndicatorData.CollectCandles(Symbol, Interval, candleOpenTime, out response);
     //        if (History == null)
     //        {
     //#if DEBUG

@@ -100,7 +100,7 @@ public class SignalPrepare
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
                     long candleOpenTime = lastCandle1mCloseTime - interval.Duration;
-                    List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(symbol, interval, candleOpenTime, out string _);
+                    List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(symbol, interval, candleOpenTime, out string _);
 
                     if (history != null)
                     {

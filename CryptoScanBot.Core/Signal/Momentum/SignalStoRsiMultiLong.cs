@@ -60,7 +60,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
 
             if (candle.CandleData == null)
             {
-                List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+                List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
                 if (history == null)
                     return false;
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
@@ -135,7 +135,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
 
     //            if (lastCandle.CandleData == null)
     //            {
-    //                List<CryptoCandle>? History = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+    //                List<CryptoCandle>? History = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
     //                if (History == null)
     //                    return false;
     //                CandleIndicatorData.CalculateIndicators(History);

@@ -338,7 +338,7 @@ public class SymbolTools
                 {
                     if (candle.CandleData == null)
                     {
-                        List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, Interval, candleOpenTime, out response);
+                        List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, Interval, candleOpenTime, out response);
 
                         if (history == null)
                         {

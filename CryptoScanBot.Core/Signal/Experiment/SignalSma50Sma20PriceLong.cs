@@ -64,7 +64,7 @@ public class SignalSma50Sma20PriceLong : SignalCreateBase
 
             if (candle.CandleData == null)
             {
-                List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+                List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
                 if (history == null)
                     return false;
                 CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);

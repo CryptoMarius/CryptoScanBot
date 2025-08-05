@@ -643,7 +643,7 @@ public class PositionMonitor //: IDisposable
             if (candleInterval.CandleData == null)
             {
                 List<CryptoCandle>? history = null;
-                history = CandleIndicatorData.CalculateCandles(Symbol, interval, candleInterval.OpenTime, out string response);
+                history = CandleIndicatorData.CollectCandles(Symbol, interval, candleInterval.OpenTime, out string response);
                 if (history == null)
                 {
                     GlobalData.AddTextToLogTab("Analyse " + response + $"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
