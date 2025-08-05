@@ -789,7 +789,7 @@ public partial class FrmMain : Form
                     break;
 
                 case CryptoSignalStrategy.NadarayaWatsonEnvelope:
-                case CryptoSignalStrategy.NadarayaWatsonEnvelopeSlope:
+                case CryptoSignalStrategy.NadarayaWatsonEnvelopeCross:
                     if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.Nwe.PlaySound, GlobalData.Settings.Signal.Nwe.PlaySpeech,
                             GlobalData.Settings.Signal.Nwe.SoundFileLong, ref LastSignalSoundNweOversold);
