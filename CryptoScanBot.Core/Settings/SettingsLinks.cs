@@ -118,7 +118,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/{quote}/{BASE}{QUOTE}",
+                    Url = "https://www.bybit.nl/trade/{quote}/{BASE}{QUOTE}",
                 }
             }
         );
@@ -146,7 +146,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
                 ExchangeUrl = new()
                 {
                     Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.com/trade/spot/{BASE}/{QUOTE}",
+                    Url = "https://www.bybit.nl/trade/spot/{BASE}/{QUOTE}",
                 }
             }
         );
