@@ -4,6 +4,8 @@ using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
 
+using NPOI.SS.Formula.Functions;
+
 using System.Text;
 
 namespace CryptoScanBot.Core.Zones;
@@ -49,7 +51,18 @@ public class ZoneCandleEngine
         string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
         string filenameBin = baseFolder + $"{symbol.Name}-{interval.Name}.bin";
         if (File.Exists(filenameBin))
-            await ReadFromBin(symbol, interval, filenameBin);
+        {
+            try
+            {
+                await ReadFromBin(symbol, interval, filenameBin);
+            }
+            catch (Exception error)
+            {
+                GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
+                File.Delete(filenameBin);
+                throw;
+            }
+        }
         //else if (File.Exists(filenameTxt))
         //    await ReadFromTxt(symbol, interval, filenameTxt);
         //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
