@@ -2,18 +2,10 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
-
-Instellingen, traden via Altrady/Exchange/Papertrading (met backtest kun je enkel papertraden)
-Het is onduidelijk voor de gebruikers hoe intervallen voor de DLZ en DLZ.Near en FVG werkt (altijd 1m en hoe en wat dan bij zones en signals)
-De fvg en dlz accentueren met een * ter indicatie dat de  interval niet van belang is (of we schuiven de intervallen door naar de strategien, liever niet?)
-Studie van orderblock, supply en demand en wat de verschillen tussen die twee nu eigenlijk zijn
-
-
-Aspect ratio in het chart formulier proberen toe te passen (en ook in de formules daaronder)
-x-as in het chart formulier is vaak niet zichtbaar (ligt eronder vreemd genoeg)
-
-
 Scanner:
+- Scanner - Visualisatie: Studie van orderblock, supply en demand en wat de verschillen tussen die twee eigenlijk zijn en of we ze kunnen visualiseren
+- Scanner - Visualisatie: Aspect ratio in het chart formulier proberen toe te passen (en ook in de formules daaronder)
+- Scanner - Visualisatie: x-as in het chart formulier is vaak niet zichtbaar (ligt eronder vreemd genoeg)
 - Scanner - Een dominant punt wordt pas geactiveerd als er een higher high ontstaat, de dlz zone kan dus niet gebroken zijn voordat dit gebeurd
 - Scanner - De laatste regel van de trend (met het % marktrend) wordt soms niet getoond (ik kan het niet herproduceren op dit moment), 
             Heeft de scanner weken/maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
