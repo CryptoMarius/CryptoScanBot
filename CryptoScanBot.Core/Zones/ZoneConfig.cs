@@ -4,8 +4,6 @@ using CryptoScanBot.Core.Trend;
 
 namespace CryptoScanBot.Core.Zones;
 
-
-
 public class ZoneConfig
 {
     // basic information
@@ -15,10 +13,6 @@ public class ZoneConfig
     public required CryptoSymbolInterval SymbolInterval { get; set; }
 
     // indicators
-    //public required ZigZagIndicator Indicator { get; set; } // primary
-    //public required ZigZagIndicator IndicatorFib { get; set; } // for charting form
-
-    // bool 
     public Dictionary<(TrendType trendType, bool useHighLow), ZigZagIndicator> IndicatorList { get; set; } = [];
 
     // for charting form

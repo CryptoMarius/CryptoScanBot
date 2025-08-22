@@ -233,12 +233,12 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     public void InitializeStandardCommands(ContextMenuStrip menuStrip)
     {
-        menuStrip.AddCommand(this, "Symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.Control | Keys.D1, click: CommandShowGraph);
-        menuStrip.AddCommand(this, "Trading app", Command.ActivateTradingApp, shortcutKeys: Keys.Control | Keys.D2);
-        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.Control | Keys.D3);
-        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.Control | Keys.D4);
-        menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.Control | Keys.D5);
-        menuStrip.AddCommand(this, "TV + Trading App", Command.CommandActivateTradingAppAndTv, shortcutKeys: Keys.Control | Keys.D6);
+        menuStrip.AddCommand(this, "Symbol chart", Command.ShowSymbolGraph, shortcutKeys: Keys.F1, click: CommandShowGraph);
+        menuStrip.AddCommand(this, "Trading app", Command.ActivateTradingApp, shortcutKeys: Keys.F2);
+        menuStrip.AddCommand(this, "TradingView internal", Command.ActivateTradingviewIntern, shortcutKeys: Keys.F3);
+        menuStrip.AddCommand(this, "TradingView external", Command.ActivateTradingviewExtern, shortcutKeys: Keys.F4);
+        menuStrip.AddCommand(this, "Goto exchange ", Command.ActivateActiveExchange, shortcutKeys: Keys.F5);
+        menuStrip.AddCommand(this, "TV + Trading App", Command.CommandActivateTradingAppAndTv, shortcutKeys: Keys.F6);
     }
 
 

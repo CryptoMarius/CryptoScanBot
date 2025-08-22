@@ -565,27 +565,23 @@ public class ZoneDlz
                 // Remember the last swing point for the automatic zone calculation
                 CryptoSymbolData symbolData = data.Symbol.Data;
                 CryptoSymbolInterval symbolIntervalData = symbolData.Get(data.Interval.IntervalPeriod);
-                
-                // TODO: This is kind of weird, WHAT indicator do we need for main!
-                //foreach (var indicatorX in data.IndicatorList.Values)
-                {
-                    //var trend = session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-                    var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
-                    var indicator = data.IndicatorList[(trend.TrendType, trend.UseHighLow)];
-                    if (indicator.LastSwingPoint != null)
-                        symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
-                    if (indicator.LastSwingLow != null)
-                        symbolIntervalData.DlzAdmin.LastSwingLow = indicator.LastSwingLow.Value;
-                    if (indicator.LastSwingHigh != null)
-                        symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
-                }
 
-                if (true) //session.UseBatchProcess
-                {
-                    foreach (var indicatorX in data.IndicatorList.Values)
-                        indicatorX.FinishBatch();
-                    //data.Indicator.FinishBatch();
-                }
+                //var trend = session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
+                var indicator = data.IndicatorList[(trend.TrendType, trend.UseHighLow)];
+                if (indicator.LastSwingPoint != null)
+                    symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
+                if (indicator.LastSwingLow != null)
+                    symbolIntervalData.DlzAdmin.LastSwingLow = indicator.LastSwingLow.Value;
+                if (indicator.LastSwingHigh != null)
+                    symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
+
+                //if (true) //session.UseBatchProcess
+                //{
+                foreach (var indicatorX in data.IndicatorList.Values)
+                    indicatorX.FinishBatch();
+                //data.Indicator.FinishBatch();
+                //}
             }
             finally
             {

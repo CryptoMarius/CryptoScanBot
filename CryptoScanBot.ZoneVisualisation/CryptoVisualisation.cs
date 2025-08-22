@@ -564,6 +564,7 @@ public partial class CryptoVisualisation : Form
         EditShowBollingerBand.CheckedChanged -= ButtonRefreshClick;
         EditShowNadarayaWatsonEnvelope.CheckedChanged -= ButtonRefreshClick;
         EditIntervalName.SelectedIndexChanged -= ButtonRefreshClick;
+        //EditShowTrendLines.SelectedIndexChanged -= ButtonRefreshClick;
 
         // symbol
         EditSymbolBase.Text = Session.SymbolBase;
@@ -592,6 +593,7 @@ public partial class CryptoVisualisation : Form
         EditShowDtb.Checked = Session.ShowDtb;
         EditShowBollingerBand.Checked = Session.ShowBollingerBand;
         EditShowSmaLinesSbm.Checked = Session.ShowSmaLinesSbm;
+        //EditShowTrendLines.Checked = Session.ShowTrendLines;
         EditShowNadarayaWatsonEnvelope.Checked = Session.ShowNadarayaWatsonEnvelope;
 
         EditTrendShowZigZag.CheckedChanged += ButtonRefreshClick;
@@ -606,6 +608,7 @@ public partial class CryptoVisualisation : Form
         EditShowBollingerBand.CheckedChanged += ButtonRefreshClick;
         EditShowNadarayaWatsonEnvelope.CheckedChanged += ButtonRefreshClick;
         EditIntervalName.SelectedIndexChanged += ButtonRefreshClick;
+        //EditShowTrendLines.CheckedChanged += ButtonRefreshClick;
     }
 
 
@@ -636,6 +639,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowBollingerBand = EditShowBollingerBand.Checked;
         Session.ShowSmaLinesSbm = EditShowSmaLinesSbm.Checked;
         Session.ShowNadarayaWatsonEnvelope = EditShowNadarayaWatsonEnvelope.Checked;
+        //Session.ShowTrendLines = EditShowTrendLines.Checked;       
     }
 
 
@@ -645,16 +649,13 @@ public partial class CryptoVisualisation : Form
         CryptoSymbolData symbolData = data.Symbol.Data;
         try
         {
-            //if (data.Symbol.Exchange.IsIntervalSupported(data.Interval.IntervalPeriod))
-            {
-                data.IndicatorList.Clear();
-                data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
-                data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
-                data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
-                data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
+            data.IndicatorList.Clear();
+            data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
+            data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
+            data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
+            data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
 
-                await ZoneDlz.CalculateDlzBoxesAsync(showProgress, session, data, loadedCandlesInMemory);
-            }
+            await ZoneDlz.CalculateDlzBoxesAsync(showProgress, session, data, loadedCandlesInMemory);
         }
         catch (Exception error)
         {
@@ -707,7 +708,8 @@ public partial class CryptoVisualisation : Form
             Chart.Sma.Draw(plotModel, Data.Symbol, Data.Interval, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate);
         if (Session.ShowSmaLinesSbm)
             Chart.Sma.Draw(plotModel, Data.Symbol, Data.Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate);
-
+        if (Session.ShowTrendLines)
+            Chart.SupportResistance.Draw(plotModel, Data.Interval, mainIndicator.ZigZagList);
 
         // Change default 
         plotView.Controller = new PlotController();

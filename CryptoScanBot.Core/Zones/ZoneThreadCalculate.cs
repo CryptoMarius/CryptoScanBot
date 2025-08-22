@@ -63,7 +63,6 @@ public class ZoneThreadCalculate
                     Interval = interval,
                     SymbolInterval = symbolInterval,
                 };
-                //var trend = session.ShowPrimary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
                 data.IndicatorList.Add((trend.TrendType, trend.UseHighLow), 
                     new(trend.TrendType, trend.UseHighLow, 1.0m));
