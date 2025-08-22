@@ -134,44 +134,53 @@ public class SignalExecute
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    var side = entry.Key.side;
-                    if (entry.Key.check) // true for the standard strategies bug false for dlz and fvg zones
+                    try
                     {
-                        // Barometer check
-                        if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, symbol.Quote, TradingConfig.Signals[side].Barometer, out string reaction))
+                        var side = entry.Key.side;
+                        if (entry.Key.check) // true for the standard strategies bug false for dlz and fvg zones
                         {
-                            if (TradingConfig.Signals[side].BarometerLog)
-                                GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
-                            continue;
+                            // Barometer check
+                            if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, symbol.Quote, TradingConfig.Signals[side].Barometer, out string reaction))
+                            {
+                                if (TradingConfig.Signals[side].BarometerLog)
+                                    GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
+                                continue;
+                            }
+                        }
+                        //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
+
+                        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                            GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side}");
+                        //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
+                        //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
+
+
+                        if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
+                        {
+                            SignalCreate createSignal = new(symbol, interval, side, lastCandle1mCloseTime);
+
+                            // The candle list can be missing in action, too little candles for example
+                            if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
+                            {
+                                createSignal.History = history;
+                                createSignal.Candle = history[^1];
+
+
+                                // TODO: Set the right Candle!!!!!
+                                if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
+                                    signalList.AddRange(createSignal.SignalList);
+
+
+                                // Counter for mainscreen so you can see symbols analyzing etc..
+                                Interlocked.Increment(ref analyseCount);
+                            }
                         }
                     }
-                    //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
-
-                    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                        GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side}");
-                    //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
-                    //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
-
-
-                    if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
+                    catch (Exception error)
                     {
-                        SignalCreate createSignal = new(symbol, interval, side, lastCandle1mCloseTime);
-
-                        // The candle list can be missing in action, too little candles for example
-                        if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
-                        {
-                            createSignal.History = history;
-                            createSignal.Candle = history[^1];
-
-
-                            // TODO: Set the right Candle!!!!!
-                            if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
-                                signalList.AddRange(createSignal.SignalList);
-
-
-                            // Counter for mainscreen so you can see symbols analyzing etc..
-                            Interlocked.Increment(ref analyseCount);
-                        }
+                        // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
+                        ScannerLog.Logger.Error(error, "");
+                        GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {entry.Key.strategy} error Monitor {error.Message}");
                     }
                 }
             }
