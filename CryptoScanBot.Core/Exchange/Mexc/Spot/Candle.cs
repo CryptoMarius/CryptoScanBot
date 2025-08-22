@@ -48,7 +48,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         {
             // This is based on the kucoin error number,, does Mexc have an error for overloading the exchange as wel?
             // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429: Too Many Requests
-            if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
+            if (result.Error?.ErrorCode == "429") // not sure if this error exists on Mexc? Copied?
             {
                 GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
                 Thread.Sleep(15000);

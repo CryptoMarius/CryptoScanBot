@@ -343,7 +343,7 @@ public class Api : ExchangeBase
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
 
                 // If its already gone ignore the error
-                if (result.Error?.Code == 110001) // 110001: Order does not exist
+                if (result.Error?.ErrorCode == "110001") // 110001: Order does not exist
                     return (true, tradeParams);
             }
             return (result.Success, tradeParams);

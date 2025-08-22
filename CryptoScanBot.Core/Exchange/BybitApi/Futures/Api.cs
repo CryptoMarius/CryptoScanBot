@@ -104,9 +104,9 @@ public class Api : ExchangeBase
         {
             // Aanpassing zonder dat er daadwerkelijk iets aangepast is
             // 110026: Cross / isolated margin mode is not modified
-            if (result.Error?.Code == 110026)
+            if (result.Error?.ErrorCode == "110026")
                 return true; // {110026: Cross/isolated margin mode is not modified }
-            if (result.Error?.Code == 110027)
+            if (result.Error?.ErrorCode == "110027")
                 return true; // {110027	Margin is not modified }
 
             GlobalData.AddTextToLogTab($"{symbol.Name} ERROR setting CrossOrIsolated={tradeMode} en leverage={GlobalData.Settings.Trading.Leverage} {result.Error}");
@@ -305,7 +305,7 @@ public class Api : ExchangeBase
                 tradeParams.ResponseStatusCode = result.ResponseStatusCode;
 
                 // If its already gone ignore the error
-                if (result.Error?.Code == 110001) // 110001: Order does not exist
+                if (result.Error?.ErrorCode == "110001") // 110001: Order does not exist
                     return (true, tradeParams);
             }
             return (result.Success, tradeParams);
