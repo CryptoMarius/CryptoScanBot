@@ -278,6 +278,11 @@ public partial class FrmSettings : Form
         EditNweBandWidth.Value = (decimal)settings.Signal.Nwe.BandWidth;
         EditNweMultiplication.Value = (decimal)settings.Signal.Nwe.Multiplication;
 
+        EditNweIncludeRsi.Checked = settings.Signal.Nwe.IncludeRsi;
+        EditNweIncludeSbmMaLines.Checked = settings.Signal.Nwe.IncludeSoftSbm;
+        EditNweIncludeSbmPercAndCrossing.Checked = settings.Signal.Nwe.IncludeSbmPercAndCrossing;
+        EditNweOnlyIfLux5m.Checked = settings.Signal.Nwe.OnlyIfLux5m;
+
 
         // --------------------------------------------------------------------------------
         // Extra instap condities
@@ -573,6 +578,11 @@ public partial class FrmSettings : Form
         UserControlSettingsSoundAndColorsNwe.SaveConfig(settings.Signal.Nwe);
         settings.Signal.Nwe.BandWidth = EditNweBandWidth.Value;
         settings.Signal.Nwe.Multiplication = EditNweMultiplication.Value;
+
+        settings.Signal.Nwe.IncludeRsi = EditNweIncludeRsi.Checked;
+        settings.Signal.Nwe.IncludeSoftSbm = EditNweIncludeSbmMaLines.Checked;
+        settings.Signal.Nwe.IncludeSbmPercAndCrossing = EditNweIncludeSbmPercAndCrossing.Checked;
+        settings.Signal.Nwe.OnlyIfLux5m = EditNweOnlyIfLux5m.Checked;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

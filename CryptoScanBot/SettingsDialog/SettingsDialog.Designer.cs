@@ -325,6 +325,11 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
+        groupBox16 = new GroupBox();
+        EditNweOnlyIfLux5m = new CheckBox();
+        EditNweIncludeSbmPercAndCrossing = new CheckBox();
+        EditNweIncludeSbmMaLines = new CheckBox();
+        EditNweIncludeRsi = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -455,6 +460,7 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
+        groupBox16.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -2973,6 +2979,7 @@ partial class FrmSettings
         flowLayoutPanel11.AutoSize = true;
         flowLayoutPanel11.Controls.Add(UserControlSettingsSoundAndColorsNwe);
         flowLayoutPanel11.Controls.Add(groupBox15);
+        flowLayoutPanel11.Controls.Add(groupBox16);
         flowLayoutPanel11.Dock = DockStyle.Fill;
         flowLayoutPanel11.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel11.Location = new Point(3, 3);
@@ -3811,6 +3818,66 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
+        // groupBox16
+        // 
+        groupBox16.AutoSize = true;
+        groupBox16.Controls.Add(EditNweOnlyIfLux5m);
+        groupBox16.Controls.Add(EditNweIncludeSbmPercAndCrossing);
+        groupBox16.Controls.Add(EditNweIncludeSbmMaLines);
+        groupBox16.Controls.Add(EditNweIncludeRsi);
+        groupBox16.Location = new Point(10, 308);
+        groupBox16.Margin = new Padding(10);
+        groupBox16.Name = "groupBox16";
+        groupBox16.Padding = new Padding(10);
+        groupBox16.Size = new Size(289, 152);
+        groupBox16.TabIndex = 161;
+        groupBox16.TabStop = false;
+        groupBox16.Text = "Settings";
+        // 
+        // EditNweOnlyIfLux5m
+        // 
+        EditNweOnlyIfLux5m.AutoSize = true;
+        EditNweOnlyIfLux5m.Location = new Point(14, 104);
+        EditNweOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditNweOnlyIfLux5m.Name = "EditNweOnlyIfLux5m";
+        EditNweOnlyIfLux5m.Size = new Size(144, 19);
+        EditNweOnlyIfLux5m.TabIndex = 168;
+        EditNweOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditNweOnlyIfLux5m.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeSbmPercAndCrossing
+        // 
+        EditNweIncludeSbmPercAndCrossing.AutoSize = true;
+        EditNweIncludeSbmPercAndCrossing.Location = new Point(14, 79);
+        EditNweIncludeSbmPercAndCrossing.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeSbmPercAndCrossing.Name = "EditNweIncludeSbmPercAndCrossing";
+        EditNweIncludeSbmPercAndCrossing.Size = new Size(261, 19);
+        EditNweIncludeSbmPercAndCrossing.TabIndex = 159;
+        EditNweIncludeSbmPercAndCrossing.Text = "With SBM conditiions percentages/crossings";
+        EditNweIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeSbmMaLines
+        // 
+        EditNweIncludeSbmMaLines.AutoSize = true;
+        EditNweIncludeSbmMaLines.Location = new Point(14, 54);
+        EditNweIncludeSbmMaLines.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeSbmMaLines.Name = "EditNweIncludeSbmMaLines";
+        EditNweIncludeSbmMaLines.Size = new Size(188, 19);
+        EditNweIncludeSbmMaLines.TabIndex = 158;
+        EditNweIncludeSbmMaLines.Text = "With SBM conditions MA-lines";
+        EditNweIncludeSbmMaLines.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeRsi
+        // 
+        EditNweIncludeRsi.AutoSize = true;
+        EditNweIncludeRsi.Location = new Point(14, 29);
+        EditNweIncludeRsi.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeRsi.Name = "EditNweIncludeRsi";
+        EditNweIncludeRsi.Size = new Size(244, 19);
+        EditNweIncludeRsi.TabIndex = 157;
+        EditNweIncludeRsi.Text = "With RSI oversold/overbought conditions";
+        EditNweIncludeRsi.UseVisualStyleBackColor = true;
+        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -4012,6 +4079,8 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
+        groupBox16.ResumeLayout(false);
+        groupBox16.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -4313,4 +4382,9 @@ partial class FrmSettings
     private NumericUpDown EditNweMultiplication;
     private Label label4;
     private NumericUpDown EditNweBandWidth;
+    private GroupBox groupBox16;
+    private CheckBox EditNweOnlyIfLux5m;
+    private CheckBox EditNweIncludeSbmPercAndCrossing;
+    private CheckBox EditNweIncludeSbmMaLines;
+    private CheckBox EditNweIncludeRsi;
 }

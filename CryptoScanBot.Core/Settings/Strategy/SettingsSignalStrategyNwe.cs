@@ -7,9 +7,10 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public decimal BandWidth { get; set; } = 8.0m;
     public decimal Multiplication { get; set; } = 3.0m;
 
-    //// Slope: Candes back + percentage
-    //public int CandleCountSlope { get; set; } = 15;
-    //public decimal IgnorePercentage { get; set; } = 0.75m;
+    public bool IncludeRsi { get; set; } = false;
+    public bool IncludeSoftSbm { get; set; } = false;
+    public bool IncludeSbmPercAndCrossing { get; set; } = false;
+    public bool OnlyIfLux5m { get; set; } = false;
 
     public SettingsSignalStrategyNwe() : base()
     {
