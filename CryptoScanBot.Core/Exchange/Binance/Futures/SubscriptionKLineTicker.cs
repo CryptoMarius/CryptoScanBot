@@ -32,14 +32,15 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).UsdFuturesApi.ExchangeData.
+            SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, (data) =>
         {
             if (data.Data.Data.Final)
             {
                 Task.Run(async () => { await ProcessCandleAsync((BinanceStreamKlineData)data.Data); });
             }
-        }, false, ExchangeBase.CancellationToken).ConfigureAwait(false);
+        }, false, ct: ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         // Premium: When it's omitted, null or false  it will be the old behavior.
         // Setting it to true will subscribe to the premium index klines

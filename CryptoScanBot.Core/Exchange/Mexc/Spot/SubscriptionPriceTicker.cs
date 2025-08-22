@@ -1,56 +1,58 @@
-﻿using CryptoExchange.Net.Objects;
-using CryptoExchange.Net.Objects.Sockets;
+﻿// SubscribeToTickerUpdatesAsync has been removed and is no longer supported
 
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Model;
+//using CryptoExchange.Net.Objects;
+//using CryptoExchange.Net.Objects.Sockets;
 
-using Mexc.Net.Clients;
+//using CryptoScanBot.Core.Core;
+//using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
+//using Mexc.Net.Clients;
 
-public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
-{
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
-    {
-        // TODO: quick en dirty code hier, nog eens verbeteren
-        // We verwachten (helaas) slechts 1 symbol per ticker
-        List<string> symbols = [];
-        //string symbolName = "";
-        foreach (var symbol in SymbolList)
-        {
-            //if (symbolName == "")
-            //    symbolName = symbol.Name;
-            //else
-            //    symbolName += "," + symbol.Name;
-            symbols.Add(symbol.Name);
-        }
+//namespace CryptoScanBot.Core.Exchange.Mexc.Spot;
+
+//public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
+//{
+//    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+//    {
+//        // TODO: quick en dirty code hier, nog eens verbeteren
+//        // We verwachten (helaas) slechts 1 symbol per ticker
+//        List<string> symbols = [];
+//        //string symbolName = "";
+//        foreach (var symbol in SymbolList)
+//        {
+//            //if (symbolName == "")
+//            //    symbolName = symbol.Name;
+//            //else
+//            //    symbolName += "," + symbol.Name;
+//            symbols.Add(symbol.Name);
+//        }
 
 
-        TickerGroup!.SocketClient ??= new MexcSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToMiniTickerUpdatesAsync(symbols, data =>
-        {
-            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
-            {
-                var tick = data.Data;
-                {
-                    if (data.Symbol != null && exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
-                    {
-                        Interlocked.Increment(ref TickerCount);
+//        TickerGroup!.SocketClient ??= new MexcSocketClient();
+//        CallResult<UpdateSubscription> subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToTickerUpdatesAsync(symbols, data =>
+//        {
+//            if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+//            {
+//                var tick = data.Data;
+//                {
+//                    if (data.Symbol != null && exchange.SymbolListName.TryGetValue(data.Symbol, out CryptoSymbol? symbol))
+//                    {
+//                        Interlocked.Increment(ref TickerCount);
 
-                        if (!GlobalData.BackTest)
-                        {
-                            symbol.LastPrice = tick.LastPrice;
-                            symbol.Volume = tick.QuoteVolume; //= Base = het volume * de prijs                                
-                        }
-                    }
-                }
+//                        if (!GlobalData.BackTest)
+//                        {
+//                            symbol.LastPrice = tick.LastPrice;
+//                            symbol.Volume = tick.QuoteVolume; //= Base = het volume * de prijs                                
+//                        }
+//                    }
+//                }
 
-                if (TickerCount > 999999999)
-                    Interlocked.Exchange(ref TickerCount, 0);
-            }
-        }, null, ExchangeBase.CancellationToken).ConfigureAwait(false);
+//                if (TickerCount > 999999999)
+//                    Interlocked.Exchange(ref TickerCount, 0);
+//            }
+//        }, ct: ExchangeBase.CancellationToken).ConfigureAwait(false);
 
-        return subscriptionResult;
-    }
+//        return subscriptionResult;
+//    }
 
-}
+//}
