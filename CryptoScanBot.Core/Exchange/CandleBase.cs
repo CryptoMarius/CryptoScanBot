@@ -1,6 +1,9 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Exchange;
 
@@ -9,6 +12,26 @@ public class CandleBase(ExchangeBase api)
     private static readonly SemaphoreSlim GetCandlesSemaphore = new(1);
 
     private ExchangeBase Api { get; set; } = api;
+
+    internal static void SaveCandleInfo(object exchangeInfo, string name)
+    {
+        // Save for debug
+        try
+        {
+            string filename = GlobalData.GetBaseDir();
+            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
+            Directory.CreateDirectory(filename);
+            filename += name;
+
+            string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
+            File.WriteAllText(filename, text);
+        }
+        catch
+        {
+            // ignore
+        }
+
+    }
 
     public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
     {
