@@ -49,8 +49,8 @@ public class AssetTools
         {
             if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
             {
-                var api = GlobalData.ActiveExchange!.GetApiInstance();
-                await api.Asset.GetAssets(activeExchange); // from exchange
+                //var api = GlobalData.ActiveExchange!.GetApiInstance();
+                //await api.Asset.GetAssets(activeExchange); // from exchange
             }
             else
                 PaperAssets.LoadAssets(activeExchange); // from db

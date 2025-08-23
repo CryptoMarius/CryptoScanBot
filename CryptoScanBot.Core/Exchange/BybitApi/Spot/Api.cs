@@ -1,6 +1,7 @@
 ﻿using Bybit.Net;
 using Bybit.Net.Clients;
 using Bybit.Net.Enums;
+using Bybit.Net.Objects;
 using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.Authentication;
@@ -21,11 +22,11 @@ public class Api : ExchangeBase
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
-        Asset = new Asset();
+        //Asset = new Asset();
         Candle = new Candle(this);
         Symbol = new Symbol();
-        Order = new Order();
-        Trade = new Trade();
+        //Order = new Order();
+        //Trade = new Trade();
     }
 
 
@@ -34,35 +35,18 @@ public class Api : ExchangeBase
         return new BybitRestClient();
     }
 
-    //internal static BybitRestClient CreateRestClient()
+    //public static BybitApiAddresses EuropeAddress = new BybitApiAddresses
     //{
-    //    // Ik snap er helemaal niets van.. Heb een paar classes verkeerd begrepen log en logger
+    //    RestBaseAddress = "https://api.bybit.eu",
+    //    SocketBaseAddress = "wss://stream.bybit.eu" // ?
+    //};
+    
+    
+    //public static BybitEnvironment Europe { get; }
+    //    = BybitEnvironment.CreateCustom("Custom",
+    //                             EuropeAddress.RestBaseAddress,
+    //                             EuropeAddress.SocketBaseAddress);
 
-    //    //NLog.Extensions.Logging.NLogLoggerFactory loggerFactory = new();
-    //    //MyClass myClass = new(loggerFactory);
-    //    //loggerFactory.
-    //    //LoadNLogConfigurationOnFactory(loggerFactory);
-    //    //using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddNLog());
-    //    //Microsoft.Extensions.Logging.ILogger logger = factory.CreateLogger("Program");
-    //    //logger.LogInformation("Hello World! Logging is {Description}.", "fun");
-
-    //    //var loggerFactory = new NLog.Extensions.Logging.NLogLoggerFactory();
-
-    //    //Logger moduleLogger = NLog.LogManager.GetLogger("Modules.MyModuleName");
-    //    //NLog.LogFactory Factory1 = new LogFactory();
-    //    //LoadNLogConfigurationOnFactory(Factory1);
-
-
-    //    BybitRestClient client = new(null, LogFactory, options =>
-    //    {
-    //        //options.Environment = _environment;
-    //        options.OutputOriginalData = true;
-    //        options.ReceiveWindow = TimeSpan.FromSeconds(15);
-    //        if (GlobalData.TradingApi.Key != "")
-    //            options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
-    //    });
-    //    return client;
-    //}
 
     public override void ExchangeDefaults()
     {
@@ -73,6 +57,7 @@ public class Api : ExchangeBase
 
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
+
         // Default opties voor deze exchange
         BybitRestClient.SetDefaultOptions(options =>
         {
@@ -80,9 +65,11 @@ public class Api : ExchangeBase
             //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            //options.Environment = BybitEnvironment.Testnet;
-            options.Environment = BybitEnvironment.Netherlands;
+            //options.Environment = BybitEnvironment.GetEnvironmentByName("Custom");
+            //options.Environment = BybitEnvironment.Netherlands;
+            //options.Environment = BybitEnvironment.eure;
             //options.SpotOptions.RateLimiters = ?
+            //options.Environment = Europe;
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });

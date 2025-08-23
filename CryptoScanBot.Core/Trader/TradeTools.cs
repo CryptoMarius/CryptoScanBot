@@ -784,14 +784,14 @@ public class TradeTools
             }
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
-            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading) // && loadFromExchange
-            {
-                count += await GlobalData.ActiveExchange!.GetApiInstance().Order.GetOrders(database, position);
-            }
+            //if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading) // && loadFromExchange
+            //{
+            //    count += await GlobalData.ActiveExchange!.GetApiInstance().Order.GetOrders(database, position);
+            //}
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist
-            if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading) // && loadFromExchange
-                count += await GlobalData.ActiveExchange!.GetApiInstance().Trade.GetTradesAsync(database, position);
+            //if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading) // && loadFromExchange
+            //    count += await GlobalData.ActiveExchange!.GetApiInstance().Trade.GetTradesAsync(database, position);
         }
         finally
         {
