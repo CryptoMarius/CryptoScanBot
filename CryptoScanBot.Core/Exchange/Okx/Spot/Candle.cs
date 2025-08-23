@@ -46,6 +46,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
+            SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");
             return minFetch;
         }
 
@@ -54,6 +55,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (result.Data == null)
         {
             GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(minFetch)} no candles received");
+            SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no data.json");
             return minFetch;
         }
 
