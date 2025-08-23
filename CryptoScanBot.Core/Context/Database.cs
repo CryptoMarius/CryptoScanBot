@@ -185,7 +185,7 @@ public class CryptoDatabase : IDisposable
             // Er is nog geen nuget library die deze ondersteund
             //new() { Name = "Mexc Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
 
-            new() { Name = "Okx Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Okx Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
 
             new() { Name = "Coinbase Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
         ];
