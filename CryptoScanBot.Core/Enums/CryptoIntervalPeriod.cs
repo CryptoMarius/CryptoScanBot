@@ -17,6 +17,7 @@ public enum CryptoIntervalPeriod
     interval6h, //11
     interval8h, //12
     interval12h, //13
-    interval1d //14
+    interval1d, //14
+    interval1w, //15
 }
 
