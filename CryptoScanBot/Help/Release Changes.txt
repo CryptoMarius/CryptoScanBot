@@ -1,8 +1,8 @@
 CryptoScanBot release historie:
 
-TODO: Logging NLOG, formatting bestanden
-
-xx-xx-2025 2.1.5
+01-09-2025 2.1.5
+- Scanner - Logging NLOG, de formatting bestanden is wellicht anders
+- Scanner - Exchange OKX toegevoegd, voor ons Nederlanders is alleen de EUR en USDC markten bereikbaar
 - Scanner - Bij dubbelklikken op een signaal ook de timeframe van het chart formulier zetten (maar niet bij zones)
 - Scanner - Ondersteuning van alle timeframes in het chart formulier (nu alleen die van de exchange)
 - Scanner - De BB, SMA200, SMA50 en SMA20 tonen in het chart formulier zetten (ter ondersteuining van SBM)

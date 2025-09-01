@@ -3,6 +3,8 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
 Scanner:
+- Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
+- Scanner - Wisselen van basismunt veroorzaak dubbele symbols in de database
 - Scanner - Visualisatie: Studie van orderblock, supply en demand en wat de verschillen tussen die twee eigenlijk zijn en of we ze kunnen visualiseren
 - Scanner - Visualisatie: Aspect ratio in het chart formulier proberen toe te passen (en ook in de formules daaronder)
 - Scanner - Visualisatie: x-as in het chart formulier is vaak niet zichtbaar (ligt eronder vreemd genoeg)
@@ -82,57 +84,7 @@ Scanner:
 - Scanner - (low priority) De laatst bekende Rsi, Stoch, enzovoort bij de munt opnemen zodat je ook een pair scanner oid van kunt maken.
             Dan moeten alle coins continue berekend worden en dat betekend heel veel meer cpu en geheugen (voorlopig niet, wel leuke gedachte..)
 
-Trading:
-- Trading - Dominante zones: De laatste open of gesloten posities laten zien (bij papertrading)
-- Trading - Als verklikker van trading rulez een geluidje laten horen
-- Trading - Handmatig een positie kunnen openen en/of sluiten
-- Trading - Het resetten (c.q. wissen) van de papertrade posities en statistiek (en wellicht ook de begin-assets configureren)
-- Trading - test account, ENAUSDT, 12-11, standaard papertrade, heeft 2x een sell tp gezet en dus ook 2x verkocht (zo wordt je snel rijk). Wat gaat daar precies fout?
-- Trading - De Telegram profits commando gaat zo te zien niet goed om met short posities (verlies trades kan, maar dit was iets teveel)
-- Trading - Met een ingevulde SL blijft de bestaande SL staan als er een DCA gezet wordt, SL kan boven de DCA staan, klopt niet!
-- Trading - De aanwezigheid van meerdere signalen per munt zorgt ervoor dat enkel eigenlijk op de lagere tf's wordt ingestapt
-            Het lijkt erop dat bij een timeout van een lager tf de hogere ook wordt verwijderd (nazoeken)
-            Het is me nog niet geheel duidelijk wat de prioriteit bij meerdere meldingen eigenlijk is
-- Trading - Papertrade: Asset management, heeft nu ongelimiteerde assets wat geen realistische situatie is.
-- Trading - Papertrade: Bij het verwijderen van een positie worden de assets niet bijgewerkt (eerst de orders annuleren?)
-- Trading - Documentatie bijwerken - Een klusje..
-- Trading - Stop loss introduceren voor Bybit
-- Trading - Stop loss introduceren voor Binance
-- Trading - Controle inbouwen op het short gaan, in futures kan dat, maar in spot lukt dat natuurlijk alleen als er assets beschikbaar zijn
-- Trading - De trader zet soms (zeg maar gerust in een enkele keer) correct afgehandelde posities weg als zijnde een takeover. Daar is/was geen aanleiding voor dus dat moet wel een bug zijn!
-- Trading - In de open posities is de kolom BE perc te hoog indien er een JoJo heeft plaatsgevonden (invested=42, returned=39, BE% = 14.49%), maar het is slechts 1x gerapporteerd, incident?
-- Trading - Papertrading is nu alleen mogelijk voor Bybit spot en futures, maar papertrading kan natuurlijk voor alle andere exchanges (configuratie aanpassen, alleen exchange of paper, niet beide!)
-- Trading - DCA's kunnen instellen per tijdsframe (maar dat is bewst bewerkelijk voor het instellingen scherm)
-- Trading - Observatie papertrading is dat de laatste TP soms dubbel uitgevoerd wordt (en dan blijft de positie openstaan), probleem vanwege herstart applicatie? 1 op 500 probleem?
-- Trading - Het trade geluidje kunnen instellen (kan nu alleen door het vervangen van de sound notification in de sound map)
-- Trading - Validatie op de ingevoerde DCA's uitvoeren, die moeten qua percentage op volgorde staan met een factor > 0
-- Trading - Charts - Graph toevoegen met hoe vaak de tweede en derde bijkoop gehit wordt
-- Trading - Charts - Ondersteuning voor long en short (de huidige charts kennen alleen maar long!)
-- Trading - Charts - Graph toevoegen voor inzicht met hoeveel we aan het handelen zijn (inclusief de extra dca orders)
-- Trading - Charts - dagen waarin niets gebeurd worden niet getoond op de x-as (dat gebeurd ook helaas)
-- Trading - Bij een liquidatie wordt de positie geannuleerd en wordt deze niet genoteerd in de statistiek (het is een cancel van buiten af, maar met een herkenbare reden)
-- Trading - Handmatig toevoegen van een positie via een naam munt + begindatum mogelijk maken, laat de bot het gewoon overnemen als je er "moe" van bent.
-- Trading - Een aparte tool maken voor een backtest, candles ophalen voor BTC (tradingregels), de intervallen 1m en emulator interval.
-            Echter de barometer werkt op deze manier niet (omdat niet alle munten geladen zijn...)
-- Trading - Uitzoeken voor iemand in de groep, de backtest emulator aanpassen zodat het (pas) bij een psar wissel instapt - is er nog niet van gekomen, sorry!
-            De huidige backtest via een SQL database werkt op dit moment niet meer, opnieuw opzetten na de trading long/short implementatie.
-- Trading - Buy Trail gebruikt de verkeerde quantity, naar mate de prijs daalt zou de quantity groter moeten worden (is nu een constante)
-            -> trailing staat vanwege Binance uit (er is geen stoplimit order op Bybit)
-- Trading - Documentatie uitleggen papertrading bot (achterliggende gedachtes uitleggen)
-- Trading - Documentatie uitleggen wat de open en gesloten posities precies zijn (per kolom)
-- Trading - Documentatie (er is wel een stukje van de trading toegelicht, maar lang niet alles
-- Trading - Bybit Spot - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
-- Trading - Bybit Futures - Testen van een stop-limit order (die bestaat niet helaas, alternatieven?)
-
-Voor alle Exchanges (behalve Binance en Bybit Futures/Spot):
-*** alle trading via Altrady, onderstaande dus niet meer relevant
-- Trading - userdate stream implementeren (detectie van trade)
-- Trading - ophalen trades implementeren
-- Trading - plaatsen van de orders (oco/buy/sell/stoplimit etc) - De OCO is Binance specifiek, vervanger?
-- Trading - price ticker implementeren (in Kucoin geeft dit teveel cpu overhead en is om die reden nu niet aangezet)
-
 Scanner:
-- Exchange OKX - Okx Spot ARUSDT 6h error getting klines [OKXRestApiError] 51001: Instrument ID does not exist (maar volgens de symbols.json is ie er wel, wellicht een conflict europe en worldwide, verkeerde url's?)
 - Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min
 
 

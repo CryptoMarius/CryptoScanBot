@@ -45,24 +45,25 @@ public class Api : ExchangeBase
 
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
+        OKXEnvironment environment = OKXEnvironment.Live;
+
         // Default opties voor deze exchange
         OKXRestClient.SetDefaultOptions(options =>
         {
+            // Endpoints global
+            options.Environment = environment;
+            //UnifiedRestAddress = "https://www.okx.com",
+            //UnifiedSocketAddress = "wss://ws.okx.com:8443",
+
+            //options.Environment = OKXEnvironment.Europe;
+            // Endpoints Europe (and not working properly)
+            //UnifiedRestAddress = "https://eea.okx.com",
+            //UnifiedSocketAddress = "wss://wseea.okx.com:8443",
+
             //options.OutputOriginalData = true;
             //options.SpotOptions.AutoTimestamp = true;
             //options.ReceiveWindow = TimeSpan.FromSeconds(15);
-            //options.Environment = OKXEnvironment.Europe;
-
-        // Global
-        //UnifiedRestAddress = "https://www.okx.com",
-        //UnifiedSocketAddress = "wss://ws.okx.com:8443",
-
-        /// Europe customers addresses
-        //UnifiedRestAddress = "https://eea.okx.com",
-        //UnifiedSocketAddress = "wss://wseea.okx.com:8443",
-
-        options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            //options.Environment = BybitEnvironment.Testnet;
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
@@ -71,7 +72,7 @@ public class Api : ExchangeBase
         OKXSocketClient.SetDefaultOptions(options =>
         {
             //options.AutoReconnect = true;
-            options.Environment = OKXEnvironment.Europe;
+            options.Environment = environment;
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
@@ -80,17 +81,6 @@ public class Api : ExchangeBase
 
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
-
-            //options.AddLogging(x =>
-            //{
-            //    x.SetMinimumLevel(LogLevel.Trace);
-            //    x.AddProvider(new TraceLoggerProvider());
-            //});
-            //options.AddLogging(x =>
-            //{
-            //    x.SetMinimumLevel(LogLevel.None);
-            //    x.AddProvider(new TraceLoggerProvider(LogLevel.None));
-            //});
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
