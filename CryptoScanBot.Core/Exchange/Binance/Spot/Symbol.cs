@@ -20,7 +20,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 using var client = new BinanceRestClient();
                 using CryptoDatabase database = new();
                 database.Open();
-
+               
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
@@ -30,7 +30,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
+                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // Create dictionary for the volume
                 SortedList<string, decimal> volumeTicker = [];
@@ -48,7 +48,8 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
-                SaveExchangeInfo(symbolInfo, "symbols.json");
+                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
+                
 
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren

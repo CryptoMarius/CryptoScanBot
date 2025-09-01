@@ -30,7 +30,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 //LimitRate.WaitForFairWeight(1);
                 var tickerInfo = await client.UnifiedApi.ExchangeData.GetTickersAsync(InstrumentType.Spot);
                 if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
+                    GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
                 SaveExchangeInfo(tickerInfo, "tickers.json");
@@ -50,11 +50,11 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var symbolInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("No exchange data retrieved (1)");
                 if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                    GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
+                    throw new ExchangeException("No exchange data retrieved (2)");
                 SaveExchangeInfo(symbolInfo, "symbols.json");
 
 
@@ -67,44 +67,9 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        //BybitSpotSymbol
-                        //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbolInfo.Data)
                         {
-                            //if (coin != "")
                             {
-                                //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
-                                //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
-
-                                // https://api.bybit.com/v5/market/instruments-info?category=spot
-                                /*
-                                    {
-                                    "Name": "HFTUSDT",
-                                    "BaseAsset": "HFT",
-                                    "QuoteAsset": "USDT",
-                                    "Status": 1,
-                                    "MarginTrading": 2,
-                                    "Innovation": false,
-                                    "LotSizeFilter": {
-                                        "BasePrecision": 0.01,
-                                        "QuotePrecision": 0.000001,
-                                        "MinOrderQuantity": 2.5,
-                                        "MaxOrderQuantity": 738825.267824,
-                                        "MinOrderValue": 1,
-                                        "MaxOrderValue": 200000
-                                    },
-                                    "PriceFilter": {
-                                        "TickSize": 0.0001
-                                    },
-                                    "PricePercentageFilter": {
-                                        "LimitPricePercentageLimit": 0.03,
-                                        "MarketPricePercentageLimit": 0.03
-                                    }
-                                    },
-                               
-                                enzovoort..
-                                */
-
                                 if (symbolData.Symbol != symbolData.BaseAsset + '-' + symbolData.QuoteAsset)
                                 {
                                     //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");

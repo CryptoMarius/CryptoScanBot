@@ -27,4 +27,25 @@ public class SymbolBase()
 
     }
 
+    internal static void SaveExchangeInfo(string? text, string name = "symbols.json")
+    {
+        if (text == null) 
+            return;
+
+        // Save for debug
+        try
+        {
+            string filename = GlobalData.GetBaseDir();
+            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
+            Directory.CreateDirectory(filename);
+            filename += name;
+
+            File.WriteAllText(filename, text);
+        }
+        catch
+        {
+            // ignore
+        }
+
+    }
 }
