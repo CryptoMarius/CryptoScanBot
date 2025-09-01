@@ -20,9 +20,7 @@ public class ScannerLog
             FileName = filename + extra + ".log",
             ArchiveEvery = NLog.Targets.FileArchivePeriod.Day,
             ArchiveFileName = filename + " {#}" + extra + ".log",
-            ArchiveSuffixFormat = @" {1:yyyy-MM-dd}",
-            //ArchiveSuffixFormat = NLog.Targets.ArchiveNumberingMode.Date
-            //ArchiveNumbering = NLog.Targets.ArchiveNumberingMode.Date
+            ArchiveSuffixFormat = @"_{1:yyyyMMdd}",
         };
 
     }
