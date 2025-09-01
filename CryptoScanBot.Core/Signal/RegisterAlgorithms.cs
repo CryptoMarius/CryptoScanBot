@@ -199,13 +199,13 @@ public static class RegisterAlgorithms
         });
 
         
-        Register(new AlgorithmDefinition()
-        {
-            Name = "nwe.cross",
-            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeCross,
-            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
-            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "nwe.cross",
+        //    Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeCross,
+        //    AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
+        //    AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
+        //});
 
 #if StrategyBbma
         // BBMA - Oma Ally
