@@ -15,6 +15,11 @@ public class ApplicationParams
     [Option('e', "exchange", Required = false, HelpText = "De te gebruiken exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot of Mexc Spot)")]
     public string? ExchangeName { get { return _ExchangeName; } set { _ExchangeName = value!.Trim(); } }
 
+    public string? _BybitEurope;
+    [Option('u', "europe", Required = false, HelpText = "In geval van bybit of het eu is")]
+    public string? BybitEurope { get { return _BybitEurope; } set { _BybitEurope = value!.Trim(); } }
+
+
     public static ApplicationParams? Options { get; set; }
 
     public static void InitApplicationOptions()
