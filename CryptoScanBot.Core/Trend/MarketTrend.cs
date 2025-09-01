@@ -30,6 +30,9 @@ public class MarketTrend
 
                     foreach (var interval in GlobalData.IntervalList)
                     {
+                        // Exclude the 1 week interval (its a new interval)
+                        if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
+                            continue;
                         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                         CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
 

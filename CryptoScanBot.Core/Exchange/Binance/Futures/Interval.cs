@@ -22,6 +22,8 @@ public class Interval
             CryptoIntervalPeriod.interval8h => KlineInterval.EightHour,
             CryptoIntervalPeriod.interval12h => KlineInterval.TwelveHour,
             CryptoIntervalPeriod.interval1d => KlineInterval.OneDay,
+            CryptoIntervalPeriod.interval1w => KlineInterval.OneWeek,
+            //CryptoIntervalPeriod.interval1Month => KlineInterval.OneMonth,
             _ => null,
         };
     }

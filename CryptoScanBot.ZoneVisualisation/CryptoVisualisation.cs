@@ -397,7 +397,7 @@ public partial class CryptoVisualisation : Form
     {
         if (Data != null && plotModel != null && 
             Session.ActiveInterval + direction >= CryptoIntervalPeriod.interval1m && 
-            Session.ActiveInterval + direction <= CryptoIntervalPeriod.interval1d)
+            Session.ActiveInterval + direction <= CryptoIntervalPeriod.interval1w)
         {
             Session.ActiveInterval += direction;
             foreach (var serie in plotModel.Series)

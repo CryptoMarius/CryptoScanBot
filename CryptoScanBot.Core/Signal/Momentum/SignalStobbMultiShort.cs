@@ -148,7 +148,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
 
             //if (okay < count) return false;
 
-            if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+            if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
         }

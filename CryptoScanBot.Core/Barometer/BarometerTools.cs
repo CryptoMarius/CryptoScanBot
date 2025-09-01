@@ -195,7 +195,7 @@ public class BarometerTools
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval30m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1h ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval4h ||
-                interval.IntervalPeriod >= CryptoIntervalPeriod.interval1d)
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
                 CalculateBarometerInternal(symbol, interval, quoteData, calcBarometerMethod, pricebarometer);

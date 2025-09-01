@@ -53,7 +53,7 @@ public class CryptoQuoteData
         };
 
         // Initialize intervals
-        for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval1m; interval <= CryptoIntervalPeriod.interval1d; interval++)
+        for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval1m; interval <= CryptoIntervalPeriod.interval1w; interval++)
             BarometerDataList[interval] = new BarometerData();
     }
 }

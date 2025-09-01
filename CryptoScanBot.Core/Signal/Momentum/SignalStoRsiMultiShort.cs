@@ -98,7 +98,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
 
             //if (okay < count) return false;
 
-            if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+            if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
         }

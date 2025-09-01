@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 45;
+    public readonly static int CurrentDatabaseVersion = 46;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1194,28 +1194,59 @@ public class Migration
 
 
         //***********************************************************
-        // 04-03-2025, account simplifications (overcomplicating things)
+        // 23-08-2025
         if (CurrentVersion > version.Version && version.Version == 44)
         {
             using var transaction = database.BeginTransaction();
 
-            try { database.Connection.Execute("drop table [Asset]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [Order]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [Trade]", transaction); } catch { } // ignore
-            // Since we are unable to drop constraints drop all positions
-            try { database.Connection.Execute("drop table [PositionStep]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [PositionPart]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [Position]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // ignore
-            try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
+            database.Connection.Execute("update exchange set IsActive=0 where Name like '%Okx Spot%'", transaction);
 
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
-
-            // todo: Delete CryptoScanBot-weblinks.json?
         }
+
+
+        //***********************************************************
+        // 28-08-2025 add week interval
+        if (CurrentVersion > version.Version && version.Version == 45)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("insert into interval(intervalperiod, name, duration, constructfromid) values(15, '1w', 604800, 15)", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        // Kind of a big step, delay because of impact
+        ////***********************************************************
+        //// 04-03-2025, account simplifications (overcomplicating things)
+        //if (CurrentVersion > version.Version && version.Version == 99999)
+        //{
+        //    using var transaction = database.BeginTransaction();
+
+        //    try { database.Connection.Execute("drop table [Asset]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [Order]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [Trade]", transaction); } catch { } // ignore
+        //    // Since we are unable to drop constraints drop all positions
+        //    try { database.Connection.Execute("drop table [PositionStep]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [PositionPart]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [Position]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // ignore
+        //    try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
+
+        //    // update version
+        //    version.Version += 1;
+        //    database.Connection.Update(version, transaction);
+        //    transaction.Commit();
+
+        //    // todo: Delete CryptoScanBot-weblinks.json?
+        //}
     }
 
 }

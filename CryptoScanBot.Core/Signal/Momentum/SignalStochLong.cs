@@ -169,7 +169,7 @@ public class SignalStochLong : SignalSbmBaseLong
             return false;
         }
 
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
             return false;
         CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod + 1);
 

@@ -149,7 +149,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
 
             //if (okay < count) return false;
 
-            if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+            if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
         }
@@ -239,7 +239,7 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
     //            //if (count == 6)
     //            //    return false;
 
-    //            if (intervalPeriod == CryptoIntervalPeriod.interval1d)
+    //            if (intervalPeriod == CryptoIntervalPeriod.interval1Month)
     //                return false;
     //            intervalPeriod++;
     //        }
