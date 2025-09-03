@@ -138,15 +138,15 @@ public class SignalCreateBase
 
 
 
-    protected CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    protected CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount, int correction = 0)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
         CryptoCandle? candle = CandleLast;
         while (candleCount > 0)
         {
             skipCandleCount--; // GlobalData.Settings.Signal.StoRsi.AddRsiAmount
-            bool isOverSold = candle is not null && candle.RsiOversold(0) && candle.StochOversold();
-            bool isOverBought = candle is not null && candle.RsiOverbought() && candle.StochOverbought();
+            bool isOverSold = candle is not null && candle.RsiOversold(correction) && candle.StochOversold();
+            bool isOverBought = candle is not null && candle.RsiOverbought(correction) && candle.StochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
