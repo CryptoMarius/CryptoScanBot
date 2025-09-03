@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Core;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -25,6 +27,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             client = client1;
         else
             throw new Exception("Expected KrakenRestClient");
+        var api = client.SpotApi;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -41,7 +44,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (limit - 1) * interval.Duration;
         //DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, minDate);
+        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, minDate);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

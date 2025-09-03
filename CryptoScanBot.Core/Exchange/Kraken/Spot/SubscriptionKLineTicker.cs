@@ -1,5 +1,6 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
@@ -30,15 +31,19 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
+        SemaphoreSlim symbolListSemaphore = new(1, 1);
+        TickerGroup!.SocketClient ??= new KrakenSocketClient();
+        var client = (KrakenSocketClient)TickerGroup.SocketClient;
+        var api = client.SpotApi;
+
         List<string> symbolList = [];
         foreach (var symbol in SymbolList)
         {
-            symbolList.Add(symbol.Base + "/" + symbol.Quote);
+            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+            symbolList.Add(symbolName);
         }
 
-        TickerGroup!.SocketClient ??= new KrakenSocketClient();
-        var subscriptionResult = await ((KrakenSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(
-            symbolList, KlineInterval.OneMinute, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolList, KlineInterval.OneMinute, data =>
         {
             foreach (KrakenKlineUpdate kline in data.Data)
             {
