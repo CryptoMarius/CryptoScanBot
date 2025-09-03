@@ -5,12 +5,11 @@ using CryptoExchange.Net.SharedApis;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
-using OKX.Net;
 using OKX.Net.Clients;
 using OKX.Net.Enums;
 using OKX.Net.Objects.Market;
 
-namespace CryptoScanBot.Core.Exchange.Okx.Spot;
+namespace CryptoScanBot.Core.Exchange.Okx.Futures;
 
 /// <summary>
 /// Monitoren van 1m candles (die gepushed worden door de exchange)
@@ -59,12 +58,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var client = (OKXSocketClient)TickerGroup!.SocketClient;
         var api = client.UnifiedApi;
 
-        // TODO: quick en dirty
+        // TODO: quick en dirty code hier, nog eens verbeteren
+        // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
         string symbolNames = "";
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
             if (symbolNames == "")
                 symbolNames = symbolName;
             else
@@ -72,7 +72,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             symbols.Add(symbolNames);
         }
 
-        TickerGroup!.SocketClient ??= new OKXSocketClient();
         var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
         {
             OKXKline kline = data.Data;
@@ -83,7 +82,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
-        throw new Exception($"not supported");
     }
 
 }
