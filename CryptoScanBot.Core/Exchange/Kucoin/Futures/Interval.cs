@@ -7,9 +7,9 @@ namespace CryptoScanBot.Core.Exchange.Kucoin.Futures;
 
 public class Interval
 {
-    public static FuturesKlineInterval? GetExchangeInterval(CryptoInterval interval)
+    public static FuturesKlineInterval? GetExchangeInterval(CryptoIntervalPeriod interval)
     {
-        return interval.IntervalPeriod switch
+        return interval switch
         {
             CryptoIntervalPeriod.interval1m => FuturesKlineInterval.OneMinute,
             CryptoIntervalPeriod.interval5m => FuturesKlineInterval.FiveMinutes,

@@ -781,6 +781,10 @@ public static class GlobalData
                 exchangeName = "Kucoin Spot";
             if (exchangeName == "Mexc")
                 exchangeName = "Mexc Spot";
+            if (exchangeName == "Coinbase")
+                exchangeName = "Coinbase Spot";
+            if (exchangeName == "HyperLiquid")
+                exchangeName = "HyperLiquid Spot";
 
             // People forget to use the right casing
             exchangeName = exchangeName.Trim().ToLower();

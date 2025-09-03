@@ -27,7 +27,7 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kucoin.Spot.Api();
                 else
-                    throw new Exception("Kucoin Futures not supported");
+                    return new Kucoin.Futures.Api();
             case CryptoExchangeType.Mexc:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Mexc.Spot.Api();
@@ -37,12 +37,17 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Okx.Spot.Api();
                 else
-                    throw new Exception("OKX Futures not supported");
+                    return new Okx.Futures.Api();
             case CryptoExchangeType.Coinbase:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Coinbase.Spot.Api();
                 else
                     throw new Exception("Coinbase Futures not supported");
+            case CryptoExchangeType.HyperLiquid:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new HyperLiquid.Spot.Api();
+                else
+                    return new HyperLiquid.Futures.Api();
             default:
                 throw new Exception("Exchange not supported");
         }
@@ -71,7 +76,7 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Kucoin.Spot.Interval.GetExchangeInterval(interval) != null;
                 else
-                    return false;
+                    return Kucoin.Futures.Interval.GetExchangeInterval(interval) != null;
             case CryptoExchangeType.Mexc:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Mexc.Spot.Interval.GetExchangeInterval(interval) != null;
@@ -81,12 +86,17 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Okx.Spot.Interval.GetExchangeInterval(interval) != null;
                 else
-                    return false;
+                    return Okx.Futures.Interval.GetExchangeInterval(interval) != null;
             case CryptoExchangeType.Coinbase:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Coinbase.Spot.Interval.GetExchangeInterval(interval) != null;
                 else
                     return false;
+            case CryptoExchangeType.HyperLiquid:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return HyperLiquid.Spot.Interval.GetExchangeInterval(interval) != null;
+                else
+                    return HyperLiquid.Futures.Interval.GetExchangeInterval(interval) != null;
             default:
                 return false;
         }

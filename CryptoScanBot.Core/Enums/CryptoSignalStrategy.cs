@@ -16,6 +16,7 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
     Stoch = 20,
+    Macd = 21, // experiment
 
     NadarayaWatsonEnvelope = 25,
     NadarayaWatsonEnvelopeCross = 27,

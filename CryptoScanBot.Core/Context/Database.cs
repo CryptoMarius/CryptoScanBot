@@ -169,21 +169,28 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Bybit Spot", FeeRate = 0.15m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
             new() { Name = "Bybit Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
 
+            // Futures not supported (needs additional work)
             new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
-            // not supported (meeds additional work)
-            new() { Name = "Kucoin Futures", FeeRate = 0.0m, IsSupported = false, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kucoin Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
 
-            // not supported (kline streams not working properly)
+            // not supported (kline streams not working properly for both)
+            // -- futures does not support "SubscribeToKlineUpdatesAsync"
             new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-            // Never looked at futures though..
+            new() { Name = "Kraken Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
-            // Er is nog geen nuget library die deze ondersteund
+            // No api for futures, weird exchange
             //new() { Name = "Mexc Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Okx Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
+            //? no futures ?
 
             new() { Name = "Coinbase Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
+            //? no futures ?
+
+            // my first dex, symbol names don't have a quote, not sure how to handle them
+            new() { Name = "HyperLiquid Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
+            new() { Name = "HyperLiquid Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
         ];
     }
 

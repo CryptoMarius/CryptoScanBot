@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 46;
+    public readonly static int CurrentDatabaseVersion = 49;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1222,6 +1222,52 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        // 02-09-2025, added HyperLiquid spot experimental
+        if (CurrentVersion > version.Version && version.Version == 46)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(8, 0, 'HyperLiquid Spot', 0.1, 0)", transaction);
+            try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 02-09-2025, added HyperLiquid Futures experimental
+        if (CurrentVersion > version.Version && version.Version == 47)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(8, 1, 'HyperLiquid Futures', 0.1, 0)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 03-09-2025, added Kraken futures
+        if (CurrentVersion > version.Version && version.Version == 48)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(3, 1, 'Kraken Futures', 0.1, 0)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        // todo: Delete CryptoScanBot-weblinks.json?
 
         // Kind of a big step, delay because of impact
         ////***********************************************************

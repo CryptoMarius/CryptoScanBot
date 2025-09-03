@@ -9,4 +9,5 @@ public enum CryptoExchangeType
     Mexc = 5,
     Okx = 6,
     Coinbase = 7,
+    HyperLiquid = 8,
 }

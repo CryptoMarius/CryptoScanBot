@@ -22,17 +22,30 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Exchange\Binance\Futures\Asset.cs" />
+    <Compile Remove="Exchange\Binance\Futures\Order.cs" />
     <Compile Remove="Exchange\Binance\Futures\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\Binance\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Binance\Futures\Trade.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Asset.cs" />
     <Compile Remove="Exchange\Binance\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Order.cs" />
     <Compile Remove="Exchange\Binance\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Binance\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Trade.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Asset.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Order.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Trade.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Asset.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\CandlesEmulator.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Order.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\BybitApi\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Trade.cs" />
     <Compile Remove="Exchange\Coinbase\Spot\Asset.cs" />
     <Compile Remove="Exchange\Coinbase\Spot\Order.cs" />
     <Compile Remove="Exchange\Coinbase\Spot\SubscriptionPriceTicker.cs" />
@@ -71,7 +84,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Exchange\Kucoin\Futures\Api.cs" />
+    <Compile Include="Exchange\Kucoin\Futures\Candles.cs" />
     <Compile Include="Exchange\Kucoin\Futures\Interval.cs" />
+    <Compile Include="Exchange\Kucoin\Futures\KucoinWeights.cs" />
+    <Compile Include="Exchange\Kucoin\Futures\SubscriptionKLineTicker.cs" />
+    <Compile Include="Exchange\Kucoin\Futures\Symbol.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -80,6 +98,7 @@
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="HyperLiquid.Net" Version="2.11.0" />
     <PackageReference Include="JK.Mexc.Net" Version="3.8.0" />
     <PackageReference Include="JK.OKX.Net" Version="3.7.0" />
     <PackageReference Include="JKorf.Coinbase.Net" Version="2.7.0" />
