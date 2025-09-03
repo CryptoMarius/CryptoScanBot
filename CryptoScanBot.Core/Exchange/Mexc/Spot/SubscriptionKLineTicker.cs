@@ -1,5 +1,6 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -33,21 +34,20 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         SemaphoreSlim symbolListSemaphore = new(1, 1);
-        SortedList<string, CryptoCandleList> klineListTemp = [];
+        TickerGroup!.SocketClient ??= new MexcSocketClient();
+        var client = (MexcSocketClient)TickerGroup!.SocketClient;
+        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
+        var api = client.SpotApi;
 
-        // TODO: quick en dirty code hier, nog eens verbeteren
-        // We verwachten (helaas) slechts 1 symbol per ticker
+        // TODO: quick en dirty
+        SortedList<string, CryptoCandleList> klineListTemp = [];
         List<string> symbols = [];
         //string symbolName = "";
         foreach (var symbol in SymbolList)
         {
-            //Symbol = symbol;
-            //if (symbolName == "")
-            //    symbolName = symbol.Name;
-            //else
-            //    symbolName += "," + symbol.Name;
-            symbols.Add(symbol.Name);
-            klineListTemp.Add(symbol.Name, []);
+            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+            symbols.Add(symbolName);
+            klineListTemp.Add(symbolName, []);
         }
 
 
@@ -56,9 +56,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
 
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
-        TickerGroup!.SocketClient ??= new MexcSocketClient();
-        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
-        var subscriptionResult = await ((MexcSocketClient)TickerGroup.SocketClient).SpotApi.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
         {
             Task taskKline = Task.Run(async () =>
             {

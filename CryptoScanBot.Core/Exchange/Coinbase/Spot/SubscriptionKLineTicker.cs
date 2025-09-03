@@ -5,8 +5,8 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
 using Coinbase.Net.Clients;
-using Coinbase.Net.Enums;
 using Coinbase.Net.Objects.Models;
+using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanBot.Core.Exchange.Coinbase.Spot;
 
@@ -37,7 +37,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{symbolName} Candle {kline.OpenTime.ToLocalTime()} start processing");
+                //GlobalData.AddTextToLogTab($"{symbolNames} Candle {kline.OpenTime.ToLocalTime()} start processing");
 
                 var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.Volume);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
@@ -53,27 +53,28 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         SemaphoreSlim symbolListSemaphore = new(1, 1);
+        TickerGroup!.SocketClient ??= new CoinbaseSocketClient();
+        var client = (CoinbaseSocketClient)TickerGroup.SocketClient;
+        var api = client.AdvancedTradeApi;
 
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        string symbolName = "";
+        string symbolNames = "";
         foreach (var symbol in SymbolList)
         {
-            //Symbol = symbol;
-            if (symbolName == "")
-                symbolName = symbol.Base + "-" + symbol.Quote;
+            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+            if (symbolNames == "")
+                symbolNames = symbolName;
             else
-                symbolName += "," + symbol.Base + "-" + symbol.Quote;
-            symbols.Add(symbolName);
+                symbolNames += "," + symbolName;
+            symbols.Add(symbolNames);
         }
 
         // WTF, dit is een kline die alleen de 5m ondersteund, wat moet je hier nu weer mee?
 
 
-        TickerGroup!.SocketClient ??= new CoinbaseSocketClient();
-        var subscriptionResult = await ((CoinbaseSocketClient)TickerGroup.SocketClient).AdvancedTradeApi.SubscribeToKlineUpdatesAsync(
-            symbolName, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
             foreach (CoinbaseStreamKline kline in data.Data)
