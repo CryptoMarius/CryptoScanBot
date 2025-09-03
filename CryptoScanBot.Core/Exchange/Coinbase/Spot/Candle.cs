@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Model;
 
 using Coinbase.Net.Clients;
 using Coinbase.Net.Enums;
+using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanBot.Core.Exchange.Coinbase.Spot;
 
@@ -25,6 +26,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             client = client1;
         else
             throw new Exception("Expected CoinbaseRestClient");
+        var api = client.AdvancedTradeApi;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -40,7 +42,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        var result = await client.AdvancedTradeApi.ExchangeData.GetKlinesAsync(symbol.Base + '-' + symbol.Quote, (KlineInterval)exchangeInterval, 
+        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {

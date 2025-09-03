@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Core;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -25,6 +27,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             client = client1;
         else
             throw new Exception("Expected BybitRestClient");
+        var api = client.SpotApi;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -42,7 +45,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
     Again:
-        var result = await client.SpotApi.ExchangeData.GetKlinesAsync(symbol.Name, (KlineInterval)exchangeInterval, 
+        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
             startTime: minDate, endTime: maxDate, limit: limit);
         if (!result.Success)
         {

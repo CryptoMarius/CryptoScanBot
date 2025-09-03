@@ -1,6 +1,8 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
+using CryptoExchange.Net.SharedApis;
+
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -31,6 +33,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             client = client1;
         else
             throw new Exception("Expected BybitRestClient");
+        var api = client.V5Api;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -46,7 +49,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        var result = await client.V5Api.ExchangeData.GetKlinesAsync(Category.Spot, symbol.Name, (KlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate, limit: 1000);
+        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+        var result = await api.ExchangeData.GetKlinesAsync(Category.Spot, symbolName, (KlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate, limit: 1000);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
