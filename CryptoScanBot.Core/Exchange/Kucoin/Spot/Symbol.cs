@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
@@ -16,7 +18,8 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new KucoinRestClient();
+                using var client = new KucoinRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.SpotApi;
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -25,7 +28,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 KucoinWeights.WaitForFairWeight(1);
-                var tickerInfo = await client.SpotApi.ExchangeData.GetTickersAsync();
+                var tickerInfo = await api.ExchangeData.GetTickersAsync();
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -48,63 +51,15 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
-                /*
-                "Data": [
-                {
-                    "Symbol": "BTC-USDT",
-                    "Name": "BTC-USDT",
-                    "Market": "USDS",
-                    "BaseAsset": "BTC",
-                    "QuoteAsset": "USDT",
-                    "BaseMinQuantity": 0.00001,
-                    "QuoteMinQuantity": 0.01,
-                    "BaseMaxQuantity": 10000000000,
-                    "QuoteMaxQuantity": 99999999,
-                    "BaseIncrement": 0.00000001,
-                    "QuoteIncrement": 0.000001,
-                    "PriceIncrement": 0.1,
-                    "PriceLimitRate": 0.1,
-                    "FeeAsset": "USDT",
-                    "IsMarginEnabled": true,
-                    "EnableTrading": true,
-                    "MinFunds": 0.1
-                },
-                ...
-                ]
-                */
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 KucoinWeights.WaitForFairWeight(1);
-                var symbolInfo = await client.SpotApi.ExchangeData.GetSymbolsAsync();
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync();
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
                 if (symbolInfo == null)
                     throw new ExchangeException("No exchange data received");
                 SaveExchangeInfo(symbolInfo, "symbols.json");
-
-
-                /* ticker
-                 
-                  {
-                    "Symbol": "BTC-USDT",
-                    "SymbolName": "BTC-USDT",
-                    "BestAskPrice": 29435.3,
-                    "BestBidPrice": 29435.2,
-                    "ChangePercentage": 0.0018,
-                    "ChangePrice": 55.4,
-                    "HighPrice": 29472.5,
-                    "LowPrice": 29100.5,
-                    "Volume": 1143.99893497,
-                    "QuoteVolume": 33549185.280333833,
-                    "LastPrice": 29435.2,
-                    "AveragePrice": 29410.48473908,
-                    "TakerFeeRate": 0.001,
-                    "MakerFeeRate": 0.001,
-                    "TakerCoefficient": 1,
-                    "MakerCoefficient": 1
-                  },
-                */
-
 
 
                 if (symbolInfo.Data != null)
@@ -121,16 +76,14 @@ public class Symbol() : SymbolBase(), ISymbol
                         {
                             foreach (var symbolData in symbolInfo.Data)
                             {
-                                // https://docs.kucoin.com/#symbols-amp-ticker
-                                // https://api.kucoin.com/api/v1/symbols
-                                //Eventueel symbol toevoegen
-                                string symbolName = symbolData.Name.Replace("-", "");
-
-                                if (symbolName != symbolData.BaseAsset + symbolData.QuoteAsset)
+                                string symbolName = api.FormatSymbol(symbolData.BaseAsset, symbolData.QuoteAsset, TradingMode.Spot);
+                                if (symbolName != symbolData.Symbol)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
+                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
                                     continue;
                                 }
+                                symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
+
 
                                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {

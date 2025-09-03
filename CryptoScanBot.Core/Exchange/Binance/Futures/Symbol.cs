@@ -1,6 +1,8 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 
+using CryptoExchange.Net.SharedApis;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
@@ -18,6 +20,7 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new BinanceRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.UsdFuturesApi;
                 using CryptoDatabase database = new();
                 database.Open();
                
@@ -25,7 +28,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.UsdFuturesApi.ExchangeData.GetTickersAsync();
+                var tickerInfo = await api.ExchangeData.GetTickersAsync();
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
@@ -43,7 +46,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.UsdFuturesApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -62,46 +65,16 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data.Symbols)
                         {
-                            ////
-                            //// Summary:
-                            ////     Status of a symbol
-                            //    public enum SymbolStatus
-                            //    {
-                            //        //
-                            //        // Summary:
-                            //        //     Not trading yet
-                            //        PreTrading = 0,
-                            //        //
-                            //        // Summary:
-                            //        //     Trading
-                            //        Trading = 1,
-                            //        //
-                            //        // Summary:
-                            //        //     No longer trading
-                            //        PostTrading = 2,
-                            //        //
-                            //        // Summary:
-                            //        //     Not trading
-                            //        EndOfDay = 3,
-                            //        //
-                            //        // Summary:
-                            //        //     Halted
-                            //        Halt = 4,
-                            //        AuctionMatch = 5,
-                            //        Break = 6
-                            //    }
-
-                            //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
-                            //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
-
-                            if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
+                            string symbolName = api.FormatSymbol(symbolData.BaseAsset, symbolData.QuoteAsset, TradingMode.PerpetualLinear);
+                            if (symbolName != symbolData.Name)
                             {
-                                //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Name} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
                                 continue;
                             }
+                            symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
 
                             //Eventueel symbol toevoegen
-                            if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
+                            if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                             {
                                 var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
 
@@ -109,7 +82,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 {
                                     Exchange = exchange,
                                     ExchangeId = exchange.Id,
-                                    Name = symbolData.Name,
+                                    Name = symbolName,
                                     Base = symbolData.BaseAsset,
                                     Quote = symbolData.QuoteAsset,
                                     QuoteData = quoteData,
