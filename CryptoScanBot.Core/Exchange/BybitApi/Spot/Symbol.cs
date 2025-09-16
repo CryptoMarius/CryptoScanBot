@@ -18,7 +18,7 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new BybitRestClient();
+                using var client = new BybitRestClient(options => { options.OutputOriginalData = true; });
                 using CryptoDatabase database = new();
                 database.Open();
 

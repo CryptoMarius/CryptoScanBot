@@ -6,6 +6,7 @@ using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 
 //using ApiAlias = CryptoScanBot.Core.Exchange.Kucoin.Futures;
+using CryptoScanBot.Core.Exchange.Kucoin.Futures;
 
 namespace ExchangeTest.Exchange.Kucoin.Futures;
 
@@ -25,7 +26,7 @@ public class Candles
 
     private static async Task<long> GetCandlesForInterval(KucoinRestClient client, CryptoSymbol symbol, CryptoInterval interval, CryptoSymbolInterval symbolInterval)
     {
-        FuturesKlineInterval? exchangeInterval = GetExchangeInterval(interval);
+        FuturesKlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
         if (exchangeInterval == null)
             return 0;
 

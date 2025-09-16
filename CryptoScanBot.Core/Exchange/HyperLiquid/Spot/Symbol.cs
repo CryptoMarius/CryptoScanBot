@@ -19,7 +19,7 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new HyperLiquidRestClient();
+                using var client = new HyperLiquidRestClient(options => { options.OutputOriginalData = true; });
                 using CryptoDatabase database = new();
                 database.Open();
 

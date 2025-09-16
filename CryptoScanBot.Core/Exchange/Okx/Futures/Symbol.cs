@@ -4,8 +4,6 @@ using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
-using System.Text.Json;
-
 using OKX.Net.Clients;
 using OKX.Net.Enums;
 
@@ -20,7 +18,7 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new OKXRestClient();
+                using var client = new OKXRestClient(options => { options.OutputOriginalData = true; });
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -33,7 +31,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
+                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];
@@ -55,7 +53,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("No exchange data retrieved (2)");
-                SaveExchangeInfo(symbolInfo, "symbols.json");
+                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren

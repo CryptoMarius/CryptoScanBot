@@ -1,6 +1,7 @@
 ﻿using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 
 using Dapper.Contrib.Extensions;
@@ -17,16 +18,16 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new KucoinRestClient();
-                var symbolData = await client.FuturesApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
-                if (!symbolData.Success)
-                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolData.Error}");
-                SaveExchangeInfo(symbolData, "symbols.json");
+                using var client = new KucoinRestClient(options => { options.OutputOriginalData = true; });
+                var symbolInfo = await client.FuturesApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                if (!symbolInfo.Success)
+                    GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
+                SaveExchangeInfo(JsonTools.FormatJson(symbolInfo.OriginalData!), "symbols.json");
 
 
-                //if (symbolData.Data == null)
-                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {symbolData.Error}");
-                if (symbolData.Data != null)
+                //if (symbolInfo.Data == null)
+                //    throw new ExchangeException($"Geen exchange data ontvangen (2) {symbolInfo.Error}");
+                if (symbolInfo.Data != null)
                 {
                     using CryptoDatabase database = new();
                     database.Open();
@@ -40,7 +41,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         List<CryptoSymbol> cache = [];
                         try
                         {
-                            foreach (var symbolData in symbolData.Data)
+                            foreach (var symbolData in symbolInfo.Data)
                             {
                                 // https://docs.kucoin.com/#symbols-amp-ticker
                                 // https://api.kucoin.com/api/v1/symbols
@@ -48,7 +49,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 GlobalData.AddTextToLogTab($"symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset}");
 
                                 // Kucoin has a different (weird?) symbolname "[Base][Quote]M"
-                                string symbolName = symbolData.Symbol; //symbolData.BaseAsset + symbolData.QuoteAsset; 
+                                string symbolName = symbolData.Symbol; //symbolInfo.BaseAsset + symbolInfo.QuoteAsset; 
 
                                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                                 {
@@ -65,18 +66,18 @@ public class Symbol() : SymbolBase(), ISymbol
                                         PriceTickSize = 1,
                                     };
                                 }
-                                symbol.Name = symbolName; //symbolData.Symbol, BaseQuoteM?
+                                symbol.Name = symbolName; //symbolInfo.Symbol, BaseQuoteM?
 
                                 // Minimale en maximale amount voor een order (in base amount)
                                 symbol.QuantityMinimum = symbolData.LotSize;
                                 symbol.QuantityMaximum = symbolData.MaxOrderQuantity;
                                 // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
-                                symbol.QuantityTickSize = 0; // symbolData.?;
+                                symbol.QuantityTickSize = 0; // symbolInfo.?;
 
                                 // De minimale en maximale prijs voor een order (in base price)
                                 // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
                                 // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                symbol.PriceMinimum = 0; // symbolData.?;
+                                symbol.PriceMinimum = 0; // symbolInfo.?;
                                 symbol.PriceMaximum = symbolData.MaxPrice;
                                 symbol.PriceTickSize = symbolData.TickSize; //?
 

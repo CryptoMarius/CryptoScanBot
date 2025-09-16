@@ -175,13 +175,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                                await CandleTools.Process1mCandleAsync(symbol, candle.Date, candle.Open, candle.High, candle.Low, candle.Close,
-#if SUPPORTBASEVOLUME
-                                    candle.BaseVolume, 
-#else
-                                    0,
-#endif
-                                    (decimal)candle.Volume);
+                                await CandleTools.Process1mCandleAsync(symbol, candle.Date, 
+                                    candle.Open, candle.High, candle.Low, candle.Close,
+                                    0, candle.Volume);
 
                                 //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
                                 //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");

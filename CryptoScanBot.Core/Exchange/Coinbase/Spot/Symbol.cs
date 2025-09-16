@@ -18,7 +18,7 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new CoinbaseRestClient();
+                using var client = new CoinbaseRestClient(options => { options.OutputOriginalData = true; });
                 using CryptoDatabase database = new();
                 database.Open();
 

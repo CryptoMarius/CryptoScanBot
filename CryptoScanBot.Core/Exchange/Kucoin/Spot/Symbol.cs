@@ -33,7 +33,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
+                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // Create dictionary for the volume
                 SortedList<string, decimal> volumeTicker = [];
@@ -59,7 +59,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
                 if (symbolInfo == null)
                     throw new ExchangeException("No exchange data received");
-                SaveExchangeInfo(symbolInfo, "symbols.json");
+                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
                 if (symbolInfo.Data != null)

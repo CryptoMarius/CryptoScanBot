@@ -17,7 +17,7 @@ public class Symbol() : SymbolBase(), ISymbol
         {
             try
             {
-                using var client = new MexcRestClient();
+                using var client = new MexcRestClient(options => { options.OutputOriginalData = true; });
                 client.ClientOptions.OutputOriginalData = true;
                 using CryptoDatabase database = new();
                 database.Open();
@@ -31,7 +31,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
+                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // index volume
                 SortedList<string, decimal> volumeTicker = [];
@@ -56,7 +56,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
                 if (symbolInfo == null)
                     throw new ExchangeException("No exchange data received");
-                SaveExchangeInfo(symbolInfo, "symbols.json");
+                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
 

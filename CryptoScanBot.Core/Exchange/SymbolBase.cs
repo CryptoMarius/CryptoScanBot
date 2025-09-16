@@ -32,6 +32,9 @@ public class SymbolBase()
         if (text == null) 
             return;
 
+        // Reformat (all on 1 line)
+        text = JsonTools.FormatJson(text);
+
         // Save for debug
         try
         {

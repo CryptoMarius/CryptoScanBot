@@ -59,7 +59,6 @@ public class Symbol() : SymbolBase(), ISymbol
                     throw new ExchangeException("No exchange data received");
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
-
                 if (symbolInfo.Data != null)
                 {
 
