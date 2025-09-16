@@ -2,6 +2,28 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
+Een beslissing maken over de Average min/max rechtsboven
+
+Beslissing maken over Kucoin Futures
+Waarom mist de btcusdt op Kucoin Futures? Andere naam wellicht?
+
+Beslissing maken over OKX futures
+
+Beslissing maken over HyperLiquid spot 
+Beslissing maken over HyperLiquid futures
+Hoe wil ik de missende quote oplossen 
+(tevens volume probleem want hoe gebruiken ze het?)
+Is het niet beter om dan de USDT prijs te gebruiken?
+Wellicht eerst al die nieuwe exchanges uitzetten en beter testen
+
+testen: Volume munten op alle exchanges (bybit spot is okay)
+Volume laten berekenen uit de laatste 24 1 uur candles (dat is redelijk goede benadering)
+Dan kunnen alle ticker dingen definitief weg
+1 probleem, volume filters (mexc/kucoin etc), die moeten eerst rekenen, pas daarna kline ticker
+En dat is een probleem, want dat is een beetje kip en ei probleem (wordt normaliter eerder gestart)
+Ach, dat ticker ding bij opstarten zit me ook niet in de weg
+Is bovendien voor HyperLiquid ook een dingetje
+
 Scanner:
 - Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
 - Scanner - Wisselen van basismunt veroorzaak dubbele symbols in de database

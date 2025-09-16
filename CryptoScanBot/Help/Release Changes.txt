@@ -1,18 +1,24 @@
 CryptoScanBot release historie:
 
+16-09-2025 2.1.6
+- Scanner - Een missend veld toegevoegd in de database en de migration aangepast
+- Scanner - Exchange Bitmart toegevoegd, maar dat werkt niet zoals het hoort (niet zichtbaar)
+- Scanner - Exchange Kucoin futures toegevoegd, lijkt te werken, maar moet getest worden
+- Scanner - Exchange HyperLiquid spot + futures toegevoegd, lijkt te werken, maar moet getest worden
+- Scanner - In de achtergrond bezig met een interface voor bybit.eu, maar deze is nog niet bruikbaar
+- Scanner - Opstart parameters versimpeld, de volledige naam van de exchange + toevoeging moet worden opgegeven
+
 01-09-2025 2.1.5
 - Scanner - Logging NLOG, de formatting bestanden is wellicht anders
 - Scanner - Exchange OKX toegevoegd, voor ons Nederlanders is alleen de EUR en USDC markten bereikbaar
 - Scanner - Bij dubbelklikken op een signaal ook de timeframe van het chart formulier zetten (maar niet bij zones)
 - Scanner - Ondersteuning van alle timeframes in het chart formulier (nu alleen die van de exchange)
-- Scanner - De BB, SMA200, SMA50 en SMA20 tonen in het chart formulier zetten (ter ondersteuining van SBM)
-- Scanner - Nieuw algoritme, Nadaraya Watson Envelope (een andere manier van BB/KC), deze is "repainting" waardoor het verleden wordy veranderd (tamelijk vervelend)
-- Scanner - De user- en price ticker zijn uitgeschakeld en zullen gaan vervallen, realtime wijzigingen in prijzen zijn niet (meer) van belang voor de scanner
+- Scanner - De BB, SMA200, SMA50 en SMA20 tonen in het chart formulier zetten (ter ondersteuning van SBM)
+- Scanner - Nieuw algoritme, Nadaraya Watson Envelope (een andere manier van BB/KC), deze is "repainting" waardoor het verleden wordt veranderd
+- Scanner - Alle user- en price ticker zijn uitgeschakeld en zullen gaan vervallen, realtime wijzigingen in prijzen zijn niet (meer) van belang voor de scanner
 - Scanner - Ivm wegvallen price ticker GetTickers geimplementeerd om het wegvallen van het 24h volume op te vangen (1x in het uur de informatie verversen)
 - Scanner - De Exchange API uitgeschakeld (aangezien alle trading via Altrady zal gaan verlopen)
 - Scanner - De limit rates van Bybit naa beneden bijgesteld, er waren waarschuwingen bij het opstarten dat we over de limiet gingen bij het ophalen van de klines
-
-testen: Volume munten op alle exchanges (bybit spot is okay)
 
 29-05-2025 2.1.4
 - Scanner - De scanner houdt geen rekening meer met het aantal dagen dat de munt bestaat.
