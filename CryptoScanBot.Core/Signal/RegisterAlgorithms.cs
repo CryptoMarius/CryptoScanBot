@@ -218,26 +218,26 @@ public static class RegisterAlgorithms
         });
 #endif
 
-        // does not work properly afaict
-        // Trend reversal
-        Register(new AlgorithmDefinition()
-        {
-            Name = "trend",
-            Strategy = CryptoSignalStrategy.Trend,
-            AnalyzeLongType = typeof(SignalTrendLong),
-            AnalyzeShortType = typeof(SignalTrendShort),
-        });
+        //// does not work properly afaict
+        //// Trend reversal
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "trend",
+        //    Strategy = CryptoSignalStrategy.Trend,
+        //    AnalyzeLongType = typeof(SignalTrendLong),
+        //    AnalyzeShortType = typeof(SignalTrendShort),
+        //});
 
 
 
-        // BBMA - Oma Ally
-        Register(new AlgorithmDefinition()
-        {
-            Name = "macd",
-            Strategy = CryptoSignalStrategy.Macd,
-            AnalyzeLongType = typeof(SignalMacdLong),
-            AnalyzeShortType = typeof(SignalMacdShort),
-        });
+        //// BBMA - Oma Ally
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "macd",
+        //    Strategy = CryptoSignalStrategy.Macd,
+        //    AnalyzeLongType = typeof(SignalMacdLong),
+        //    AnalyzeShortType = typeof(SignalMacdShort),
+        //});
 
     }
 
