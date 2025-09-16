@@ -52,7 +52,6 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
-                
 
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
