@@ -395,8 +395,8 @@ public partial class CryptoVisualisation : Form
 
     private async void ButtonIntervalPlusOrMin(int direction)
     {
-        if (Data != null && plotModel != null && 
-            Session.ActiveInterval + direction >= CryptoIntervalPeriod.interval1m && 
+        if (Data != null && plotModel != null &&
+            Session.ActiveInterval + direction >= CryptoIntervalPeriod.interval1m &&
             Session.ActiveInterval + direction <= CryptoIntervalPeriod.interval1w)
         {
             Session.ActiveInterval += direction;
@@ -667,7 +667,7 @@ public partial class CryptoVisualisation : Form
     private async Task CreateChartAndOverlays()
     {
         // Create the chart
-        SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+        SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = Data!.IndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
         CryptoTrendIndicator trendIndicator = TrendInterval.InterpretZigZagPoints(mainIndicator, null);
         plotModel = Chart.Chart.Create(Data.Symbol, Data.Interval, out horizontalLine, out verticalLine);
@@ -841,6 +841,5 @@ public partial class CryptoVisualisation : Form
             GlobalData.AddTextToLogTab("ERROR settings " + error.ToString());
         }
     }
-
 
 }

@@ -55,6 +55,7 @@ partial class CryptoVisualisation
         ButtonCalculate = new Button();
         ButtonZoomLast = new Button();
         groupBox1 = new GroupBox();
+        EditShowSmaLinesSbm = new CheckBox();
         EditShowNadarayaWatsonEnvelope = new CheckBox();
         EditShowBollingerBand = new CheckBox();
         EditShowDlzZones = new CheckBox();
@@ -64,7 +65,6 @@ partial class CryptoVisualisation
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
-        EditShowSmaLinesSbm = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -355,6 +355,16 @@ partial class CryptoVisualisation
         groupBox1.TabStop = false;
         groupBox1.Text = "Misc";
         // 
+        // EditShowSmaLinesSbm
+        // 
+        EditShowSmaLinesSbm.AutoSize = true;
+        EditShowSmaLinesSbm.Location = new Point(5, 219);
+        EditShowSmaLinesSbm.Name = "EditShowSmaLinesSbm";
+        EditShowSmaLinesSbm.Size = new Size(110, 19);
+        EditShowSmaLinesSbm.TabIndex = 36;
+        EditShowSmaLinesSbm.Text = "Show SBM SMA";
+        EditShowSmaLinesSbm.UseVisualStyleBackColor = true;
+        // 
         // EditShowNadarayaWatsonEnvelope
         // 
         EditShowNadarayaWatsonEnvelope.AutoSize = true;
@@ -379,7 +389,7 @@ partial class CryptoVisualisation
         // 
         EditShowDlzZones.AutoSize = true;
         EditShowDlzZones.Location = new Point(5, 96);
-        EditShowDlzZones.Name = "EditDlzShow";
+        EditShowDlzZones.Name = "EditShowDlzZones";
         EditShowDlzZones.Size = new Size(106, 19);
         EditShowDlzZones.TabIndex = 5;
         EditShowDlzZones.Text = "Show dlz zones";
@@ -448,16 +458,6 @@ partial class CryptoVisualisation
         plotView.ZoomHorizontalCursor = Cursors.SizeWE;
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
-        // 
-        // EditShowSmaLinesSbm
-        // 
-        EditShowSmaLinesSbm.AutoSize = true;
-        EditShowSmaLinesSbm.Location = new Point(5, 219);
-        EditShowSmaLinesSbm.Name = "EditShowSmaLinesSbm";
-        EditShowSmaLinesSbm.Size = new Size(110, 19);
-        EditShowSmaLinesSbm.TabIndex = 36;
-        EditShowSmaLinesSbm.Text = "Show SBM SMA";
-        EditShowSmaLinesSbm.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
