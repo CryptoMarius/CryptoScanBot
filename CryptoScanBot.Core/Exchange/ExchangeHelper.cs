@@ -48,6 +48,11 @@ public static class Helper
                     return new HyperLiquid.Spot.Api();
                 else
                     return new HyperLiquid.Futures.Api();
+            case CryptoExchangeType.BitMart:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new BitMart.Spot.Api();
+                else
+                    return new BitMart.Futures.Api();
             default:
                 throw new Exception("Exchange not supported");
         }
@@ -97,6 +102,11 @@ public static class Helper
                     return HyperLiquid.Spot.Interval.GetExchangeInterval(interval) != null;
                 else
                     return HyperLiquid.Futures.Interval.GetExchangeInterval(interval) != null;
+            case CryptoExchangeType.BitMart:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return BitMart.Spot.Interval.GetExchangeInterval(interval) != null;
+                else
+                    return BitMart.Futures.Interval.GetExchangeInterval(interval) != null;
             default:
                 return false;
         }

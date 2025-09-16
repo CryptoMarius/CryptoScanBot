@@ -94,6 +94,7 @@
 
   <ItemGroup>
     <PackageReference Include="Binance.Net" Version="11.7.0" />
+    <PackageReference Include="BitMart.Net" Version="2.8.0" />
     <PackageReference Include="Bybit.Net" Version="5.8.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />

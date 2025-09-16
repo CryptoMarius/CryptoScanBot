@@ -10,4 +10,5 @@ public enum CryptoExchangeType
     Okx = 6,
     Coinbase = 7,
     HyperLiquid = 8,
+    BitMart = 9,
 }
