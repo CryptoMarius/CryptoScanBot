@@ -770,22 +770,6 @@ public static class GlobalData
         string? exchangeName = ApplicationParams.Options!.ExchangeName;
         if (exchangeName != null)
         {
-            // Migration (not needed but its cheap)
-            if (exchangeName == "Binance")
-                exchangeName = "Binance Spot";
-            if (exchangeName == "Bybit")
-                exchangeName = "Bybit Spot";
-            if (exchangeName == "Kraken")
-                exchangeName = "Kraken Spot";
-            if (exchangeName == "Kucoin")
-                exchangeName = "Kucoin Spot";
-            if (exchangeName == "Mexc")
-                exchangeName = "Mexc Spot";
-            if (exchangeName == "Coinbase")
-                exchangeName = "Coinbase Spot";
-            if (exchangeName == "HyperLiquid")
-                exchangeName = "HyperLiquid Spot";
-
             // People forget to use the right casing
             exchangeName = exchangeName.Trim().ToLower();
             string? found = ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;

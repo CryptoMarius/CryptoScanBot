@@ -191,6 +191,9 @@ public class CryptoDatabase : IDisposable
             // my first dex, symbol names don't have a quote, not sure how to handle them
             new() { Name = "HyperLiquid Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
             new() { Name = "HyperLiquid Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
+
+            new() { Name = "BitMart Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
+            new() { Name = "BitMart Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
         ];
     }
 
@@ -314,9 +317,9 @@ public class CryptoDatabase : IDisposable
                 "CloseDate TEXT NULL," +
                 "ExpirationDate TEXT NULL," +
 
+                "EventText TEXT NULL," +
                 "SignalPrice TEXT NOT NULL," +
                 "SignalVolume TEXT NULL," +
-                "EventText TEXT NULL," +
 
                 "Last24HoursChange TEXT NULL," +
                 "LastXDaysEffective TEXT NULL," +
@@ -392,7 +395,7 @@ public class CryptoDatabase : IDisposable
                 "PriceMinPerc TEXT NULL," +
                 "PriceMaxPerc TEXT NULL," +
 
-                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
+                "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
             ")");
@@ -453,8 +456,7 @@ public class CryptoDatabase : IDisposable
                 "SignalVolume TEXT NULL," +
 
                 "Last24HoursChange TEXT NULL," +
-                "Last24HoursEffective TEXT NULL," +
-                "Last10DaysEffective TEXT NULL," +
+                "LastXDaysEffective TEXT NULL," +
 
                 "TrendPercentagePrimary TEXT NULL," +
                 "TrendPercentageSecondary TEXT NULL," +

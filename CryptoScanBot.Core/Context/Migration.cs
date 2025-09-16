@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 49;
+    public readonly static int CurrentDatabaseVersion = 51;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1267,32 +1267,43 @@ public class Migration
             transaction.Commit();
         }
 
+        //***********************************************************
+        // 04-09-2025, added BitMart
+        if (CurrentVersion > version.Version && version.Version == 49)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(9, 0, 'BitMart Spot', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(9, 1, 'BitMart Futures', 0.1, 0)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 04-09-2025, correction, forgot to rename Position.Last10DaysEffective
+        if (CurrentVersion > version.Version && version.Version == 50)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Position add LastXDaysEffective Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("update Position set LastXDaysEffective=Last10DaysEffective", transaction); } catch { } // ignore
+
+            try { database.Connection.Execute("alter table Position drop column Last48Hours", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position drop column Last24HoursEffective", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position drop column Last10DaysEffective", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         // todo: Delete CryptoScanBot-weblinks.json?
 
-        // Kind of a big step, delay because of impact
-        ////***********************************************************
-        //// 04-03-2025, account simplifications (overcomplicating things)
-        //if (CurrentVersion > version.Version && version.Version == 99999)
-        //{
-        //    using var transaction = database.BeginTransaction();
-
-        //    try { database.Connection.Execute("drop table [Asset]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [Order]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [Trade]", transaction); } catch { } // ignore
-        //    // Since we are unable to drop constraints drop all positions
-        //    try { database.Connection.Execute("drop table [PositionStep]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [PositionPart]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [Position]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // ignore
-        //    try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
-
-        //    // update version
-        //    version.Version += 1;
-        //    database.Connection.Update(version, transaction);
-        //    transaction.Commit();
-
-        //    // todo: Delete CryptoScanBot-weblinks.json?
-        //}
     }
 
 }
