@@ -312,4 +312,32 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "BINA",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
+                Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}&interval={interval}"
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=spot",
+            }
+        };
+    }
 }

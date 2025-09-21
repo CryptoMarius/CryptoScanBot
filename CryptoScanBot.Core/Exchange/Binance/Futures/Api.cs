@@ -130,16 +130,6 @@ public class Api : ExchangeBase
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
     }
 
-    //public override async Task GetSymbolsAsync()
-    //{
-    //    await Symbol.GetSymbolsAsync();
-    //}
-
-    //public override async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
-    //{
-    //    await Candle.GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
-    //}
-
 
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
@@ -317,4 +307,32 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "BIFU",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/BIFU_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
+                Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
+            }
+        };
+    }
 }
