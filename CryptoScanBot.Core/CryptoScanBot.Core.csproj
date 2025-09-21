@@ -13,15 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Exchange\Base\**" />
-    <Compile Remove="Exchange\Kucoin\Futures\**" />
-    <EmbeddedResource Remove="Exchange\Base\**" />
-    <EmbeddedResource Remove="Exchange\Kucoin\Futures\**" />
-    <None Remove="Exchange\Base\**" />
-    <None Remove="Exchange\Kucoin\Futures\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="Exchange\Binance\Futures\Asset.cs" />
     <Compile Remove="Exchange\Binance\Futures\Order.cs" />
     <Compile Remove="Exchange\Binance\Futures\SubscriptionPriceTicker.cs" />
@@ -33,6 +24,12 @@
     <Compile Remove="Exchange\Binance\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\Binance\Spot\SubscriptionUserTicker.cs" />
     <Compile Remove="Exchange\Binance\Spot\Trade.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Api.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Candle.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Interval.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\LimitRate.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\SubscriptionKLineTicker.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Symbol.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\Asset.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\BybitApi\Futures\Order.cs" />
@@ -54,6 +51,7 @@
     <Compile Remove="Exchange\Kraken\Spot\Asset.cs" />
     <Compile Remove="Exchange\Kraken\Spot\FetchTradesForOrder.cs" />
     <Compile Remove="Exchange\Kraken\Spot\Order.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\SubscriptionKLineTicker - Copy.cs" />
     <Compile Remove="Exchange\Kraken\Spot\SubscriptionPriceTicker.cs" />
     <Compile Remove="Exchange\Kraken\Spot\SubscriptionUserTicker.cs" />
     <Compile Remove="Exchange\Kraken\Spot\Trade.cs" />
@@ -83,34 +81,28 @@
     <Compile Remove="Trend\ZigZagIndicator7.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Exchange\Kucoin\Futures\Api.cs" />
-    <Compile Include="Exchange\Kucoin\Futures\Candles.cs" />
-    <Compile Include="Exchange\Kucoin\Futures\Interval.cs" />
-    <Compile Include="Exchange\Kucoin\Futures\KucoinWeights.cs" />
-    <Compile Include="Exchange\Kucoin\Futures\SubscriptionKLineTicker.cs" />
-    <Compile Include="Exchange\Kucoin\Futures\Symbol.cs" />
-  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Binance.Net" Version="11.7.0" />
+    <PackageReference Include="Binance.Net" Version="11.7.1" />
     <PackageReference Include="BitMart.Net" Version="2.8.0" />
+    <PackageReference Include="BloFin.Net" Version="1.0.0" />
     <PackageReference Include="Bybit.Net" Version="5.8.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
-    <PackageReference Include="HyperLiquid.Net" Version="2.11.0" />
+    <PackageReference Include="HyperLiquid.Net" Version="2.12.0" />
     <PackageReference Include="JK.Mexc.Net" Version="3.8.0" />
-    <PackageReference Include="JK.OKX.Net" Version="3.7.0" />
+    <PackageReference Include="JK.OKX.Net" Version="3.7.1" />
     <PackageReference Include="JKorf.Coinbase.Net" Version="2.7.0" />
     <PackageReference Include="KrakenExchange.Net" Version="6.7.0" />
-    <PackageReference Include="Kucoin.Net" Version="7.7.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
-    <PackageReference Include="NLog" Version="6.0.3" />
+    <PackageReference Include="Kucoin.Net" Version="7.7.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="NLog" Version="6.0.4" />
     <PackageReference Include="NPOI" Version="2.7.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.6.1" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.8" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.9" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
 
@@ -265,6 +257,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Exchange\BloFin\Spot\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 
