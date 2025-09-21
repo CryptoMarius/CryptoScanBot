@@ -239,6 +239,13 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalMacdShort),
         //});
 
+        Register(new AlgorithmDefinition()
+        {
+            Name = "dist.sma",
+            Strategy = CryptoSignalStrategy.SmaDist,
+            AnalyzeLongType = typeof(SignalSmaDistLong),
+            AnalyzeShortType = typeof(SignalSmaDistShort),
+        });
     }
 
 

@@ -17,6 +17,7 @@ public enum CryptoSignalStrategy
 
     Stoch = 20,
     Macd = 21, // experiment
+    SmaDist = 22, // experiment
 
     NadarayaWatsonEnvelope = 25,
     NadarayaWatsonEnvelopeCross = 27,
