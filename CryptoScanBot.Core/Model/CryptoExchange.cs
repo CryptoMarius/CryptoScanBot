@@ -9,13 +9,13 @@ public class CryptoExchange
 {
     [Key]
     public int Id { get; set; }
-    public required string Name { get; set; }
-    public bool IsSupported { get; set; }
+    public required string Name { get; set; } = string.Empty;
+    public bool IsSupported { get; set; } = true;
 
     // Datum dat de laatste keer de exchange informatie is opgehaald
     public DateTime? LastTimeFetched { get; set; }
 
-    public decimal FeeRate { get; set; }
+    public decimal FeeRate { get; set; } = 0.1m;
 
     public CryptoExchangeType ExchangeType { get; set; }
     public CryptoTradingType TradingType { get; set; }
