@@ -11,4 +11,5 @@ public enum CryptoExchangeType
     Coinbase = 7,
     HyperLiquid = 8,
     BitMart = 9,
+    BloFin = 10,
 }

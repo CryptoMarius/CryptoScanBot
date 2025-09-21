@@ -13,6 +13,11 @@ public static class Helper
                     return new Binance.Spot.Api();
                 else
                     return new Binance.Futures.Api();
+            case CryptoExchangeType.BloFin:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    throw new Exception("BloFin Spot not supported");
+                else
+                    return new BloFin.Futures.Api();
             case CryptoExchangeType.Bybit:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new BybitApi.Spot.Api();
@@ -58,55 +63,60 @@ public static class Helper
         }
     }
 
-    public static bool IsIntervalSupported(this Model.CryptoExchange exchange, CryptoIntervalPeriod interval)
+    public static bool IsIntervalSupported(this Model.CryptoExchange exchange, CryptoIntervalPeriod intervalPeriod)
     {
         switch (exchange.ExchangeType)
         {
             case CryptoExchangeType.Binance:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Binance.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Binance.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return Binance.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return Binance.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
+            case CryptoExchangeType.BloFin:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    throw new Exception("BloFin Spot not supported");
+                else
+                    return BloFin.Futures.Interval. GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.Bybit:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return BybitApi.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return BybitApi.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return BybitApi.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return BybitApi.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.Kraken:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Kraken.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
                     return false;
             case CryptoExchangeType.Kucoin:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Kucoin.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Kucoin.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return Kucoin.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return Kucoin.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.Mexc:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Mexc.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Mexc.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
                     return false;
             case CryptoExchangeType.Okx:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Okx.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Okx.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return Okx.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return Okx.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.Coinbase:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Coinbase.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return Coinbase.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
                     return false;
             case CryptoExchangeType.HyperLiquid:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return HyperLiquid.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return HyperLiquid.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return HyperLiquid.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return HyperLiquid.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.BitMart:
                 if (exchange.TradingType == CryptoTradingType.Spot)
-                    return BitMart.Spot.Interval.GetExchangeInterval(interval) != null;
+                    return BitMart.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
-                    return BitMart.Futures.Interval.GetExchangeInterval(interval) != null;
+                    return BitMart.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             default:
                 return false;
         }
