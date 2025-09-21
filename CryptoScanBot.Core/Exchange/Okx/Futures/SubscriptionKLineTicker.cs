@@ -63,16 +63,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        string symbolNames = "";
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-            if (symbolNames == "")
-                symbolNames = symbolName;
-            else
-                symbolNames += "," + symbolName;
-            symbols.Add(symbolNames);
+            //string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
+            string symbolName = symbol.Base + '-' + symbol.Quote;
+            symbols.Add(symbolName);
         }
+        string symbolNames = string.Join(",", symbols);
 
         var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
         {

@@ -39,14 +39,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        int limit = Api.ExchangeOptions.CandleLimit;
         long minTime = minFetch;
         DateTime minDate = CandleTools.GetUnixDate(minTime);
-        long maxTime = minTime + (limit - 1) * interval.Duration;
+        long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
         string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate, limit: limit);
+        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
+            startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

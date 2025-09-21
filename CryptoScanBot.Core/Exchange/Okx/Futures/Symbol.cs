@@ -19,14 +19,16 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new OKXRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.UnifiedApi;
+
                 using CryptoDatabase database = new();
                 database.Open();
 
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.UnifiedApi.ExchangeData.GetTickersAsync(InstrumentType.Spot);
+                LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await api.ExchangeData.GetTickersAsync(InstrumentType.Spot) ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -47,8 +49,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("No exchange data retrieved (1)");
+                LimitRate.WaitForFairWeight(1);
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)

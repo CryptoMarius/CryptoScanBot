@@ -6,9 +6,9 @@ using CryptoExchange.Net.SharedApis;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
-using HyperLiquid.Net.Clients;
-using HyperLiquid.Net.Enums;
-using HyperLiquid.Net.Objects.Models;
+using BitMart.Net.Clients;
+using BitMart.Net.Enums;
+using BitMart.Net.Objects.Models;
 
 namespace CryptoScanBot.Core.Exchange.BitMart.Futures;
 
@@ -17,7 +17,7 @@ namespace CryptoScanBot.Core.Exchange.BitMart.Futures;
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    private async Task ProcessCandleAsync(string? symbolName, HyperLiquidKline kline)
+    private async Task ProcessCandleAsync(string? symbolName, BitMartFuturesKlineItem kline)
     {
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
@@ -41,7 +41,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Timestamp!.Value, 
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
                     kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
@@ -57,29 +57,26 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
         SemaphoreSlim symbolListSemaphore = new(1, 1);
-        TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
-        var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
-        var api = client.FuturesApi;
+        TickerGroup!.SocketClient ??= new BitMartSocketClient();
+        var client = (BitMartSocketClient)TickerGroup.SocketClient;
+        var api = client.UsdFuturesApi;
 
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        string symbolNames = "";
         foreach (var symbol in SymbolList)
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-            if (symbolNames == "")
-                symbolNames = symbolName;
-            else
-                symbolNames += "," + symbolName;
-            symbols.Add(symbolNames);
+            symbols.Add(symbolName);
         }
+        string symbolNames = string.Join(",", symbols);
 
-        TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
+        TickerGroup!.SocketClient ??= new BitMartSocketClient();
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, FuturesStreamKlineInterval.OneMinute, data =>
         {
-            var kline = data.Data;
+            //var klines = data.Data;
             {
+                foreach (var kline in data.Data.Klines)
                 Task.Run(async () => { await ProcessCandleAsync(data.Symbol, kline); });
             }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);

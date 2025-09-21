@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoScanBot": {
       "commandName": "Project",
-      "commandLineArgs": "-e \"Binance Futures\" -f \"CryptoScanBot\\Binance\\Futures\"",
+      "commandLineArgs": "-e \"Okx Futures\" -f \"CryptoScanBot\\Okx\\Futures\"",
       "nativeDebugging": false
     }
   }

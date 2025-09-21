@@ -26,12 +26,12 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.V5Api.ExchangeData.GetLinearInverseTickersAsync(Category.Linear);
+                var tickerInfo = await client.V5Api.ExchangeData.GetLinearInverseTickersAsync(Category.Linear) ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
                     throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo, "tickers.json");
+                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
 
                 // Create dictionary for the volume
                 SortedList<string, decimal> volumeTicker = [];
@@ -44,12 +44,12 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var symbolInfo = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear) ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
                     throw new ExchangeException("Geen exchange data ontvangen (2)");
-                SaveExchangeInfo(symbolInfo, "symbols.json");
+                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren

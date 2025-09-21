@@ -63,16 +63,12 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         // TODO: quick en dirty
         List<string> symbols = [];
-        string symbolNames = "";
         foreach (var symbol in SymbolList)
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-            if (symbolNames == "")
-                symbolNames = symbolName;
-            else
-                symbolNames += "," + symbolName;
-            symbols.Add(symbolNames);
+            symbols.Add(symbolName);
         }
+        string symbolNames = string.Join(",", symbols);
 
         TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>

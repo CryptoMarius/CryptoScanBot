@@ -19,14 +19,17 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new CoinbaseRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.AdvancedTradeApi;
+
                 using CryptoDatabase database = new();
                 database.Open();
 
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.AdvancedTradeApi.ExchangeData.GetBookTickersAsync();
+                LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await api.ExchangeData.GetBookTickersAsync() ?? 
+                    throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
@@ -45,7 +48,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.AdvancedTradeApi.ExchangeData.GetSymbolsAsync(SymbolType.Spot) ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync(SymbolType.Spot) ?? 
+                    throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -102,7 +106,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 if (symbolData.Symbol != symbolData.BaseAsset + '-' + symbolData.QuoteAsset)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
+                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
                                     continue;
                                 }
                                 string symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;

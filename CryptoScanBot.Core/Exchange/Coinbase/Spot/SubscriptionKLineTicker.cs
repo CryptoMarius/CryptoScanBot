@@ -10,23 +10,11 @@ using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanBot.Core.Exchange.Coinbase.Spot;
 
-/// <summary>
-/// Monitoren van 1m candles (die gepushed worden door de exchange)
-/// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
     private async Task ProcessCandleAsync(string? symbolName, CoinbaseStreamKline kline)
     {
-        // Aantekeningen
-        // De Base volume is the volume in terms of the first currency pair.
-        // De Quote volume is the volume in terms of the second currency pair.
-        // For example, for "MFN/USDT": 
-        // base volume would be MFN
-        // quote volume would be USDT
-
-        //ScannerLog.Logger.Trace($"kline ticker {topic}");
-
-        // De interval wordt geprefixed in de topic "kline.1.SymbolName"
+        // Interval is prefixed in the "kline.1.SymbolName"? wtf? copied comments probably..
         if (string.IsNullOrEmpty(symbolName))
             return;
         symbolName = symbolName.Replace("-", "");
@@ -62,21 +50,21 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        string symbolNames = "";
+        
         foreach (var symbol in SymbolList)
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-            if (symbolNames == "")
-                symbolNames = symbolName;
-            else
-                symbolNames += "," + symbolName;
-            symbols.Add(symbolNames);
+            symbols.Add(symbolName);
         }
+        string symbolNames = string.Join(",", symbols);
 
-        // WTF, dit is een kline die alleen de 5m ondersteund, wat moet je hier nu weer mee?
 
+        //------------------------------------------------------------------------------
+        // WTF, Subscribe to kline updates.
+        // But the Klines are always at a 5 minute interval, that won't work
+        //------------------------------------------------------------------------------
 
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
             foreach (CoinbaseStreamKline kline in data.Data)

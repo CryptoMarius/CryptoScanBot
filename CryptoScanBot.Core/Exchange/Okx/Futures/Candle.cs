@@ -4,8 +4,6 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-using Kraken.Net;
-
 using OKX.Net.Clients;
 using OKX.Net.Enums;
 using OKX.Net.Objects.Market;
@@ -37,7 +35,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (exchangeInterval == null)
             throw new Exception($"Not supported interval");
 
-        //LimitRate.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         long minTime = minFetch;
@@ -45,7 +43,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        string symbolName = KrakenExchange.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
+        //string symbolName = OkxExchange.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
+        string symbolName = symbol.Base + '-' + symbol.Quote;
         var result = await client.UnifiedApi.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)

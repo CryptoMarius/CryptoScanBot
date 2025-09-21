@@ -28,6 +28,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             client = client1;
         else
             throw new Exception("Expected KrakenRestClient");
+        var api = client.FuturesApi;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -44,8 +45,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (limit - 1) * interval.Duration;
         //DateTime maxDate = CandleTools.GetUnixDate(maxTime);
         
-        string symbolName = KrakenExchange.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        var result = await client.FuturesApi.ExchangeData.GetKlinesAsync(TickType.Trade, symbolName, (FuturesKlineInterval)exchangeInterval, minDate);
+        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
+        var result = await api.ExchangeData.GetKlinesAsync(TickType.Trade, symbolName, (FuturesKlineInterval)exchangeInterval, minDate);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

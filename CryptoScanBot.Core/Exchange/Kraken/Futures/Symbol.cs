@@ -18,14 +18,16 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new KrakenRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.FuturesApi;
+
                 using CryptoDatabase database = new();
                 database.Open();
 
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                //LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.FuturesApi.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                LimitRate.WaitForFairWeight(1);
+                var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
@@ -37,14 +39,14 @@ public class Symbol() : SymbolBase(), ISymbol
                 if (tickerInfo.Data != null && tickerInfo.Data != null)
                 {
                     foreach (var tickerData in tickerInfo.Data)
-                        volumeTicker.Add(tickerData.Symbol, tickerData.Volume24h);
+                        volumeTicker.Add(tickerData.Symbol, tickerData.Volume24hQuote);
                 }
 
 
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.FuturesApi.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("Geen exchange data ontvangen (1)");
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)

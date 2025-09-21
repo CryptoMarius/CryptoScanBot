@@ -122,14 +122,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 foreach (var symbol in SymbolList)
                 {
-                    CryptoCandleList tempList = klineListTemp[symbol.Name];
-                    CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                    long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
-
                     //await symbol.Lock("kucoin kline ticker2");
                     await symbolListSemaphore.WaitAsync();
                     try
                     {
+                        CryptoCandleList tempList = klineListTemp[symbol.Name];
+                        CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                        long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
+
                         // If needed add dummy candle(s) with the same price as the last candle
                         if (symbolPeriod.CandleList.Count > 0 && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
                         {

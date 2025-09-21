@@ -36,7 +36,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (exchangeInterval == null)
             throw new Exception($"Not supported interval");
 
-        //LimitRate.WaitForFairWeight(1);
+        LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         long minTime = minFetch;

@@ -38,21 +38,18 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        int limit = Api.ExchangeOptions.CandleLimit;
         long minTime = minFetch;
         DateTime minDate = CandleTools.GetUnixDate(minTime);
-        long maxTime = minTime + (limit - 1) * interval.Duration;
+        long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
     Again:
         string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
         var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
-            startTime: minDate, endTime: maxDate, limit: limit);
+            startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            // This is based on the kucoin error number,, does Mexc have an error for overloading the exchange as wel?
-            // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429: Too Many Requests
-            if (result.Error?.ErrorCode == "429") // not sure if this error exists on Mexc? Copied?
+            if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
             {
                 GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
                 Thread.Sleep(15000);
@@ -68,6 +65,9 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (result.Data == null)
         {
             GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(minFetch)} no candles received");
+#if DEBUG
+            SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no data.json");
+#endif
             return minFetch;
         }
 
@@ -86,7 +86,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 }
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.QuoteVolume);
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+					kline.Volume, kline.QuoteVolume);
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)
