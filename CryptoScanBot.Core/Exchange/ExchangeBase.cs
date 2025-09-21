@@ -90,17 +90,10 @@ public abstract class ExchangeBase
     public static Ticker? KLineTicker { get; set; }
     //public static Ticker? UserTicker { get; set; }
 
-    public static ExchangeOptions ExchangeOptions { get; } = new() { ExchangeName = "?", }; // made public for ExchangeTest project
+    public static ExchangeOptions ExchangeOptions { get; } = new() { ExchangeName = "?", };
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
     public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 
-    /// <summary>
-    /// return the thechnical format of the symbol on the exchange name 
-    /// </summary>
-    public virtual string ExchangeSymbolName(CryptoSymbol symbol)
-    {
-        return symbol.Name;
-    }
 
     public abstract Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step);
     public abstract Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
@@ -145,5 +138,4 @@ public abstract class ExchangeBase
         GlobalData.AddTextToLogTab(text);
         GlobalData.AddTextToTelegram(text, position);
     }
-
 }
