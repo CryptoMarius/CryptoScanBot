@@ -33,7 +33,7 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "HyperLiquid Futures";
+        ExchangeOptions.ExchangeName = "BitMart Futures";
         ExchangeOptions.LimitAmountOfSymbols = false;
         ExchangeOptions.SymbolLimitPerSubscription = 1;
 
@@ -82,4 +82,10 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+        };
+    }
 }

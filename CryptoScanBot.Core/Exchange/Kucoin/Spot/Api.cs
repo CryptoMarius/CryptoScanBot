@@ -91,4 +91,33 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "KUCN",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/KUCN_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "hypertrader://kucoin/{BASE}-{QUOTE}/{interval}",
+                Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={BASE}&b={QUOTE}&i={interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                // Geen idee
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.kucoin.com/trade/{QUOTE}/{BASE}&interval={interval}",
+            }
+        };
+    }
 }

@@ -217,4 +217,22 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "KUCNF",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}.P&interval={interval}",
+            },
+        };
+    }
 }

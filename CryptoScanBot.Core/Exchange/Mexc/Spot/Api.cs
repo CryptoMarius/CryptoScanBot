@@ -128,4 +128,22 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "MEXC",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}&interval={interval}",
+            },
+        };
+    }
 }

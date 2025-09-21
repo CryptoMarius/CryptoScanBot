@@ -88,4 +88,27 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "GDAX",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=GDAX:{BASE}{QUOTE}&interval={interval}", // ?
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://coinbase.com/trade-spot/{BASE}-{QUOTE}", // ?
+            }
+        };
+    }
 }

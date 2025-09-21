@@ -346,4 +346,32 @@ public class Api : ExchangeBase
         return (false, tradeParams);
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "BYBI",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/BYBI_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "hypertrader://bybit-spot/{BASE}-{QUOTE}/{interval}",
+                Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={BASE}&b={QUOTE}&i={interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.bybit.nl/trade/spot/{BASE}/{QUOTE}",
+            }
+        };
+    }
 }

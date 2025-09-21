@@ -87,4 +87,10 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+        };
+    }
 }

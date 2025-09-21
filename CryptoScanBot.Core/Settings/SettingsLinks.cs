@@ -1,29 +1,10 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
+using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Settings;
 
-public class CryptoExternalUrl
-{
-    // Alleen HyperTrader gebruikt een execute link
-    public CryptoExternalUrlType Execute { get; set; } = CryptoExternalUrlType.External;
-    public string Url { get; set; } = "";
-    public string? Telegram { get; set; }
-}
-
-public class CryptoExternalUrlAltrady : CryptoExternalUrl
-{
-    public string? Code { get; set; }
-}
-
-public class CryptoExternalUrls
-{
-    public CryptoExternalUrlAltrady? Altrady { get; set; }
-    public CryptoExternalUrl? HyperTrader { get; set; }
-    public CryptoExternalUrl? TradingView { get; set; }
-    public CryptoExternalUrl? ExchangeUrl { get; set; }
-}
 
 public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 {
@@ -33,260 +14,39 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     /// </summary>
     public void InitializeUrls()
     {
-        // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+        // This can/should be some kind of service..
 
+        // Altrady: Codes on webpage
+        // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
+        // TradingView: Codes are in the symbol description (kind of hidden)
 
         Remove("Binance");
-        this.TryAdd("Binance Futures",
-            new()
-            {
-                Altrady = new() // werkt niet
-                {
-                    Code = "BIFU",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BIFU_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new() // werkt niet
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new() // werkt
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}.P&interval={interval}"
-                },
-                ExchangeUrl = new() // werkt niet
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=futures",
-                }
-            }
-        );
+        this.TryAdd("Binance Spot", Exchange.Binance.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Binance Futures", Exchange.Binance.Futures.Api.GetExchangeLinks());
 
-        this.TryAdd("Binance Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "BINA",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BINA_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://binance/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=binance&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BINANCE:{BASE}{QUOTE}&interval={interval}"
-                },
-                ExchangeUrl = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.binance.com/en/trade/{BASE}_{QUOTE}?_from=markets&type=spot",
-                }
-            }
-        );
-
+        this.TryAdd("BloFin Futures", Exchange.BloFin.Futures.Api.GetExchangeLinks());
 
         Remove("Bybit");
-        this.TryAdd("Bybit Futures",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "BYBIF",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BYBIF_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://bybit/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{BASE}{QUOTE}.P&interval={interval}",
-                },
-                ExchangeUrl = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.nl/trade/{quote}/{BASE}{QUOTE}",
-                }
-            }
-        );
-
-        this.TryAdd("Bybit Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "BYBI",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/BYBI_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://bybit-spot/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit-spot&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=BYBIT:{BASE}{QUOTE}&interval={interval}",
-                },
-                ExchangeUrl = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.bybit.nl/trade/spot/{BASE}/{QUOTE}",
-                }
-            }
-        );
+        this.TryAdd("Bybit Spot", Exchange.BybitApi.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Bybit Futures", Exchange.BybitApi.Futures.Api.GetExchangeLinks());
 
         Remove("Kucoin");
-        this.TryAdd("Kucoin Futures",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "KUCNF",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = null,
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}.P&interval={interval}",
-                },
-            }
-        );
-        this.TryAdd("Kucoin Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "KUCN",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/KUCN_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "hypertrader://kucoin/{BASE}-{QUOTE}/{interval}",
-                    Telegram = "http://www.ccscanner.nl/hypertrader/?e=kucoin&a={BASE}&b={QUOTE}&i={interval}",
-                },
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}&interval={interval}",
-                },
-                ExchangeUrl = new()
-                {
-                    // Geen idee
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.kucoin.com/trade/{QUOTE}/{BASE}&interval={interval}",
-                }
-            }
-        );
+        this.TryAdd("Kucoin Spot", Exchange.Kucoin.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Kucoin Futures", Exchange.Kucoin.Futures.Api.GetExchangeLinks());
 
         Remove("Kraken");
-        this.TryAdd("Kraken Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "KRKN",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = null,
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=KRAKEN:{BASE}{QUOTE}&interval={interval}",
-                },
-            }
-        );
-
+        this.TryAdd("Kraken Spot", Exchange.Kraken.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Kraken Futures", Exchange.Kraken.Futures.Api.GetExchangeLinks());
 
         Remove("Mexc");
-        this.TryAdd("Mexc Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "MEXC",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/MEXC_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = null,
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=MEXC:{BASE}{QUOTE}&interval={interval}",
-                },
-            }
-        );
-
+        this.TryAdd("Mexc Spot", Exchange.Mexc.Spot.Api.GetExchangeLinks());
 
         Remove("Okx");
-        this.TryAdd("Okx Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "OKEX",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/OKEX_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = null,
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=OKEX:{BASE}{QUOTE}&interval={interval}",
-                },
-                ExchangeUrl = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://my.okx.com/trade-spot/{BASE}-{QUOTE}",
-                }
-            }
-        );
-
+        this.TryAdd("Okx Spot", Exchange.Okx.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Okx Futures", Exchange.Okx.Futures.Api.GetExchangeLinks());
 
         Remove("Coinbase");
-        this.TryAdd("Coinbase Spot",
-            new()
-            {
-                Altrady = new()
-                {
-                    Code = "GDAX",
-                    Execute = CryptoExternalUrlType.Internal,
-                    Url = "https://app.altrady.com/d/GDAX_{QUOTE}_{BASE}:{interval}",
-                },
-                HyperTrader = null,
-                TradingView = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://www.tradingview.com/chart/?symbol=GDAX:{BASE}{QUOTE}&interval={interval}", // ?
-                },
-                ExchangeUrl = new()
-                {
-                    Execute = CryptoExternalUrlType.External,
-                    Url = "https://coinbase.com/trade-spot/{BASE}-{QUOTE}", // ?
-                }
-            }
-        );
-
+        this.TryAdd("Coinbase Spot", Exchange.Coinbase.Spot.Api.GetExchangeLinks());
     }
 
     public static string GetTradingAppName(CryptoTradingApp tradingApp, string exchangeName)

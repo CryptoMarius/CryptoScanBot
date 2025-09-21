@@ -29,8 +29,9 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         ExchangeOptions.ExchangeName = "Kraken Futures";
+        ExchangeOptions.CandleLimit = 720;
         ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 5; // onbekend
+        ExchangeOptions.SymbolLimitPerSubscription = 5;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>
@@ -68,4 +69,22 @@ public class Api : ExchangeBase
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "KRKN",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=KRAKEN:{BASE}{QUOTE}&interval={interval}",
+            },
+        };
+    }
 }
