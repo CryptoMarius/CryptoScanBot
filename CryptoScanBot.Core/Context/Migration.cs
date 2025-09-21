@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 51;
+    public readonly static int CurrentDatabaseVersion = 53;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1302,9 +1302,36 @@ public class Migration
         }
 
 
-        // todo: Delete CryptoScanBot-weblinks.json?
+        //***********************************************************
+        // 04-09-2025, added BitMart
+        if (CurrentVersion > version.Version && version.Version == 51)
+        {
+            using var transaction = database.BeginTransaction();
 
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(10, 0, 'BloFin Spot', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(10, 1, 'BloFin Futures', 0.1, 0)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 04-09-2025, added BitMart
+        if (CurrentVersion > version.Version && version.Version == 51)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("update Exchange set IsSupported=1 where name='Kraken Spot'", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
 
+    
 }
 

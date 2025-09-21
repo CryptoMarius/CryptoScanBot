@@ -163,37 +163,38 @@ public class CryptoDatabase : IDisposable
     {
         return
         [
-            new() { Name = "Binance Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Binance Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
+            new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
-            new() { Name = "Bybit Spot", FeeRate = 0.15m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Bybit Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
+            new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
-            // Futures not supported (needs additional work)
-            new() { Name = "Kucoin Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kucoin Futures", FeeRate = 0.0m, IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
+            new() { Name = "BloFin Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Spot },
+            new() { Name = "BloFin Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BloFin, TradingType=CryptoTradingType.Futures },
 
-            // not supported (kline streams not working properly for both)
-            // -- futures does not support "SubscribeToKlineUpdatesAsync"
-            new() { Name = "Kraken Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kraken Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Bybit Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Bybit Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Bybit, TradingType=CryptoTradingType.Futures },
 
-            new() { Name = "Mexc Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
-            // No api for futures, weird exchange
-            //new() { Name = "Mexc Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Futures },
+            // Problem: kline stream only supports 5m? That will not work
+            new() { Name = "Coinbase Spot", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Coinbase Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Futures },
 
-            new() { Name = "Okx Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
-            //? no futures ?
+            new() { Name = "HyperLiquid Spot", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
+            new() { Name = "HyperLiquid Futures", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
 
-            new() { Name = "Coinbase Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.Coinbase, TradingType=CryptoTradingType.Spot },
-            //? no futures ?
+            // Problem: kline streams not working properly for futures -- futures does not support "SubscribeToKlineUpdatesAsync"
+            new() { Name = "Kraken Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Kraken Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
 
-            // my first dex, symbol names don't have a quote, not sure how to handle them
-            new() { Name = "HyperLiquid Spot", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
-            new() { Name = "HyperLiquid Futures", FeeRate = 0.1m, IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Kucoin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
 
-            new() { Name = "BitMart Spot", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
-            new() { Name = "BitMart Futures", FeeRate = 0.1m, IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
+            // Mexc Futures: Problem: No api for futures, kind of a weird exchange?
+            new() { Name = "Mexc Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Mexc Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Mexc, TradingType=CryptoTradingType.Spot },
+
+            new() { Name = "Okx Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Spot },
+            new() { Name = "Okx Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Okx, TradingType=CryptoTradingType.Futures },
         ];
     }
 
