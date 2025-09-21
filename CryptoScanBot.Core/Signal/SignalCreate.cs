@@ -51,6 +51,8 @@ public class SignalCreate
             // Voor de backtest, pas tellen vanaf het moment dat het nodig is
             if (unixFrom > 0 && CandleLast.OpenTime > unixFrom)
                 continue;
+            if (CandleLast.CandleData == null || CandleLast.CandleData?.BollingerBandsPercentage == null)
+                continue;
 
             AvgBBCount++;
             AvgBB += (double)CandleLast.CandleData?.BollingerBandsPercentage!;
