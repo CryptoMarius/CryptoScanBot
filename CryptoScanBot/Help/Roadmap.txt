@@ -25,6 +25,8 @@ Ach, dat ticker ding bij opstarten zit me ook niet in de weg
 Is bovendien voor HyperLiquid ook een dingetje
 
 Scanner:
+- Scanner - URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 
+            (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
 - Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
 - Scanner - Wisselen van basismunt veroorzaak dubbele symbols in de database
 - Scanner - Visualisatie: Studie van orderblock, supply en demand en wat de verschillen tussen die twee eigenlijk zijn en of we ze kunnen visualiseren

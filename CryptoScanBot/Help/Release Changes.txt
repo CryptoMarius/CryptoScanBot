@@ -1,5 +1,8 @@
 CryptoScanBot release historie:
 
+xx-xx-2025 2.1.7
+- Scanner - Exchange Kraken Spot toegevoegd
+
 16-09-2025 2.1.6
 - Scanner - Een missend veld toegevoegd in de database en de migration aangepast
 - Scanner - Exchange Bitmart toegevoegd, maar dat werkt niet zoals het hoort (niet zichtbaar)
