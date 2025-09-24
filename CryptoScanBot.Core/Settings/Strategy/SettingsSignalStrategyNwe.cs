@@ -11,11 +11,12 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public bool IncludeSoftSbm { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
+    public bool OnlyIfOutsideBb { get; set; } = false;
 
     public SettingsSignalStrategyNwe() : base()
     {
-        SoundFileLong = "sound-nwe-long.wav";
-        SoundFileShort = "sound-nwe-short.wav";
+        SoundFileLong = "sound-nwe-oversold.wav";
+        SoundFileShort = "sound-nwe-overbought.wav";
     }
 
 }
