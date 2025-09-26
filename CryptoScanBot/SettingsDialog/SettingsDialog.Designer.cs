@@ -256,6 +256,11 @@ partial class FrmSettings
         EditNweMultiplication = new NumericUpDown();
         label4 = new Label();
         EditNweBandWidth = new NumericUpDown();
+        groupBox16 = new GroupBox();
+        EditNweOnlyIfLux5m = new CheckBox();
+        EditNweIncludeSbmPercAndCrossing = new CheckBox();
+        EditNweIncludeSbmMaLines = new CheckBox();
+        EditNweIncludeRsi = new CheckBox();
         tabTrading = new TabPage();
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
@@ -325,11 +330,7 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        groupBox16 = new GroupBox();
-        EditNweOnlyIfLux5m = new CheckBox();
-        EditNweIncludeSbmPercAndCrossing = new CheckBox();
-        EditNweIncludeSbmMaLines = new CheckBox();
-        EditNweIncludeRsi = new CheckBox();
+        EditOnlyIfOutsideBb = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -432,6 +433,7 @@ partial class FrmSettings
         groupBox15.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditNweMultiplication).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditNweBandWidth).BeginInit();
+        groupBox16.SuspendLayout();
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
@@ -460,7 +462,6 @@ partial class FrmSettings
         tabShortBlackList.SuspendLayout();
         panel6.SuspendLayout();
         tabPageOptions.SuspendLayout();
-        groupBox16.SuspendLayout();
         SuspendLayout();
         // 
         // panelButtons
@@ -3056,6 +3057,67 @@ partial class FrmSettings
         EditNweBandWidth.TabIndex = 126;
         EditNweBandWidth.Value = new decimal(new int[] { 1, 0, 0, 0 });
         // 
+        // groupBox16
+        // 
+        groupBox16.AutoSize = true;
+        groupBox16.Controls.Add(EditOnlyIfOutsideBb);
+        groupBox16.Controls.Add(EditNweOnlyIfLux5m);
+        groupBox16.Controls.Add(EditNweIncludeSbmPercAndCrossing);
+        groupBox16.Controls.Add(EditNweIncludeSbmMaLines);
+        groupBox16.Controls.Add(EditNweIncludeRsi);
+        groupBox16.Location = new Point(10, 308);
+        groupBox16.Margin = new Padding(10);
+        groupBox16.Name = "groupBox16";
+        groupBox16.Padding = new Padding(10);
+        groupBox16.Size = new Size(289, 177);
+        groupBox16.TabIndex = 161;
+        groupBox16.TabStop = false;
+        groupBox16.Text = "Settings";
+        // 
+        // EditNweOnlyIfLux5m
+        // 
+        EditNweOnlyIfLux5m.AutoSize = true;
+        EditNweOnlyIfLux5m.Location = new Point(14, 104);
+        EditNweOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
+        EditNweOnlyIfLux5m.Name = "EditNweOnlyIfLux5m";
+        EditNweOnlyIfLux5m.Size = new Size(144, 19);
+        EditNweOnlyIfLux5m.TabIndex = 168;
+        EditNweOnlyIfLux5m.Text = "Only if lux 5m at 100%";
+        EditNweOnlyIfLux5m.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeSbmPercAndCrossing
+        // 
+        EditNweIncludeSbmPercAndCrossing.AutoSize = true;
+        EditNweIncludeSbmPercAndCrossing.Location = new Point(14, 79);
+        EditNweIncludeSbmPercAndCrossing.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeSbmPercAndCrossing.Name = "EditNweIncludeSbmPercAndCrossing";
+        EditNweIncludeSbmPercAndCrossing.Size = new Size(261, 19);
+        EditNweIncludeSbmPercAndCrossing.TabIndex = 159;
+        EditNweIncludeSbmPercAndCrossing.Text = "With SBM conditiions percentages/crossings";
+        EditNweIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeSbmMaLines
+        // 
+        EditNweIncludeSbmMaLines.AutoSize = true;
+        EditNweIncludeSbmMaLines.Location = new Point(14, 54);
+        EditNweIncludeSbmMaLines.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeSbmMaLines.Name = "EditNweIncludeSbmMaLines";
+        EditNweIncludeSbmMaLines.Size = new Size(188, 19);
+        EditNweIncludeSbmMaLines.TabIndex = 158;
+        EditNweIncludeSbmMaLines.Text = "With SBM conditions MA-lines";
+        EditNweIncludeSbmMaLines.UseVisualStyleBackColor = true;
+        // 
+        // EditNweIncludeRsi
+        // 
+        EditNweIncludeRsi.AutoSize = true;
+        EditNweIncludeRsi.Location = new Point(14, 29);
+        EditNweIncludeRsi.Margin = new Padding(4, 3, 4, 3);
+        EditNweIncludeRsi.Name = "EditNweIncludeRsi";
+        EditNweIncludeRsi.Size = new Size(244, 19);
+        EditNweIncludeRsi.TabIndex = 157;
+        EditNweIncludeRsi.Text = "With RSI oversold/overbought conditions";
+        EditNweIncludeRsi.UseVisualStyleBackColor = true;
+        // 
         // tabTrading
         // 
         tabTrading.Controls.Add(tabControlTrading);
@@ -3818,65 +3880,16 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // groupBox16
+        // EditOnlyIfOutsideBb
         // 
-        groupBox16.AutoSize = true;
-        groupBox16.Controls.Add(EditNweOnlyIfLux5m);
-        groupBox16.Controls.Add(EditNweIncludeSbmPercAndCrossing);
-        groupBox16.Controls.Add(EditNweIncludeSbmMaLines);
-        groupBox16.Controls.Add(EditNweIncludeRsi);
-        groupBox16.Location = new Point(10, 308);
-        groupBox16.Margin = new Padding(10);
-        groupBox16.Name = "groupBox16";
-        groupBox16.Padding = new Padding(10);
-        groupBox16.Size = new Size(289, 152);
-        groupBox16.TabIndex = 161;
-        groupBox16.TabStop = false;
-        groupBox16.Text = "Settings";
-        // 
-        // EditNweOnlyIfLux5m
-        // 
-        EditNweOnlyIfLux5m.AutoSize = true;
-        EditNweOnlyIfLux5m.Location = new Point(14, 104);
-        EditNweOnlyIfLux5m.Margin = new Padding(4, 3, 4, 3);
-        EditNweOnlyIfLux5m.Name = "EditNweOnlyIfLux5m";
-        EditNweOnlyIfLux5m.Size = new Size(144, 19);
-        EditNweOnlyIfLux5m.TabIndex = 168;
-        EditNweOnlyIfLux5m.Text = "Only if lux 5m at 100%";
-        EditNweOnlyIfLux5m.UseVisualStyleBackColor = true;
-        // 
-        // EditNweIncludeSbmPercAndCrossing
-        // 
-        EditNweIncludeSbmPercAndCrossing.AutoSize = true;
-        EditNweIncludeSbmPercAndCrossing.Location = new Point(14, 79);
-        EditNweIncludeSbmPercAndCrossing.Margin = new Padding(4, 3, 4, 3);
-        EditNweIncludeSbmPercAndCrossing.Name = "EditNweIncludeSbmPercAndCrossing";
-        EditNweIncludeSbmPercAndCrossing.Size = new Size(261, 19);
-        EditNweIncludeSbmPercAndCrossing.TabIndex = 159;
-        EditNweIncludeSbmPercAndCrossing.Text = "With SBM conditiions percentages/crossings";
-        EditNweIncludeSbmPercAndCrossing.UseVisualStyleBackColor = true;
-        // 
-        // EditNweIncludeSbmMaLines
-        // 
-        EditNweIncludeSbmMaLines.AutoSize = true;
-        EditNweIncludeSbmMaLines.Location = new Point(14, 54);
-        EditNweIncludeSbmMaLines.Margin = new Padding(4, 3, 4, 3);
-        EditNweIncludeSbmMaLines.Name = "EditNweIncludeSbmMaLines";
-        EditNweIncludeSbmMaLines.Size = new Size(188, 19);
-        EditNweIncludeSbmMaLines.TabIndex = 158;
-        EditNweIncludeSbmMaLines.Text = "With SBM conditions MA-lines";
-        EditNweIncludeSbmMaLines.UseVisualStyleBackColor = true;
-        // 
-        // EditNweIncludeRsi
-        // 
-        EditNweIncludeRsi.AutoSize = true;
-        EditNweIncludeRsi.Location = new Point(14, 29);
-        EditNweIncludeRsi.Margin = new Padding(4, 3, 4, 3);
-        EditNweIncludeRsi.Name = "EditNweIncludeRsi";
-        EditNweIncludeRsi.Size = new Size(244, 19);
-        EditNweIncludeRsi.TabIndex = 157;
-        EditNweIncludeRsi.Text = "With RSI oversold/overbought conditions";
-        EditNweIncludeRsi.UseVisualStyleBackColor = true;
+        EditOnlyIfOutsideBb.AutoSize = true;
+        EditOnlyIfOutsideBb.Location = new Point(14, 129);
+        EditOnlyIfOutsideBb.Margin = new Padding(4, 3, 4, 3);
+        EditOnlyIfOutsideBb.Name = "EditOnlyIfOutsideBb";
+        EditOnlyIfOutsideBb.Size = new Size(120, 19);
+        EditOnlyIfOutsideBb.TabIndex = 169;
+        EditOnlyIfOutsideBb.Text = "Only if outside BB";
+        EditOnlyIfOutsideBb.UseVisualStyleBackColor = true;
         // 
         // FrmSettings
         // 
@@ -4031,6 +4044,8 @@ partial class FrmSettings
         groupBox15.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditNweMultiplication).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditNweBandWidth).EndInit();
+        groupBox16.ResumeLayout(false);
+        groupBox16.PerformLayout();
         tabTrading.ResumeLayout(false);
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
@@ -4079,8 +4094,6 @@ partial class FrmSettings
         panel6.PerformLayout();
         tabPageOptions.ResumeLayout(false);
         tabPageOptions.PerformLayout();
-        groupBox16.ResumeLayout(false);
-        groupBox16.PerformLayout();
         ResumeLayout(false);
     }
 
@@ -4387,4 +4400,5 @@ partial class FrmSettings
     private CheckBox EditNweIncludeSbmPercAndCrossing;
     private CheckBox EditNweIncludeSbmMaLines;
     private CheckBox EditNweIncludeRsi;
+    private CheckBox EditOnlyIfOutsideBb;
 }
