@@ -70,6 +70,7 @@ namespace CryptoScanBot
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
             timerClearEvents = new System.Windows.Forms.Timer(components);
+            buttonSpikes = new Button();
             panel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageLog.SuspendLayout();
@@ -86,6 +87,7 @@ namespace CryptoScanBot
             // 
             // panel1
             // 
+            panel1.Controls.Add(buttonSpikes);
             panel1.Controls.Add(button4);
             panel1.Controls.Add(button3);
             panel1.Controls.Add(button2);
@@ -142,7 +144,7 @@ namespace CryptoScanBot
             // 
             // ButtonVolatiteit
             // 
-            ButtonVolatiteit.Location = new Point(846, 17);
+            ButtonVolatiteit.Location = new Point(774, 13);
             ButtonVolatiteit.Margin = new Padding(4, 3, 4, 3);
             ButtonVolatiteit.Name = "ButtonVolatiteit";
             ButtonVolatiteit.Size = new Size(88, 27);
@@ -405,6 +407,17 @@ namespace CryptoScanBot
             toolStripMenuItem10.Size = new Size(186, 22);
             toolStripMenuItem10.Text = "toolStripMenuItem10";
             // 
+            // buttonSpikes
+            // 
+            buttonSpikes.Location = new Point(870, 13);
+            buttonSpikes.Margin = new Padding(4, 3, 4, 3);
+            buttonSpikes.Name = "buttonSpikes";
+            buttonSpikes.Size = new Size(88, 27);
+            buttonSpikes.TabIndex = 17;
+            buttonSpikes.Text = "Spikes";
+            buttonSpikes.UseVisualStyleBackColor = true;
+            buttonSpikes.Click += ButtonSpikes_Click;
+            // 
             // TestForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -471,6 +484,7 @@ namespace CryptoScanBot
         private DataGridView dataGridViewSignal;
         private TabPage tabPage2;
         private DataGridView dataGridViewSymbol;
+        private Button buttonSpikes;
     }
 }
 

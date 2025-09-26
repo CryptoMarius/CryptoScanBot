@@ -907,12 +907,11 @@ public partial class TestForm : Form
 
     /// <summary>
     /// Volatiteit meten van coins
-    /// Bedoeld om leuke munten voor een gridbot te vinden
     /// </summary>
     private void ButtonVolatiteit_Click(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab("Lijstjes");
+        GlobalData.AddTextToLogTab("Lijstjes volatiteit");
         GlobalData.AddTextToLogTab("");
         List<VolatiteitStat> list = [];
 
@@ -994,6 +993,98 @@ public partial class TestForm : Form
         //    GlobalData.AddTextToLogTab(string.Format("BINANCE:{0}{1},", item.Base, item.Quote));
         //}
     }
+
+    /// <summary>
+    /// Spikes meten van coins
+    /// </summary>
+    private void ButtonSpikes_Click(object sender, EventArgs e)
+    {
+        GlobalData.AddTextToLogTab("");
+        GlobalData.AddTextToLogTab("Lijstjes spikes");
+        GlobalData.AddTextToLogTab("");
+        List<VolatiteitStat> list = [];
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
+        {
+            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            //if (exchange.SymbolListName.TryGetValue("NEBLBUSD", out symbol))
+            {
+                if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                {
+                    CryptoIntervalPeriod intervalPeriod = CryptoIntervalPeriod.interval5m;
+                    CryptoInterval interval = GlobalData.IntervalListPeriod[intervalPeriod];
+                    LoadSymbolCandles(symbol, interval);
+                    CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+                    if (candles.Count == 0)
+                        continue;
+                    CryptoCandle last = candles.Values.Last();
+
+                    // Heeft de munt genoeg 24h volume
+                    if (!SymbolTools.CheckValidMinimalVolume(symbol, last.OpenTime, 3 * 60, out _))
+                        continue;
+                    // Heeft de munt een redelijke prijs
+                    if (!SymbolTools.CheckValidMinimalPrice(symbol, out _))
+                        continue;
+                    if (!SymbolTools.CheckNewCoin(symbol, out string _))
+                        continue;
+
+
+
+                    int count = 0;
+                    decimal diffSum = 0;
+                    double[] values = new double[candles.Count];
+                    foreach (CryptoCandle candle in candles.Values)
+                    {
+                        values[count] = (double)candle.Close;
+                        count++;
+                        decimal diff = (candle.High - Math.Max(candle.Open, candle.Close)) / candle.Close;
+                        diffSum += diff;
+
+                        diff = (Math.Min(candle.Open, candle.Close) - candle.Low) / candle.Close;
+                        diffSum += diff;
+                    }
+
+
+                    VolatiteitStat item = new()
+                    {
+                        Base = symbol.Base,
+                        Quote = symbol.Quote,
+                        Volume = symbol.Volume,
+                    };
+                    if (count > 0)
+                    {
+                        item.avgDiff = 100 * diffSum / count;
+                    }
+                    item.stddev = 100 * values.StdDev();
+                    //item.stddev1h = values1h.StdDev();
+                    list.Add(item);
+
+                    candles.Clear();
+                }
+            }
+        }
+
+        GlobalData.AddTextToLogTab("");
+        GlobalData.AddTextToLogTab("Sortering");
+        GlobalData.AddTextToLogTab("");
+        list.Sort((x, y) => y.avgDiff.CompareTo(x.avgDiff));
+        foreach (VolatiteitStat item in list)
+        {
+            GlobalData.AddTextToLogTab(string.Format("{0}/{1};{2:N2}%;{3:N2};{4:N2} ", item.Base, item.Quote, item.avgDiff, item.stddev, item.Volume));
+        }
+
+        //// Tradeview lijst
+        //GlobalData.AddTextToLogTab("");
+        //GlobalData.AddTextToLogTab("Tradeview lijst");
+        //GlobalData.AddTextToLogTab("");
+        ////list.Sort((x, y) => x.Base.CompareTo(y.Base));
+        //foreach (VolatiteitStat item in list)
+        //{
+        //    GlobalData.AddTextToLogTab(string.Format("BINANCE:{0}{1},", item.Base, item.Quote));
+        //}
+    }
+
 
     private class Period21
     {
