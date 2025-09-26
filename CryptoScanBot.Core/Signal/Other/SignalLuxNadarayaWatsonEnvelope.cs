@@ -45,27 +45,6 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        if (GlobalData.Settings.Signal.Nwe.OnlyIfOutsideBb)
-        {
-            if (SignalSide == CryptoTradeSide.Long)
-            {
-                if (!CandleLast.IsBelowBollingerBands(false))
-                {
-                    response = "not below bb";
-                    return false;
-                }
-            }
-            else if (SignalSide == CryptoTradeSide.Short)
-            {
-                if (!CandleLast.IsAboveBollingerBands(false))
-                {
-                    response = "not above bb";
-                    return false;
-                }
-            }
-        }
-
-
         if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m && SignalSide == CryptoTradeSide.Long)
         {
             if (SignalSide == CryptoTradeSide.Long)

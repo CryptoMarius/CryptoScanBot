@@ -330,7 +330,6 @@ partial class FrmSettings
         EditDebugSignalStrength = new CheckBox();
         EditDebugSignalCreate = new CheckBox();
         EditDebugKLineReceive = new CheckBox();
-        EditOnlyIfOutsideBb = new CheckBox();
         panelButtons.SuspendLayout();
         panelFill.SuspendLayout();
         tabControlMain.SuspendLayout();
@@ -3060,7 +3059,6 @@ partial class FrmSettings
         // groupBox16
         // 
         groupBox16.AutoSize = true;
-        groupBox16.Controls.Add(EditOnlyIfOutsideBb);
         groupBox16.Controls.Add(EditNweOnlyIfLux5m);
         groupBox16.Controls.Add(EditNweIncludeSbmPercAndCrossing);
         groupBox16.Controls.Add(EditNweIncludeSbmMaLines);
@@ -3880,17 +3878,6 @@ partial class FrmSettings
         EditDebugKLineReceive.Text = "Debug KLineReceive (does kline ticker work)";
         EditDebugKLineReceive.UseVisualStyleBackColor = true;
         // 
-        // EditOnlyIfOutsideBb
-        // 
-        EditOnlyIfOutsideBb.AutoSize = true;
-        EditOnlyIfOutsideBb.Location = new Point(14, 129);
-        EditOnlyIfOutsideBb.Margin = new Padding(4, 3, 4, 3);
-        EditOnlyIfOutsideBb.Name = "EditOnlyIfOutsideBb";
-        EditOnlyIfOutsideBb.Size = new Size(120, 19);
-        EditOnlyIfOutsideBb.TabIndex = 169;
-        EditOnlyIfOutsideBb.Text = "Only if outside BB";
-        EditOnlyIfOutsideBb.UseVisualStyleBackColor = true;
-        // 
         // FrmSettings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -4400,5 +4387,4 @@ partial class FrmSettings
     private CheckBox EditNweIncludeSbmPercAndCrossing;
     private CheckBox EditNweIncludeSbmMaLines;
     private CheckBox EditNweIncludeRsi;
-    private CheckBox EditOnlyIfOutsideBb;
 }

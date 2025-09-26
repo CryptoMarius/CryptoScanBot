@@ -282,7 +282,6 @@ public partial class FrmSettings : Form
         EditNweIncludeSbmMaLines.Checked = settings.Signal.Nwe.IncludeSoftSbm;
         EditNweIncludeSbmPercAndCrossing.Checked = settings.Signal.Nwe.IncludeSbmPercAndCrossing;
         EditNweOnlyIfLux5m.Checked = settings.Signal.Nwe.OnlyIfLux5m;
-        EditOnlyIfOutsideBb.Checked = settings.Signal.Nwe.OnlyIfOutsideBb;
 
 
         // --------------------------------------------------------------------------------
@@ -584,7 +583,6 @@ public partial class FrmSettings : Form
         settings.Signal.Nwe.IncludeSoftSbm = EditNweIncludeSbmMaLines.Checked;
         settings.Signal.Nwe.IncludeSbmPercAndCrossing = EditNweIncludeSbmPercAndCrossing.Checked;
         settings.Signal.Nwe.OnlyIfLux5m = EditNweOnlyIfLux5m.Checked;
-        settings.Signal.Nwe.OnlyIfOutsideBb = EditOnlyIfOutsideBb.Checked;
 
         // --------------------------------------------------------------------------------
         // Extra instap condities

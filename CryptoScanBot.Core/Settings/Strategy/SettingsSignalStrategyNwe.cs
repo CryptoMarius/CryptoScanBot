@@ -11,7 +11,6 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public bool IncludeSoftSbm { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
-    public bool OnlyIfOutsideBb { get; set; } = false;
 
     public SettingsSignalStrategyNwe() : base()
     {
