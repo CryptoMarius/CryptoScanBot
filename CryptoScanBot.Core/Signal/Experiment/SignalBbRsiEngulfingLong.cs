@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Experiment;
@@ -48,7 +47,7 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
         }
 
         // Rsi oversold
-        if (!prev!.RsiOversold(0))
+        if (!prev!.RsiOversold(4))
         {
             ExtraText = "rsi not oversold";
             return false;
@@ -61,27 +60,14 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
             return false;
         }
 
-        //if (HadStorsiInThelastXCandles(SignalSide, 0, 25) == null)
-        //{
-        //    ExtraText = "no previous storsi found";
-        //    return false;
-        //}
+        if (HadStorsiInThelastXCandles(SignalSide, 0, 25, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 25) == null)
+        {
+            ExtraText = "no previous storsi/stobb found";
+            return false;
+        }
 
         return true;
     }
 
-
-    public override bool GiveUp(CryptoSignal signal)
-    {
-        // Langer dan 3 candles willen we niet wachten
-        if (CandleLast.OpenTime - signal.EventTime > 3 * Interval.Duration)
-        {
-            ExtraText = "Ophouden na 3 candles";
-            return true;
-        }
-
-        ExtraText = "";
-        return false;
-    }
 
 }

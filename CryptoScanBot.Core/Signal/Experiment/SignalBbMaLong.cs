@@ -1,4 +1,3 @@
-#if StrategyBbma
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
@@ -36,7 +35,7 @@ public class SignalBbMaLong : SignalCreateBase
 
         if (candle.CandleData == null)
         {
-            List<CryptoCandle>? history = CandleIndicatorData.CalculateCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+            List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
             if (history == null)
                 return false;
             CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
@@ -115,4 +114,3 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 }
-#endif

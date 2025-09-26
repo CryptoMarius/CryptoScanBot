@@ -21,7 +21,7 @@ public class SignalSbm1Short : SignalSbmBaseShort
             if (last == null)
                 return false;
             // Closes or opens above the bb & stochastic overbought situation 
-            if (last!.AboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought()) 
+            if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought()) 
                 return true;
 
             if (!GetPrevCandle(last, out last))

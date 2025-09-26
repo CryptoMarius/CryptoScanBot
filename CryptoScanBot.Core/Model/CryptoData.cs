@@ -66,7 +66,7 @@ public class CryptoData
     // SMA (Simple Moving Average) indicator values
     //public double? Sma8 { get; set; }
     public double? Sma20 { get; set; }
-    //public double? SlopeSma20 { get; set; }
+    public double? SlopeSma20 { get; set; }
     public double? Sma50 { get; set; }
     //public double? SlopeSma50 { get; set; }
     public double? Sma100 { get; set; }
@@ -74,7 +74,7 @@ public class CryptoData
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
-#if StrategyBbma
+#if DEBUG
     [Computed]
     public double? Wma05Low { get; set; }
     [Computed]
@@ -84,6 +84,7 @@ public class CryptoData
     [Computed]
     public double? Wma10High { get; set; }
 #endif
+
 
     // RSI indicator
     public double? Rsi { get; set; }
@@ -145,7 +146,7 @@ public class CryptoData
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
 
-#if StrategyBbma
+#if DEBUG
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;

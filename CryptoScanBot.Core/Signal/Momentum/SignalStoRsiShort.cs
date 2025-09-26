@@ -46,7 +46,7 @@ public class SignalStoRsiShort : SignalSbmBaseShort
         // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
-            //if (!CandleLast.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
+            //if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
             if (!InUpperPartOfBollingerBands(3, 5.0m))
             {
                 response = "not in upper part of bb";

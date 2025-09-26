@@ -123,25 +123,25 @@ public class NadarayaWatsonEnvelope
                     }
 
 
-                    if (i > 0)
-                    {
-                        if (smaList20[i - 0].Sma != null && smaList20[i - 1].Sma != null)
-                        {
-                            double nweLast = (double)nwe[i - 0];
-                            double nwePrev = (double)nwe[i - 1];
+                    //if (i > 0)
+                    //{
+                    //    if (smaList20[i - 0].Sma != null && smaList20[i - 1].Sma != null)
+                    //    {
+                    //        double nweLast = (double)nwe[i - 0];
+                    //        double nwePrev = (double)nwe[i - 1];
 
-                            double smaLast = (double)smaList20[i - 0].Sma!.Value;
-                            double smaPrev = (double)smaList20[i - 1].Sma!.Value;
+                    //        double smaLast = (double)smaList20[i - 0].Sma!.Value;
+                    //        double smaPrev = (double)smaList20[i - 1].Sma!.Value;
 
-                            if (// buy alert when the nwe.lower crosses the sma20 upwards
-                                (nwePrev - (double)sae < smaPrev! && nweLast - (double)sae >= smaLast) ||
-                                // sell alert when the nwe.upper crosses the sma20 downwards
-                                (nwePrev + (double)sae > smaPrev! && nweLast + (double)sae <= smaLast))
-                            {
-                                seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)smaLast));
-                            }
-                        }
-                    }
+                    //        if (// buy alert when the nwe.lower crosses the sma20 upwards
+                    //            (nwePrev - (double)sae < smaPrev! && nweLast - (double)sae >= smaLast) ||
+                    //            // sell alert when the nwe.upper crosses the sma20 downwards
+                    //            (nwePrev + (double)sae > smaPrev! && nweLast + (double)sae <= smaLast))
+                    //        {
+                    //            seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)smaLast));
+                    //        }
+                    //    }
+                    //}
                 }
             }
         }

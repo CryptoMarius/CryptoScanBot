@@ -34,7 +34,7 @@ public static class IndicatorBollingerBandsHelper
     }
 
 
-    public static bool AboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
+    public static bool IsAboveBollingerBands(this CryptoCandle candle, bool useLowHigh)
     {
         // Opens or closes above the bollinger band
         decimal value;

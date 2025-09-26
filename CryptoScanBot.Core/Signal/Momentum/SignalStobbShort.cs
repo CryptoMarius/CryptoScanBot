@@ -104,7 +104,7 @@ public class SignalStobbShort : SignalSbmBaseShort
         }
 
         // Er een candle onder de bb opent of sluit
-        if (!CandleLast.AboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+        if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
             ExtraText = "not above bb.upper";
             return false;

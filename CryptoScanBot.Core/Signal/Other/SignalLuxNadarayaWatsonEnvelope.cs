@@ -45,87 +45,131 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
 
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        // TODO implement short version...
+        if (GlobalData.Settings.Signal.Nwe.OnlyIfOutsideBb)
+        {
+            if (SignalSide == CryptoTradeSide.Long)
+            {
+                if (!CandleLast.IsBelowBollingerBands(false))
+                {
+                    response = "not below bb";
+                    return false;
+                }
+            }
+            else if (SignalSide == CryptoTradeSide.Short)
+            {
+                if (!CandleLast.IsAboveBollingerBands(false))
+                {
+                    response = "not above bb";
+                    return false;
+                }
+            }
+        }
+
 
         if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m && SignalSide == CryptoTradeSide.Long)
         {
-            if (CandleLast.CandleData!.Lux5mValue > -50)
+            if (SignalSide == CryptoTradeSide.Long)
             {
-                response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
-                return false;
+                if (CandleLast.CandleData!.Lux5mValue > -50)
+                {
+                    response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                    return false;
+                }
             }
-        }
-        if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m && SignalSide == CryptoTradeSide.Short)
-        {
-            if (CandleLast.CandleData!.Lux5mValue < 50)
+            else if (SignalSide == CryptoTradeSide.Short)
             {
-                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
-                return false;
+                if (CandleLast.CandleData!.Lux5mValue < 50)
+                {
+                    response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                    return false;
+                }
             }
         }
 
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Nwe.IncludeSoftSbm && SignalSide == CryptoTradeSide.Long)
         {
-            if (!CandleLast!.SbmConditionsOversold(false))
+            if (SignalSide == CryptoTradeSide.Long)
             {
-                response = "no sbm conditions";
-                return false;
+                if (!CandleLast!.SbmConditionsOversold(false))
+                {
+                    response = "no sbm conditions";
+                    return false;
+                }
             }
-        }
-        if (GlobalData.Settings.Signal.Nwe.IncludeSoftSbm && SignalSide == CryptoTradeSide.Short)
-        {
-            if (!CandleLast.IsSbmConditionsOverbought(false))
+            else if (SignalSide == CryptoTradeSide.Short)
             {
-                response = "no sbm conditions";
-                return false;
+                if (!CandleLast.IsSbmConditionsOverbought(false))
+                {
+                    response = "no sbm conditions";
+                    return false;
+                }
             }
         }
 
         // Controle op de ma-kruisingen
-        if (GlobalData.Settings.Signal.Nwe.IncludeSbmPercAndCrossing && SignalSide == CryptoTradeSide.Long)
+        if (GlobalData.Settings.Signal.Nwe.IncludeSbmPercAndCrossing)
         {
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
-                return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
-                return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
-                return false;
+            if (SignalSide == CryptoTradeSide.Long)
+            {
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
+                    !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
+                    !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
+                    !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    return false;
 
-            if (!CheckMaCrossings(out response))
-                return false;
-        }
-        if (GlobalData.Settings.Signal.Nwe.IncludeSbmPercAndCrossing && SignalSide == CryptoTradeSide.Short)
-        {
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                !candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
-                return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                !candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
-                return false;
-            if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                !candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
-                return false;
+                if (!CheckMaCrossings(out response))
+                    return false;
+            }
+            else if (SignalSide == CryptoTradeSide.Short)
+            {
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
+                    !candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
+                    !candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
+                    !candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    return false;
 
-            if (!CheckMaCrossings(out response))
-                return false;
+                if (!CheckMaCrossings(out response))
+                    return false;
+            }
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Nwe.IncludeRsi && SignalSide == CryptoTradeSide.Long && !CandleLast.RsiOversold())
+        if (GlobalData.Settings.Signal.Nwe.IncludeRsi)
         {
-            response = "rsi not oversold";
-            return false;
-        }
-        if (GlobalData.Settings.Signal.Nwe.IncludeRsi && SignalSide == CryptoTradeSide.Short && !CandleLast.RsiOverbought())
-        {
-            response = "rsi not overbought";
-            return false;
+            if (SignalSide == CryptoTradeSide.Long)
+            {
+                if (!CandleLast.RsiOversold())
+                {
+                    response = "rsi not oversold";
+                    return false;
+                }
+            }
+            else if (SignalSide == CryptoTradeSide.Short)
+            {
+                if (!CandleLast.RsiOverbought())
+                {
+                    {
+                        response = "rsi not overbought";
+                        return false;
+                    }
+                }
+            }
         }
 
+        if (HadStorsiInThelastXCandles(SignalSide, 0, 10, 4) == null && HadStobbInThelastXCandles(SignalSide, 0, 10) == null)
+        {
+            response = "no previous storsi/stobb found";
+            return false;
+        }
 
         response = "";
         return true;

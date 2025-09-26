@@ -10,6 +10,9 @@ public enum CryptoSignalStrategy
     Stobb = 6,
     StobbMulti = 7,
 
+    Sma20Sma50 = 4,
+    //SlopeSma20 = 8,
+
     IchimokuKumoBreakout = 9, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
 
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator

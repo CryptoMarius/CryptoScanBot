@@ -35,20 +35,6 @@ public class Api : ExchangeBase
         return new BybitRestClient();
     }
 
-    public static BybitApiAddresses EuropeAddress = new BybitApiAddresses
-    {
-        RestBaseAddress = "https://api.bybit.eu",
-        SocketBaseAddress = "wss://stream.bybit.eu" // ?
-    };
-
-
-    public static BybitEnvironment Europe { get; }
-        = BybitEnvironment.CreateCustom("BybitEu",
-        EuropeAddress.RestBaseAddress,
-        EuropeAddress.SocketBaseAddress
-    );
-
-
     public override void ExchangeDefaults()
     {
         ExchangeOptions.CandleLimit = 1000;
@@ -66,13 +52,6 @@ public class Api : ExchangeBase
             //options.SpotOptions.AutoTimestamp = true;
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
-            //if (ApplicationParams.Options!.BybitEurope != null)
-            //    options.Environment = BybitEnvironment.GetEnvironmentByName("BybitEu");
-            //options.Environment = BybitEnvironment.Netherlands;
-            //options.Environment = BybitEnvironment.eure;
-            //options.SpotOptions.RateLimiters = ?
-            if (ApplicationParams.Options!.BybitEurope != null)
-                options.Environment = Europe;
             if (GlobalData.TradingApi.Key != "")
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
@@ -85,11 +64,6 @@ public class Api : ExchangeBase
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
             options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
-            // when is bybit.eu coming? ;-)
-            //if (ApplicationParams.Options!.BybitEurope != null)
-            //    options.Environment = BybitEnvironment.GetEnvironmentByName("BybitEu");
-            if (ApplicationParams.Options!.BybitEurope != null)
-                options.Environment = Europe;
             //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")

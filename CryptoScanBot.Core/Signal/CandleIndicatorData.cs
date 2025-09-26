@@ -9,7 +9,7 @@ namespace CryptoScanBot.Core.Signal;
 
 public class CandleIndicatorData : CryptoData
 {
-    //private const int SlopeCount = 2;
+    private const int SlopeCount = 2;
 
     // Test
     //public double? Ema9 { get; set; }
@@ -157,7 +157,7 @@ public class CandleIndicatorData : CryptoData
 
         //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(5);
 
-//List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
@@ -171,13 +171,14 @@ public class CandleIndicatorData : CryptoData
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
-#if StrategyBbma
+#if DEBUG
         // https://dotnet.stockindicators.dev/utilities/#content
         List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
 #endif
+
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
         //List<WmaResult> wmaList05Low = (List<WmaResult>)historyLast05.Use(CandlePart.Low).GetWma(05);
@@ -193,21 +194,21 @@ public class CandleIndicatorData : CryptoData
         List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
 
         //// GetSlope looks buggy? (specially with sma(200) and count <> 200)
-        //List<SlopeResult>? slopeSma20List = null;
+        List<SlopeResult>? slopeSma20List = null;
         //List<SlopeResult>? slopeSma50List = null;
         //List<SlopeResult>? slopeSma100List = null;
         //List<SlopeResult>? slopeSma200List = null;
-        //try
-        //{
-        //    slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
+        try
+        {
+            slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
         //    slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(SlopeCount);
         //    slopeSma100List = (List<SlopeResult>)smaList100.GetSlope(SlopeCount);
         //    slopeSma200List = (List<SlopeResult>)smaList200.GetSlope(SlopeCount);
-        //}
-        //catch (Exception)
-        //{
-        //    //ignore
-        //}
+        }
+        catch (Exception)
+        {
+            //ignore
+        }
 
 
         //List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
@@ -283,8 +284,8 @@ public class CandleIndicatorData : CryptoData
                 candleData.Sma100 = smaList100[index].Sma;
                 candleData.Sma200 = smaList200[index].Sma;
 
-                //if (slopeSma20List != null && index < slopeSma20List.Count)
-                //    candleData.SlopeSma20 = slopeSma20List[index].Slope;
+                if (slopeSma20List != null && index < slopeSma20List.Count)
+                    candleData.SlopeSma20 = slopeSma20List[index].Slope;
                 //if (slopeSma50List != null && index < slopeSma50List.Count)
                 //    candleData.SlopeSma50 = slopeSma50List[index].Slope;
                 //if (slopeSma100List != null && index < slopeSma100List.Count)
@@ -292,13 +293,14 @@ public class CandleIndicatorData : CryptoData
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
-#if StrategyBbma
+#if DEBUG
                 // BbMa
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
 #endif
+
 
                 candleData.Rsi = rsiList[index].Rsi;
                 //if (slopeRsiList != null && index < slopeRsiList.Count)
