@@ -65,6 +65,7 @@ partial class CryptoVisualisation
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
         plotView = new OxyPlot.WindowsForms.PlotView();
+        ButtonOpenTradingApp = new Button();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -86,6 +87,7 @@ partial class CryptoVisualisation
         flowLayoutPanel1.Controls.Add(ButtonCalculate);
         flowLayoutPanel1.Controls.Add(ButtonZoomLast);
         flowLayoutPanel1.Controls.Add(groupBox1);
+        flowLayoutPanel1.Controls.Add(ButtonOpenTradingApp);
         flowLayoutPanel1.Dock = DockStyle.Left;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(0, 0);
@@ -459,6 +461,15 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
+        // ButtonOpenTradingApp
+        // 
+        ButtonOpenTradingApp.Location = new Point(6, 723);
+        ButtonOpenTradingApp.Name = "ButtonOpenTradingApp";
+        ButtonOpenTradingApp.Size = new Size(121, 23);
+        ButtonOpenTradingApp.TabIndex = 41;
+        ButtonOpenTradingApp.Text = "Open trading app";
+        ButtonOpenTradingApp.UseVisualStyleBackColor = true;
+        // 
         // CryptoVisualisation
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -525,4 +536,5 @@ partial class CryptoVisualisation
     private CheckBox EditShowNadarayaWatsonEnvelope;
     private CheckBox EditShowBollingerBand;
     private CheckBox EditShowSmaLinesSbm;
+    private Button ButtonOpenTradingApp;
 }

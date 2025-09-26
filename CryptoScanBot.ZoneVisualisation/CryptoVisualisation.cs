@@ -60,6 +60,7 @@ public partial class CryptoVisualisation : Form
         ButtonCalculate.Click += ButtonCalculateClick;
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
         EditTransparant.Click += TransparentClick;
+        ButtonOpenTradingApp.Click += ButtonOpenTradingAppClick;
         plotView.MouseMove += PlotView_MouseMove;
         KeyDown += FormKeyDown;
         KeyPreview = true;
@@ -87,6 +88,26 @@ public partial class CryptoVisualisation : Form
     private void ButtonRefreshClick(object? sender, EventArgs e) => Calculate(false);
     private void ButtonCalculateClick(object? sender, EventArgs e) => Calculate(true);
 
+
+    private void ButtonOpenTradingAppClick(object? sender, EventArgs e)
+    {
+        if (Data != null)
+        {
+            CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+            // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+                tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+            GlobalData.LoadLinkSettings(); // refresh links
+            if (Data.Symbol != null && Data.Interval != null)
+            {
+                (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, false, Data.Symbol, Data.Interval);
+                if (Url != "")
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
+                }
+            }
+        }
+    }
 
     // restore window position coordinates & size
     private void FrmMain_Load(object? sender, EventArgs? e)
