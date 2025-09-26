@@ -1319,19 +1319,23 @@ public class Migration
 
         //***********************************************************
         // 04-09-2025, added BitMart
-        if (CurrentVersion > version.Version && version.Version == 51)
+        if (CurrentVersion > version.Version && version.Version == 52)
         {
             using var transaction = database.BeginTransaction();
 
             database.Connection.Execute("update Exchange set IsSupported=1 where name='Kraken Spot'", transaction);
+
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 0, 'Bybit EU Spot', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 1, 'Bybit EU Futures', 0.1, 0)", transaction);
 
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
     }
 
-    
+
 }
 

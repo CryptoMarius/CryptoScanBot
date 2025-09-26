@@ -12,4 +12,5 @@ public enum CryptoExchangeType
     HyperLiquid = 8,
     BitMart = 9,
     BloFin = 10,
+    BybitEu = 11,
 }
