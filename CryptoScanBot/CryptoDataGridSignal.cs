@@ -756,7 +756,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
                 case ColumnsForGrid.Rsi:
                     {
-                        // Oversold/overbougt
+                        // Oversold/overbought
                         double? value = signal.Rsi;
                         if (value < GlobalData.Settings.General.SettingsRsi.Oversold)
                             foreColor = Color.Red;
@@ -765,9 +765,15 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     }
                     break;
 
+                case ColumnsForGrid.BB:
+                    {
+                        double? value = signal.BollingerBandsPercentage;
+                        if (value > 8)
+                            foreColor = Color.Red;
+                    }
+                    break;
                 case ColumnsForGrid.AvgBB:
                     {
-                        // Oversold/overbougt
                         double? value = signal.AvgBB;
                         if (value < 1.5)
                             foreColor = Color.Red;
