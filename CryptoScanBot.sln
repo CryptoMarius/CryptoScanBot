@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot", "CryptoScanBot\CryptoScanBot.csproj", "{08F1B17A-A03D-4861-B9F6-E870E0C80E03}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBotTestStuff", "Testjes\CryptoScanBotTestStuff.csproj", "{4BFA89AB-8BA3-475D-8B8A-CDE7E3EC5CE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot.TestStuff", "Testjes\CryptoScanBot.TestStuff.csproj", "{4BFA89AB-8BA3-475D-8B8A-CDE7E3EC5CE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBotAltradyTest", "ExchangeTest\CryptoScanBotAltradyTest.csproj", "{070613CA-3477-4639-B9F7-C0B7A7965324}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot.AltradyTest", "ExchangeTest\CryptoScanBot.AltradyTest.csproj", "{070613CA-3477-4639-B9F7-C0B7A7965324}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C83487B7-7669-4E60-9B77-9B2CD92DE47F}"
 EndProject
