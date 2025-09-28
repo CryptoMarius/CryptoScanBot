@@ -5,21 +5,25 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot", "CryptoScanBot\CryptoScanBot.csproj", "{08F1B17A-A03D-4861-B9F6-E870E0C80E03}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBotTestjes", "Testjes\CryptoScanBotTestjes.csproj", "{4BFA89AB-8BA3-475D-8B8A-CDE7E3EC5CE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBotTestStuff", "Testjes\CryptoScanBotTestStuff.csproj", "{4BFA89AB-8BA3-475D-8B8A-CDE7E3EC5CE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExchangeTest", "ExchangeTest\ExchangeTest.csproj", "{070613CA-3477-4639-B9F7-C0B7A7965324}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBotAltradyTest", "ExchangeTest\CryptoScanBotAltradyTest.csproj", "{070613CA-3477-4639-B9F7-C0B7A7965324}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C83487B7-7669-4E60-9B77-9B2CD92DE47F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot.Core", "CryptoScanBot.Core\CryptoScanBot.Core.csproj", "{46D3C180-215F-4D23-A691-A8A8205E35A5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoShowTrend", "CryptoShowTrend\CryptoShowTrend.csproj", "{54C6E99D-A297-447C-B2F5-01A6E886B0A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanBot.ShowChart", "CryptoShowTrend\CryptoScanBot.ShowChart.csproj", "{54C6E99D-A297-447C-B2F5-01A6E886B0A0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanBot.ZoneVisualisation", "CryptoScanBot.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj", "{05F2DDF6-C7E5-40C0-91A3-F042759CECEC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanBot.CoreTests", "CryptoScanBot.CoreTests\CryptoScanBot.CoreTests.csproj", "{2A46EE2A-926D-4CEA-916F-6E92A2740486}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanBot.Emulator", "CryptoScanBot.Emulator\CryptoScanBot.Emulator.csproj", "{00358383-D14D-498C-A5DA-95DB994FD998}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scanner", "Scanner", "{C258921C-E70A-42E4-877C-923E59F741C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,6 +99,16 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{08F1B17A-A03D-4861-B9F6-E870E0C80E03} = {C258921C-E70A-42E4-877C-923E59F741C9}
+		{4BFA89AB-8BA3-475D-8B8A-CDE7E3EC5CE0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{070613CA-3477-4639-B9F7-C0B7A7965324} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{46D3C180-215F-4D23-A691-A8A8205E35A5} = {C258921C-E70A-42E4-877C-923E59F741C9}
+		{54C6E99D-A297-447C-B2F5-01A6E886B0A0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{05F2DDF6-C7E5-40C0-91A3-F042759CECEC} = {C258921C-E70A-42E4-877C-923E59F741C9}
+		{2A46EE2A-926D-4CEA-916F-6E92A2740486} = {C258921C-E70A-42E4-877C-923E59F741C9}
+		{00358383-D14D-498C-A5DA-95DB994FD998} = {C258921C-E70A-42E4-877C-923E59F741C9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {170100C1-0141-4A68-B3B0-BEF145EDD46C}
