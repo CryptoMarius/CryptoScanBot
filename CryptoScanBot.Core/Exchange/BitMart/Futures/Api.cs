@@ -86,6 +86,12 @@ public class Api : ExchangeBase
     {
         return new()
         {
+            Altrady = new()
+            {
+                Code = "BITMF",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/BITMF_{QUOTE}_{BASE}:{interval}",
+            },
         };
     }
 }

@@ -75,15 +75,14 @@ public class Api : ExchangeBase
         {
             Altrady = new()
             {
-                Code = "KRKN",
+                Code = "KRKNF",
                 Execute = CryptoExternalUrlType.Internal,
-                Url = "https://app.altrady.com/d/KRKN_{QUOTE}_{BASE}:{interval}",
+                Url = "https://app.altrady.com/d/KRKNF_{QUOTE}_{BASE}:{interval}",
             },
-            HyperTrader = null,
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=KRAKEN:{BASE}{QUOTE}&interval={interval}",
+                Url = "https://www.tradingview.com/chart/?symbol=KRAKEN.P:{BASE}{QUOTE}&interval={interval}",
             },
         };
     }
