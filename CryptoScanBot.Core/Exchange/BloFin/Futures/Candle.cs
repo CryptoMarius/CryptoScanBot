@@ -52,7 +52,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         {
             if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
             {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
+                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (rate limits)");
                 Thread.Sleep(15000);
                 //continue;
                 goto Again;

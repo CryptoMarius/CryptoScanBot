@@ -60,7 +60,7 @@ public static class LimitRate
                 // Maar het is ook niet plezierig om gebanned te worden, dus begin maar ietwat voorzichtig lijkt me..
                 if (CurrentWeight > 200)
                 {
-                    GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (because of rate limits)");
+                    GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {CurrentWeight} (rate limits)");
                     Thread.Sleep(2500);
                 }
                 else

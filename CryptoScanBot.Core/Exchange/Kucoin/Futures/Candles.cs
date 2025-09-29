@@ -53,7 +53,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429000: Too Many Requests
             if (result.Error?.ErrorCode == "429000")
             {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (because of rate limits)");
+                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (rate limits)");
                 Thread.Sleep(15000);
                 //continue;
                 goto Again;

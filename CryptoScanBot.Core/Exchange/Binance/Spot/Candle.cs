@@ -58,7 +58,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int? weight = result.ResponseHeaders.UsedWeight();
         if (weight > 700)
         {
-            GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: {weight} (because of rate limits)");
+            GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: {weight} (rate limits)");
             if (weight > 800)
                 await Task.Delay(10000);
             if (weight > 900)
