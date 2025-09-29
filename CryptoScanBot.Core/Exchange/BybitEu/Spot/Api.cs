@@ -360,7 +360,7 @@ public class Api : ExchangeBase
             ExchangeUrl = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.bybit.nl/trade/spot/{BASE}/{QUOTE}",
+                Url = "https://www.bybit.eu/trade/spot/{BASE}/{QUOTE}",
             }
         };
     }

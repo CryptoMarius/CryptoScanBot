@@ -338,12 +338,6 @@ public class Api : ExchangeBase
                 Execute = CryptoExternalUrlType.Internal,
                 Url = "https://app.altrady.com/d/BYBIF_{QUOTE}_{BASE}:{interval}",
             },
-            HyperTrader = new()
-            {
-                Execute = CryptoExternalUrlType.External,
-                Url = "hypertrader://bybit/{BASE}-{QUOTE}/{interval}",
-                Telegram = "http://www.ccscanner.nl/hypertrader/?e=bybit&a={BASE}&b={QUOTE}&i={interval}",
-            },
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
@@ -352,7 +346,7 @@ public class Api : ExchangeBase
             ExchangeUrl = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.bybit.nl/trade/{quote}/{BASE}{QUOTE}",
+                Url = "https://www.bybit.eu/trade/{quote}/{BASE}{QUOTE}",
             }
         };
     }
