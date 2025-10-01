@@ -1,4 +1,6 @@
-﻿using Binance.Net.Clients;
+﻿using BBMA_Strategy;
+
+using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models;
 using Binance.Net.Objects.Models.Spot;
@@ -2828,4 +2830,66 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab($"Oversold Percentage: {oversellPercentage:F2}%");
     }
 
+    private async void buttonBbma_ClickAsync(object sender, EventArgs e)
+    {
+        GlobalData.AddTextToLogTab("");
+        GlobalData.AddTextToLogTab("Lijstjes spikes");
+        GlobalData.AddTextToLogTab("");
+        List<VolatiteitStat> list = [];
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
+        {
+            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            //if (exchange.SymbolListName.TryGetValue("NEBLBUSD", out symbol))
+            {
+                if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                {
+                    List<(TimeFrame, CryptoIntervalPeriod) > l = [
+                        (TimeFrame.H1, CryptoIntervalPeriod.interval1h),
+                        (TimeFrame.M15, CryptoIntervalPeriod.interval15m), 
+                        (TimeFrame.M5, CryptoIntervalPeriod.interval5m)
+                        ];
+
+
+                    // Sample data generatie
+                    var multiTimeFrameCandles = new Dictionary<TimeFrame, List<CryptoCandle>>();
+                    foreach (var (timeframe, period) in l)
+                    {
+                        multiTimeFrameCandles.Add(timeframe, new List<CryptoCandle>());
+
+                        CryptoIntervalPeriod intervalPeriod = period;
+                        CryptoInterval interval = GlobalData.IntervalListPeriod[intervalPeriod];
+                        LoadSymbolCandles(symbol, interval);
+                        CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
+                        if (candles.Count == 0)
+                            continue;
+                        CryptoCandle last = candles.Values.Last();
+
+                        // Heeft de munt genoeg 24h volume
+                        if (!SymbolTools.CheckValidMinimalVolume(symbol, last.OpenTime, 3 * 60, out _))
+                            continue;
+                        // Heeft de munt een redelijke prijs
+                        if (!SymbolTools.CheckValidMinimalPrice(symbol, out _))
+                            continue;
+                        if (!SymbolTools.CheckNewCoin(symbol, out string _))
+                            continue;
+
+
+                        foreach (var candle in candles.Values)
+                        {
+                            multiTimeFrameCandles[timeframe].Add(candle);
+                        }
+                    }
+
+                    GlobalData.AddTextToLogTab($"symbol {symbol.Name}");
+                    var bbma = new BBMA();
+                    await bbma.Analyze(symbol.Name, multiTimeFrameCandles);
+
+
+                    //break;
+                }
+            }
+        }
+    }
 }

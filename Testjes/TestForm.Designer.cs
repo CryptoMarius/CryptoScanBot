@@ -33,6 +33,7 @@ namespace CryptoScanBot
         {
             components = new System.ComponentModel.Container();
             panel1 = new Panel();
+            buttonSpikes = new Button();
             button4 = new Button();
             button3 = new Button();
             button2 = new Button();
@@ -70,7 +71,7 @@ namespace CryptoScanBot
             toolStripMenuItem9 = new ToolStripMenuItem();
             toolStripMenuItem10 = new ToolStripMenuItem();
             timerClearEvents = new System.Windows.Forms.Timer(components);
-            buttonSpikes = new Button();
+            buttonBbma = new Button();
             panel1.SuspendLayout();
             tabControl.SuspendLayout();
             tabPageLog.SuspendLayout();
@@ -87,6 +88,7 @@ namespace CryptoScanBot
             // 
             // panel1
             // 
+            panel1.Controls.Add(buttonBbma);
             panel1.Controls.Add(buttonSpikes);
             panel1.Controls.Add(button4);
             panel1.Controls.Add(button3);
@@ -101,6 +103,17 @@ namespace CryptoScanBot
             panel1.Name = "panel1";
             panel1.Size = new Size(1423, 59);
             panel1.TabIndex = 10;
+            // 
+            // buttonSpikes
+            // 
+            buttonSpikes.Location = new Point(870, 13);
+            buttonSpikes.Margin = new Padding(4, 3, 4, 3);
+            buttonSpikes.Name = "buttonSpikes";
+            buttonSpikes.Size = new Size(88, 27);
+            buttonSpikes.TabIndex = 17;
+            buttonSpikes.Text = "Spikes";
+            buttonSpikes.UseVisualStyleBackColor = true;
+            buttonSpikes.Click += ButtonSpikes_Click;
             // 
             // button4
             // 
@@ -407,16 +420,16 @@ namespace CryptoScanBot
             toolStripMenuItem10.Size = new Size(186, 22);
             toolStripMenuItem10.Text = "toolStripMenuItem10";
             // 
-            // buttonSpikes
+            // buttonBbma
             // 
-            buttonSpikes.Location = new Point(870, 13);
-            buttonSpikes.Margin = new Padding(4, 3, 4, 3);
-            buttonSpikes.Name = "buttonSpikes";
-            buttonSpikes.Size = new Size(88, 27);
-            buttonSpikes.TabIndex = 17;
-            buttonSpikes.Text = "Spikes";
-            buttonSpikes.UseVisualStyleBackColor = true;
-            buttonSpikes.Click += ButtonSpikes_Click;
+            buttonBbma.Location = new Point(993, 12);
+            buttonBbma.Margin = new Padding(4, 3, 4, 3);
+            buttonBbma.Name = "buttonBbma";
+            buttonBbma.Size = new Size(88, 27);
+            buttonBbma.TabIndex = 18;
+            buttonBbma.Text = "BBMA";
+            buttonBbma.UseVisualStyleBackColor = true;
+            buttonBbma.Click += buttonBbma_ClickAsync;
             // 
             // TestForm
             // 
@@ -485,6 +498,7 @@ namespace CryptoScanBot
         private TabPage tabPage2;
         private DataGridView dataGridViewSymbol;
         private Button buttonSpikes;
+        private Button buttonBbma;
     }
 }
 
