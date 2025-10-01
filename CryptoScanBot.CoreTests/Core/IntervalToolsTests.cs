@@ -2,7 +2,7 @@
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
-namespace CryptoScanBot.CoreTests.Intern;
+namespace CryptoScanBot.CoreTests.Core;
 
 [TestClass()]
 public class IntervalToolsTests : TestBase

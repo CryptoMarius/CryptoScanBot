@@ -3,8 +3,6 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal.Momentum;
 
-using Skender.Stock.Indicators;
-
 namespace CryptoScanBot.Core.Signal.Other;
 
 public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
