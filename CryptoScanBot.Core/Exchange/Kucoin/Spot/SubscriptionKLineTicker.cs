@@ -14,12 +14,6 @@ namespace CryptoScanBot.Core.Exchange.Kucoin.Spot;
 
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
-    //KucoinKline klinePrev;
-    //long klinePrevOpenTime = 0;
-    //#if KUCOINDEBUG
-    //private static int tickerIndex = 0;
-    //#endif
-
     static double GetInterval()
     {
         // bewust 6 seconden zodat we zeker weten dat de kline er is
@@ -33,16 +27,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     {
         SemaphoreSlim symbolListSemaphore = new(1, 1);
         TickerGroup!.SocketClient ??= new KucoinSocketClient();
-        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var client = (KucoinSocketClient)TickerGroup!.SocketClient;
+        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var api = client.SpotApi;
 
         SortedList<string, CryptoCandleList> klineListTemp = [];
 
-        // TODO: quick en dirty code hier, nog eens verbeteren
-        // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        string symbolNames = "";
+        //string symbolName = "";
         foreach (var symbol in SymbolList)
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
@@ -50,16 +42,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             klineListTemp.Add(symbol.Name, []);
         }
 
-        // Remark, only 1 symbol (see api limits), as there is no SubscribeToKlineUpdatesAsync with a symbol list
-        // Made the code the same as Mexc kline ticker because this is easier to maintain (overkill with 1 symbol)
-
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
             throw new Exception("Geen intervallen?");
 
 
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
         {
             Task taskKline = Task.Run(async () =>
             {
@@ -93,16 +82,12 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.BaseVolume = kline.Volume;
 #endif
                             candle.Volume = kline.QuoteVolume;
-
-                            //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                            //    GlobalData.AddTextToLogTab($"candle update {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
 
                             // Last price (because the Kucoin price-ticker is turned off completely)
                             if (!GlobalData.BackTest)
                             {
                                 symbol.LastPrice = kline.ClosePrice;
-                                //symbol.AskPrice = kline.ClosePrice;
-                                //symbol.BidPrice = kline.ClosePrice;
                             }
                         }
                         finally
@@ -130,83 +115,93 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 foreach (var symbol in SymbolList)
                 {
-                    CryptoCandleList tempList = klineListTemp[symbol.Name];
-                    CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                    long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
-
-                    //await symbol.Lock("kucoin kline ticker2");
-                    await symbolListSemaphore.WaitAsync();
                     try
                     {
-                        // If needed add dummy candle(s) with the same price as the last candle
-                        if (symbolPeriod.CandleList.Count > 0 && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                        //await symbol.Lock("kucoin kline ticker2");
+                        await symbolListSemaphore.WaitAsync();
+                        try
                         {
-                            CryptoCandle lastCandle = symbolPeriod.CandleList.Values.Last();
-                            while (lastCandle.OpenTime < expectedCandlesUpto)
-                            {
-                                // Als deze al aanwezig dmv een ticker update niet dupliceren
-                                long nextCandleUnix = lastCandle.OpenTime + interval.Duration;
-                                if (tempList.TryGetValue(nextCandleUnix, out CryptoCandle? nextCandle))
-                                    break;
+                            CryptoCandleList tempList = klineListTemp[symbol.Name];
+                            CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                            long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
 
-                                // Dplicate the last candle if it is not present ("flat" candle)
-                                if (!symbolPeriod.CandleList.TryGetValue(nextCandleUnix, out nextCandle))
+                            // If needed add dummy candle(s) with the same price as the last candle
+                            if (symbolPeriod.CandleList.Count > 0 && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                            {
+                                CryptoCandle lastCandle = symbolPeriod.CandleList.Values.Last();
+                                while (lastCandle.OpenTime < expectedCandlesUpto)
                                 {
-                                    nextCandle = new();
-                                    tempList.Add(nextCandleUnix, nextCandle);
-                                    nextCandle.OpenTime = nextCandleUnix;
-                                    nextCandle.Open = lastCandle.Close;
-                                    nextCandle.High = lastCandle.Close;
-                                    nextCandle.Low = lastCandle.Close;
-                                    nextCandle.Close = lastCandle.Close;
+                                    // Als deze al aanwezig dmv een ticker update niet dupliceren
+                                    long nextCandleUnix = lastCandle.OpenTime + interval.Duration;
+                                    if (tempList.TryGetValue(nextCandleUnix, out CryptoCandle? nextCandle))
+                                        break;
+
+                                    // Dplicate the last candle if it is not present ("flat" candle)
+                                    if (!symbolPeriod.CandleList.TryGetValue(nextCandleUnix, out nextCandle))
+                                    {
+                                        nextCandle = new();
+                                        tempList.Add(nextCandleUnix, nextCandle);
+                                        nextCandle.OpenTime = nextCandleUnix;
+                                        nextCandle.Open = lastCandle.Close;
+                                        nextCandle.High = lastCandle.Close;
+                                        nextCandle.Low = lastCandle.Close;
+                                        nextCandle.Close = lastCandle.Close;
 #if SUPPORTBASEVOLUME
                                     nextCandle.BaseVolume = 0; // no volume (flat candle)
 #endif
-                                    nextCandle.Volume = 0; // no volume (flat candle)
-                                    lastCandle = nextCandle;
+                                        nextCandle.Volume = 0; // no volume (flat candle)
+                                        lastCandle = nextCandle;
+                                    }
+                                    else break;
+                                }
+                            }
+
+
+                            // Finally do something with the cached data
+                            foreach (CryptoCandle candle in tempList.Values.ToList())
+                            {
+                                if (candle.OpenTime <= expectedCandlesUpto)
+                                {
+                                    tempList.Remove(candle.OpenTime);
+                                    Interlocked.Increment(ref TickerCount);
+                                    if (TickerCount > 999999999)
+                                        Interlocked.Exchange(ref TickerCount, 0);
+
+
+                                    //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+                                    //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
+                                    await CandleTools.Process1mCandleAsync(symbol, candle.Date,
+                                        candle.Open, candle.High, candle.Low, candle.Close,
+                                        0, candle.Volume);
+
+                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
+                                    //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+
+                                    // Debug...
+                                    //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
+
+                                    // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
+                                    if (candle.OpenTime == expectedCandlesUpto)
+                                    {
+                                        //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
+                                        GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
+                                    }
                                 }
                                 else break;
                             }
+
                         }
-
-
-                        // Finally do something with the cached data
-                        foreach (CryptoCandle candle in tempList.Values.ToList())
+                        finally
                         {
-                            if (candle.OpenTime <= expectedCandlesUpto)
-                            {
-                                tempList.Remove(candle.OpenTime);
-                                Interlocked.Increment(ref TickerCount);
-                                if (TickerCount > 999999999)
-                                    Interlocked.Exchange(ref TickerCount, 0);
-
-
-                                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                                //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
-                                await CandleTools.Process1mCandleAsync(symbol, candle.Date, 
-                                    candle.Open, candle.High, candle.Low, candle.Close, 
-                                    0, candle.Volume);
-
-                                //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                                //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
-
-                                // Debug...
-                                //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
-
-                                // Aanbieden voor analyse (dit gebeurd zowel in de ticker als ProcessCandles)
-                                if (candle.OpenTime == expectedCandlesUpto)
-                                {
-                                    //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
-                                    GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
-                                }
-                            }
-                            else break;
+                            symbolListSemaphore.Release();
                         }
-
                     }
-                    finally
+                    catch (Exception error)
                     {
-                        symbolListSemaphore.Release();
+                        ScannerLog.Logger.Error(error, "");
+#if DEBUG
+                        GlobalData.AddTextToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");
+#endif
                     }
                 }
 
