@@ -5,19 +5,13 @@ using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Exchange.Altrady;
 using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Settings;
 using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Trader;
 
-using ExchangeTest.Exchange.Altrady;
-
-using Mexc.Net.Clients;
-
-using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 
 
@@ -200,28 +194,28 @@ public partial class Form1 : Form
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
+            AltradyWebhook.DelegateControlToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position open");
     }
 
     private void ButtonAltradyIncreasePositionClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
+            AltradyWebhook.DelegateControlToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position increase");
     }
 
     private void ButtonAltradyAddTpClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
+            AltradyWebhook.DelegateControlToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position set tp");
     }
 
     private void ButtonAltradyCancelClick(object? sender, EventArgs e)
     {
         CryptoPosition? position = SetupPosition();
         if (position != null)
-            AltradyWebhook.DelegateAllToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position cancel");
+            AltradyWebhook.DelegateControlToAltrady(position, "https://api.altrady.com/v2/signal_bot_positions", "Altrady - Position cancel");
     }
 
 
