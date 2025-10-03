@@ -1,7 +1,10 @@
 ﻿using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Exchange;
+using CryptoScanBot.Core.Json;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.Core.Signal;
+
+using System.Text.Json;
 
 namespace CryptoScanBot.Core.Core;
 
@@ -282,7 +285,6 @@ public static class CandleTools
             // Update administration of the last processed candle
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
 
-
             // Calculate the higher timeframes
             long candle1mCloseTime = candle!.OpenTime + 60;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
@@ -381,8 +383,6 @@ public static class CandleTools
             {
                 CryptoCandle? candle = CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
                 loop += targetInterval.Duration;
-                //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                //    GlobalData.AddTextToLogTab($"Debug calculating candle {candle?.OhlcText(symbol, targetInterval, symbol.PriceDisplayFormat, true, true, true)}");
             }
 
             UpdateCandleFetched(symbol, targetInterval);
