@@ -28,20 +28,18 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         SemaphoreSlim symbolListSemaphore = new(1, 1);
         TickerGroup!.SocketClient ??= new MexcSocketClient();
         var client = (MexcSocketClient)TickerGroup!.SocketClient;
-        //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var api = client.SpotApi;
 
         SortedList<string, CryptoCandleList> klineListTemp = [];
 
         List<string> symbols = [];
-        //string symbolName = "";
         foreach (var symbol in SymbolList)
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
             symbols.Add(symbolName);
             klineListTemp.Add(symbolName, []);
         }
-
+        //string symbolNames = string.Join(",", symbols);
 
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
             throw new Exception("Geen intervallen?");
@@ -167,15 +165,11 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     if (TickerCount > 999999999)
                                         Interlocked.Exchange(ref TickerCount, 0);
 
-
                                     //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                     //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                     await CandleTools.Process1mCandleAsync(symbol, candle.Date,
                                         candle.Open, candle.High, candle.Low, candle.Close,
                                         0, candle.Volume);
-
-                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                                    //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                     // Debug...
                                     //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
