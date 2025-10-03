@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Experiment;
 
+#if DEBUG
 public class SignalBbMaLong : SignalCreateBase
 {
     public SignalBbMaLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -47,25 +48,41 @@ public class SignalBbMaLong : SignalCreateBase
 
     private bool IsExtreme(CryptoSymbolInterval symbolInterval, CryptoCandle candle, int backward)
     {
-        if (candle.CandleData!.Wma05Low >= candle.CandleData.BollingerBandsLowerBand)
-            return false;
+        decimal ema50 = (decimal)candle.CandleData!.Ema50!;
+        decimal wma05Low = (decimal)candle.CandleData!.Wma05Low!;
+        decimal wma10Low = (decimal)candle.CandleData!.Wma10Low!;
+        decimal bbLower = (decimal)candle.CandleData!.BollingerBandsLowerBand!.Value;
+
+        // Extreme Type A: LWMA 5 high/low closes above/below BB
+        bool extremeTypeA = wma05Low < bbLower;
+        // Extreme Type B: Bullish/bearish candle rejects BB
+        bool extremeTypeB = candle.Low <= bbLower && candle.Close > bbLower && candle.Close > candle.Open;
+        // Magic Extreme: LWMA 5 + LWMA 10 outside BB
+        bool magicExtreme = extremeTypeA && wma10Low < bbLower && candle.Close > candle.Open;
+        // Advance Extreme: Price rejects EMA 50 (wick rejection)
+        bool advanceExtreme = candle.Low <= ema50 && candle.Close > ema50 && candle.Close > candle.Open;
+
+
+        bool mlvPotential = extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme;
 
         // go back x extra candle(s)?
-        if (backward > 0)
-        {
-            //if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
-            //    return false;
+        //if (backward > 0)
+        //{
+        //if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
+        //    return false;
 
-            //if (!IndicatorsOkay(candle))
-            //    return false;
-        }
+        //if (!IndicatorsOkay(candle))
+        //    return false;
+        //}
 
-        return true;
+        return mlvPotential;
     }
 
 
     public override bool IsSignal()
     {
+        ExtraText = "";
+
         CryptoIntervalPeriod higherIntervalPeriod = CryptoIntervalPeriod.interval1m;
         // BBMA codes interval correlation (we do not support the week interval)
         if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval5m)
@@ -87,10 +104,7 @@ public class SignalBbMaLong : SignalCreateBase
 
 
         if (!IsExtreme(SymbolInterval, CandleLast, 0))
-        {
-            ExtraText = $"no extreme on interval {Interval.Name}";
             return false;
-        }
 
         // For now just focus on the 2 extremes (the second situation)
 
@@ -103,14 +117,11 @@ public class SignalBbMaLong : SignalCreateBase
             return false;
 
         if (!IsExtreme(higherInterval, candle!, 1))
-        {
-            ExtraText = $"no extreme on interval {higherInterval.Interval.Name}";
             return false;
-        }
 
 
-        ExtraText = "";
         return true;
     }
 
 }
+#endif

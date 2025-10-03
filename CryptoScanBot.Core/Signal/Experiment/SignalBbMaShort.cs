@@ -4,6 +4,7 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Experiment;
 
+//#if DEBUG
 public class SignalBbMaShort : SignalCreateBase
 {
     public SignalBbMaShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
@@ -47,25 +48,45 @@ public class SignalBbMaShort : SignalCreateBase
 
     private bool IsExtreme(CryptoSymbolInterval symbolInterval, CryptoCandle candle, int backward)
     {
-        if (candle.CandleData!.Wma05High <= candle.CandleData.BollingerBandsUpperBand)
-            return false;
+        //if (candle.CandleData!.Wma05High <= candle.CandleData.BollingerBandsUpperBand)
+        //    return false;
+        decimal ema50 = (decimal)candle.CandleData!.Ema50!;
+        decimal wma05High = (decimal)candle.CandleData!.Wma05High!;
+        decimal wma10High = (decimal)candle.CandleData!.Wma10High!;
+        decimal bbUpper = (decimal)candle.CandleData!.BollingerBandsUpperBand!.Value;
+
+        // Extreme Type A: LWMA 5 high/low closes above/below BB
+        bool extremeTypeA = wma05High > bbUpper;
+
+        // Extreme Type B: Bullish/bearish candle rejects BB
+        bool extremeTypeB = candle.High >= bbUpper && candle.Close < bbUpper && candle.Close < candle.Open;
+
+        // Magic Extreme: LWMA 5 + LWMA 10 outside BB
+        bool magicExtreme = extremeTypeA && wma10High > bbUpper && candle.Close < candle.Open;
+
+        // Advance Extreme: Price rejects EMA 50 (wick rejection)
+        bool advanceExtreme = candle.High >= ema50 && candle.Close < ema50 && candle.Close < candle.Open;
+
+        bool mlvPotential = extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme;
 
         // go back x extra candle(s)?
-        if (backward > 0)
-        {
+        //if (backward > 0)
+        //{
             //if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
             //    return false;
 
             //if (!IndicatorsOkay(candle))
             //    return false;
-        }
+        //}
 
-        return true;
+        return mlvPotential;
     }
 
 
     public override bool IsSignal()
     {
+        ExtraText = "";
+
         CryptoIntervalPeriod higherIntervalPeriod = CryptoIntervalPeriod.interval1m;
         // BBMA codes interval correlation (we do not support the week interval)
         if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval5m)
@@ -76,8 +97,8 @@ public class SignalBbMaShort : SignalCreateBase
             higherIntervalPeriod = CryptoIntervalPeriod.interval4h;
         if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval4h)
             higherIntervalPeriod = CryptoIntervalPeriod.interval1d;
-        //if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
-        //    higherIntervalPeriod = CryptoIntervalPeriod.interval1w;
+        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+            higherIntervalPeriod = CryptoIntervalPeriod.interval1w;
 
         if (higherIntervalPeriod == CryptoIntervalPeriod.interval1m)
         {
@@ -87,12 +108,9 @@ public class SignalBbMaShort : SignalCreateBase
 
 
         if (!IsExtreme(SymbolInterval, CandleLast, 0))
-        {
-            ExtraText = $"no extreme on interval {Interval.Name}";
             return false;
-        }
 
-        // For now just focus on the 2 extremes (the second situation)
+        // For now just focus on the 2 extremes (the second situation), REE
 
         //for example : https://www.forexfactory.com/thread/724759-bbma-strategy-by-oma-ally?page=3
         //H4 : ReEntry H1: ReEntry M15 : Extreme
@@ -103,14 +121,11 @@ public class SignalBbMaShort : SignalCreateBase
             return false;
 
         if (!IsExtreme(higherInterval, candle!, 1))
-        {
-            ExtraText = $"no extreme on interval {higherInterval.Interval.Name}";
             return false;
-        }
 
 
-        ExtraText = "";
         return true;
     }
 
 }
+//#endif
