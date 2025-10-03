@@ -3,7 +3,7 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 using CryptoScanBot.CoreTests;
 
-namespace CryptoScanBot.Intern.Tests;
+namespace CryptoScanBot.CoreTests.Core;
 
 [TestClass]
 public class CandleToolsTests : TestBase
