@@ -264,7 +264,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
     public void ExportToExcel()
     {
-        GlobalData.AddTextToLogTab($"Dumping symbol to Excel");
+        GlobalData.AddTextToLogTab($"Dumping symbol {Symbol.Name} to Excel");
         try
         {
             DumpInformation();
