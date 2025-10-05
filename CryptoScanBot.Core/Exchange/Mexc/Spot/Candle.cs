@@ -1,4 +1,5 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using CryptoExchange.Net.Objects.Errors;
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -51,7 +52,14 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         {
             if (result.Error?.Code == 429) // not sure if this error exists on Mexc? Copied?
             {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (rate limits)");
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
+                Thread.Sleep(15000);
+                //continue;
+                goto Again;
+            }
+            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
+            {
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
                 Thread.Sleep(15000);
                 //continue;
                 goto Again;

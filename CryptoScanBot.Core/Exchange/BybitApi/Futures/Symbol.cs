@@ -95,7 +95,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 */
                                 if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
                                 {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
+                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Symbol} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
                                     continue;
                                 }
 

@@ -77,7 +77,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 string symbolName = api.FormatSymbol(symbolData.BaseAsset, symbolData.QuoteAsset, TradingMode.Spot);
                                 if (symbolName != symbolData.Symbol)
                                 {
-                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolName} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
+                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
                                     continue;
                                 }
                                 symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;

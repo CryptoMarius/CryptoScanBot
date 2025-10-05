@@ -1,4 +1,5 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using CryptoExchange.Net.Objects.Errors;
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -49,11 +50,10 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         var result = await api.ExchangeData.GetKlinesAsync(symbolName, (FuturesKlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate);
         if (!result.Success)
         {
-            // We doen het gewoon over (dat is tenminste het advies)
-            // 13-07-2023 14:08:00 AOA-BTC 30m error getting klines 429000: Too Many Requests
-            if (result.Error?.ErrorCode == "429000")
+            // Just retry
+            if (result.Error?.ErrorType == ErrorType.RateLimitRequest)
             {
-                GlobalData.AddTextToLogTab($"{prefix} delay needed for weight: (rate limits)");
+                GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
                 Thread.Sleep(15000);
                 //continue;
                 goto Again;
