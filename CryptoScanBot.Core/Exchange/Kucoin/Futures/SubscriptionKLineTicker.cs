@@ -82,15 +82,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 #endif
                             candle.Volume = kline.Volume;
 
-                            //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                            //    GlobalData.AddTextToLogTab($"candle update {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                            if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                                GlobalData.AddTextToLogTab($"Caching candle {candle?.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true)}");
 
                             // Last price (the Kucoin price-ticker is turned off completely)
                             if (!GlobalData.BackTest)
                             {
                                 symbol.LastPrice = kline.ClosePrice;
-                                //symbol.AskPrice = kline.ClosePrice;
-                                //symbol.BidPrice = kline.ClosePrice;
                             }
                         }
                         finally
@@ -154,6 +152,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 #endif
                                         nextCandle.Volume = 0; // no volume (flat candle)
                                         lastCandle = nextCandle;
+
+                                        if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                                            GlobalData.AddTextToLogTab($"Create dummy candle {nextCandle?.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true)}");
+
                                     }
                                     else break;
                                 }
@@ -170,15 +172,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     if (TickerCount > 999999999)
                                         Interlocked.Exchange(ref TickerCount, 0);
 
+                                    if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                                        GlobalData.AddTextToLogTab($"Process cached candle {candle?.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true)}");
 
                                     //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                     //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                     await CandleTools.Process1mCandleAsync(symbol, candle.Date,
                                         candle.Open, candle.High, candle.Low, candle.Close,
                                         candle.Volume, candle.Volume * 0.5m * (candle.High + candle.Low));
-
-                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                                    //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
                                     // Debug...
                                     //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
@@ -201,7 +202,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                     }
                     catch (Exception error)
                     {
-                        ScannerLog.Logger.Error(error, "");
+                        ScannerLog.Logger.Error(error, symbol.Name);
 #if DEBUG
                         GlobalData.AddTextToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");
 #endif

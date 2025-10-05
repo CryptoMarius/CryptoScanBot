@@ -174,9 +174,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                         candle.Open, candle.High, candle.Low, candle.Close,
                                         0, candle.Volume);
 
-                                    //if (symbol.Name == "GAMEUSDT") // debug very low volume symbol
-                                    //    GlobalData.AddTextToLogTab($"candle added {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
-
                                     // Debug...
                                     //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
 
