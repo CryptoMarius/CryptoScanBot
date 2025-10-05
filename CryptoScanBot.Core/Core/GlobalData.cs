@@ -305,7 +305,8 @@ public static class GlobalData
             symbol.Name.Equals("TRXUSDT") ||
             symbol.Name.Equals("ENAUSDT") ||
             symbol.Name.Equals("ZKJUSDT") ||
-            symbol.Name.Equals("ZILUSDT") ||            
+            symbol.Name.Equals("PUMPUSDT") ||
+            symbol.Name.Equals("CLUBUSDT") ||
             symbol.Name.StartsWith("$BMP")
           )
 #endif
