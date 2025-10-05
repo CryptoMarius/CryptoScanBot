@@ -49,12 +49,12 @@ public class CryptoData
     //Where?
 
     // EMA (Exponential Moving Average) indicator values
-#if EXTRASTRATEGIES
+#if DEBUG
     //public double? Ema8 { get; set; }
     //public double? Ema9 { get; set; }
     //public double? Ema20 { get; set; }
     //public double? SlopeEma20 { get; set; }
-    //public double? Ema50 { get; set; }
+    public double? Ema50 { get; set; }
     //public double? SlopeEma50 { get; set; }
     //public double? Ema100 { get; set; }
     //public double? SlopeEma100 { get; set; }
@@ -128,7 +128,9 @@ public class CryptoData
         //public double? Ema8 { get; set; }
         //public double? Ema20 { get; set; }
         //public double? SlopeEma20 { get; set; }
-        //public double? Ema50 { get; set; }
+#if DEBUG
+        Ema50 = source.Ema50;
+#endif
         //public double? SlopeEma50 { get; set; }
         //public double? Ema100 { get; set; }
         //public double? SlopeEma100 { get; set; }

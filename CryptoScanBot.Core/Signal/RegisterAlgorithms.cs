@@ -150,29 +150,28 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalDominantLevelNearShort),
         });
 
-//#if DEBUG
-//        //***************************************************
-//        // Test
-//        //***************************************************
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "sma50sma20",
-//            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
-//            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
-//            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
-//        });
-//#endif
+        //#if DEBUG
+        //        //***************************************************
+        //        // Test
+        //        //***************************************************
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "sma50sma20",
+        //            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
+        //            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
+        //            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
+        //        });
+        //#endif
 
-//#if DEBUG
-
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "BbRsiEngulf",
-//            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
-//            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
-//            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
-//        });
-//#endif
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "BbRsiEngulf",
+        //            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
+        //            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
+        //            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
+        //        });
+        //#endif
 
         Register(new AlgorithmDefinition()
         {
@@ -191,7 +190,7 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
         //});
 
-        
+
         Register(new AlgorithmDefinition()
         {
             Name = "nwe",
@@ -209,39 +208,38 @@ public static class RegisterAlgorithms
         //    AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
         //});
 
-//#if DEBUG
-//        // BBMA - Oma Ally
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "bbma",
-//            Strategy = CryptoSignalStrategy.BbMa,
-//            AnalyzeLongType = typeof(SignalBbMaLong),
-//            AnalyzeShortType = typeof(SignalBbMaShort),
-//        });
-//#endif
+#if DEBUG
+        // BBMA - Oma Ally
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma",
+            Strategy = CryptoSignalStrategy.BbMa,
+            AnalyzeLongType = typeof(SignalBbMaLong),
+            AnalyzeShortType = typeof(SignalBbMaShort),
+        });
+#endif
 
-//#if DEBUG
-//        // does not work properly afaict
-//        // Trend reversal
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "trend",
-//            Strategy = CryptoSignalStrategy.Trend,
-//            AnalyzeLongType = typeof(SignalTrendLong),
-//            AnalyzeShortType = typeof(SignalTrendShort),
-//        });
-//#endif
+#if DEBUG
+        // Trend reversal
+        Register(new AlgorithmDefinition()
+        {
+            Name = "trend",
+            Strategy = CryptoSignalStrategy.Trend,
+            AnalyzeLongType = typeof(SignalTrendLong),
+            AnalyzeShortType = typeof(SignalTrendShort),
+        });
+#endif
 
 
-//#if DEBUG
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "macd",
-//            Strategy = CryptoSignalStrategy.Macd,
-//            AnalyzeLongType = typeof(SignalMacdLong),
-//            AnalyzeShortType = typeof(SignalMacdShort),
-//        });
-//#endif
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "macd",
+        //            Strategy = CryptoSignalStrategy.Macd,
+        //            AnalyzeLongType = typeof(SignalMacdLong),
+        //            AnalyzeShortType = typeof(SignalMacdShort),
+        //        });
+        //#endif
 
 #if DEBUG
         Register(new AlgorithmDefinition()
@@ -254,27 +252,27 @@ public static class RegisterAlgorithms
 #endif
 
 
-//#if DEBUG
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "sma.slope",
-//            Strategy = CryptoSignalStrategy.SlopeSma20,
-//            AnalyzeLongType = typeof(SignalSlopeSma20Long),
-//            AnalyzeShortType = typeof(SignalSlopeSma20Short),
-//        });
-//#endif
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "sma.slope",
+        //            Strategy = CryptoSignalStrategy.SlopeSma20,
+        //            AnalyzeLongType = typeof(SignalSlopeSma20Long),
+        //            AnalyzeShortType = typeof(SignalSlopeSma20Short),
+        //        });
+        //#endif
 
 
-//#if DEBUG
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "sma.cross",
-//            Strategy = CryptoSignalStrategy.Sma20Sma50,
-//            AnalyzeLongType = typeof(SignalSma20Crossed50Long),
-//            AnalyzeShortType = typeof(SignalSma20Crossed50Short),
-//        });
-//#endif
-        
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "sma.cross",
+        //            Strategy = CryptoSignalStrategy.Sma20Sma50,
+        //            AnalyzeLongType = typeof(SignalSma20Crossed50Long),
+        //            AnalyzeShortType = typeof(SignalSma20Crossed50Short),
+        //        });
+        //#endif
+
     }
 
 

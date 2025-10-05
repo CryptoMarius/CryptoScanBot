@@ -162,17 +162,18 @@ public class CandleIndicatorData : CryptoData
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
         List<EmaResult> emaList26 = (List<EmaResult>)history.GetEma(26);
+        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
         //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
 #endif
 #if EXTRASTRATEGIESSLOPEEMA
         List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 #if DEBUG
         // https://dotnet.stockindicators.dev/utilities/#content
+        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
@@ -295,6 +296,7 @@ public class CandleIndicatorData : CryptoData
 
 #if DEBUG
                 // BbMa
+                candleData.Ema50 = emaList50[index].Ema;
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;

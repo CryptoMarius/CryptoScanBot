@@ -4,13 +4,11 @@ using CryptoScanBot.Core.Model;
 
 namespace CryptoScanBot.Core.Signal.Experiment;
 
-//#if DEBUG
+#if DEBUG
 public class SignalBbMaShort : SignalCreateBase
 {
     public SignalBbMaShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.BbMa;
     }
 
 
@@ -18,6 +16,7 @@ public class SignalBbMaShort : SignalCreateBase
     {
         if (candle == null
            || candle.CandleData == null
+           || candle.CandleData.Ema50 == null
            || candle.CandleData.Wma05High == null
            || candle.CandleData.BollingerBandsDeviation == null
            )
@@ -48,38 +47,35 @@ public class SignalBbMaShort : SignalCreateBase
 
     private bool IsExtreme(CryptoSymbolInterval symbolInterval, CryptoCandle candle, int backward)
     {
-        //if (candle.CandleData!.Wma05High <= candle.CandleData.BollingerBandsUpperBand)
-        //    return false;
-        decimal ema50 = (decimal)candle.CandleData!.Ema50!;
-        decimal wma05High = (decimal)candle.CandleData!.Wma05High!;
-        decimal wma10High = (decimal)candle.CandleData!.Wma10High!;
-        decimal bbUpper = (decimal)candle.CandleData!.BollingerBandsUpperBand!.Value;
-
-        // Extreme Type A: LWMA 5 high/low closes above/below BB
-        bool extremeTypeA = wma05High > bbUpper;
-
-        // Extreme Type B: Bullish/bearish candle rejects BB
-        bool extremeTypeB = candle.High >= bbUpper && candle.Close < bbUpper && candle.Close < candle.Open;
-
-        // Magic Extreme: LWMA 5 + LWMA 10 outside BB
-        bool magicExtreme = extremeTypeA && wma10High > bbUpper && candle.Close < candle.Open;
-
-        // Advance Extreme: Price rejects EMA 50 (wick rejection)
-        bool advanceExtreme = candle.High >= ema50 && candle.Close < ema50 && candle.Close < candle.Open;
-
-        bool mlvPotential = extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme;
-
         // go back x extra candle(s)?
-        //if (backward > 0)
-        //{
-            //if (!symbolInterval.CandleList.TryGetValue(candle.OpenTime - symbolInterval.Interval.Duration, out candle))
-            //    return false;
+        while (backward-- > 0)
+        {
+            decimal ema50 = (decimal)candle.CandleData!.Ema50!;
+            decimal wma05High = (decimal)candle.CandleData!.Wma05High!;
+            decimal wma10High = (decimal)candle.CandleData!.Wma10High!;
+            decimal bbUpper = (decimal)candle.CandleData!.BollingerBandsUpperBand!.Value;
 
-            //if (!IndicatorsOkay(candle))
-            //    return false;
-        //}
+            // Extreme Type A: LWMA 5 high/low closes above/below BB
+            bool extremeTypeA = wma05High > bbUpper;
 
-        return mlvPotential;
+            // Extreme Type B: Bullish/bearish candle rejects BB
+            bool extremeTypeB = candle.High >= bbUpper && candle.Close < bbUpper && candle.Close < candle.Open;
+
+            // Magic Extreme: LWMA 5 + LWMA 10 outside BB
+            bool magicExtreme = extremeTypeA && wma10High > bbUpper && candle.Close < candle.Open;
+
+            // Advance Extreme: Price rejects EMA 50 (wick rejection)
+            bool advanceExtreme = false; // candle.High >= ema50 && candle.Close < ema50 && candle.Close < candle.Open;
+
+            if (extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme)
+                return true;
+
+            if (!GetPrevCandle(candle, out CryptoCandle? prev))
+                return false;
+            candle = prev!;
+        }
+
+        return false;
     }
 
 
@@ -107,7 +103,7 @@ public class SignalBbMaShort : SignalCreateBase
         }
 
 
-        if (!IsExtreme(SymbolInterval, CandleLast, 0))
+        if (!IsExtreme(SymbolInterval, CandleLast, 2))
             return false;
 
         // For now just focus on the 2 extremes (the second situation), REE
@@ -120,7 +116,7 @@ public class SignalBbMaShort : SignalCreateBase
         if (!PrepareHigherInterval(higherIntervalPeriod, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle))
             return false;
 
-        if (!IsExtreme(higherInterval, candle!, 1))
+        if (!IsExtreme(higherInterval, candle!, 2))
             return false;
 
 
@@ -128,4 +124,4 @@ public class SignalBbMaShort : SignalCreateBase
     }
 
 }
-//#endif
+#endif
