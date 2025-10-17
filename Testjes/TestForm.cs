@@ -2884,7 +2884,7 @@ public partial class TestForm : Form
 
                     GlobalData.AddTextToLogTab($"symbol {symbol.Name}");
                     var bbma = new BBMA();
-                    await bbma.Analyze(symbol.Name, multiTimeFrameCandles);
+                    //await bbma.Analyze(symbol.Name, multiTimeFrameCandles);
 
 
                     //break;
