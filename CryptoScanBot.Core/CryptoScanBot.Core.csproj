@@ -81,28 +81,34 @@
     <Compile Remove="Trend\ZigZagIndicator7.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker - Copy original.cs.txt" />
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old not okay.cs.txt" />
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old okay.cs.txt" />
+  </ItemGroup>
+
 
   <ItemGroup>
-    <PackageReference Include="Binance.Net" Version="11.7.1" />
-    <PackageReference Include="BitMart.Net" Version="2.8.0" />
-    <PackageReference Include="BloFin.Net" Version="1.0.0" />
-    <PackageReference Include="Bybit.Net" Version="5.8.0" />
+    <PackageReference Include="Binance.Net" Version="11.9.0" />
+    <PackageReference Include="BitMart.Net" Version="2.10.0" />
+    <PackageReference Include="BloFin.Net" Version="1.2.0" />
+    <PackageReference Include="Bybit.Net" Version="5.10.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
-    <PackageReference Include="HyperLiquid.Net" Version="2.12.0" />
-    <PackageReference Include="JK.Mexc.Net" Version="3.8.0" />
-    <PackageReference Include="JK.OKX.Net" Version="3.7.1" />
-    <PackageReference Include="JKorf.Coinbase.Net" Version="2.7.0" />
-    <PackageReference Include="KrakenExchange.Net" Version="6.7.0" />
-    <PackageReference Include="Kucoin.Net" Version="7.7.1" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
-    <PackageReference Include="NLog" Version="6.0.4" />
-    <PackageReference Include="NPOI" Version="2.7.4" />
+    <PackageReference Include="HyperLiquid.Net" Version="2.14.0" />
+    <PackageReference Include="JK.Mexc.Net" Version="3.10.0" />
+    <PackageReference Include="JK.OKX.Net" Version="3.9.0" />
+    <PackageReference Include="JKorf.Coinbase.Net" Version="2.9.0" />
+    <PackageReference Include="KrakenExchange.Net" Version="6.9.0" />
+    <PackageReference Include="Kucoin.Net" Version="7.9.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
+    <PackageReference Include="NLog" Version="6.0.5" />
+    <PackageReference Include="NPOI" Version="2.7.5" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="Skender.Stock.Indicators" Version="2.6.1" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.9" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.10" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
 
