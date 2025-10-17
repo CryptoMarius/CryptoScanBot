@@ -11,6 +11,53 @@ public class SignalBbMaLong : SignalCreateBase
     {
     }
 
+    private bool GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3)
+    {
+        // For BBMA codes
+        switch (Interval.IntervalPeriod)
+        {
+            case CryptoIntervalPeriod.interval5m:
+                interval2 = CryptoIntervalPeriod.interval15m;
+                interval3 = CryptoIntervalPeriod.interval1h;
+                break;
+            case CryptoIntervalPeriod.interval10m:
+                interval2 = CryptoIntervalPeriod.interval30m;
+                interval3 = CryptoIntervalPeriod.interval2h;
+                break;
+            case CryptoIntervalPeriod.interval15m:
+                interval2 = CryptoIntervalPeriod.interval1h;
+                interval3 = CryptoIntervalPeriod.interval4h;
+                break;
+            case CryptoIntervalPeriod.interval30m:
+                interval2 = CryptoIntervalPeriod.interval2h;
+                interval3 = CryptoIntervalPeriod.interval8h;
+                break;
+            case CryptoIntervalPeriod.interval1h:
+                interval2 = CryptoIntervalPeriod.interval4h;
+                interval3 = CryptoIntervalPeriod.interval1d;
+                break;
+            case CryptoIntervalPeriod.interval2h:
+                interval2 = CryptoIntervalPeriod.interval6h;
+                interval3 = CryptoIntervalPeriod.interval1d;
+                break;
+            case CryptoIntervalPeriod.interval3h:
+                interval2 = CryptoIntervalPeriod.interval8h;
+                interval3 = CryptoIntervalPeriod.interval1d;
+                break;
+            case CryptoIntervalPeriod.interval4h:
+                interval2 = CryptoIntervalPeriod.interval1d;
+                interval3 = CryptoIntervalPeriod.interval1w;
+                break;
+            default:
+                ExtraText = $"not accepted interval {Interval.Name}";
+                //GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.IntervalPeriod} {CryptoTradeSide.Long} failed PrepareHigherInterval (1)");
+                interval2 = Interval.IntervalPeriod;
+                interval3 = Interval.IntervalPeriod;
+                return false;
+        }
+        return true;
+    }
+
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {
@@ -31,13 +78,20 @@ public class SignalBbMaLong : SignalCreateBase
         higherInterval = Symbol.GetSymbolInterval(higher);
         long candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
         if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out candle))
+        {
+            ExtraText += $"nocandle:{candleOpenTime}";
             return false;
+        }
 
         if (candle.CandleData == null)
         {
-            List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
+            List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
             if (history == null)
+            {
+                DateTime x = CandleTools.GetUnixDate(candleOpenTime);
+                ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
                 return false;
+            }
             CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
         }
 
@@ -45,12 +99,11 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 
-    private bool IsExtreme(CryptoSymbolInterval symbolInterval, CryptoCandle candle, int backward)
+    private bool IsExtreme(CryptoCandle candle, int backward)
     {
         // go back x extra candle(s)?
         while (backward-- > 0)
         {
-            decimal ema50 = (decimal)candle.CandleData!.Ema50!;
             decimal wma05Low = (decimal)candle.CandleData!.Wma05Low!;
             decimal wma10Low = (decimal)candle.CandleData!.Wma10Low!;
             decimal bbLower = (decimal)candle.CandleData!.BollingerBandsLowerBand!.Value;
@@ -59,13 +112,14 @@ public class SignalBbMaLong : SignalCreateBase
             bool extremeTypeA = wma05Low < bbLower;
 
             // Extreme Type B: Bullish/bearish candle rejects BB
-            bool extremeTypeB = candle.Low <= bbLower && candle.Close > bbLower && candle.Close > candle.Open;
+            bool extremeTypeB = candle.Low < bbLower && candle.Close > bbLower && candle.Open > bbLower;
 
             // Magic Extreme: LWMA 5 + LWMA 10 outside BB
-            bool magicExtreme = extremeTypeA && wma10Low < bbLower && candle.Close > candle.Open;
+            bool magicExtreme = extremeTypeA && wma10Low < bbLower;
 
             // Advance Extreme: Price rejects EMA 50 (wick rejection)
-            bool advanceExtreme = false; //candle.Low <= ema50 && candle.Close > ema50 && candle.Close > candle.Open;
+            decimal ema50 = (decimal)candle.CandleData!.Ema50!;
+            bool advanceExtreme = candle.Low < ema50 && candle.Open > ema50 && candle.Close > ema50;
 
             if (extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme)
                 return true;
@@ -79,43 +133,96 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 
+    internal bool IsReentry(CryptoCandle candle, int backward)
+    {
+        // go back x extra candle(s)?
+        while (backward-- > 0)
+        {
+            if (!GetPrevCandle(candle, out CryptoCandle? prev))
+                return false;
+
+            decimal wma05Low = (decimal)candle.CandleData!.Wma05Low!;
+            decimal wma10Low = (decimal)candle.CandleData!.Wma10Low!;
+
+            //decimal wma05LowPrev = (decimal)candle.CandleData!.Wma05Low!;
+            //decimal wma10LowPrev = (decimal)candle.CandleData!.Wma10Low!;
+
+            // CSD (CSAK): LWMA5/WMA10 crossover (use lows for buy, highs for sell)
+            //bool csd = wma05Low > wma10Low && wma05LowPrev <= wma10LowPrev;
+
+            //// Early CSD: CSD zonder volledige MLV (hoog risico)
+            //bool earlyCsdBull = csd && (!signals[tf].ContainsKey("MLV") || !signals[tf]["MLV"].Active);
+
+            //// CSM: Strong candle after CSD
+            //double bodySize = Math.Abs(candles[i].Close - candles[i].Open);
+            //bool strongCandle = bodySize > 0.01 * candles[i].Close;
+            //bool csmBull = csd && strongCandle && candles[i].Close > candles[i].Open;
+
+            //// Early CSM: CSM zonder volledige CSD (hoog risico)
+            //bool earlyCsmBull = csmBull && (!signals[tf].ContainsKey("CSDBull") || !signals[tf]["CSDBull"].Active);
+
+            //// Re-entry Zones (na CSD/CSM)
+            //bool reentryBuyZone = (csd || csmBull || earlyCsdBull || earlyCsmBull) && candles[i].Close >= wma05Low && candles[i].Close <= wma10Low;
+            //return reentryBuyZone;
+
+            bool possibleReentry = candle.Close >= wma05Low && candle.Close <= wma10Low;
+            if (possibleReentry)
+                return true;
+
+            candle = prev!;
+        }
+        return false;
+    }
+
     public override bool IsSignal()
     {
         ExtraText = "";
+        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
+            return false;
 
-        CryptoIntervalPeriod higherIntervalPeriod = CryptoIntervalPeriod.interval1m;
-        // BBMA codes interval correlation (we do not support the week interval)
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval5m)
-            higherIntervalPeriod = CryptoIntervalPeriod.interval15m;
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval15m)
-            higherIntervalPeriod = CryptoIntervalPeriod.interval1h;
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1h)
-            higherIntervalPeriod = CryptoIntervalPeriod.interval4h;
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval4h)
-            higherIntervalPeriod = CryptoIntervalPeriod.interval1d;
-        if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
-            higherIntervalPeriod = CryptoIntervalPeriod.interval1w;
-
-        if (higherIntervalPeriod == CryptoIntervalPeriod.interval1m)
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
         {
-            ExtraText = $"not accepted interval {Interval.Name}";
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
-
-        if (!IsExtreme(SymbolInterval, CandleLast, 2))
+        if (!IsExtreme(CandleLast, 2))
             return false;
 
-        // For now just focus on the 2 extremes (the second situation)
 
+
+        if (!GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3))
+            return false;
+
+
+
+        // For now just focus on the 2 extremes (the second situation), REE
+
+        // BBMA codes
         // REE,   1h Reentry 15m Extreme, 5m Extreme
         // REM,   1h Reentry 15m Extreme, 5m Momentum?
 
-        if (!PrepareHigherInterval(higherIntervalPeriod, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle))
+        if (!PrepareHigherInterval(interval2, out CryptoSymbolInterval interval2_, out CryptoCandle? candle2))
+        {
+            GlobalData.AddTextToLogTab($"{Symbol.Name} {interval2} {CryptoTradeSide.Long} failed PrepareHigherInterval (2)");
+            //PrepareHigherInterval(interval2, out interval2_, out candle2);
             return false;
+        }
+        if (!IsExtreme(candle2!, 3))
+            return false;
+        ExtraText += $"{Interval.Name} {CandleLast.DateLocal:dd-MM HH:mm}, {interval2_.Interval.Name} {candle2!.DateLocal}";
 
-        if (!IsExtreme(higherInterval, candle!, 2))
+
+        if (!PrepareHigherInterval(interval3, out CryptoSymbolInterval interval3_, out CryptoCandle? candle3))
+        {
+            //GlobalData.AddTextToLogTab($"{Symbol.Name} {interval3} {CryptoTradeSide.Long} failed PrepareHigherInterval (3)");
+            ExtraText += $", {interval3_.Interval.Name} {candle3?.DateLocal:dd-MM HH:mm} FAILED";
+            //    PrepareHigherInterval(interval3, out interval3_, out candle3); // debug
             return false;
+        }
+        if (!IsReentry(candle3!, 3))
+            return false;
+        else ExtraText += $", {interval3_.Interval.Name} {candle3!.DateLocal:dd-MM HH:mm}";
 
 
         return true;
