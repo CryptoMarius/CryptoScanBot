@@ -73,77 +73,57 @@ public class Symbol() : SymbolBase(), ISymbol
                         {
                             foreach (var symbolData in symbolInfo.Data)
                             {
-                                string symbolName = api.FormatSymbol(symbolData.BaseAsset, symbolData.QuoteAsset, TradingMode.PerpetualLinear);
-                                if (symbolName != symbolData.Symbol)
+                                SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                                if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                                 {
-                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
-                                    continue;
-                                }
-                                symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
+                                    //Tijdelijk alles overnemen (vanwege into nieuwe velden)
+                                    //De te gebruiken precisie in prijzen
+                                    //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
+                                    //if (symbol.BaseAssetPrecision <= 0)
+                                    //    symbol.BaseAssetPrecision = 8;
+                                    //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
+                                    //if (symbol.QuoteAssetPrecision <= 0)
+                                    //    symbol.QuoteAssetPrecision = 8;
+                                    //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
+                                    //Minimale en maximale amount voor een order (in base amount)
+                                    //symbol.QuantityMinimum = symbolData.BaseAsset.MinQuantity;
+                                    //symbol.QuantityMaximum = symbolData.MaxQuantity; //baseMinSize
+                                    // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
 
-                                    symbol = new()
+                                    symbol.QuantityTickSize = symbolData.TickSize;
+
+                                    // De minimale en maximale prijs voor een order (in base price)
+                                    // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
+                                    // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
+                                    //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
+                                    //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
+                                    symbol.PriceTickSize = symbolData.TickSize;
+
+                                    symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                    symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+
+                                    symbol.Volume = symbolData.Volume24H;
+                                    //// volume from the tickers
+                                    //if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    //    symbol.Volume = volume;
+                                    //else
+                                    //    symbol.Volume = 0;
+
+                                    if (symbolData.Status == "Open")
+                                        symbol.Status = 1;
+                                    else
+                                        symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+
+                                    if (symbol.Id == 0)
                                     {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
+                                        database.Connection.Insert(symbol, transaction);
+                                        cache.Add(symbol);
+                                    }
+                                    else
+                                        database.Connection.Update(symbol, transaction);
+                                    activeSymbols.Add(symbol.Name, symbol);
                                 }
-
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
-                                //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
-                                //if (symbol.BaseAssetPrecision <= 0)
-                                //    symbol.BaseAssetPrecision = 8;
-                                //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
-                                //if (symbol.QuoteAssetPrecision <= 0)
-                                //    symbol.QuoteAssetPrecision = 8;
-                                //symbol.MinNotional = binanceSymbol.MinNotional; // ????
-
-                                //Minimale en maximale amount voor een order (in base amount)
-                                //symbol.QuantityMinimum = symbolData.BaseAsset.MinQuantity;
-                                //symbol.QuantityMaximum = symbolData.MaxQuantity; //baseMinSize
-                                // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
-                                
-                                symbol.QuantityTickSize = symbolData.TickSize;
-
-                                // De minimale en maximale prijs voor een order (in base price)
-                                // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
-                                // (dat heeft consequenties voro de werking van de Clamp die wel waarden verwacht)
-                                //symbol.PriceMinimum = niet aanwezig! binanceSymbol.PriceFilter.min;
-                                //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
-                                symbol.PriceTickSize = symbolData.TickSize;
-
-                                symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
-
-                                symbol.Volume = symbolData.Volume24H;
-                                //// volume from the tickers
-                                //if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                //    symbol.Volume = volume;
-                                //else
-                                //    symbol.Volume = 0;
-
-                                if (symbolData.Status == "Open")
-                                    symbol.Status = 1;
-                                else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
-
-                                if (symbol.Id == 0)
-                                {
-                                    database.Connection.Insert(symbol, transaction);
-                                    cache.Add(symbol);
-                                }
-                                else
-                                    database.Connection.Update(symbol, transaction);
-                                activeSymbols.Add(symbol.Name, symbol);
                             }
 
                             // Deactiveer de munten die niet meer voorkomen

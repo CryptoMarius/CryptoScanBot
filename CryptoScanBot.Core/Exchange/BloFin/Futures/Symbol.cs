@@ -72,31 +72,9 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                string symbolName = api.FormatSymbol(symbolData.BaseAsset, symbolData.QuoteAsset, TradingMode.PerpetualLinear);
-                                if (symbolName != symbolData.Symbol)
-                                {
-                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
-                                    continue;
-                                }
-                                symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
-
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
-
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
                                 //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;

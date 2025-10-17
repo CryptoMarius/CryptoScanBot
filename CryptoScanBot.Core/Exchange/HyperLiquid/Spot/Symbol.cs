@@ -20,6 +20,7 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new HyperLiquidRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.SpotApi;
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -27,7 +28,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
+                var tickerInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -53,7 +54,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
                 var symbolInfo = tickerInfo;
-                //var symbolInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No exchange data retrieved (1)");
+                //var symbolInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No exchange data retrieved (1)");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -72,30 +73,9 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data.ExchangeInfo.Symbols)
                         {
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset.Name, symbolData.QuoteAsset.Name);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
-                                if (symbolData.Name != symbolData.BaseAsset.Name + '/' + symbolData.QuoteAsset.Name)
-                                {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
-                                    continue;
-                                }
-                                string symbolName = symbolData.BaseAsset.Name + symbolData.QuoteAsset.Name;
-
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset.Name);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolData.BaseAsset.Name,
-                                        Quote = symbolData.QuoteAsset.Name,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
@@ -136,9 +116,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                     symbol.Volume = 0;
 
                                 //if (symbolData.BaseAsset.QuantityDecimalsState == InstrumentState.Live)
-                                    symbol.Status = 1;
+                                symbol.Status = 1;
                                 //else
-                                  //  symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
+                                //  symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
 
                                 if (symbol.Id == 0)
                                 {
@@ -163,7 +143,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
                         }
                         if (deactivated > 0)
-                            GlobalData.AddTextToLogTab($"{deactivated} munten gedeactiveerd");
+                            GlobalData.AddTextToLogTab($"{deactivated} coins deactivated");
 
                         transaction.Commit();
 

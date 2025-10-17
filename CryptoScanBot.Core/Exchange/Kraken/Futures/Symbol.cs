@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
@@ -65,42 +67,14 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
-                            //if (coin != "")
+                            // TODO? Inspect
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, "", "");
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.BaseAsset + symbolInfo.QuoteAsset;
                                 //string[] nameParts = name.Split('/');
                                 //name = nameParts[0] + nameParts[1];
-                                //string name = symbolData.BaseAsset + symbolData.QuoteAsset;
-                                string name = symbolData.Symbol;
-
-
-                                /*
-                                    enzovoort..
-                                */
-                                //if (symbolInfo.Name != symbolInfo.BaseAsset + symbolInfo.QuoteAsset)
-                                //{
-                                //    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
-                                //    continue;
-                                //}
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
-                                {
-                                    //var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    //symbol = new()
-                                    //{
-                                    //    Exchange = exchange,
-                                    //    ExchangeId = exchange.Id,
-                                    //    //Name = name,
-                                    //    //Base = nameParts[0],  // symbolInfo.BaseAsset,
-                                    //    //Quote = nameParts[1], //symbolInfo.QuoteAsset,
-                                    //    Name = symbolData.BaseAsset+ symbolData.QuoteAsset,
-                                    //    Base = symbolData.BaseAsset,
-                                    //    Quote = symbolData.QuoteAsset,
-                                    //    QuoteData = quoteData,
-                                    //    Status = 1,
-                                    //};
-                                }
+                           
 
                                 //TODO: ?????????????????????????????????????????????
 

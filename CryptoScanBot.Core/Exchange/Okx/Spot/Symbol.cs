@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
@@ -19,6 +21,7 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new OKXRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.UnifiedApi;
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -26,7 +29,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.UnifiedApi.ExchangeData.GetTickersAsync(InstrumentType.Spot) ?? throw new ExchangeException("No ticker data received");
+                var tickerInfo = await api.ExchangeData.GetTickersAsync(InstrumentType.Spot) ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -48,7 +51,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.UnifiedApi.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("No symbol data received");
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync(InstrumentType.Spot) ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -67,30 +70,9 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol ? symbol))
                             {
-                                if (symbolData.Symbol != symbolData.BaseAsset + '-' + symbolData.QuoteAsset)
-                                {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
-                                    continue;
-                                }
-                                string symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
-
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen

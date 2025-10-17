@@ -1,6 +1,8 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
+using CryptoExchange.Net.SharedApis;
+
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
@@ -19,6 +21,7 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new BybitRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.V5Api;
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -26,7 +29,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.V5Api.ExchangeData.GetSpotTickersAsync() ?? throw new ExchangeException("No ticker data received");
+                var tickerInfo = await api.ExchangeData.GetSpotTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
@@ -44,7 +47,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.V5Api.ExchangeData.GetSpotSymbolsAsync() ?? throw new ExchangeException("No symbol data received");
+                var symbolInfo = await api.ExchangeData.GetSpotSymbolsAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -59,11 +62,10 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        //BybitSpotSymbol
-                        //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbolInfo.Data.List)
                         {
-                            //if (coin != "")
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                 //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
@@ -97,28 +99,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 enzovoort..
                                 */
 
-                                if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
-                                {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
-                                    continue;
-                                }
 
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolData.Name,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen

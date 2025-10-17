@@ -1,4 +1,6 @@
-﻿using CryptoScanBot.Core.Context;
+﻿using CryptoExchange.Net.SharedApis;
+
+using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
 
@@ -19,14 +21,16 @@ public class Symbol() : SymbolBase(), ISymbol
             {
                 using var client = new MexcRestClient(options => { options.OutputOriginalData = true; });
                 client.ClientOptions.OutputOriginalData = true;
+                var api = client.SpotApi;
                 using CryptoDatabase database = new();
                 database.Open();
 
 
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
+                // https://api.bybit.com/v5/market/instruments-info?category=spot
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.SpotApi.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
+                var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -48,10 +52,9 @@ public class Symbol() : SymbolBase(), ISymbol
                 }
 
 
-
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await client.SpotApi.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
+                var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
                 if (symbolInfo == null)
@@ -67,11 +70,10 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        //BybitSpotSymbol
-                        //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbolInfo.Data.Symbols)
                         {
-                            //if (coin != "")
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                 //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
@@ -109,30 +111,6 @@ public class Symbol() : SymbolBase(), ISymbol
                                 },
                                
                                 */
-
-                                if (symbolData.Name != symbolData.BaseAsset + symbolData.QuoteAsset)
-                                {
-                                    //GlobalData.AddTextToLogTab($"Ignoring symbol {symbolInfo.Name} {symbolInfo.BaseAsset} {symbolInfo.QuoteAsset} weird name?");
-                                    continue;
-                                }
-
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolData.Name, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolData.Name,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
-
 
                                 // min, max en tick (in base amount)
                                 symbol.QuantityTickSize = 1;

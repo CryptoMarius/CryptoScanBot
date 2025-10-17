@@ -20,6 +20,7 @@ public class Symbol() : SymbolBase(), ISymbol
             try
             {
                 using var client = new HyperLiquidRestClient(options => { options.OutputOriginalData = true; });
+                var api = client.FuturesApi;
                 using CryptoDatabase database = new();
                 database.Open();
 
@@ -27,7 +28,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // tickers for volumes... (need volume because of filtered kline and price tickers)
                 GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await client.FuturesApi.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
+                var tickerInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No ticker and symbol data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting symbol ticker info {tickerInfo.Error}");
                 if (tickerInfo == null)
@@ -53,7 +54,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
                 var symbolInfo = tickerInfo;
-                //var symbolInfo = await client.FuturesApi.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No exchange data retrieved (1)");
+                //var symbolInfo = await api.ExchangeData.GetExchangeInfoAndTickersAsync() ?? throw new ExchangeException("No exchange data retrieved (1)");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol information " + symbolInfo.Error);
                 if (symbolInfo.Data == null)
@@ -72,25 +73,10 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data.ExchangeInfo.Symbols)
                         {
+                            // TODO: 
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "QUOTE");
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                string symbolName = symbolData.Name;
-
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData("QUOTE");
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolName,
-                                        Quote = "QUOTE",
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen

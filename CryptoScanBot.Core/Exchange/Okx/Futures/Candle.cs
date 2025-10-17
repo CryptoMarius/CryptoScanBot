@@ -1,4 +1,5 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using CryptoExchange.Net.Objects.Errors;
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
@@ -45,8 +46,16 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         //string symbolName = OkxExchange.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
         string symbolName = symbol.Base + '-' + symbol.Quote;
-        var result = await client.UnifiedApi.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, 
+    Again:
+        var result = await client.UnifiedApi.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
+        if (!result.Success && result.Error?.ErrorType == ErrorType.RateLimitRequest)
+        {
+            GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");
+            Thread.Sleep(15000);
+            //continue;
+            goto Again;
+        }
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

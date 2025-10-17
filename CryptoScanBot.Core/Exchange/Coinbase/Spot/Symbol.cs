@@ -6,6 +6,7 @@ using Dapper.Contrib.Extensions;
 
 using Coinbase.Net.Clients;
 using Coinbase.Net.Enums;
+using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanBot.Core.Exchange.Coinbase.Spot;
 
@@ -70,7 +71,8 @@ public class Symbol() : SymbolBase(), ISymbol
                         //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbolInfo.Data)
                         {
-                            //if (coin != "")
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                 //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
@@ -104,29 +106,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 enzovoort..
                                 */
 
-                                if (symbolData.Symbol != symbolData.BaseAsset + '-' + symbolData.QuoteAsset)
-                                {
-                                    GlobalData.AddTextToLogTab($"Ignoring symbol {symbolData.Symbol} {symbolData.BaseAsset} {symbolData.QuoteAsset} weird name?");
-                                    continue;
-                                }
-                                string symbolName = symbolData.BaseAsset + symbolData.QuoteAsset;
 
-                                //Eventueel symbol toevoegen
-                                if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-                                {
-                                    var quoteData = GlobalData.AddQuoteData(symbolData.QuoteAsset);
-
-                                    symbol = new()
-                                    {
-                                        Exchange = exchange,
-                                        ExchangeId = exchange.Id,
-                                        Name = symbolName,
-                                        Base = symbolData.BaseAsset,
-                                        Quote = symbolData.QuoteAsset,
-                                        QuoteData = quoteData,
-                                        Status = 1,
-                                    };
-                                }
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
