@@ -174,7 +174,7 @@ public static class GlobalData
     {
         // Load & index all the available intervals
         //AddTextToLogTab("Reading interval information");
-
+     
         IntervalList.Clear();
         IntervalListId.Clear();
         IntervalListPeriod.Clear();

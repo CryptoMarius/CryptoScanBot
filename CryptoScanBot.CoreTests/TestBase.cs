@@ -8,6 +8,7 @@ using CryptoScanBot.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using System.Reflection;
 using System.Text.Json;
 
 namespace CryptoScanBot.CoreTests;
@@ -15,11 +16,29 @@ namespace CryptoScanBot.CoreTests;
 public class TestBase
 {
     static bool IsSetupOnce = false;
+
+    public static void InitializeApplicationVariables()
+    {
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+
+        var assembly = Assembly.GetExecutingAssembly().GetName();
+        string appVersion = assembly.Version!.ToString();
+        while (appVersion.EndsWith(".0.0"))
+            appVersion = appVersion[0..^2];
+
+        GlobalData.AppVersion = appVersion;
+    }
+
     static void SetupOnce()
     {
         if (!IsSetupOnce)
         {
             IsSetupOnce = true;
+
+            // Vroeger dan alle andere..
+            //InitializeApplicationVariables();
+            //ScannerLog.InitializeLogging();
 
             // Description: toevoegen en mergen van candles (de happy flow)
             GlobalData.AppName = "CryptoScanBot.Core.Test";
@@ -31,6 +50,7 @@ public class TestBase
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
             GlobalData.LoadIntervals();
+            GlobalData.ActiveExchange = GlobalData.ExchangeListId.Values[0];
             GlobalData.LoadSymbols();
             GlobalData.BackTest = true;
         }
@@ -49,7 +69,7 @@ public class TestBase
 
     internal static CryptoSymbol CreateTestSymbol(CryptoDatabase database)
     {
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out CryptoScanBot.Core.Model.CryptoExchange? exchange))
         {
             if (!exchange.SymbolListName.TryGetValue("TESTUSDT", out CryptoSymbol? symbol))
             {

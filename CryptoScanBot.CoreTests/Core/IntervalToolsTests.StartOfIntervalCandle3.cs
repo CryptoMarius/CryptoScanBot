@@ -5,9 +5,9 @@ using CryptoScanBot.Core.Model;
 namespace CryptoScanBot.CoreTests.Core;
 
 [TestClass()]
-public class IntervalToolsTests : TestBase
+public class IntervalToolsTestsStartOfIntervalCandle3 : TestBase
 {
-    [TestMethod]
+     [TestMethod]
     public void StartOfIntervalCandle3Test1()
     {
         InitTestSession();
@@ -32,13 +32,12 @@ public class IntervalToolsTests : TestBase
     [TestMethod]
     public void StartOfIntervalCandle3Test2()
     {
-        // Same as the first test, but the startdate is shifted 5 minutes
-
         InitTestSession();
 
         CryptoInterval intervalSource = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m];
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h];
 
+        // Same as the first test, but the startdate is shifted 5 minutes
         DateTime now = new(2024, 12, 1, 0, 5, 0, 0, DateTimeKind.Utc);
         long sourceStart = CandleTools.GetUnixTime(now, intervalSource.Duration);
 
@@ -51,4 +50,5 @@ public class IntervalToolsTests : TestBase
             Assert.AreEqual(targetIncomplete, i == 5, "Target complete");
         }
     }
+
 }
