@@ -71,7 +71,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             //"WebsocketName": "AAVE/EUR",
                             //"BaseAsset": "AAVE",
                             //"QuoteAsset": "ZEUR",
-                            SymbolInfo info = ParseSymbol(symbolData.WebsocketName, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            SymbolInfo info = ParseSymbol(symbolData.AlternateName, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //TODO: ?????????????????????????????????????????????
