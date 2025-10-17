@@ -1,15 +1,24 @@
 CryptoScanBot release historie:
 
-xx-xx-2025 2.1.7
+fix documentatie (even bij langs)
+
+xx-10-2025 2.1.7
 - Scanner - Exchange Kraken Spot toegevoegd
+- Scanner - Exchange Bybit EU Spot toegevoegd
+- Scanner - Exchange Bybit EU Futures toegevoegd (heeft helaas geen symbols?)
+- Scanner - Diverse errors van Mexc en Kucoin opgelost (vanwege meerdere updates van klines per minuut)
+- Scanner - Probleem met wegvallende verbinding van Mexc spot opgelost
+- Scanner - Strategie NWE toegevoegd, deze kijkt ook of er rcecent een STOBB of STORSI is geweest
 
 16-09-2025 2.1.6
 - Scanner - Een missend veld toegevoegd in de database en de migration aangepast
-- Scanner - Exchange Bitmart toegevoegd, maar dat werkt niet zoals het hoort (niet zichtbaar)
 - Scanner - Exchange Kucoin futures toegevoegd, lijkt te werken, maar moet getest worden
 - Scanner - Exchange HyperLiquid spot + futures toegevoegd, lijkt te werken, maar moet getest worden
 - Scanner - In de achtergrond bezig met een interface voor bybit.eu, maar deze is nog niet bruikbaar
 - Scanner - Opstart parameters versimpeld, de volledige naam van de exchange + toevoeging moet worden opgegeven
+- Scanner - Exchange Bitmart toegevoegd, maar dat werkt nog niet zoals het hoort (niet zichtbaar)
+- Scanner - Exchange Blofin toegevoegd, maar dat werkt nog niet zoals het hoort (niet zichtbaar)
+- Scanner - Exchange Coinbase toegevoegd, maar dat werkt helemaal niet zoals het hoort (niet zichtbaar) kline stream supports namelijk alleen de 5m..
 
 01-09-2025 2.1.5
 - Scanner - Logging NLOG, de formatting bestanden is wellicht anders
@@ -21,7 +30,7 @@ xx-xx-2025 2.1.7
 - Scanner - Alle user- en price ticker zijn uitgeschakeld en zullen gaan vervallen, realtime wijzigingen in prijzen zijn niet (meer) van belang voor de scanner
 - Scanner - Ivm wegvallen price ticker GetTickers geimplementeerd om het wegvallen van het 24h volume op te vangen (1x in het uur de informatie verversen)
 - Scanner - De Exchange API uitgeschakeld (aangezien alle trading via Altrady zal gaan verlopen)
-- Scanner - De limit rates van Bybit naa beneden bijgesteld, er waren waarschuwingen bij het opstarten dat we over de limiet gingen bij het ophalen van de klines
+- Scanner - De limit rates van Bybit naar beneden bijgesteld, er waren waarschuwingen bij het opstarten dat we over de limiet gingen bij het ophalen van de klines
 
 29-05-2025 2.1.4
 - Scanner - De scanner houdt geen rekening meer met het aantal dagen dat de munt bestaat.

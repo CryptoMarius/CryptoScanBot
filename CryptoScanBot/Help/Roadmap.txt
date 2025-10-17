@@ -25,6 +25,8 @@ Ach, dat ticker ding bij opstarten zit me ook niet in de weg
 Is bovendien voor HyperLiquid ook een dingetje
 
 Scanner:
+- Scanner - Bij een initialisatie van een nieuwe exchange/database staat de op te starten exchange op een verkeerd item
+- Scanner - Controle of de max tijd die bij het ophalen van candles ervoor zorgt dat we te weinig candles maken (zie GetCandlesForInterval)?
 - Scanner - URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 
             (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
 - Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
