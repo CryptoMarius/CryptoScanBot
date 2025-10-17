@@ -53,7 +53,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        SemaphoreSlim symbolListSemaphore = new(1, 1);
         TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
         var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
         var api = client.FuturesApi;

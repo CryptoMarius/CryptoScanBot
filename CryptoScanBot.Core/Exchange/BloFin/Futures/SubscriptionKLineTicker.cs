@@ -46,7 +46,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        SemaphoreSlim symbolListSemaphore = new(1, 1);
         TickerGroup!.SocketClient ??= new BloFinSocketClient();
         var client = (BloFinSocketClient)TickerGroup.SocketClient;
         var api = client.FuturesApi;
