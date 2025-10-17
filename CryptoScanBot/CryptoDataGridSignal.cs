@@ -60,8 +60,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
         MinimumEntry,
         // statistics
-        PriceMin,
-        PriceMax,
         PriceMinPerc,
         PriceMaxPerc,
 
@@ -269,12 +267,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.MinimumEntry:
                     CreateColumn("M.Entry", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleCenter, 42).Visible = false;
                     break;
-                case ColumnsForGrid.PriceMin:
-                    CreateColumn("MinPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
-                    break;
-                case ColumnsForGrid.PriceMax:
-                    CreateColumn("MaxPrice", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
-                    break;
                 case ColumnsForGrid.PriceMinPerc:
                     CreateColumn("MinPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
@@ -356,8 +348,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.Barometer4h => ObjectCompare.Compare(a.Barometer4h, b.Barometer4h),
                     ColumnsForGrid.Barometer1d => ObjectCompare.Compare(a.Barometer1d, b.Barometer1d),
                     ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
-                    ColumnsForGrid.PriceMin => ObjectCompare.Compare(a.PriceMin, b.PriceMin),
-                    ColumnsForGrid.PriceMax => ObjectCompare.Compare(a.PriceMax, b.PriceMax),
                     ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
                     ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
 #if StrategyBbma
@@ -585,14 +575,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     break;
                 case ColumnsForGrid.MinimumEntry:
                     e.Value = signal.MinEntry.ToString(signal.Symbol.QuoteData!.DisplayFormat);
-                    break;
-                case ColumnsForGrid.PriceMin:
-                    if (signal.PriceMin! != 0m)
-                        e.Value = signal.PriceMin.ToString(signal.Symbol.PriceDisplayFormat);
-                    break;
-                case ColumnsForGrid.PriceMax:
-                    if (signal.PriceMax! != 0m)
-                        e.Value = signal.PriceMax.ToString(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.PriceMinPerc:
                     if (signal.PriceMinPerc! != 0)
@@ -883,26 +865,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.Barometer1d:
                     foreColor = SimpleColor(signal.Barometer1d);
                     break;
-
-                case ColumnsForGrid.PriceMin:
-                    {
-                        decimal value = signal.PriceMin;
-                        if (value <= 0)
-                            foreColor = Color.Red;
-                        else
-                            foreColor = Color.Green;
-                    }
-                    break;
-                case ColumnsForGrid.PriceMax:
-                    {
-                        decimal value = signal.PriceMax;
-                        if (value <= 0)
-                            foreColor = Color.Red;
-                        else
-                            foreColor = Color.Green;
-                    }
-                    break;
-
                 case ColumnsForGrid.PriceMinPerc:
                     {
                         double value = signal.PriceMinPerc;
@@ -954,13 +916,12 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
     {
         if (!signal.BackTest) //  && signal.Strategy != CryptoSignalStrategy.Jump
         {
-
-            CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-            if (symbolInterval.CandleList.Count > 0)
+            try
             {
-                try
+                CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                CryptoCandle? candle = symbolInterval.CandleList.Values.LastOrDefault(); // todo, not working for emulator & dates!
+                if (candle != null)
                 {
-                    CryptoCandle candle = symbolInterval.CandleList.Values.Last(); // todo, not working for emulator!
                     if (candle.Low < signal.PriceMin || signal.PriceMin == 0)
                     {
                         signal.PriceMin = candle.Low;
@@ -975,10 +936,10 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         return true;
                     }
                 }
-                catch
-                {
-                    // ignore (sometimes low of high value not set, need locking?)
-                }
+            }
+            catch
+            {
+                // ignore errors
             }
         }
         return false;
@@ -1106,8 +1067,6 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
                     if (GlobalData.Settings.General.DebugSignalStrength)
                     {
-                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMin);
-                        Grid.InvalidateColumn((int)ColumnsForGrid.PriceMax);
                         Grid.InvalidateColumn((int)ColumnsForGrid.PriceMinPerc);
                         Grid.InvalidateColumn((int)ColumnsForGrid.PriceMaxPerc);
                     }
