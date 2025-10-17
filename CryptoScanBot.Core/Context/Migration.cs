@@ -1199,7 +1199,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("update exchange set IsActive=0 where Name like '%Okx Spot%'", transaction);
+            database.Connection.Execute("update exchange set IsSupported=0 where Name like '%Okx Spot%'", transaction);
 
             // update version
             version.Version += 1;
@@ -1318,7 +1318,7 @@ public class Migration
         }
 
         //***********************************************************
-        // 04-09-2025, added BitMart
+        // 11-09-2025, added Bybit EU
         if (CurrentVersion > version.Version && version.Version == 52)
         {
             using var transaction = database.BeginTransaction();
