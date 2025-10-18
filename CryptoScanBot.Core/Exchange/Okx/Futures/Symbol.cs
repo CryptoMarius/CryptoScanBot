@@ -71,8 +71,9 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            //PerpetualLinear, but library adds -SWAP at the end (is that correct?)
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
-                            if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
