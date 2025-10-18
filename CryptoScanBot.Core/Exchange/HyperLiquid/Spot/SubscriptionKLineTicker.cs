@@ -37,7 +37,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
             symbols.Add(symbolName);
-            symbolCandleCache.Add(symbolName, []);
+            symbolCandleCache.Add(symbol.Name, []);
         }
         string symbolNames = string.Join(",", symbols);
 
@@ -72,7 +72,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         {
                             // Add or update the local cache
                             long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
-                            CryptoCandleList candleCache = symbolCandleCache[symbolName];
+                            CryptoCandleList candleCache = symbolCandleCache[symbol.Name];
                             if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
                                 candle = new();
