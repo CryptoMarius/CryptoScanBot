@@ -74,7 +74,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         foreach (var symbolData in symbolInfo.Data.ExchangeInfo.Symbols)
                         {
                             // TODO: 
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "QUOTE");
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "");
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
 
