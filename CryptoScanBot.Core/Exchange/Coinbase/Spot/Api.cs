@@ -34,11 +34,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "Coinbase Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 4;
-
+        ExchangeOptions.SetDefaultOptions("Coinbase Spot", "USDT", 300, false, 4);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

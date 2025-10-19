@@ -43,8 +43,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        var result = await api.ExchangeData.GetKlinesAsync(Category.Linear, symbolName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.ExchangeName, (KlineInterval)exchangeInterval, 
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
@@ -80,7 +79,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)
                     fetchedUpTo = candle.OpenTime;
-                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
+                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.ExchangeSymbol + " " + interval.ExchangeSymbol + " " + candle.DateLocal);
             }
 
             // For the next session

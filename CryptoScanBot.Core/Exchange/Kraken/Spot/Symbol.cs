@@ -65,13 +65,13 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        foreach (var symbolData in symbolInfo.Data.Values)
+                        foreach (var (key, symbolData) in symbolInfo.Data)
                         {
                             //"AlternateName": "AAVEEUR",
                             //"WebsocketName": "AAVE/EUR",
-                            //"BaseAsset": "AAVE",
-                            //"QuoteAsset": "ZEUR",
-                            SymbolInfo info = ParseSymbol(symbolData.AlternateName, symbolData.BaseAsset, symbolData.QuoteAsset);
+                            //"Base": "AAVE",
+                            //"Quote": "ZEUR",
+                            SymbolInfo info = ParseSymbol(key, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
                                 //TODO: ?????????????????????????????????????????????
@@ -98,9 +98,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMaximum = symbolInfo.PriceFilter.MaxPrice;
 
                                 if (symbolData.MinValue.HasValue)
-                                    symbol.QuoteValueMinimum = (decimal)symbolData.MinValue;
+                                    symbol!.QuoteValueMinimum = (decimal)symbolData.MinValue;
 
-                                symbol.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
+                                symbol!.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???

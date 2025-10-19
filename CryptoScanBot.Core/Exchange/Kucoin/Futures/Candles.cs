@@ -46,8 +46,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
     Again:
-        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (FuturesKlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate);
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval, startTime: minDate, endTime: maxDate);
         if (!result.Success)
         {
             // Just retry

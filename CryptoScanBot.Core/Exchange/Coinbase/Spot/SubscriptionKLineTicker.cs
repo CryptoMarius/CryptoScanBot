@@ -17,11 +17,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // Interval is prefixed in the "kline.1.SymbolName"? wtf? copied comments probably..
         if (string.IsNullOrEmpty(symbolName))
             return;
-        symbolName = symbolName.Replace("-", "");
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
@@ -49,8 +48,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-            symbols.Add(symbolName);
+            symbols.Add(symbol.ExchangeName);
         }
         string symbolNames = string.Join(",", symbols);
 
@@ -62,7 +60,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, data =>
         {
-            //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.Symbol));
+            //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));
             foreach (CoinbaseStreamKline kline in data.Data)
             {
                 //if (data.Confirm) // Het is een definitieve candle (niet eentje in opbouw)

@@ -35,11 +35,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "Okx Futures";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("Okx Futures", "USDT", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         OKXEnvironment environment = OKXEnvironment.Live;

@@ -71,7 +71,7 @@ public class Symbol() : SymbolBase(), ISymbol
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, "", "");
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
-                                //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.BaseAsset + symbolInfo.QuoteAsset;
+                                //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.Base + symbolInfo.Quote;
                                 //string[] nameParts = name.Split('/');
                                 //name = nameParts[0] + nameParts[1];
                            

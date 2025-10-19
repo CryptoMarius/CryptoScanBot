@@ -418,7 +418,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     private static string SymbolName(CryptoSignal signal)
     {
-        string s = signal.Symbol.Base + "/" + @signal.Symbol.Quote;
+        string s = signal.Symbol.Base;
+        if (signal.Symbol.Quote != "")
+            s += @"/" + @signal.Symbol.Quote;
         decimal tickPercentage = 100 * signal.Symbol.PriceTickSize / signal.SignalPrice;
         if (tickPercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
             s += " " + tickPercentage.ToString("N2");

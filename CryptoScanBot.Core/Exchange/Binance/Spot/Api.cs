@@ -96,9 +96,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.ExchangeName = "Binance Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 50; // was 200
+        ExchangeOptions.SetDefaultOptions("Binance Spot", "USDT", 1000, false, 50);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

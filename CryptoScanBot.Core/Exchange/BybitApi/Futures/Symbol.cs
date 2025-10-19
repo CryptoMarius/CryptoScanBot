@@ -77,9 +77,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                   "Data": {
                                     "List": [
                                       {
-                                        "Name": "BTCUSDT",
-                                        "BaseAsset": "BTC",
-                                        "QuoteAsset": "USDT",
+                                        "ExchangeSymbol": "BTCUSDT",
+                                        "Base": "BTC",
+                                        "Quote": "USDT",
                                         "Status": 1,
                                         "MarginTading": 0,
                                         "Innovation": false,

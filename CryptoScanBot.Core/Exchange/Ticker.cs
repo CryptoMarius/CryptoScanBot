@@ -77,26 +77,19 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                     }
                 }
 
-                // De symbols evenredig verdelen over de tickers
+                // Divide the symbols evenly
                 x = 0;
                 foreach (CryptoSymbol symbol in symbols)
                 {
-                    //ticker.Symbols.Add(symbol.Name); // Werkt niet voor kucoin..
-                    //TODO: ticker.Symbols.Add(Api.ExchangeSymbolName(symbol)); // beter!
                     var ticker = tickers[x];
                     ticker.SymbolList.Add(symbol);
                     ticker.Symbols.Add(symbol.Name);
 
-                    //if (ticker.SymbolOverview == "")
-                    //    ticker.SymbolOverview += symbol.Name;
-                    //else
-                    //    ticker.SymbolOverview += "," + symbol.Name;
                     x++;
                     if (x >= tickers.Count)
                         x = 0;
                     symbolCount++;
                 }
-                //string.Join(',', Symbols)
 
                 // kan gecombineerd worden ^^
                 foreach (var ticker in tickers)
@@ -287,8 +280,8 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             }
         }
 
-        if (restart)
-            GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} check for restart {count} {TickerType} tickers {restart}");
+        //if (restart)
+        //    GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeSymbol} check for restart {count} {TickerType} tickers {restart}");
         return restart;
     }
 

@@ -24,11 +24,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // De interval wordt geprefixed in de topic "kline.1.SymbolName"
         if (!kline.Finished || string.IsNullOrEmpty(symbolName))
             return;
-        symbolName = symbolName.Replace("-", "");
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
@@ -55,8 +54,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         List<string> symbols = [];
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-            symbols.Add(symbolName);
+            symbols.Add(symbol.ExchangeName);
         }
         //string symbolNames = string.Join(",", symbols);
 

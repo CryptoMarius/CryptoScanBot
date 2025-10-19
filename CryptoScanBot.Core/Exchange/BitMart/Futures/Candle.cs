@@ -1,6 +1,4 @@
-﻿using CryptoExchange.Net.SharedApis;
-
-using CryptoScanBot.Core.Core;
+﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
@@ -26,7 +24,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         if (clientBase is BitMartRestClient client1)
             client = client1;
         else
-            throw new Exception("Expected HyperLiquidRestClient");
+            throw new Exception("Expected BitMartRestClient");
         var api = client.UsdFuturesApi;
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -43,9 +41,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (FuturesKlineInterval)exchangeInterval, 
-            startTime: minDate, endTime: maxDate); //, limit: Api.ExchangeOptions.CandleLimit
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval, 
+            startTime: minDate, endTime: maxDate); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

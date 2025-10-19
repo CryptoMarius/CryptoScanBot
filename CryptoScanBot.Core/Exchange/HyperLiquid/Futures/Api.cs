@@ -32,11 +32,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "HyperLiquid Futures";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "", 300, false, 1); // No Quote available!
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
@@ -86,6 +82,22 @@ public class Api : ExchangeBase
     {
         return new()
         {
+            Altrady = new()
+            {
+                Code = "HYPERLIQUIDF",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/HYPERLIQUIDF_{QUOTE}_{BASE}:{interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUIDF:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.hyperliquid.com/trade/{BASE}/{QUOTE}",
+            }
         };
     }
 }

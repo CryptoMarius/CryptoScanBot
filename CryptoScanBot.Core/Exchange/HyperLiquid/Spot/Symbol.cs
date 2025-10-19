@@ -88,7 +88,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                //if (symbolData.BaseAsset.PriceDecimals)
+                                //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
                                 symbol.QuantityTickSize = symbolData.BaseAsset.QuantityDecimals;
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
@@ -115,7 +115,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                //if (symbolData.BaseAsset.QuantityDecimalsState == InstrumentState.Live)
+                                //if (symbolData.Base.QuantityDecimalsState == InstrumentState.Live)
                                 symbol.Status = 1;
                                 //else
                                 //  symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)

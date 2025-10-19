@@ -27,7 +27,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                 //// tickers for volumes... (need volume because of filtered kline and price tickers)
-                //GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                //GlobalData.AddTextToLogTab($"Reading symbol and ticker information from {ExchangeOptions.ExchangeSymbol}");
                 ////LimitRate.WaitForFairWeight(1);
                 //var tickerInfo = await api.ExchangeData.GetTickersAsync();
                 //if (!tickerInfo.Success)
@@ -42,9 +42,9 @@ public class Symbol() : SymbolBase(), ISymbol
                 //{
                 //    foreach (var tickerData in tickerInfo.Data.Tickers)
                 //    {
-                //        if (tickerData.Symbol != null)
+                //        if (tickerData.ScannerSymbol != null)
                 //        {
-                //            string symbolName = tickerData.Symbol.Replace("/", "");
+                //            string symbolName = tickerData.ScannerSymbol.Replace("/", "");
                 //            volumeTicker.Add(symbolName, tickerData.NotionalVolume); // QuoteVolume?
                 //        }
                 //    }
@@ -87,9 +87,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                //if (symbolData.BaseAsset.PriceDecimals)
+                                //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                symbol.QuantityTickSize = symbolData.QuantityPrecision;
+                                symbol!.QuantityTickSize = symbolData.QuantityPrecision;
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
@@ -109,7 +109,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 //// volume from the tickers
-                                //if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                 //    symbol.Volume = volume;
                                 //else
                                     symbol.Volume = symbolData.Volume24h;

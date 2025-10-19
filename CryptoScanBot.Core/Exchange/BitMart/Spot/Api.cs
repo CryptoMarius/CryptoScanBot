@@ -33,11 +33,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "BitMart Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("BitMart Spot", "USDT", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BitMartRestClient.SetDefaultOptions(options =>

@@ -21,6 +21,9 @@ public partial class UserControlQuote : UserControl
     public void LoadConfig()
     {
         EditQuoteName.Text = QuoteData.Name;
+        // Hyperliquid Futures does not have quotes
+        if (QuoteData.Name == "")
+            EditQuoteName.Text = "(default)";
         EditQuoteName.Checked = QuoteData.FetchCandles;
         EditMinimumVolume.Value = QuoteData.MinimalVolume;
         EditMinimumPrice.Value = QuoteData.MinimalPrice;

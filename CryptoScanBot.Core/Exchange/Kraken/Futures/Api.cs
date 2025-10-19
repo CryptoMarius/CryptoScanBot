@@ -28,10 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.ExchangeName = "Kraken Futures";
-        ExchangeOptions.CandleLimit = 720;
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 5;
+        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 720, false, 5);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>

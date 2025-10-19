@@ -1,14 +1,11 @@
-﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
+﻿using BitMart.Net.Clients;
+
+using CryptoExchange.Net.Authentication;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
 using CryptoScanBot.Core.Model;
-
-using HyperLiquid.Net.Clients;
-
 
 namespace CryptoScanBot.Core.Exchange.BitMart.Futures;
 
@@ -27,19 +24,15 @@ public class Api : ExchangeBase
 
     public override IDisposable GetClient()
     {
-        return new HyperLiquidRestClient();
+        return new BitMartRestClient();
     }
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "BitMart Futures";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
-        HyperLiquidRestClient.SetDefaultOptions(options =>
+        BitMartRestClient.SetDefaultOptions(options =>
         {
             //options.OutputOriginalData = true;
             //options.ReceiveWindow = TimeSpan.FromSeconds(15);
@@ -48,7 +41,7 @@ public class Api : ExchangeBase
                 options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
-        HyperLiquidSocketClient.SetDefaultOptions(options =>
+        BitMartSocketClient.SetDefaultOptions(options =>
         {
             //options.AutoReconnect = true;
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds

@@ -14,11 +14,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 {
     private async Task ProcessCandleAsync(string topic, KrakenKlineUpdate kline)
     {
-        // De interval wordt geprefixed in de topic
-        string symbolName = topic.Replace("/", "");
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            if (exchange.SymbolListExchangeName.TryGetValue(topic, out CryptoSymbol? symbol))
             {
                 Interlocked.Increment(ref TickerCount);
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
@@ -39,8 +37,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         List<string> symbolList = [];
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.PerpetualLinear);
-            symbolList.Add(symbolName);
+            symbolList.Add(symbol.ExchangeName);
         }
 
         // TODO: SubscribeToKlineUpdatesAsync does not exist?
@@ -49,7 +46,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //{
         //    foreach (KrakenKlineUpdate kline in data.Data)
         //    {
-        //        Task.Run(async () => { await ProcessCandleAsync(data.Symbol ?? "", kline); });
+        //        Task.Run(async () => { await ProcessCandleAsync(data.ScannerSymbol ?? "", kline); });
         //    }
         //}, ExchangeBase.CancellationToken).ConfigureAwait(false);
 

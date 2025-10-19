@@ -35,11 +35,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 300;
-        ExchangeOptions.ExchangeName = "HyperLiquid Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
@@ -91,6 +87,22 @@ public class Api : ExchangeBase
     {
         return new()
         {
+            Altrady = new()
+            {
+                Code = "HYPERLIQUID",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/HYPERLIQUID_{QUOTE}_{BASE}:{interval}",
+            },
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUID:{BASE}{QUOTE}&interval={interval}",
+            },
+            ExchangeUrl = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.hyperliquid.com/trade/{BASE}/{QUOTE}",
+            }
         };
     }
 }

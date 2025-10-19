@@ -240,6 +240,7 @@ public class CryptoDatabase : IDisposable
                 "Name TEXT NOT NULL," +
                 "Base TEXT NOT NULL," +
                 "Quote TEXT NOT NULL," +
+                "ExchangeName TEXT NULL," + // Needs to be NOT NULL, but voila..
                 "Status INTEGER NOT NULL," +
                 "Volume TEXT NULL," +
 
@@ -290,7 +291,7 @@ public class CryptoDatabase : IDisposable
     //            "TrendInterval INTEGER NULL," +
     //            "LastCandleSynchronized TEXT NULL," + // overlapt
     //            "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)" +
-    //            "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
+    //            "FOREIGN KEY(SymbolId) REFERENCES ScannerSymbol(Id)," +
     //            "FOREIGN KEY(IntervalId) REFERENCES IntervalList(Id)" +
     //        ")");
     //        connection.Connection.Execute("CREATE INDEX IdxSymbolIntervalId ON SymbolInterval(Id)");
@@ -765,7 +766,7 @@ public class CryptoDatabase : IDisposable
     //    //        "ExchangeId INTEGER NOT NULL," +
     //    //        "SymbolId INTEGER NOT NULL," +
     //    //        "EventTime TEXT NOT NULL," +
-    //    //        "Name TEXT NOT NULL," +
+    //    //        "ExchangeSymbol TEXT NOT NULL," +
     //    //        "Price TEXT NOT NULL," +
     //    //        "Quantity TEXT NOT NULL," +
     //    //        "QuoteQuantity TEXT NOT NULL," +
@@ -773,7 +774,7 @@ public class CryptoDatabase : IDisposable
     //    //        "InvestedValue TEXT NULL," +
     //    //        "UsdtValue TEXT NULL," +
     //    //        "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
-    //    //        "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
+    //    //        "FOREIGN KEY(SymbolId) REFERENCES ScannerSymbol(Id)" +
     //    //    ")");
     //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceId ON [Balance](Id)");
     //    //    connection.Connection.Execute("CREATE INDEX IdxBalanceExchangeId ON [Balance](ExchangeId)");

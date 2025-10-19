@@ -96,10 +96,8 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.ExchangeName = "Binance Futures";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 50; // was 200
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
+        ExchangeOptions.SetDefaultOptions("Binance Futures", "USDT", 1000, false, 50);
+        GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange
         BinanceRestClient.SetDefaultOptions(options =>

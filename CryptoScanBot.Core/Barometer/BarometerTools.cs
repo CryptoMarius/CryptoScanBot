@@ -42,6 +42,7 @@ public class BarometerTools
                     Base = baseName, //De "munt"
                     Quote = quoteData.Name, //USDT, BTC etc.
                     QuoteData = quoteData,
+                    ExchangeName = baseName + quoteData.Name,
                     Volume = 0,
                     Status = 1,
                 };

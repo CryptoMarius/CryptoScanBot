@@ -52,13 +52,14 @@ public partial class FrmMain : Form
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
 
-    //private readonly ISettings _settings;
+    private readonly IExchangeOptions _ExchangeOptionsService;
 
-    public FrmMain()
+    public FrmMain(IExchangeOptions exchangeOptions)
     {
-        //_settings = (ISettings)Program.ServiceProvider.GetService(typeof(ISettings));
-    
         InitializeComponent();
+
+        _ExchangeOptionsService = exchangeOptions ?? throw new ArgumentNullException(nameof(ExchangeOptions));
+
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         logQueue.EnsureCapacity(1500);
@@ -230,6 +231,19 @@ public partial class FrmMain : Form
         {
             GlobalData.ActiveExchange = exchange;
         }
+
+        string? defaultQuote = ExchangeOptions.DefaultQuote;
+        if (defaultQuote != null)
+        {
+            if (!GlobalData.Settings.QuoteCoins.TryGetValue(defaultQuote, out CryptoQuoteData? quoteData))
+            {
+                CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
+                defaultQuoteData.FetchCandles = true;
+                GlobalData.Settings.General.SelectedBarometerQuote = defaultQuote;
+            }
+        }
+
+
 
         // Eventueel de nieuwe quotes zetten enz.
         dashBoardInformation1.InitializeBarometer();

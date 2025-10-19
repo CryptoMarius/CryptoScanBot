@@ -306,7 +306,7 @@ public static class GlobalData
             symbol.Name.Equals("ENAUSDT") ||
             symbol.Name.Equals("ZKJUSDT") ||
             symbol.Name.Equals("PUMPUSDT") ||
-            symbol.Name.Equals("CLUBUSDT") ||
+            symbol.Name.Equals("JAILSTOOL") ||
             symbol.Name.StartsWith("$BMP")
           )
 #endif
@@ -327,6 +327,9 @@ public static class GlobalData
 
             if (!exchange.SymbolListName.ContainsKey(symbol.Name))
                 exchange.SymbolListName.Add(symbol.Name, symbol);
+
+            if (!exchange.SymbolListExchangeName.ContainsKey(symbol.ExchangeName))
+                exchange.SymbolListExchangeName.Add(symbol.ExchangeName, symbol);
 
             // Een referentie naar de globale quote data opzoeken of aanmaken
             symbol.QuoteData = AddQuoteData(symbol.Quote);

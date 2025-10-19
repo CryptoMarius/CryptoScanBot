@@ -92,7 +92,7 @@
     <PackageReference Include="Binance.Net" Version="11.9.0" />
     <PackageReference Include="BitMart.Net" Version="2.10.0" />
     <PackageReference Include="BloFin.Net" Version="1.2.0" />
-    <PackageReference Include="Bybit.Net" Version="5.10.0" />
+    <PackageReference Include="Bybit.Net" Version="5.10.1" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />

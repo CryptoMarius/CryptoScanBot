@@ -38,10 +38,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 1000;
-        ExchangeOptions.ExchangeName = "Bybit Futures";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 10;
+        ExchangeOptions.SetDefaultOptions("Bybit Futures", "USDT", 1000, false, 10);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

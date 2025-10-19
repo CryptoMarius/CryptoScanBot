@@ -81,12 +81,12 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                                 /*
                                 {
-                                "Name": "OGNUSDT",
+                                "ExchangeSymbol": "OGNUSDT",
                                 "BaseAssetName": "Origin",
                                 "Status": "ENABLED",
-                                "BaseAsset": "OGN",
+                                "Base": "OGN",
                                 "BaseAssetPrecision": 2,
-                                "QuoteAsset": "USDT",
+                                "Quote": "USDT",
                                 "QuoteAssetPrecision": 4,
                                 "QuoteAssetFeePrecision": 4,
                                 "BaseAssetFeePrecision": 2,

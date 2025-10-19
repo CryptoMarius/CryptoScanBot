@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 53;
+    public readonly static int CurrentDatabaseVersion = 54;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -151,7 +151,7 @@ public class Migration
                 // -Verwijderen van de Part.Status + de laatste code (verplicht veld)
                 database.Connection.Execute("alter table PositionPart drop column Status", transaction);
 
-                // -Verwijderen van de Step.Name, dit is een alias voor de Side
+                // -Verwijderen van de Step.ExchangeSymbol, dit is een alias voor de Side
                 database.Connection.Execute("alter table PositionStep drop column Name", transaction);
 
                 // update version
@@ -227,7 +227,7 @@ public class Migration
                 database.Connection.Execute("update PositionPart set Purpose=0 where name='BUY'", transaction);
                 database.Connection.Execute("update PositionPart set Purpose=1 where name='DCA'", transaction);
 
-                // Daardoor vervalt het bestaansrecht van de velden Name en Side
+                // Daardoor vervalt het bestaansrecht van de velden ExchangeSymbol en Side
                 database.Connection.Execute("alter table PositionPart drop column Name", transaction);
                 database.Connection.Execute("alter table PositionPart drop column Side", transaction);
 
@@ -499,13 +499,13 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                // remove unused Symbol.LastOrderFetched 
+                // remove unused ScannerSymbol.LastOrderFetched 
                 database.Connection.Execute("alter table Symbol drop column LastOrderFetched", transaction);
 
-                // remove Symbol.TrendPercentage
+                // remove ScannerSymbol.TrendPercentage
                 database.Connection.Execute("alter table Symbol drop column TrendPercentage", transaction);
 
-                // remove Symbol.TrendInfoDate
+                // remove ScannerSymbol.TrendInfoDate
                 database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
 
                 // New exchange Mexc Spot
@@ -627,7 +627,7 @@ public class Migration
             transaction.Commit();
         }
         // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
-        //database.Connection.Execute("insert into exchange(Name, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
+        //database.Connection.Execute("insert into exchange(ExchangeSymbol, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
         //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
         //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
         //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
@@ -1019,7 +1019,7 @@ public class Migration
             try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
 
             //delete
-            //from Symbol
+            //from ScannerSymbol
             //where(symbol.id NOT IN(select distinct(symbolid) from signal))
             //and(symbol.id NOT IN(select distinct symbolid from position))
             //and(symbol.id NOT IN(select distinct symbolid from[order]))
@@ -1327,6 +1327,35 @@ public class Migration
 
             database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 0, 'Bybit EU Spot', 0.1, 0)", transaction);
             database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 1, 'Bybit EU Futures', 0.1, 0)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+        //***********************************************************
+        // 18-10-2025
+        // Kraken spot is unstable, high cpu and no signals
+        // Bybit EU Futures does yet not have any symbols and Altrady doesn't support it
+        // HyperLiquid Spot does not have any symbols and Altrady doesn't support it
+        // Store the symbol name of the exchange (the mapping is getting complicated)
+        if (CurrentVersion > version.Version && version.Version == 53)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='Bybit EU Futures'", transaction);
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='HyperLiquid Spot'", transaction);
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='Kraken Spot'", transaction);
+            // Unless I do another shot at it????
+            //database.Connection.Execute("update Exchange set IsSupported=0 where name='Kucoin Futures'", transaction);
+
+            // Store the symbol name of the exchange (the mapping is getting quite complicated), give it a default
+            try { database.Connection.Execute("alter table symbol add ExchangeName TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("update symbol set ExchangeName=Name", transaction); } catch { } // ignore
+
+            // Make sure symbols are loaded from the exchange
+            try { database.Connection.Execute("update exchange set lastTimeFetched=null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

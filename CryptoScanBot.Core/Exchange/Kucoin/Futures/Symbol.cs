@@ -26,7 +26,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                 //// Tickers for the 24h volume
-                //GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+                //GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeOptions.ExchangeSymbol}");
                 //KucoinWeights.WaitForFairWeight(1);
                 //var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
                 //if (!tickerInfo.Success)
@@ -43,7 +43,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 //    {
                 //        if (tickerData.QuoteVolume.HasValue)
                 //        {
-                //            string symbolName = tickerData.Symbol.Replace("-", "");
+                //            string symbolName = tickerData.ScannerSymbol.Replace("-", "");
                 //            volumeTicker.Add(symbolName, tickerData.QuoteVolume.Value);
                 //        }
                 //    }
@@ -87,11 +87,11 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                     //Minimale en maximale amount voor een order (in base amount)
-                                    //symbol.QuantityMinimum = symbolData.BaseAsset.MinQuantity;
+                                    //symbol.QuantityMinimum = symbolData.Base.MinQuantity;
                                     //symbol.QuantityMaximum = symbolData.MaxQuantity; //baseMinSize
                                     // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
 
-                                    symbol.QuantityTickSize = symbolData.TickSize;
+                                    symbol!.QuantityTickSize = symbolData.TickSize;
 
                                     // De minimale en maximale prijs voor een order (in base price)
                                     // In de definities is wel een minPrice en maxprice aanwezig, maar die is niet gevuld
@@ -105,7 +105,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                     symbol.Volume = symbolData.Volume24H;
                                     //// volume from the tickers
-                                    //if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                    //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                     //    symbol.Volume = volume;
                                     //else
                                     //    symbol.Volume = 0;

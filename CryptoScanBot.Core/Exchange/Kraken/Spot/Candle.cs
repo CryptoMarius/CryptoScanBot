@@ -44,8 +44,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         long maxTime = minTime + (limit - 1) * interval.Duration;
         //DateTime maxDate = CandleTools.GetUnixDate(maxTime);
 
-        string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-        var result = await api.ExchangeData.GetKlinesAsync(symbolName, (KlineInterval)exchangeInterval, minDate);
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, minDate);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");

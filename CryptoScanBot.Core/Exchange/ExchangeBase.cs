@@ -65,11 +65,11 @@ public interface ICandle
 
 public interface IApi
 {
-    public IAsset Asset { get; set; }
+    //public IAsset Asset { get; set; }
     public ICandle Candle { get; set; }
     public ISymbol Symbol { get; set; }
-    public IOrder Order { get; set; }
-    public ITrade Trade { get; set; }
+    //public IOrder Order { get; set; }
+    //public ITrade Trade { get; set; }
     //Limit rates?
 }
 

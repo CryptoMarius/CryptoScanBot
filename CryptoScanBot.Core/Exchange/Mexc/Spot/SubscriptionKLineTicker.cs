@@ -35,9 +35,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //string symbolName = "";
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-            symbols.Add(symbolName);
-            symbolCandleCache.Add(symbolName, []);
+            symbols.Add(symbol.ExchangeName);
+            symbolCandleCache.Add(symbol.ExchangeName, []);
         }
         //string symbolNames = string.Join(",", symbols);
 
@@ -52,7 +51,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 MexcStreamKline kline = data.Data;
                 //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
-                //GlobalData.AddTextToLogTab($"kline ticker {data.Symbol} {json}");
+                //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
 
                 // Prossible change in flow:
                 // Create some variables or temp candle
@@ -61,18 +60,17 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 // Then: Add the in between candles and the tempcandle
                 // Finally add the tempcandle to the Analysis Queue / Monitoring Queue
 
-                if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+                if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
                 {
                     var tick = data.Data;
-                    string symbolName = data.Symbol!;
-                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                    if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
                     {
                         await cacheListSemaphore.WaitAsync();
                         try
                         {
                             // Add or update the local cache
                             long candleOpenUnix = CandleTools.GetUnixTime(kline.StartTime, 60);
-                            CryptoCandleList candleCache = symbolCandleCache[symbolName];
+                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
                             if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
                                 candle = new();
@@ -87,13 +85,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.BaseVolume = kline.Volume;
 #endif
                             candle.Volume = kline.QuoteVolume;
-                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(Symbol, interval, Symbol.PriceDisplayFormat, true, true)}");
-
-                            // Last known price(s)
-                            if (!GlobalData.BackTest)
-                            {
-                                symbol.LastPrice = kline.ClosePrice;
-                            }
+                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
                         }
                         finally
                         {
@@ -125,7 +117,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         await cacheListSemaphore.WaitAsync();
                         try
                         {
-                            CryptoCandleList candleCache = symbolCandleCache[symbol.Name];
+                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
                             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
                             long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
 
@@ -208,8 +200,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 else break;
                             }
                             // Add the last candle in the analysis queue
-                            if (candleLast != null) //&& candleLast.OpenTime == expectedCandlesUpto
+                            if (candleLast != null && candleLast.OpenTime == expectedCandlesUpto)
                             {
+                                // Last known price(s)
+                                if (!GlobalData.BackTest)
+                                {
+                                    symbol.LastPrice = candleLast.Close;
+                                }
+
                                 //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
                                 GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candleLast);
                             }

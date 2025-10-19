@@ -16,6 +16,7 @@ public class CryptoSymbol
     public required string Name { get; set; }
     public required string Base { get; set; } // (ADA, NKN, LTC, etc)
     public required string Quote { get; set; } // (BTC, ETH, EUR, USDT etc)
+    public required string ExchangeName { get; set; } 
     public int Status { get; set; } // 0 for inactive, 1 voor active
 
     // The minimal quantity of an order

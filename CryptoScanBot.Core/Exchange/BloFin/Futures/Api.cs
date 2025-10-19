@@ -32,11 +32,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 1440;
-        ExchangeOptions.ExchangeName = "BloFin Futures";
-        ExchangeOptions.LimitAmountOfSymbols = true;
-        ExchangeOptions.SymbolLimitPerSubscription = 1;
-
+        ExchangeOptions.SetDefaultOptions("BloFin Futures", "USDT", 1440, true, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BloFinRestClient.SetDefaultOptions(options =>

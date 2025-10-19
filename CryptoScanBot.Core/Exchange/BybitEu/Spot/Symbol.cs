@@ -75,9 +75,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                                 /*
                                     {
-                                    "Name": "HFTUSDT",
-                                    "BaseAsset": "HFT",
-                                    "QuoteAsset": "USDT",
+                                    "ExchangeSymbol": "HFTUSDT",
+                                    "Base": "HFT",
+                                    "Quote": "USDT",
                                     "Status": 1,
                                     "MarginTrading": 2,
                                     "Innovation": false,

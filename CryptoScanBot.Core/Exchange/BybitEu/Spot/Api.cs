@@ -51,11 +51,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.CandleLimit = 1000;
-        ExchangeOptions.ExchangeName = "Bybit EU Spot";
-        ExchangeOptions.LimitAmountOfSymbols = false;
-        ExchangeOptions.SymbolLimitPerSubscription = 10;
-
+        ExchangeOptions.SetDefaultOptions("Bybit EU Spot", "USDC", 1000, false, 10);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
 

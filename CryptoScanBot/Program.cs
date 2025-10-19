@@ -1,5 +1,4 @@
 ﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Settings;
 
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -8,21 +7,6 @@ namespace CryptoScanBot;
 
 static class Program
 {
-    //public static IServiceProvider? ServiceProvider { get; set; }
-
-    //static void ConfigureServices()
-    //{
-    //    var services = new ServiceCollection();
-    //    //services.AddTransient<ISomeThing, SomeThing>();
-    //    services.AddSingleton<ISettings, SettingsBasic>();
-    //    ServiceProvider = services.BuildServiceProvider();
-    //}
-
-
-    /// <summary>
-    /// The main entry point for the application.
-    /// </summary>
-    [STAThread]
     static void Main()
     {
         // Vroeger dan alle andere..
@@ -42,8 +26,24 @@ static class Program
         Application.EnableVisualStyles();
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.SetCompatibleTextRenderingDefault(false);
-        //ConfigureServices();
-        Application.Run(new FrmMain());
+
+        var services = new ServiceCollection();
+        //services.AddTransient<Core.Exchange.ExchangeBase>();
+        //services.AddTransient<Core.Exchange.SymbolBase>();
+        //services.AddTransient<Core.Exchange.CandleBase>();
+        //services.AddTransient<Core.Exchange.LimitRatesBase>();
+
+        //services.AddTransient<Core.Exchange.Binance.Futures.Candle>();
+        //services.AddTransient<Core.Exchange.Binance.Spot.Candle>();
+        //services.AddTransient<CryptoScanBot.Core.Exchange.BybitApi.Futures.LimitRate>();
+        
+
+        //services.AddSingleton<Core.Exchange.IExchangeOptions, Core.Exchange.ExchangeOptions>();
+        services.AddTransient<FrmMain>();
+        services.AddTransient<FrmSettings>();
+
+        var serviceProvider = services.BuildServiceProvider();
+        Application.Run(serviceProvider.GetRequiredService<FrmMain>());
     }
 
 

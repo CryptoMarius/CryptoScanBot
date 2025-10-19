@@ -7,8 +7,6 @@ Een beslissing maken over de Average min/max rechtsboven
 Beslissing maken over Kucoin Futures
 Waarom mist de btcusdt op Kucoin Futures? Andere naam wellicht?
 
-Beslissing maken over OKX futures
-
 Beslissing maken over HyperLiquid spot 
 Beslissing maken over HyperLiquid futures
 Hoe wil ik de missende quote oplossen 
@@ -25,6 +23,7 @@ Ach, dat ticker ding bij opstarten zit me ook niet in de weg
 Is bovendien voor HyperLiquid ook een dingetje
 
 Scanner:
+- Scanner - Mexc verliest wel erg vaak de candle stream verbinding (gemiddeld 1x per 30m, tijden varieeren sterk)
 - Scanner - Bij een initialisatie van een nieuwe exchange/database staat de op te starten exchange op een verkeerd item
 - Scanner - Controle of de max tijd die bij het ophalen van candles ervoor zorgt dat we te weinig candles maken (zie GetCandlesForInterval)?
 - Scanner - URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 

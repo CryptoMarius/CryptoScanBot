@@ -24,10 +24,14 @@ public class CryptoExchange
     [Computed]
     public SortedList<int, CryptoSymbol> SymbolListId { get; } = [];
 
-    // Coins indexed on name
+    // Scanner mapping index
     [Computed]
     public SortedList<string, CryptoSymbol> SymbolListName { get; } = [];
-    
+
+    // Exchange Mapping index
+    [Computed]
+    public SortedList<string, CryptoSymbol> SymbolListExchangeName { get; } = [];
+
     [Computed]
     public CryptoExchangeData Data { get; } = new();
 
@@ -38,6 +42,7 @@ public class CryptoExchange
     {
         SymbolListId.Clear();
         SymbolListName.Clear();
+        SymbolListExchangeName.Clear();
     }
 
 }
