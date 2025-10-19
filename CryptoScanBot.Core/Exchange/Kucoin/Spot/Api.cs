@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
+using Kucoin.Net;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
 using Kucoin.Net.Objects;
@@ -69,6 +70,14 @@ public class Api : ExchangeBase
         //};
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
+        KucoinExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            if (x.DelayTime.HasValue)
+                Thread.Sleep(x.DelayTime.Value);
+            Thread.Sleep(1000);
+        };
     }
 
 

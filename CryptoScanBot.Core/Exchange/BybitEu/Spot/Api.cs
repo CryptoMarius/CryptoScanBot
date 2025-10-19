@@ -85,6 +85,14 @@ public class Api : ExchangeBase
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
+        BybitExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            if (x.DelayTime.HasValue)
+                Thread.Sleep(x.DelayTime.Value);
+            Thread.Sleep(1000);
+        };
     }
 
 

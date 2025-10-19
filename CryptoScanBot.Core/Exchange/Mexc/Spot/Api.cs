@@ -5,6 +5,7 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
+using Mexc.Net;
 using Mexc.Net.Clients;
 using Mexc.Net.Enums;
 
@@ -58,6 +59,14 @@ public class Api : ExchangeBase
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         // UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
+        MexcExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            if (x.DelayTime.HasValue)
+                Thread.Sleep(x.DelayTime.Value);
+            Thread.Sleep(1000);
+        };
     }
 
 

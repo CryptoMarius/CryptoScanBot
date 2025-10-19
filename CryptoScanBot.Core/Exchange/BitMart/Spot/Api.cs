@@ -6,6 +6,7 @@ using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
 using BitMart.Net.Clients;
+using BitMart.Net;
 
 
 namespace CryptoScanBot.Core.Exchange.BitMart.Spot;
@@ -61,6 +62,13 @@ public class Api : ExchangeBase
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
+        BitMartExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            if (x.DelayTime.HasValue)
+                Thread.Sleep(x.DelayTime.Value);
+            Thread.Sleep(1000);
+        };
     }
 
 
