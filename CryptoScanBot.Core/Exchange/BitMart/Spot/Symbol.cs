@@ -106,9 +106,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
                                 if (symbolData.QuoteIncrement.HasValue)
-                                    symbol.PriceTickSize = symbolData.QuoteIncrement.Value;
+                                    symbol!.PriceTickSize = symbolData.QuoteIncrement.Value;
 
-                                symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                symbol!.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers

@@ -100,7 +100,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
 
-                                symbol.FundingInterval = symbolData.FundingInterval;
+                                symbol!.FundingInterval = symbolData.FundingInterval;
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen

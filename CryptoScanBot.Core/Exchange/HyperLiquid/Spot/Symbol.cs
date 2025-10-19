@@ -90,7 +90,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 // min, max en tick (in base amount)
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
-                                symbol.QuantityTickSize = symbolData.BaseAsset.QuantityDecimals;
+                                symbol!.QuantityTickSize = symbolData.BaseAsset.QuantityDecimals;
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 

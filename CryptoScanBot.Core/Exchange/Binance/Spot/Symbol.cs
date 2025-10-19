@@ -78,7 +78,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //    symbol.MinNotional = 0;
 
                                 //Minimale en maximale amount voor een order (in base amount)
-                                symbol.QuantityMinimum = symbolData.LotSizeFilter?.MinQuantity ?? 0;
+                                symbol!.QuantityMinimum = symbolData.LotSizeFilter?.MinQuantity ?? 0;
                                 symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
                                 symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
 

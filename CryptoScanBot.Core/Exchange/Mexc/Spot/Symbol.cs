@@ -113,7 +113,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 */
 
                                 // min, max en tick (in base amount)
-                                symbol.QuantityTickSize = 1;
+                                symbol!.QuantityTickSize = 1;
                                 for (int x = symbolData.BaseAssetPrecision; x > 0; x--)
                                     symbol.QuantityTickSize /= 10;
 

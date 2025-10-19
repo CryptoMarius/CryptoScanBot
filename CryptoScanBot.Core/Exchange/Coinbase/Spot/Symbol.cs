@@ -119,7 +119,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                 // min, max en tick (in base amount)
-                                symbol.QuantityTickSize = symbolData.QuantityStep;
+                                symbol!.QuantityTickSize = symbolData.QuantityStep;
                                 symbol.QuantityMinimum = symbolData.MinOrderQuantity;
                                 symbol.QuantityMaximum = symbolData.MaxOrderQuantity;
 

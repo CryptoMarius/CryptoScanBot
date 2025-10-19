@@ -102,7 +102,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //if (symbolData.MinValue.HasValue)
                                 //    symbol.QuoteValueMinimum = (decimal)symbolData.MinValue;
 
-                                symbol.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
+                                symbol!.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
