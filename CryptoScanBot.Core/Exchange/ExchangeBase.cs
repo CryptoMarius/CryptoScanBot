@@ -91,6 +91,7 @@ public abstract class ExchangeBase
     //public static Ticker? UserTicker { get; set; }
 
     public static ExchangeOptions ExchangeOptions { get; } = new() { ExchangeName = "?", };
+    public ExchangeOptions GetExchangeOptions() => ExchangeOptions;
     public static CancellationTokenSource CancellationTokenSource { get; set; } = new();
     public static CancellationToken CancellationToken { get; set; } = CancellationTokenSource.Token;
 
