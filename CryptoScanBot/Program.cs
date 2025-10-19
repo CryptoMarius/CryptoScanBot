@@ -7,6 +7,12 @@ namespace CryptoScanBot;
 
 static class Program
 {
+
+
+    /// <summary>
+    /// The main entry point for the application.
+    /// </summary>
+    [STAThread]
     static void Main()
     {
         // Vroeger dan alle andere..
@@ -27,7 +33,8 @@ static class Program
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
         Application.SetCompatibleTextRenderingDefault(false);
 
-        var services = new ServiceCollection();
+        // Via service gives thread error with the WebView browser
+        //var services = new ServiceCollection();
         //services.AddTransient<Core.Exchange.ExchangeBase>();
         //services.AddTransient<Core.Exchange.SymbolBase>();
         //services.AddTransient<Core.Exchange.CandleBase>();
@@ -36,14 +43,15 @@ static class Program
         //services.AddTransient<Core.Exchange.Binance.Futures.Candle>();
         //services.AddTransient<Core.Exchange.Binance.Spot.Candle>();
         //services.AddTransient<CryptoScanBot.Core.Exchange.BybitApi.Futures.LimitRate>();
-        
+
 
         //services.AddSingleton<Core.Exchange.IExchangeOptions, Core.Exchange.ExchangeOptions>();
-        services.AddTransient<FrmMain>();
-        services.AddTransient<FrmSettings>();
+        //services.AddTransient<FrmMain>();
+        //services.AddTransient<FrmSettings>();
 
-        var serviceProvider = services.BuildServiceProvider();
-        Application.Run(serviceProvider.GetRequiredService<FrmMain>());
+        //var serviceProvider = services.BuildServiceProvider();
+        //Application.Run(serviceProvider.GetRequiredService<FrmMain>());
+        Application.Run(new FrmMain());
     }
 
 
