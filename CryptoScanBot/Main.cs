@@ -52,13 +52,14 @@ public partial class FrmMain : Form
     private readonly ToolStripMenuItemCommand ApplicationCreateSignals;
     private readonly ToolStripMenuItemCommand ApplicationTradingBot;
 
-    private readonly IExchangeOptions _ExchangeOptionsService;
+    //private readonly IExchangeOptions _ExchangeOptionsService;
 
-    public FrmMain(IExchangeOptions exchangeOptions)
+    public FrmMain()
     {
         InitializeComponent();
 
-        _ExchangeOptionsService = exchangeOptions ?? throw new ArgumentNullException(nameof(ExchangeOptions));
+        //IExchangeOptions exchangeOptions
+        //_ExchangeOptionsService = exchangeOptions ?? throw new ArgumentNullException(nameof(ExchangeOptions));
 
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
@@ -232,7 +233,8 @@ public partial class FrmMain : Form
             GlobalData.ActiveExchange = exchange;
         }
 
-        string? defaultQuote = ExchangeOptions.DefaultQuote;
+        var api = GlobalData.ActiveExchange!.GetApiInstance();
+        string? defaultQuote = api.GetExchangeOptions().DefaultQuote;
         if (defaultQuote != null)
         {
             if (!GlobalData.Settings.QuoteCoins.TryGetValue(defaultQuote, out CryptoQuoteData? quoteData))
