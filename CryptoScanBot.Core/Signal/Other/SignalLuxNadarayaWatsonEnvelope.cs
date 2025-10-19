@@ -12,7 +12,19 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         // nothing, implements both long and short
     }
 
+    public override bool IndicatorsOkay(CryptoCandle candle)
+    {
+        if (candle == null
+           || candle.CandleData == null
+           || candle.CandleData.Sma20 == null
+           || candle.CandleData.StochSignal == null
+           || candle.CandleData.StochOscillator == null
+           || candle.CandleData.BollingerBandsDeviation == null
+           )
+            return false;
 
+        return true;
+    }
     private static bool EnoughMomentum(List<CryptoCandle> nwe, int max, out decimal perc)
     {
         // We noticed weak turn's
