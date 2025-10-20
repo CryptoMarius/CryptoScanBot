@@ -30,6 +30,26 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         this.TryAdd("Bybit Spot", Exchange.BybitApi.Spot.Api.GetExchangeLinks());
         this.TryAdd("Bybit Futures", Exchange.BybitApi.Futures.Api.GetExchangeLinks());
 
+        Remove("Bybit EU");
+        this.TryAdd("Bybit EU Spot", Exchange.BybitEu.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
+
+        Remove("BitMart");
+        this.TryAdd("BitMart Spot", Exchange.BitMart.Spot.Api.GetExchangeLinks());
+        this.TryAdd("BitMart Futures", Exchange.BitMart.Futures.Api.GetExchangeLinks());
+
+        Remove("BloFin");
+        //this.TryAdd("BloFin Spot", Exchange.BloFin.Spot.Api.GetExchangeLinks());
+        this.TryAdd("BloFin Futures", Exchange.BloFin.Futures.Api.GetExchangeLinks());
+
+        Remove("Coinbase");
+        this.TryAdd("Coinbase Spot", Exchange.Coinbase.Spot.Api.GetExchangeLinks());
+        //this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
+
+        Remove("HyperLiquid");
+        this.TryAdd("HyperLiquid Spot", Exchange.HyperLiquid.Spot.Api.GetExchangeLinks());
+        this.TryAdd("HyperLiquid Futures", Exchange.HyperLiquid.Futures.Api.GetExchangeLinks());
+
         Remove("Kucoin");
         this.TryAdd("Kucoin Spot", Exchange.Kucoin.Spot.Api.GetExchangeLinks());
         this.TryAdd("Kucoin Futures", Exchange.Kucoin.Futures.Api.GetExchangeLinks());
