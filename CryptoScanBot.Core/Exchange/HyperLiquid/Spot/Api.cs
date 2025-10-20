@@ -68,9 +68,9 @@ public class Api : ExchangeBase
         HyperLiquidExchange.RateLimiter.RateLimitTriggered += (x) =>
         {
             GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            if (x.DelayTime.HasValue)
-                Thread.Sleep(x.DelayTime.Value);
-            Thread.Sleep(1000);
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //    Thread.Sleep(x.DelayTime.Value);
+            //Thread.Sleep(1000);
         };
     }
 

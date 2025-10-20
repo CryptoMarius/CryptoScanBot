@@ -7,6 +7,7 @@ using CryptoScanBot.Core.Model;
 
 using BloFin.Net.Clients;
 using BloFin.Net;
+using CryptoExchange.Net.Objects;
 
 
 namespace CryptoScanBot.Core.Exchange.BloFin.Futures;
@@ -62,9 +63,9 @@ public class Api : ExchangeBase
         BloFinExchange.RateLimiter.RateLimitTriggered += (x) => 
         {
             GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            if (x.DelayTime.HasValue)
-                Thread.Sleep(x.DelayTime.Value);
-            Thread.Sleep(1000);
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //    Thread.Sleep(x.DelayTime.Value);
+            //Thread.Sleep(1000);
         };
     }
 

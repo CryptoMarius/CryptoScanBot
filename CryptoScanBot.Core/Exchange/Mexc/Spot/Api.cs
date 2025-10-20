@@ -1,4 +1,5 @@
 ﻿using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
 
 using CryptoScanBot.Core.Context;
 using CryptoScanBot.Core.Core;
@@ -63,9 +64,9 @@ public class Api : ExchangeBase
         MexcExchange.RateLimiter.RateLimitTriggered += (x) =>
         {
             GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            if (x.DelayTime.HasValue)
-                Thread.Sleep(x.DelayTime.Value);
-            Thread.Sleep(1000);
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //    Thread.Sleep(x.DelayTime.Value);
+            //Thread.Sleep(1000);
         };
     }
 

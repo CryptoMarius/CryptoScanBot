@@ -33,7 +33,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "", 300, false, 1); // No Quote available!
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
@@ -61,10 +61,16 @@ public class Api : ExchangeBase
 
         HyperLiquidExchange.RateLimiter.RateLimitTriggered += (x) =>
         {
-            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            if (x.DelayTime.HasValue)
-                Thread.Sleep(x.DelayTime.Value);
-            Thread.Sleep(1000);
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour} {x.DelayTime.Value.TotalSeconds}");
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //{
+                //x.DelayTime = 0.1 * x.DelayTime;
+                //int delay = (int)Math.Round(x.DelayTime.Value.TotalSeconds * 10);
+                //Thread.Sleep(delay);
+                //await Task.Delay((int)Math.Round(x.DelayTime.Value.TotalSeconds * 1000));
+                //x.Behaviour = RateLimitingBehaviour.
+            //}
+            //Thread.Sleep(1000);
         };
 
     }
