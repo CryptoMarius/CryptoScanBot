@@ -14,13 +14,13 @@ public class SymbolBase()
     internal class SymbolInfo
     {
         // Exchange name (can be sometimes different than base+quote)
-        public string ExchangeSymbol { get; set; } = string.Empty;
+        public string ExchangeName { get; set; } = string.Empty;
 
         public string Base { get; set; } = string.Empty;
         public string Quote { get; set; } = string.Empty;
 
         // The combination of base and quote
-        public string ScannerSymbol { get; set; } = string.Empty;
+        public string ScannerName { get; set; } = string.Empty;
     }
 
     internal static void SaveExchangeInfo(object exchangeInfo, string name = "symbols.json")
@@ -68,14 +68,14 @@ public class SymbolBase()
 
     }
 
-    static internal SymbolInfo ParseSymbol(string exchangeSymbol, string baseAsset, string quoteAsset)
+    static internal SymbolInfo ParseSymbol(string exchangeName, string baseAsset, string quoteAsset)
     {
         var info = new SymbolInfo
         {
             Base = baseAsset,
-            Quote = quoteAsset,
-            ExchangeSymbol = exchangeSymbol,
-            ScannerSymbol = baseAsset + quoteAsset,
+            Quote = quoteAsset.ToUpper(),
+            ExchangeName = exchangeName,
+            ScannerName = baseAsset.ToUpper() + quoteAsset.ToUpper(),
         };
         return info;
     }
@@ -83,32 +83,32 @@ public class SymbolBase()
 
     static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
     {
-        if (!exchange.SymbolListName.TryGetValue(info.ScannerSymbol, out symbol))
+        if (!exchange.SymbolListName.TryGetValue(info.ScannerName, out symbol))
         {
             var quoteData = GlobalData.AddQuoteData(info.Quote);
             symbol = new()
             {
                 Exchange = exchange,
                 ExchangeId = exchange.Id,
-                Name = info.ScannerSymbol,
+                Name = info.ScannerName,
                 Base = info.Base,
                 Quote = info.Quote,
                 QuoteData = quoteData,
-                ExchangeName = info.ExchangeSymbol,
+                ExchangeName = info.ExchangeName,
                 Status = 1,
             };
         }
         // Fix because we introduced a new storage Symbol.ExchangeName field
-        symbol.ExchangeName = info.ExchangeSymbol;
+        symbol.ExchangeName = info.ExchangeName;
 
         // Is it a weird symbol name? Delivery dates or other name mangling
         // **This does not work for Kraken Spot. Lets accept all symbols for now.**
 
         string formattedName = api.FormatSymbol(info.Base, info.Quote, mode);
-        if (formattedName != info.ExchangeSymbol)
+        if (formattedName != info.ExchangeName)
         {
 #if DEBUG
-            GlobalData.AddTextToLogTab($"Ignoring symbol {formattedName} {info.Base} {info.Quote} weird symbol name? {info.ExchangeSymbol}");
+            GlobalData.AddTextToLogTab($"Ignoring symbol {formattedName} {info.Base} {info.Quote} weird symbol name? {info.ExchangeName}");
 #endif
             return false;
         }
