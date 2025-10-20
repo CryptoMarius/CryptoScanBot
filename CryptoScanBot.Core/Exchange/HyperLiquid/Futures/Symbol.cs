@@ -8,6 +8,8 @@ using Dapper.Contrib.Extensions;
 
 using HyperLiquid.Net.Clients;
 
+using System.Text;
+
 namespace CryptoScanBot.Core.Exchange.HyperLiquid.Futures;
 
 public class Symbol() : SymbolBase(), ISymbol
@@ -43,8 +45,8 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         if (tickerData.Symbol != null)
                         {
-                            string symbolName = tickerData.Symbol.Replace("/", "");
-                            volumeTicker.Add(symbolName, tickerData.NotionalVolume); // QuoteVolume?
+                            SymbolInfo info = ParseSymbol(tickerData.Symbol, tickerData.Symbol, "USDC");
+                            volumeTicker.Add(info.ExchangeName, tickerData.NotionalVolume); // QuoteVolume?
                         }
                     }
                 }
@@ -71,16 +73,19 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        foreach (var symbolData in symbolInfo.Data.ExchangeInfo.Symbols)
+                        for (int i= 0; i < symbolInfo.Data.ExchangeInfo.Symbols.Count(); i++)
                         {
+                            var tickerData = symbolInfo.Data.Tickers[i];
+                            var symbolData = symbolInfo.Data.ExchangeInfo.Symbols[i];
+
                             // TODO: 
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "");
+                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.Name, "USDC");
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
-                                //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
+                                //symbol.BaseAssetPrecision = symbolData.QuantityDecimals;
                                 //if (symbol.BaseAssetPrecision <= 0)
                                 //    symbol.BaseAssetPrecision = 8;
                                 //symbol.QuoteAssetPrecision = binanceSymbol.LotSizeFilter.QuotePrecision.ToString().Length - 2;
@@ -92,6 +97,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //if (symbolData.Base.PriceDecimals)
                                 //    symbol.QuantityTickSize = symbolData.LotSize.Value;
                                 symbol!.QuantityTickSize = symbolData.QuantityDecimals;
+
                                 //symbol.QuantityMinimum = symbolInfo.LotSizeFilter?.MinOrderQuantity ?? 0;
                                 //symbol.QuantityMaximum = symbolInfo.LotSizeFilter?.MaxOrderQuantity ?? 0;
 
@@ -105,13 +111,23 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.PriceMinimum = symbolInfo.LotSizeFilter.MinOrderValue;
                                 //symbol.PriceMaximum = symbolInfo.LotSizeFilter.MaxOrderValue;
 
-                                //symbol.PriceTickSize = symbolData.; ehh?
+                                var x = tickerData.MarkPrice.ToString();
+                                StringBuilder sb = new(x);
+                                for (int j = 0; j < x.Length; j++)
+                                {
+                                    if (sb[j] != '.')
+                                        sb[j] = '0';
+                                }
+                                if (sb[x.Length - 1] != '.')
+                                    sb[x.Length - 1] = '1';
+                                x = sb.ToString();
+                                symbol.PriceTickSize = Convert.ToDecimal(x);
 
                                 symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))
                                     symbol.Volume = volume;
                                 else
                                     symbol.Volume = 0;
