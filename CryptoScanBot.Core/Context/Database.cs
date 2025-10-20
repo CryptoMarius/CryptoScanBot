@@ -166,8 +166,8 @@ public class CryptoDatabase : IDisposable
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
             new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
-            // Spot is working by mistake ;-)
-            new() { Name = "BitMart Spot", IsSupported = true, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
+            // Spot is working by mistake ;-) Just needs a bit more work (klines)
+            new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
             new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
             // Experiment
