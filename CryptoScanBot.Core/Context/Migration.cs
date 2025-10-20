@@ -1337,8 +1337,9 @@ public class Migration
         //***********************************************************
         // 18-10-2025
         // Kraken spot is unstable, high cpu and no signals
-        // Bybit EU Futures does yet not have any symbols and Altrady doesn't support it
+        // Bybit EU Futures does yet not have any symbols
         // HyperLiquid Spot does not have any symbols and Altrady doesn't support it
+        // Kraken is not stable enough (memory overflow problems etc)
         // Store the symbol name of the exchange (the mapping is getting complicated)
         if (CurrentVersion > version.Version && version.Version == 53)
         {
@@ -1347,14 +1348,15 @@ public class Migration
             database.Connection.Execute("update Exchange set IsSupported=0 where name='Bybit EU Futures'", transaction);
             database.Connection.Execute("update Exchange set IsSupported=0 where name='HyperLiquid Spot'", transaction);
             database.Connection.Execute("update Exchange set IsSupported=0 where name='Kraken Spot'", transaction);
-            // Unless I do another shot at it????
-            //database.Connection.Execute("update Exchange set IsSupported=0 where name='Kucoin Futures'", transaction);
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='Kraken Futures'", transaction);
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='Coinbase Spot'", transaction);
+            database.Connection.Execute("update Exchange set IsSupported=0 where name='Coinbase Futures'", transaction);
 
             // Store the symbol name of the exchange (the mapping is getting quite complicated), give it a default
             try { database.Connection.Execute("alter table symbol add ExchangeName TEXT NULL", transaction); } catch { } // ignore
             try { database.Connection.Execute("update symbol set ExchangeName=Name", transaction); } catch { } // ignore
 
-            // Make sure symbols are loaded from the exchange
+            // Make sure symbols are loaded again from the exchange so it wil fill the Symbol.ExchangeName
             try { database.Connection.Execute("update exchange set lastTimeFetched=null", transaction); } catch { } // ignore
 
             // update version
@@ -1363,6 +1365,8 @@ public class Migration
             transaction.Commit();
         }
 
+        // Suprise, it works
+        //database.Connection.Execute("update Exchange set IsSupported=1 where name='BitMart Futures'", transaction);
     }
 
 
