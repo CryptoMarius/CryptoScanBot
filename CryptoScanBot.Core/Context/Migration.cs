@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // De huidige database versie
-    public readonly static int CurrentDatabaseVersion = 54;
+    public readonly static int CurrentDatabaseVersion = 55;
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
@@ -1365,10 +1365,34 @@ public class Migration
             transaction.Commit();
         }
 
-        // Suprise, it works
-        //database.Connection.Execute("update Exchange set IsSupported=1 where name='BitMart Futures'", transaction);
+        //***********************************************************
+        // 22-10-2025
+        // Fix migration problems with the exchanges.
+        // select * from exchange order by exchangetype, tradingtype
+        if (CurrentVersion > version.Version && version.Version == 54)
+        {
+            using var transaction = database.BeginTransaction();
+
+            // Missing exchanges (some dont exist or are not supported in real live)
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(5, 1, 'Mexc Futures', 0.1, 0)", transaction);
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(6, 1, 'Okx Futures', 0.1, 1)", transaction);
+            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(7, 1, 'Coinbase Futures', 0.1, 0)", transaction);
+
+            foreach (var e in CryptoDatabase.CreateExchangeList())
+            {
+                string sql = $"update Exchange set " +
+                    $"ExchangeType={(int)e.ExchangeType}, " +
+                    $"TradingType={(int)e.TradingType}, " +
+                    $"IsSupported={e.IsSupported} " +
+                    $"where name=\'{e.Name}\'";
+                database.Connection.Execute(sql, transaction);
+            }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
     }
-
-
 }
 

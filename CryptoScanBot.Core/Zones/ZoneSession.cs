@@ -41,7 +41,7 @@ public class ZoneSession
 
     // fib
     public TrendType FibTrend { get; set; } = TrendType.Primary;
-    public bool FibShowRetracement { get; set; } = true;
+    public bool FibShowRetracement { get; set; } = false;
     public bool FibShowZigZag { get; set; } = false;
 
     // misc

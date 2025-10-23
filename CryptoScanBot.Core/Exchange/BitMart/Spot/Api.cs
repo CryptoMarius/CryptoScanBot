@@ -35,7 +35,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("BitMart Spot", "USDT", 300, false, 1);
+        ExchangeOptions.SetDefaultOptions("BitMart Spot", "USDT", 500, false, 1);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BitMartRestClient.SetDefaultOptions(options =>
@@ -66,9 +66,9 @@ public class Api : ExchangeBase
         BitMartExchange.RateLimiter.RateLimitTriggered += (x) =>
         {
             GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
-            //    Thread.Sleep(x.DelayTime.Value);
-            //Thread.Sleep(1000);
+            if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+                Thread.Sleep(x.DelayTime.Value * 1000);
+            Thread.Sleep(1000);
         };
     }
 

@@ -159,14 +159,14 @@ public class CryptoDatabase : IDisposable
         }
     }
 
-    private static List<Model.CryptoExchange> CreateExchangeList()
+    public static List<Model.CryptoExchange> CreateExchangeList()
     {
         return
         [
             new() { Name = "Binance Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Spot },
             new() { Name = "Binance Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Binance, TradingType=CryptoTradingType.Futures},
 
-            // Spot is working by mistake ;-) Just needs a bit more work (klines)
+            // Both loads of LimitRates errors, not working for this scanner
             new() { Name = "BitMart Spot", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Spot },
             new() { Name = "BitMart Futures", IsSupported = false, ExchangeType = CryptoExchangeType.BitMart, TradingType=CryptoTradingType.Futures },
 
