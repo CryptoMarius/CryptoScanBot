@@ -22,3 +22,5 @@ The application currently supports Binance and Bybit spot and Futures. Kucoin is
 
 Furthermore: Very nice that you try this application, below is an explanation of what the application does, the installation, necessary settings and so on. I hope you enjoy trading, the communities and so on. Good luck in this special world!
 
+![CryptoMarius_CryptoScanBot](https://github.com/user-attachments/assets/1509b67c-6891-4d32-9a4b-e6cdebd61022)
+![HBARUSDT chart form](https://github.com/user-attachments/assets/6e94d55e-309d-4f93-a6ff-1c226227306e)
