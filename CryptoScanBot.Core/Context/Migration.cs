@@ -7,13 +7,51 @@ namespace CryptoScanBot.Core.Context;
 
 public class Migration
 {
-    // De huidige database versie
+    // Latest and greatest database version
     public readonly static int CurrentDatabaseVersion = 55;
+
+
+    private static void UpdateExchanges(CryptoDatabase database)
+    {
+        using var transaction = database.BeginTransaction();
+
+        foreach (var e in CryptoDatabase.CreateExchangeList())
+        {
+            string sql = $"update Exchange set " +
+                $"ExchangeType={(int)e.ExchangeType}, " +
+                $"TradingType={(int)e.TradingType}, " +
+                $"IsSupported={e.IsSupported}, " +
+                $"lastTimeFetched=null " + // Make sure symbols are loaded again from the exchange so it wil fill the Symbol.ExchangeName
+                $"where name=\'{e.Name}\'";
+            int count = database.Connection.Execute(sql, transaction);
+            if (count == 0)
+            {
+                sql = $"insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported)" +
+                "Values(" +
+                $"{(int)e.ExchangeType}, " +
+                $"{(int)e.TradingType}, " +
+                $"\'{e.Name}\', " +
+                "0.1," +
+                $"{e.IsSupported}" +
+                $")";
+                database.Connection.Execute(sql, transaction);
+            }
+        }
+
+        // Forceer dat de symbol informatie (en funding rates) opgehaald wordt
+        //database.Connection.Execute("update Exchange set LastTimeFetched=null", transaction);
+
+        transaction.Commit();
+    }
 
 
     public static void Execute(CryptoDatabase database, int CurrentVersion)
     {
+        bool updateExchanges = false;
         CryptoVersion version = database.Connection.GetAll<CryptoVersion>().First();
+        if (CurrentVersion != version.Version || version.Version < 2)
+            updateExchanges = true;
+
 
         if (CurrentVersion > version.Version)
         {
@@ -21,12 +59,6 @@ public class Migration
             if (CurrentVersion > version.Version && version.Version == 1)
             {
                 using var transaction = database.BeginTransaction();
-
-                // De exchangeId's in de TradeAccount staan initieel allemaal op Binance (verkeerde initialisatie)
-                database.Connection.Execute("update TradeAccount set ExchangeId=1 where name like 'Binance%'", transaction);
-                database.Connection.Execute("update TradeAccount set ExchangeId=2 where name like 'Bybit Spot%'", transaction);
-                database.Connection.Execute("update TradeAccount set ExchangeId=3 where name like 'Bybit Futures%'", transaction);
-                database.Connection.Execute("update TradeAccount set ExchangeId=4 where name like 'Kucoin%'", transaction);
 
                 // De fee moet erbij zodat we achteraf kunnen rapporteren (anders moet dat via de trades)
                 database.Connection.Execute("alter table PositionStep add Commission TEXT NOT NULL default 0", transaction);
@@ -37,9 +69,6 @@ public class Migration
                 // https://bybit-exchange.github.io/docs/v5/market/History-fund-rate
                 database.Connection.Execute("alter table symbol add FundingRate TEXT", transaction);
                 database.Connection.Execute("alter table symbol add FundingInterval TEXT", transaction);
-
-                // Forceer dat de symbol informatie (en funding rates) opgehaald wordt
-                database.Connection.Execute("update Exchange set LastTimeFetched=null", transaction);
 
                 // update version
                 version.Version += 1;
@@ -53,10 +82,6 @@ public class Migration
             if (CurrentVersion > version.Version && version.Version == 2)
             {
                 using var transaction = database.BeginTransaction();
-
-
-                // De accounttype voor Futures is niet goed ingevuld, deze staan allemaal op spot (verkeerde initialisatie)
-                database.Connection.Execute("update TradeAccount set AccountType=1 where name like '%Futures%'", transaction);
 
                 // Ongebruikte kolommen
                 database.Connection.Execute("alter table PositionPart drop column BuyAmount", transaction);
@@ -102,11 +127,6 @@ public class Migration
             if (CurrentVersion > version.Version && version.Version == 4)
             {
                 using var transaction = database.BeginTransaction();
-
-                database.Connection.Execute("insert into exchange(Name) values('Kraken')", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Trading', 'Kraken trading', 0, 2, 5);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Paper', 'Kraken paper', 0, 1, 5);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId) values('Backtest', 'Kraken backtest', 0, 0, 5);", transaction);
 
                 // update version
                 version.Version += 1;
@@ -298,17 +318,6 @@ public class Migration
                 database.Connection.Execute("alter table Position add Reserved TEXT NULL", transaction);
                 database.Connection.Execute("alter table PositionPart add Reserved TEXT NULL", transaction);
 
-                // Er zitten blijkbaar typo's in de exchange tabel
-                database.Connection.Execute("update TradeAccount set Short='Paper' where Short='Pater'", transaction);
-                database.Connection.Execute("update TradeAccount set ExchangeId=2 where Name='Bybit Spot trading'", transaction);
-
-                // We ondersteunen niet op alle exchanges trading (of het is ongetest)
-                database.Connection.Execute("alter table TradeAccount add CanTrade INTEGER NULL DEFAULT 0", transaction);
-                database.Connection.Execute("update TradeAccount set CanTrade=1", transaction);
-                database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Binance%' and TradeAccountType=2", transaction);
-                database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kraken%' and TradeAccountType=2", transaction);
-                database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kucoin%' and TradeAccountType=2", transaction);
-
                 // Voor Bybit spot moeten we bijhouden hoeveel dust we overhouden (administratie)
                 database.Connection.Execute("alter table positionstep add RemainingDust Text null", transaction);
                 database.Connection.Execute("alter table PositionPart add RemainingDust Text null", transaction);
@@ -321,7 +330,6 @@ public class Migration
                 // In de trade tabel is het een not nullable veld, mag null zijn (blijkbaar)
                 database.Connection.Execute("alter table Trade drop column CommissionAsset", transaction);
                 database.Connection.Execute("alter table Trade add CommissionAsset Text null", transaction);
-
 
                 // Voor Bybit spot moeten we bijhouden hoeveel dust we overhouden (administratie)
                 database.Connection.Execute("alter table positionstep add CommissionBase Text null", transaction);
@@ -386,33 +394,6 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                // Nieuwe exchange Binance Futures
-                database.Connection.Execute("insert into exchange(Name, FeeRate) values('Binance Futures', 0.1)", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Binance Futures trading', 0, 2, 6, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Binance Futures paper', 0, 1, 6, 0);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Binance Futures backtest', 0, 0, 6, 0);", transaction);
-
-                // Onderverdeling maken in Spot en Futures
-                database.Connection.Execute("update exchange set name='Binance Spot' where name='Binance'", transaction);
-                database.Connection.Execute("update TradeAccount set name='Binance Spot trading' where name= 'Binance trading';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Binance Spot paper' where name= 'Binance paper';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Binance Spot backtest' where name= 'Binance backtest';", transaction);
-
-                // Onderverdeling maken in Spot en Futures
-                database.Connection.Execute("update exchange set name='Kraken Spot', FeeRate=0.25 where name='Kraken'", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kraken Spot trading' where name= 'Kraken trading';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kraken Spot paper' where name= 'Kraken paper';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kraken Spot backtest' where name= 'Kraken backtest';", transaction);
-
-                // Onderverdeling maken in Spot en Futures
-                database.Connection.Execute("update exchange set name='Kucoin Spot' where name='Kucoin'", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kucoin Spot trading' where name= 'Kucoin trading';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kucoin Spot paper' where name= 'Kucoin paper';", transaction);
-                database.Connection.Execute("update TradeAccount set name='Kucoin Spot backtest' where name= 'Kucoin backtest';", transaction);
-
-                // Kraken inactief zetten (de klines zijn ontzettend traag en de fee is ook gewoon te hoog 0.25%)
-                database.Connection.Execute("update TradeAccount set CanTrade=0 where Name like '%Kraken%' and TradeAccountType=2", transaction);
-
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);
@@ -439,16 +420,6 @@ public class Migration
                 // For now Kraken is not fully supported (so we make it inactive until it is fixed)
                 database.Connection.Execute("alter table exchange add IsActive Integer", transaction);
                 database.Connection.Execute("update exchange set IsActive=1", transaction);
-                database.Connection.Execute("update exchange set IsActive=0 where Name like '%Kraken%'", transaction);
-
-                // New exchange Kucoin Futures (experiment, failed on klines unitil now)
-                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Kucoin Futures', 0.1, 0)", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Kucoin Futures trading', 0, 2, 7, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Kucoin Futures paper', 0, 1, 7, 0);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Kucoin Futures backtest', 0, 0, 7, 0);", transaction);
-
-                // The exchangeId's in the TradeAccount of Binance Futures are not right (wrong initialisation)
-                database.Connection.Execute("update TradeAccount set ExchangeId=6 where name like 'Binance Futures%'", transaction);
 
                 // update version
                 version.Version += 1;
@@ -508,13 +479,6 @@ public class Migration
                 // remove ScannerSymbol.TrendInfoDate
                 database.Connection.Execute("alter table Symbol drop column TrendInfoDate", transaction);
 
-                // New exchange Mexc Spot
-                database.Connection.Execute("insert into exchange(Name, FeeRate, IsActive) values('Mexc Spot', 0.1, 0)", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Trading', 'Mexc Spot trading', 0, 2, 8, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Paper', 'Mexc Spot paper', 0, 1, 8, 0);", transaction);
-                database.Connection.Execute("insert into TradeAccount(Short, Name, AccountType, TradeAccountType, ExchangeId, CanTrade) values('Backtest', 'Mexc Spot backtest', 0, 0, 8, 0);", transaction);
-
-
                 // update version
                 version.Version += 1;
                 database.Connection.Update(version, transaction);
@@ -530,71 +494,9 @@ public class Migration
                 // Exchange, AccountType=spot or futures
                 database.Connection.Execute("alter table Exchange add TradingType Integer null", transaction);
                 database.Connection.Execute("update exchange set TradingType=0", transaction);
-                database.Connection.Execute("update exchange set TradingType=1 where Name like '%Futures%'", transaction);
 
                 // Purpose was if the exchange can be truely supported
                 database.Connection.Execute("alter table exchange rename column IsActive to IsSupported", transaction);
-
-                // Introduce an attribute for spot/futures
-                database.Connection.Execute("alter table Exchange add ExchangeType Integer null", transaction);
-                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Binance} where Name like '%Binance%'", transaction);
-                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Bybit} where Name like '%Bybit%'", transaction);
-                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Kraken} where Name like '%Kraken%'", transaction);
-                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Kucoin} where Name like '%Kucoin%'", transaction);
-                database.Connection.Execute($"update exchange set ExchangeType={(int)CryptoExchangeType.Mexc} where Name like '%Mexc%'", transaction);
-
-                // Remove redundant fields
-                database.Connection.Execute("drop index idxTradeAccountName", transaction);
-                database.Connection.Execute("alter table TradeAccount drop column Name", transaction);
-                database.Connection.Execute("alter table TradeAccount drop column Short", transaction);
-                database.Connection.Execute("alter table TradeAccount drop column AccountType", transaction);
-                database.Connection.Execute("alter table TradeAccount rename column TradeAccountType to AccountType", transaction);
-
-                // Add Altrady webhook accounts
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 1, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 2, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 3, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 4, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 5, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 6, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 7, 1);", transaction);
-                database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 8, 1);", transaction);
-
-                //// in the model the table name is account -> TradeAccount
-                //// Would love to rename the table in the db as well, but there is a contraint position -> tradeaccount
-                //// And sqllite does not support dropping columns with contraints <really, what a weird database enigine>
-                //// Need to copy that table, recreate it without constraint and copy the data back <sigh>
-                //// There is however a rename table
-
-                ////database.Connection.Execute("alter table position add AccountId Integer null", transaction);
-                ////database.Connection.Execute("update position set AccountId=TradeAccountId", transaction);
-                ////database.Connection.Execute("alter table position drop TradeAccountId", transaction); // not possible because of positions
-
-                //database.Connection.Execute("drop INDEX IdxPositionId", transaction);
-                //database.Connection.Execute("drop INDEX IdxPositionExchangeId", transaction);
-                //database.Connection.Execute("drop INDEX IdxPositionSymbolId", transaction);
-                //database.Connection.Execute("drop INDEX IdxPositionCreateTime", transaction);
-                //database.Connection.Execute("drop INDEX IdxPositionCloseTime", transaction);
-                //database.Connection.Execute("drop INDEX IdxPositionTradeAccountId", transaction);
-
-                //database.Connection.Execute("alter table Position rename to PositionCopy", transaction);
-                //CryptoDatabase.CreateTablePosition(database, transaction);
-                ////database.Connection.Execute("insert into position select positionCopy.TradeAccountId as AccountId, positionCopy.* from positionCopy", transaction);
-                //database.Connection.Execute("insert into position select * from positionCopy", transaction);
-                //database.Connection.Execute("drop table if exists PositionCopy", transaction);
-                ////transaction.Commit();
-
-
-                //database.Connection.Execute("insert into Account select * from TradeAccount", transaction);
-                //database.Connection.Execute("drop table if exists TradeAccount", transaction);
-
-
-
-
-                // The table was created by the the database check
-                //database.Connection.Execute("drop table if exists Account", transaction);
-                //database.Connection.Execute("alter table TradeAccount rename to Account", transaction);
-                // fixed it by table attribute
 
                 // update version
                 version.Version += 1;
@@ -610,9 +512,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // Mexc Spot fix
-            database.Connection.Execute("update Exchange set IsSupported=1 where name='Mexc Spot'", transaction);
-
             // symbol, drop LastPrice
             database.Connection.Execute("alter table symbol drop column LastPrice", transaction);
 
@@ -626,12 +525,6 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
-        // Mexc Futures (experimental), but Mexc Futures does not have a proper api yet
-        //database.Connection.Execute("insert into exchange(ExchangeSymbol, FeeRate, IsSupported, ExchangeType, TradingType) values('Mexc Futures', 0.1, 0, 5, 1)", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 1);", transaction);
-        //database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 1);", transaction);
 
 
         //***********************************************************
@@ -922,30 +815,7 @@ public class Migration
         // 24-11-2024, zones, startdate
         if (CurrentVersion > version.Version && version.Version == 33)
         {
-            // problem, timing of introduction of zone table depend on start.
-            // On older systems the full table will be created by database check!
-
             using var transaction = database.BeginTransaction();
-
-            // conflicting types (long/date)
-            database.Connection.Execute("delete from zone", transaction);
-
-            try { database.Connection.Execute("alter table Zone add CreateTime Text not null", transaction); } catch { } // ignore
-            // Optional start date for a zone
-            try { database.Connection.Execute("alter table Zone add OpenTime Text null", transaction); } catch { } // ignore
-
-            // Holds the percentage for the zone
-            try { database.Connection.Execute("alter table Zone add Description Text null", transaction); } catch { } // ignore
-
-
-            // better name for the expiration (not something in the future but the moment of closing)
-            try { database.Connection.Execute("alter table Zone add ClosePrice Text null", transaction); } catch { } // ignore
-            try { database.Connection.Execute("alter table Zone add CloseDate Text null", transaction); } catch { } // ignore
-            try { database.Connection.Execute("alter table Zone drop column ExpirationPrice", transaction); } catch { } // ignore
-            try { database.Connection.Execute("alter table Zone drop column ExpirationDate", transaction); } catch { } // ignore
-
-            // TODO: Avoid to many signals on this zone
-            try { database.Connection.Execute("alter table Zone add LastSignalDate Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -958,19 +828,7 @@ public class Migration
         // 25-11-2024, CloseTime -> CloseTime
         if (CurrentVersion > version.Version && version.Version == 34)
         {
-            // problem, timing of introduction of zone table depend on start.
-            // On older systems the full table will be created by database check!
-
             using var transaction = database.BeginTransaction();
-
-            try { database.Connection.Execute("alter table Zone add CloseTime Text null", transaction); } catch { } // ignore
-            try { database.Connection.Execute("update Zone set CloseTime=CloseDate", transaction); } catch { } // ignore
-            try { database.Connection.Execute("alter table Zone drop column CloseDate", transaction); } catch { } // ignore
-
-            // Barometer problem, clean symbols without a name and dump the price and volume barometer
-            try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
-            try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
-            try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -985,16 +843,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            try { database.Connection.Execute("alter table Zone drop column AlarmPrice", transaction); } catch { }
-            try { database.Connection.Execute("alter table Zone drop column ClosePrice", transaction); } catch { }
-
             // set the feerates of futures to 0
             try { database.Connection.Execute("update table exchange set feerate=0 where TradingType=1", transaction); } catch { }
-
-            // Barometer problem, clean symbols without a name and dump the price and volume barometer
-            try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
-            try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
-            try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1008,24 +858,10 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // New types of zones
-            try { database.Connection.Execute("alter table Zone add Kind integer", transaction); } catch { }
-            // if the zone is valid
-            try { database.Connection.Execute("alter table Zone add IsValid integer", transaction); } catch { }
-
             // Barometer problem, clean symbols without a name and dump the price and volume barometer
             try { database.Connection.Execute("delete from symbol where name = ''", transaction); } catch { } // ignore
             try { database.Connection.Execute("delete from symbol where name like '$BMP%'", transaction); } catch { } // ignore
             try { database.Connection.Execute("delete from symbol where name like '$BMV%'", transaction); } catch { } // ignore
-
-            //delete
-            //from ScannerSymbol
-            //where(symbol.id NOT IN(select distinct(symbolid) from signal))
-            //and(symbol.id NOT IN(select distinct symbolid from position))
-            //and(symbol.id NOT IN(select distinct symbolid from[order]))
-            //and(symbol.id NOT IN(select distinct symbolid from[trade]))
-            //and(symbol.id NOT IN(select distinct symbolid from[zone]))
-            //update exchange set lasttimefetched = null
 
             // update version
             version.Version += 1;
@@ -1039,12 +875,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // New types of zones
-            try { database.Connection.Execute("alter table Zone add Kind integer", transaction); } catch { }
-            try { database.Connection.Execute("update Zone set Kind = 1", transaction); } catch { }
-            try { database.Connection.Execute("alter table Zone Drop Column Strategy", transaction); } catch { }
-
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1057,11 +887,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            //New types of zones
-            //try { database.Connection.Execute("delete fom Zone", transaction); } catch { }
-            //try { database.Connection.Execute("alter table Zone add IntervalId integer", transaction); } catch { }
-            try { database.Connection.Execute("drop table Zone", transaction); } catch { }
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1073,13 +898,6 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 39)
         {
             using var transaction = database.BeginTransaction();
-
-            // New experimental exchange OKX Spot
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(6, 0, 'Okx Spot', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 9, 1);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 9, 0);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 9, 0);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 9, 0);", transaction);
 
             // update version
             version.Version += 1;
@@ -1096,13 +914,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // For indication of weak or strong boxes
-            // note: with a try catch because of possible new zone table
-            try { database.Connection.Execute("alter table zone add Strength integer", transaction); } catch { }
-            try { database.Connection.Execute("update zone set Strength=0", transaction); } catch { }
-            try { database.Connection.Execute("update zone set Strength=1 where Kind=1", transaction); } catch { }
-            try { database.Connection.Execute("update zone set Strength=2 where Kind=1 and Description like '%!'", transaction); } catch { }
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1115,19 +926,10 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // New experimental exchange Coinbase Spot
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(7, 0, 'Coinbase Spot', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(0, 10, 1);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(1, 10, 0);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(2, 10, 0);", transaction);
-            database.Connection.Execute("insert into TradeAccount(AccountType, ExchangeId, CanTrade) values(3, 10, 0);", transaction);
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
-
-            // todo: Delete CryptoScanBot-weblinks.json?
         }
 
         //***********************************************************
@@ -1143,9 +945,6 @@ public class Migration
             try { database.Connection.Execute("alter table Signal drop column Last48Hours", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Signal drop column Last24HoursEffective", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Signal drop column Last10DaysEffective", transaction); } catch { } // ignore
-
-            // A never used field
-            try { database.Connection.Execute("alter table zone drop column LastSignalDate", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1192,14 +991,11 @@ public class Migration
         }
 
 
-
         //***********************************************************
         // 23-08-2025
         if (CurrentVersion > version.Version && version.Version == 44)
         {
             using var transaction = database.BeginTransaction();
-
-            database.Connection.Execute("update exchange set IsSupported=0 where Name like '%Okx Spot%'", transaction);
 
             // update version
             version.Version += 1;
@@ -1229,8 +1025,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(8, 0, 'HyperLiquid Spot', 0.1, 0)", transaction);
             try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
+            try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // has an accountid field
 
             // update version
             version.Version += 1;
@@ -1245,8 +1041,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(8, 1, 'HyperLiquid Futures', 0.1, 0)", transaction);
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1259,8 +1053,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(3, 1, 'Kraken Futures', 0.1, 0)", transaction);
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1272,9 +1064,6 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 49)
         {
             using var transaction = database.BeginTransaction();
-
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(9, 0, 'BitMart Spot', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(9, 1, 'BitMart Futures', 0.1, 0)", transaction);
 
             // update version
             version.Version += 1;
@@ -1308,9 +1097,6 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(10, 0, 'BloFin Spot', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(10, 1, 'BloFin Futures', 0.1, 0)", transaction);
-
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1322,11 +1108,6 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 52)
         {
             using var transaction = database.BeginTransaction();
-
-            database.Connection.Execute("update Exchange set IsSupported=1 where name='Kraken Spot'", transaction);
-
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 0, 'Bybit EU Spot', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(11, 1, 'Bybit EU Futures', 0.1, 0)", transaction);
 
             // update version
             version.Version += 1;
@@ -1344,20 +1125,9 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 53)
         {
             using var transaction = database.BeginTransaction();
-
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='Bybit EU Futures'", transaction);
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='HyperLiquid Spot'", transaction);
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='Kraken Spot'", transaction);
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='Kraken Futures'", transaction);
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='Coinbase Spot'", transaction);
-            database.Connection.Execute("update Exchange set IsSupported=0 where name='Coinbase Futures'", transaction);
-
             // Store the symbol name of the exchange (the mapping is getting quite complicated), give it a default
             try { database.Connection.Execute("alter table symbol add ExchangeName TEXT NULL", transaction); } catch { } // ignore
             try { database.Connection.Execute("update symbol set ExchangeName=Name", transaction); } catch { } // ignore
-
-            // Make sure symbols are loaded again from the exchange so it wil fill the Symbol.ExchangeName
-            try { database.Connection.Execute("update exchange set lastTimeFetched=null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1368,31 +1138,24 @@ public class Migration
         //***********************************************************
         // 22-10-2025
         // Fix migration problems with the exchanges.
-        // select * from exchange order by exchangetype, tradingtype
         if (CurrentVersion > version.Version && version.Version == 54)
         {
             using var transaction = database.BeginTransaction();
 
-            // Missing exchanges (some dont exist or are not supported in real live)
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(5, 1, 'Mexc Futures', 0.1, 0)", transaction);
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(6, 1, 'Okx Futures', 0.1, 1)", transaction);
-            database.Connection.Execute("insert into exchange(ExchangeType, TradingType, Name, FeeRate, IsSupported) values(7, 1, 'Coinbase Futures', 0.1, 0)", transaction);
-
-            foreach (var e in CryptoDatabase.CreateExchangeList())
-            {
-                string sql = $"update Exchange set " +
-                    $"ExchangeType={(int)e.ExchangeType}, " +
-                    $"TradingType={(int)e.TradingType}, " +
-                    $"IsSupported={e.IsSupported} " +
-                    $"where name=\'{e.Name}\'";
-                database.Connection.Execute(sql, transaction);
-            }
+            // Has an accountid field whichs was not properly removed before (insert errors)
+            try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } 
 
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+
+        // Apply the exchange defaults with each update
+        if (updateExchanges)
+            UpdateExchanges(database);
+
     }
 }
 
