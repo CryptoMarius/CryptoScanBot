@@ -80,6 +80,13 @@ public class SymbolBase()
         return info;
     }
 
+    static private string StripSymbolName(string name)
+    {
+        name = name.Replace("/", "");
+        name = name.Replace("-", "");
+        name = name.Replace("_", "");
+        return name;
+    }
 
     static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
     {
@@ -105,10 +112,10 @@ public class SymbolBase()
         // **This does not work for Kraken Spot. Lets accept all symbols for now.**
 
         string formattedName = api.FormatSymbol(info.Base, info.Quote, mode);
-        if (formattedName != info.ExchangeName)
+        if (StripSymbolName(formattedName) != StripSymbolName(info.ExchangeName))
         {
 #if DEBUG
-            GlobalData.AddTextToLogTab($"Ignoring symbol {formattedName} {info.Base} {info.Quote} weird symbol name? {info.ExchangeName}");
+            GlobalData.AddTextToLogTab($"Ignoring symbol {formattedName} {info.Base} {info.Quote} weird symbol name {info.ExchangeName}");
 #endif
             return false;
         }

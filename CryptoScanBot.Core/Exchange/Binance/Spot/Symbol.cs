@@ -55,7 +55,6 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                 // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
-                List<string> reportSymbols = [];
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
@@ -113,7 +112,8 @@ public class Symbol() : SymbolBase(), ISymbol
                             }
                         }
 
-                        // Deactiveer de munten die niet meer voorkomen
+                        // Deactivate the symbols who have disappeared
+                        List<string> reportSymbols = [];
                         foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
                         {
                             if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))

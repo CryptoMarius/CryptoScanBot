@@ -5,6 +5,7 @@ using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Enums;
 using CryptoScanBot.Core.Model;
 
+using Kraken.Net;
 using Kraken.Net.Clients;
 
 namespace CryptoScanBot.Core.Exchange.Kraken.Futures;
@@ -47,6 +48,14 @@ public class Api : ExchangeBase
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
+        KrakenExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //    Thread.Sleep(x.DelayTime.Value);
+            //Thread.Sleep(1000);
+        };
     }
 
 
