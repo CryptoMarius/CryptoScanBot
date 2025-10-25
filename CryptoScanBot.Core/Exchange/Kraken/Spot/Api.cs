@@ -32,7 +32,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kraken Spot", "USD", 720, false, 5);
+        ExchangeOptions.SetDefaultOptions("Kraken Spot", "USD", 720, true, 5);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>
