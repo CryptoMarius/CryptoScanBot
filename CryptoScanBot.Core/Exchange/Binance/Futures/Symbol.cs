@@ -60,7 +60,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
-                    List<CryptoSymbol> cache = [];
+                    List <CryptoSymbol> cache = [];
                     try
                     {
                         foreach (var symbolData in symbolInfo.Data.Symbols)
@@ -68,6 +68,13 @@ public class Symbol() : SymbolBase(), ISymbol
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
+                                if (symbolData.ContractType != ContractType.Perpetual)
+                                {
+#if DEBUG
+                                    GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
+#endif
+                                    continue;
+                                }
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
                                 //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;

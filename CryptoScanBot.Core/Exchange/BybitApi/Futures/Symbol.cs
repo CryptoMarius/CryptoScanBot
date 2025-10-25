@@ -69,6 +69,14 @@ public class Symbol() : SymbolBase(), ISymbol
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
+                                if (symbolData.ContractType != ContractTypeV5.LinearPerpetual)
+                                {
+#if DEBUG
+                                    GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
+#endif
+                                    continue;
+                                }
+
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
                                 //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
 

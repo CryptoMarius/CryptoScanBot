@@ -80,14 +80,6 @@ public class SymbolBase()
         return info;
     }
 
-    static private string StripSymbolName(string name)
-    {
-        name = name.Replace("/", "");
-        name = name.Replace("-", "");
-        name = name.Replace("_", "");
-        return name;
-    }
-
     static internal bool IsSymbolAccepted(Model.CryptoExchange exchange, SymbolInfo info, IRestApiClient api, TradingMode mode, out CryptoSymbol? symbol)
     {
         if (!exchange.SymbolListName.TryGetValue(info.ScannerName, out symbol))
@@ -105,21 +97,9 @@ public class SymbolBase()
                 Status = 1,
             };
         }
-        // Fix because we introduced a new storage Symbol.ExchangeName field
+        
+        // Fill the new storage ExchangeName field
         symbol.ExchangeName = info.ExchangeName;
-
-        // Is it a weird symbol name? Delivery dates or other name mangling
-        // **This does not work for Kraken Spot. Lets accept all symbols for now.**
-
-        string formattedName = api.FormatSymbol(info.Base, info.Quote, mode);
-        if (StripSymbolName(formattedName) != StripSymbolName(info.ExchangeName))
-        {
-#if DEBUG
-            GlobalData.AddTextToLogTab($"Ignoring symbol {formattedName} {info.Base} {info.Quote} weird symbol name {info.ExchangeName}");
-#endif
-            return false;
-        }
-
         return true;
     }
 }
