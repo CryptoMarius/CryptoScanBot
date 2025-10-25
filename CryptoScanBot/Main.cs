@@ -369,18 +369,26 @@ public partial class FrmMain : Form
 
     private void AddTextToLogTab(string text)
     {
-        // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
-        ScannerLog.Logger.Info(text);
-        text = text.Trim();
-
-        if (text != "")
+        // The queue can be overwhelmed (and there is a max array size)
+		try
         {
-            if (GlobalData.BackTest)
-                text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
-            else
-                text = DateTime.Now.ToLocalTime() + " " + text;
+            // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
+            ScannerLog.Logger.Info(text);
+            text = text.Trim();
+
+            if (text != "")
+            {
+                if (GlobalData.BackTest)
+                    text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
+                else
+                    text = DateTime.Now.ToLocalTime() + " " + text;
+            }
+            logQueue.Enqueue(text);
         }
-        logQueue.Enqueue(text);
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "adding " + text);
+        }
     }
 
     private void TelegramHasChangedEvent(string text)
