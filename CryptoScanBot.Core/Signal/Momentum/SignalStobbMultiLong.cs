@@ -8,7 +8,6 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
 {
     public SignalStobbMultiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

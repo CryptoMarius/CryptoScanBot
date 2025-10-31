@@ -6,8 +6,6 @@ public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
 {
     public SignalIchimokuKumoBreakoutShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Short;
-        SignalStrategy = CryptoSignalStrategy.IchimokuKumoBreakout;
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)

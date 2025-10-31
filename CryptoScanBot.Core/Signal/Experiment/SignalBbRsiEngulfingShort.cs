@@ -7,7 +7,6 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
 {
     public SignalBbRsiEngulfingShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

@@ -9,7 +9,6 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
 {
     public SignalLuxNadarayaWatsonEnvelope(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing, implements both long and short
     }
 
     public override bool IndicatorsOkay(CryptoCandle candle)

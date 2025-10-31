@@ -9,7 +9,6 @@ public class SignalTrendShort : SignalCreateBase
 {
     public SignalTrendShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

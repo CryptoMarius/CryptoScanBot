@@ -7,7 +7,6 @@ public class SignalSmaDistShort : SignalCreateBase
 {
     public SignalSmaDistShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

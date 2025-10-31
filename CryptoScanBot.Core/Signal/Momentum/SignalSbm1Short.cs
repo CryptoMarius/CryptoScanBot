@@ -8,7 +8,6 @@ public class SignalSbm1Short : SignalSbmBaseShort
 {
     public SignalSbm1Short(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

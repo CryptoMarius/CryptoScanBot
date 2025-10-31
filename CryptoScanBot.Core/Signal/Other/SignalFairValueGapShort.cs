@@ -8,7 +8,6 @@ public class SignalFairValueGapShort : SignalCreateBase
 {
     public SignalFairValueGapShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

@@ -8,7 +8,6 @@ public class SignalDominantLevelLong : SignalCreateBase
 {
     public SignalDominantLevelLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

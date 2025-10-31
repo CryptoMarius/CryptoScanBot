@@ -8,7 +8,6 @@ public class SignalDominantLevelNearShort : SignalCreateBase
 {
     public SignalDominantLevelNearShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

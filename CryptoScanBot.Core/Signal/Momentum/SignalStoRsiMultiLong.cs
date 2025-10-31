@@ -13,7 +13,6 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
 {
     public SignalStoRsiMultiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        // nothing
     }
 
 

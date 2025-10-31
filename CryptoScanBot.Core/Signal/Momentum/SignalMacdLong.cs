@@ -8,8 +8,6 @@ public class SignalMacdLong : SignalCreateBase
 {
     public SignalMacdLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
     {
-        SignalSide = CryptoTradeSide.Long;
-        SignalStrategy = CryptoSignalStrategy.Macd;
     }
 
 
