@@ -616,6 +616,7 @@ public partial class CryptoVisualisation : Form
         EditShowSmaLinesSbm.Checked = Session.ShowSmaLinesSbm;
         //EditShowTrendLines.Checked = Session.ShowTrendLines;
         EditShowNadarayaWatsonEnvelope.Checked = Session.ShowNadarayaWatsonEnvelope;
+        EditShowNadarayaWatsonEnvelopeRepaining.Checked = Session.ShowNadarayaWatsonEnvelopeRepainting;
 
         EditTrendShowZigZag.CheckedChanged += ButtonRefreshClick;
         EditFibShow.CheckedChanged += ButtonRefreshClick;
@@ -660,6 +661,7 @@ public partial class CryptoVisualisation : Form
         Session.ShowBollingerBand = EditShowBollingerBand.Checked;
         Session.ShowSmaLinesSbm = EditShowSmaLinesSbm.Checked;
         Session.ShowNadarayaWatsonEnvelope = EditShowNadarayaWatsonEnvelope.Checked;
+        Session.ShowNadarayaWatsonEnvelopeRepainting = EditShowNadarayaWatsonEnvelopeRepaining.Checked;
         //Session.ShowTrendLines = EditShowTrendLines.Checked;       
     }
 
@@ -719,8 +721,13 @@ public partial class CryptoVisualisation : Form
             Chart.ChartDrawFvgZones.Draw(plotModel, Data.Symbol, Session.MinDate, Session.MaxDate);
         if (Session.ShowSignals)
             Chart.Signals.Draw(plotModel, Data.Signals, Session.MinDate, Session.MaxDate);
+
+        //if (Session.ShowNadarayaWatsonEnvelope)
+        //    Chart.NadarayaWatsonEnvelope1.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
         if (Session.ShowNadarayaWatsonEnvelope)
-            Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
+            Chart.NadarayaWatsonEnvelope.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, Session.ShowNadarayaWatsonEnvelopeRepainting);
+        //if (Session.ShowNadarayaWatsonEnvelope)
+//            Chart.NadarayaWatsonEnvelope2.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, false);
         if (Session.ShowBollingerBand)
             Chart.Bollingerbands.Draw(plotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
         if (Session.ShowSmaLinesSbm)

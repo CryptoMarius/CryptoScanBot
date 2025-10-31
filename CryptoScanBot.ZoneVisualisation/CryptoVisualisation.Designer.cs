@@ -64,8 +64,9 @@ partial class CryptoVisualisation
         EditShowSignals = new CheckBox();
         EditShowDtb = new CheckBox();
         EditShowFvgZones = new CheckBox();
-        plotView = new OxyPlot.WindowsForms.PlotView();
         ButtonOpenTradingApp = new Button();
+        plotView = new OxyPlot.WindowsForms.PlotView();
+        EditShowNadarayaWatsonEnvelopeRepaining = new CheckBox();
         flowLayoutPanel1.SuspendLayout();
         groupBox2.SuspendLayout();
         groupBox5.SuspendLayout();
@@ -341,6 +342,7 @@ partial class CryptoVisualisation
         // 
         // groupBox1
         // 
+        groupBox1.Controls.Add(EditShowNadarayaWatsonEnvelopeRepaining);
         groupBox1.Controls.Add(EditShowSmaLinesSbm);
         groupBox1.Controls.Add(EditShowNadarayaWatsonEnvelope);
         groupBox1.Controls.Add(EditShowBollingerBand);
@@ -447,6 +449,15 @@ partial class CryptoVisualisation
         EditShowFvgZones.Text = "Show fvg zones";
         EditShowFvgZones.UseVisualStyleBackColor = true;
         // 
+        // ButtonOpenTradingApp
+        // 
+        ButtonOpenTradingApp.Location = new Point(6, 723);
+        ButtonOpenTradingApp.Name = "ButtonOpenTradingApp";
+        ButtonOpenTradingApp.Size = new Size(121, 23);
+        ButtonOpenTradingApp.TabIndex = 41;
+        ButtonOpenTradingApp.Text = "Open trading app";
+        ButtonOpenTradingApp.UseVisualStyleBackColor = true;
+        // 
         // plotView
         // 
         plotView.BackColor = Color.Black;
@@ -461,14 +472,15 @@ partial class CryptoVisualisation
         plotView.ZoomRectangleCursor = Cursors.SizeNWSE;
         plotView.ZoomVerticalCursor = Cursors.SizeNS;
         // 
-        // ButtonOpenTradingApp
+        // EditShowNadarayaWatsonEnvelopeRepaining
         // 
-        ButtonOpenTradingApp.Location = new Point(6, 723);
-        ButtonOpenTradingApp.Name = "ButtonOpenTradingApp";
-        ButtonOpenTradingApp.Size = new Size(121, 23);
-        ButtonOpenTradingApp.TabIndex = 41;
-        ButtonOpenTradingApp.Text = "Open trading app";
-        ButtonOpenTradingApp.UseVisualStyleBackColor = true;
+        EditShowNadarayaWatsonEnvelopeRepaining.AutoSize = true;
+        EditShowNadarayaWatsonEnvelopeRepaining.Location = new Point(95, 194);
+        EditShowNadarayaWatsonEnvelopeRepaining.Name = "EditShowNadarayaWatsonEnvelopeRepaining";
+        EditShowNadarayaWatsonEnvelopeRepaining.Size = new Size(66, 19);
+        EditShowNadarayaWatsonEnvelopeRepaining.TabIndex = 37;
+        EditShowNadarayaWatsonEnvelopeRepaining.Text = "Repaint";
+        EditShowNadarayaWatsonEnvelopeRepaining.UseVisualStyleBackColor = true;
         // 
         // CryptoVisualisation
         // 
@@ -537,4 +549,5 @@ partial class CryptoVisualisation
     private CheckBox EditShowBollingerBand;
     private CheckBox EditShowSmaLinesSbm;
     private Button ButtonOpenTradingApp;
+    private CheckBox EditShowNadarayaWatsonEnvelopeRepaining;
 }

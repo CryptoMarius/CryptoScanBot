@@ -51,6 +51,7 @@ public class ZoneSession
     public bool ShowFvgZones { get; set; } = false;
     public bool ShowDtb { get; set; } = false;
     public bool ShowNadarayaWatsonEnvelope { get; set; } = true;
+    public bool ShowNadarayaWatsonEnvelopeRepainting { get; set; } = true;
     public bool ShowBollingerBand { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = true;
     public bool ShowTrendLines { get; set; } = false;
