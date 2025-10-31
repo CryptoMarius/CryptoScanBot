@@ -523,8 +523,14 @@ public partial class DashBoardInformation : UserControl
 
 
             label = item.SymbolVolume;
-            value = (decimal)symbol.Volume;
-            label.Text = value.ToString("N0");
+            value = symbol.Volume;
+
+            if (value > 1000000000)
+                label.Text = (value / 1000000).ToString("N0") + 'm';
+            else if (value > 1000000)
+                label.Text = (value / 1000).ToString("N1") + 'k';
+            else 
+                label.Text = value.ToString("N0");
             label.ForeColor = Color.Black;
             if (symbol.Name.Equals(hist.Symbol))
             {
@@ -563,7 +569,13 @@ public partial class DashBoardInformation : UserControl
 
             decimal value = tvValues.Lp;
             label = item.Symbol2Value;
-            label.Text = value.ToString(tvValues.DisplayFormat);
+            if (value > 1000000000)
+                label.Text = (value / 1000000).ToString(tvValues.DisplayFormat) + 'm';
+            else
+            if (value > 1000000)
+                label.Text = (value / 1000).ToString(tvValues.DisplayFormat) + 'k';
+            else
+                label.Text = value.ToString(tvValues.DisplayFormat);
             if (value < tvValues.LastValue)
                 label.ForeColor = Color.Red;
             else if (value > tvValues.LastValue)
