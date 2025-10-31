@@ -76,6 +76,14 @@ public class Symbol() : SymbolBase(), ISymbol
                                 SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                                 if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                                 {
+                                    if (symbolData.RootSymbol != symbolData.QuoteAsset)
+                                    {
+#if DEBUG
+                                        GlobalData.AddTextToLogTab($"{info.ExchangeName} rootsymbol != quote {symbolData.RootSymbol}");
+#endif
+                                        continue;
+                                    }
+
                                     //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                     //De te gebruiken precisie in prijzen
                                     //symbol.BaseAssetPrecision = binanceSymbol.LotSizeFilter.BasePrecision.ToString().Length - 2;
