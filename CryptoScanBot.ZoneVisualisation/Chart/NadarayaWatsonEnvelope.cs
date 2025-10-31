@@ -1,16 +1,15 @@
 ﻿using CryptoScanBot.Core.Core;
 using CryptoScanBot.Core.Model;
+using CryptoScanBot.Core.Signal;
 
 using OxyPlot;
 using OxyPlot.Series;
-
-using Skender.Stock.Indicators;
 
 namespace CryptoScanBot.ZoneVisualisation.Chart;
 
 public class NadarayaWatsonEnvelope
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate, bool smoothRepainting = true)
     {
         //TODO: Honour Min & Max Date!
 
@@ -20,13 +19,7 @@ public class NadarayaWatsonEnvelope
         var seriesBuy = new ScatterSeries { Title = "n buy", MarkerSize = 3, MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5 };
         var seriesSell = new ScatterSeries { Title = "n sell", MarkerSize = 3, MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5 };
 
-        // configuration:
-        decimal h = GlobalData.Settings.Signal.Nwe.BandWidth;
-        decimal mult = GlobalData.Settings.Signal.Nwe.Multiplication;
-
-
         // Iterate the last 500 candles
-        int maxlen = 500;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.CandleList.Count == 0)
             return;
@@ -40,44 +33,17 @@ public class NadarayaWatsonEnvelope
             }
         }
 
+        NweIndicator nwe = new(
+            bandwidth: (double)GlobalData.Settings.Signal.Nwe.BandWidth,
+            multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
+            smoothRepainting: smoothRepainting
+           );
+        var result = nwe.Calculate(candles);
 
-
-        int n = candles.Count;
-        int max = Math.Min(maxlen, n - 1);
-        //In Pine Script, wanneer je src[x] gebruikt en src = input.source(close) is:
-        // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) candle in de chart context(dus de meest recente die op dat moment verwerkt wordt).
-        // en x = 1 verwijst naar de vorige candle.
         long offsett = candles.Values.Last().OpenTime; // - max * interval.Duration;
 
-        List<decimal> nwe = [];
-        List<SmaResult> smaList20 = (List<SmaResult>)candles.Values.GetSma(20);
-        smaList20.Reverse();
-        decimal sae = 0;
 
-        // Compute and set NWE points 
-        for (int i = 0; i < max; i++)
-        {
-            // Compute weighted mean 
-            decimal sum = 0;
-            decimal sumw = 0;
-            for (int j = 0; j < max; j++)
-            {
-                // Gaussian window
-                decimal w = (decimal)Math.Exp(-(Math.Pow(i - j, 2)) / (double)(h * h * 2));
-                if (candles.TryGetValue(offsett - j * interval.Duration, out CryptoCandle? candlej))
-                    sum += candlej.Close * w;
-                sumw += w;
-            }
-            decimal y2 = sum / sumw;
-            nwe.Add(y2);
-
-            if (candles.TryGetValue(offsett - i * interval.Duration, out CryptoCandle? candlei))
-                sae += Math.Abs(candlei.Close - y2);
-        }
-        sae = sae / max * (decimal)mult;
-
-
-        for (int i = 0; i < max; i++)
+        for (int i = 0; i < candles.Count; i++)
         {
             if (candles.TryGetValue(offsett - (i + 0) * interval.Duration, out CryptoCandle? candleLast) &&
                 candles.TryGetValue(offsett - (i + 1) * interval.Duration, out CryptoCandle? candlePrev))
@@ -85,10 +51,12 @@ public class NadarayaWatsonEnvelope
                 long openTime = CandleTools.GetUnixTime(candleLast.Date, interval.Duration);
                 if (openTime >= minDate && openTime <= maxDate)
                 {
-
-                    decimal nwevalue = nwe[i];
-                    decimal upperband = nwevalue + sae;
-                    decimal lowerband = nwevalue - sae;
+                    var res = result[i];
+                    if (res.Lower == null)
+                        continue;
+                    decimal lowerband = res.Lower.Value;
+                    decimal nwevalue = res.Center.Value;
+                    decimal upperband = res.Upper.Value;
 
                     seriesLow.Points.Add(new DataPoint(candleLast.OpenTime, (double)lowerband));
                     seriesMiddle.Points.Add(new DataPoint(candleLast.OpenTime, (double)nwevalue));
@@ -146,10 +114,11 @@ public class NadarayaWatsonEnvelope
             }
         }
 
-        chart.Series.Add(seriesLow);        
+        chart.Series.Add(seriesLow);
         chart.Series.Add(seriesMiddle);
         chart.Series.Add(seriesHigh);
         chart.Series.Add(seriesBuy);
         chart.Series.Add(seriesSell);
     }
+
 }

@@ -25,17 +25,18 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
 
         return true;
     }
-    private static bool EnoughMomentum(List<CryptoCandle> nwe, int max, out decimal perc)
+
+
+    private static bool EnoughMomentum(List<decimal> nwe, int max, out decimal perc)
     {
         // We noticed weak turn's
         int count = 15;
-        var o = nwe[max - 1];
-        decimal value = o.Close;
         decimal diff = 0;
+        decimal value = nwe[max - 1];
         for (int i = max - 2; i > 0; i--)
         {
             var o2 = nwe[i];
-            decimal d = Math.Abs(o2.Close - value);
+            decimal d = Math.Abs(o2 - value);
             if (d > diff)
                 diff = d;
 
@@ -173,37 +174,32 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        
-		
-	
-		
-		
+
         // configuration:
-        decimal h = GlobalData.Settings.Signal.Nwe.BandWidth;
-        decimal mult = GlobalData.Settings.Signal.Nwe.Multiplication;
+        decimal bandWidth = GlobalData.Settings.Signal.Nwe.BandWidth;
+        decimal multplier = GlobalData.Settings.Signal.Nwe.Multiplication;
 
         // Iterate the last 500 candles
         int maxlen = 500;
-        int n = SymbolInterval.CandleList.Count;
-        int max = Math.Min(maxlen, n - 1);
+        int max = Math.Min(maxlen, SymbolInterval.CandleList.Count - 1);
         //In Pine Script, wanneer je src[x] gebruikt en src = input.source(close) is:
         // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) candle in de chart context(dus de meest recente die op dat moment verwerkt wordt).
         // en x = 1 verwijst naar de vorige candle.
         long offsett = CandleLast.OpenTime; // - max * Interval.Duration;
 
-        List<CryptoCandle> nwe = [];
         decimal sae = 0;
+        List<decimal> nwe = [];
 
-        // Compute and set NWE points 
+        // Compute and set NWE points
         for (int i = 0; i < max; i++)
         {
-            // Compute weighted mean 
+            // Compute weighted mean
             decimal sum = 0;
             decimal sumw = 0;
             for (int j = 0; j < max; j++)
             {
                 // Gaussian window
-                decimal w = (decimal)Math.Exp(-(Math.Pow(i - j, 2)) / (double)(h * h * 2));
+                decimal w = (decimal)Math.Exp(-(Math.Pow(i - j, 2)) / (double)(bandWidth * bandWidth * 2));
                 if (SymbolInterval.CandleList.TryGetValue(offsett - j * Interval.Duration, out CryptoCandle? candlej))
                     sum += candlej.Close * w;
                 sumw += w;
@@ -214,58 +210,21 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             if (SymbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle? candlei))
             {
                 sae += Math.Abs(candlei.Close - y2);
-
-                nwe.Add(new CryptoCandle
-                {
-                    Close = y2,
-                    Open = y2,
-                    High = y2,
-                    Low = y2,
-                    Volume = 0,
-                    OpenTime = candlei!.OpenTime,
-                    CandleData = candlei?.CandleData,
-                });
             }
-            else
-            {
-                nwe.Add(new CryptoCandle
-                {
-                    Close = y2,
-                    Open = y2,
-                    High = y2,
-                    Low = y2,
-                    Volume = 0,
-                    OpenTime = openTime,
-                    CandleData = null,
-                });
-            }
+            nwe.Add(y2);
         }
-        sae = sae / max * mult;
+        sae = sae / max * multplier;
 
 
         ExtraText = "";
         nwe.Reverse();
-        //List<SlopeResult> slopeNweList = (List<SlopeResult>)nwe.GetSlope(2);
-        //var slopeNweLast = slopeNweList[max - 1];
-        // Calculate the angle in degrees
-        //double angle_radians = Math.Atan(slopeNweLast.Slope ?? 0);
-        //double angle_degrees = angle_radians * (180 / Math.PI);
-        //double angle_degrees2 = (180 / Math.PI) * (slopeNweLast.Slope ?? 0);
-
-        var candleLast = nwe[max - 1];
         var candlePrev = nwe[max - 2];
-
-        if (candleLast.CandleData == null || candlePrev.CandleData == null)
-            return false;
-
-
-        decimal nwevalue = nwe[max - 1].Close;
-        decimal upperband = nwevalue + sae;
-        decimal lowerband = nwevalue - sae;
+        decimal nweValue = nwe[max - 1];
 
         // buy alert
         if (SignalSide == CryptoTradeSide.Long)
         {
+            decimal lowerband = nweValue - sae;
             // Candle outside the band
             if (CandleLast!.Open <= lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
@@ -273,7 +232,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
                 return true;
             }
             // Candle sticking pearsing trough the band
-            if (candlePrev!.Close > lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
+            if (candlePrev! > lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
                //ExtraText = $"{angle_degrees2:N2}°, {perc2:N2}%";
                 return true;
@@ -281,8 +240,9 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         }
 
         // sell alert
-        if (SignalSide == CryptoTradeSide.Short) 
+        if (SignalSide == CryptoTradeSide.Short)
         {
+            decimal upperband = nweValue + sae;
             // Candle outside the band
             if (CandleLast!.Open >= upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
@@ -290,7 +250,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
                 return true;
             }
             // Candle sticking pearsing trough the band
-            if (candlePrev!.Close < upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
+            if (candlePrev! < upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
                 //ExtraText = $"{angle_degrees2:N2}°, {perc4:N2}%";
                 return true;

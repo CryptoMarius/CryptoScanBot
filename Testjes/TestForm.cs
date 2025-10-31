@@ -1,6 +1,4 @@
-﻿using BBMA_Strategy;
-
-using Binance.Net.Clients;
+﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models;
 using Binance.Net.Objects.Models.Spot;
@@ -18,6 +16,7 @@ using CryptoScanBot.Core.Signal;
 using CryptoScanBot.Core.Telegram;
 using CryptoScanBot.Core.Trader;
 using CryptoScanBot.Core.Zones;
+using CryptoScanBot.TestStuff.bbma;
 
 using Dapper;
 
@@ -284,7 +283,7 @@ public partial class TestForm : Form
         {
             if (symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.Count == 0)
             {
-                GlobalData.AddTextToLogTab(string.Format("{0} {1} Candles lezen", symbol.Name, interval.Name));
+                //GlobalData.AddTextToLogTab(string.Format("{0} {1} Candles lezen", symbol.Name, interval.Name));
 
                 //int aantaltotaal = 0;
                 string baseStoragePath = GlobalData.GetBaseDir();
@@ -2830,10 +2829,10 @@ public partial class TestForm : Form
         GlobalData.AddTextToLogTab($"Oversold Percentage: {oversellPercentage:F2}%");
     }
 
-    private async void buttonBbma_ClickAsync(object sender, EventArgs e)
+    private void BbmaExecute1()
     {
         GlobalData.AddTextToLogTab("");
-        GlobalData.AddTextToLogTab("Lijstjes spikes");
+        GlobalData.AddTextToLogTab("BbmaExecute1");
         GlobalData.AddTextToLogTab("");
         List<VolatiteitStat> list = [];
 
@@ -2845,51 +2844,122 @@ public partial class TestForm : Form
             {
                 if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
                 {
-                    List<(TimeFrame, CryptoIntervalPeriod) > l = [
-                        (TimeFrame.H1, CryptoIntervalPeriod.interval1h),
-                        (TimeFrame.M15, CryptoIntervalPeriod.interval15m), 
-                        (TimeFrame.M5, CryptoIntervalPeriod.interval5m)
-                        ];
-
-
-                    // Sample data generatie
-                    var multiTimeFrameCandles = new Dictionary<TimeFrame, List<CryptoCandle>>();
-                    foreach (var (timeframe, period) in l)
+                    if (symbol.Volume > 10000000)
                     {
-                        multiTimeFrameCandles.Add(timeframe, new List<CryptoCandle>());
+                        //// Heeft de munt een redelijke prijs
+                        //if (!SymbolTools.CheckValidMinimalPrice(symbol, out _))
+                        //    continue;
+                        //if (!SymbolTools.CheckNewCoin(symbol, out string _))
+                        //    continue;
 
-                        CryptoIntervalPeriod intervalPeriod = period;
-                        CryptoInterval interval = GlobalData.IntervalListPeriod[intervalPeriod];
-                        LoadSymbolCandles(symbol, interval);
-                        CryptoCandleList candles = symbol.GetSymbolInterval(intervalPeriod).CandleList;
-                        if (candles.Count == 0)
-                            continue;
-                        CryptoCandle last = candles.Values.Last();
-
-                        // Heeft de munt genoeg 24h volume
-                        if (!SymbolTools.CheckValidMinimalVolume(symbol, last.OpenTime, 3 * 60, out _))
-                            continue;
-                        // Heeft de munt een redelijke prijs
-                        if (!SymbolTools.CheckValidMinimalPrice(symbol, out _))
-                            continue;
-                        if (!SymbolTools.CheckNewCoin(symbol, out string _))
-                            continue;
+                        List<(TimeFrame, CryptoIntervalPeriod)> l = [
+                            (TimeFrame.W1, CryptoIntervalPeriod.interval1w),
+                            (TimeFrame.D1, CryptoIntervalPeriod.interval1d),
+                            (TimeFrame.H4, CryptoIntervalPeriod.interval4h),
+                            (TimeFrame.H1, CryptoIntervalPeriod.interval1h),
+                        (TimeFrame.M15, CryptoIntervalPeriod.interval15m),
+                        (TimeFrame.M5, CryptoIntervalPeriod.interval5m)
+                            ];
 
 
-                        foreach (var candle in candles.Values)
+                        // Sample data generatie
+                        var multiTimeFrameCandles = new Dictionary<TimeFrame, List<CryptoCandle>>();
+                        foreach (var (timeframe, period) in l)
                         {
-                            multiTimeFrameCandles[timeframe].Add(candle);
+                            multiTimeFrameCandles.Add(timeframe, []);
+
+                            //CryptoIntervalPeriod intervalPeriod = period;
+                            CryptoInterval interval = GlobalData.IntervalListPeriod[period];
+                            LoadSymbolCandles(symbol, interval);
+                            CryptoCandleList candles = symbol.GetSymbolInterval(period).CandleList;
+                            if (candles.Count == 0)
+                                continue;
+
+                            foreach (var candle in candles.Values)
+                            {
+                                multiTimeFrameCandles[timeframe].Add(candle);
+                            }
                         }
+
+                        GlobalData.AddTextToLogTab($"symbol {symbol.Name}");
+
+
+                        var bbma = new BBMA1();
+                        bbma.Analyze(multiTimeFrameCandles);
+
+
+                        //break;
                     }
-
-                    GlobalData.AddTextToLogTab($"symbol {symbol.Name}");
-                    var bbma = new BBMA();
-                    //await bbma.Analyze(symbol.Name, multiTimeFrameCandles);
-
-
-                    //break;
                 }
             }
         }
+        GlobalData.AddTextToLogTab("Done");
+    }
+
+
+    public void Calculate(CryptoSymbol symbol, CryptoIntervalPeriod tf1, CryptoIntervalPeriod tf2, CryptoIntervalPeriod tf3)
+    {
+        CryptoInterval interval1 = GlobalData.IntervalListPeriod[tf1];
+        LoadSymbolCandles(symbol, interval1);
+        CryptoCandleList candlesTf1 = symbol.GetSymbolInterval(tf1).CandleList;
+        if (candlesTf1.Count == 0)
+            return;
+
+        CryptoInterval interval2 = GlobalData.IntervalListPeriod[tf2];
+        LoadSymbolCandles(symbol, interval2);
+        CryptoCandleList candlesTf2 = symbol.GetSymbolInterval(tf2).CandleList;
+        if (candlesTf2.Count == 0)
+            return;
+
+        CryptoInterval interval3 = GlobalData.IntervalListPeriod[tf3];
+        LoadSymbolCandles(symbol, interval3);
+        CryptoCandleList candlesTf3 = symbol.GetSymbolInterval(tf3).CandleList;
+        if (candlesTf3.Count == 0)
+            return;
+
+
+        var bbma = new BbmaStrategyGrok2();
+        bbma.SignalTriggered += (sender, args) => 
+        {
+            if (args.Event == BbmaStrategyGrok2.BbmaEvent.ReEntry)
+                GlobalData.AddTextToLogTab($"{symbol.Name} ({interval1.Name}/{interval2.Name}/{interval3.Name}) {args.Side} {args.Event} {args.Message}");
+        };
+        bbma.Compute(candlesTf1, candlesTf2, candlesTf3);
+    }
+
+
+    private void BbmaExecute2()
+    {
+        GlobalData.AddTextToLogTab("");
+        GlobalData.AddTextToLogTab("BbmaExecute2");
+        GlobalData.AddTextToLogTab("");
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
+        {
+            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            //if (exchange.SymbolListName.TryGetValue("XRPUSDT", out CryptoSymbol? symbol))
+            {
+                if (symbol.Quote.Equals("USDT") && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                {
+                    if (symbol.Volume > 10000000)
+                    {
+                        //GlobalData.AddTextToLogTab($"symbol {symbol.Name}");
+                        Calculate(symbol, CryptoIntervalPeriod.interval5m, CryptoIntervalPeriod.interval15m, CryptoIntervalPeriod.interval1h);
+                        Calculate(symbol, CryptoIntervalPeriod.interval15m, CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h);
+                        Calculate(symbol, CryptoIntervalPeriod.interval1h, CryptoIntervalPeriod.interval4h, CryptoIntervalPeriod.interval1d);
+
+                    }
+                }
+            }
+        }
+        GlobalData.AddTextToLogTab("Done");
+
+    }
+
+
+    private void buttonBbma_ClickAsync(object sender, EventArgs e)
+    {
+        BbmaExecute1();
     }
 }
