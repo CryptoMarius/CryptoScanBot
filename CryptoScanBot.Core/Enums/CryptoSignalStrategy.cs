@@ -19,15 +19,23 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
     Stoch = 20,
-    Macd = 21, // experiment
+    //Macd = 21, // experiment
+#if DEBUG
     SmaDist = 22, // experiment
+#endif
 
     NadarayaWatsonEnvelope = 25,
+#if DEBUG
     NadarayaWatsonEnvelopeCross = 27,
+#endif
 
+#if DEBUG
     BbMa = 30, // still studying, its quite complicated that Oma Ally strategy
+#endif
 
+#if DEBUG
     Trend = 31,
+#endif
 
     BbRsiEngulfing = 50,
     SignalSma50Sma20Price = 52,
