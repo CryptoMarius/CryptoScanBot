@@ -102,7 +102,7 @@
     <PackageReference Include="Microsoft.Web.WebView2">
       <Version>1.0.3537.50</Version>
     </PackageReference>
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="System.Reflection.Emit">
       <Version>4.7.0</Version>
     </PackageReference>
