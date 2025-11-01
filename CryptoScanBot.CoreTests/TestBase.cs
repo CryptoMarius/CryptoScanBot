@@ -83,6 +83,7 @@ public class TestBase
                     Exchange = exchange,
                     ExchangeId = exchange.Id,
                     QuoteData = quoteData,
+                    ExchangeName = "TEST exchange",
 
                     QuantityTickSize = 0.01m,
                     QuantityMinimum = 0.2m,

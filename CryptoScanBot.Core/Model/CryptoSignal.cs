@@ -48,9 +48,6 @@ public class CryptoSignal : CryptoData2
 
     public string? EventText { get; set; }
 
-
-    [Computed]
-    public decimal? LastPrice { get; set; }
     [Computed]
     public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * (Symbol.LastPrice / SignalPrice - 1)); else return 0; } }
 

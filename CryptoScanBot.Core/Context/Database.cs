@@ -403,6 +403,7 @@ public class CryptoDatabase : IDisposable
                 "PriceMax TEXT NULL," +
                 "PriceMinPerc TEXT NULL," +
                 "PriceMaxPerc TEXT NULL," +
+                "SignalStatus TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -537,6 +538,7 @@ public class CryptoDatabase : IDisposable
                 "PriceMax TEXT NULL," +
                 "PriceMinPerc TEXT NULL," +
                 "PriceMaxPerc TEXT NULL," +
+                "SignalStatus TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

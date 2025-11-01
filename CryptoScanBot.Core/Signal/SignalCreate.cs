@@ -234,7 +234,6 @@ public class SignalCreate
         CryptoSignal signal = CreateSignal(Candle!);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
-        signal.LastPrice = Candle!.Close;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
@@ -452,12 +451,11 @@ public class SignalCreate
             IntervalId = Interval.Id,
             BackTest = GlobalData.BackTest,
             SignalPrice = candle.Close,
-#if DEBUG
             PriceMin = candle.Close, // statistics
             PriceMax = candle.Close, // statistics
             PriceMinPerc = 0, // statistics
             PriceMaxPerc = 0, // statistics
-#endif
+            SignalStatus = CryptoSignalStatus.Run,
             SignalVolume = Symbol.Volume,
             EventTime = candle.OpenTime + Interval.Duration, // close of the candle
             OpenDate = CandleTools.GetUnixDate(candle.OpenTime),

@@ -213,6 +213,7 @@ public class CryptoData2 : CryptoData
     public double PriceMinPerc { get; set; }
     public decimal PriceMax { get; set; }
     public double PriceMaxPerc { get; set; }
+    public CryptoSignalStatus SignalStatus { get; set; }
 
     public double AvgBB { get; set; }
 
@@ -259,6 +260,7 @@ public class CryptoData2 : CryptoData
             PriceMax = source2.PriceMax;
             PriceMinPerc = source2.PriceMinPerc;
             PriceMaxPerc = source2.PriceMaxPerc;
+            SignalStatus = source2.SignalStatus;
 
             AvgBB = source2.AvgBB;
         }

@@ -8,7 +8,7 @@ namespace CryptoScanBot.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 55;
+    public readonly static int CurrentDatabaseVersion = 56;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -470,7 +470,7 @@ public class Migration
             {
                 using var transaction = database.BeginTransaction();
 
-                // remove unused ScannerSymbol.LastOrderFetched 
+                // remove unused ScannerSymbol.LastOrderFetched
                 database.Connection.Execute("alter table Symbol drop column LastOrderFetched", transaction);
 
                 // remove ScannerSymbol.TrendPercentage
@@ -657,7 +657,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // Note: Add a AT signal string to the position table from the Altrady response 
+            // Note: Add a AT signal string to the position table from the Altrady response
             database.Connection.Execute("alter table Position add AltradyPositionId Text null", transaction);
 
             // update version
@@ -1143,7 +1143,24 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             // Has an accountid field whichs was not properly removed before (insert errors)
-            try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } 
+            try { database.Connection.Execute("drop table [Zone]", transaction); } catch { }
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 31-10-2025 Added SignalStatus
+        if (CurrentVersion > version.Version && version.Version == 55)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal add column SignalStatus TEXT null", transaction);
+            database.Connection.Execute("alter table Position add column SignalStatus TEXT null", transaction);
+            database.Connection.Execute("update Signal set SignalStatus=0", transaction);
 
             // update version
             version.Version += 1;
