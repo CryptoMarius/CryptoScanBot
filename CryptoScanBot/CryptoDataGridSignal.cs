@@ -62,6 +62,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         // statistics
         PriceMinPerc,
         PriceMaxPerc,
+        SignalStatus,
 
 #if StrategyBbma
         // Debug
@@ -273,6 +274,10 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+                case ColumnsForGrid.SignalStatus:
+                    CreateColumn("Status", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
+                    break;
+                    
 #if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     CreateColumn("Wma05Low", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
@@ -350,6 +355,8 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
                     ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
                     ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+                    ColumnsForGrid.SignalStatus => ObjectCompare.Compare(a.SignalStatus, b.SignalStatus),
+                    
 #if StrategyBbma
                     ColumnsForGrid.Wma05Low => ObjectCompare.Compare(a.Wma05Low, b.Wma05Low),
                     ColumnsForGrid.Wma05High => ObjectCompare.Compare(a.Wma05High, b.Wma05High),
@@ -585,6 +592,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.PriceMaxPerc:
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
+                    break;
+                case ColumnsForGrid.SignalStatus:
+                    e.Value = signal.SignalStatus.ToString();
                     break;
 #if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
@@ -905,6 +915,15 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         }
                     }
                     break;
+                case ColumnsForGrid.SignalStatus:
+                    {
+                        if (signal.SignalStatus == CryptoSignalStatus.Lost)
+                            foreColor = Color.Red;
+                        else
+                        if (signal.SignalStatus == CryptoSignalStatus.Win)
+                            foreColor = Color.Green;
+                    }
+                    break;
             }
 
             DataGridViewCell cell = Grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -924,19 +943,73 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 CryptoCandle? candle = symbolInterval.CandleList.Values.LastOrDefault(); // todo, not working for emulator & dates!
                 if (candle != null)
                 {
+                    var result = false;
+
                     if (candle.Low < signal.PriceMin || signal.PriceMin == 0)
                     {
                         signal.PriceMin = candle.Low;
                         signal.PriceMinPerc = (double)(100 * (signal.PriceMin / signal.SignalPrice - 1));
-                        return true;
+                        result = true;
                     }
-
-                    if (candle.High > signal.PriceMax || signal.PriceMax == 0)
+                    else if (candle.High > signal.PriceMax || signal.PriceMax == 0)
                     {
                         signal.PriceMax = candle.High;
                         signal.PriceMaxPerc = (double)(100 * (signal.PriceMax / signal.SignalPrice - 1));
-                        return true;
+                        result = true;
                     }
+
+                    if (signal.SignalStatus == CryptoSignalStatus.Run)
+                    {
+                        decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage;
+                        if (stopLossPerc != 0.0m)
+                        {
+                            if (signal.Side == CryptoTradeSide.Long)
+                            {
+                                decimal stopLossPrice = signal.SignalPrice - (stopLossPerc / 100) * signal.SignalPrice;
+                                if (signal.PriceMin <= stopLossPrice)
+                                {
+                                    signal.SignalStatus = CryptoSignalStatus.Lost;
+                                    result = true;
+                                }
+                            }
+                            else if (signal.Side == CryptoTradeSide.Short)
+                            {
+                                decimal stopLossPrice = signal.SignalPrice + (stopLossPerc / 100) * signal.SignalPrice;
+                                if (signal.PriceMax >= stopLossPrice)
+                                {
+                                    signal.SignalStatus = CryptoSignalStatus.Lost;
+                                    result = true;
+                                }
+                            }
+                        }
+                        // still running? ;-)
+                        if (signal.SignalStatus == CryptoSignalStatus.Run)
+                        {
+                            decimal takeProfitPercentage  = GlobalData.Settings.Trading.ProfitPercentage;
+                            if (takeProfitPercentage != 0.0m)
+                            {
+                                if (signal.Side == CryptoTradeSide.Long)
+                                {
+                                    decimal takeProfitPrice = signal.SignalPrice + (takeProfitPercentage / 100) * signal.SignalPrice;
+                                    if (signal.PriceMax > takeProfitPrice)
+                                    {
+                                        signal.SignalStatus = CryptoSignalStatus.Win;
+                                        result = true;
+                                    }
+                                }
+                                else if (signal.Side == CryptoTradeSide.Short)
+                                {
+                                    decimal takeProfitPrice = signal.SignalPrice - (takeProfitPercentage / 100) * signal.SignalPrice;
+                                    if (signal.PriceMin < takeProfitPrice)
+                                    {
+                                        signal.SignalStatus = CryptoSignalStatus.Win;
+                                        result = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return result;
                 }
             }
             catch
