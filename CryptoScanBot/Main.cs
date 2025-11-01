@@ -813,7 +813,9 @@ public partial class FrmMain : Form
                     break;
 
                 case CryptoSignalStrategy.NadarayaWatsonEnvelope:
+#if DEBUG
                 case CryptoSignalStrategy.NadarayaWatsonEnvelopeCross:
+#endif
                     if (signal.Side == CryptoTradeSide.Long)
                         PlaySound(signal, GlobalData.Settings.Signal.Nwe.PlaySound, GlobalData.Settings.Signal.Nwe.PlaySpeech,
                             GlobalData.Settings.Signal.Nwe.SoundFileLong, ref LastSignalSoundNweOversold);
