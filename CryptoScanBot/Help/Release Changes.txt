@@ -1,6 +1,7 @@
 CryptoScanBot release historie:
 
 xx-10-2025 2.1.7
+- Scanner - Signaal stoch weggehaald
 - Scanner - Display van de volumes aangepast (nu met k/m)
 - Scanner - Exchange Kraken Spot toegevoegd, maar deze werkt niet zoals het hoort (onzichtbaar)
 - Scanner - Exchange Bybit EU Spot toegevoegd

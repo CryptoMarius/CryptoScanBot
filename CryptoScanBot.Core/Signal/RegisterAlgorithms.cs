@@ -121,6 +121,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
+#if DEBUG
         // another combined with a higher timeframe
         Register(new AlgorithmDefinition()
         {
@@ -130,6 +131,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStochShort),
         });
 
+#endif
 
         //***************************************************
         // Level approaching

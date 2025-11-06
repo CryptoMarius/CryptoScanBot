@@ -18,7 +18,9 @@ public enum CryptoSignalStrategy
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
+#if DEBUG
     Stoch = 20,
+#endif
     //Macd = 21, // experiment
 #if DEBUG
     SmaDist = 22, // experiment
