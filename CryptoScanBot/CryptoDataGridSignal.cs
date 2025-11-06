@@ -960,12 +960,12 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
                     if (signal.SignalStatus == CryptoSignalStatus.Run)
                     {
-                        decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage;
+                        decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
                         if (stopLossPerc != 0.0m)
                         {
                             if (signal.Side == CryptoTradeSide.Long)
                             {
-                                decimal stopLossPrice = signal.SignalPrice - (stopLossPerc / 100) * signal.SignalPrice;
+                                decimal stopLossPrice = signal.SignalPrice - stopLossPerc * signal.SignalPrice;
                                 if (signal.PriceMin <= stopLossPrice)
                                 {
                                     signal.SignalStatus = CryptoSignalStatus.Lost;
@@ -974,7 +974,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                             }
                             else if (signal.Side == CryptoTradeSide.Short)
                             {
-                                decimal stopLossPrice = signal.SignalPrice + (stopLossPerc / 100) * signal.SignalPrice;
+                                decimal stopLossPrice = signal.SignalPrice + stopLossPerc * signal.SignalPrice;
                                 if (signal.PriceMax >= stopLossPrice)
                                 {
                                     signal.SignalStatus = CryptoSignalStatus.Lost;
@@ -985,12 +985,12 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         // still running? ;-)
                         if (signal.SignalStatus == CryptoSignalStatus.Run)
                         {
-                            decimal takeProfitPercentage  = GlobalData.Settings.Trading.ProfitPercentage;
+                            decimal takeProfitPercentage  = GlobalData.Settings.Trading.ProfitPercentage / 100;
                             if (takeProfitPercentage != 0.0m)
                             {
                                 if (signal.Side == CryptoTradeSide.Long)
                                 {
-                                    decimal takeProfitPrice = signal.SignalPrice + (takeProfitPercentage / 100) * signal.SignalPrice;
+                                    decimal takeProfitPrice = signal.SignalPrice + takeProfitPercentage * signal.SignalPrice;
                                     if (signal.PriceMax > takeProfitPrice)
                                     {
                                         signal.SignalStatus = CryptoSignalStatus.Win;
@@ -999,7 +999,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                                 }
                                 else if (signal.Side == CryptoTradeSide.Short)
                                 {
-                                    decimal takeProfitPrice = signal.SignalPrice - (takeProfitPercentage / 100) * signal.SignalPrice;
+                                    decimal takeProfitPrice = signal.SignalPrice - takeProfitPercentage * signal.SignalPrice;
                                     if (signal.PriceMin < takeProfitPrice)
                                     {
                                         signal.SignalStatus = CryptoSignalStatus.Win;
