@@ -90,7 +90,7 @@ public partial class Form1 : Form
             else
                 textBox1.AppendText(text);
 
-            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
+            //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanner\Testjes\bin\Debug\data\backtest.txt", text);
         }
     }
 

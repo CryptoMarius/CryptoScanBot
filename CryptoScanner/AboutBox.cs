@@ -3,7 +3,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 partial class AboutBox : Form
 {

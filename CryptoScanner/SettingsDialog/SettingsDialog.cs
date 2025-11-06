@@ -4,7 +4,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.SettingsDialog;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public partial class FrmSettings : Form
 {

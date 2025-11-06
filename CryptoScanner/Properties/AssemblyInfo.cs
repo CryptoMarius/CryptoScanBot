@@ -12,7 +12,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyProduct("CryptoScanBot")]
 [assembly: AssemblyCopyright("CryptoScanBot © 2025")]
 [assembly: AssemblyTrademark("https://t.me/+LiHJxgEUibg5YjE8")]
-[assembly: AssemblyCulture("")]
+//[assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

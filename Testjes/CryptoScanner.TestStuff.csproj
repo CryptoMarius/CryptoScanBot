@@ -30,7 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
     <ProjectReference Include="..\CryptoScanner.Emulator\CryptoScanner.Emulator.csproj" />
-    <ProjectReference Include="..\CryptoScanBot\CryptoScanner.csproj" />
+    <ProjectReference Include="..\CryptoScanner\CryptoScanner.csproj" />
   </ItemGroup>
 
   <ItemGroup>

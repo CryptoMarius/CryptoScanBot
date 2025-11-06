@@ -1,4 +1,4 @@
-﻿namespace CryptoScanBot
+﻿namespace CryptoScanner
 {
     partial class AskSymbolDialog
     {

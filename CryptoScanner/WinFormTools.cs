@@ -6,7 +6,7 @@ using CryptoScanner.Core.Settings;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 // Virtual DataGrid Base for displaying objects (symbol, signal, positions)
 

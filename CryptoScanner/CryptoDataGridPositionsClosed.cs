@@ -8,7 +8,7 @@ using CryptoScanner.Core.Trend;
 
 using Dapper;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : CryptoPosition
 {

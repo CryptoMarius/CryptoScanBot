@@ -8,7 +8,7 @@ using Dapper;
 using System.Text;
 using System.Windows.Forms.DataVisualization.Charting;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 // Charts:
 // https://stackoverflow.com/questions/10622674/chart-creating-dynamically-in-net-c-sharp

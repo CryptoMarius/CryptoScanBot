@@ -19,7 +19,7 @@ using Nito.AsyncEx;
 using System.Text;
 using System.Text.Json;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public partial class FrmMain : Form
 {

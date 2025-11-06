@@ -16,8 +16,7 @@ internal static class Program
         // Vroeger dan alle andere..
         ApplicationConfiguration.Initialize();
         InitializeApplicationVariables();
-        GlobalData.AppName = "CryptoScanBot";
-        GlobalData.LogName = "CryptoShowTrend";
+        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
         ScannerLog.InitializeLogging();
 
         // Add the event handler for handling UI thread exceptions to the event.

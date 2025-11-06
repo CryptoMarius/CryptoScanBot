@@ -3,7 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 static class Program
 {
@@ -57,7 +57,7 @@ static class Program
 
     public static void InitializeApplicationVariables()
     {
-        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
+        GlobalData.AppName = "CryptoScanBot";
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
         var assembly = Assembly.GetExecutingAssembly().GetName();

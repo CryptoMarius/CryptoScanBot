@@ -9,7 +9,7 @@ using CryptoScanner.Core.Trend;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public class CryptoDataGridPositionsOpen<T>() : CryptoDataGrid<T>() where T : CryptoPosition
 {

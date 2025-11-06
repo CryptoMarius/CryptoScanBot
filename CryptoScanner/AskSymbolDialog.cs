@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 
-namespace CryptoScanBot
+namespace CryptoScanner
 {
     public partial class AskSymbolDialog : Form
     {

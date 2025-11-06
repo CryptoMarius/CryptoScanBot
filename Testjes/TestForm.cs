@@ -29,7 +29,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 
 
@@ -331,7 +331,7 @@ public partial class TestForm : Form
                     Invoke((MethodInvoker)(() => textBox1.AppendText(text)));
                 else
                     textBox1.AppendText(text);
-                //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanBot\Testjes\bin\Debug\data\backtest.txt", text);
+                //File.AppendAllText(@"D:\Shares\Projects\.Net\CryptoScanner\Testjes\bin\Debug\data\backtest.txt", text);
             }
         }
     }

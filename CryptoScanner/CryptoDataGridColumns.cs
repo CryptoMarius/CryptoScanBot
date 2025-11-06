@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Settings;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public partial class CryptoDataGridColumns : Form
 {

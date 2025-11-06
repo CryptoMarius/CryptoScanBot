@@ -34,11 +34,11 @@ public static class GlobalData
     public static double PriceMinPerc = 0;
     public static double PriceMaxPerc = 0;
 
-    public static string AppName { get; set; } = "";
+    public static string AppName { get; set; } = "CryptoScanBot";
     public static string AppPath { get; set; } = "";
     public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
-    private static string? AppDataFolder { get; set; } = ""; // depends on starup parameters
+    private static string? AppDataFolder { get; set; } = ""; // depends on startup parameters
 
     public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;

@@ -25,10 +25,7 @@ internal static class Program
 
     public static void InitializeApplicationVariables()
     {
-        // Appname && name of database
         GlobalData.AppName = "CryptoScanBot"; // Assembly.GetExecutingAssembly().GetName().Name;
-
-        // Path of the executable
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location!)!;
 
         // Version stuff

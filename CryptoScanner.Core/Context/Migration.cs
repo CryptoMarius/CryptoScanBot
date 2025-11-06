@@ -904,7 +904,7 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
 
-            // todo: Delete CryptoScanBot-weblinks.json?
+            // todo: Delete CryptoScanner-weblinks.json?
         }
 
 

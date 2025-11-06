@@ -3,7 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoLiveData
 {

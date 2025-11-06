@@ -1,4 +1,4 @@
-using CryptoScanBot;
+using CryptoScanner;
 using CryptoScanner.Core.Core;
 
 using System.Reflection;
@@ -18,8 +18,7 @@ namespace Testjes2
             // Vroeger dan alle andere..
             ApplicationConfiguration.Initialize();
             InitializeApplicationVariables();
-            GlobalData.AppName = "CryptoScanBot";
-            GlobalData.LogName = "CryptoShowTrend";
+            GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
             ScannerLog.InitializeLogging();
 
             // Add the event handler for handling UI thread exceptions to the event.

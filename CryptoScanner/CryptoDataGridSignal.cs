@@ -4,7 +4,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
 
-namespace CryptoScanBot;
+namespace CryptoScanner;
 
 public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSignal
 {
