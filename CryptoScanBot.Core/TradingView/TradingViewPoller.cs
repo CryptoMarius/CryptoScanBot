@@ -10,7 +10,7 @@ public class SymbolValue
     public string? Ticker { get; set; }
     public string? Url { get; set; }
 
-    public string? DisplayFormat { get; set; }
+    public string DisplayFormat { get; set; } = "N2";
     public DateTime? LastCheck { get; set; }
     public decimal LastValue { get; set; } // For colors
 
@@ -56,12 +56,12 @@ public class TradingViewSymbolInfo
             var result = socket.ReceiveData().Result;
             if (result)
             {
-                await Task.Delay(1000);
+                await Task.Delay(2000);
             }
             else
             {
                 // Failed, connect again..
-                await Task.Delay(100);
+                await Task.Delay(250);
                 socket = new TradingViewSymbolWebSocket(tickerName);
                 socket.DataFetched += OnValueFetched;
                 socket.ConnectWebSocketAndRequestSession().Wait();
