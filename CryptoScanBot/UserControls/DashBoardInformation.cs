@@ -490,6 +490,23 @@ public partial class DashBoardInformation : UserControl
     }
 
 
+    private static string GetDisplayValue(decimal value, string displayFormat)
+    {
+        decimal boundary = 1000000000;
+        if (value >= boundary)
+            return (value / boundary).ToString(displayFormat) + " B";
+
+        boundary = 1000000;
+        if (value >= boundary)
+            return (value / boundary).ToString(displayFormat) + " M";
+
+        boundary = 1000;
+        if (value >= boundary)
+            return (value / boundary).ToString(displayFormat) + " K";
+
+        return value.ToString(displayFormat);
+    }
+
     private static void ShowSymbolPrice(SymbolHist hist, InformationRow item, Core.Model.CryptoExchange exchange,
         CryptoQuoteData quoteData, string baseCoin, string caption, string valueText)
     {
@@ -524,13 +541,15 @@ public partial class DashBoardInformation : UserControl
 
             label = item.SymbolVolume;
             value = symbol.Volume;
-
-            if (value > 1000000000)
-                label.Text = (value / 1000000).ToString("N0") + 'm';
-            else if (value > 1000000)
-                label.Text = (value / 1000).ToString("N1") + 'k';
-            else 
-                label.Text = value.ToString("N0");
+            //if (value > 1000000000000)
+            //    label.Text = (value / 1000000000).ToString("N2") + 'B';
+            //else if (value > 1000000000)
+            //    label.Text = (value / 1000000).ToString("N2") + 'M';
+            //else if (value > 1000000)
+            //    label.Text = (value / 1000).ToString("N2") + 'K';
+            //else 
+            //    label.Text = value.ToString("N2");
+            label.Text = GetDisplayValue(value, "N2");
             label.ForeColor = Color.Black;
             if (symbol.Name.Equals(hist.Symbol))
             {
@@ -569,13 +588,17 @@ public partial class DashBoardInformation : UserControl
 
             decimal value = tvValues.Lp;
             label = item.Symbol2Value;
-            if (value > 1000000000)
-                label.Text = (value / 1000000).ToString(tvValues.DisplayFormat) + 'm';
-            else
-            if (value > 1000000)
-                label.Text = (value / 1000).ToString(tvValues.DisplayFormat) + 'k';
-            else
-                label.Text = value.ToString(tvValues.DisplayFormat);
+            //if (value > 1000000000000)
+            //    label.Text = (value / 1000000000).ToString(tvValues.DisplayFormat) + 'B';
+            //else
+            //if (value > 1000000000)
+            //    label.Text = (value / 1000000).ToString(tvValues.DisplayFormat) + 'M';
+            //else
+            //if (value > 1000000)
+            //    label.Text = (value / 1000).ToString(tvValues.DisplayFormat) + 'K';
+            //else
+            //    label.Text = value.ToString(tvValues.DisplayFormat);
+            label.Text = GetDisplayValue(value, tvValues.DisplayFormat);
             if (value < tvValues.LastValue)
                 label.ForeColor = Color.Red;
             else if (value > tvValues.LastValue)
@@ -641,9 +664,10 @@ public partial class DashBoardInformation : UserControl
                         //text = "disabled";
                         //else
                         //    text = ExchangeBase.PriceTicker.Count().ToString("N0");
-                        text = GlobalData.PriceMinPerc.ToString("N2") + " " + GlobalData.PriceMaxPerc.ToString("N2");
+                        //text = GlobalData.PriceMinPerc.ToString("N2") + " " + GlobalData.PriceMaxPerc.ToString("N2");
                         symbol = GlobalData.Settings.ShowSymbolInformation[0];
-                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Average min/max", text);
+                        //ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "Average min/max", text);
+                        ShowSymbolPrice(SymbolHistList[0], InformationRowList[0], exchange, quoteData, symbol, "", "");
                     }
                     if (ExchangeBase.KLineTicker != null)
                     {
