@@ -1,6 +1,6 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
-namespace CryptoScanBot.TestStuff.nwe;
+namespace CryptoScanner.TestStuff.nwe;
 
 /*
 Ik wil graag het Pinescript "Nadaraya-Watson Envelope [LuxAlgo]" van tradingview naar c# overzetten. 

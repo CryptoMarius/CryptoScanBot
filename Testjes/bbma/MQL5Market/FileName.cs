@@ -1,10 +1,10 @@
 ﻿//using Skender.Stock.Indicators;
-//using CryptoScanBot.Core.Model;
+//using CryptoScanner.Core.Model;
 
 //// MQL5 Market – “BBMA Oma Ally Labels” indicator
 //// Deze lijkt niet zo compleet te zijn..
 
-//namespace CryptoScanBot.TestStuff.BBMA.MQL5Market
+//namespace CryptoScanner.TestStuff.BBMA.MQL5Market
 //{
 //    //// Simpele candle / quote representatie
 //    //public class Candle

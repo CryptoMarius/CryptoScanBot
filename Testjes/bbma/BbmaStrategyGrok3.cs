@@ -1,6 +1,6 @@
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 using Skender.Stock.Indicators;
 
 // Translation of a MQ4/MQ5 script found by Grok concerning BBMA (which looks nice)

@@ -1,6 +1,6 @@
-﻿//namespace CryptoScanBot.TestStuff.bbma
+﻿//namespace CryptoScanner.TestStuff.bbma
 //{
-//    using CryptoScanBot.Core.Model;
+//    using CryptoScanner.Core.Model;
 
 //    using System;
 //    using System.Collections.Generic;

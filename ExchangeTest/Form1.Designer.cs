@@ -1,4 +1,4 @@
-﻿namespace CryptoScanBot.Experiment;
+﻿namespace CryptoScanner.Experiment;
 
 partial class Form1
 {

@@ -1,0 +1,55 @@
+﻿using CryptoScanner.Core.Trend;
+
+using OxyPlot;
+using OxyPlot.Series;
+
+namespace CryptoScanner.ZoneVisualisation.Chart;
+
+public class ZigZag
+{
+    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption, OxyColor color, long minDate, long maxDate)
+    {
+        var seriesZigZag = new LineSeries { Title = caption, Color = color };
+        var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, };
+        var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, };
+        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, };
+        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, };
+        foreach (var zigzag in zigZagList)
+        {
+            if (zigzag.Candle!.OpenTime >= minDate && zigzag.Candle!.OpenTime <= maxDate)
+            {
+                ScatterSeries? series;
+                if (zigzag.Dummy)
+                {
+                    if (zigzag.PointType == 'L')
+                        series = seriesDummyLow;
+                    else
+                        series = seriesDummyHigh;
+                }
+                else
+                {
+                    if (zigzag.PointType == 'L')
+                        series = seriesLow;
+                    else
+                        series = seriesHigh;
+                }
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
+                seriesZigZag.Points.Add(new DataPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
+            }
+        }
+
+        chart.Series.Add(seriesLow);
+        chart.Series.Add(seriesHigh);
+        chart.Series.Add(seriesZigZag);
+        chart.Series.Add(seriesDummyLow);
+        chart.Series.Add(seriesDummyHigh);
+
+        //string format = symbol.PriceDisplayFormat[1..];
+        //string text = "Time: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
+        //text = text.Replace("$", format);
+        //seriesLong.TrackerFormatString = text;
+        //seriesShort.TrackerFormatString = text;
+        //seriesZigZag.TrackerFormatString = text;
+    }
+
+}

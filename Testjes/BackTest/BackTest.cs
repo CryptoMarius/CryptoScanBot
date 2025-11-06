@@ -1,12 +1,12 @@
-﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 using Skender.Stock.Indicators;
 
 using System.Text;
 
-namespace CryptoScanBot.BackTest;
+namespace CryptoScanner.BackTest;
 
 public class BackTest
 {

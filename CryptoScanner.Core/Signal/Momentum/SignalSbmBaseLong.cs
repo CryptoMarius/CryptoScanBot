@@ -1,0 +1,381 @@
+﻿using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
+
+namespace CryptoScanner.Core.Signal.Momentum;
+
+
+public static class SignalSbmBaseOversoldHelper
+{
+    public static bool SbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck)
+    {
+        // Optimalisatie, zou naar de SignalSbmBaseOversold kunnen, maar de stobb gebruikt deze routine ook
+
+        // Oversold (denk groen-geel-rood) - long
+        // 200 (red)
+        // 50 (orange)
+        // 20 (green)
+        // psar
+
+        // Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
+        if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma200)
+            return false;
+        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma200)
+            return false;
+        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma50)
+            return false;
+
+
+        if (includePsarCheck)
+        {
+            // wait at least until it is below the sma20
+            if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
+                return false;
+
+            // psar switched to the opposite side
+            if ((decimal?)candle.CandleData?.PSar <= candle.Close)
+                return false;
+        }
+
+        return true;
+    }
+
+    public static bool Sma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    {
+        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
+        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma50;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma50) / 2;
+        decimal? perc = 100 * value / value2;
+        if (perc < percentage)
+        {
+            response = string.Format("percentage sma200 and sma50 ({0:N2} < {1:N2})", perc, percentage);
+            return false;
+        }
+
+        response = "";
+        return true;
+    }
+
+
+    public static bool Sma50AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    {
+        decimal? value = (decimal?)candle.CandleData?.Sma50 - (decimal?)candle.CandleData?.Sma20;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma50 + (decimal?)candle.CandleData?.Sma20) / 2;
+        decimal? perc = 100 * value / value2;
+        if (perc < percentage)
+        {
+            response = string.Format("percentage sma50 and sma20 ({0:N2} < {1:N2})", perc, percentage);
+            return false;
+        }
+
+        response = "";
+        return true;
+    }
+
+
+    public static bool Sma200AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
+    {
+        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
+        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma20;
+        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma20) / 2;
+        decimal? perc = 100 * value / value2;
+        if (perc < percentage)
+        {
+            response = string.Format("percentage sma200 and sma20 ({0:N2} < {1:N2})", perc, percentage);
+            return false;
+        }
+
+        response = "";
+        return true;
+    }
+
+}
+
+
+public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
+{
+    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    {
+        // Er recovery is via de macd
+        if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        {
+            response = "no macd recovery";
+            return false;
+        }
+
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
+            !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            return false;
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage && 
+            !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            return false;
+        if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage && 
+            !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            return false;
+
+        if (!CheckMaCrossings(out response))
+            return false;
+
+        return true;
+    }
+
+    public bool MacdRecoveryOversold(int candleCount)
+    {
+        // Is there "recovery" (a lighter macd bar)
+        CryptoCandle last = CandleLast!;
+        while (candleCount-- > 0)
+        {
+            if (!GetPrevCandle(last, out CryptoCandle? prev))
+                return false;
+
+            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
+                return false;
+
+            last = prev;
+        }
+
+        return true;
+    }
+
+
+    public override bool IsSignal()
+    {
+        ExtraText = "";
+
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
+        // De ma lijnen en psar goed staan
+        if (!CandleLast!.SbmConditionsOversold(true))
+        {
+            ExtraText = "no sbm conditions";
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public override bool AllowStepIn(CryptoSignal signal)
+    {
+        if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
+            return false;
+
+
+
+        // ********************************************************************
+        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
+        {
+            if (CandleLast.Close <= candlePrev!.Close)
+            {
+                ExtraText = $"Price {candlePrev!.Close:N8} goes down even more {CandleLast.Close:N8}";
+                return false;
+            }
+
+            //if (CheckPriceGoingDown(signal))
+            //{
+            //    ExtraText = $"Price going down";
+            //    return false;
+            //}
+        }
+
+
+        // Deze routine is een beetje back to the basics, gewoon een nette SBM, vervolgens
+        // 2 MACD herstel candles, wat rsi en stoch condities om glijbanen te voorkomen
+        // ********************************************************************
+        // MACD
+        if (GlobalData.Settings.Trading.CheckIncreasingMacd)
+        {
+            if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+            {
+                // ExtraText is al ingevuld
+                return false;
+            }
+        }
+
+
+        // ********************************************************************
+        // RSI increasing
+        if (GlobalData.Settings.Trading.CheckIncreasingRsi)
+        {
+            // At least x which is kind of a minimum (normally 30-70), hardcoded because we can change it
+            //double? boundary = 15;
+            //if (CandleLast?.CandleData!.Rsi < boundary)
+            //{
+            //    ExtraText = $"RSI {CandleLast?.CandleData!.Rsi:N8} not above {boundary:N0}";
+            //    return false;
+            //}
+
+            // RSI should recover
+            if (CandleLast?.CandleData?.Rsi <= candlePrev?.CandleData?.Rsi)
+            {
+                ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
+                return false;
+            }
+
+            //if (!RsiIncreasingInTheLast(3, 1))
+            //{
+            //    ExtraText = string.Format("RSI not increasing in the last 3,1");
+            //    return false;
+            //}
+        }
+
+        // ********************************************************************
+        // PSAR
+        //if ((decimal)CandleLast.CandleData.PSar > CandleLast.Close)
+        //{
+        //    ExtraText = string.Format("De PSAR staat niet onder de prijs {0:N8}", CandleLast.CandleData.PSar);
+        //    return false;
+        //}
+
+
+        // ********************************************************************
+        // STOCH
+        // Stochastic:
+        // Red %D = signal, average from the last 3 %K values
+        // Blue %K = Oscilator calculated from the last 14 candles
+        if (GlobalData.Settings.Trading.CheckIncreasingStoch)
+        {
+            // Stochastic: Omdat ik ze door elkaar haal
+            // Rood %D = signal, het gemiddelde van de laatste 3 %K waarden
+            // Blauw %K = Oscilator berekend over een lookback periode van 14 candles
+
+            //// At least x which is kind of a minimum (normally 20-80), hardcoded because we can change it
+            //double? boundary = 12;
+            //if (CandleLast?.CandleData!.StochOscillator < boundary)
+            //{
+            //    ExtraText = $"Stoch.%K {CandleLast?.CandleData!.StochOscillator:N8} not above {boundary:N0}";
+            //    return false;
+            //}
+
+            // %K should recover
+            if (CandleLast?.CandleData?.StochOscillator <= candlePrev?.CandleData?.StochOscillator)
+            {
+                ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
+                return false;
+            }
+
+            // De %D en %K should moeten elkaar gekruist hebben. Dus %K(snel/blauw) > %D(traag/rood)
+            if (CandleLast?.CandleData?.StochOscillator <= CandleLast?.CandleData?.StochSignal)
+            {
+                ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
+                return false;
+            }
+        }
+
+
+        // Koop als de close vlak bij de bb.lower is (c.q. niet te ver naar boven zit)
+        // Werkt goed!!! (toch even experimenteren) - maar negeert hierdoor ook veel signalen die wel bruikbaar waren
+        //double? value = CandleLast.CandleData.BollingerBandsUpperBand - 0.25 * CandleLast.CandleData.BollingerBandsDeviation;
+        //if (Symbol.LastPrice < (decimal)value)
+        //{
+        //    ExtraText = string.Format("Symbol.Lastprice {0:N8} > BB.Upper + 0.25 * StdDev {1:N8}", Symbol.LastPrice, value);
+        //    signal.LastPrice = Symbol.LastPrice;
+        //    return false;
+        //}
+
+        return true;
+    }
+
+
+    public override bool GiveUp(CryptoSignal signal)
+    {
+        //// ********************************************************************
+        //// Als BTC snel gedaald is dan stoppen (NB: houdt geen rekening met closedate!)
+        //if (GlobalData.PauseTrading.Until >= CandleLast.OpenTime)
+        //{
+        //    ExtraText = string.Format("De bot is gepauseerd omdat {0}", GlobalData.PauseTrading.Text);
+        //    return true;
+        //}
+
+
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return true;
+        }
+
+
+
+        // ********************************************************************
+        // Instaptijd verstreken (oneindig wachten is geen optie)
+        if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
+        {
+            ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            return true;
+        }
+
+
+        // ********************************************************************
+        // PSAR
+        //if ((decimal)CandleLast.CandleData.PSar < CandleLast.Close)
+        //{
+        //    ExtraText = string.Format("De PSAR staat onder de prijs {0:N8}", CandleLast.CandleData.PSar);
+        //    return true;
+        //}
+
+        // alsnog een neerwaardse richting gekozen (wel een rare conditie)
+        //if (CandleLast.CandleData.PSar > CandleLast.CandleData.Sma20)
+        //{
+        //    ExtraText = string.Format("De PSAR staat boven de sma20 {0:N8}", CandleLast.CandleData.PSar);
+        //    return true;
+        //}
+
+
+        // ********************************************************************
+        // BB - buiten de grenzen
+        // okay, ff wachten, er komt vast nog een melding
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
+        //if (CandleLast.Close < (decimal)CandleLast.CandleData.BollingerBandsLowerBand || Symbol.LastPrice < (decimal)CandleLast.CandleData.BollingerBandsLowerBand)
+        //{
+        //    ExtraText = "Close of LastPrice beneden de bb.lower";
+        //    return true;
+        //}
+
+        if (CandleLast?.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
+        {
+            ExtraText = "Close of LastPrice above bb.upper";
+            return true;
+        }
+
+
+
+
+        // ********************************************************************
+        // RSI
+        // okay, ff wachten - slope van de laatste 5 candles
+        // Die slope werkt niet lekker vindt ik, nog eens nazoeken
+        // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
+        //if (CandleLast.CandleData.SlopeRsi < 0) 
+        //{
+        //    ExtraText = "Slope RSI < 0";
+        //    return true;
+        //}
+
+        // 2023-04-29 12:15 toegevoegd: Neergaande rsi meldingen vermijden.
+        //if (!RsiDecreasingInTheLast(3, 1))
+        //{
+        //    ExtraText = string.Format("RSI aflopend in de laatste 3,1, laat maar");
+        //    return true;
+        //}
+
+
+
+        // ********************************************************************
+        // Barometer(s)
+        if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, TradingConfig.Trading[CryptoTradeSide.Long].Barometer, out ExtraText))
+            return true;
+
+
+        ExtraText = "";
+        return false;
+    }
+
+}

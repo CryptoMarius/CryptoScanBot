@@ -1,10 +1,10 @@
-﻿using CryptoScanBot.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
 using Newtonsoft.Json;
 
 using System.Text;
 
-namespace CryptoScanBot.BackTest;
+namespace CryptoScanner.BackTest;
 
 public class CryptoBackTestResults
 {

@@ -5,18 +5,19 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Objects;
 
-using CryptoScanBot.BackTest;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Json;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Core.Telegram;
-using CryptoScanBot.Core.Trader;
-using CryptoScanBot.Core.Zones;
-using CryptoScanBot.TestStuff.bbma;
+using CryptoScanner.BackTest;
+using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Emulator;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Telegram;
+using CryptoScanner.Core.Trader;
+using CryptoScanner.Core.Zones;
+using CryptoScanner.TestStuff.bbma;
 
 using Dapper;
 
@@ -105,9 +106,12 @@ public partial class TestForm : Form
 
 
         comboBox1.Items.Clear();
-        //foreach (AlgorithmDefinition def in TradingConfig.AlgorithmDefinitionIndex.Values)
-        //    comboBox1.Items.Add(def.Name);
-        //comboBox1.SelectedIndex = 5;
+        foreach (var def in RegisterAlgorithms.AlgorithmDefinitionList.Values)
+        {
+            comboBox1.Items.Add(def.Name);
+        }
+        if (comboBox1.Items.Count > 4) 
+            comboBox1.SelectedIndex = 5;
 
         tabControl.SelectedTab = tabPageLog;
 
@@ -2342,6 +2346,11 @@ public partial class TestForm : Form
 
     private async Task BackTestAsync()
     {
+        // TODO:
+        // That is a lot of configuring in a "live" database, we need to create a new database for the emulator
+        // (and we have a lot of hardcoded timestamps to fix as live code does not expect emulator calls)
+        // We also have a lot of hardcoded Date() and Now() calls (no fun)
+
         string algorithm = ""; //string algorithm, 
         Invoke((MethodInvoker)(() => algorithm = comboBox1.Text));
 
@@ -2364,13 +2373,11 @@ public partial class TestForm : Form
         GlobalData.Settings.Signal.Long.Interval.Add(interval.Name);
 
         GlobalData.Settings.Signal.Long.Strategy.Clear();
-        GlobalData.Settings.Signal.Long.Strategy.Clear();
-        GlobalData.Settings.Signal.Long.Strategy.Add("sbm1");
-        GlobalData.Settings.Signal.Long.Strategy.Add("sbm2");
-        GlobalData.Settings.Signal.Long.Strategy.Add("sbm3");
-        GlobalData.Settings.Signal.Long.Strategy.Add("sbm4");
-        GlobalData.Settings.Signal.Long.Strategy.Add("flux");
-        GlobalData.Settings.Signal.Long.Strategy.Add("stob");
+        GlobalData.Settings.Signal.Long.Strategy.Add(algorithm);
+        //GlobalData.Settings.Signal.Long.Strategy.Add("sbm1");
+        //GlobalData.Settings.Signal.Long.Strategy.Add("sbm2");
+        //GlobalData.Settings.Signal.Long.Strategy.Add("sbm3");
+        //GlobalData.Settings.Signal.Long.Strategy.Add("stob");
         //GlobalData.Settings.Signal.ScanForNew.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
 
@@ -2379,12 +2386,11 @@ public partial class TestForm : Form
         GlobalData.Settings.Trading.Long.Interval.Add(interval.Name);
 
         GlobalData.Settings.Trading.Long.Strategy.Clear();
-        GlobalData.Settings.Trading.Long.Strategy.Add("sbm1");
-        GlobalData.Settings.Trading.Long.Strategy.Add("sbm2");
-        GlobalData.Settings.Trading.Long.Strategy.Add("sbm3");
-        GlobalData.Settings.Trading.Long.Strategy.Add("sbm4");
-        GlobalData.Settings.Trading.Long.Strategy.Add("lux");
-        GlobalData.Settings.Trading.Long.Strategy.Add("stob");
+        GlobalData.Settings.Signal.Long.Strategy.Add(algorithm);
+        //GlobalData.Settings.Trading.Long.Strategy.Add("sbm1");
+        //GlobalData.Settings.Trading.Long.Strategy.Add("sbm2");
+        //GlobalData.Settings.Trading.Long.Strategy.Add("sbm3");
+        //GlobalData.Settings.Trading.Long.Strategy.Add("stob");
         //GlobalData.Settings.Trading.Monitor.Strategy[CryptoOrderSide.Buy].Add(algorithm);
 
         TradingConfig.IndexStrategyInternally();
@@ -2419,176 +2425,177 @@ public partial class TestForm : Form
         //GlobalData.Settings.Trading.LockProfits = true;
 
         StringBuilder samenvatting = new();
-        //for (int macdCandles = 2; macdCandles <= 2; macdCandles++)
+
+
+
+        BuyPriceStrategy strategy = config.BuyPriceStrategy;
+        //config.BuyPriceStrategy = strategy;
+
+
+        Results = new(config.QuoteMarket, null, interval, config);
+
+        Log = new();
+        Results.ShowHeader(Log);
+
+        // Ook naar beeldscherm
+        StringBuilder header = new();
+        Results.ShowHeader(header, false);
+        GlobalData.AddTextToLogTab(header.ToString());
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
         {
+            string baseFolder = GlobalData.GetBaseDir();
+            baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
+            Directory.CreateDirectory(baseFolder);
 
-            //GlobalData.Settings.Signal.MacdCandles = macdCandles;
-            //samenvatting.AppendLine();
-            //samenvatting.AppendLine(macdCandles.ToString());
-
-            //for (BuyPriceStrategy strategy = BuyPriceStrategy.MarketOrder; strategy <= BuyPriceStrategy.BollingerBands; strategy++)
-            //for (BuyPriceStrategy strategy = BuyPriceStrategy.MarketOrder; strategy <= BuyPriceStrategy.MarketOrder; strategy++)
+            // De symbols van/voor de pauseer regels inlezen
+            foreach (Core.Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
             {
-                BuyPriceStrategy strategy = config.BuyPriceStrategy;
-                //config.BuyPriceStrategy = strategy;
-
-
-                Results = new(config.QuoteMarket, null, interval, config);
-
-                Log = new();
-                Results.ShowHeader(Log);
-
-                // Ook naar beeldscherm
-                StringBuilder header = new();
-                Results.ShowHeader(header, false);
-                GlobalData.AddTextToLogTab(header.ToString());
-
-                var exchange = GlobalData.ActiveExchange;
-                if (exchange != null)
+                if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol? symbolX))
                 {
-                    string baseFolder = GlobalData.GetBaseDir();
-                    baseFolder += @"\backtest\" + exchange.Name + @"\" + strategy.ToString() + @"\";
-                    Directory.CreateDirectory(baseFolder);
-
-                    // De symbols van/voor de pauseer regels inlezen
-                    foreach (Core.Settings.PauseTradingRule rule in GlobalData.Settings.Trading.PauseTradingRules)
+                    if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? intervalX))
                     {
-                        if (exchange.SymbolListName.TryGetValue(rule.Symbol, out CryptoSymbol? symbolX))
-                        {
-                            if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? intervalX))
-                            {
-                                LoadSymbolCandles(symbolX, intervalX); //, config.DateStart, config.DateEinde);
-                            }
-                        }
+                        LoadSymbolCandles(symbolX, intervalX); //, config.DateStart, config.DateEinde);
                     }
-
-                    List<string> quoteList = [];
-                    Queue<CryptoSymbol> queue = new();
-                    string filter = "," + config.SymbolFilter + ",";
-                    foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                    {
-                        if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol() && symbol.IsSpotTradingAllowed)
-                        {
-                            if (symbol.Quote.Equals(config.QuoteMarket) && symbol.Volume >= config.VolumeLimit)
-                            {
-                                if (config.SymbolFilter == "" || filter.Contains("," + symbol.Base + ","))
-                                {
-                                    if (!quoteList.Contains(symbol.Quote))
-                                        quoteList.Add(symbol.Quote);
-
-                                    queue.Enqueue(symbol);
-                                }
-                            }
-                        }
-                    }
-
-                    // De relevante barometer inlezen en niet alleen de USDT!
-
-                    // Inlezen barometers
-                    foreach (string quote in quoteList)
-                    {
-                        if (exchange.SymbolListName.TryGetValue("$BMP" + quote, out CryptoSymbol? symbol))
-                        {
-                            foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
-                            {
-                                if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval15m)
-                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
-                                if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval30m)
-                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
-                                if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1h)
-                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
-                                if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval4h)
-                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
-                                if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1d)
-                                    LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
-                            }
-                        }
-                    }
-
-                    // En door x tasks de queue leeg laten trekken
-                    List<Task> taskList = [];
-                    while (taskList.Count < 3)
-                    {
-                        Task task = Task.Run(() =>
-                        {
-                            //BackTest(barometer, queue, interval, config, baseFolder);
-                            //private void BackTest(CryptoSymbol barometer, Queue<CryptoSymbol> queue, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
-                            {
-                                try
-                                {
-                                    // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
-                                    // "An operation on list socket could not be performed because the system lacked sufficient buffer space or because list queue was full"
-                                    using BinanceRestClient client = new();
-                                    {
-                                        while (true)
-                                        {
-                                            CryptoSymbol symbol;
-
-                                            // Omdat er meer threads bezig zijn moet de queue gelocked worden
-                                            Monitor.Enter(queue);
-                                            try
-                                            {
-                                                if (queue.Count > 0)
-                                                    symbol = queue.Dequeue();
-                                                else
-                                                    break;
-                                            }
-                                            finally
-                                            {
-                                                Monitor.Exit(queue);
-                                            }
-
-                                            //symbol.TradeList.Clear();
-                                            //await BackTest(algorithm, symbol, interval, config, baseFolder);
-                                        }
-                                    }
-                                }
-                                catch (Exception error)
-                                {
-                                    ScannerLog.Logger.Error(error, "");
-                                    GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
-                                }
-                            }
-                        });
-                        taskList.Add(task);
-                    }
-                    await Task.WhenAll(taskList).ConfigureAwait(false);
-
-
-                    Results.ShowFooter(Log);
-
-                    decimal percentage = 0m;
-                    if (Results.Invested != 0m)
-                        percentage = 100 * (Results.Returned - Results.Commission) / Results.Invested;
-
-                    samenvatting.AppendLine(string.Format("{0} {1} {2} {3}", ((int)strategy).ToString(), strategy.ToString(), Results.Invested.ToString("N2"), percentage.ToString("N2")));
-                    //samenvatting.AppendLine(strategy.ToString());
-                    //samenvatting.AppendLine(Results.Invested.ToString());
-                    //samenvatting.AppendLine(percentage.ToString("N2"));
-                    //Results.ShowFooter(samenvatting);
-
-                    // Ook naar beeldscherm
-                    StringBuilder footer = new();
-                    Results.ShowFooter(footer);
-                    GlobalData.AddTextToLogTab(footer.ToString());
-                    GlobalData.AddTextToLogTab("");
-                    GlobalData.AddTextToLogTab(DateTime.Now.ToLocalTime() + " done...");
-
-                    // report
-                    string s = Log.ToString();
-                    System.IO.File.WriteAllText(baseFolder + "Overview-" + interval.Name + ".txt", s);
                 }
-
             }
-            GlobalData.AddTextToLogTab(samenvatting.ToString());
-        }
 
+            List<string> quoteList = [];
+            Queue<CryptoSymbol> queue = new();
+            string filter = "," + config.SymbolFilter + ",";
+            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            {
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol() && symbol.IsSpotTradingAllowed)
+                {
+                    if (symbol.Quote.Equals(config.QuoteMarket) && symbol.Volume >= config.VolumeLimit)
+                    {
+                        if (config.SymbolFilter == "" || filter.Contains("," + symbol.Base + ","))
+                        {
+                            if (!quoteList.Contains(symbol.Quote))
+                                quoteList.Add(symbol.Quote);
+
+                            queue.Enqueue(symbol);
+                        }
+                    }
+                }
+            }
+
+            // De relevante barometer inlezen en niet alleen de USDT!
+
+            // Inlezen barometers
+            foreach (string quote in quoteList)
+            {
+                if (exchange.SymbolListName.TryGetValue("$BMP" + quote, out CryptoSymbol? symbol))
+                {
+                    foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
+                    {
+                        if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval15m)
+                            LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
+                        if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval30m)
+                            LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
+                        if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1h)
+                            LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
+                        if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval4h)
+                            LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
+                        if (intervalX.IntervalPeriod == CryptoIntervalPeriod.interval1d)
+                            LoadSymbolCandles(symbol, intervalX); //, config.DateStart, config.DateEinde);
+                    }
+                }
+            }
+
+            if (!GlobalData.BackTest)
+                throw new Exception("Backtest option not set");
+            if (GlobalData.ActiveExchange == null)
+                throw new Exception("No active exchange");
+            if (GlobalData.ActiveExchange == null)
+                throw new Exception("No active exchange");
+            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? btcSymbol))
+                throw new Exception("No BTC symbol on this exchange");
+
+
+            // En door x tasks de queue leeg laten trekken
+            List<Task> taskList = [];
+            while (taskList.Count < 3)
+            {
+                Task task = Task.Run(async () =>
+                {
+                    //BackTest(barometer, queue, interval, config, baseFolder);
+                    //private void BackTest(CryptoSymbol barometer, Queue<CryptoSymbol> queue, CryptoInterval interval, CryptoBackConfig config, string baseFolder)
+                    {
+                        try
+                        {
+                            // We hergebruiken de client binnen deze thread, teveel connecties opnenen resulteerd in een foutmelding:
+                            // "An operation on list socket could not be performed because the system lacked sufficient buffer space or because list queue was full"
+                            //using BinanceRestClient client = new();
+                            {
+                                while (true)
+                                {
+                                    CryptoSymbol symbol;
+
+                                    // Omdat er meer threads bezig zijn moet de queue gelocked worden
+                                    Monitor.Enter(queue);
+                                    try
+                                    {
+                                        if (queue.Count > 0)
+                                            symbol = queue.Dequeue();
+                                        else
+                                            break;
+                                    }
+                                    finally
+                                    {
+                                        Monitor.Exit(queue);
+                                    }
+
+                                    GlobalData.ActiveExchange.Data.Clear();
+
+                                    Core.Emulator.Emulator.DeletePreviousData();
+                                    await Core.Emulator.Emulator.Execute(btcSymbol, symbol);
+                                }
+                            }
+                        }
+                        catch (Exception error)
+                        {
+                            ScannerLog.Logger.Error(error, "");
+                            GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
+                        }
+                    }
+                });
+                taskList.Add(task);
+            }
+            await Task.WhenAll(taskList).ConfigureAwait(false);
+
+
+            Results.ShowFooter(Log);
+
+            decimal percentage = 0m;
+            if (Results.Invested != 0m)
+                percentage = 100 * (Results.Returned - Results.Commission) / Results.Invested;
+
+            samenvatting.AppendLine(string.Format("{0} {1} {2} {3}", ((int)strategy).ToString(), strategy.ToString(), Results.Invested.ToString("N2"), percentage.ToString("N2")));
+            //samenvatting.AppendLine(strategy.ToString());
+            //samenvatting.AppendLine(Results.Invested.ToString());
+            //samenvatting.AppendLine(percentage.ToString("N2"));
+            //Results.ShowFooter(samenvatting);
+
+            // Ook naar beeldscherm
+            StringBuilder footer = new();
+            Results.ShowFooter(footer);
+            GlobalData.AddTextToLogTab(footer.ToString());
+            GlobalData.AddTextToLogTab("");
+            GlobalData.AddTextToLogTab(DateTime.Now.ToLocalTime() + " done...");
+
+            // report
+            string s = Log.ToString();
+            System.IO.File.WriteAllText(baseFolder + "Overview-" + interval.Name + ".txt", s);
+        }
+        GlobalData.AddTextToLogTab(samenvatting.ToString());
     }
+
 
     private void ButtonBackTest_Click(object? sender, EventArgs? e)
     {
         Task task = Task.Run(BackTestAsync);
-        task.Start();
     }
 
 

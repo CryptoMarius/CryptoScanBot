@@ -1,9 +1,9 @@
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Model;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 using Skender.Stock.Indicators;
 
-namespace CryptoScanBot.TestStuff.bbma;
+namespace CryptoScanner.TestStuff.bbma;
 
 // Translation of a Pinescript found by Grok concerning BBMA
 // This Pinescript has a shitload of variables which is confusing

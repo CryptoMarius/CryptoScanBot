@@ -1,5 +1,5 @@
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.ZoneVisualisation;
+using CryptoScanner.Core.Core;
+using CryptoScanner.ZoneVisualisation;
 
 using System.Reflection;
 

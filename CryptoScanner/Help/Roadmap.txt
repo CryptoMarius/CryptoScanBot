@@ -1,0 +1,124 @@
+Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
+Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
+(groot kans dat datgene we besproken hebben tussen wal en schip is beland)
+
+Een beslissing maken over de Average min/max rechtsboven
+Documentatie Luxalgo Nadaraya-Watson envelope
+
+Beslissing maken over Kucoin Futures
+Waarom mist de btcusdt op Kucoin Futures? Andere naam wellicht?
+
+Beslissing maken over HyperLiquid spot 
+Beslissing maken over HyperLiquid futures
+Hoe wil ik de missende quote oplossen 
+(tevens volume probleem want hoe gebruiken ze het?)
+Is het niet beter om dan de USDT prijs te gebruiken?
+Wellicht eerst al die nieuwe exchanges uitzetten en beter testen
+
+testen: Volume munten op alle exchanges (bybit spot is okay)
+Volume laten berekenen uit de laatste 24 1 uur candles (dat is redelijk goede benadering)
+Dan kunnen alle ticker dingen definitief weg
+1 probleem, volume filters (mexc/kucoin etc), die moeten eerst rekenen, pas daarna kline ticker
+En dat is een probleem, want dat is een beetje kip en ei probleem (wordt normaliter eerder gestart)
+Ach, dat ticker ding bij opstarten zit me ook niet in de weg
+Is bovendien voor HyperLiquid ook een dingetje
+
+Scanner:
+- Scanner - Mexc verliest wel erg vaak de candle stream verbinding (gemiddeld 1x per 30m, tijden varieeren sterk)
+- Scanner - Bij een initialisatie van een nieuwe exchange/database staat de op te starten exchange op een verkeerd item
+- Scanner - Controle of de max tijd die bij het ophalen van candles ervoor zorgt dat we te weinig candles maken (zie GetCandlesForInterval)?
+- Scanner - URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 
+            (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
+- Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
+- Scanner - Wisselen van basismunt veroorzaak dubbele symbols in de database
+- Scanner - Visualisatie: Studie van orderblock, supply en demand en wat de verschillen tussen die twee eigenlijk zijn en of we ze kunnen visualiseren
+- Scanner - Visualisatie: Aspect ratio in het chart formulier proberen toe te passen (en ook in de formules daaronder)
+- Scanner - Visualisatie: x-as in het chart formulier is vaak niet zichtbaar (ligt eronder vreemd genoeg)
+- Scanner - Een dominant punt wordt pas geactiveerd als er een higher high ontstaat, de dlz zone kan dus niet gebroken zijn voordat dit gebeurd
+- Scanner - De laatste regel van de trend (met het % marktrend) wordt soms niet getoond (ik kan het niet herproduceren op dit moment), 
+            Heeft de scanner weken/maanden achter elkaar aanstaan en zo test ik het natuurlijk niet dus dat moet het verschil zijn..
+- Scanner - Er worden exchange assets gehaald bij een papertrade - ik heb het hier lokaal niet gezien, keuze om trading via de exchange definitief te verwijderen? - M.
+- Scanner - Queue Telegram messages zodat berichten niet verloren gaan (de zoveelste task, maar hoe hou je de berichten op volgorde als iets uit de queue is gehaald?)
+- Scanner - Overweging - Als we dan niet direct een exchange gaan ondersteunen dan kunnen de price tickers weg (overhead). 
+            We hebben enkel een verversing van het volume nodig (alle tickers ieder uur opvragen zoals we nu ook doen voor Kucoin)
+- Scanner - Soms geen extra informatie in de live data (omdat deze intern reeds vervallen is na een bepaalde timeout)
+- Scanner - Overweging: Verwijderen van het invalid signal vinkje, dit maakt de scanner nodeloos ingewikkeld
+- Scanner - De sounds voor de fvg, dlz en dlz.near melding zijn hetzelfde (en worden niet bijgeleverd)
+- Scanner - Chart formulier - De 2e header regel van de chart verdwijnt als deze te lang is - geen oplossing voor nu
+- Scanner - Geen XrpUsdt op Bybit Futures, waarom (maar hij is er wel op Altrady, wat gaat er fout bij het ophalen van de symbols?) -> S.
+- Scanner - Het chart formulier lijkt candles te herberekenen waardoor candles corrupt worden gemaakt (na de eerste $bmp kijk actie is de bm graph kapot)
+- Scanner - De Lux oversold/overbought waarde komt niet altijd overeen met wat de TV indicator berekend.
+- Scanner - Oude bestanden in de Pivot directory verwijderen, dat zou ook voor de bestanden van de exchange kunnen (met name voor de verwijderde muntparen)
+- Scanner - Dashboards, de grafieken vervangen met de Oxyplot library
+- Scanner - Dashboards, grafiek van de barometer wellicht vervangen met oxyplot?
+- Scanner - Dashboards, de code voor de verschillende grafieken opsplitsen (nu lastig nazoeken)
+- Scanner - Optioneel, een plaatje in Telegram van de situatie
+- Scanner - De candle in het visualitie scherm zijn soms enkel wicks, als de prijs nauwelijks beweegt gaat de charting library de fout in? -> Geen oplossing
+- Scanner - Signalen importeren of exporteren, exchange, symbol, interval, time, strategy, price 
+- Scanner - Altcoin season index toevoegen https://www.blockchaincenter.net/en/altcoin-season-index/, maar die site heeft geen api?
+- Scanner - Refactor - LimitRates per exchange, is nu alleen voor Binance geregeld, de rest is op basis van aantal aanroepen per minuut
+- Scanner - Grafiek, op de x-as de lokale tijd tonen (gaf problemen tijdens de wisseling, component verwacht geen dubbele data)
+- Scanner - Dominante zones, ophalen van de candles optimaliseren en delen met de emulator
+            De tussenliggende intervallen eventueel ook kunnen berekenen..
+- Scanner - Een wat vreemde, de logging naar het logtab kan stoppen? 
+            (eens gedetecteerd tijdens het debuggen, geen reden of oplossing gevonden)
+- Scanner - (als extra voor de gui) De trend berekening laat de aanvullende informatie niet meer zien
+            (todo: Waar/hoe het vinkje te plaatsen, toch een debug tabsheet of extra dialoog maken, of excel sheet?)
+            Staat nu voorlopig even op de debug tabsheet, weet nog niet wat de beste method c.q. plek is
+- Scanner - Nieuwe libraries voor Skender indicator testen/bekijken/stabiel? (er is namelijk een pre-release)
+- Scanner - Documentatie - Uitleg van de Add Value voor de WGHM/STORSI uitbreiden, er zijn wel wat vragen over geweest.
+- Scanner - Dashboard - Aantal meldingen per dag / week? Iets wat het aantal meldingen laat zien in iedere geval (zie je ook wat als je geen trader gebruikt)
+- Scanner - De grid tekst kleur is zwart in de actuele regel (als je de selectie uitzet met de nieuwe instelling)
+- Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt heel vaak gedaan, soms elke 5 minuten, dat lijkt overbodig (tenzij het allemaal flatlines zijn)?
+- Scanner - Kucoin - Het ophalen van candles bij Kucoin wordt 2x gedaan (aldus het logbestand)
+- Scanner - Bybit - Bybit blijft af en toe stil staan (of lijkt stil te staan), wat kan ik hier aan verbeteren?
+- Scanner - Gerapporteerd: Dubbele munten (zelfs de BTCUSDT, wellicht na wisselen van exchanges?)
+- Scanner - Alle exchanges rechtstreeks kunnen benaderen via een url (dat is flink wat uitzoekwerk)
+- Scanner - Gerapporteerd: Het geheugen loopt langzaam op gedurende meerdere weken
+- Scanner - Nieuwe munten die toegevoegd worden op de exchange terwijl de scanner loopt worden niet automatisch toegevoegd aan de price- en kline tickers
+            (maar vanwege de herstart na 24 uur worden ze dan wel meegenomen, hoe relevant zijn nieuwe munten voor de scanner?)
+- Scanner - Limit rates voor Kucoin verder uitwerken (ophalen candles geeft soms een foutmelding, wordt bij een volgende herstart wel hersteld, maar hoort niet zo)
+            error getting klines [ServerRateLimitError] 429: Server rate limit exceeded: {"code":"429000","msg":"too many request"}
+- Scanner - Rate limits van de libraries bestuderen en eventueel de ingebouwde vervangen (de interne is aan de voorzichtige kant)
+- Scanner - Het geheugen loopt gemeten over meerdere dagen op. Een oorzaak kan wellicht de barometer zijn (wat intern gewoon een muntje met candles is, maar waarin de candles niet opgeruimd worden)
+- Scanner - Telegram meldingen sturen met een extra link naar TV (optioneel maken via de instelllingen).
+- Scanner - locking inbouwen zodat dezelfde scanner niet twee keer opgestart kan worden (menselijke fouten <including me>)
+- Scanner - De scanner is soms onzichtbaar omdat het window buiten het scherm valt of te klein is (2x gemeld) (oorzaak onduidelijk)
+- Scanner - Bij kleine(re) beeldschermen zijn bepaalde instellingen niet in zijn geheel zichtbaar (de OK en Cancel knop vallen onder andere weg)
+- Scanner - Het normale logbestand bevat op het einde een .0, waar komt deze vandaag? Doet NLog alsnog een archive ofzo? Wat apart in die hoek?
+- Scanner/Trader: Een dashboard introduceren, totaal aantal signalen afgelopen dag/week, indeling per categorie, short/long
+  Trading: Totaal geinvesteerd, returned, gemiddelde profit, de uitschieters (max), de tegenvallers (min).
+- Scanner - Bij aanpassing van het lettertype lopen de labels over in de control waardoor tekst minder leesbaar wordt
+- Scanner - Bij aanpassing van het lettertype worden de scrollbars in bovenste listview getoond waardoor de onderste regel niet leesbaar is
+- Scanner - Via coindelist een munt direct op de blacklist zetten voor zowel oversold als overbought (optioneel) - 1e poging lukt niet
+- Scanner - Meldingen naar een externe applicatie c.q. script sturen - event of dropbox inbouwen
+- Scanner - Meldingen naar een syslog server sturen (statistiek) - de signalen worden nu wel opgeslagen in de signal tabel
+- Scanner - Indien de applicatie traag(?) afsluit wordt tijdens het afsluiten opnieuw begonnen met het activeren van de scanner (ophalen candles enzovoort) - nog niet kunnen herproduceren!
+- Scanner - Teksten kunnen vertalen (de NL en EN lopen nu vaak door elkaar, tenenkrommend, maar ach)
+- Scanner - Experiment om een Mac versie te bouwen dmv MAUI XAML (een compleet nieuwe aanvliegroute van Microsoft)
+  Maar ik verwacht een duizendtal nieuwe problemen met geluid, voice, storage, sockets, hibernate/sleep enzovoort)
+  (ondertussen is er een VM met een Mac installatie, Mac is geheel nieuw voor mij, dat gaat even duren)
+- Scanner - Visuele herkenning dat de scanner loopt (de getallen linksboven zeggen de mensen niet zoveel)
+  (ik heb hier eigenlijk geen alternatief voor, als iemand goede ideen heet laat het me weten aub)
+  Misschien dat de introductie van een dashboard hier nog iets in kan betekenen t.z.t.
+- Scanner - Het font van de menuitem (en popup?) wordt niet aangepast (indien een ander lettertype of grootte wordt gekozen)
+- Scanner - Algemeen - Black theming  https://stackoverflow.com/questions/61145347/c-how-to-make-a-dark-mode-theme-in-windows-forms-separate-form-as-select-the <geen prio>
+            Er is nu een slappe variant die iets met grijs doet (omdat anders de scrollbars en headers zo'n lelijk getoond worden), ik ben er niet tevreden over.
+- Scanner - (low priority) We rekenen intern nu met het aantal seconden vanaf X waardoor een long nodig is, dat kan ook met een minuten vanaf X dat scheelt mogelijk opslag en geheugen ruimte
+            (maar zijn die "paar" megabytes wel de moeite waard met het vele (test)werk wat hiervoor nodig is?)
+- Scanner - (low priority) Zelf de regels kunnen maken, maar dat is best veel werk qua invoer. Via de bestaande indicator waarden
+- Scanner - (low priority) De laatst bekende Rsi, Stoch, enzovoort bij de munt opnemen zodat je ook een pair scanner oid van kunt maken.
+            Dan moeten alle coins continue berekend worden en dat betekend heel veel meer cpu en geheugen (voorlopig niet, wel leuke gedachte..)
+
+Scanner:
+- Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min
+
+
+Emulator:
+- Emulator - Emulator moet een eigen applicatie worden en een eigen database krijgen (dan zijn er veel minder conflicten)
+- Emulator - De trading rulez worden niet correct berekend (worden waarschijnlijk niet correct gereset bij een nieuwe sessie)
+- Emulator - De Barometer wordt niet correct berekend (of wordt verkeerd opgehaald)
+- Emulator - Als de emulator draait de menu optie onbereikbaar maken (anders 2 emulator sessies)
+- Emulator - Een "beter" algoritme ontwikkelen voor het ophalen en bewaren van de candles, hetzelfde geld ook voor het bepalen van de liquiditeit zones.
+             Uiteindelijk heb de candles verzameld over een lange tijd en dat wilde ik juist voorkomen.... bah..
+- Emulator - Het ophalen van candles gaat niet altijd goed indien de munt nog maar "kort" bestaat, er ontstaat een eindeloze lus

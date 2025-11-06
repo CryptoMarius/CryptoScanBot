@@ -1,5 +1,5 @@
-﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 
 namespace ExchangeTest;
 
@@ -46,7 +46,7 @@ internal class EmulatorTest
         //}
 
         //GlobalData.Settings.BackTest.BackTestSymbol = "ONDOUSDT";
-        //if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanBot.Core.Model.CryptoExchange exchange))
+        //if (GlobalData.ExchangeListName.TryGetValue("Bybit Spot", out CryptoScanner.Core.Model.CryptoExchange exchange))
         //{
         //    if (exchange.SymbolListName.TryGetValue(GlobalData.Settings.BackTest.BackTestSymbol, out CryptoSymbol? symbol) &&
         //          exchange.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? btcSymbol))

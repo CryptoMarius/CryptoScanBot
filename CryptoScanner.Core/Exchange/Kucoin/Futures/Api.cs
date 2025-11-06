@@ -1,0 +1,244 @@
+﻿using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
+
+using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+
+using Kucoin.Net;
+using Kucoin.Net.Clients;
+using Kucoin.Net.Enums;
+using Kucoin.Net.Objects;
+using Kucoin.Net.Objects.Models.Spot;
+
+namespace CryptoScanner.Core.Exchange.Kucoin.Futures;
+
+
+public class Api : ExchangeBase
+{
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
+    public Api()
+    {
+        //Asset = new Asset();
+        Candle = new Candle(this);
+        Symbol = new Symbol();
+        //Order = new Order();
+        //Trade = new Trade();
+    }
+
+    public override IDisposable GetClient()
+    {
+        return new KucoinRestClient();
+    }
+
+    public override void ExchangeDefaults()
+    {
+        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20);
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
+
+        KucoinRestClient.SetDefaultOptions(options =>
+        {
+            //options.OutputOriginalData = true;
+            //options.SpotOptions.AutoTimestamp = true;
+            //options.ReceiveWindow = TimeSpan.FromSeconds(15);
+            options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
+            if (GlobalData.TradingApi.Key != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+        });
+
+        KucoinSocketClient.SetDefaultOptions(options =>
+        {
+            //options.AutoReconnect = true;
+            options.RequestTimeout = TimeSpan.FromSeconds(60); // standard=20 seconds
+            options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
+            options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
+            //options.V5Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
+            options.SocketSubscriptionsCombineTarget = 20;
+
+            if (GlobalData.TradingApi.Key != "")
+                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+        });
+
+        //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price)
+        //{
+        //    Enabled = false // many many errors
+        //};
+        KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
+        //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
+
+
+        KucoinExchange.RateLimiter.RateLimitTriggered += (x) =>
+        {
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
+            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+            //    Thread.Sleep(x.DelayTime.Value);
+            //Thread.Sleep(1000);
+        };
+    }
+
+    public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
+        CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
+        CryptoOrderType orderType, CryptoOrderSide orderSide,
+        decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
+    {
+        // Controleer de limiten van de maximum en minimum bedrag en de quantity
+        if (!position.Symbol.InsideBoundaries(quantity, price, out string text))
+        {
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {text} (debug={price} {quantity})");
+            return (false, null);
+        }
+
+        TradeParams tradeParams = new()
+        {
+            Purpose = part.Purpose,
+            CreateTime = currentDate,
+            OrderSide = orderSide,
+            OrderType = orderType,
+            Price = price,
+            StopPrice = stop, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = limit, // OCO - the lowest price that the trader is willing to accept
+            Quantity = quantity,
+            QuoteQuantity = price * quantity,
+            //OrderId = 0,
+        };
+        if (orderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+        {
+            tradeParams.OrderId = database.CreateNewUniqueId();
+            return (true, tradeParams);
+        }
+
+
+        // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+
+        OrderSide side;
+        if (orderSide == CryptoOrderSide.Buy)
+            side = OrderSide.Buy;
+        else
+            side = OrderSide.Sell;
+
+
+        // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
+        //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
+        using KucoinRestClient client = new();
+
+        WebCallResult<KucoinOrderId> result;
+        switch (orderType)
+        {
+            case CryptoOrderType.Market:
+                {
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
+                        NewOrderType.Market, quantity);
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        tradeParams.CreateTime = currentDate;
+                        tradeParams.OrderId = result.Data.Id;
+                    }
+                    return (result.Success, tradeParams);
+                }
+            case CryptoOrderType.Limit:
+                {
+                    result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
+                    NewOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                    if (!result.Success)
+                    {
+                        tradeParams.Error = result.Error;
+                        tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+                    }
+                    if (result.Success && result.Data != null)
+                    {
+                        tradeParams.CreateTime = currentDate;
+                        tradeParams.OrderId = result.Data.Id;
+                    }
+                    return (result.Success, tradeParams);
+                }
+            case CryptoOrderType.StopLimit:
+                {
+                    // wordt het nu wel of niet ondersteund? Het zou ook een extra optie van de limit kunnen (zie wel een tp)
+                    //result = await client.V5Api.Trading.PlaceOrderAsync(Category.Linear, symbol.Name, side, NewOrderType.Market,
+                    //    quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
+                    throw new Exception("${orderType} not supported");
+                }
+            case CryptoOrderType.Oco:
+                {
+                    // Een OCO is afwijkend ten opzichte van een standaard buy or sell
+                    //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
+                    //    het had ook andere parameters en results
+                    //WebCallResult<BybitOrderOcoList> result;?????
+                    //    throw new Exception("${orderType} not supported");
+                    throw new Exception("${orderType} not supported");
+                }
+            default:
+                throw new Exception("${orderType} not supported");
+        }
+    }
+
+    public override async Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
+    {
+        // Order gegevens overnemen (enkel voor een eventuele error dump)
+        TradeParams tradeParams = new()
+        {
+            Purpose = part.Purpose,
+            CreateTime = step.CreateTime,
+            OrderSide = step.Side,
+            OrderType = step.OrderType,
+            Price = step.Price, // the sell part (can also be a buy)
+            StopPrice = step.StopPrice, // OCO - the price at which the limit order to sell is activated
+            LimitPrice = step.StopLimitPrice, // OCO - the lowest price that the trader is willing to accept
+            Quantity = step.Quantity,
+            QuoteQuantity = step.Price * step.Quantity,
+            OrderId = step.OrderId,
+            Order2Id = step.Order2Id,
+        };
+        // Eigenlijk niet nodig
+        if (step.OrderType == CryptoOrderType.StopLimit)
+            tradeParams.QuoteQuantity = tradeParams.StopPrice ?? 0 * tradeParams.Quantity;
+
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
+            return (true, tradeParams);
+
+
+        // Annuleer de order 
+        if (step.OrderId != null && step.OrderId != "")
+        {
+            // BinanceWeights.WaitForFairBinanceWeight(1); flauwekul
+            using var client = new KucoinRestClient();
+            var result = await client.SpotApi.Trading.CancelOrderAsync(step.OrderId!);
+            if (!result.Success)
+            {
+                tradeParams.Error = result.Error;
+                tradeParams.ResponseStatusCode = result.ResponseStatusCode;
+            }
+            return (result.Success, tradeParams);
+        }
+
+        return (false, tradeParams);
+    }
+
+    public static CryptoExternalUrls GetExchangeLinks()
+    {
+        return new()
+        {
+            Altrady = new()
+            {
+                Code = "KUCNF",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/KUCNF_{QUOTE}_{BASE}:{interval}",
+            },
+            HyperTrader = null,
+            TradingView = new()
+            {
+                Execute = CryptoExternalUrlType.External,
+                Url = "https://www.tradingview.com/chart/?symbol=KUCOIN:{BASE}{QUOTE}.P&interval={interval}",
+            },
+        };
+    }
+}

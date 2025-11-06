@@ -1,21 +1,21 @@
 using Bybit.Net.Clients;
 
-using CryptoScanBot.Core.Barometer;
-using CryptoScanBot.Core.Context;
-using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Enums;
-using CryptoScanBot.Core.Exchange;
-using CryptoScanBot.Core.Exchange.Altrady;
-using CryptoScanBot.Core.Json;
-using CryptoScanBot.Core.Model;
-using CryptoScanBot.Core.Settings;
-using CryptoScanBot.Core.Signal;
-using CryptoScanBot.Core.Trader;
+using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Exchange.Altrady;
+using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
 
 using System.Text.Json;
 
 
-namespace CryptoScanBot.Experiment;
+namespace CryptoScanner.Experiment;
 
 public partial class Form1 : Form
 {

@@ -1,7 +1,7 @@
-﻿using CryptoScanBot.Core.Core;
-using CryptoScanBot.Core.Model;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 
-namespace CryptoScanBot.TestStuff.bbma
+namespace CryptoScanner.TestStuff.bbma
 {
     // One of the first BBMA experiment using Grok
     // Its from a pinescript, code is confusing

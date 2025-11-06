@@ -1,6 +1,6 @@
-﻿using CryptoScanBot.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 
-namespace CryptoScanBot.BackTest;
+namespace CryptoScanner.BackTest;
 
 public enum EmulatorResult
 {

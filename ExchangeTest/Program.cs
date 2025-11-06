@@ -1,8 +1,8 @@
-using CryptoScanBot.Core.Core;
+using CryptoScanner.Core.Core;
 
 using System.Reflection;
 
-namespace CryptoScanBot.Experiment;
+namespace CryptoScanner.Experiment;
 
 internal static class Program
 {
