@@ -94,7 +94,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 }
 
             });
-        }, ExchangeBase.CancellationToken).ConfigureAwait(false);
+        }, ct: ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 
         // Implementatie kline timer (fix)
