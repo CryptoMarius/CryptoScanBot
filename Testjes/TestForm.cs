@@ -1703,7 +1703,7 @@ public partial class TestForm : Form
     //                foreach (CryptoIntervalPeriod intervalPeriod in list)
     //                {
     //                    Color color;
-    //                    BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+    //                    CryptoBarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(quoteData.Name, intervalPeriod);
     //                    if (barometerData?.PriceBarometer < 0)
     //                        color = Color.Red;
     //                    else

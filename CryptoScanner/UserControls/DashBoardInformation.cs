@@ -374,7 +374,7 @@ public partial class DashBoardInformation : UserControl
                 {
 
                     Color color;
-                    BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+                    CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
                     if (barometerData != null)
                     {
                         if (barometerData.PriceBarometer < 0)
@@ -466,7 +466,7 @@ public partial class DashBoardInformation : UserControl
             if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))
                 return;
 
-            BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
+            CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, intervalPeriod);
             CreateBarometerBitmap(GlobalData.ActiveExchange, quoteData, interval);
 
             GC.Collect();

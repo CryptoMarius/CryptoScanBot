@@ -111,7 +111,7 @@ public static class TradingRules
     public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, string quoteName, CryptoTradeSide side, long candleUnixDate, uint candleDuration, out string reaction)
     {
         reaction = "";
-        PauseBarometer? pause = activeExchange.Data.GetPauseRule(quoteName, side);
+        CryptoPauseBarometer? pause = activeExchange.Data.GetPauseRule(quoteName, side);
 
         // Ongeveer iedere minuut c.q. candle berekenen
         DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(candleUnixDate + candleDuration);

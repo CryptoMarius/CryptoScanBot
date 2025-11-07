@@ -98,7 +98,7 @@ public class BarometerTools
 
         long periodStart, periodStop;
 
-        BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
+        CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
 
         if (GlobalData.BackTest)
         {
@@ -210,7 +210,7 @@ public class BarometerTools
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
         if (symbol != null)
         {
-            CalculateBarometerIntervals(symbol, quoteData, BarometerPrice.CalculatePriceBarometer, true);
+            CalculateBarometerIntervals(symbol, quoteData, CryptoBarometerPrice.CalculatePriceBarometer, true);
         }
     }
 

@@ -151,7 +151,7 @@ internal class TelegramGenerateSignalText
             builder.Append("Barometer: ");
             foreach (KeyValuePair<CryptoIntervalPeriod, string> entry in b)
             {
-                BarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(signal.Symbol.QuoteData.Name, entry.Key);
+                CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(signal.Symbol.QuoteData.Name, entry.Key);
                 builder.Append($" {entry.Value} {barometerData.PriceBarometer?.ToString("N2")}");
             }
             builder.AppendLine();

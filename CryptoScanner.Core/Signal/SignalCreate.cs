@@ -273,7 +273,7 @@ public class SignalCreate
         }
 
         // Barometers
-        BarometerData barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval15m);
+        CryptoBarometerData barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(Symbol.Quote, CryptoIntervalPeriod.interval15m);
         if (barometerData.PriceBarometer.HasValue)
             signal.Barometer15m = barometerData.PriceBarometer.Value;
         else

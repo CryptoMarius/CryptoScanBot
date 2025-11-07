@@ -43,14 +43,14 @@ public abstract class ExcelBase
 
         CellStyleDate = Book.CreateCellStyle();
         CellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
-        CellStyleDate.Alignment = HorizontalAlignment.Left;
+        CellStyleDate.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
 
         CellStyleDateRed = Book.CreateCellStyle();
         CellStyleDateRed.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
         CellStyleDateRed.FillForegroundColor = HSSFColor.Red.Index;
         CellStyleDateRed.FillPattern = FillPattern.SolidForeground;
         CellStyleDateRed.FillBackgroundColor = HSSFColor.Red.Index;
-        CellStyleDateRed.Alignment = HorizontalAlignment.Left;
+        CellStyleDateRed.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
 
 
         CellStyleStringGreen = Book.CreateCellStyle();

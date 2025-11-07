@@ -59,14 +59,14 @@ public class CryptoExchangeData
     }
 
 
-    public BarometerData GetBarometer(string quoteName, CryptoIntervalPeriod intervalPeriod)
+    public CryptoBarometerData GetBarometer(string quoteName, CryptoIntervalPeriod intervalPeriod)
     {
         CryptoQuoteData quoteData = GetQuoteData(quoteName);
         return quoteData.BarometerDataList[intervalPeriod];
     }
 
 
-    public PauseBarometer GetPauseRule(string quoteName, CryptoTradeSide side)
+    public CryptoPauseBarometer GetPauseRule(string quoteName, CryptoTradeSide side)
     {
         CryptoQuoteData quoteData = GetQuoteData(quoteName);
         return quoteData.PauseBarometerList[side];

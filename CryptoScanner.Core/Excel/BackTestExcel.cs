@@ -8,7 +8,6 @@ using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 
-using ICell = NPOI.SS.UserModel.ICell;
 
 namespace CryptoScanner.Core.Excel;
 
@@ -87,7 +86,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         WriteCell(sheet, column++, row, "stoch.ocillator");
         WriteCell(sheet, column++, row, "stoch.signal");
 
-        // wat kun je hiermee?     
+        // wat kun je hiermee?
         WriteCell(sheet, column++, row, "Ema20");
         WriteCell(sheet, column++, row, "Ema50");
         WriteCell(sheet, column++, row, "Ema200");
@@ -117,7 +116,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
 
         ICellStyle cellStyleDate = book.CreateCellStyle();
         cellStyleDate.DataFormat = format.GetFormat("dd-MM-yyyy HH:mm");
-        cellStyleDate.Alignment = HorizontalAlignment.Left;
+        cellStyleDate.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Left;
 
         ICellStyle cellStyleStringGreen = book.CreateCellStyle();
         cellStyleStringGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
@@ -153,7 +152,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         // macd.red
         ICellStyle cellStyleMacdRed = book.CreateCellStyle();
         cellStyleMacdRed.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdRed.Alignment = HorizontalAlignment.Right;
+        cellStyleMacdRed.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
         cellStyleMacdRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Red.Index;
         cellStyleMacdRed.FillPattern = FillPattern.SolidForeground;
         cellStyleMacdRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Lime.Index;
@@ -161,7 +160,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         // macd.roze
         ICellStyle cellStyleMacdLightRed = book.CreateCellStyle();
         cellStyleMacdLightRed.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdLightRed.Alignment = HorizontalAlignment.Right;
+        cellStyleMacdLightRed.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
         cellStyleMacdLightRed.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Rose.Index;
         cellStyleMacdLightRed.FillPattern = FillPattern.SolidForeground;
         cellStyleMacdLightRed.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Rose.Index;
@@ -169,7 +168,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         // macd.green
         ICellStyle cellStyleMacdGreen = book.CreateCellStyle();
         cellStyleMacdGreen.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdGreen.Alignment = HorizontalAlignment.Right;
+        cellStyleMacdGreen.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
         cellStyleMacdGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
         cellStyleMacdGreen.FillPattern = FillPattern.SolidForeground;
         cellStyleMacdGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.Green.Index;
@@ -177,7 +176,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         // macd.ligh green
         ICellStyle cellStyleMacdLightGreen = book.CreateCellStyle();
         cellStyleMacdLightGreen.DataFormat = format.GetFormat("0.00000000");
-        cellStyleMacdLightGreen.Alignment = HorizontalAlignment.Right;
+        cellStyleMacdLightGreen.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Right;
         cellStyleMacdLightGreen.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
         cellStyleMacdLightGreen.FillPattern = FillPattern.SolidForeground;
         cellStyleMacdLightGreen.FillBackgroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;

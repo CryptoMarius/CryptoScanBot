@@ -2,7 +2,7 @@
 
 namespace CryptoScanner.Core.Barometer;
 
-internal class BarometerPrice
+internal class CryptoBarometerPrice
 {
     public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc)
     {

@@ -538,7 +538,7 @@ public class BackTest
     //                    if (exchangeX.SymbolListName.TryGetValue("$BMP" + Symbol.Quote, out CryptoSymbol? symbolX))
     //                    {
     //                        CryptoSymbolInterval cryptoSymbolIntervalX = symbolX.GetSymbolInterval(CryptoIntervalPeriod.interval1h);
-    //                        BarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval1h);
+    //                        CryptoBarometerData? barometerData = GlobalData.ActiveAccount!.Data.GetBarometer(symbolX.Quote, CryptoIntervalPeriod.interval1h);
     //                        if (cryptoSymbolIntervalX.CandleList.TryGetValue(candle.OpenTime, out CryptoCandle candleX))
     //                        {
     //                            barometerData.PriceBarometer = candleX.Close;

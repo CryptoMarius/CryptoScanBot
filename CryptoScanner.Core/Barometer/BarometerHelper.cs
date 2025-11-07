@@ -16,7 +16,7 @@ public static class BarometerHelper
         }
 
         // We gaan ervan uit dat alles in 1x wordt berekend
-        BarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, intervalPeriod);
+        CryptoBarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, intervalPeriod);
         if (!barometerData.PriceBarometer.HasValue)
         {
             reaction = $"Barometer {interval.Name} not calculated";

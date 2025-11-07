@@ -34,12 +34,12 @@ public class CryptoQuoteData
     // The pausing values for each side
     [Computed]
     [JsonIgnore]
-    public Dictionary<CryptoTradeSide, PauseBarometer> PauseBarometerList { get; set; } = [];
+    public Dictionary<CryptoTradeSide, CryptoPauseBarometer> PauseBarometerList { get; set; } = [];
 
     // The barometer values for each interval 
     [Computed]
     [JsonIgnore]
-    public Dictionary<CryptoIntervalPeriod, BarometerData> BarometerDataList { get; set; } = [];
+    public Dictionary<CryptoIntervalPeriod, CryptoBarometerData> BarometerDataList { get; set; } = [];
 
 
 
@@ -48,12 +48,12 @@ public class CryptoQuoteData
         // Initialize sides
         PauseBarometerList = new()
         {
-            { CryptoTradeSide.Long, new PauseBarometer() },
-            { CryptoTradeSide.Short, new PauseBarometer() }
+            { CryptoTradeSide.Long, new CryptoPauseBarometer() },
+            { CryptoTradeSide.Short, new CryptoPauseBarometer() }
         };
 
         // Initialize intervals
         for (CryptoIntervalPeriod interval = CryptoIntervalPeriod.interval1m; interval <= CryptoIntervalPeriod.interval1w; interval++)
-            BarometerDataList[interval] = new BarometerData();
+            BarometerDataList[interval] = new CryptoBarometerData();
     }
 }
