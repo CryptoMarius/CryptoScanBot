@@ -142,8 +142,8 @@
     <EmbeddedResource Include="Resources\volume.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
-    <ProjectReference Include="..\CryptoScanner.ZoneVisualisation\CryptoScanner.ZoneVisualisation.csproj" />
+    <ProjectReference Include="..\CryptoScanner.Core\CryptoScanBot.Core.csproj" />
+    <ProjectReference Include="..\CryptoScanner.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Main.PositionsClosed.cs" />

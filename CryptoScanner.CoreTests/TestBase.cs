@@ -41,7 +41,7 @@ public class TestBase
             //ScannerLog.InitializeLogging();
 
             // Description: toevoegen en mergen van candles (de happy flow)
-            GlobalData.AppName = "CryptoScanner.Core.Test";
+            GlobalData.AppName = "CryptoScanBot.Core.Test";
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent += AddTextToLogTab;

@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
-    <ProjectReference Include="..\CryptoScanner.ZoneVisualisation\CryptoScanner.ZoneVisualisation.csproj" />
+    <ProjectReference Include="..\CryptoScanner.Core\CryptoScanBot.Core.csproj" />
+    <ProjectReference Include="..\CryptoScanner.ZoneVisualisation\CryptoScanBot.ZoneVisualisation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
