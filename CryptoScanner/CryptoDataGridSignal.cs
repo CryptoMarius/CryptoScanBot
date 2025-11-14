@@ -62,8 +62,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
         // statistics
         PriceMinPerc,
         PriceMaxPerc,
+#if DEBUG
         SignalStatus,
-
+#endif
 #if StrategyBbma
         // Debug
         Wma05Low,
@@ -274,10 +275,12 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 case ColumnsForGrid.PriceMaxPerc:
                     CreateColumn("MaxPerc", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
+#if DEBUG
                 case ColumnsForGrid.SignalStatus:
                     CreateColumn("Status", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
                     break;
-                    
+#endif
+
 #if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     CreateColumn("Wma05Low", typeof(string), string.Empty, DataGridViewContentAlignment.MiddleRight, 70).Visible = false;
@@ -355,8 +358,9 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.MinimumEntry => ObjectCompare.Compare(a.MinEntry, b.MinEntry),
                     ColumnsForGrid.PriceMinPerc => ObjectCompare.Compare(a.PriceMinPerc, b.PriceMinPerc),
                     ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
+#if DEBUG
                     ColumnsForGrid.SignalStatus => ObjectCompare.Compare(a.SignalStatus, b.SignalStatus),
-                    
+#endif                    
 #if StrategyBbma
                     ColumnsForGrid.Wma05Low => ObjectCompare.Compare(a.Wma05Low, b.Wma05Low),
                     ColumnsForGrid.Wma05High => ObjectCompare.Compare(a.Wma05High, b.Wma05High),
@@ -593,9 +597,11 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     if (signal.PriceMaxPerc! != 0)
                         e.Value = signal.PriceMaxPerc.ToString("N2");
                     break;
+#if DEBUG
                 case ColumnsForGrid.SignalStatus:
                     e.Value = signal.SignalStatus.ToString();
                     break;
+#endif
 #if StrategyBbma
                 case ColumnsForGrid.Wma05Low:
                     if (signal.Wma05Low! != 0)
@@ -915,6 +921,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         }
                     }
                     break;
+#if DEBUG
                 case ColumnsForGrid.SignalStatus:
                     {
                         if (signal.SignalStatus == CryptoSignalStatus.Lost)
@@ -924,6 +931,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                             foreColor = Color.Green;
                     }
                     break;
+#endif
             }
 
             DataGridViewCell cell = Grid.Rows[e.RowIndex].Cells[e.ColumnIndex];
@@ -958,6 +966,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         result = true;
                     }
 
+#if DEBUG
                     if (signal.SignalStatus == CryptoSignalStatus.Run)
                     {
                         decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
@@ -1009,6 +1018,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                             }
                         }
                     }
+#endif
                     return result;
                 }
             }
