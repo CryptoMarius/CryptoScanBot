@@ -2,28 +2,14 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
-Een beslissing maken over de Average min/max rechtsboven
-Documentatie Luxalgo Nadaraya-Watson envelope
-
-Beslissing maken over Kucoin Futures
-Waarom mist de btcusdt op Kucoin Futures? Andere naam wellicht?
-
-Beslissing maken over HyperLiquid spot 
-Beslissing maken over HyperLiquid futures
-Hoe wil ik de missende quote oplossen 
-(tevens volume probleem want hoe gebruiken ze het?)
-Is het niet beter om dan de USDT prijs te gebruiken?
-Wellicht eerst al die nieuwe exchanges uitzetten en beter testen
-
-testen: Volume munten op alle exchanges (bybit spot is okay)
-Volume laten berekenen uit de laatste 24 1 uur candles (dat is redelijk goede benadering)
-Dan kunnen alle ticker dingen definitief weg
-1 probleem, volume filters (mexc/kucoin etc), die moeten eerst rekenen, pas daarna kline ticker
-En dat is een probleem, want dat is een beetje kip en ei probleem (wordt normaliter eerder gestart)
-Ach, dat ticker ding bij opstarten zit me ook niet in de weg
-Is bovendien voor HyperLiquid ook een dingetje
-
 Scanner:
+- Scanner - Testen (over eigenlijk alle exchanges): Volume munten op alle exchanges (bybit spot is okay)
+- Scanner - Het volume laten berekenen uit de laatste 24 1 uur candles (scheelt een hoop intern "gedoe")
+  (dan kunnen de volume ticker weg (maar het geeft wel weer problemen met Mexc, Kucoin en Hyperliquid))
+- Scanner - Waarom mist de btcusdt op Kucoin Futures? Is waarschijnlijk onder een naam bekend?
+- Scanner - Documentatie Luxalgo Nadaraya-Watson envelope (zie voorlopig de indicator in Tradingview)
+- Scanner - Een beslissing maken over de Average min/max rechtsboven (een experimenteel item waar ontevreden over ben)
+- Scanner - De Pivots folder in de datamap bevat na verloop van tijd wel erg veel data (hier richting de 10 Gb!!)
 - Scanner - Mexc verliest wel erg vaak de candle stream verbinding (gemiddeld 1x per 30m, tijden varieeren sterk)
 - Scanner - Bij een initialisatie van een nieuwe exchange/database staat de op te starten exchange op een verkeerd item
 - Scanner - Controle of de max tijd die bij het ophalen van candles ervoor zorgt dat we te weinig candles maken (zie GetCandlesForInterval)?
