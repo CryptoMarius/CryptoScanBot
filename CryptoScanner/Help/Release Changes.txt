@@ -2,12 +2,9 @@ CryptoScanBot release historie:
 
 14-11-2025 2.1.7
 - Scanner - De scanner wordt nu als een single file aangeboden (minder bestanden)
-- Scanner - De naam van het project aangepast van CryptoScanBot naar CryptoScanner
 - Scanner - Signaal stoch weggehaald
 - Scanner - Display van de volumes aangepast (nu met k/m)
-- Scanner - Exchange Kraken Spot toegevoegd, maar deze werkt niet zoals het hoort (onzichtbaar)
 - Scanner - Exchange Bybit EU Spot toegevoegd
-- Scanner - Exchange Bybit EU Futures toegevoegd (heeft helaas geen symbols?)
 - Scanner - Diverse errors van Mexc en Kucoin opgelost (vanwege idioot aantal updates van klines per minuut)
 - Scanner - Probleem met wegvallende verbinding van Mexc spot opgelost
 - Scanner - Strategie NWE toegevoegd, deze kijkt ook of er rcecent een STOBB of STORSI is geweest
