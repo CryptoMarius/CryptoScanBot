@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.ZoneVisualisation;
 
 using System.Collections;
@@ -503,41 +504,13 @@ public abstract class CryptoDataGrid<T> : CryptoDataGrid
 
     internal static Color GetBackgroudColorForStrategy(CryptoSignalStrategy strategy, CryptoTradeSide side)
     {
-        // Dit kan optimaler door het van te voren te indexeren
-
-        switch (strategy)
+        if (GlobalData.StrategiesSettings.TryGetValue(strategy, out (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy) x))
         {
-            case CryptoSignalStrategy.Jump:
-                if (side == CryptoTradeSide.Long)
-                    return GlobalData.Settings.Signal.Jump.ColorLong;
-                else if (side == CryptoTradeSide.Short)
-                    return GlobalData.Settings.Signal.Jump.ColorShort;
-                break;
-
-            case CryptoSignalStrategy.Stobb:
-                if (side == CryptoTradeSide.Long)
-                    return GlobalData.Settings.Signal.Stobb.ColorLong;
-                else if (side == CryptoTradeSide.Short)
-                    return GlobalData.Settings.Signal.Stobb.ColorShort;
-                break;
-
-            case CryptoSignalStrategy.Sbm1:
-            case CryptoSignalStrategy.Sbm2:
-            case CryptoSignalStrategy.Sbm3:
-                if (side == CryptoTradeSide.Long)
-                    return GlobalData.Settings.Signal.Sbm.ColorLong;
-                else if (side == CryptoTradeSide.Short)
-                    return GlobalData.Settings.Signal.Sbm.ColorShort;
-                break;
-
-            case CryptoSignalStrategy.StoRsi:
-                if (side == CryptoTradeSide.Long)
-                    return GlobalData.Settings.Signal.StoRsi.ColorLong;
-                else if (side == CryptoTradeSide.Short)
-                    return GlobalData.Settings.Signal.StoRsi.ColorShort;
-                break;
+            if (side == CryptoTradeSide.Long)
+                return x.strategySettings.ColorLong;
+            else if (side == CryptoTradeSide.Short)
+                return x.strategySettings.ColorShort;
         }
-
         return Color.White;
     }
 

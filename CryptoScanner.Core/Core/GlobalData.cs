@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
@@ -151,6 +152,10 @@ public static class GlobalData
     public static SymbolValue TradingViewSpx500 { get; set; } = new();
     public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
     public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
+
+    // Indexed strategies for colors, soundfiles etc.
+    public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy)> StrategiesSettings = [];
+
 
     public static void LoadExchanges()
     {
@@ -405,6 +410,7 @@ public static class GlobalData
             if (Settings.General.ActivateExchangeName == "")
                 Settings.General.ActivateExchangeName = Settings.General.ExchangeName;
 
+            AddStrategySettings();
         }
         catch (Exception error)
         {
@@ -809,4 +815,21 @@ public static class GlobalData
     //        AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
     //    }
     //}
+
+    public static void AddStrategySettings()
+    {
+        StrategiesSettings = [];
+        StrategiesSettings.Add(CryptoSignalStrategy.Jump, (Settings.Signal.Jump, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.Stobb, (Settings.Signal.Stobb, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.StobbMulti, (Settings.Signal.Stobb, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, 0));
+    }
 }
