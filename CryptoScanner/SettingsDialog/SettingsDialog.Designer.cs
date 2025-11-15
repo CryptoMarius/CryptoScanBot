@@ -85,12 +85,8 @@ partial class FrmSettings
         EditSoundHeartBeatMinutes = new NumericUpDown();
         label2 = new Label();
         EditTradingApp = new ComboBox();
-        UserControlTrendPrimary = new CryptoScanner.SettingsDialog.UserControlZigZagSettings();
-        UserControlTrendSecondary = new CryptoScanner.SettingsDialog.UserControlZigZagSettings();
-        UserControlTelegram = new CryptoScanner.SettingsDialog.UserControlTelegram();
         tabBasecoin = new TabPage();
         flowLayoutPanelQuotes = new FlowLayoutPanel();
-        userControlQuoteHeader1 = new CryptoScanner.SettingsDialog.UserControlQuoteHeader();
         tabSignal = new TabPage();
         tabControlSignals = new TabControl();
         tabSignalsGeneral = new TabPage();
@@ -133,12 +129,9 @@ partial class FrmSettings
         EditSymbolMustExistsDays = new NumericUpDown();
         label25 = new Label();
         tabSignalsLong = new TabPage();
-        UserControlSignalLong = new CryptoScanner.SettingsDialog.UserControlEverything();
         tabSignalsShort = new TabPage();
-        UserControlSignalShort = new CryptoScanner.SettingsDialog.UserControlEverything();
         tabSignalStobb = new TabPage();
         flowLayoutPanel6 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsStobb = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox2 = new GroupBox();
         EditStobOnlyIfLux5m = new CheckBox();
         EditStobOnlyIfPreviousStobb = new CheckBox();
@@ -151,7 +144,6 @@ partial class FrmSettings
         EditStobbUseLowHigh = new CheckBox();
         tabSignalSbm = new TabPage();
         flowLayoutPanel7 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsSbm = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         flowLayoutPanel9 = new FlowLayoutPanel();
         groupBox3 = new GroupBox();
         EditSbmUseLowHigh = new CheckBox();
@@ -189,7 +181,6 @@ partial class FrmSettings
         EditSbmMa200AndMa20Crossing = new CheckBox();
         tabSignalStoRsi = new TabPage();
         flowLayoutPanel2 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsStoRsi = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox6 = new GroupBox();
         EditStorsiCheckMacdRecovery = new CheckBox();
         EditStoRsiOnlyIfLux5m = new CheckBox();
@@ -202,7 +193,6 @@ partial class FrmSettings
         EditStorsiAddRsiAmount = new NumericUpDown();
         tabSignalJump = new TabPage();
         flowLayoutPanel8 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsJump = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox5 = new GroupBox();
         label5 = new Label();
         EditJumpCandlesLookbackCount = new NumericUpDown();
@@ -211,7 +201,6 @@ partial class FrmSettings
         EditAnalysisCandleJumpPercentage = new NumericUpDown();
         tabSignalZones = new TabPage();
         flowLayoutPanel4 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsZonesDominant = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox11 = new GroupBox();
         label32 = new Label();
         label33 = new Label();
@@ -239,18 +228,13 @@ partial class FrmSettings
         EditZoneStartApply = new CheckBox();
         label30 = new Label();
         EditZoneStartCandleCount = new NumericUpDown();
-        UserControlIntervalZonesDominant = new CryptoScanner.SettingsDialog.UserControlInterval();
-        UserControlZoneZigZagSettings = new CryptoScanner.SettingsDialog.UserControlZigZagSettings();
         tabSignalZonesFvg = new TabPage();
         flowLayoutPanel10 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsZonesFvg = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox14 = new GroupBox();
         label34 = new Label();
         EditZonesFvgMinimumPercentage = new NumericUpDown();
-        UserControlIntervalZonesFvg = new CryptoScanner.SettingsDialog.UserControlInterval();
         tabSignalZonesNwe = new TabPage();
         flowLayoutPanel11 = new FlowLayoutPanel();
-        UserControlSettingsSoundAndColorsNwe = new CryptoScanner.SettingsDialog.UserControlSettingsPlaySoundAndColors();
         groupBox15 = new GroupBox();
         label7 = new Label();
         EditNweMultiplication = new NumericUpDown();
@@ -265,10 +249,6 @@ partial class FrmSettings
         tabControlTrading = new TabControl();
         tabTradingGeneral = new TabPage();
         flowLayoutPanel1 = new FlowLayoutPanel();
-        UserControlTradeEntry = new CryptoScanner.SettingsDialog.UserControlTradeEntry();
-        UserControlTradeTakeProfit = new CryptoScanner.SettingsDialog.UserControlTradeTakeProfit();
-        UserControlTradeStopLoss = new CryptoScanner.SettingsDialog.UserControlTradeStopLoss();
-        UserControlTradeDca = new CryptoScanner.SettingsDialog.UserControlTradeDca();
         panel7 = new Panel();
         label83 = new Label();
         EditTradeVia = new ComboBox();
@@ -293,16 +273,11 @@ partial class FrmSettings
         EditSoundTradeNotification = new CheckBox();
         EditDisableNewPositions = new CheckBox();
         tabTradingLong = new TabPage();
-        UserControlTradingLong = new CryptoScanner.SettingsDialog.UserControlEverything();
         tabTradingShort = new TabPage();
-        UserControlTradingShort = new CryptoScanner.SettingsDialog.UserControlEverything();
         tabPageTradingRules = new TabPage();
-        UserControlTradeRules = new CryptoScanner.SettingsDialog.UserControlTradeRule();
         label59 = new Label();
         tabApi = new TabPage();
         flowLayoutPanel3 = new FlowLayoutPanel();
-        UserControlExchangeApi = new CryptoScanner.SettingsDialog.UserControlExchangeApi();
-        UserControlAltradyApi = new CryptoScanner.SettingsDialog.UserControlAltradyApi();
         tabWhiteBlack = new TabPage();
         tabControlWhiteBlack = new TabControl();
         tabLongWhiteList = new TabPage();
@@ -353,7 +328,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditGlobalDataRemoveSignalAfterxCandles).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).BeginInit();
         tabBasecoin.SuspendLayout();
-        flowLayoutPanelQuotes.SuspendLayout();
         tabSignal.SuspendLayout();
         tabControlSignals.SuspendLayout();
         tabSignalsGeneral.SuspendLayout();
@@ -371,8 +345,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditMinimumAboveBollingerBandsSma).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditMinimumTickPercentage).BeginInit();
         ((System.ComponentModel.ISupportInitialize)EditSymbolMustExistsDays).BeginInit();
-        tabSignalsLong.SuspendLayout();
-        tabSignalsShort.SuspendLayout();
         tabSignalStobb.SuspendLayout();
         flowLayoutPanel6.SuspendLayout();
         groupBox2.SuspendLayout();
@@ -436,7 +408,6 @@ partial class FrmSettings
         tabTrading.SuspendLayout();
         tabControlTrading.SuspendLayout();
         tabTradingGeneral.SuspendLayout();
-        flowLayoutPanel1.SuspendLayout();
         panel7.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyCooldownTime).BeginInit();
         groupBoxInstap.SuspendLayout();
@@ -445,11 +416,7 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSlotsMaximalShort).BeginInit();
         groupBoxFutures.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)EditLeverage).BeginInit();
-        tabTradingLong.SuspendLayout();
-        tabTradingShort.SuspendLayout();
-        tabPageTradingRules.SuspendLayout();
         tabApi.SuspendLayout();
-        flowLayoutPanel3.SuspendLayout();
         tabWhiteBlack.SuspendLayout();
         tabControlWhiteBlack.SuspendLayout();
         tabLongWhiteList.SuspendLayout();
@@ -575,9 +542,6 @@ partial class FrmSettings
         flowLayoutPanel5.AutoScroll = true;
         flowLayoutPanel5.AutoSize = true;
         flowLayoutPanel5.Controls.Add(groupBox1);
-        flowLayoutPanel5.Controls.Add(UserControlTrendPrimary);
-        flowLayoutPanel5.Controls.Add(UserControlTrendSecondary);
-        flowLayoutPanel5.Controls.Add(UserControlTelegram);
         flowLayoutPanel5.Dock = DockStyle.Fill;
         flowLayoutPanel5.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel5.Location = new Point(4, 3);
@@ -1104,34 +1068,6 @@ partial class FrmSettings
         EditTradingApp.TabIndex = 266;
         EditTradingApp.SelectionChangeCommitted += EditTradingApp_SelectionChangeCommitted;
         // 
-        // UserControlTrendPrimary
-        // 
-        UserControlTrendPrimary.AutoSize = true;
-        UserControlTrendPrimary.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTrendPrimary.Location = new Point(654, 3);
-        UserControlTrendPrimary.Name = "UserControlTrendPrimary";
-        UserControlTrendPrimary.Size = new Size(145, 96);
-        UserControlTrendPrimary.TabIndex = 293;
-        // 
-        // UserControlTrendSecondary
-        // 
-        UserControlTrendSecondary.AutoSize = true;
-        UserControlTrendSecondary.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTrendSecondary.Location = new Point(654, 105);
-        UserControlTrendSecondary.Name = "UserControlTrendSecondary";
-        UserControlTrendSecondary.Size = new Size(145, 96);
-        UserControlTrendSecondary.TabIndex = 294;
-        // 
-        // UserControlTelegram
-        // 
-        UserControlTelegram.AutoScroll = true;
-        UserControlTelegram.AutoSize = true;
-        UserControlTelegram.Location = new Point(654, 207);
-        UserControlTelegram.Name = "UserControlTelegram";
-        UserControlTelegram.Padding = new Padding(10);
-        UserControlTelegram.Size = new Size(427, 180);
-        UserControlTelegram.TabIndex = 248;
-        // 
         // tabBasecoin
         // 
         tabBasecoin.Controls.Add(flowLayoutPanelQuotes);
@@ -1148,7 +1084,6 @@ partial class FrmSettings
         // 
         flowLayoutPanelQuotes.AutoScroll = true;
         flowLayoutPanelQuotes.AutoSize = true;
-        flowLayoutPanelQuotes.Controls.Add(userControlQuoteHeader1);
         flowLayoutPanelQuotes.Dock = DockStyle.Fill;
         flowLayoutPanelQuotes.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanelQuotes.Location = new Point(4, 3);
@@ -1156,17 +1091,6 @@ partial class FrmSettings
         flowLayoutPanelQuotes.Name = "flowLayoutPanelQuotes";
         flowLayoutPanelQuotes.Size = new Size(1450, 609);
         flowLayoutPanelQuotes.TabIndex = 0;
-        // 
-        // userControlQuoteHeader1
-        // 
-        userControlQuoteHeader1.AutoSize = true;
-        userControlQuoteHeader1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        userControlQuoteHeader1.Location = new Point(0, 0);
-        userControlQuoteHeader1.Margin = new Padding(0);
-        userControlQuoteHeader1.Name = "userControlQuoteHeader1";
-        userControlQuoteHeader1.Padding = new Padding(0, 0, 0, 3);
-        userControlQuoteHeader1.Size = new Size(620, 23);
-        userControlQuoteHeader1.TabIndex = 0;
         // 
         // tabSignal
         // 
@@ -1636,7 +1560,6 @@ partial class FrmSettings
         // 
         // tabSignalsLong
         // 
-        tabSignalsLong.Controls.Add(UserControlSignalLong);
         tabSignalsLong.Location = new Point(4, 27);
         tabSignalsLong.Name = "tabSignalsLong";
         tabSignalsLong.Padding = new Padding(3);
@@ -1645,19 +1568,8 @@ partial class FrmSettings
         tabSignalsLong.Text = "Signals long";
         tabSignalsLong.UseVisualStyleBackColor = true;
         // 
-        // UserControlSignalLong
-        // 
-        UserControlSignalLong.AutoScroll = true;
-        UserControlSignalLong.AutoSize = true;
-        UserControlSignalLong.Dock = DockStyle.Fill;
-        UserControlSignalLong.Location = new Point(3, 3);
-        UserControlSignalLong.Name = "UserControlSignalLong";
-        UserControlSignalLong.Size = new Size(1436, 572);
-        UserControlSignalLong.TabIndex = 0;
-        // 
         // tabSignalsShort
         // 
-        tabSignalsShort.Controls.Add(UserControlSignalShort);
         tabSignalsShort.Location = new Point(4, 27);
         tabSignalsShort.Name = "tabSignalsShort";
         tabSignalsShort.Padding = new Padding(3);
@@ -1665,16 +1577,6 @@ partial class FrmSettings
         tabSignalsShort.TabIndex = 2;
         tabSignalsShort.Text = "Signals short";
         tabSignalsShort.UseVisualStyleBackColor = true;
-        // 
-        // UserControlSignalShort
-        // 
-        UserControlSignalShort.AutoScroll = true;
-        UserControlSignalShort.AutoSize = true;
-        UserControlSignalShort.Dock = DockStyle.Fill;
-        UserControlSignalShort.Location = new Point(3, 3);
-        UserControlSignalShort.Name = "UserControlSignalShort";
-        UserControlSignalShort.Size = new Size(1436, 572);
-        UserControlSignalShort.TabIndex = 0;
         // 
         // tabSignalStobb
         // 
@@ -1692,7 +1594,6 @@ partial class FrmSettings
         // 
         flowLayoutPanel6.AutoScroll = true;
         flowLayoutPanel6.AutoSize = true;
-        flowLayoutPanel6.Controls.Add(UserControlSettingsSoundAndColorsStobb);
         flowLayoutPanel6.Controls.Add(groupBox2);
         flowLayoutPanel6.Dock = DockStyle.Fill;
         flowLayoutPanel6.FlowDirection = FlowDirection.TopDown;
@@ -1700,17 +1601,6 @@ partial class FrmSettings
         flowLayoutPanel6.Name = "flowLayoutPanel6";
         flowLayoutPanel6.Size = new Size(1434, 572);
         flowLayoutPanel6.TabIndex = 158;
-        // 
-        // UserControlSettingsSoundAndColorsStobb
-        // 
-        UserControlSettingsSoundAndColorsStobb.AutoScroll = true;
-        UserControlSettingsSoundAndColorsStobb.AutoSize = true;
-        UserControlSettingsSoundAndColorsStobb.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsStobb.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsStobb.Name = "UserControlSettingsSoundAndColorsStobb";
-        UserControlSettingsSoundAndColorsStobb.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsStobb.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsStobb.TabIndex = 157;
         // 
         // groupBox2
         // 
@@ -1724,7 +1614,7 @@ partial class FrmSettings
         groupBox2.Controls.Add(EditStobIncludeSbmMaLines);
         groupBox2.Controls.Add(EditStobIncludeRsi);
         groupBox2.Controls.Add(EditStobbUseLowHigh);
-        groupBox2.Location = new Point(10, 186);
+        groupBox2.Location = new Point(10, 10);
         groupBox2.Margin = new Padding(10);
         groupBox2.Name = "groupBox2";
         groupBox2.Padding = new Padding(10);
@@ -1845,7 +1735,6 @@ partial class FrmSettings
         // 
         flowLayoutPanel7.AutoScroll = true;
         flowLayoutPanel7.AutoSize = true;
-        flowLayoutPanel7.Controls.Add(UserControlSettingsSoundAndColorsSbm);
         flowLayoutPanel7.Controls.Add(flowLayoutPanel9);
         flowLayoutPanel7.Dock = DockStyle.Fill;
         flowLayoutPanel7.FlowDirection = FlowDirection.TopDown;
@@ -1854,24 +1743,13 @@ partial class FrmSettings
         flowLayoutPanel7.Size = new Size(1434, 572);
         flowLayoutPanel7.TabIndex = 160;
         // 
-        // UserControlSettingsSoundAndColorsSbm
-        // 
-        UserControlSettingsSoundAndColorsSbm.AutoScroll = true;
-        UserControlSettingsSoundAndColorsSbm.AutoSize = true;
-        UserControlSettingsSoundAndColorsSbm.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsSbm.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsSbm.Name = "UserControlSettingsSoundAndColorsSbm";
-        UserControlSettingsSoundAndColorsSbm.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsSbm.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsSbm.TabIndex = 163;
-        // 
         // flowLayoutPanel9
         // 
         flowLayoutPanel9.AutoScroll = true;
         flowLayoutPanel9.AutoSize = true;
         flowLayoutPanel9.Controls.Add(groupBox3);
         flowLayoutPanel9.Controls.Add(groupBox4);
-        flowLayoutPanel9.Location = new Point(3, 179);
+        flowLayoutPanel9.Location = new Point(3, 3);
         flowLayoutPanel9.Name = "flowLayoutPanel9";
         flowLayoutPanel9.Size = new Size(876, 370);
         flowLayoutPanel9.TabIndex = 161;
@@ -2288,7 +2166,6 @@ partial class FrmSettings
         // 
         flowLayoutPanel2.AutoScroll = true;
         flowLayoutPanel2.AutoSize = true;
-        flowLayoutPanel2.Controls.Add(UserControlSettingsSoundAndColorsStoRsi);
         flowLayoutPanel2.Controls.Add(groupBox6);
         flowLayoutPanel2.Dock = DockStyle.Fill;
         flowLayoutPanel2.FlowDirection = FlowDirection.TopDown;
@@ -2296,17 +2173,6 @@ partial class FrmSettings
         flowLayoutPanel2.Name = "flowLayoutPanel2";
         flowLayoutPanel2.Size = new Size(1436, 572);
         flowLayoutPanel2.TabIndex = 160;
-        // 
-        // UserControlSettingsSoundAndColorsStoRsi
-        // 
-        UserControlSettingsSoundAndColorsStoRsi.AutoScroll = true;
-        UserControlSettingsSoundAndColorsStoRsi.AutoSize = true;
-        UserControlSettingsSoundAndColorsStoRsi.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsStoRsi.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsStoRsi.Name = "UserControlSettingsSoundAndColorsStoRsi";
-        UserControlSettingsSoundAndColorsStoRsi.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsStoRsi.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsStoRsi.TabIndex = 158;
         // 
         // groupBox6
         // 
@@ -2320,7 +2186,7 @@ partial class FrmSettings
         groupBox6.Controls.Add(EditStorsiCheckBollingerBandsCondition);
         groupBox6.Controls.Add(label26);
         groupBox6.Controls.Add(EditStorsiAddRsiAmount);
-        groupBox6.Location = new Point(10, 186);
+        groupBox6.Location = new Point(10, 10);
         groupBox6.Margin = new Padding(10);
         groupBox6.Name = "groupBox6";
         groupBox6.Padding = new Padding(10);
@@ -2438,7 +2304,6 @@ partial class FrmSettings
         // 
         flowLayoutPanel8.AutoScroll = true;
         flowLayoutPanel8.AutoSize = true;
-        flowLayoutPanel8.Controls.Add(UserControlSettingsSoundAndColorsJump);
         flowLayoutPanel8.Controls.Add(groupBox5);
         flowLayoutPanel8.Dock = DockStyle.Fill;
         flowLayoutPanel8.FlowDirection = FlowDirection.TopDown;
@@ -2446,17 +2311,6 @@ partial class FrmSettings
         flowLayoutPanel8.Name = "flowLayoutPanel8";
         flowLayoutPanel8.Size = new Size(1434, 572);
         flowLayoutPanel8.TabIndex = 159;
-        // 
-        // UserControlSettingsSoundAndColorsJump
-        // 
-        UserControlSettingsSoundAndColorsJump.AutoScroll = true;
-        UserControlSettingsSoundAndColorsJump.AutoSize = true;
-        UserControlSettingsSoundAndColorsJump.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsJump.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsJump.Name = "UserControlSettingsSoundAndColorsJump";
-        UserControlSettingsSoundAndColorsJump.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsJump.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsJump.TabIndex = 158;
         // 
         // groupBox5
         // 
@@ -2466,7 +2320,7 @@ partial class FrmSettings
         groupBox5.Controls.Add(EditJumpUseLowHighCalculation);
         groupBox5.Controls.Add(label3);
         groupBox5.Controls.Add(EditAnalysisCandleJumpPercentage);
-        groupBox5.Location = new Point(10, 186);
+        groupBox5.Location = new Point(10, 10);
         groupBox5.Margin = new Padding(10);
         groupBox5.Name = "groupBox5";
         groupBox5.Padding = new Padding(10);
@@ -2535,37 +2389,23 @@ partial class FrmSettings
         tabSignalZones.Padding = new Padding(3);
         tabSignalZones.Size = new Size(1442, 578);
         tabSignalZones.TabIndex = 12;
-        tabSignalZones.Text = "Zones";
+        tabSignalZones.Text = "DLZ";
         tabSignalZones.UseVisualStyleBackColor = true;
         // 
         // flowLayoutPanel4
         // 
         flowLayoutPanel4.AutoScroll = true;
         flowLayoutPanel4.AutoSize = true;
-        flowLayoutPanel4.Controls.Add(UserControlSettingsSoundAndColorsZonesDominant);
         flowLayoutPanel4.Controls.Add(groupBox11);
         flowLayoutPanel4.Controls.Add(groupBox12);
         flowLayoutPanel4.Controls.Add(groupBox13);
         flowLayoutPanel4.Controls.Add(groupBox8);
-        flowLayoutPanel4.Controls.Add(UserControlIntervalZonesDominant);
-        flowLayoutPanel4.Controls.Add(UserControlZoneZigZagSettings);
         flowLayoutPanel4.Dock = DockStyle.Fill;
         flowLayoutPanel4.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel4.Location = new Point(3, 3);
         flowLayoutPanel4.Name = "flowLayoutPanel4";
         flowLayoutPanel4.Size = new Size(1436, 572);
         flowLayoutPanel4.TabIndex = 160;
-        // 
-        // UserControlSettingsSoundAndColorsZonesDominant
-        // 
-        UserControlSettingsSoundAndColorsZonesDominant.AutoScroll = true;
-        UserControlSettingsSoundAndColorsZonesDominant.AutoSize = true;
-        UserControlSettingsSoundAndColorsZonesDominant.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsZonesDominant.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsZonesDominant.Name = "UserControlSettingsSoundAndColorsZonesDominant";
-        UserControlSettingsSoundAndColorsZonesDominant.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsZonesDominant.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsZonesDominant.TabIndex = 158;
         // 
         // groupBox11
         // 
@@ -2578,7 +2418,7 @@ partial class FrmSettings
         groupBox11.Controls.Add(EditZonesCandleCount);
         groupBox11.Controls.Add(label63);
         groupBox11.Controls.Add(EditZonesWarnPercentage);
-        groupBox11.Location = new Point(10, 186);
+        groupBox11.Location = new Point(10, 10);
         groupBox11.Margin = new Padding(10);
         groupBox11.Name = "groupBox11";
         groupBox11.Size = new Size(292, 134);
@@ -2672,7 +2512,7 @@ partial class FrmSettings
         groupBox12.Controls.Add(EditMaximumUnZoomedPercentage);
         groupBox12.Controls.Add(label54);
         groupBox12.Controls.Add(EditMinimumUnZoomedPercentage);
-        groupBox12.Location = new Point(10, 340);
+        groupBox12.Location = new Point(10, 164);
         groupBox12.Margin = new Padding(10);
         groupBox12.Name = "groupBox12";
         groupBox12.Size = new Size(276, 120);
@@ -2739,7 +2579,7 @@ partial class FrmSettings
         groupBox13.Controls.Add(label56);
         groupBox13.Controls.Add(EditMaximumZoomedPercentage);
         groupBox13.Controls.Add(label57);
-        groupBox13.Location = new Point(817, 10);
+        groupBox13.Location = new Point(10, 304);
         groupBox13.Margin = new Padding(10);
         groupBox13.Name = "groupBox13";
         groupBox13.Size = new Size(277, 118);
@@ -2806,7 +2646,7 @@ partial class FrmSettings
         groupBox8.Controls.Add(EditZoneStartApply);
         groupBox8.Controls.Add(label30);
         groupBox8.Controls.Add(EditZoneStartCandleCount);
-        groupBox8.Location = new Point(817, 148);
+        groupBox8.Location = new Point(322, 10);
         groupBox8.Margin = new Padding(10);
         groupBox8.Name = "groupBox8";
         groupBox8.Size = new Size(204, 133);
@@ -2864,25 +2704,6 @@ partial class FrmSettings
         EditZoneStartCandleCount.Size = new Size(56, 23);
         EditZoneStartCandleCount.TabIndex = 129;
         // 
-        // UserControlIntervalZonesDominant
-        // 
-        UserControlIntervalZonesDominant.AutoScroll = true;
-        UserControlIntervalZonesDominant.AutoSize = true;
-        UserControlIntervalZonesDominant.Location = new Point(810, 294);
-        UserControlIntervalZonesDominant.MinimumSize = new Size(100, 150);
-        UserControlIntervalZonesDominant.Name = "UserControlIntervalZonesDominant";
-        UserControlIntervalZonesDominant.Size = new Size(100, 150);
-        UserControlIntervalZonesDominant.TabIndex = 163;
-        // 
-        // UserControlZoneZigZagSettings
-        // 
-        UserControlZoneZigZagSettings.AutoSize = true;
-        UserControlZoneZigZagSettings.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlZoneZigZagSettings.Location = new Point(810, 450);
-        UserControlZoneZigZagSettings.Name = "UserControlZoneZigZagSettings";
-        UserControlZoneZigZagSettings.Size = new Size(145, 96);
-        UserControlZoneZigZagSettings.TabIndex = 164;
-        // 
         // tabSignalZonesFvg
         // 
         tabSignalZonesFvg.Controls.Add(flowLayoutPanel10);
@@ -2898,9 +2719,7 @@ partial class FrmSettings
         // 
         flowLayoutPanel10.AutoScroll = true;
         flowLayoutPanel10.AutoSize = true;
-        flowLayoutPanel10.Controls.Add(UserControlSettingsSoundAndColorsZonesFvg);
         flowLayoutPanel10.Controls.Add(groupBox14);
-        flowLayoutPanel10.Controls.Add(UserControlIntervalZonesFvg);
         flowLayoutPanel10.Dock = DockStyle.Fill;
         flowLayoutPanel10.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel10.Location = new Point(3, 3);
@@ -2908,23 +2727,12 @@ partial class FrmSettings
         flowLayoutPanel10.Size = new Size(1436, 572);
         flowLayoutPanel10.TabIndex = 161;
         // 
-        // UserControlSettingsSoundAndColorsZonesFvg
-        // 
-        UserControlSettingsSoundAndColorsZonesFvg.AutoScroll = true;
-        UserControlSettingsSoundAndColorsZonesFvg.AutoSize = true;
-        UserControlSettingsSoundAndColorsZonesFvg.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsZonesFvg.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsZonesFvg.Name = "UserControlSettingsSoundAndColorsZonesFvg";
-        UserControlSettingsSoundAndColorsZonesFvg.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsZonesFvg.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsZonesFvg.TabIndex = 158;
-        // 
         // groupBox14
         // 
         groupBox14.AutoSize = true;
         groupBox14.Controls.Add(label34);
         groupBox14.Controls.Add(EditZonesFvgMinimumPercentage);
-        groupBox14.Location = new Point(10, 186);
+        groupBox14.Location = new Point(10, 10);
         groupBox14.Margin = new Padding(10);
         groupBox14.Name = "groupBox14";
         groupBox14.Size = new Size(278, 73);
@@ -2952,16 +2760,6 @@ partial class FrmSettings
         EditZonesFvgMinimumPercentage.Size = new Size(56, 23);
         EditZonesFvgMinimumPercentage.TabIndex = 126;
         // 
-        // UserControlIntervalZonesFvg
-        // 
-        UserControlIntervalZonesFvg.AutoScroll = true;
-        UserControlIntervalZonesFvg.AutoSize = true;
-        UserControlIntervalZonesFvg.Location = new Point(3, 272);
-        UserControlIntervalZonesFvg.MinimumSize = new Size(100, 150);
-        UserControlIntervalZonesFvg.Name = "UserControlIntervalZonesFvg";
-        UserControlIntervalZonesFvg.Size = new Size(100, 150);
-        UserControlIntervalZonesFvg.TabIndex = 161;
-        // 
         // tabSignalZonesNwe
         // 
         tabSignalZonesNwe.Controls.Add(flowLayoutPanel11);
@@ -2977,7 +2775,6 @@ partial class FrmSettings
         // 
         flowLayoutPanel11.AutoScroll = true;
         flowLayoutPanel11.AutoSize = true;
-        flowLayoutPanel11.Controls.Add(UserControlSettingsSoundAndColorsNwe);
         flowLayoutPanel11.Controls.Add(groupBox15);
         flowLayoutPanel11.Controls.Add(groupBox16);
         flowLayoutPanel11.Dock = DockStyle.Fill;
@@ -2987,17 +2784,6 @@ partial class FrmSettings
         flowLayoutPanel11.Size = new Size(1436, 572);
         flowLayoutPanel11.TabIndex = 162;
         // 
-        // UserControlSettingsSoundAndColorsNwe
-        // 
-        UserControlSettingsSoundAndColorsNwe.AutoScroll = true;
-        UserControlSettingsSoundAndColorsNwe.AutoSize = true;
-        UserControlSettingsSoundAndColorsNwe.Location = new Point(0, 0);
-        UserControlSettingsSoundAndColorsNwe.Margin = new Padding(0);
-        UserControlSettingsSoundAndColorsNwe.Name = "UserControlSettingsSoundAndColorsNwe";
-        UserControlSettingsSoundAndColorsNwe.Padding = new Padding(10);
-        UserControlSettingsSoundAndColorsNwe.Size = new Size(807, 176);
-        UserControlSettingsSoundAndColorsNwe.TabIndex = 158;
-        // 
         // groupBox15
         // 
         groupBox15.AutoSize = true;
@@ -3005,7 +2791,7 @@ partial class FrmSettings
         groupBox15.Controls.Add(EditNweMultiplication);
         groupBox15.Controls.Add(label4);
         groupBox15.Controls.Add(EditNweBandWidth);
-        groupBox15.Location = new Point(10, 186);
+        groupBox15.Location = new Point(10, 10);
         groupBox15.Margin = new Padding(10);
         groupBox15.Name = "groupBox15";
         groupBox15.Size = new Size(279, 102);
@@ -3063,11 +2849,11 @@ partial class FrmSettings
         groupBox16.Controls.Add(EditNweIncludeSbmPercAndCrossing);
         groupBox16.Controls.Add(EditNweIncludeSbmMaLines);
         groupBox16.Controls.Add(EditNweIncludeRsi);
-        groupBox16.Location = new Point(10, 308);
+        groupBox16.Location = new Point(10, 132);
         groupBox16.Margin = new Padding(10);
         groupBox16.Name = "groupBox16";
         groupBox16.Padding = new Padding(10);
-        groupBox16.Size = new Size(289, 177);
+        groupBox16.Size = new Size(289, 152);
         groupBox16.TabIndex = 161;
         groupBox16.TabStop = false;
         groupBox16.Text = "Settings";
@@ -3158,10 +2944,6 @@ partial class FrmSettings
         // flowLayoutPanel1
         // 
         flowLayoutPanel1.AutoScroll = true;
-        flowLayoutPanel1.Controls.Add(UserControlTradeEntry);
-        flowLayoutPanel1.Controls.Add(UserControlTradeTakeProfit);
-        flowLayoutPanel1.Controls.Add(UserControlTradeStopLoss);
-        flowLayoutPanel1.Controls.Add(UserControlTradeDca);
         flowLayoutPanel1.Dock = DockStyle.Fill;
         flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel1.Location = new Point(275, 3);
@@ -3170,48 +2952,6 @@ partial class FrmSettings
         flowLayoutPanel1.Name = "flowLayoutPanel1";
         flowLayoutPanel1.Size = new Size(1164, 572);
         flowLayoutPanel1.TabIndex = 336;
-        // 
-        // UserControlTradeEntry
-        // 
-        UserControlTradeEntry.AutoSize = true;
-        UserControlTradeEntry.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeEntry.Location = new Point(3, 3);
-        UserControlTradeEntry.Name = "UserControlTradeEntry";
-        UserControlTradeEntry.Padding = new Padding(5);
-        UserControlTradeEntry.Size = new Size(397, 166);
-        UserControlTradeEntry.TabIndex = 335;
-        // 
-        // UserControlTradeTakeProfit
-        // 
-        UserControlTradeTakeProfit.AutoSize = true;
-        UserControlTradeTakeProfit.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeTakeProfit.Location = new Point(3, 175);
-        UserControlTradeTakeProfit.Name = "UserControlTradeTakeProfit";
-        UserControlTradeTakeProfit.Padding = new Padding(5);
-        UserControlTradeTakeProfit.Size = new Size(396, 173);
-        UserControlTradeTakeProfit.TabIndex = 336;
-        // 
-        // UserControlTradeStopLoss
-        // 
-        UserControlTradeStopLoss.AutoSize = true;
-        UserControlTradeStopLoss.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeStopLoss.Location = new Point(3, 354);
-        UserControlTradeStopLoss.Name = "UserControlTradeStopLoss";
-        UserControlTradeStopLoss.Padding = new Padding(5);
-        UserControlTradeStopLoss.Size = new Size(284, 112);
-        UserControlTradeStopLoss.TabIndex = 337;
-        // 
-        // UserControlTradeDca
-        // 
-        UserControlTradeDca.AutoScroll = true;
-        UserControlTradeDca.AutoSize = true;
-        UserControlTradeDca.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeDca.Location = new Point(403, 0);
-        UserControlTradeDca.Margin = new Padding(0);
-        UserControlTradeDca.Name = "UserControlTradeDca";
-        UserControlTradeDca.Padding = new Padding(5);
-        UserControlTradeDca.Size = new Size(426, 178);
-        UserControlTradeDca.TabIndex = 334;
         // 
         // panel7
         // 
@@ -3468,7 +3208,6 @@ partial class FrmSettings
         // 
         // tabTradingLong
         // 
-        tabTradingLong.Controls.Add(UserControlTradingLong);
         tabTradingLong.Location = new Point(4, 27);
         tabTradingLong.Name = "tabTradingLong";
         tabTradingLong.Padding = new Padding(3);
@@ -3477,19 +3216,8 @@ partial class FrmSettings
         tabTradingLong.Text = "Trading long";
         tabTradingLong.UseVisualStyleBackColor = true;
         // 
-        // UserControlTradingLong
-        // 
-        UserControlTradingLong.AutoScroll = true;
-        UserControlTradingLong.AutoSize = true;
-        UserControlTradingLong.Dock = DockStyle.Fill;
-        UserControlTradingLong.Location = new Point(3, 3);
-        UserControlTradingLong.Name = "UserControlTradingLong";
-        UserControlTradingLong.Size = new Size(1436, 572);
-        UserControlTradingLong.TabIndex = 0;
-        // 
         // tabTradingShort
         // 
-        tabTradingShort.Controls.Add(UserControlTradingShort);
         tabTradingShort.Location = new Point(4, 27);
         tabTradingShort.Name = "tabTradingShort";
         tabTradingShort.Padding = new Padding(3);
@@ -3498,19 +3226,8 @@ partial class FrmSettings
         tabTradingShort.Text = "Trading short";
         tabTradingShort.UseVisualStyleBackColor = true;
         // 
-        // UserControlTradingShort
-        // 
-        UserControlTradingShort.AutoScroll = true;
-        UserControlTradingShort.AutoSize = true;
-        UserControlTradingShort.Dock = DockStyle.Fill;
-        UserControlTradingShort.Location = new Point(3, 3);
-        UserControlTradingShort.Name = "UserControlTradingShort";
-        UserControlTradingShort.Size = new Size(1436, 572);
-        UserControlTradingShort.TabIndex = 0;
-        // 
         // tabPageTradingRules
         // 
-        tabPageTradingRules.Controls.Add(UserControlTradeRules);
         tabPageTradingRules.Location = new Point(4, 27);
         tabPageTradingRules.Name = "tabPageTradingRules";
         tabPageTradingRules.Padding = new Padding(3);
@@ -3518,18 +3235,6 @@ partial class FrmSettings
         tabPageTradingRules.TabIndex = 3;
         tabPageTradingRules.Text = "Rulez";
         tabPageTradingRules.UseVisualStyleBackColor = true;
-        // 
-        // UserControlTradeRules
-        // 
-        UserControlTradeRules.AutoScroll = true;
-        UserControlTradeRules.AutoSize = true;
-        UserControlTradeRules.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlTradeRules.Dock = DockStyle.Fill;
-        UserControlTradeRules.Location = new Point(3, 3);
-        UserControlTradeRules.Margin = new Padding(0);
-        UserControlTradeRules.Name = "UserControlTradeRules";
-        UserControlTradeRules.Size = new Size(1436, 572);
-        UserControlTradeRules.TabIndex = 0;
         // 
         // label59
         // 
@@ -3556,34 +3261,12 @@ partial class FrmSettings
         // flowLayoutPanel3
         // 
         flowLayoutPanel3.AutoSize = true;
-        flowLayoutPanel3.Controls.Add(UserControlExchangeApi);
-        flowLayoutPanel3.Controls.Add(UserControlAltradyApi);
         flowLayoutPanel3.Dock = DockStyle.Fill;
         flowLayoutPanel3.FlowDirection = FlowDirection.TopDown;
         flowLayoutPanel3.Location = new Point(3, 3);
         flowLayoutPanel3.Name = "flowLayoutPanel3";
         flowLayoutPanel3.Size = new Size(1452, 609);
         flowLayoutPanel3.TabIndex = 342;
-        // 
-        // UserControlExchangeApi
-        // 
-        UserControlExchangeApi.AutoScroll = true;
-        UserControlExchangeApi.AutoSize = true;
-        UserControlExchangeApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlExchangeApi.Location = new Point(3, 3);
-        UserControlExchangeApi.Name = "UserControlExchangeApi";
-        UserControlExchangeApi.Size = new Size(404, 96);
-        UserControlExchangeApi.TabIndex = 343;
-        // 
-        // UserControlAltradyApi
-        // 
-        UserControlAltradyApi.AutoScroll = true;
-        UserControlAltradyApi.AutoSize = true;
-        UserControlAltradyApi.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        UserControlAltradyApi.Location = new Point(3, 105);
-        UserControlAltradyApi.Name = "UserControlAltradyApi";
-        UserControlAltradyApi.Size = new Size(407, 96);
-        UserControlAltradyApi.TabIndex = 342;
         // 
         // tabWhiteBlack
         // 
@@ -3919,8 +3602,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditSoundHeartBeatMinutes).EndInit();
         tabBasecoin.ResumeLayout(false);
         tabBasecoin.PerformLayout();
-        flowLayoutPanelQuotes.ResumeLayout(false);
-        flowLayoutPanelQuotes.PerformLayout();
         tabSignal.ResumeLayout(false);
         tabControlSignals.ResumeLayout(false);
         tabSignalsGeneral.ResumeLayout(false);
@@ -3942,10 +3623,6 @@ partial class FrmSettings
         ((System.ComponentModel.ISupportInitialize)EditMinimumAboveBollingerBandsSma).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditMinimumTickPercentage).EndInit();
         ((System.ComponentModel.ISupportInitialize)EditSymbolMustExistsDays).EndInit();
-        tabSignalsLong.ResumeLayout(false);
-        tabSignalsLong.PerformLayout();
-        tabSignalsShort.ResumeLayout(false);
-        tabSignalsShort.PerformLayout();
         tabSignalStobb.ResumeLayout(false);
         tabSignalStobb.PerformLayout();
         flowLayoutPanel6.ResumeLayout(false);
@@ -4037,8 +3714,6 @@ partial class FrmSettings
         tabTrading.PerformLayout();
         tabControlTrading.ResumeLayout(false);
         tabTradingGeneral.ResumeLayout(false);
-        flowLayoutPanel1.ResumeLayout(false);
-        flowLayoutPanel1.PerformLayout();
         panel7.ResumeLayout(false);
         panel7.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditGlobalBuyCooldownTime).EndInit();
@@ -4051,16 +3726,8 @@ partial class FrmSettings
         groupBoxFutures.ResumeLayout(false);
         groupBoxFutures.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)EditLeverage).EndInit();
-        tabTradingLong.ResumeLayout(false);
-        tabTradingLong.PerformLayout();
-        tabTradingShort.ResumeLayout(false);
-        tabTradingShort.PerformLayout();
-        tabPageTradingRules.ResumeLayout(false);
-        tabPageTradingRules.PerformLayout();
         tabApi.ResumeLayout(false);
         tabApi.PerformLayout();
-        flowLayoutPanel3.ResumeLayout(false);
-        flowLayoutPanel3.PerformLayout();
         tabWhiteBlack.ResumeLayout(false);
         tabControlWhiteBlack.ResumeLayout(false);
         tabLongWhiteList.ResumeLayout(false);
