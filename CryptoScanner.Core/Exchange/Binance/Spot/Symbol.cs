@@ -95,7 +95,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                if (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
+                                if (symbol.IsSpotTradingAllowed && symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)

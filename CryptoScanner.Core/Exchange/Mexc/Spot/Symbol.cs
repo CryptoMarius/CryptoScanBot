@@ -134,7 +134,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 for (int x = symbolData.QuoteAssetPrecision; x > 0; x--)
                                     symbol.PriceTickSize /= 10;
 
-                                symbol.IsSpotTradingAllowed = true; // symbolInfo.IsSpotTradingAllowed; // confusing, there is a Permissions flag as well (read doumentation once..)
+                                // confusing, there is a Permissions flag as well
+                                symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed; 
                                 symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
                                 // volume from the tickers
@@ -143,7 +144,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                if (symbolData.Status == SymbolStatus.Enabled)
+                                if (symbol.IsSpotTradingAllowed && symbolData.Status == SymbolStatus.Enabled)
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
