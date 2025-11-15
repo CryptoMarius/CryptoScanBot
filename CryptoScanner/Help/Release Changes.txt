@@ -1,7 +1,7 @@
 CryptoScanBot release historie:
 
 14-11-2025 2.1.7
-- Scanner - De scanner wordt nu als een single file aangeboden (minder bestanden)
+- Scanner - Fix voor weggevallen kleuren en geluiden (stobb.multi, storsi.multi, nwe, fvg en dlz)
 - Scanner - Signaal stoch weggehaald
 - Scanner - Display van de volumes aangepast (nu met k/m)
 - Scanner - Exchange Bybit EU Spot toegevoegd
