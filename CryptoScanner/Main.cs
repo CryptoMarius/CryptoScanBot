@@ -753,7 +753,7 @@ public partial class FrmMain : Form
                     GlobalData.StrategiesSettings[signal.Strategy] = x;
 
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
-                    GlobalData.Settings.Signal.Jump.SoundFileLong : GlobalData.Settings.Signal.Jump.SoundFileShort;
+                        x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;
                     PlaySound(signal, x.strategySettings.PlaySound, x.strategySettings.PlaySpeech, soundFile);
                     //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
                 }

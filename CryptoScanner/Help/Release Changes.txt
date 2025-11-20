@@ -1,5 +1,9 @@
 CryptoScanBot release historie:
 
+20-11-2025 2.1.8
+- Scanner - Kraken spot verwijderd aangezien deze niet goe functioneerd
+- Scanner - Fix voor verkeerde geluiden (speelde altijd de jump geluiden)
+
 14-11-2025 2.1.7
 - Scanner - Fix voor weggevallen kleuren en geluiden (stobb.multi, storsi.multi, nwe, fvg en dlz)
 - Scanner - Signaal stoch weggehaald

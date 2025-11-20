@@ -1,16 +1,11 @@
 CryptoScanBot signal scanner for the following exchanges:
-- Binance Spot
-- Binance Futures
-- Bybit Spot
-- ByBit Futures
+- Binance Spot and Futures
+- Bybit Spot and Futures
 - Bybit EU Spot
 - HyperLiquid Futurues
-- Kraken Spot
-- Kucoin Spot
-- Kucoin Futures
+- Kucoin Spot and Futures
 - Mexc Spot 
-- Okx Spot 
-- Okx Futures
+- Okx Spot and Futures
 
 The Crypto scanner was initially only intended to generate oversold signals on the Binance exchange (because someone said something about DYOR and you shouldn't say that to a programmer). In the meantime, the application has been overhauled a number of times, split, merged the best points, improved, simplified, adapted for SBM signals and made multi-exchange.
 
