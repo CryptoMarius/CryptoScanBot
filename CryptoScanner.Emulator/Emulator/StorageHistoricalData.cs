@@ -1,6 +1,7 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanBot.Core.Json;
+
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 
 using System.Text.Json;

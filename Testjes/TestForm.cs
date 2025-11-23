@@ -5,6 +5,8 @@ using Binance.Net.Objects.Models.Spot;
 
 using CryptoExchange.Net.Objects;
 
+using CryptoScanBot.Core.Json;
+
 using CryptoScanner.BackTest;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;

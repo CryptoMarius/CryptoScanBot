@@ -1,6 +1,4 @@
-﻿using CryptoScanBot;
-
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;

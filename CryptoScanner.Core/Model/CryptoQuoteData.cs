@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
 
 namespace CryptoScanner.Core.Model;
 
@@ -23,7 +22,6 @@ public class CryptoQuoteData
     // Trading: The initial entry percentage of PF
     public decimal EntryPercentage { get; set; }
     // Color of the base coin in signal grid
-    [JsonConverter(typeof(ColorConverter))]
     public System.Drawing.Color DisplayColor { get; set; } = System.Drawing.Color.White;
 
     // List of symbols (for this quote)

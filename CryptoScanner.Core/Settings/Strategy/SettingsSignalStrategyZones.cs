@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Settings.Strategy;
+
+using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.Core.Settings.Strategy;
 
