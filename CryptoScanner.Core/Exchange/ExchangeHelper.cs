@@ -28,11 +28,11 @@ public static class Helper
                     return new BybitEu.Spot.Api();
                 else
                     return new BybitEu.Futures.Api();
-            case CryptoExchangeType.Kraken:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return new Kraken.Spot.Api();
-                else
-                    throw new Exception("Kraken Futures not supported");
+            //case CryptoExchangeType.Kraken:
+            //    if (exchange.TradingType == CryptoTradingType.Spot)
+            //        return new Kraken.Spot.Api();
+            //    else
+            //        throw new Exception("Kraken Futures not supported");
             case CryptoExchangeType.Kucoin:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return new Kucoin.Spot.Api();
@@ -92,11 +92,11 @@ public static class Helper
                     return BybitEu.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
                     return BybitEu.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
-            case CryptoExchangeType.Kraken:
-                if (exchange.TradingType == CryptoTradingType.Spot)
-                    return Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
-                else
-                    return false;
+            //case CryptoExchangeType.Kraken:
+            //    if (exchange.TradingType == CryptoTradingType.Spot)
+            //        return Kraken.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
+            //    else
+            //        return false;
             case CryptoExchangeType.Kucoin:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return Kucoin.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;

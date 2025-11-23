@@ -54,9 +54,9 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         this.TryAdd("Kucoin Spot", Exchange.Kucoin.Spot.Api.GetExchangeLinks());
         this.TryAdd("Kucoin Futures", Exchange.Kucoin.Futures.Api.GetExchangeLinks());
 
-        Remove("Kraken");
-        this.TryAdd("Kraken Spot", Exchange.Kraken.Spot.Api.GetExchangeLinks());
-        this.TryAdd("Kraken Futures", Exchange.Kraken.Futures.Api.GetExchangeLinks());
+        //Remove("Kraken");
+        //this.TryAdd("Kraken Spot", Exchange.Kraken.Spot.Api.GetExchangeLinks());
+        ////this.TryAdd("Kraken Futures", Exchange.Kraken.Futures.Api.GetExchangeLinks());
 
         Remove("Mexc");
         this.TryAdd("Mexc Spot", Exchange.Mexc.Spot.Api.GetExchangeLinks());
