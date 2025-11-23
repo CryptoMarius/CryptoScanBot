@@ -2,7 +2,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Trend;
 
 using Dapper;
 using Dapper.Contrib.Extensions;

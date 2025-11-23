@@ -109,7 +109,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 "QuoteQuantityPrecisionMarket": 5.0000000000000000000000000000,
                                 "MaxQuoteQuantityMarket": 100000.00000000000000000000000
                                 },
-                               
+
                                 */
 
                                 // min, max en tick (in base amount)
@@ -135,7 +135,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     symbol.PriceTickSize /= 10;
 
                                 // confusing, there is a Permissions flag as well
-                                symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed; 
+                                symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
                                 symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
                                 // volume from the tickers

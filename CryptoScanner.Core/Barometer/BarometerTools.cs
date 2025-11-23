@@ -178,7 +178,7 @@ public class BarometerTools
                     GlobalData.AddTextToLogTab($"Debug candle {candle.OhlcText(bmSymbol, GlobalData.IntervalList[0], bmSymbol.PriceDisplayFormat, true, true, true)}");
             }
 
-            // Naar de volgende 1m candle 
+            // Naar de volgende 1m candle
             periodStart += 60;
         }
     }

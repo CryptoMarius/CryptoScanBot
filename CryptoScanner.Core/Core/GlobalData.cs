@@ -179,7 +179,7 @@ public static class GlobalData
     {
         // Load & index all the available intervals
         //AddTextToLogTab("Reading interval information");
-     
+
         IntervalList.Clear();
         IntervalListId.Clear();
         IntervalListPeriod.Clear();
@@ -791,7 +791,7 @@ public static class GlobalData
 
         if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out var exchange))
             GlobalData.ActiveExchange = exchange;
-        else 
+        else
             throw new Exception($"Exchange {Settings.General.ExchangeName} does not exist");
     }
 

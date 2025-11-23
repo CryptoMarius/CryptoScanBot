@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Settings;
 
 using Newtonsoft.Json.Linq;
 

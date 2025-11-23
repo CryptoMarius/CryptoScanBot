@@ -423,7 +423,7 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Position] (" +
                 "Id INTEGER primary key autoincrement not null," +
-                
+
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
@@ -818,14 +818,14 @@ public class CryptoDatabase : IDisposable
             using var transaction = databaseThread.BeginTransaction();
             {
                 // Database cleanup (there is no need for old signals <fixed 7 day's>)
-                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate", 
+                databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate",
                     new { opendate = DateTime.UtcNow.AddDays(-7) });
 
                 // Database cleanup (there is no need for old zones older than the configured value)
                 foreach (var interval in GlobalData.IntervalList)
                 {
                     // we use the same candlecount for both the fvg and dlz zones
-                    databaseThread.Connection.Execute("delete from zone where createTime < @createTime", 
+                    databaseThread.Connection.Execute("delete from zone where createTime < @createTime",
                         new { createTime = DateTime.UtcNow.AddSeconds(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration) });
                 }
                 transaction.Commit();
@@ -878,7 +878,7 @@ public class CryptoDatabase : IDisposable
 
         CreateTables(connection);
 
-        // Indien noodzakelijk database upgraden 
+        // Indien noodzakelijk database upgraden
         Migration.Execute(connection, Migration.CurrentDatabaseVersion);
 
         // Tables are sometimes dropped
