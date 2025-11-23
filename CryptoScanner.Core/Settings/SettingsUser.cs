@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 
 using System.Drawing;
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Settings;
 
@@ -15,6 +16,7 @@ public class ColumnSetting
 [Serializable]
 public class FormDimensions
 {
+    [JsonConverter(typeof(Json.RectangleConverter))]
     public Rectangle WindowPosition { get; set; } = new Rectangle();
     public int WindowState { get; set; } = 0;
 
