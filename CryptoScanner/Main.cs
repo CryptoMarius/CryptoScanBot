@@ -522,14 +522,8 @@ public partial class FrmMain : Form
                     {
                         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
                         {
-                            foreach (var x in symbol.Data.SymbolIntervalList)
-                            {
-                                if (x.CandleList.Count != 0)
-                                {
-                                    x.CandleList.Clear();
-                                    GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name} {x.Interval.Name}");
-                                }
-                            }
+                            symbol.ClearCandles();
+                            //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
                         }
                     }
                 }

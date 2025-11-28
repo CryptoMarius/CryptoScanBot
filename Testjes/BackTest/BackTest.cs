@@ -51,17 +51,13 @@ public class BackTest
 
 
     /// <summary>
-    /// Geheugen teruggeven (anders blijft het ook maar hangen)
+    /// Release memory
     /// </summary>
     public void ClearCandles()
     {
         Symbol.LastTradeDate = null;
-        foreach (CryptoInterval intervalX in GlobalData.IntervalListPeriod.Values)
-            Symbol.GetSymbolInterval(intervalX.IntervalPeriod).CandleList.Clear();
+        Symbol.ClearCandles();
     }
-
-
-
 
 
     /// <summary>

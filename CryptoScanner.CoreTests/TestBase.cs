@@ -1,9 +1,8 @@
-﻿using CryptoScanBot.Core.Json;
-
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -102,9 +101,9 @@ public class TestBase
                 database.Connection.Insert(symbol);
             }
 
+            symbol.ClearCandles();
+            GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
 
-            foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
-                symbolInterval.CandleList.Clear();
             return symbol;
         }
 
