@@ -151,11 +151,12 @@ public class BarometerTools
                     candles.Add(candle.OpenTime, candle);
                 }
 
-                // Alle waarden invullen
+                // Just fill all the ohlc + v
                 candle.Open = BarometerPerc;
                 candle.High = BarometerPerc;
                 candle.Low = BarometerPerc;
                 candle.Close = BarometerPerc;
+                candle.Volume = BarometerPerc;
 
 
                 // Administratie bijwerken
@@ -207,6 +208,7 @@ public class BarometerTools
     // Separate call because of emulator (calculate only 1 quote)
     public static void CalculatePriceBarometerForQuote(CryptoQuoteData quoteData)
     {
+        //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name}");
         CryptoSymbol? symbol = CheckBarometerSymbolPrecence(Constants.SymbolNameBarometerPrice, quoteData);
         if (symbol != null)
         {
