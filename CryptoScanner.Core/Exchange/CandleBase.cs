@@ -35,7 +35,7 @@ public class CandleBase(ExchangeBase api)
 
     public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
     {
-        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+        if (!symbol.QuoteData.FetchCandles || symbol.Status == 0 || symbol.IsBarometerSymbol())
             return;
 
         using IDisposable client = Api.GetClient();
@@ -77,7 +77,11 @@ public class CandleBase(ExchangeBase api)
                     Queue<CryptoSymbol> queue = new();
                     foreach (var symbol in exchange.SymbolListName.Values)
                     {
-                        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+                        if (symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData.FetchCandles)
+                            continue;
+
+                        // The not so interesting coins (saves a lot of memory)
+                        if (!symbol.EnoughVolume())
                             continue;
 
                         //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
@@ -156,7 +160,7 @@ public class CandleBase(ExchangeBase api)
 
     public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval, long fetchMax)
     {
-        if (!symbol.IsSpotTradingAllowed || symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
+        if (symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
             return;
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
