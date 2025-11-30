@@ -108,8 +108,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //symbol.PriceMaximum = niet aanwezig! binanceSymbol.LotSizeFilter.MaxOrderValue;
                                     symbol.PriceTickSize = symbolData.TickSize;
 
-                                    symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
-                                    symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+                                    //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                    //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                     symbol.Volume = symbolData.Volume24H;
                                     //// volume from the tickers

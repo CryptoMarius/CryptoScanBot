@@ -1841,7 +1841,6 @@ public class PositionMonitor //: IDisposable
         {
             if (!GlobalData.Settings.Signal.Active || 
                 !Symbol.QuoteData!.FetchCandles || 
-                !Symbol.IsSpotTradingAllowed || 
                 Symbol.Status == 0 || 
                 !Symbol.LastPrice.HasValue)
                 return;

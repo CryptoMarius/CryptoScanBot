@@ -123,8 +123,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 x = sb.ToString();
                                 symbol.PriceTickSize = Convert.ToDecimal(x);
 
-                                symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+                                //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))

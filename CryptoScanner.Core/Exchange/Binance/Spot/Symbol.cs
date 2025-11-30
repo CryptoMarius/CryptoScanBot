@@ -86,8 +86,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
                                 symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
 
-                                symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
+                                //symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
+                                //symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
@@ -95,7 +95,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 else
                                     symbol.Volume = 0;
 
-                                if (symbol.IsSpotTradingAllowed && symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay)
+                                if (symbolData.IsSpotTradingAllowed && (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay))
                                     symbol.Status = 1;
                                 else
                                     symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)

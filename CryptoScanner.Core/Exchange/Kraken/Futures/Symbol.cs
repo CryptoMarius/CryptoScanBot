@@ -104,8 +104,8 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 symbol!.PriceTickSize = symbolData.TickSize ?? 0; // ? binanceSymbol.PriceFilter.TickSize;
 
-                                symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
+                                //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
+                                //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))

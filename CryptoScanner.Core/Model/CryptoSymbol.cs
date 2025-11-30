@@ -46,8 +46,8 @@ public class CryptoSymbol
     public string PriceDisplayFormat { get; set; } = "N8";
 
     // TODO: never used in this scanner sofar
-    public bool IsSpotTradingAllowed { get; set; }
-    public bool IsMarginTradingAllowed { get; set; }
+    //public bool IsSpotTradingAllowed { get; set; }
+    //public bool IsMarginTradingAllowed { get; set; }
 
 
     // Bybit Futures, ondersteunen van de FundingRate en FundingInterval
@@ -91,4 +91,20 @@ public class CryptoSymbol
         return Data.SymbolIntervalList[(int)intervalPeriod];
     }
 
+    public bool EnoughVolume()
+    {
+        if (QuoteData == null || QuoteData.MinimalVolume == 0)
+            return true;
+        if (Volume > 0.9m * QuoteData.MinimalVolume)
+            return true;
+        return false;
+    }
+
+    public void ClearCandles()
+    {
+        foreach (var symbolInterval in Data.SymbolIntervalList)
+        {
+            symbolInterval.CandleList.Clear();
+        }
+    }
 }

@@ -95,8 +95,8 @@ public class Symbol() : SymbolBase(), ISymbol
                                 symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
                                 symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
 
-                                symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed;
-                                symbol.IsMarginTradingAllowed = true; // symbolData.IsMarginTradingAllowed;
+                                //symbol.IsSpotTradingAllowed = true; // symbolData.IsSpotTradingAllowed;
+                                //symbol.IsMarginTradingAllowed = true; // symbolData.IsMarginTradingAllowed;
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
