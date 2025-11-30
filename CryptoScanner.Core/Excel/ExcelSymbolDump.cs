@@ -158,7 +158,11 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         {
             row++;
             int column = 0;
-            bool attention = (last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime);
+            bool attention = false;
+            if (Symbol.IsBarometerSymbol())
+                attention = last != null && last.OpenTime + 60 != candle.OpenTime;
+            else
+                attention = last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime;
 
             WriteCell(sheet, column++, row, candle.OpenTime);
             if (attention)
@@ -177,7 +181,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             else
                 WriteCell(sheet, column++, row, candle.BaseVolume, CellStyleDecimalNormal);
 #endif
-            if (candle.Volume == 0m)
+            if (candle.Volume == 0m && !Symbol.IsBarometerSymbol())
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
             else
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
