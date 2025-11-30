@@ -21,21 +21,6 @@ public static class RegisterAlgorithms
 
     // a class contructor get called later (when something of the class is touched, cannot use it to register something)
 
-    //public static void RegisterLong(CryptoSignalStrategy strategy, string name, Type? analyzeType)
-    //{
-    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-    //        RegisterAlgorithms(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
-
-    //    definition!.AnalyzeLongType = analyzeType;
-    //}
-
-    //public static void RegisterShort(CryptoSignalStrategy strategy, string name, Type? analyzeType)
-    //{
-    //    if (!GetAlgorithm(strategy, out AlgorithmDefinition? definition))
-    //        RegisterAlgorithms(new AlgorithmDefinition() { Name = name, Strategy = strategy, AnalyzeLongType = null, AnalyzeShortType = analyzeType, });
-
-    //    definition!.AnalyzeShortType = analyzeType;
-    //}
 
     static RegisterAlgorithms()
     {
@@ -152,18 +137,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalDominantLevelNearShort),
         });
 
-        //#if DEBUG
-        //        //***************************************************
-        //        // Test
-        //        //***************************************************
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "sma50sma20",
-        //            Strategy = CryptoSignalStrategy.SignalSma50Sma20Price,
-        //            AnalyzeLongType = typeof(SignalSma50Sma20PriceLong),
-        //            AnalyzeShortType = typeof(SignalSma50Sma20PriceShort),
-        //        });
-        //#endif
 
         //#if DEBUG
         //        Register(new AlgorithmDefinition()
@@ -183,16 +156,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalFairValueGapShort),
         });
 
-        // Double top/bottom
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "dtb",
-        //    Strategy = CryptoSignalStrategy.DoubleTopBottomLong,
-        //    AnalyzeLongType = typeof(SignalDoubleTopBottomLong),
-        //    AnalyzeShortType = typeof(SignalDoubleTopBottomShort),
-        //});
-
-
         Register(new AlgorithmDefinition()
         {
             Name = "nwe",
@@ -201,14 +164,15 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "nwe.cross",
-        //    Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeCross,
-        //    AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
-        //    AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeCross),
-        //});
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe.pull",
+            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopePull,
+            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
+            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
+        });
+#endif
 
 #if DEBUG
         // BBMA - Oma Ally
@@ -231,18 +195,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalTrendShort),
         });
 #endif
-
-
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "macd",
-        //            Strategy = CryptoSignalStrategy.Macd,
-        //            AnalyzeLongType = typeof(SignalMacdLong),
-        //            AnalyzeShortType = typeof(SignalMacdShort),
-        //        });
-        //#endif
-
+        
 #if DEBUG
         Register(new AlgorithmDefinition()
         {
@@ -253,27 +206,57 @@ public static class RegisterAlgorithms
         });
 #endif
 
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "ema9.tema",
+            Strategy = CryptoSignalStrategy.EmaCrossedSma20,
+            AnalyzeLongType = typeof(SignalEma9CrossedTemaLong),
+            AnalyzeShortType = typeof(SignalEma9CrossedTemaShort),
+        });
+#endif
 
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "sma.slope",
-        //            Strategy = CryptoSignalStrategy.SlopeSma20,
-        //            AnalyzeLongType = typeof(SignalSlopeSma20Long),
-        //            AnalyzeShortType = typeof(SignalSlopeSma20Short),
-        //        });
-        //#endif
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "ema9.kc-band",
+            Strategy = CryptoSignalStrategy.Ema9KcBand,
+            AnalyzeLongType = typeof(SignalEma9CrossedKeltnerBand),
+            AnalyzeShortType = typeof(SignalEma9CrossedKeltnerBand),
+        });
+#endif
+
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "ema9.kc-center",
+            Strategy = CryptoSignalStrategy.Ema9KcCenter,
+            AnalyzeLongType = typeof(SignalEma9CrossedKeltnerCenter),
+            AnalyzeShortType = typeof(SignalEma9CrossedKeltnerCenter),
+        });
+#endif
 
 
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "sma.cross",
-        //            Strategy = CryptoSignalStrategy.Sma20Sma50,
-        //            AnalyzeLongType = typeof(SignalSma20Crossed50Long),
-        //            AnalyzeShortType = typeof(SignalSma20Crossed50Short),
-        //        });
-        //#endif
+
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "tema.kc-band",
+            Strategy = CryptoSignalStrategy.TemaCrossedKcBand,
+            AnalyzeLongType = typeof(SignalTemaCrossedKeltnerBand),
+            AnalyzeShortType = typeof(SignalTemaCrossedKeltnerBand),
+        });
+#endif
+
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "tema.kc-center",
+            Strategy = CryptoSignalStrategy.TemaCrossedKcCenter,
+            AnalyzeLongType = typeof(SignalTemaCrossedKeltnerCenter),
+            AnalyzeShortType = typeof(SignalTemaCrossedKeltnerCenter),
+        });
+#endif
 
     }
 

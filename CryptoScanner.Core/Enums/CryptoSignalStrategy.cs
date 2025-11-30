@@ -29,6 +29,7 @@ public enum CryptoSignalStrategy
     NadarayaWatsonEnvelope = 25,
 #if DEBUG
     NadarayaWatsonEnvelopeCross = 27,
+    NadarayaWatsonEnvelopePull = 28,
 #endif
 
 #if DEBUG
@@ -39,8 +40,26 @@ public enum CryptoSignalStrategy
     Trend = 31,
 #endif
 
-    BbRsiEngulfing = 50,
-    SignalSma50Sma20Price = 52,
+#if DEBUG
+    EmaCrossedSma20 = 32,
+#endif
+#if DEBUG
+    Ema9KcBand = 33,
+#endif
+#if DEBUG
+    Ema9KcCenter = 34,
+#endif  
+#if DEBUG
+    TemaCrossedKcBand = 35,
+#endif  
+#if DEBUG
+    TemaCrossedKcCenter = 36,
+#endif  
+
+
+
+    //BbRsiEngulfing = 50,
+    //SignalSma50Sma20Price = 52,
 
     DominantLevel = 1000,
     DominantLevelNear = 1001,
