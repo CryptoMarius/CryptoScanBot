@@ -926,12 +926,8 @@ public partial class FrmMain : Form
             {
                 if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
                 {
-                    if (symbol.IsBarometerSymbol())
-                        symbol.IsSpotTradingAllowed = true;
-
-
-                    if (!symbol.IsSpotTradingAllowed || symbol.IsBarometerSymbol())
-                        continue;
+                    //if (symbol.IsBarometerSymbol())
+                    //    continue;
 
                     bool addSymbol = true;
                     if (filter != "" && !symbol.Name.Contains(filter))

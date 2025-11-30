@@ -295,7 +295,7 @@ public partial class TestForm : Form
                 if (exchange != null)
                 {
                     string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
-                    if (!symbol.IsBarometerSymbol() && (symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
+                    if (!symbol.IsBarometerSymbol() && symbol.QuoteData!.FetchCandles && symbol.Status == 1)
                         DataStore.LoadCandleForSymbol(exchangeStoragePath, symbol);
                 }
             }
@@ -2466,7 +2466,7 @@ public partial class TestForm : Form
             string filter = "," + config.SymbolFilter + ",";
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
-                if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol() && symbol.IsSpotTradingAllowed)
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
                 {
                     if (symbol.Quote.Equals(config.QuoteMarket) && symbol.Volume >= config.VolumeLimit)
                     {
