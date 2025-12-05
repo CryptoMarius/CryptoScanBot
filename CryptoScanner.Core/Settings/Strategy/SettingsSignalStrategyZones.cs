@@ -35,8 +35,8 @@ public class SettingsSignalStrategyZones : SettingsSignalStrategyBase
 
     public SettingsSignalStrategyZones() : base()
     {
-        SoundFileLong = "sound-zones-long.wav";
-        SoundFileShort = "sound-zones-short.wav";
+        SoundFileLong = "sound-dlz-oversold.wav";
+        SoundFileShort = "sound-dlz-overbought.wav";
 
         IntervalList.Add("1h");
     }

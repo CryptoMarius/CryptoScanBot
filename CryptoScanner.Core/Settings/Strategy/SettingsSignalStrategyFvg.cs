@@ -10,8 +10,8 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     
     public SettingsSignalStrategyFvg() : base()
     {
-        SoundFileLong = "sound-fvg-long.wav";
-        SoundFileShort = "sound-fvg-short.wav";
+        SoundFileLong = "sound-fvg-oversold.wav";
+        SoundFileShort = "sound-fvg-overbought.wav";
 
         IntervalList.Add("1h");
         IntervalList.Add("4h");
