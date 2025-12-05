@@ -63,9 +63,13 @@ public class BarometerTools
                 }
 
                 GlobalData.AddSymbol(symbol);
-                GlobalData.AddTextToLogTab($"Created barometer {symbol.Name}");
+                //GlobalData.AddTextToLogTab($"Created barometer {symbol.Name}");
             }
+
+            // Apply some defaults
             symbol.Status = 1;
+            symbol.PriceDisplayFormat = "N2"; // percentage
+            symbol.QuantityDisplayFormat = "N2"; // percentage
             return symbol;
         }
         return null;
