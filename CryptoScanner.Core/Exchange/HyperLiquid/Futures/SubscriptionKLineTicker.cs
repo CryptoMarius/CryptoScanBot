@@ -117,9 +117,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
-#if SUPPORTBASEVOLUME
-                            candle.BaseVolume = kline.Volume;
-#endif
                             candle.Volume = kline.Volume;
                             //kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice
                             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");

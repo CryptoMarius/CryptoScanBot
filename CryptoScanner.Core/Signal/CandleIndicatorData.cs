@@ -94,9 +94,6 @@ public class CandleIndicatorData : CryptoData
                         Low = candleLast.Close,
                         High = candleLast.Close,
                         Close = candleLast.Close,
-#if SUPPORTBASEVOLUME
-                        BaseVolume = 0,
-#endif
                         Volume = 0,
                     };
 

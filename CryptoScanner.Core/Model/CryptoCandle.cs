@@ -29,10 +29,6 @@ public class CryptoCandle : IQuote
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public decimal Volume { get; set; }
-    //decimal IQuote.Volume => (decimal)Volume;
-#if SUPPORTBASEVOLUME
-    public decimal BaseVolume { get; set; }
-#endif
 
     // Idea, we store it as uint together with the factor, saves some memory
     //public uint OpenStorage { get; set; }

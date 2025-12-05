@@ -78,9 +78,6 @@ public static class Helper
         if (includeVolume)
         {
             s = s + " volume=" + candle.Volume.ToString();
-#if SUPPORTBASEVOLUME
-            s = s + " BaseVolume=" + candle.BaseVolume.ToString();
-#endif
         }
         return s;
     }

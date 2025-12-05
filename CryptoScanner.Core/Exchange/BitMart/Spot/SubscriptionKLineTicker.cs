@@ -82,9 +82,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 candle.High = kline.Kline.HighPrice;
                                 candle.Low = kline.Kline.LowPrice;
                                 candle.Close = kline.Kline.ClosePrice;
-#if SUPPORTBASEVOLUME
-                                candle.BaseVolume = kline.Kline.Volume;
-#endif
                                 candle.Volume = kline.Kline.Volume;
                                 //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
                             }
@@ -165,9 +162,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             //            nextCandle.High = lastCandle.Close;
                             //            nextCandle.Low = lastCandle.Close;
                             //            nextCandle.Close = lastCandle.Close;
-                            //#if SUPPORTBASEVOLUME
-                            //            nextCandle.BaseVolume = 0; // no volume (flat candle)
-                            //#endif
                             //            nextCandle.Volume = 0; // no volume (flat candle)
                             //            candleCache.Add(nextCandleUnix, nextCandle);
 
