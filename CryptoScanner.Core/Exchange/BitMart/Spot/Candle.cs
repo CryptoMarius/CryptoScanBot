@@ -1,8 +1,6 @@
 ﻿using BitMart.Net.Clients;
 using BitMart.Net.Enums;
 
-using CryptoExchange.Net.SharedApis;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -82,7 +80,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
-                    kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

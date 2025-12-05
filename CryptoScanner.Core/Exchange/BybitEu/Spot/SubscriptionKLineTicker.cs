@@ -40,7 +40,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                 var candle = await CandleTools.Process1mCandleAsync(symbol, kline.StartTime, 
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
-                    kline.Volume, kline.Turnover);
+                    kline.Turnover);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }

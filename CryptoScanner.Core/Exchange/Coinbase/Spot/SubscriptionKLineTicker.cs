@@ -6,7 +6,6 @@ using CryptoScanner.Core.Model;
 
 using Coinbase.Net.Clients;
 using Coinbase.Net.Objects.Models;
-using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
@@ -28,7 +27,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                 var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
-                    kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }

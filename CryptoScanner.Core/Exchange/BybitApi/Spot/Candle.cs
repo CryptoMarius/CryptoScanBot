@@ -79,7 +79,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 }
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.StartTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.Volume, kline.QuoteVolume);
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

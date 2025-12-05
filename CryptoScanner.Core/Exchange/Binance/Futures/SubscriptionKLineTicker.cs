@@ -24,7 +24,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {symbol.ExchangeSymbol} {json}");
                 var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Data.OpenTime, 
                     kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice, 
-                    kline.Data.Volume, kline.Data.QuoteVolume);
+                    kline.Data.QuoteVolume);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }

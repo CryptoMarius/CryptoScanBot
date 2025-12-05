@@ -100,13 +100,17 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         HSSFWorkbook book = new();
 
         //create a entry of DocumentSummaryInformation
-        DocumentSummaryInformation documentSummaryInformation = PropertySetFactory.CreateDocumentSummaryInformation();
-        documentSummaryInformation.Company = "Crypto Scanner";
+        DocumentSummaryInformation documentSummaryInformation = new()
+        {
+            Company = "Crypto Scanner"
+        };
         book.DocumentSummaryInformation = documentSummaryInformation;
 
         //create a entry of SummaryInformation
-        SummaryInformation summaryInformation = PropertySetFactory.CreateSummaryInformation();
-        summaryInformation.Subject = Symbol.Name;
+        SummaryInformation summaryInformation = new()
+        {
+            Subject = Symbol.Name
+        };
         book.SummaryInformation = summaryInformation;
 
         IDataFormat format = book.CreateDataFormat();

@@ -183,8 +183,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
                                     //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                     await CandleTools.Process1mCandleAsync(symbol, candle.Date,
-                                        candle.Open, candle.High, candle.Low, candle.Close,
-                                        0, candle.Volume);
+                                        candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
                                     candleLast = candle;
                                     // Debug...
                                     //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));

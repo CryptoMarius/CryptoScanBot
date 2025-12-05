@@ -39,7 +39,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                 var candle = await CandleTools.Process1mCandleAsync(symbol, kline.StartTime, 
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
-                    kline.Volume, kline.Turnover);
+                    kline.Turnover);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
         }
