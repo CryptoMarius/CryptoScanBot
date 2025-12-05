@@ -287,7 +287,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
+                if (candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
@@ -297,7 +297,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out _))
+                if (candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
@@ -307,7 +307,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                     WriteCell(sheet, column++, row, "no");
                 }
 
-                if (candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out _))
+                if (candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out _))
                 {
                     cell = WriteCell(sheet, column++, row, "yes");
                     cell.CellStyle = cellStyleStringGreen;
