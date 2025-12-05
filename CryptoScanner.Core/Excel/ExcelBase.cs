@@ -30,13 +30,17 @@ public abstract class ExcelBase
         Book = new();
 
         //create a entry of DocumentSummaryInformation
-        DocumentSummaryInformation documentSummaryInformation = PropertySetFactory.CreateDocumentSummaryInformation();
-        documentSummaryInformation.Company = "Crypto Scanner";
+        DocumentSummaryInformation documentSummaryInformation = new()
+        {
+            Company = "Crypto Scanner"
+        };
         Book.DocumentSummaryInformation = documentSummaryInformation;
 
         //create a entry of SummaryInformation
-        SummaryInformation summaryInformation = PropertySetFactory.CreateSummaryInformation();
-        summaryInformation.Subject = subject;
+        SummaryInformation summaryInformation = new()
+        {
+            Subject = subject
+        };
         Book.SummaryInformation = summaryInformation;
 
         IDataFormat format = Book.CreateDataFormat();

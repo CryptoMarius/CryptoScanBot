@@ -83,9 +83,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 candle.High = kline.HighPrice;
                                 candle.Low = kline.LowPrice;
                                 candle.Close = kline.ClosePrice;
-#if SUPPORTBASEVOLUME
-                            candle.BaseVolume = kline.Volume;
-#endif
                                 candle.Volume = kline.Volume;
                                 //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
                             }
@@ -166,9 +163,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             //            nextCandle.High = lastCandle.Close;
                             //            nextCandle.Low = lastCandle.Close;
                             //            nextCandle.Close = lastCandle.Close;
-                            //#if SUPPORTBASEVOLUME
-                            //            nextCandle.BaseVolume = 0; // no volume (flat candle)
-                            //#endif
                             //            nextCandle.Volume = 0; // no volume (flat candle)
                             //            candleCache.Add(nextCandleUnix, nextCandle);
 
@@ -194,8 +188,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                     //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                                     //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", topic, kline.Timestamp.ToLocalTime()));
                                     await CandleTools.Process1mCandleAsync(symbol, candle.Date,
-                                        candle.Open, candle.High, candle.Low, candle.Close,
-                                        0, candle.Volume);
+                                        candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
                                     candleLast = candle;
                                     // Debug...
                                     //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));

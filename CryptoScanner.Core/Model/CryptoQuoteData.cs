@@ -34,7 +34,7 @@ public class CryptoQuoteData
     [JsonIgnore]
     public Dictionary<CryptoTradeSide, CryptoPauseBarometer> PauseBarometerList { get; set; } = [];
 
-    // The barometer values for each interval 
+    // The barometer values for each interval
     [Computed]
     [JsonIgnore]
     public Dictionary<CryptoIntervalPeriod, CryptoBarometerData> BarometerDataList { get; set; } = [];
