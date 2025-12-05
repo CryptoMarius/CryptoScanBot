@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
@@ -10,11 +10,23 @@ public class SignalSbm2Short : SignalSbmBaseShort
     {
     }
 
-
     public override bool IsSignal()
     {
-        if (!base.IsSignal())
+        ExtraText = "";
+
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
+        }
+
+        // De ma lijnen en psar goed staan
+        if (!CandleLast!.IsSbmConditionsOverbought(true))
+        {
+            ExtraText = "no sbm conditions";
+            return false;
+        }
 
         if (!InUpperPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
         {
@@ -24,6 +36,4 @@ public class SignalSbm2Short : SignalSbmBaseShort
 
         return true;
     }
-
-
 }

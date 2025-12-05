@@ -3,6 +3,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
@@ -52,11 +53,11 @@ public class SignalStochShort : SignalSbmBaseShort
         //// Controle op de ma-kruisingen
         //if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         //{
-        //    if (!candle.IsSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+        //    if (!candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
         //        return false;
-        //    if (!candle.IsSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+        //    if (!candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
         //        return false;
-        //    if (!candle.IsSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+        //    if (!candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
         //        return false;
 
         //    if (!CheckMaCrossings(out response))
@@ -70,7 +71,7 @@ public class SignalStochShort : SignalSbmBaseShort
         //    return false;
         //}
 
-        //if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
+        //if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandlesOversold(SignalSide, 5, 60) == null)
         //{
         //    response = "no previous stobb found";
         //    return false;
@@ -214,7 +215,7 @@ public class SignalStochShort : SignalSbmBaseShort
         double rsiSurface2 = result.higherInterval.RsiOverboughtSurface(result.candle!, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
         ExtraText = $"sto:{stochSurface:N2}/{stochSurface2:N2} rsi:{rsiSurface:N2}/{rsiSurface2:N2}";
 
-        //if (HadStobbInThelastXCandles(SignalSide, 0, 40) == null && HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
+        //if (HadStobbInThelastXCandlesOversold(SignalSide, 0, 40) == null && HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
         //{
         //    ExtraText = "no prev stobb/storsi";
         //    return false;

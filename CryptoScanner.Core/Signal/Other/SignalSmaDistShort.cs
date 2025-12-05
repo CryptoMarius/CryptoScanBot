@@ -1,5 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
+
+// Interesting, but nog good enough for now, does not work okay for all intervals (hardcoded percentage)
 
 namespace CryptoScanner.Core.Signal.Other;
 

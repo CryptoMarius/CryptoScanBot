@@ -1,8 +1,8 @@
 ﻿using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal;
+namespace CryptoScanner.Core.Signal.Helpers;
 
-public static class IndicatorBollingerBandsHelper
+public static class BollingerBandsHelper
 {
 
     public static bool CheckBollingerBandsWidth(this CryptoCandle candle, double minValue, double maxValue)

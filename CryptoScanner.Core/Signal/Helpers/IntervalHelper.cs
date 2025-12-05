@@ -1,10 +1,9 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal;
+namespace CryptoScanner.Core.Signal.Helpers;
 
-public static class IndicatorHelper
+public static class IntervalHelper
 {
 
     public static bool GetPrevCandle(this CryptoSymbolInterval symbolInterval, CryptoCandle? oldCandle, out CryptoCandle? newCandle)
@@ -57,7 +56,7 @@ public static class IndicatorHelper
 
         while (candleCount-- > 0)
         {
-            if (!GetPrevCandle(symbolInterval, last, out CryptoCandle? prev))
+            if (!symbolInterval.GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
             if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
@@ -75,7 +74,7 @@ public static class IndicatorHelper
 
         while (candleCount-- > 0)
         {
-            if (!GetPrevCandle(symbolInterval, last, out CryptoCandle? prev))
+            if (!symbolInterval.GetPrevCandle(last, out CryptoCandle? prev))
                 return false;
 
             if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)

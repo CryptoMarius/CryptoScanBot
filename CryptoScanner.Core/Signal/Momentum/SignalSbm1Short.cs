@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
@@ -10,35 +10,27 @@ public class SignalSbm1Short : SignalSbmBaseShort
     {
     }
 
-
-    public bool HadStobbInThelastXCandles(int candleCount)
-    {
-        // Was price close to the edge of the bb?
-        CryptoCandle? last = CandleLast;
-        while (candleCount > 0)
-        {
-            if (last == null)
-                return false;
-            // Closes or opens above the bb & stochastic overbought situation 
-            if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought()) 
-                return true;
-
-            if (!GetPrevCandle(last, out last))
-                return false;
-            candleCount--;
-        }
-
-        return false;
-    }
-
-
+    // TODO: Stoch cross over %K/%D (in AllowStepIn)
 
     public override bool IsSignal()
     {
-        if (!base.IsSignal())
-            return false;
+        ExtraText = "";
 
-        if (!HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
+        // De ma lijnen en psar goed staan
+        if (!CandleLast!.IsSbmConditionsOverbought(true))
+        {
+            ExtraText = "no sbm conditions";
+            return false;
+        }
+
+        if (!this.HadStobbInThelastXCandlesOverbought(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
         {
             ExtraText = "no stob in the last x candles";
             return false;
@@ -46,6 +38,4 @@ public class SignalSbm1Short : SignalSbmBaseShort
 
         return true;
     }
-
-
 }

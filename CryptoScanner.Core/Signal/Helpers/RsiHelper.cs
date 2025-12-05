@@ -1,9 +1,9 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal;
+namespace CryptoScanner.Core.Signal.Helpers;
 
-public static class IndicatorRsiHelper
+public static class RsiHelper
 {
     public static bool RsiOversold(this CryptoCandle candle, int correction = 0)
     {

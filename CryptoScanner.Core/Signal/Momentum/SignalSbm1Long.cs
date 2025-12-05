@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
@@ -10,32 +10,27 @@ public class SignalSbm1Long : SignalSbmBaseLong
     {
     }
 
-
-    public bool HadStobbInThelastXCandles(int candleCount)
-    {
-        // Was price close to the edge of the bb?
-        CryptoCandle? last = CandleLast;
-        while (candleCount-- > 0)
-        {
-            // Closes or opens below the bb & stochastic oversold situation 
-            if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last!.StochOversold())
-                return true;
-
-            if (!GetPrevCandle(last, out last))
-                return false;
-        }
-
-        return false;
-    }
-
-
+    // TODO: Stoch cross over %K/%D (in AllowStepIn)
 
     public override bool IsSignal()
     {
-        if (!base.IsSignal())
-            return false;
+        ExtraText = "";
 
-        if (!HadStobbInThelastXCandles(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
+        // De ma lijnen en psar goed staan
+        if (!CandleLast!.SbmConditionsOversold(true))
+        {
+            ExtraText = "no sbm conditions";
+            return false;
+        }
+
+        if (!this.HadStobbInThelastXCandlesOversold(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
         {
             ExtraText = "no stob in the last x candles";
             return false;
@@ -43,6 +38,4 @@ public class SignalSbm1Long : SignalSbmBaseLong
 
         return true;
     }
-
-
 }

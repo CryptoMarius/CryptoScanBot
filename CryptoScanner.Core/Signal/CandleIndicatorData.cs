@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicator;
 
 using Skender.Stock.Indicators;
 
@@ -215,7 +216,7 @@ public class CandleIndicatorData : CryptoData
 
 #if DEBUG
         // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Indicator.GetKeltner(history, 20, 1);
+        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Skender.Stock.Indicators.Indicator.GetKeltner(history, 20, 1);
 #endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);

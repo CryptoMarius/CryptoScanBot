@@ -2,161 +2,34 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Trader;
 
 namespace CryptoScanner.Core.Signal.Momentum;
-
-
-public static class SignalSbmBaseOversoldHelper
-{
-    public static bool SbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck)
-    {
-        // Optimalisatie, zou naar de SignalSbmBaseOversold kunnen, maar de stobb gebruikt deze routine ook
-
-        // Oversold (denk groen-geel-rood) - long
-        // 200 (red)
-        // 50 (orange)
-        // 20 (green)
-        // psar
-
-        // Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma200)
-            return false;
-        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma200)
-            return false;
-        if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma50)
-            return false;
-
-
-        if (includePsarCheck)
-        {
-            // wait at least until it is below the sma20
-            if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
-                return false;
-
-            // psar switched to the opposite side
-            if ((decimal?)candle.CandleData?.PSar <= candle.Close)
-                return false;
-        }
-
-        return true;
-    }
-
-    public static bool Sma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
-    {
-        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma50;
-        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma50) / 2;
-        decimal? perc = 100 * value / value2;
-        if (perc < percentage)
-        {
-            response = string.Format("percentage sma200 and sma50 ({0:N2} < {1:N2})", perc, percentage);
-            return false;
-        }
-
-        response = "";
-        return true;
-    }
-
-
-    public static bool Sma50AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
-    {
-        decimal? value = (decimal?)candle.CandleData?.Sma50 - (decimal?)candle.CandleData?.Sma20;
-        decimal? value2 = ((decimal?)candle.CandleData?.Sma50 + (decimal?)candle.CandleData?.Sma20) / 2;
-        decimal? perc = 100 * value / value2;
-        if (perc < percentage)
-        {
-            response = string.Format("percentage sma50 and sma20 ({0:N2} < {1:N2})", perc, percentage);
-            return false;
-        }
-
-        response = "";
-        return true;
-    }
-
-
-    public static bool Sma200AndSma20OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
-    {
-        // En aanvullend, de ma lijnen moeten afwijken (bij benadering, dat hoeft niet geheel exact)
-        decimal? value = (decimal?)candle.CandleData?.Sma200 - (decimal?)candle.CandleData?.Sma20;
-        decimal? value2 = ((decimal?)candle.CandleData?.Sma200 + (decimal?)candle.CandleData?.Sma20) / 2;
-        decimal? perc = 100 * value / value2;
-        if (perc < percentage)
-        {
-            response = string.Format("percentage sma200 and sma20 ({0:N2} < {1:N2})", perc, percentage);
-            return false;
-        }
-
-        response = "";
-        return true;
-    }
-
-}
-
 
 public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
 {
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Er recovery is via de macd
-        if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        if (!this.MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
         {
             response = "no macd recovery";
             return false;
         }
 
         if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
-            !candle.Sma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+            !candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
             return false;
         if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage && 
-            !candle.Sma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+            !candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
             return false;
         if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage && 
-            !candle.Sma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+            !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
             return false;
 
         if (!CheckMaCrossings(out response))
             return false;
-
-        return true;
-    }
-
-    public bool MacdRecoveryOversold(int candleCount)
-    {
-        // Is there "recovery" (a lighter macd bar)
-        CryptoCandle last = CandleLast!;
-        while (candleCount-- > 0)
-        {
-            if (!GetPrevCandle(last, out CryptoCandle? prev))
-                return false;
-
-            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
-                return false;
-
-            last = prev;
-        }
-
-        return true;
-    }
-
-
-    public override bool IsSignal()
-    {
-        ExtraText = "";
-
-        // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
-        {
-            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
-            return false;
-        }
-
-        // De ma lijnen en psar goed staan
-        if (!CandleLast!.SbmConditionsOversold(true))
-        {
-            ExtraText = "no sbm conditions";
-            return false;
-        }
 
         return true;
     }
@@ -192,7 +65,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // MACD
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
-            if (!MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+            if (!this.MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             {
                 // ExtraText is al ingevuld
                 return false;

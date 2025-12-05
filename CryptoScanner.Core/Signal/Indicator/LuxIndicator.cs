@@ -2,7 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal;
+namespace CryptoScanner.Core.Signal.Indicator;
 
 public class LuxIndicator
 {
@@ -117,7 +117,7 @@ public class LuxIndicator
 
                 for (int i = min; i <= max; i++)
                 {
-                    decimal alpha = 1.0m / (decimal)i;
+                    decimal alpha = 1.0m / i;
                     decimal num_rma = alpha * diff + (1m - alpha) * num[k];
                     decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
 
@@ -140,8 +140,8 @@ public class LuxIndicator
             loop += symbolInterval.Interval.Duration;
         }
 
-        luxOverSold = (int)(100m * (decimal)oversell / N);
-        luxOverBought = (int)(100m * (decimal)overbuy / N); 
+        luxOverSold = (int)(100m * oversell / N);
+        luxOverBought = (int)(100m * overbuy / N); 
     }
 
     public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)

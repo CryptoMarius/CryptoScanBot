@@ -1,7 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal;
+namespace CryptoScanner.Core.Signal.Indicator;
 
 // Nadaraya-Watson Envelope [LuxAlgo]
 
@@ -81,7 +81,7 @@ public class NweIndicator
             }
 
             int divider = Math.Min(Length - 1, n - 1); // = Windows - 1?
-            decimal sae = (sumAbs / divider) * Multiplier;
+            decimal sae = sumAbs / divider * Multiplier;
 
             // Mapping reverse
             for (int i = 0; i < window; i++)
@@ -93,7 +93,7 @@ public class NweIndicator
                 results[idx].Upper = center + sae;
                 results[idx].Lower = center - sae;
             }
-            sae = (sumAbs / divider) * Multiplier;
+            sae = sumAbs / divider * Multiplier;
         }
         else
         {
@@ -141,7 +141,7 @@ public class NweIndicator
                 {
                     sumAbs += residuals[available - 1 - i];
                 }
-                decimal mae = (sumAbs / maeLen) * Multiplier;
+                decimal mae = sumAbs / maeLen * Multiplier;
                 for (int k = 0; k < n; k++)
                 {
                     if (results[k].Center.HasValue)
