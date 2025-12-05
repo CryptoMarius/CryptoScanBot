@@ -139,7 +139,7 @@ public class CryptoDatabase : IDisposable
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60 * 60, IntervalList[8])); // 10
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60 * 60, IntervalList[9])); // 11
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60 * 60, IntervalList[10])); // 12
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, IntervalList[9])); // 13
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, IntervalList[11])); // 13
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 24 * 60 * 60, IntervalList[13])); // 14
             IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1w, "1w", 7 * 24 * 60 * 60, IntervalList[14])); // 15
 
