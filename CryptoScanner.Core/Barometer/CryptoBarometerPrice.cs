@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Barometer;
 
@@ -19,19 +20,23 @@ internal class CryptoBarometerPrice
         for (int i = 0; i < quoteData.SymbolList.Count; i++) // foreach with ToList() is overkill
         {
             CryptoSymbol symbol = quoteData.SymbolList[i];
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
-            if (symbolInterval.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbolInterval.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
-            {
-                if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
-                {
-                    decimal perc;
-                    decimal diff = candleLast.Close - candlePrev.Close;
-                    if (!candlePrev.Close.Equals(0))
-                        perc = 100m * (diff / candlePrev.Close);
-                    else perc = 0;
 
-                    sumPerc += perc;
-                    coinsMatching++;
+            if (symbol.QuoteData!.FetchCandles && !symbol.IsBarometerSymbol() && symbol.EnoughVolume())
+            {
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
+                if (symbolInterval.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbolInterval.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
+                {
+                    if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
+                    {
+                        decimal perc;
+                        decimal diff = candleLast.Close - candlePrev.Close;
+                        if (!candlePrev.Close.Equals(0))
+                            perc = 100m * (diff / candlePrev.Close);
+                        else perc = 0;
+
+                        sumPerc += perc;
+                        coinsMatching++;
+                    }
                 }
             }
         }
@@ -43,6 +48,8 @@ internal class CryptoBarometerPrice
         }
         else
             barometerPerc = 0m; // not -99 because of long/short.
+        //GlobalData.AddTextToLogTab($"Barometer {quoteData.Name} ({quoteData.SymbolList.Count}) {interval.Name} {barometerPerc:N2} {coinsMatching}");
+
 
         return coinsMatching > 0; // Met 1 munt krijgen we okay, mhhhh geeft een aardig vertekend beeld in dat geval..
     }

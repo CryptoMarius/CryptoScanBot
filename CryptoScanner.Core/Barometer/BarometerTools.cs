@@ -43,6 +43,8 @@ public class BarometerTools
                     Quote = quoteData.Name, //USDT, BTC etc.
                     QuoteData = quoteData,
                     ExchangeName = baseName + quoteData.Name,
+                    QuantityTickSize = 0.01m,
+                    PriceTickSize = 0.01m,
                     Volume = 0,
                     Status = 1,
                 };
