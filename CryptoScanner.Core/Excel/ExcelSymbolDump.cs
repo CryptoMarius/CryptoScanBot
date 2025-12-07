@@ -85,8 +85,34 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         int row = 0;
         WriteCell(sheet, 0, row, "Created");
         WriteCell(sheet, 1, row, DateTime.Now, CellStyleDate);
+
+        row++;
+        var trend = Symbol.Data.TrendPrimary;
+        WriteCell(sheet, 0, row, "Trend primary");
+        if (trend.Time.HasValue)
+        {
+            DateTime x = CandleTools.GetUnixDate(trend.Time);
+            WriteCell(sheet, 1, row, x.ToLocalTime(), CellStyleDate);
+        }
+        else WriteCell(sheet, 1, row, "");
+        WriteCell(sheet, 2, row, trend.Trend.ToString());
+        WriteCell(sheet, 3, row, trend.Percentage, CellStyleDecimalNormal);
+
+        row++;
+        trend = Symbol.Data.TrendSecondary;
+        WriteCell(sheet, 0, row, "Trend secondary");
+        if (trend.Time.HasValue)
+        {
+            DateTime x = CandleTools.GetUnixDate(trend.Time);
+            WriteCell(sheet, 1, row, x.ToLocalTime(), CellStyleDate);
+        }
+        else WriteCell(sheet, 1, row, "");
+        WriteCell(sheet, 2, row, trend.Trend.ToString());
+        WriteCell(sheet, 3, row, trend.Percentage, CellStyleDecimalNormal);
         row++;
         row++;
+        row++;
+
 
         // Interval overview
         int columns = 0;
@@ -96,7 +122,12 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Count");
         WriteCell(sheet, columns++, row, "First");
         WriteCell(sheet, columns++, row, "Last");
-        WriteCell(sheet, columns++, row, "Synchronized");
+        WriteCell(sheet, columns++, row, "Synchronized (+1)");
+        WriteCell(sheet, columns++, row, "LastCandle ref");
+        WriteCell(sheet, columns++, row, "Time trend prim");
+        WriteCell(sheet, columns++, row, "Trend primary");
+        WriteCell(sheet, columns++, row, "Time trend sec");
+        WriteCell(sheet, columns++, row, "Trend secondary");
 
         foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList.ToList())
         {
@@ -110,12 +141,36 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.FirstOrDefault()?.DateLocal, CellStyleDate);
             WriteCell(sheet, column++, row, symbolInterval.CandleList.Values.LastOrDefault()?.DateLocal, CellStyleDate);
 
-            // Debug: There is something not right in the synchronizing or building of candles..
+            // last candle synchronised with the exchange (or locally fully calculated)
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
                 DateTime x = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
                 WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
             }
+            else WriteCell(sheet, column++, row, "");
+
+            // reference to the last candle system
+            WriteCell(sheet, column++, row, symbolInterval.LastCandle?.DateLocal, CellStyleDate);
+
+            // primary trend
+            trend = symbolInterval.TrendPrimary;
+            if (trend.Time.HasValue)
+            {
+                DateTime x = CandleTools.GetUnixDate(trend.Time);
+                WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
+            }
+            else WriteCell(sheet, column++, row, "");
+            WriteCell(sheet, column++, row, trend.Trend.ToString());
+
+            // secondary trend
+            trend = symbolInterval.TrendSecondary;
+            if (trend.Time.HasValue)
+            {
+                DateTime x = CandleTools.GetUnixDate(trend.Time);
+                WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
+            }
+            else WriteCell(sheet, column++, row, "");
+            WriteCell(sheet, column++, row, trend.Trend.ToString());
         }
 
         AutoSize(sheet, columns);
@@ -143,12 +198,10 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "StochOscillator");
         WriteCell(sheet, columns++, row, "StochSignal");
         WriteCell(sheet, columns++, row, "Lux5mValue");
-        //WriteCell(sheet, columns++, row, "SlopeMacd");
-        //WriteCell(sheet, columns++, row, "SlopeStoch");
-        //WriteCell(sheet, columns++, row, "SlopeSma20");
-        //WriteCell(sheet, columns++, row, "SlopeSma50");
-        //WriteCell(sheet, columns++, row, "SlopeSma100");
-        //WriteCell(sheet, columns++, row, "SlopeSma200");
+        WriteCell(sheet, columns++, row, "Sma200");
+        WriteCell(sheet, columns++, row, "Sma50");
+        WriteCell(sheet, columns++, row, "Sma20");
+        WriteCell(sheet, columns++, row, "PSar");
 
         CryptoCandle? last = null;
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
@@ -184,12 +237,10 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
                 bla.Add(candle.CandleData.StochOscillator);
                 bla.Add(candle.CandleData.StochSignal);
                 bla.Add(candle.CandleData.Lux5mValue);
-                //    bla.Add(candle.CandleData.SlopeMacd);
-                //    bla.Add(candle.CandleData.SlopeStoch);
-                //    bla.Add(candle.CandleData.SlopeSma20);
-                //    bla.Add(candle.CandleData.SlopeSma50);
-                //    bla.Add(candle.CandleData.SlopeSma100);
-                //    bla.Add(candle.CandleData.SlopeSma200);
+                bla.Add(candle.CandleData.Sma200);
+                bla.Add(candle.CandleData.Sma50);
+                bla.Add(candle.CandleData.Sma20);
+                bla.Add(candle.CandleData.PSar);
 
                 foreach (var value in bla)
                 {
