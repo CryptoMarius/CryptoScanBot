@@ -10,6 +10,7 @@ using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Indicator;
 using CryptoScanner.Core.Trader;
 
 using System.Text.Json;

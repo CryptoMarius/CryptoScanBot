@@ -18,9 +18,12 @@ public class CryptoData
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
 
-    //public double? KeltnerUpperBand { get; set; }
-    //public double? KeltnerLowerBand { get; set; }
-    //public double? KeltnerCenterLine { get; set; }
+    [Computed]
+    public double? KeltnerUpperBand { get; set; }
+    [Computed]
+    public double? KeltnerLowerBand { get; set; }
+    [Computed]
+    public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
 
     // MACD indicator values
@@ -51,7 +54,8 @@ public class CryptoData
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG
     //public double? Ema8 { get; set; }
-    //public double? Ema9 { get; set; }
+    [Computed]
+    public double? Ema9 { get; set; }
     //public double? Ema20 { get; set; }
     //public double? SlopeEma20 { get; set; }
     public double? Ema50 { get; set; }
@@ -60,13 +64,15 @@ public class CryptoData
     //public double? SlopeEma100 { get; set; }
     //public double? Ema200 { get; set; }
     //public double? SlopeEma200 { get; set; }
+    [Computed]
+    public double? Tema { get; set; }
 #endif
 
 
     // SMA (Simple Moving Average) indicator values
     //public double? Sma8 { get; set; }
     public double? Sma20 { get; set; }
-    public double? SlopeSma20 { get; set; }
+    //public double? SlopeSma20 { get; set; }
     public double? Sma50 { get; set; }
     //public double? SlopeSma50 { get; set; }
     public double? Sma100 { get; set; }
@@ -107,6 +113,10 @@ public class CryptoData
         BollingerBandsDeviation = source.BollingerBandsDeviation;
         BollingerBandsPercentage = source.BollingerBandsPercentage;
 
+        KeltnerUpperBand = source.KeltnerUpperBand;
+        KeltnerCenterLine = source.KeltnerCenterLine;
+        KeltnerLowerBand = source.KeltnerLowerBand;
+
         // MACD indicator values
         MacdValue = source.MacdValue;
         MacdSignal = source.MacdSignal;
@@ -124,12 +134,13 @@ public class CryptoData
         //RsiSurface = source.RsiSurface;
 
         // EMA indicator values
-        //Ema9 = source.Ema9;
+        Ema9 = source.Ema9;
         //public double? Ema8 { get; set; }
         //public double? Ema20 { get; set; }
         //public double? SlopeEma20 { get; set; }
 #if DEBUG
         Ema50 = source.Ema50;
+        Tema = source.Tema;
 #endif
         //public double? SlopeEma50 { get; set; }
         //public double? Ema100 { get; set; }

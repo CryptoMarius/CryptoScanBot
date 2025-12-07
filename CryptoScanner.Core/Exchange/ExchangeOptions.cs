@@ -57,7 +57,7 @@ public class ExchangeOptions // : IExchangeOptions
         ExchangeName = exchangeName;
         DefaultQuote = defaultQuote;
         CandleLimit = candleLimit;
-        LimitAmountOfSymbols = limitAmountOfSymbols;
+        LimitAmountOfSymbols = true; // limitAmountOfSymbols; ALWAY's
         SymbolLimitPerSubscription = symbolLimitPerSubscription;
         SubscriptionLimitPerClient = subscriptionLimitPerClient;
     }

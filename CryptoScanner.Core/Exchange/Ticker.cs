@@ -38,7 +38,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
 
 
     /// <summary>
-    /// Voor de kline en price ticker
+    /// Prepare the kline ticker groups
     /// </summary>
     private List<SubscriptionTicker> CreateTheTickers(ref int symbolCount)
     {
@@ -53,12 +53,12 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 List<SubscriptionTicker> tickers = [];
                 List<CryptoSymbol> symbols = [.. quoteData.SymbolList];
 
-                // Limiteer de munten (dat heeft dan ook impact op de barometer)
+                // Limit the amount of symbols (this has impact on the barometer)
                 if (ExchangeOptions.LimitAmountOfSymbols)
                 {
                     foreach (var symbol in symbols.ToList())
                     {
-                        if (symbol.QuoteData!.MinimalVolume > 0 && symbol.Volume < 0.1m * symbol.QuoteData.MinimalVolume)
+                        if (!symbol.EnoughVolume())
                             symbols.Remove(symbol);
                     }
                 }
