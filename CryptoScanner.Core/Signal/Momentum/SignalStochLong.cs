@@ -41,7 +41,7 @@ public class SignalStochLong : SignalSbmBaseLong
         //// Controle op de ma-lijnen
         //if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         //{
-        //    if (!CandleLast!.SbmConditionsOversold(false))
+        //    if (!CandleLast!.IsSbmConditionsOversold(false))
         //    {
         //        response = "no sbm conditions";
         //        return false;

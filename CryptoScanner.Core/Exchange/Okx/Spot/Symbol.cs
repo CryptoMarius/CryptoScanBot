@@ -107,7 +107,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                if (volumeTicker.TryGetValue(symbol!.Name, out decimal volume))
                                     symbol.Volume = volume;
                                 else
                                     symbol.Volume = 0;

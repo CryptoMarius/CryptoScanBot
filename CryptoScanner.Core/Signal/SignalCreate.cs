@@ -16,19 +16,17 @@ public class SignalCreate
     private CryptoSymbol Symbol { get; set; }
     private CryptoInterval Interval { get; set; }
     private CryptoTradeSide Side { get; set; }
-    private long LastCandle1mCloseTime { get; set; }
 
     public CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? History { get; set; }
 
     public List<CryptoSignal> SignalList { get; set; } = [];
 
-    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, long lastCandle1mCloseTime)
+    public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side)
     {
         Symbol = symbol;
         Interval = interval;
         Side = side;
-        LastCandle1mCloseTime = lastCandle1mCloseTime;
     }
 
     public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
@@ -360,7 +358,7 @@ public class SignalCreate
 
 
         // Calculate MarketTrend and the individual interval trends (reasonably CPU heavy and that is why it is on the end of the routine)
-        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary, 0, LastCandle1mCloseTime);
+        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Primary);
         if (signal.Symbol.Data.TrendPrimary.Percentage.HasValue)
         {
             signal.TrendPercentagePrimary = (float)signal.Symbol.Data.TrendPrimary.Percentage!;
@@ -373,7 +371,7 @@ public class SignalCreate
         }
 
         // This is for comparison only
-        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary, 0, LastCandle1mCloseTime);
+        _ = await MarketTrend.CalculateMarketTrendAsync(signal.Symbol, GlobalData.Settings.Trend.Secondary);
         if (signal.Symbol.Data.TrendSecondary.Percentage.HasValue)
             signal.TrendPercentageSecondary = (float)signal.Symbol.Data.TrendSecondary.Percentage!;
 

@@ -22,10 +22,17 @@ public class SignalSbm3Short : SignalSbmBaseShort
             return false;
         }
 
-        // De ma lijnen en psar goed staan
-        if (!CandleLast!.IsSbmConditionsOverbought(true))
+        // Check ma lines
+        if (!CandleLast!.IsSbmConditionsOverbought())
         {
             ExtraText = "no sbm conditions";
+            return false;
+        }
+
+        // Check psar above sma20
+        if (!CandleLast!.IsSbmConditionsPSarOverbought())
+        {
+            ExtraText = "psar not above sma20";
             return false;
         }
 

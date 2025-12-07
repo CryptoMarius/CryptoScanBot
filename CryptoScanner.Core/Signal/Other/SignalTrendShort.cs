@@ -14,11 +14,12 @@ public class SignalTrendShort : SignalCreateBase
 
     public override bool IsSignal()
     {
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary, 0, 0, null).Result;
+        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 
         CryptoTrendData data = SymbolInterval.TrendPrimary;
-        if ( SymbolInterval.TrendPrimary.PrevTime + Interval.Duration == SymbolInterval.TrendPrimary.Time && 
-            data.PrevTime > 0 && data.PrevTrend == CryptoTrendIndicator.Bullish && data.Trend == CryptoTrendIndicator.Bearish)
+        if (data.PrevTime != null && data.PrevTime > 0 &&
+            data.PrevTime + Interval.Duration == data.Time &&
+            data.PrevTrend == CryptoTrendIndicator.Bullish && data.Trend == CryptoTrendIndicator.Bearish)
         {
             if (!data.ReversalSignaled)
             {

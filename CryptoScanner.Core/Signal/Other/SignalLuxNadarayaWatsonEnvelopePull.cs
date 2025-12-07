@@ -81,7 +81,7 @@ public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
         {
             if (SignalSide == CryptoTradeSide.Long)
             {
-                if (!CandleLast!.SbmConditionsOversold(false))
+                if (!CandleLast!.IsSbmConditionsOversold())
                 {
                     response = "no sbm conditions";
                     return false;
@@ -89,7 +89,7 @@ public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
             }
             else if (SignalSide == CryptoTradeSide.Short)
             {
-                if (!CandleLast.IsSbmConditionsOverbought(false))
+                if (!CandleLast.IsSbmConditionsOverbought())
                 {
                     response = "no sbm conditions";
                     return false;
@@ -273,20 +273,20 @@ public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
             {
                 decimal upperband = nweLast + sae;
                 // Candle outside the band
-                if (CandleLast!.Open >= upperband && candleLast.Close >= upperband && EnoughMomentum(nwe, i, out decimal _))
+                if (CandleLast!.Open >= upperband && candleLast!.Close >= upperband && EnoughMomentum(nwe, i, out decimal _))
                 {
                     hadNwe = true;
                     break;
                 }
                 // Candle sticking pearsing trough the band
-                if (nwePrev! < upperband && candleLast.Close >= upperband && EnoughMomentum(nwe, i, out decimal _))
+                if (nwePrev! < upperband && candleLast!.Close >= upperband && EnoughMomentum(nwe, i, out decimal _))
                 {
                     hadNwe = true;
                     break;
                 }
             }
 
-            if (!GetPrevCandle(candleLast, out candleLast))
+            if (!GetPrevCandle(candleLast, out candleLast!))
                 return false;
         }
         return hadNwe;

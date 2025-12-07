@@ -113,9 +113,9 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbolData.Symbol, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol!.Volume = volume;
                                 else
-                                    symbol.Volume = 0;
+                                    symbol!.Volume = 0;
 
                                 if (symbolData.TradeStatus == SymbolStatus.Trading)
                                     symbol.Status = 1;

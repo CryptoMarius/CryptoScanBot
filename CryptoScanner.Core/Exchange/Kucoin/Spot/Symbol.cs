@@ -90,7 +90,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //symbol.MinNotional = binanceSymbol.MinNotional; // ????
 
                                     //Minimale en maximale amount voor een order (in base amount)
-                                    symbol.QuantityMinimum = symbolData.BaseMinQuantity;
+                                    symbol!.QuantityMinimum = symbolData.BaseMinQuantity;
                                     symbol.QuantityMaximum = symbolData.BaseMaxQuantity; //baseMinSize
                                                                                          // Dit klopt niet, deze heeft wederom effect op de Clamp routine!
                                     symbol.QuantityTickSize = symbolData.BaseIncrement;

@@ -41,9 +41,10 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
-            if (!CandleLast.IsSbmConditionsOverbought(false))
+            // Check ma lines
+            if (!CandleLast!.IsSbmConditionsOverbought())
             {
-                response = "geen sbm condities";
+                response = "no sbm conditions";
                 return false;
             }
         }

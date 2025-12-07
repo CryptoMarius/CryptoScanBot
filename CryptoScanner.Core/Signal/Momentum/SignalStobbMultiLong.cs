@@ -43,9 +43,10 @@ public class SignalStobbMultiLong : SignalSbmBaseLong
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
-            if (!CandleLast!.SbmConditionsOversold(false))
+            // Check ma lines
+            if (!CandleLast!.IsSbmConditionsOversold())
             {
-                response = "geen sbm condities";
+                response = "no sbm conditions";
                 return false;
             }
         }

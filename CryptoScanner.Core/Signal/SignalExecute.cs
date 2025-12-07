@@ -157,7 +157,7 @@ public class SignalExecute
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
                         {
-                            SignalCreate createSignal = new(symbol, interval, side, lastCandle1mCloseTime);
+                            SignalCreate createSignal = new(symbol, interval, side);
 
                             // The candle list can be missing in action, too little candles for example
                             if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))

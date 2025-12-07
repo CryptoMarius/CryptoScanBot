@@ -81,7 +81,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         {
             if (SignalSide == CryptoTradeSide.Long)
             {
-                if (!CandleLast!.SbmConditionsOversold(false))
+                if (!CandleLast!.IsSbmConditionsOversold())
                 {
                     response = "no sbm conditions";
                     return false;
@@ -89,7 +89,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             }
             else if (SignalSide == CryptoTradeSide.Short)
             {
-                if (!CandleLast.IsSbmConditionsOverbought(false))
+                if (!CandleLast.IsSbmConditionsOverbought())
                 {
                     response = "no sbm conditions";
                     return false;

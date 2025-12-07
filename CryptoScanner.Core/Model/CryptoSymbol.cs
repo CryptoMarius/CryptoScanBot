@@ -85,7 +85,6 @@ public class CryptoSymbol
     // Interval related data like candles and last candle fetched
     public CryptoSymbolData Data { get; set; } = new();
 
-
     public CryptoSymbolInterval GetSymbolInterval(CryptoIntervalPeriod intervalPeriod)
     {
         return Data.SymbolIntervalList[(int)intervalPeriod];
