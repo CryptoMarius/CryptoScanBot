@@ -31,14 +31,14 @@ public class DataStore
         CryptoSymbolData accountSymbolData = symbol.Data;
         accountSymbolData.ResetTrendData();
 
-        // Laad in 1x alle intervallen 
+        // Load alll intervals
         if (File.Exists(filename))
         {
             try
             {
-                // For some reason we can have corrupted candles.
-                // Killed scanner because it had a loop until maxLong!
-                long futureCandles = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(7), 60);
+                // For some reason we can have corrupted candles in the system.
+                // This killed the scanner because it had a loop until maxLong!
+                long futureCandles = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(1), 60);
 
                 // Een experiment (vanwege de obfuscator)
                 using FileStream readStream = new(filename, FileMode.Open);
@@ -70,23 +70,18 @@ public class DataStore
                                 Low = binaryReader.ReadDecimal(),
                                 Close = binaryReader.ReadDecimal(),
                                 Volume = binaryReader.ReadDecimal(),
-#if SUPPORTBASEVOLUME
-                                BaseVolume = 0,
-#endif
                             };
 
-#if SUPPORTBASEVOLUME
-                            if (version > 1)
-                            {
-                                candle.BaseVolume = binaryReader.ReadDecimal();
-                            }
-#endif
                             // We had some data corruption and 1 candle in the year 2150...
-                            // It isn't nice, but skip those please, really weird ...
+                            // It is not a nice solution, but skip those candles (really weird)
                             if (candle.OpenTime >= startFetchUnix)
                             {
                                 if (candle.OpenTime < futureCandles)
+                                {
                                     symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                                    if (symbolInterval.LastCandle == null || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                                        symbolInterval.LastCandle = candle;
+                                }
                                 else
                                     GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.OpenTime}");
                             }
@@ -134,8 +129,19 @@ public class DataStore
 
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
-                if (!symbol.IsBarometerSymbol() && (symbol.QuoteData!.FetchCandles && symbol.IsSpotTradingAllowed))
+                // ignore inactive
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
+                {
+                    // Dont load candles for symbols below the minimal volume treshold
+                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume())
+                    {
+                        //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
+                        symbol.ClearCandles();
+                        continue;
+                    }
+
                     LoadCandleForSymbol(exchangeStoragePath, symbol);
+                }
             }
         }
         //GlobalData.AddTextToLogTab("Information loaded");
@@ -160,15 +166,22 @@ public class DataStore
                     string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
                     try
                     {
-
-                        // Verwijder het bestand indien niet relevant of niet actief
-                        string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
-                        if (!symbol.IsBarometerSymbol() && (!symbol.QuoteData.FetchCandles || !symbol.IsSpotTradingAllowed))
+                        // Delete the file if the symbol is not active anymore
+                        string filename = dirSymbol + symbol.Base.ToLower();
+                        if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
                         {
-                            //if (File.Exists(filename))
-                            //    File.Delete(filename);
+                            if (File.Exists(filename))
+                                File.Delete(filename);
                             continue;
                         }
+                        // Dont save candles for symbols below the minimal volume treshold
+                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume())
+                        {
+                            // Leave the storage file intact (for now?)
+                            symbol.ClearCandles();
+                            continue;
+                        }
+
 
                         long count = 0;
                         foreach (CryptoSymbolInterval cryptoSymbolInterval in symbol.Data.SymbolIntervalList)
@@ -208,9 +221,6 @@ public class DataStore
                                                     binaryWriter.Write(candle.Low);
                                                     binaryWriter.Write(candle.Close);
                                                     binaryWriter.Write(candle.Volume);
-#if SUPPORTBASEVOLUME
-                                                binaryWriter.Write(candle.BaseVolume);
-#endif
                                                 }
                                             }
                                         }

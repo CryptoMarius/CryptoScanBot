@@ -21,7 +21,7 @@ public class CommandShowTrendInfo : CommandBase
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab($"Markettrend {symbol.Name}");
 
-            CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend, 0, 0, log);
+            CryptoTrendData symbolTrend = await MarketTrend.CalculateMarketTrendAsync(symbol, trend, log);
 
             log.AppendLine("");
             log.AppendLine("");

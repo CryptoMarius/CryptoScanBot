@@ -282,7 +282,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                 }
 
 
-                if (candle.SbmConditionsOversold(true))
+                if (candle.IsSbmConditionsOversold() && candle.IsSbmConditionsPSarOversold())
                 {
                     WriteCell(sheet, column++, row, "yes");
                 }
@@ -290,6 +290,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
                 {
                     WriteCell(sheet, column++, row, "no");
                 }
+
 
                 if (candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
                 {

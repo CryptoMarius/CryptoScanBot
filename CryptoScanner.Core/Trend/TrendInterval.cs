@@ -14,7 +14,7 @@ public class TrendInterval
     {
         // We cache the Primary indicator, this way we do not have to add all the candles again and again.
         // (We hope this makes the scanner a more less cpu hungry)
-        // Question however: when is it ssave to clear the zigzag? to avoid memory overflow in the long run?
+        // Question however: when is it save to clear the zigzag? to avoid memory overflow in the long run?
         // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
         //intervalTrend.ZigZagIndicator ??= new(candleList, false);
 
@@ -66,7 +66,7 @@ public class TrendInterval
     public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log)
     {
         var zigZagList = indicator.ZigZagList;
-        CryptoTrendIndicator trend = CryptoTrendIndicator.Sideways;
+        CryptoTrendIndicator trend = CryptoTrendIndicator.Unknown;
 
         if (log != null)
         {
@@ -101,40 +101,35 @@ public class TrendInterval
         }
 
 
-        // Nieuwe bepaling [NB: Er is discussie over de laatste zigzag waarde (market value ipv een low/high)]
-        // Je wilt naar pairs toe (l,h) zodat je kan vergelijken met de vorige (l,h)
-        // (?verwarring of je een (l,h) of (h,l) gebruikt, beide zou kunnen, misschien vanwege start situatie?
+        // New strategy [There is discussion about the last zigzag value (market value instead of a low/high)]
         ZigZagResult zigZag;
         for (int i = 0; i < zigZagList.Count; i++)
         {
             zigZag = zigZagList[i];
 
-            // Nope, the dummies are the most important as it can be a BOS (break of structure)
-            //if (zigZag.Dummy)
-            //    continue;
-
             // Pickup last value
-            decimal value;
-            if (zigZag.PointType == 'H')
-                value = lastHigh;
-            else
-                value = lastLow;
+            decimal value = zigZag.PointType == 'H' ? lastHigh : lastLow;
+            //decimal value;
+            //if (zigZag.PointType == 'H')
+            //    value = lastHigh;
+            //else
+            //    value = lastLow;
 
             // if the trend was bearish and the market was able to make a HH
-
             switch (trend)
             {
                 case CryptoTrendIndicator.Bearish:
                     if (zigZag.Value > value)
                         count++;
-                    else count = 0;
+                    else 
+                        count = 0;
                     break;
                 case CryptoTrendIndicator.Bullish:
                     if (zigZag.Value <= value)
                         count++;
-                    else count = 0;
+                    else 
+                        count = 0;
                     break;
-
             }
 
             // Save the last value
@@ -145,7 +140,8 @@ public class TrendInterval
 
 
 
-            // switch trend if 2 values are opposite
+            // switch trend if at least 2 values are present (Charles Dow theory)
+            // (we could do the simple version and just use the last 2 points <weak?>)
             if (count > 1)
             {
                 if (trend == CryptoTrendIndicator.Bearish)
@@ -166,7 +162,7 @@ public class TrendInterval
 
 
     public static async Task CalculateAsync(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList,
-        CryptoTrendData intervalTrend, SettingsZigZag trend, long minDate, long maxDate, StringBuilder? log = null)
+        CryptoTrendData intervalTrend, SettingsZigZag trend, StringBuilder? log = null)
     {
         log?.AppendLine("");
         log?.AppendLine("----");
@@ -176,11 +172,7 @@ public class TrendInterval
         // Unable to calculate - Note: in fact we need at least ~24 candles because of the zigzag parameters to identify H/L
         if (candleList.Count == 0)
         {
-            // Lots of discussion, maar als we niet genoeg candles hebben om een trend te berekenen
-            // gebruiken we toch de sideway's om aan te geven dat het niet berekend kon worden.
-            // Bij new munten, flatliners en andere gedrochten is het dus sideway's!
-            //Signal.Reaction = string.Format("not enough quotes for {0} trend", interval.Name);
-            //intervalTrend.DlzAdmin.Reset();
+            // Lots of discussion, but if we dont have candles it really cannot be up or down so we choose sideway's
             intervalTrend.Reset();
 #if DEBUG
             if (intervalTrend.Time != null)
@@ -193,6 +185,9 @@ public class TrendInterval
         }
 
 
+        // Determine the period (but limited <not 10000+ candles back>)
+        long minDate = 0;
+        long maxDate = 0;
         if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
         {
             log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (date period problem)");
@@ -204,21 +199,12 @@ public class TrendInterval
         //        DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(maxDate);
         //#endif
 
-        // We cache the Primary indicator and we create a lot of them with different deviations
-        //TrendTools.CreateAllTrendIndicators(intervalTrend, candleList);
-
-        // Add candles to the Primary indicators
+        // Add candles to the indicator
         ZigZagIndicator indicator = new(trend.TrendType, trend.UseHighLow, 1.0m);
-        //intervalTrend.ZigZagLastCandleAdded = 
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
-
-        // Determine the best indicator based on avg count of pivots
-        //TrendTools.GetBestTrendIndicator(intervalTrend, symbol, log);
-
 
         // Interpret the pivot points and put Charles Dow theory at work
         var bestIndicator = indicator;
-        //var bestIndicator = intervalTrend.BestZigZagIndicator!;
         CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
 
         intervalTrend.PrevTrend = intervalTrend.Trend;
