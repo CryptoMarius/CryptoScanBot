@@ -48,15 +48,15 @@ public class PaperAssetsTests : TestBase
         TradeParams tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, 5.6261m, 0.53m);
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
             CryptoOrderStatus.New, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.1");
-        Assert.AreEqual(assetQuote.Total, 1000m);
-        Assert.AreEqual(assetQuote.Locked, 2.981833m);
-        Assert.AreEqual(assetQuote.Free, 997.018167m);
+        Assert.AreEqual(1000m, assetQuote.Total);
+        Assert.AreEqual(2.981833m, assetQuote.Locked);
+        Assert.AreEqual(997.018167m, assetQuote.Free);
 
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Long, tradeParams.OrderSide,
             CryptoOrderStatus.Filled, tradeParams.Quantity, tradeParams.QuoteQuantity, "test1.2");
-        Assert.AreEqual(assetQuote.Total, 1000m - 2.981833m);
-        Assert.AreEqual(assetQuote.Locked, 0);
-        Assert.AreEqual(assetQuote.Free, 997.018167m);
+        Assert.AreEqual(1000m - 2.981833m, assetQuote.Total);
+        Assert.AreEqual(0, assetQuote.Locked);
+        Assert.AreEqual(997.018167m, assetQuote.Free);
     }
 
 }
