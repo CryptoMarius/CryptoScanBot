@@ -3,49 +3,31 @@ using CryptoScanner.Core.Model;
 public static class SmaHelper
 {
 
-    public static bool SbmConditionsOversold(this CryptoCandle candle, bool includePsarCheck)
+    public static bool IsSbmConditionsOversold(this CryptoCandle candle)
     {
         // Line levels:
         // -sma 200 (red)
         // -sma 50 (orange)
         // -sma 20 (green)
+        return candle.CandleData?.Sma200 > candle.CandleData?.Sma50 && candle.CandleData?.Sma50 > candle.CandleData?.Sma20;
+    }
+
+
+    public static bool IsSbmConditionsPSarOversold(this CryptoCandle candle)
+    {
+        // Line levels:
+        // -sma 20 (green)
         // -psar
 
-        if (candle.CandleData?.Sma200 > candle.CandleData?.Sma50 && candle.CandleData?.Sma50 > candle.CandleData?.Sma20)
-        {
-            // Wait until psar is below the sma20
-            if (includePsarCheck)
-            {
-                if (candle.CandleData?.PSar < candle.CandleData?.Sma20)
-                    return true;
-                else
-                    return false;
-            }
-            else return true;
-        }
-        return false;
+        // Wait until psar is below the sma20
+        if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
+            return false;
 
-        //// Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        //if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma200)
-        //    return false;
-        //if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma200)
-        //    return false;
-        //if (candle.CandleData?.Sma20 >= candle.CandleData?.Sma50)
-        //    return false;
+        // psar switched to the opposite side
+        if ((decimal?)candle.CandleData?.PSar <= candle.Close)
+            return false;
+        return true;
 
-
-        //if (includePsarCheck)
-        //{
-        //    // wait at least until it is below the sma20
-        //    if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
-        //        return false;
-
-        //    // psar switched to the opposite side
-        //    if ((decimal?)candle.CandleData?.PSar <= candle.Close)
-        //        return false;
-        //}
-
-        //return true;
     }
 
     public static bool IsPercentageSma200AndSma50OkayOversold(this CryptoCandle candle, decimal percentage, out string response)
@@ -97,50 +79,29 @@ public static class SmaHelper
         return true;
     }
 
-    public static bool IsSbmConditionsOverbought(this CryptoCandle candle, bool includePsarCheck = true)
+    public static bool IsSbmConditionsOverbought(this CryptoCandle candle)
+    {
+        // Line levels:
+        // -sma 20 (green)
+        // -sma 50 (orange)
+        // -sma 200 (red)
+        return candle.CandleData?.Sma200 < candle.CandleData?.Sma50 && candle.CandleData?.Sma50 < candle.CandleData?.Sma20;
+    }
+
+    public static bool IsSbmConditionsPSarOverbought(this CryptoCandle candle)
     {
         // Line levels:
         // -psar
         // -sma 20 (green)
-        // -sma 50 (orange)
-        // -sma 200 (red)
 
-        if (candle.CandleData?.Sma200 < candle.CandleData?.Sma50 && candle.CandleData?.Sma50 < candle.CandleData?.Sma20)
-        {
-            // Wait until psar is above the sma20
-            if (includePsarCheck)
-            {
-                if (candle.CandleData?.PSar > candle.CandleData?.Sma20)
-                    return true;
-                else
-                    return false;
-            }
-            else return true;
-        }
-        return false;
+        // wait at least until it is above the sma20
+        if (candle.CandleData?.PSar < candle.CandleData?.Sma20)
+            return false;
 
-
-        //// Staan de 3 ma-lijnen (200, 50, 20) en psar in de juiste volgorde
-        //if (candle.CandleData?.Sma200 >= candle.CandleData?.Sma50)
-        //    return false;
-        //if (candle.CandleData?.Sma200 >= candle.CandleData?.Sma20)
-        //    return false;
-        //if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma20)
-        //    return false;
-
-
-        //if (includePsarCheck)
-        //{
-        //    // wait at least until it is above the sma20
-        //    if (candle.CandleData?.PSar < candle.CandleData?.Sma20)
-        //        return false;
-
-        //    // psar switched to the opposite side
-        //    if ((decimal)candle.CandleData?.PSar! >= candle.Close)
-        //        return false;
-        //}
-
-        //return true;
+        // psar switched to the opposite side
+        if ((decimal)candle.CandleData?.PSar! >= candle.Close)
+            return false;
+        return true;
     }
 
     public static bool IsPercentageSma200AndSma50OkayOverbought(this CryptoCandle candle, decimal percentage, out string response)
