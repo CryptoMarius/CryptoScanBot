@@ -21,7 +21,6 @@ public enum CryptoSignalStrategy
 #if DEBUG
     Stoch = 20,
 #endif
-    //Macd = 21, // experiment
 #if DEBUG
     SmaDist = 22, // experiment
 #endif
@@ -33,7 +32,7 @@ public enum CryptoSignalStrategy
 #endif
 
 #if DEBUG
-    BbMa = 30, // still studying, its quite complicated that Oma Ally strategy
+    BbMa = 30, // still studying, its complicated
 #endif
 
 #if DEBUG
@@ -56,10 +55,6 @@ public enum CryptoSignalStrategy
     TemaCrossedKcCenter = 36,
 #endif  
 
-
-
-    //BbRsiEngulfing = 50,
-    //SignalSma50Sma20Price = 52,
 
     DominantLevel = 1000,
     DominantLevelNear = 1001,
