@@ -54,7 +54,7 @@ public partial class FrmSettings : Form
     {
         this.settings = settings;
 
-        EditGlobalDataRemoveSignalAfterxCandles.Maximum = +240;
+        EditGlobalDataRemoveSignalAfterxCandles.Maximum = +120;
 
         EditAnalysisMinChangePercentage.Minimum = -100;
         EditAnalysisEffectivePercentage.Maximum = +1000;
