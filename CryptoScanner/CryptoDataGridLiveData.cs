@@ -312,43 +312,43 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
                         e.Value = liveData.Candle.CandleData?.BollingerBandsPercentage;
                         break;
                     case ColumnsForGrid.BbUpper:
-                        e.Value = liveData.Candle.CandleData?.BollingerBandsUpperBand;
+                        e.Value = liveData.Candle.CandleData?.BollingerBandsUpperBand.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.BbLower:
-                        e.Value = liveData.Candle.CandleData?.BollingerBandsLowerBand;
+                        e.Value = liveData.Candle.CandleData?.BollingerBandsLowerBand.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     //case ColumnsForGrid.AvgBB:
-                    //    e.Value = liveData.Candle.CandleData?.AvgBB;
+                    //    e.Value = liveData.Candle.CandleData?.AvgBB.ToString0("N2");
                     //    break;
                     case ColumnsForGrid.Rsi:
-                        e.Value = liveData.Candle.CandleData?.Rsi;
+                        e.Value = liveData.Candle.CandleData?.Rsi.ToString0("N2");
                         break;
                     case ColumnsForGrid.MacdValue:
-                        e.Value = liveData.Candle.CandleData?.MacdValue.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdValue.ToString0("N8");
                         break;
                     case ColumnsForGrid.MacdSignal:
-                        e.Value = liveData.Candle.CandleData?.MacdSignal.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdSignal.ToString0("N8");
                         break;
                     case ColumnsForGrid.MacdHistogram:
-                        e.Value = liveData.Candle.CandleData?.MacdHistogram.ToString0(liveData.Symbol.PriceDisplayFormat);
+                        e.Value = liveData.Candle.CandleData?.MacdHistogram.ToString0("N8");
                         break;
                     case ColumnsForGrid.Stoch:
-                        e.Value = liveData.Candle.CandleData?.StochOscillator;
+                        e.Value = liveData.Candle.CandleData?.StochOscillator.ToString0("N2");
                         break;
                     case ColumnsForGrid.Signal:
-                        e.Value = liveData.Candle.CandleData?.StochSignal;
+                        e.Value = liveData.Candle.CandleData?.StochSignal.ToString0("N2");
                         break;
                     case ColumnsForGrid.Sma200:
-                        e.Value = liveData.Candle.CandleData?.Sma200;
+                        e.Value = liveData.Candle.CandleData?.Sma200.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Sma50:
-                        e.Value = liveData.Candle.CandleData?.Sma50;
+                        e.Value = liveData.Candle.CandleData?.Sma50.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Sma20:
-                        e.Value = liveData.Candle.CandleData?.Sma20;
+                        e.Value = liveData.Candle.CandleData?.Sma20.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.PSar:
-                        e.Value = liveData.Candle.CandleData?.PSar;
+                        e.Value = liveData.Candle.CandleData?.PSar.ToString0(liveData.Symbol.PriceDisplayFormat);
                         break;
                     case ColumnsForGrid.Lux5m:
                         e.Value = liveData.Candle.CandleData?.Lux5mValue;
@@ -515,9 +515,9 @@ public class CryptoDataGridLiveData<T>() : CryptoDataGrid<T>() where T : CryptoL
         long x = CandleTools.GetUnixTime(DateTime.UtcNow, 15 * 60);
         if (x == LastCheck)
             return;
- 
+
         if (Monitor.TryEnter(List))
-        {            
+        {
             LastCheck = x;
             try
             {

@@ -543,10 +543,10 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     e.Value = TrendTools.TrendIndicatorText(position.TrendInterval);
                     break;
                 case ColumnsForGrid.MarketTrendPrimary:
-                    e.Value = position.TrendPercentagePrimary;
+                    e.Value = position.TrendPercentagePrimary.ToString("N2");
                     break;
                 case ColumnsForGrid.MarketTrendSecondary:
-                    e.Value = position.TrendPercentageSecondary;
+                    e.Value = position.TrendPercentageSecondary.ToString("N2");
                     break;
                 case ColumnsForGrid.Change24h:
                     e.Value = position.Last24HoursChange;
@@ -555,43 +555,43 @@ public class CryptoDataGridPositionsClosed<T>() : CryptoDataGrid<T>() where T : 
                     e.Value = position.LastXDaysEffective;
                     break;
                 case ColumnsForGrid.BB:
-                    e.Value = position.BollingerBandsPercentage;
+                    e.Value = position.BollingerBandsPercentage.ToString0("N2");
                     break;
                 case ColumnsForGrid.AvgBB:
-                    e.Value = position.AvgBB;
+                    e.Value = position.AvgBB.ToString("N2");
                     break;
                 case ColumnsForGrid.Rsi:
                     e.Value = position.Rsi;
                     break;
                 case ColumnsForGrid.MacdValue:
-                    e.Value = position.MacdValue.ToString0(position.Symbol.PriceDisplayFormat);
+                    e.Value = position.MacdValue.ToString0("N8");
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    e.Value = position.MacdSignal.ToString0(position.Symbol.PriceDisplayFormat);
+                    e.Value = position.MacdSignal.ToString0("N8");
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    e.Value = position.MacdHistogram.ToString0(position.Symbol.PriceDisplayFormat);
+                    e.Value = position.MacdHistogram.ToString0("N8");
                     break;
                 //case ColumnsForGrid.SlopeRsi:
                 //    e.Value = position.SlopeRsi;
                 //    break;
                 case ColumnsForGrid.Stoch:
-                    e.Value = position.StochOscillator;
+                    e.Value = position.StochOscillator.ToString0("N2");
                     break;
                 case ColumnsForGrid.Signal:
-                    e.Value = position.StochSignal;
+                    e.Value = position.StochSignal.ToString0("N2");
                     break;
                 case ColumnsForGrid.Sma200:
-                    e.Value = position.Sma200;
+                    e.Value = position.Sma200.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Sma50:
-                    e.Value = position.Sma50;
+                    e.Value = position.Sma50.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Sma20:
-                    e.Value = position.Sma20;
+                    e.Value = position.Sma20.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.PSar:
-                    e.Value = position.PSar;
+                    e.Value = position.PSar.ToString0(position.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Lux5m:
                     e.Value = position.LuxIndicator5m;

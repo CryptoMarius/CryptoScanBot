@@ -230,7 +230,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     CreateColumn("Lux 5m", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 45).Visible = false;
                     break;
                 case ColumnsForGrid.FundingRate:
-                    //DataGridViewTextBoxColumn c = 
+                    //DataGridViewTextBoxColumn c =
                     CreateColumn("Funding Rate", typeof(decimal), "##0.#0", DataGridViewContentAlignment.MiddleRight, 50).Visible = false;
                     //if (GlobalData.Settings.General.ActivateExchange. Futures ...  disable the column...
                     break;
@@ -360,7 +360,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     ColumnsForGrid.PriceMaxPerc => ObjectCompare.Compare(a.PriceMaxPerc, b.PriceMaxPerc),
 #if DEBUG
                     ColumnsForGrid.SignalStatus => ObjectCompare.Compare(a.SignalStatus, b.SignalStatus),
-#endif                    
+#endif
 #if StrategyBbma
                     ColumnsForGrid.Wma05Low => ObjectCompare.Compare(a.Wma05Low, b.Wma05Low),
                     ColumnsForGrid.Wma05High => ObjectCompare.Compare(a.Wma05High, b.Wma05High),
@@ -487,10 +487,10 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     e.Value = TrendTools.TrendIndicatorText(signal.TrendInterval);
                     break;
                 case ColumnsForGrid.MarketTrendPrimary:
-                    e.Value = signal.TrendPercentagePrimary;
+                    e.Value = signal.TrendPercentagePrimary.ToString("N2");
                     break;
                 case ColumnsForGrid.MarketTrendSecondary:
-                    e.Value = signal.TrendPercentageSecondary;
+                    e.Value = signal.TrendPercentageSecondary.ToString("N2");
                     break;
                 case ColumnsForGrid.Change24h:
                     e.Value = signal.Last24HoursChange;
@@ -499,19 +499,19 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                     e.Value = signal.LastXDaysEffective;
                     break;
                 case ColumnsForGrid.BB:
-                    e.Value = signal.BollingerBandsPercentage;
+                    e.Value = signal.BollingerBandsPercentage.ToString0("N2");
                     break;
                 case ColumnsForGrid.BbUpper:
-                    e.Value = signal.BollingerBandsUpperBand;
+                    e.Value = signal.BollingerBandsUpperBand.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.BbLower:
-                    e.Value = signal.BollingerBandsLowerBand;
+                    e.Value = signal.BollingerBandsLowerBand.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.AvgBB:
-                    e.Value = signal.AvgBB;
+                    e.Value = signal.AvgBB.ToString("N2");
                     break;
                 case ColumnsForGrid.Rsi:
-                    e.Value = signal.Rsi;
+                    e.Value = signal.Rsi.ToString0("N2");
                     break;
                 //case ColumnsForGrid.RsiSurface:
                 //    e.Value = signal.RsiSurface;
@@ -520,34 +520,34 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                 //    e.Value = signal.SlopeRsi;
                 //    break;
                 case ColumnsForGrid.MacdValue:
-                    e.Value = signal.MacdValue.ToString0(signal.Symbol.PriceDisplayFormat);
+                    e.Value = signal.MacdValue.ToString0("N8");
                     break;
                 case ColumnsForGrid.MacdSignal:
-                    e.Value = signal.MacdSignal.ToString0(signal.Symbol.PriceDisplayFormat);
+                    e.Value = signal.MacdSignal.ToString0("N8");
                     break;
                 case ColumnsForGrid.MacdHistogram:
-                    e.Value = signal.MacdHistogram.ToString0(signal.Symbol.PriceDisplayFormat);
+                    e.Value = signal.MacdHistogram.ToString0("N8");
                     break;
                 case ColumnsForGrid.Stoch:
-                    e.Value = signal.StochOscillator;
+                    e.Value = signal.StochOscillator.ToString0("N2");
                     break;
                 case ColumnsForGrid.Signal:
-                    e.Value = signal.StochSignal;
+                    e.Value = signal.StochSignal.ToString0("N2");
                     break;
                 //case ColumnsForGrid.StochSurface:
                 //    e.Value = signal.StochSurface;
                 //    break;
                 case ColumnsForGrid.Sma200:
-                    e.Value = signal.Sma200;
+                    e.Value = signal.Sma200.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Sma50:
-                    e.Value = signal.Sma50;
+                    e.Value = signal.Sma50.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Sma20:
-                    e.Value = signal.Sma20;
+                    e.Value = signal.Sma20.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.PSar:
-                    e.Value = signal.PSar;
+                    e.Value = signal.PSar.ToString0(signal.Symbol.PriceDisplayFormat);
                     break;
                 case ColumnsForGrid.Lux5m:
                     e.Value = signal.LuxIndicator5m;
@@ -1076,7 +1076,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
 
     static long LastStatisticUpdate = 0;
 
- 
+
     private void UpdateStatistics()
     {
         // statistics (not sure where to put it right now)
@@ -1105,7 +1105,7 @@ public class CryptoDataGridSignal<T>() : CryptoDataGrid<T>() where T : CryptoSig
                         if (UpdateSignalStatistics(signal))
                             GlobalData.ThreadSaveObjects!.AddToQueue(signal);
 
-                        if (!signal.IsInvalid && signal.Strategy < CryptoSignalStrategy.DominantLevel) 
+                        if (!signal.IsInvalid && signal.Strategy < CryptoSignalStrategy.DominantLevel)
                         {
                             if (signal.Side == CryptoTradeSide.Long)
                             {
