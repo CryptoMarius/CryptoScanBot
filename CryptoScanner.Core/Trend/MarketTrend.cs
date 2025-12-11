@@ -20,50 +20,55 @@ public class MarketTrend
             {
                 // Take the last 1m endtime as timing (
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                long candleIntervalEnd = symbolInterval.LastCandle == null ? 0 : symbolInterval.LastCandle.OpenTime + symbolInterval.Interval.Duration;
+                if (symbolInterval.LastCandle == null)
+                    return symbolTrend; // should never happen
+                long candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
 
                 // the log parameter is only present when called from the CommandShowTrendInfo()
-                if (symbolTrend.Time == null || symbolTrend.Time < candleIntervalEnd || log != null)
+                if (symbolTrend.Time == null || candleIntervalEnd > symbolTrend.Time || log != null)
                 {
                     string text;
-                    int weightSum1 = 0;
-                    int weightMax1 = 0;
+                    int weightSum = 0;
+                    int weightMax = 0;
                     symbolTrend.Time = candleIntervalEnd;
 
                     foreach (var interval in GlobalData.IntervalList)
                     {
-                        // Exclude the 1 week interval (a new interval)
+                        // Exclude the 1 week interval (its a new interval which adds a lot of weight)
                         if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
                             continue;
 
                         bool isCached = false;
                         symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                        if (symbolInterval.LastCandle == null)
+                            return symbolTrend; // should never happen
                         CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
-                        candleIntervalEnd = symbolInterval.LastCandle == null ? 0 : symbolInterval.LastCandle.OpenTime + symbolInterval.Interval.Duration;
-                        if (intervalTrend.Time == null || intervalTrend.Time < candleIntervalEnd || log != null)
+                        candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
+                        if (intervalTrend.Time == null || candleIntervalEnd > intervalTrend.Time || log != null)
                         {
                             intervalTrend.Time = candleIntervalEnd;
                             await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trend, log);
                         }
                         else isCached = true;
 
-                        int weight1 = interval.Duration;
+                        int intervalWeight = interval.Duration;
                         if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)
-                            weightSum1 += weight1;
+                            weightSum += intervalWeight;
                         else if (intervalTrend.Trend == CryptoTrendIndicator.Bearish)
-                            weightSum1 -= weight1;
-                        weightMax1 += weight1;
+                            weightSum -= intervalWeight;
+                        weightMax += intervalWeight;
 
-                        text = $"{symbol.Name} {interval.Name} weight={weight1} sum={weightSum1}";
-                        if (isCached) text += " (cached)";
+                        text = $"{symbol.Name} {interval.Name} {intervalTrend.Trend} weight={intervalWeight} sum={weightSum}";
+                        if (isCached) 
+                            text += " (cached)";
                         log?.AppendLine(text);
                         ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
                     }
-                    symbolTrend.Percentage = 100 * (float)weightSum1 / weightMax1;
+                    symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
 
                     log?.AppendLine("");
                     ScannerLog.Logger.Trace("");
-                    text = $"{symbol.Name} sum ={weightSum1} / {weightMax1} = {symbolTrend.Percentage:N2}";
+                    text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
                     log?.AppendLine(text);
                     ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
                 }
