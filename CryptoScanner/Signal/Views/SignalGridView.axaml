@@ -1,0 +1,33 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450" 
+             x:Class="CryptoScanner.Signal.Views.SignalGridView"
+             xmlns:vm="using:CryptoScanner.Signal.ViewModels"
+             xmlns:behaviors="using:CryptoScanner.Signal.Behaviors"
+             xmlns:converter="using:CryptoScanner.Signal.Converters"
+             x:DataType="vm:SignalGridViewModel">
+
+    <UserControl.Resources>
+        <converter:SignalVolumeColorConverter x:Key="SignalVolumeColorConverter" />
+    </UserControl.Resources>
+
+    <Grid> 
+        <DataGrid x:Name="SignalsDataGrid" Grid.Row="0" Classes="grid" ItemsSource="{Binding Signals}" 
+                  IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Extended" 
+                  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+                  GridLinesVisibility="None" BorderThickness="0" BorderBrush="Transparent"
+                  PointerPressed="OnDataGridPointerPressed">
+            <DataGrid.Columns >
+            </DataGrid.Columns>
+
+			<!-- Dialog with selection of visible columns -->
+            <DataGrid.ContextFlyout>
+                <MenuFlyout>
+                    <MenuItem Header="External Programma" Click="OnLaunchExternal" />
+                </MenuFlyout>
+            </DataGrid.ContextFlyout>
+		</DataGrid>
+    </Grid>
+</UserControl>

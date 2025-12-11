@@ -1,0 +1,109 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:symbol="using:CryptoScanner.Symbol.Views"
+        xmlns:signal="using:CryptoScanner.Signal.Views"
+        xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
+        xmlns:vm="using:CryptoScanner.MainForm.ViewModels"
+		xmlns:controls="using:CryptoScanner.Controls"
+        x:Class="CryptoScanner.MainForm.Views.MainView"
+        x:DataType="vm:MainViewModel"
+        Title="CryptoScanBot" Width="1000" Height="800" FontSize="10">
+
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+
+	
+    <Grid ColumnDefinitions="300, 4, *">
+
+		<!-- The symbols on the left Background="red" -->
+		<Grid Grid.Column ="0" x:Name="SymbolSplitView">
+		    <Grid RowDefinitions="Auto,*">
+			    <Panel Grid.Row="0" Height="100" >
+				    <Menu>
+					    <MenuItem Header="Instellingen">
+						    <MenuItem Header="Algemeen" Click="OnSettingsClick" />
+					    </MenuItem>
+				    </Menu>
+				    <TextBlock Text="Search etc." FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+			    </Panel>
+			    <Grid Grid.Row="1">
+                    <TabControl Grid.Row="0" Margin="0" >
+                        <TabItem Header="Symbols" FontSize="15">
+				            <symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}" Grid.Column="0"/>
+                        </TabItem>
+                    </TabControl>
+			    </Grid>
+			</Grid>
+		</Grid>
+
+		
+		<!-- Splitter between symbols and the signals -->
+		<GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+
+
+		<!-- Main screen -->
+        <Grid Grid.Column ="2" RowDefinitions="Auto,*">
+            <!-- The top dashboard  Background="orange" -->
+            
+            <Grid ColumnDefinitions="Auto, Auto" Grid.Row="0">
+                <Panel Grid.Column="0" Height="100" >
+                    <!--
+				    <TextBlock Text="Dashboard information" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
+                    -->
+	                <dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
+                </Panel>
+                <Panel Grid.Column="1" Height="100" >
+                    <!--
+	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
+                    -->
+                </Panel>
+            </Grid>
+
+
+            <!-- The signals on the main screen Background="yellow" -->
+            <TabControl Grid.Row="1" Margin="0" >
+              <TabItem Header="Signals" FontSize="15">
+                <Panel >
+				    <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
+                    <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
+                </Panel>
+              </TabItem>
+              <TabItem Header="Tradingview" FontSize="15">
+                <Panel Background="red">
+                    <!-- NavigationCompleted="WebView_NavigationCompleted" -->
+                    <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
+                    <!-- Dan gaat de tradingview browser waarschijnlijk vervallen, 219 euro per jaar 
+                    
+                    Eigen interop / native browser handles
+                    Met Avalonia kun je het onderliggende platform-handle van de WebView ophalen (TryGetPlatformHandle) 
+                    en native browser-API’s gebruiken. docs.avaloniaui.net +1
+                    Dit vereist wel extra werk per-platform, omdat je dan platform‐specifieke code moet schrijven 
+                    (bijv. WebView2 op Windows, WebKit op macOS, WebKitGtk op Linux).
+                    <NativeWebView Source="https://nu.nl/"  />
+                    <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
+                    -->
+                    <Decorator x:Name="browserWrapper"/>
+                </Panel>
+              </TabItem>
+              <TabItem Header="Live Data" FontSize="15">
+                <TextBlock Margin="0">This is content</TextBlock>
+              </TabItem>
+              <TabItem Header="Open positions" FontSize="15">
+                <TextBlock Margin="5">This is content</TextBlock>
+              </TabItem>
+              <TabItem Header="Closed positions" FontSize="15">
+                <TextBlock Margin="5">This is content</TextBlock>
+              </TabItem>
+              <TabItem Header="Log" FontSize="15">
+                <TextBlock Margin="5">This is content</TextBlock>
+              </TabItem>
+            </TabControl>
+        </Grid>
+
+
+		
+	</Grid >
+</Window>

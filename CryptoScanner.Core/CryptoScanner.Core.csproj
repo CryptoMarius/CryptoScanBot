@@ -1,0 +1,300 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CryptoScanner.Core</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Exchange\Binance\Futures\Asset.cs" />
+    <Compile Remove="Exchange\Binance\Futures\Order.cs" />
+    <Compile Remove="Exchange\Binance\Futures\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Binance\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Binance\Futures\Trade.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Binance\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Order.cs" />
+    <Compile Remove="Exchange\Binance\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Binance\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Binance\Spot\Trade.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Api.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Candle.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Interval.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\LimitRate.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\SubscriptionKLineTicker.cs" />
+    <Compile Remove="Exchange\BloFin\Spot\Symbol.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Asset.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Order.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Futures\Trade.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Asset.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\CandlesEmulator.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Order.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\BybitApi\Spot\Trade.cs" />
+    <Compile Remove="Exchange\Coinbase\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Coinbase\Spot\Order.cs" />
+    <Compile Remove="Exchange\Coinbase\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Coinbase\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Coinbase\Spot\Trade.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\FetchTradesForOrder.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\Order.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\SubscriptionKLineTicker - Copy.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Kraken\Spot\Trade.cs" />
+    <Compile Remove="Exchange\Kucoin\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Kucoin\Spot\Order.cs" />
+    <Compile Remove="Exchange\Kucoin\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Kucoin\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Kucoin\Spot\Trade.cs" />
+    <Compile Remove="Exchange\Mexc\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Mexc\Spot\Order.cs" />
+    <Compile Remove="Exchange\Mexc\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Mexc\Spot\Trade.cs" />
+    <Compile Remove="Exchange\Okx\Spot\Asset.cs" />
+    <Compile Remove="Exchange\Okx\Spot\Order.cs" />
+    <Compile Remove="Exchange\Okx\Spot\SubscriptionPriceTicker.cs" />
+    <Compile Remove="Exchange\Okx\Spot\SubscriptionUserTicker.cs" />
+    <Compile Remove="Exchange\Okx\Spot\Trade.cs" />
+    <Compile Remove="Signal\Other\SignalDoubleTopBottomLong.cs" />
+    <Compile Remove="Signal\Other\SignalDoubleTopBottomShort.cs" />
+    <Compile Remove="Signal\SignalMacdLtLong.cs" />
+    <Compile Remove="Signal\SignalMacdLtShort.cs" />
+    <Compile Remove="Signal\SignalMacdTestLong.cs" />
+    <Compile Remove="Signal\SignalMacdTestShort .cs" />
+    <Compile Remove="Trend\ZigZagIndicator10.cs" />
+    <Compile Remove="Trend\ZigZagIndicator11.cs" />
+    <Compile Remove="Trend\ZigZagIndicator14.cs" />
+    <Compile Remove="Trend\ZigZagIndicator7.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker - Copy original.cs.txt" />
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old not okay.cs.txt" />
+    <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old okay.cs.txt" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+	  <PackageReference Include="Avalonia" Version="11.3.9" />
+	  <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
+	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.9" />
+	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	  <PackageReference Include="Binance.Net" Version="11.11.0" />
+    <PackageReference Include="BitMart.Net" Version="2.12.0" />
+    <PackageReference Include="BloFin.Net" Version="1.4.0" />
+    <PackageReference Include="Bybit.Net" Version="5.13.0" />
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="HyperLiquid.Net" Version="2.17.0" />
+    <PackageReference Include="JK.Mexc.Net" Version="3.12.0" />
+    <PackageReference Include="JK.OKX.Net" Version="3.11.1" />
+    <PackageReference Include="JKorf.Coinbase.Net" Version="2.11.3" />
+    <PackageReference Include="KrakenExchange.Net" Version="6.11.0" />
+    <PackageReference Include="Kucoin.Net" Version="7.11.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="NLog" Version="6.0.6" />
+    <PackageReference Include="NPOI" Version="2.7.5" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="Skender.Stock.Indicators" Version="2.6.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Sounds\Old\sound-jump-down.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-jump-up.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-sbm-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-sbm-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-stobb-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-stobb-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-storsi-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Old\sound-storsi-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\aksu.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\ball_bearing.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\bell_sound.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\boing_sound_effect.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\boxing_bell.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\cool.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\discord_halloween.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\email_entact.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\fade_in.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\huawei.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\la_cucaracha.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\luana.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\mind_transfer_no_jutsu.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\notification.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\popup.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\proxima.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\star_trek_energize.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\suffocation.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\Other\xiaomi_fress.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-dlz-overbought .wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-dlz-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-dlz-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-domnear-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-domnear-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-domnearby-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-domnearby-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-fvg-overbought .wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-fvg-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-fvg-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-heartbeat.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-jump-down.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-jump-up.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-nwe-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-nwe-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-overbought2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-sbm-oversold2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-overbought2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-stobb-oversold2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-storsi-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-storsi-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-trade-notification-ka-ching.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-trade-notification.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-trade-notification2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-uuh-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Sounds\sound-uuh-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Exchange\BloFin\Spot\" />
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+</Project>

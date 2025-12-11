@@ -7,7 +7,7 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
 
     public double MinimumPercentage { get; set; } = 0.25;
 
-    
+
     public SettingsSignalStrategyFvg() : base()
     {
         SoundFileLong = "sound-fvg-oversold.wav";

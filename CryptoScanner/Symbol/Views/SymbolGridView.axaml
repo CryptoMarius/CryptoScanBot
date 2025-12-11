@@ -1,0 +1,65 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450" 
+             x:Class="CryptoScanner.Symbol.Views.SymbolGridView"
+             xmlns:vm="using:CryptoScanner.Symbol.ViewModels"
+             xmlns:converter="using:CryptoScanner.Symbol.Converters"
+             x:DataType="vm:SymbolGridViewModel">
+
+    <UserControl.Resources>
+        <converter:SymbolVolumeColorConverter x:Key="SymbolVolumeColorConverter" />
+    </UserControl.Resources>
+
+    <Grid> 
+
+        <DataGrid x:Name="SymbolsDataGrid" Grid.Row="0" Classes="grid" ItemsSource="{Binding Symbols}" 
+                  IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Extended" 
+                  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+                  GridLinesVisibility="None" BorderThickness="1" BorderBrush="Transparent"
+                  PointerPressed="OnDataGridPointerPressed">
+
+            <DataGrid.Columns >
+                <!-- Id -->
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}" IsVisible="{Binding ShowIdColumn}" Width="Auto" SortMemberPath="Id"/>
+
+                <!-- Name -->
+                <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" IsVisible="{Binding ShowNameColumn}" Width="Auto" SortMemberPath="Symbol"/>
+                
+                <!-- Volume -->
+                <DataGridTemplateColumn IsVisible="{Binding ShowVolumeColumn}" Width="Auto" SortMemberPath="Volume">
+                    <DataGridTemplateColumn.Header>
+                        <TextBlock Text="Volume" HorizontalAlignment="Right" />
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding Volume, StringFormat='{}{0:N0}'}" 
+                                       Foreground="{Binding ., Converter={StaticResource SymbolVolumeColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+			
+                <!-- Distance -->
+                <DataGridTemplateColumn Header="Distance" IsVisible="{Binding ShowDistanceColumn}" Width="Auto" SortMemberPath="Distance">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                       Text ="{Binding Distance, StringFormat='{}{0:N2}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+
+
+			<!-- Dialog with selection of visible columns -->
+            <DataGrid.ContextFlyout>
+                <MenuFlyout>
+                    <MenuItem Header="Start Extern Programma" Click="OnLaunchExternal" />
+                </MenuFlyout>
+            </DataGrid.ContextFlyout>
+
+		</DataGrid>
+    </Grid>
+</UserControl>

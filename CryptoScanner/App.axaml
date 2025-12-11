@@ -1,0 +1,111 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="CryptoScanner.App"
+             RequestedThemeVariant="Default">
+    
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Light theme resources -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="LowVolumeBrush">#E61A1A</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#000000</SolidColorBrush>
+                    
+                    <!-- Price change colors -->
+                    <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#000000</SolidColorBrush>
+                </ResourceDictionary>
+                
+                <!-- Dark theme resources -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="LowVolumeBrush">#FF4444</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#E0E0E0</SolidColorBrush>
+                    
+                    <!-- Price change colors (aangepast voor dark mode) -->
+                    <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#EF5350</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+    
+    <Application.Styles>
+        <FluentTheme />
+        <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <!-- ============================================ -->
+        <!-- GLOBALE TEXTBLOCK/CONTROL STYLES -->
+        <!-- ============================================ -->
+        
+        <!-- Globale style voor TextBlock -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        
+        <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
+        <Style Selector="Button">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        
+        <Style Selector="Label">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- ============================================ -->
+        <!-- DASHBOARD SPECIFIC STYLES -->
+        <!-- ============================================ -->
+        
+        <!-- Alle TextBlocks in dashboard krijgen margin en vertical alignment -->
+        <Style Selector="TextBlock.dashboard">
+            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        
+        <!-- Labels (kolom 0) -->
+        <Style Selector="TextBlock.label">
+            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        
+        <!-- Values (kolom 1) -->
+        <Style Selector="TextBlock.value">
+            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <!-- ============================================ -->
+        <!-- DATAGRID STYLES (voor alle DataGrids in app) -->
+        <!-- ============================================ -->
+        
+        <!-- Alternating row colors -->
+        <Style Selector="DataGridRow:nth-child(even)">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+        </Style>
+        
+        <!-- Kleinere row height -->
+        <Style Selector="DataGridCell">
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        
+        <Style Selector="DataGridRow">
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        
+        <!-- Verberg focus indicator -->
+        <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        
+        <!-- Verberg currency visual (selected cell border) -->
+        <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+    </Application.Styles>
+</Application>

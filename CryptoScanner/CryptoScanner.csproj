@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<PackageIcon>FacIcon1.jpg</PackageIcon>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
+	
+	<ItemGroup>
+	  <AvaloniaXaml Remove="BrowserView\**" />
+	  <Compile Remove="BrowserView\**" />
+	  <Compile Remove="Main\**" />
+	  <Compile Remove="TopBanner\**" />
+	  <EmbeddedResource Remove="BrowserView\**" />
+	  <None Remove="BrowserView\**" />
+	  <None Remove="Main\**" />
+	  <None Remove="TopBanner\**" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.3.9" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.9" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+		<!--
+		<PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
+		<PackageReference Include="CefGlue.Common" Version="120.6099.211" />
+		-->
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="DashBoard\Views\DashBoardView.axaml.cs">
+	    <DependentUpon>DashBoardView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="MainForm\Views\MainView.axaml.cs">
+	    <DependentUpon>MainView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Signal\Views\SignalGridView.axaml.cs">
+	    <DependentUpon>SignalGridView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Symbol\Views\SymbolGridView.axaml.cs">
+	    <DependentUpon>SymbolGridView.axaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResourceX Include="Assets" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+	</PropertyGroup>
+
+</Project>

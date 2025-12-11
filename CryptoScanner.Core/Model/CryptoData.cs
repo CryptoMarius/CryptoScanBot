@@ -209,7 +209,7 @@ public class CryptoData2 : CryptoData
     // Market trend percentage (primary)
     public float TrendPercentagePrimary { get; set; }
     public float TrendPercentageSecondary { get; set; }
-    
+
     // Trend
     public CryptoTrendIndicator? Trend15m { get; set; }
     public CryptoTrendIndicator? Trend30m { get; set; }

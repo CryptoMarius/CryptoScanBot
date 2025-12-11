@@ -14,7 +14,18 @@ public class SymbolValue
     public DateTime? LastCheck { get; set; }
     public decimal LastValue { get; set; } // For colors
 
-    public decimal Lp { get; set; } // Close?
+    // Close value?
+    public decimal _lp;
+    public decimal Lp {
+        get { return _lp; }
+        set {
+            if (_lp != value)
+            {
+                _lp = value;
+                DataReceived?.Invoke(this, this);
+            }
+        } }
+
 
     // Onderstaand is in deze tool niet nodig, wellicht willen we er in de toekomt nog wat mee?
 
@@ -29,6 +40,7 @@ public class SymbolValue
     //public double OpenPrice { get; set; } // previous ?
     //public DateTime OpenTime { get; set; }
     //public string TimeZone { get; set; }
+    public event EventHandler<SymbolValue>? DataReceived;
 }
 
 

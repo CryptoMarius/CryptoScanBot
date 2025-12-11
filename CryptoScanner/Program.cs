@@ -1,58 +1,41 @@
-﻿using CryptoScanner.Core.Core;
+﻿using Avalonia;
 
-using Microsoft.Extensions.DependencyInjection;
+using CryptoScanner;
+using CryptoScanner.Core.Core;
+
+using System;
 using System.Reflection;
+using System.Threading;
 
 namespace CryptoScanner;
 
-static class Program
+class Program
 {
-
-
-    /// <summary>
-    /// The main entry point for the application.
-    /// </summary>
     [STAThread]
-    static void Main()
+    public static void Main(string[] args)
     {
         // Vroeger dan alle andere..
         InitializeApplicationVariables();
         ScannerLog.InitializeLogging();
 
-        // Add the event handler for handling UI thread exceptions to the event.
-        Application.ThreadException += new ThreadExceptionEventHandler(OnThreadException);
-
-        // Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
-        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
-
-
         // Add the event handler for handling non-UI thread exceptions to the event. 
         AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledException);
 
-        Application.EnableVisualStyles();
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.SetCompatibleTextRenderingDefault(false);
+        // Add the event handler for handling UI thread exceptions to the event.
+        //Application.ThreadException += new ThreadExceptionEventHandler(OnThreadException);
 
-        // Via service gives thread error with the WebView browser
-        //var services = new ServiceCollection();
-        //services.AddTransient<Core.Exchange.ExchangeBase>();
-        //services.AddTransient<Core.Exchange.SymbolBase>();
-        //services.AddTransient<Core.Exchange.CandleBase>();
-        //services.AddTransient<Core.Exchange.LimitRatesBase>();
-
-        //services.AddTransient<Core.Exchange.Binance.Futures.Candle>();
-        //services.AddTransient<Core.Exchange.Binance.Spot.Candle>();
-        //services.AddTransient<CryptoScanner.Core.Exchange.BybitApi.Futures.LimitRate>();
-
-
-        //services.AddSingleton<Core.Exchange.IExchangeOptions, Core.Exchange.ExchangeOptions>();
-        //services.AddTransient<FrmMain>();
-        //services.AddTransient<FrmSettings>();
-
-        //var serviceProvider = services.BuildServiceProvider();
-        //Application.Run(serviceProvider.GetRequiredService<FrmMain>());
-        Application.Run(new FrmMain());
+        // Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
+        // https://docs.avaloniaui.net/docs/concepts/unhandledexceptions
+        // Avalonia UI does not offer any mechanism to handle exceptions globally and mark this as handled. 
+        //Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
+
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            //.WithInterFont()
+            .LogToTrace();
 
 
     public static void InitializeApplicationVariables()

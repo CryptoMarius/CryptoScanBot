@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="CryptoScanner.DashBoard.Views.DashBoardView"
+             xmlns:vm="using:CryptoScanner.DashBoard.ViewModels"
+             xmlns:converters="using:CryptoScanner.DashBoard.Converters"
+             x:DataType="vm:DashBoardViewModel">
+
+    <UserControl.Resources>
+        <converters:LargeNumberConverter x:Key="LargeNumberConverter" />
+    </UserControl.Resources>
+  
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
+        
+        <!-- Market Cap Total -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
+                   Text="Market Cap Total" />
+        <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
+                   Foreground="{Binding MarketCapTotalColor}"
+                   Text="{Binding MarketCapTotal, Converter={StaticResource LargeNumberConverter}}" />
+        
+        <!-- Dollar Index -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
+                   Text="Dollar Index (DXY)" />
+        <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
+                   Foreground="{Binding DollarIndexColor}"
+                   Text="{Binding DollarIndex, Converter={StaticResource LargeNumberConverter}}" />
+
+        <!-- S&P 500 -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
+                   Text="S&amp;P 500" />
+        <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
+                   Foreground="{Binding Spx500Color}"
+                   Text="{Binding Spx500, Converter={StaticResource LargeNumberConverter}}" />
+
+        <!-- Bitcoin Dominance -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Classes="label"
+                   Text="BTC Dominance" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
+                   Foreground="{Binding BitcoinDominanceColor}"
+                   Text="{Binding BitcoinDominance, StringFormat='{}{0:N2}%'}" />
+
+        <!-- Fear and Greed Index -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Classes="label"
+                   Text="Fear &amp; Greed Index" />
+        <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
+                   Foreground="{Binding FearAndGreedIndexColor}"
+                   Text="{Binding FearAndGreedIndex, StringFormat='{}{0:N2}%'}" />
+    </Grid>
+</UserControl>
