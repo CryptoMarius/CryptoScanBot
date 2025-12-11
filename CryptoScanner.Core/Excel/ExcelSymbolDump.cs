@@ -8,75 +8,6 @@ namespace CryptoScanner.Core.Excel;
 public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 {
 
-    //static private void ExportToExcel(Model.CryptoExchange exchange, CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList)
-    //{
-    //    //Deze is op dit moment specifiek voor de TradeView aanpak gemaakt (datum er ff uitgehaald en vervangen met unix 1000's)
-    //    try
-
-    //    {
-    //        var csv = new StringBuilder();
-    //        var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", "Timestamp", "Symbol", "Open", "High", "Low", "Close", "Volume");
-    //        csv.AppendLine(newLine);
-
-    //        //Monitor.Enter(candleList);
-    //        //try
-    //        //{
-    //        for (int i = 0; i < candleList.Count; i++)
-    //        {
-    //            CryptoCandle candle = candleList.Values[i];
-
-    //            newLine = string.Format("{0}000,{1},{2},{3},{4},{5},{6}",
-    //            candle.OpenTime.ToString(),
-    //            //CandleTools.GetUnixDate(candle.OpenTime).ToString(),
-    //            symbol.Name,
-    //            //candle.Interval.ToString(),
-    //            candle.Open.ToString(),
-    //            candle.High.ToString(),
-    //            candle.Low.ToString(),
-    //            candle.Close.ToString(),
-    //            //GetUnixDate(candle.CloseTime).ToString(),
-    //            candle.Volume.ToString());
-    //            //candle.Trades.ToString());
-
-    //            csv.AppendLine(newLine);
-    //        }
-    //        //}
-    //        //finally
-    //        //{
-    //        //    Monitor.Exit(candleList);
-    //        //}
-    //        string filename = GlobalData.GetBaseDir();
-    //        filename = filename + @"\data\" + exchange.Name + @"\Candles\" + symbol.Name + @"\"; // + interval.Name + @"\";
-    //        Directory.CreateDirectory(filename);
-    //        File.WriteAllText(filename + symbol.Name + "-" + interval.Name + ".csv", csv.ToString());
-
-    //    }
-    //    catch (Exception error)
-    //    {
-    //        ScannerLog.Logger.Error(error, "");
-    //        // Soms is niet alles goed gevuld en dan krijgen we range errors e.d.
-    //        //GlobalData.AddTextToLogTab(error.ToString());
-    //    }
-    //}
-
-
-    //public static void ExportToExcelAll()
-    //{
-    //    foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values)
-    //    {
-    //        ExportSymbolsToExcel(exchange);
-
-    //        foreach (var symbol in exchange.SymbolListName.Values)
-    //        {
-    //            foreach (CryptoInterval interval in GlobalData.IntervalList)
-    //            {
-    //                CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-    //                ExportToExcel(exchange, symbol, interval, symbolPeriod.CandleList);
-    //            }
-    //        }
-    //    }
-    //}
-
     private void DumpInformation()
     {
         // Overzichts van de aanwezige candles
@@ -197,11 +128,13 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "Rsi");
         WriteCell(sheet, columns++, row, "StochOscillator");
         WriteCell(sheet, columns++, row, "StochSignal");
-        WriteCell(sheet, columns++, row, "Lux5mValue");
+        WriteCell(sheet, columns++, row, "bb.low");
+        WriteCell(sheet, columns++, row, "bb.high");
         WriteCell(sheet, columns++, row, "Sma200");
         WriteCell(sheet, columns++, row, "Sma50");
         WriteCell(sheet, columns++, row, "Sma20");
         WriteCell(sheet, columns++, row, "PSar");
+        WriteCell(sheet, columns++, row, "Lux5mValue");
 
         CryptoCandle? last = null;
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
@@ -232,27 +165,16 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
             if (candle.CandleData != null)
             {
-                List<double?> bla = [];
-                bla.Add(candle.CandleData.Rsi);
-                bla.Add(candle.CandleData.StochOscillator);
-                bla.Add(candle.CandleData.StochSignal);
-                bla.Add(candle.CandleData.Lux5mValue);
-                bla.Add(candle.CandleData.Sma200);
-                bla.Add(candle.CandleData.Sma50);
-                bla.Add(candle.CandleData.Sma20);
-                bla.Add(candle.CandleData.PSar);
-
-                foreach (var value in bla)
-                {
-                    if (value != null)
-                    {
-                        if (value <= 0)
-                            WriteCell(sheet, column, row, value, CellStyleDecimalRed);
-                        else
-                            WriteCell(sheet, column, row, value, CellStyleDecimalGreen);
-                    }
-                    column++;
-                }
+                WriteCell(sheet, column++, row, candle.CandleData.Rsi, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.StochOscillator, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.StochSignal, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.Sma200, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.Sma50, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.PSar, CellStyleDecimalNormal);
+                WriteCell(sheet, column++, row, candle.CandleData.Lux5mValue, CellStyleDecimalNormal);
             }
 
             last = candle;
