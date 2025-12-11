@@ -1,7 +1,18 @@
 CryptoScanBot release historie:
 
-20-11-2025 2.1.8
-- Scanner - Kraken spot verwijderd aangezien deze niet goe functioneerd
+xx-xx-2025 2.1.9
+- Scanner - Optimalisatie van de trend waardoor niet bij elke aanroep de trend voor alle intervallen berekend hoeft te worden
+- Scanner - Verkeerd aantal decimalen in de display van de sma*, rsi, macd*, bb%, avgbb gecorrigeerd
+- Scanner - Reductie van de opstarttijd door enkel de munten te verversen die boven het ingestelde minimale volume ligt bij te werken
+- Scanner - Reductie van de benodigde hoeveelheid geheugen door enkel de munten te monitoren die boven het ingestelde minimale volume liggen.
+            Dit heeft lichte impact op de barometer aangezien die munten ook niet meer kunnen worden meegenomen in de barometer berekening.
+- Scanner - De bestanden van de niet actieve munten worden verwijderd wat een stukje scheelt qua gebruikte bestanden
+- Scanner - De interne opslag voor kleuren aangepast (alvast unverseel voor zowel Mac als Windows)
+- Scanner - De default naamgeving van de geluidsbestanden voor dlz en fvg waren afwijkend.
+            (nomaal gebruuikt de scanner oversold/overbought ipv long/short en die geluiden waren niet bijgeleverd)
+
+21-11-2025 2.1.8
+- Scanner - Kraken spot verwijderd aangezien deze niet goed functioneert
 - Scanner - Fix voor verkeerde geluiden (speelde altijd de jump geluiden)
 
 14-11-2025 2.1.7

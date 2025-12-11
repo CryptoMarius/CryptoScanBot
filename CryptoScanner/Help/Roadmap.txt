@@ -2,11 +2,23 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
+BUG: 
+- De week candles kloppen niet (het lijken bijna 2 intervallen te zijn die door elkaar lopen?)
+- (opgelost?)De barometer voor de 1d werkt niet meer goed (het gevolg van het reduceren van de symbols??) of was deze altijd al kapot?
+- (weinig impact?) De barometer berekening lijkt ook meerdere keren per interval aangeroepen te worden (jammer van de cpu)
+- (opgelost?)De excel dump laat zien dat de barometer op de 1d niet goed bwaard is, hersteld wordt, of berekend wordt (slechts de laatste waarden zijn zichtbaar, die net berekend zijn)
+(en oppassen, de barometer symbols zijn nu zichtbaar in de symbol grid om het te kunnen controleren)
+- ****** We halen nu alleen candles op voro de munten die boven het minimale volume zitten. Maar als een munt plotseling eronder of boven zit dan wordt de munt niet toegevoegd of verwijderd 
+  aan de kline stream. Dus op basis van de volumes die we ophalen (momenteel default ieder uur) moeten we ook de kline stream soms bijwerken.
+  Idee is om alleen de munten toe te voegen in een aparte kline ticker groep als het boven de minimale volume uitkomt (enn og niet mee deed)
+- De SBM 3 is echt helemaal kapot? long en short lijken niet goed (of komen te laat)
+  Heb 1 conditie ook laten vervallen, wellicht is dat het? de prijs en psar vergelijking
+- TODO: PSAR inzichtelijk maken in de visualisatie (om het te kunnen vergelijken met TV)
+
 Scanner:
+- Scanner - Je kunt de geluiden niet testen vanuit het instellingenscherm als je hebt ingesteld dat geluiden uit moeten staan (via vinkje hoofdscherm)
 - Scanner - Testen (over eigenlijk alle exchanges): Volume munten op alle exchanges (bybit spot is okay)
-- Scanner - Het volume laten berekenen uit de laatste 24 1 uur candles (scheelt een hoop intern "gedoe")
-  (dan kunnen de volume ticker weg (maar het geeft wel weer problemen met Mexc, Kucoin en Hyperliquid))
-- Scanner - Waarom mist de btcusdt op Kucoin Futures? Is waarschijnlijk onder een naam bekend?
+- Scanner - Waarom mist de btcusdt op Kucoin Futures en mexc? Is waarschijnlijk onder een andere naam bekend..
 - Scanner - Documentatie Luxalgo Nadaraya-Watson envelope (zie voorlopig de indicator in Tradingview)
 - Scanner - Een beslissing maken over de Average min/max rechtsboven (een experimenteel item waar ontevreden over ben)
 - Scanner - De Pivots folder in de datamap bevat na verloop van tijd wel erg veel data (hier richting de 10 Gb!!)
