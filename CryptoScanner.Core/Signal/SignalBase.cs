@@ -204,7 +204,7 @@ public class SignalCreateBase
         // Was the price near the upper bb?
 
         CryptoCandle? last = CandleLast;
-        while (candleCount-- > 0)
+        while (candleCount > 0)
         {
             decimal band = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
             band -= (decimal)last!.CandleData?.BollingerBandsDeviation! * percentage / 100m;
@@ -220,6 +220,7 @@ public class SignalCreateBase
 
             if (!GetPrevCandle(last, out last))
                 return false;
+            candleCount--;
         }
 
         return false;

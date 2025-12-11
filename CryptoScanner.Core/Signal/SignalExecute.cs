@@ -13,14 +13,14 @@ public class SignalExecute
     public static int AnalyseCount { get { return analyseCount; } }
     public static void ResetAnalyseCount() => analyseCount = 0;
     
-    private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool check), 
+    private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool checkBarometer), 
         SortedList<string, CryptoInterval>> Executing { get; set; } = [];
 
 
-    private static void Add(AlgorithmDefinition strategyDef, CryptoTradeSide side, bool checkStuff, string intervalName)
+    private static void Add(AlgorithmDefinition strategyDef, CryptoTradeSide side, bool checkBarometer, string intervalName)
     {
         CryptoInterval interval = GlobalData.IntervalListPeriodName[intervalName];
-        var key = (strategyDef.Strategy, side, checkStuff);
+        var key = (strategyDef.Strategy, side, checkBarometer);
         Executing.TryAdd(key, []);
         Executing[key].TryAdd(intervalName, interval);
     }
@@ -137,7 +137,7 @@ public class SignalExecute
                     try
                     {
                         var side = entry.Key.side;
-                        if (entry.Key.check) // true for the standard strategies bug false for dlz and fvg zones
+                        if (entry.Key.checkBarometer) // true for the standard strategies bug false for dlz and fvg zones
                         {
                             // Barometer check
                             if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, symbol.Quote, TradingConfig.Signals[side].Barometer, out string reaction))
@@ -148,11 +148,6 @@ public class SignalExecute
                             }
                         }
                         //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
-
-                        if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                            GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side}");
-                        //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
-                        //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
 
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
@@ -165,16 +160,25 @@ public class SignalExecute
                                 createSignal.History = history;
                                 createSignal.Candle = history[^1];
 
-
                                 // TODO: Set the right Candle!!!!!
+                                string text = "";
                                 if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
+                                {
+                                    text = "*";
                                     signalList.AddRange(createSignal.SignalList);
+                                }
 
+                                if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                                    GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} {text}");
+                                //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
+                                //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
 
                                 // Counter for mainscreen so you can see symbols analyzing etc..
                                 Interlocked.Increment(ref analyseCount);
                             }
+                            else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
                         }
+                        else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm");
                     }
                     catch (Exception error)
                     {
