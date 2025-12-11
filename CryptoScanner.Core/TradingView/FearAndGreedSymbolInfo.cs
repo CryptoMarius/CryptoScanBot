@@ -14,7 +14,7 @@ public class FGIndexData
     public string? Value { get; set; }
 }
 
-public class FearAndGreatSymbolInfo
+public class FearAndGreedSymbolInfo
 {
     private SymbolValue? SymbolValue;
     private readonly HttpClient httpClient = new();
