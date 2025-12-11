@@ -37,9 +37,15 @@ public class SignalSbm1Short : SignalSbmBaseShort
             return false;
         }
 
-        if (!this.HadStobbInThelastXCandlesOverbought(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
+        if (!this.IsStobbInThelastXCandlesOverbought(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
         {
             ExtraText = "no stob in the last x candles";
+            return false;
+        }
+
+        if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        {
+            ExtraText = "no macd recovery";
             return false;
         }
 

@@ -11,12 +11,11 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 {
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
-        // Er recovery is via de macd
-        if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
-        {
-            response = "no macd recovery";
-            return false;
-        }
+        //if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        //{
+        //    response = "no macd recovery";
+        //    return false;
+        //}
 
         if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
             !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))

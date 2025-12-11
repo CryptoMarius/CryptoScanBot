@@ -41,6 +41,12 @@ public class SignalSbm2Short : SignalSbmBaseShort
             return false;
         }
 
+        if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        {
+            ExtraText = "no macd recovery";
+            return false;
+        }
+
         return true;
     }
 }

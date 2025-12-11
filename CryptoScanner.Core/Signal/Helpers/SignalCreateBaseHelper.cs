@@ -5,7 +5,7 @@ namespace CryptoScanner.Core.Signal.Helpers;
 
 public static class SignalCreateBaseHelper
 {
-    public static bool MacdRecoveryOversold(this SignalCreateBase strategy, int candleCount)
+    public static bool IsMacdRecoveryOversold(this SignalCreateBase strategy, int candleCount)
     {
         // Is there "recovery" (a lighter macd bar)
         CryptoCandle last = strategy.CandleLast!;
@@ -62,7 +62,7 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool HadStobbInThelastXCandlesOverbought(this SignalCreateBase strategy, int candleCount)
+    public static bool IsStobbInThelastXCandlesOverbought(this SignalCreateBase strategy, int candleCount)
     {
         CryptoCandle? last = strategy.CandleLast;
         while (candleCount > 0)
@@ -82,7 +82,7 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool HasBollingerBandsIncreased(this SignalCreateBase strategy, int candleCount = 5, decimal percentage = 1.5m)
+    public static bool IsBollingerBandsIncreased(this SignalCreateBase strategy, int candleCount = 5, decimal percentage = 1.5m)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
         // zijn, ook als dat binnen de bollinger bands plaats vindt (dit is dus aanvullend 

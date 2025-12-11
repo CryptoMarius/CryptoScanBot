@@ -35,8 +35,14 @@ public class SignalSbm3Long : SignalSbmBaseLong
             return false;
         }
 
-        if (!this.HasBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
+        if (!this.IsBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
             return false;
+
+        if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        {
+            ExtraText = "no macd recovery";
+            return false;
+        }
 
         return true;
     }

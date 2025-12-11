@@ -12,7 +12,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
     public override bool AdditionalChecks(CryptoCandle candle, out string response)
     {
         // Er recovery is via de macd
-        if (!this.MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
         {
             response = "no macd recovery";
             return false;
@@ -65,7 +65,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // MACD
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
-            if (!this.MacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+            if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
             {
                 // ExtraText is al ingevuld
                 return false;
