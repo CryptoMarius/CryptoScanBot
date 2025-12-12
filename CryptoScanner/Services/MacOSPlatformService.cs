@@ -11,7 +11,7 @@ public class MacOSPlatformService : IPlatformService
     {
         // macOS: ~/Library/Application Support/CryptoScanBot
         var appSupport = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        return Path.Combine(appSupport, "CryptoScanBot");
+        return Path.Combine(appSupport, "CryptoScanner");
     }
 
     public Task<bool> OpenExternalApp(string appName)

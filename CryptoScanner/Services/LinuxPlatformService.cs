@@ -11,7 +11,7 @@ public class LinuxPlatformService : IPlatformService
     {
         // Linux: ~/.local/share/CryptoScanBot
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return Path.Combine(home, ".local", "share", "CryptoScanBot");
+        return Path.Combine(home, ".local", "share", "CryptoScanner");
     }
 
     public Task<bool> OpenExternalApp(string appName)

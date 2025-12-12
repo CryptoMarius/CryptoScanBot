@@ -8,7 +8,7 @@ namespace CryptoScanner.Services;
 public class WindowsPlatformService : IPlatformService
 {
     public string GetDataDirectory() =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CryptoScanBot");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CryptoScanner");
 
     public Task<bool> OpenExternalApp(string appName)
     {
