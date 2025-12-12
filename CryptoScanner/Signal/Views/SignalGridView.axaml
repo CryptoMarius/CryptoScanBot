@@ -24,7 +24,9 @@
                   GridLinesVisibility="None"
                   BorderThickness="1"
                   BorderBrush="Transparent"
-                  PointerPressed="OnDataGridPointerPressed">
+                  PointerPressed="OnDataGridPointerPressed"
+                  ColumnReordered="OnColumnReordered"
+                  ColumnDisplayIndexChanged="OnColumnDisplayIndexChanged">
 
             <DataGrid.Columns>
                 <!-- Id (Hidden by default) -->
@@ -34,7 +36,7 @@
                                     SortMemberPath="Id" 
                                     IsVisible="False"/>
 
-                <!-- Date (Hidden by default) -->
+                <!-- Date -->
                 <DataGridTextColumn Header="Date" 
                                     Binding="{Binding Date}" 
                                     Width="160" 
@@ -154,7 +156,6 @@
                     <MenuItem Header="-" />
                 </MenuFlyout>
             </DataGrid.ContextFlyout>
-
         </DataGrid>
     </Grid>
 </UserControl>
