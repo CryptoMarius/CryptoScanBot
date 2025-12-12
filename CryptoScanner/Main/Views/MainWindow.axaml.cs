@@ -2,20 +2,19 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
-using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
-using CryptoScanner.MainForm.ViewModels;
+using CryptoScanner.Main.ViewModels;
 
 using System.Reflection;
 
-namespace CryptoScanner.MainForm.Views;
+namespace CryptoScanner.Main.Views;
 
-public partial class MainView : Window
+public partial class MainWindow: Window
 {
     private readonly ITradingViewService _tradingViewService;
 
-    public MainView(MainViewModel viewModel, ITradingViewService tradingViewService)
+    public MainWindow(MainWindowViewModel viewModel, ITradingViewService tradingViewService)
     {
         _tradingViewService = tradingViewService;
         InitializeComponent();

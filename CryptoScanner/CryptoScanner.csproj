@@ -17,8 +17,10 @@
 	  <Compile Remove="TopBanner\**" />
 	  <EmbeddedResource Remove="BrowserView\**" />
 	  <None Remove="BrowserView\**" />
-	  <None Remove="Main\**" />
-	  <None Remove="TopBanner\**" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Compile Remove="Signal\Common\ExtendedColumnDefinitionInfo.cs" />
 	</ItemGroup>
 
 
@@ -44,8 +46,8 @@
 	  <Compile Update="DashBoard\Views\DashBoardView.axaml.cs">
 	    <DependentUpon>DashBoardView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="MainForm\Views\MainView.axaml.cs">
-	    <DependentUpon>MainView.axaml</DependentUpon>
+	  <Compile Update="MainForm\Views\MainWindow.axaml.cs">
+	    <DependentUpon>MainWindow.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Signal\Views\SignalGridView.axaml.cs">
 	    <DependentUpon>SignalGridView.axaml</DependentUpon>
@@ -57,6 +59,15 @@
 
 	<ItemGroup>
 		<AvaloniaResourceX Include="Assets" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Include="Main\ViewModels\MainViewModel.cs" />
+	  <Compile Include="Main\Views\MainWindow.axaml.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Signal\%24klad\" />
 	</ItemGroup>
 
 	<PropertyGroup>

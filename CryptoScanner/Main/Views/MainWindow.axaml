@@ -3,14 +3,14 @@
         xmlns:symbol="using:CryptoScanner.Symbol.Views"
         xmlns:signal="using:CryptoScanner.Signal.Views"
         xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
-        xmlns:vm="using:CryptoScanner.MainForm.ViewModels"
+        xmlns:vm="using:CryptoScanner.Main.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
-        x:Class="CryptoScanner.MainForm.Views.MainView"
-        x:DataType="vm:MainViewModel"
+        x:Class="CryptoScanner.Main.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="CryptoScanBot" Width="1000" Height="800" FontSize="10">
 
     <Design.DataContext>
-        <vm:MainViewModel />
+        <vm:MainWindowViewModel />
     </Design.DataContext>
 
 

@@ -4,15 +4,15 @@ using CryptoScanner.DashBoard.ViewModels;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
 
-namespace CryptoScanner.MainForm.ViewModels;
+namespace CryptoScanner.Main.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainWindowViewModel : ObservableObject
 {
     public DashBoardViewModel DashBoardViewModel { get; }
     public SymbolGridViewModel SymbolGridViewModel { get; }
     public SignalGridViewModel SignalGridViewModel { get; }
 
-    public MainViewModel(
+    public MainWindowViewModel(
         DashBoardViewModel dashBoardViewModel,
         SymbolGridViewModel symbolGridViewModel,
         SignalGridViewModel signalGridViewModel)

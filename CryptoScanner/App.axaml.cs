@@ -6,8 +6,8 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
 using CryptoScanner.DashBoard.ViewModels;
-using CryptoScanner.MainForm.ViewModels;
-using CryptoScanner.MainForm.Views;
+using CryptoScanner.Main.ViewModels;
+using CryptoScanner.Main.Views;
 using CryptoScanner.Services;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
@@ -76,13 +76,13 @@ public partial class App : Application
 
 
         // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
-        services.AddTransient<MainViewModel>();
+        services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashBoardViewModel>();
         services.AddTransient<SymbolGridViewModel>();
         services.AddTransient<SignalGridViewModel>();
 
         // Register Views
-        services.AddTransient<MainView>();
+        services.AddTransient<MainWindow>();
     }
 
     
@@ -99,7 +99,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Get MainView from DI container
-            desktop.MainWindow = Services.GetRequiredService<MainView>();
+            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
         }
 
         base.OnFrameworkInitializationCompleted();
