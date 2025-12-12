@@ -2,7 +2,7 @@
 
 public interface ITradingViewService
 {
-    // Events voor elk symbool
+    // Events for each symbol
     event EventHandler<decimal>? MarketCapTotalChanged;
     event EventHandler<decimal>? DollarIndexChanged;
     event EventHandler<decimal>? Spx500Changed;

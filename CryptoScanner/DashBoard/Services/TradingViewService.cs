@@ -6,7 +6,8 @@ namespace CryptoScanner.DashBoard.Services;
 
 public class TradingViewService : ITradingViewService
 {
-    private readonly List<object> _symbolInfos = new(); // object omdat FearAndGreedSymbolInfo ander type is
+    // Type=object because FearAndGreedSymbolInfo is different type
+    private readonly List<object> _symbolInfos = []; 
 
     // Events
     public event EventHandler<decimal>? MarketCapTotalChanged;
