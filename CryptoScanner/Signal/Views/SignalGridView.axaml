@@ -1,11 +1,10 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450" 
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" 
              x:Class="CryptoScanner.Signal.Views.SignalGridView"
              xmlns:vm="using:CryptoScanner.Signal.ViewModels"
-             xmlns:behaviors="using:CryptoScanner.Signal.Behaviors"
              xmlns:converter="using:CryptoScanner.Signal.Converters"
              x:DataType="vm:SignalGridViewModel">
 
@@ -13,21 +12,149 @@
         <converter:SignalVolumeColorConverter x:Key="SignalVolumeColorConverter" />
     </UserControl.Resources>
 
-    <Grid> 
-        <DataGrid x:Name="SignalsDataGrid" Grid.Row="0" Classes="grid" ItemsSource="{Binding Signals}" 
-                  IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Extended" 
-                  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
-                  GridLinesVisibility="None" BorderThickness="0" BorderBrush="Transparent"
+    <Grid>
+        <DataGrid x:Name="SignalDataGrid"
+                  ItemsSource="{Binding Signals}"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  SelectionMode="Extended"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="None"
+                  BorderThickness="1"
+                  BorderBrush="Transparent"
                   PointerPressed="OnDataGridPointerPressed">
-            <DataGrid.Columns >
+
+            <DataGrid.Columns>
+                <!-- Id (Hidden by default) -->
+                <DataGridTextColumn Header="Id" 
+                                    Binding="{Binding Id}" 
+                                    Width="60" 
+                                    SortMemberPath="Id" 
+                                    IsVisible="False"/>
+
+                <!-- Date (Hidden by default) -->
+                <DataGridTextColumn Header="Date" 
+                                    Binding="{Binding Date}" 
+                                    Width="160" 
+                                    SortMemberPath="Date" 
+                                    IsVisible="True"/>
+
+                <!-- Exchange -->
+                <DataGridTextColumn Header="Exchange" 
+                                    Binding="{Binding Exchange}" 
+                                    Width="110" 
+                                    SortMemberPath="Exchange" 
+                                    IsVisible="False"/>
+
+                <!-- Symbol -->
+                <DataGridTextColumn Header="Symbol" 
+                                    Binding="{Binding Symbol}" 
+                                    Width="100" 
+                                    SortMemberPath="Symbol" 
+                                    IsVisible="True"/>
+
+                <!-- Side -->
+                <DataGridTextColumn Header="Side" 
+                                    Binding="{Binding Side}" 
+                                    Width="60" 
+                                    SortMemberPath="Side" 
+                                    IsVisible="True"/>
+
+                <!-- Interval -->
+                <DataGridTextColumn Header="Interval" 
+                                    Binding="{Binding Interval}" 
+                                    Width="50" 
+                                    SortMemberPath="Interval" 
+                                    IsVisible="True"/>
+
+                <!-- Strategy -->
+                <DataGridTextColumn Header="Strategy" 
+                                    Binding="{Binding Strategy}" 
+                                    Width="100" 
+                                    SortMemberPath="Strategy" 
+                                    IsVisible="True"/>
+
+                <!-- Text -->
+                <DataGridTextColumn Header="Text" 
+                                    Binding="{Binding Text}" 
+                                    Width="150" 
+                                    SortMemberPath="Text" 
+                                    IsVisible="True"/>
+
+                <!-- Signal Price -->
+                <DataGridTemplateColumn Header="Price" 
+                                        Width="75" 
+                                        SortMemberPath="SignalPrice" 
+                                        IsVisible="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" 
+                                       HorizontalAlignment="Right"
+                                       Text="{Binding SignalPrice, StringFormat='{}{0:#,##0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Price Change (Hidden by default) -->
+                <DataGridTemplateColumn Header="Change" 
+                                        Width="75" 
+                                        SortMemberPath="PriceChange" 
+                                        IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" 
+                                       HorizontalAlignment="Right"
+                                       Text="{Binding PriceChange, StringFormat='{}{0:##0.#0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Signal Volume with color converter -->
+                <DataGridTemplateColumn Header="Volume" 
+                                        Width="75" 
+                                        SortMemberPath="SignalVolume" 
+                                        IsVisible="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" 
+                                       HorizontalAlignment="Right"
+                                       Text="{Binding SignalVolume, StringFormat='{}{0:#,##0}'}"
+                                       Foreground="{Binding ., Converter={StaticResource SignalVolumeColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- TfTrend (Hidden by default) -->
+                <DataGridTemplateColumn Header="TfTrend" 
+                                        Width="75" 
+                                        SortMemberPath="TfTrend" 
+                                        IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" 
+                                       HorizontalAlignment="Right"
+                                       Text="{Binding TfTrend, StringFormat='{}{0:##0.#0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
 
-			<!-- Dialog with selection of visible columns -->
-            <DataGrid.ContextFlyout>
+
+            <!-- Context menu for rows only -->
+            <DataGrid.ContextFlyout >
+
                 <MenuFlyout>
-                    <MenuItem Header="External Programma" Click="OnLaunchExternal" />
+                    <MenuItem Header="Open in External Program" Click="OnLaunchExternal" />
+                    <MenuItem Header="-" />
+                    <MenuItem Header="-" />
+                    <MenuItem Header="-" />
+                    <MenuItem Header="-" />
+                    <MenuItem Header="-" />
                 </MenuFlyout>
             </DataGrid.ContextFlyout>
-		</DataGrid>
+
+        </DataGrid>
     </Grid>
 </UserControl>

@@ -19,7 +19,9 @@ namespace CryptoScanner.Signal.Model
         public string Strategy { get => SignalObject.StrategyText; set { } }
         public decimal SignalPrice { get => SignalObject.SignalPrice; set { } }
         public decimal SignalVolume { get => SignalObject.SignalVolume; set { }}
-
+        public double PriceChange { get => SignalObject.Last24HoursChange; set { } }
+        public string? Text { get => SignalObject.EventText; set { } }
+        public string TfTrend { get => SignalObject.TrendInterval.ToString(); set { } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

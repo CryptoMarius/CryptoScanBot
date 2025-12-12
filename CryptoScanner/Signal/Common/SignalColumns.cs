@@ -81,7 +81,7 @@ public enum ColumnEnum
 }
 
 // Helper class for column configuration
-public class ColumnDefinition
+public class SignalColumnDefinition
 {
     public ColumnEnum Column { get; set; }
     public string Caption { get; set; } = string.Empty;
@@ -95,88 +95,17 @@ public class ColumnDefinition
     public string Format { get; set; } = string.Empty;
 }
 
-public class ColumnDefinitions
+public class SignalColumnDefinitions
 {
     private static readonly CaseInsensitiveComparer ObjectCompare = new();
 
-    public ColumnDefinition? SortColumn { get; set; }
+    public SignalColumnDefinition? SortColumn { get; set; }
     public GridSortDirection? SortDirection { get; set; }
-    public Dictionary<ColumnEnum, ColumnDefinition> Columns { get; set; } = [];
 
-
-    public ColumnDefinition CreateColumn(ColumnEnum column, string caption, Type type, string format,
-        HorizontalAlignment align, int width = 0, bool visible = false)
-    {
-        ColumnDefinition c = new()
-        {
-            Column = column,
-            Caption = caption,
-            Type = type,
-            Align = align,
-            Visible = visible,
-            Width = width,
-            Format = format,
-            Index = Columns.Count // do we need this?
-        };
-        Columns.Add(column, c);
-        return c;
-    }
-
-
-    /// <summary>
-    /// Create the column definitions
-    /// </summary>
-    public void DefaultColumnDefinition()
-    {
-        var columns = Enum.GetValues<ColumnEnum>();
-        foreach (ColumnEnum column in columns)
-        {
-            switch (column)
-            {
-                case ColumnEnum.Id:
-                    CreateColumn(column, "Id", typeof(string), string.Empty, HorizontalAlignment.Center, 50).Visible = false;
-                    break;
-                case ColumnEnum.Date:
-                    CreateColumn(column, "Date", typeof(string), string.Empty, HorizontalAlignment.Center, 50).Visible = false;
-                    break;
-                case ColumnEnum.Exchange:
-                    CreateColumn(column, "Exchange", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.Symbol:
-                    CreateColumn(column, "Symbol", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.Side:
-                    CreateColumn(column, "Side", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.Interval:
-                    CreateColumn(column, "Interval", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.Strategy:
-                    CreateColumn(column, "Strategy", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.Text:
-                    CreateColumn(column, "Text", typeof(string), string.Empty, HorizontalAlignment.Left, 100, true);
-                    break;
-                case ColumnEnum.SignalPrice:
-                    CreateColumn(column, "Price", typeof(decimal), "#,##0", HorizontalAlignment.Right, 75);
-                    break;
-                case ColumnEnum.PriceChange:
-                    CreateColumn(column, "Change", typeof(decimal), "##0.#0", HorizontalAlignment.Right, 75).Visible = false;
-                    break;
-                case ColumnEnum.SignalVolume:
-                    CreateColumn(column, "Volume", typeof(decimal), "#,##0", HorizontalAlignment.Right, 75);
-                    break;
-                case ColumnEnum.TfTrend:
-                    CreateColumn(column, "TfTrend", typeof(decimal), "##0.#0", HorizontalAlignment.Right, 75).Visible = false;
-                    break;
-            }
-        }
-
-        if (SortDirection == null)
-            SortDirection = GridSortDirection.Ascending;
-        //if (SortColumn == null || (int)SortDirection > Enum.GetNames<ColumnEnum>().Length)
-        //    SortColumn = ColumnEnum.Symbol;
-    }
+    //    if (SortDirection == null)
+    //        SortDirection = GridSortDirection.Ascending;
+    //    //if (SortColumn == null || (int)SortDirection > Enum.GetNames<ColumnEnum>().Length)
+    //    //    SortColumn = ColumnEnum.Symbol;
 
     public int Compare(SignalInfo a, SignalInfo b)
     {
@@ -207,6 +136,8 @@ public class ColumnDefinitions
             // secondary sort
             if (compareResult == 0)
                 compareResult = ObjectCompare.Compare(a.Symbol, b.Symbol);
+            if (compareResult == 0)
+                compareResult = ObjectCompare.Compare(a.SignalObject.Interval.Duration, b.SignalObject.Interval.Duration);
 
 
             // Calculate correct return value based on object comparison
@@ -222,10 +153,4 @@ public class ColumnDefinitions
             return 0;
         }
     }
-}
-
-// Sorry, not my best code, but a quick way to share the default column definitions
-public static class SignalShared
-{
-    public static readonly ColumnDefinitions Columns = new();
 }
