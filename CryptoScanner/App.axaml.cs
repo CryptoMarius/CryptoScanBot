@@ -63,6 +63,8 @@ public partial class App : Application
     {
         // Register Services as Singleton (één instantie voor hele app)
         services.AddSingleton<ITradingViewService, TradingViewService>();
+        services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
+        services.AddSingleton<IDataGridColumnsService, DataGridColumnsService>();
 
         // Platform service - alleen desktop platforms
         if (OperatingSystem.IsWindows())
@@ -84,8 +86,12 @@ public partial class App : Application
         // Register Views
         services.AddTransient<MainWindow>();
     }
-
     
+    public static T? GetService<T>() where T : class
+    {
+        return Services?.GetService<T>();
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
         // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
