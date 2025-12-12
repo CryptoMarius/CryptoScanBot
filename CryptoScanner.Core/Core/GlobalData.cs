@@ -5,7 +5,6 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
@@ -146,12 +145,12 @@ public static class GlobalData
     public static ZoneThreadCalculate? ThreadZoneCalculate { get; set; }
 
 
-    // On special request of a hardcore trader..
-    public static SymbolValue FearAndGreedIndex { get; set; } = new();
-    public static SymbolValue TradingViewDollarIndex { get; set; } = new();
-    public static SymbolValue TradingViewSpx500 { get; set; } = new();
-    public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
-    public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
+    // On special request of a hardcore trader.. (moved to CryptoScanner.DashBoard.Services)
+    //public static SymbolValue FearAndGreedIndex { get; set; } = new();
+    //public static SymbolValue TradingViewDollarIndex { get; set; } = new();
+    //public static SymbolValue TradingViewSpx500 { get; set; } = new();
+    //public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
+    //public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
 
     // Indexed strategies for colors, soundfiles etc.
     public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy)> StrategiesSettings = [];

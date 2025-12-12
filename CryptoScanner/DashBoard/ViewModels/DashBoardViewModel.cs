@@ -60,11 +60,11 @@ public partial class DashBoardViewModel : ObservableObject
         _tradingViewService.FearAndGreedIndexChanged += (s, v) => UpdateFearAndGreedIndex(v);
 
         // Set initial values
-        MarketCapTotal = _tradingViewService.MarketCapTotal;
-        DollarIndex = _tradingViewService.DollarIndex;
-        Spx500 = _tradingViewService.Spx500;
-        BitcoinDominance = _tradingViewService.BitcoinDominance;
-        FearAndGreedIndex = _tradingViewService.FearAndGreedIndex;
+        //MarketCapTotal = _tradingViewService.MarketCapTotalValue;
+        //DollarIndex = _tradingViewService.DollarIndexValue;
+        //Spx500 = _tradingViewService.Spx500Value;
+        //BitcoinDominance = _tradingViewService.BitcoinDominanceValue;
+        //FearAndGreedIndex = _tradingViewService.FearAndGreedIndexValue;
 
         System.Diagnostics.Debug.WriteLine("DashBoardViewModel constructor called");
     }

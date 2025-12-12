@@ -10,11 +10,11 @@ public interface ITradingViewService
     event EventHandler<decimal>? FearAndGreedIndexChanged;
 
     // Current values
-    decimal? MarketCapTotal { get; }
-    decimal? DollarIndex { get; }
-    decimal? Spx500 { get; }
-    decimal? BitcoinDominance { get; }
-    decimal? FearAndGreedIndex { get; }
+    decimal? MarketCapTotalValue { get; }
+    decimal? DollarIndexValue { get; }
+    decimal? Spx500Value { get; }
+    decimal? BitcoinDominanceValue { get; }
+    decimal? FearAndGreedIndexValue { get; }
 
     void Start();
     void Stop();
