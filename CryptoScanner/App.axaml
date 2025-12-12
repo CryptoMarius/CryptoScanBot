@@ -35,7 +35,6 @@
         <FluentTheme />
         <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-        <StyleInclude Source="avares://NP.Ava.Visuals/Themes/ThemeStyles.axaml"/>
 
         <!-- ============================================ -->
         <!-- GLOBALE TEXTBLOCK/CONTROL STYLES -->
