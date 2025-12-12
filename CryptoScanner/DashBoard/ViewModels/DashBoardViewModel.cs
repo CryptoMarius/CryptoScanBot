@@ -59,7 +59,7 @@ public partial class DashBoardViewModel : ObservableObject
         _tradingViewService.BitcoinDominanceChanged += (s, v) => UpdateBitcoinDominance(v);
         _tradingViewService.FearAndGreedIndexChanged += (s, v) => UpdateFearAndGreedIndex(v);
 
-        // Set initial values
+        // Set initial values (null on startup)
         //MarketCapTotal = _tradingViewService.MarketCapTotalValue;
         //DollarIndex = _tradingViewService.DollarIndexValue;
         //Spx500 = _tradingViewService.Spx500Value;
