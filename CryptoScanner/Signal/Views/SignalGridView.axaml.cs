@@ -3,8 +3,11 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
+
 using CryptoScanner.Services;
 using CryptoScanner.Signal.ViewModels;
+using CryptoScanner.ViewModels;
+using CryptoScanner.Views;
 
 namespace CryptoScanner.Signal.Views;
 
@@ -30,6 +33,8 @@ public partial class SignalGridView : UserControl
         _dataGrid = this.FindControl<DataGrid>("SignalDataGrid")
             ?? throw new InvalidOperationException("SignalDataGrid not found");
 
+        _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
+    
         LoadColumnSettings();
     }
 
@@ -99,57 +104,87 @@ public partial class SignalGridView : UserControl
             if (gridPoint.Y < HeaderHeight)
             {
                 // Header click
-                //ShowHeaderFlyout(dataGrid, e);
-                // Header click - show column visibility window
-                ShowColumnVisibilityWindow(_dataGrid!);
+                ShowHeaderContextMenu(_dataGrid!, e);
                 e.Handled = true;
             }
-            //else
-            //{
-            //    // Row click
-            //    ShowGridFlyout(dataGrid, e);
-            //    e.Handled = true;
-            //}
+            else
+            {
+                // Row click
+                ShowRowContextMenu(_dataGrid!, e);
+                e.Handled = true;
+            }
         }
     }
 
 
-    private void ShowHeaderFlyout(DataGrid dataGrid, PointerPressedEventArgs e)
+    /// <summary>
+    /// Show context menu for header (column management)
+    /// </summary>
+    private void ShowHeaderContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
     {
         var flyout = new MenuFlyout();
-        flyout.Items.Add(new MenuItem { Header = "Adjust Columns..." });
-        flyout.Items.Add(new MenuItem { Header = "---" });
-        flyout.Items.Add(new MenuItem { Header = "Reset Columns" });
+
+        var adjustColumnsItem = new MenuItem { Header = "Adjust Columns..." };
+        adjustColumnsItem.Click += (s, args) => ShowColumnVisibilityWindow(dataGrid);
+        flyout.Items.Add(adjustColumnsItem);
+
+        flyout.Items.Add(new Separator());
+
+        var resetColumnsItem = new MenuItem { Header = "Reset Columns" };
+        resetColumnsItem.Click += (s, args) => ResetColumns(dataGrid);
+        flyout.Items.Add(resetColumnsItem);
 
         flyout.ShowAt(dataGrid, true);
-        //// Header click - show column visibility window
-        //if (DataContext is SignalGridViewModel vm)
+    }
+
+
+    /// <summary>
+    /// Show context menu for rows (signal actions)
+    /// </summary>
+    private void ShowRowContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
+    {
+        var flyout = new MenuFlyout();
+
+        var openExternalItem = new MenuItem { Header = "Open in External Program" };
+        openExternalItem.Click += OnLaunchExternal;
+        flyout.Items.Add(openExternalItem);
+
+        flyout.Items.Add(new Separator());
+
+        var copyItem = new MenuItem { Header = "Copy Signal" };
+        copyItem.Click += (s, args) =>
+        {
+            if (DataContext is SignalGridViewModel vm && dataGrid.SelectedItem != null)
+                vm.CopySignalCommand.Execute(dataGrid.SelectedItem);
+        };
+        flyout.Items.Add(copyItem);
+
+        flyout.ShowAt(dataGrid, true);
+    }
+
+    /// <summary>
+    /// Reset columns to default settings
+    /// </summary>
+    private void ResetColumns(DataGrid dataGrid)
+    {
+        // is dat wel genoeg? Daar krijg je echt de originele index niet mee terug
+        //try
         //{
-        //    ShowColumnVisibilityWindow(dataGrid);
-        //    e.Handled = true; // Prevent context menu
+        //    // Delete settings file
+        //    var settingsPath = GetSettingsFilePath();
+        //    if (File.Exists(settingsPath))
+        //        File.Delete(settingsPath);
+
+        //    // Reload default settings (you might need to refresh the view)
+        //    System.Diagnostics.Debug.WriteLine("Column settings reset to defaults");
         //}
-            //< !--Context menu for rows only -->
-            //< DataGrid.ContextFlyout >
-
-            //    < MenuFlyout >
-            //        < MenuItem Header = "Adjust columns" Click = "ColumnsAdjust" Margin = "2" />
-            //        < MenuItem Header = "-" />
-            //        < MenuItem Header = "Open in External Program" Click = "OnLaunchExternal" />
-            //        < MenuItem Header = "-" />
-            //    </ MenuFlyout >
-            //</ DataGrid.ContextFlyout >
-
+        //catch (Exception ex)
+        //{
+        //    System.Diagnostics.Debug.WriteLine($"Error resetting columns: {ex.Message}");
+        //}
     }
 
-    private void ShowGridFlyout(DataGrid dataGrid, PointerPressedEventArgs e)
-    {
-        var flyout = new MenuFlyout();
-        flyout.Items.Add(new MenuItem { Header = "Copy name..." });
-        flyout.Items.Add(new MenuItem { Header = "---" });
-        flyout.Items.Add(new MenuItem { Header = "BlaBla" });
 
-        flyout.ShowAt(dataGrid, true);
-    }
     /// <summary>
     /// Show the signal column visibility window as a modal dialog
     /// </summary>
@@ -158,14 +193,12 @@ public partial class SignalGridView : UserControl
         if (this.GetVisualRoot() is not Window parentWindow)
             return;
 
-        var columnVisibilityWindow = new SignalColumnVisibilityWindow
+        var columnVisibilityWindow = new ColumnVisibilityWindow
         {
+            CanResize = false,
             Title = "Select Visible Columns",
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            Width = 300,
-            Height = 500,
-            DataContext = new SignalColumnVisibilityViewModel(dataGrid.Columns)
+            DataContext = new ColumnVisibilityViewModel(dataGrid.Columns)
         };
 
         await columnVisibilityWindow.ShowDialog(parentWindow);

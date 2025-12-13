@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Signal.Model;
+
 using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Signal.ViewModels;
@@ -32,8 +33,6 @@ public partial class SignalGridViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
-        //if (SignalShared.Columns.Columns.Count == 0)
-        //    SignalShared.Columns.DefaultColumnDefinition();
 
         // Laad symbols direct in de observable collection
         foreach (var signal in GlobalData.SignalQueue)
@@ -43,9 +42,6 @@ public partial class SignalGridViewModel : ObservableObject
                 SignalObject = signal,
             });
         }
-
-        //// Laad opgeslagen configuratie
-        //LoadConfigurationFromSettings();
 
         //// Sorteer als er een sort configuratie is
         //if (SignalShared.Columns.SortColumn != null)
@@ -89,7 +85,7 @@ public partial class SignalGridViewModel : ObservableObject
         if (parameter is not SignalInfo signal)
             return;
 
-        var signalText = $"{signal.Symbol} - {signal.Side} @ {signal.SignalPrice:F8}";
-        System.Diagnostics.Debug.WriteLine($"Copying signal to clipboard: {signalText}");
+        var text = $"{signal.Symbol} - {signal.Side} @ {signal.SignalPrice:F8}";
+        System.Diagnostics.Debug.WriteLine($"Copying signal to clipboard: {text}");
     }
 }

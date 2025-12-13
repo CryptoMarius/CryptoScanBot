@@ -5,11 +5,11 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" 
              x:Class="CryptoScanner.Signal.Views.SignalGridView"
              xmlns:vm="using:CryptoScanner.Signal.ViewModels"
-             xmlns:converter="using:CryptoScanner.Signal.Converters"
+             xmlns:converter="using:CryptoScanner.Converters"
              x:DataType="vm:SignalGridViewModel">
 
     <UserControl.Resources>
-        <converter:SignalVolumeColorConverter x:Key="SignalVolumeColorConverter" />
+        <converter:VolumeColorConverter x:Key="VolumeColorConverter" />
     </UserControl.Resources>
 
     <Grid>
@@ -24,7 +24,6 @@
                   GridLinesVisibility="None"
                   BorderThickness="1"
                   BorderBrush="Transparent"
-                  PointerPressed="OnDataGridPointerPressed"
                   ColumnReordered="OnColumnReordered"
                   ColumnDisplayIndexChanged="OnColumnDisplayIndexChanged">
 
@@ -123,7 +122,7 @@
                             <TextBlock VerticalAlignment="Center" 
                                        HorizontalAlignment="Right"
                                        Text="{Binding SignalVolume, StringFormat='{}{0:#,##0}'}"
-                                       Foreground="{Binding ., Converter={StaticResource SignalVolumeColorConverter}}" />
+                                       Foreground="{Binding ., Converter={StaticResource VolumeColorConverter}}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -144,18 +143,7 @@
             </DataGrid.Columns>
 
 
-            <!-- Context menu for rows only -->
-            <DataGrid.ContextFlyout >
 
-                <MenuFlyout>
-                    <MenuItem Header="Open in External Program" Click="OnLaunchExternal" />
-                    <MenuItem Header="-" />
-                    <MenuItem Header="-" />
-                    <MenuItem Header="-" />
-                    <MenuItem Header="-" />
-                    <MenuItem Header="-" />
-                </MenuFlyout>
-            </DataGrid.ContextFlyout>
         </DataGrid>
     </Grid>
 </UserControl>

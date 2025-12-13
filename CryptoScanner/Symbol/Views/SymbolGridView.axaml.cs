@@ -2,30 +2,40 @@
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using System.ComponentModel;
+using Avalonia.VisualTree;
 
+using CryptoScanner.Services;
 using CryptoScanner.Symbol.ViewModels;
-using CryptoScanner.Symbol.Common;
+using CryptoScanner.ViewModels;
+using CryptoScanner.Views;
 
 namespace CryptoScanner.Symbol.Views
 {
     public partial class SymbolGridView : UserControl
     {
         private const double HeaderHeight = 30.0;
+        private const string SettingsFileName = "symbol-grid-columns.json";
+
         private readonly DataGrid? _dataGrid;
-        private bool _isSorting = false;
+        private readonly IPlatformService? _platformService;
+        private readonly IDataGridColumnsService? _datagridService;
+
 
         public SymbolGridView()
         {
             InitializeComponent();
 
-            // Voeg sorting event handler toe
-            _dataGrid = this.FindControl<DataGrid>("SymbolsDataGrid");
-            if (_dataGrid != null)
-            {
-                _dataGrid.Sorting += OnDataGridSorting;
-                _dataGrid.Loaded += OnDataGridLoaded;
-            }
+            // Get services from DI container
+            _platformService = App.GetService<IPlatformService>()
+                ?? throw new InvalidOperationException("IPlatformService not registered");
+            _datagridService = App.GetService<IDataGridColumnsService>()
+                ?? throw new InvalidOperationException("IDataGridColumnsService not registered");
+            _dataGrid = this.FindControl<DataGrid>("SymbolDataGrid")
+                ?? throw new InvalidOperationException("SymbolDataGrid not found");
+
+            _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
+
+            LoadColumnSettings();
         }
 
         private void InitializeComponent()
@@ -33,122 +43,187 @@ namespace CryptoScanner.Symbol.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        private void OnDataGridLoaded(object? sender, RoutedEventArgs e)
+        /// <summary>
+        /// Get the full path to the settings file
+        /// </summary>
+        private string GetSettingsFileName()
         {
-            // Herstel sort indicator na laden
-            if (DataContext is SymbolGridViewModel vm && _dataGrid != null)
-            {
-                UpdateSortIndicators(vm);
-            }
+            string dataDir = _platformService!.GetDataDirectory();
+
+            if (!Directory.Exists(dataDir))
+                Directory.CreateDirectory(dataDir);
+
+            return Path.Combine(dataDir, SettingsFileName);
         }
 
-        private void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
+        /// <summary>
+        /// Load saved column settings (width, order, visibility) from JSON file
+        /// </summary>
+        private void LoadColumnSettings()
         {
-            if (_isSorting)
-                return;
-
-            _isSorting = true;
-
-            try
-            {
-                if (DataContext is SymbolGridViewModel vm)
-                {
-                    // Laat ViewModel de sort afhandelen
-                    vm.OnSorting(sender, e);
-
-                    // Update sort indicators na de sort
-                    UpdateSortIndicators(vm);
-                }
-            }
-            finally
-            {
-                _isSorting = false;
-            }
+            var settingsFileName = GetSettingsFileName();
+            _datagridService!.LoadColumnSettings(_dataGrid!, settingsFileName);
         }
 
-        private void UpdateSortIndicators(SymbolGridViewModel vm)
+        /// <summary>
+        /// Save column settings to JSON file
+        /// </summary>
+        private void SaveColumnSettings()
         {
-            if (_dataGrid == null)
-                return;
-
-            var config = vm.GetColumnConfig(GridColumn.Id).Visible; // Dummy call om Columns te krijgen
-
-            // We hebben de Columns nodig - voeg publieke property toe aan ViewModel
-            // Voor nu: haal sort info op uit de kolom configuratie
-
-            foreach (var column in _dataGrid.Columns)
-            {
-                var sortMemberPath = column is DataGridBoundColumn bc
-                    ? bc.SortMemberPath
-                    : (column as DataGridTemplateColumn)?.SortMemberPath;
-
-                if (!string.IsNullOrEmpty(sortMemberPath) &&
-                    Enum.TryParse<GridColumn>(sortMemberPath, true, out GridColumn gridColumn))
-                {
-                    var colConfig = vm.GetColumnConfig(gridColumn);
-
-                    // Check of dit de gesorteerde kolom is
-                    var sortedColumn = vm.GetSortColumn();
-                    var sortDirection = vm.GetSortDirection();
-
-                    if (sortedColumn != null && sortedColumn.Column == gridColumn && sortDirection != null)
-                    {
-                        var avaloniaDirection = sortDirection == GridSortDirection.Ascending
-                            ? ListSortDirection.Ascending
-                            : ListSortDirection.Descending;
-
-                        // Gebruik reflection om SortDirection te zetten zonder event te triggeren
-                        var prop = column.GetType().GetProperty("SortDirection");
-                        if (prop != null && prop.CanWrite)
-                        {
-                            prop.SetValue(column, avaloniaDirection);
-                        }
-                    }
-                    else
-                    {
-                        // Clear sort direction
-                        var prop = column.GetType().GetProperty("SortDirection");
-                        if (prop != null && prop.CanWrite)
-                        {
-                            prop.SetValue(column, null);
-                        }
-                    }
-                }
-            }
+            var settingsFileName = GetSettingsFileName();
+            _datagridService!.SaveColumnSettings(_dataGrid!, settingsFileName);
         }
 
+        /// <summary>
+        /// Handle column reordering
+        /// </summary>
+        private void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
+        {
+            SaveColumnSettings();
+        }
+
+        /// <summary>
+        /// Handle column display index changes
+        /// </summary>
+        private void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
+        {
+            SaveColumnSettings();
+        }
+
+        /// <summary>
+        /// Handle pointer pressed events on the DataGrid
+        /// Right-click on header shows column visibility window
+        /// </summary>
         private void OnDataGridPointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.RightButtonPressed)
             {
-                var dataGrid = this.FindControl<DataGrid>("SymbolsDataGrid");
-                if (dataGrid != null)
+                var gridPoint = e.GetPosition(_dataGrid!);
+
+                // Check if click is in header area (Y < HeaderHeight)
+                if (gridPoint.Y < HeaderHeight)
                 {
-                    var gridPoint = e.GetPosition(dataGrid);
-                    if (gridPoint.Y < HeaderHeight)
-                    {
-                        if (DataContext is SymbolGridViewModel vm)
-                        {
-                            //var window = new ColumnVisibilityWindow { DataContext = vm };
-                            //window.Show();
-                        }
-                    }
-                    else
-                    {
-                        e.Handled = false; // Laat ContextFlyout voor rij
-                    }
+                    // Header click
+                    ShowHeaderContextMenu(_dataGrid!, e);
+                    e.Handled = true;
+                }
+                else
+                {
+                    // Row click
+                    ShowRowContextMenu(_dataGrid!, e);
+                    e.Handled = true;
                 }
             }
         }
 
+
+        /// <summary>
+        /// Show context menu for header (column management)
+        /// </summary>
+        private void ShowHeaderContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
+        {
+            var flyout = new MenuFlyout();
+
+            var adjustColumnsItem = new MenuItem { Header = "Adjust Columns..." };
+            adjustColumnsItem.Click += (s, args) => ShowColumnVisibilityWindow(dataGrid);
+            flyout.Items.Add(adjustColumnsItem);
+
+            flyout.Items.Add(new Separator());
+
+            var resetColumnsItem = new MenuItem { Header = "Reset Columns" };
+            resetColumnsItem.Click += (s, args) => ResetColumns(dataGrid);
+            flyout.Items.Add(resetColumnsItem);
+
+            flyout.ShowAt(dataGrid, true);
+        }
+
+
+        /// <summary>
+        /// Show context menu for rows (signal actions)
+        /// </summary>
+        private void ShowRowContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
+        {
+            var flyout = new MenuFlyout();
+
+            var openExternalItem = new MenuItem { Header = "Open in External Program" };
+            openExternalItem.Click += OnLaunchExternal;
+            flyout.Items.Add(openExternalItem);
+
+            flyout.Items.Add(new Separator());
+
+            var copyItem = new MenuItem { Header = "Copy Symbol" };
+            copyItem.Click += (s, args) =>
+            {
+                //if (DataContext is SymbolGridViewModel vm && dataGrid.SelectedItem != null)
+                //    vm.CopySignalCommand.Execute(dataGrid.SelectedItem);
+            };
+            flyout.Items.Add(copyItem);
+
+            flyout.ShowAt(dataGrid, true);
+        }
+
+        /// <summary>
+        /// Reset columns to default settings
+        /// </summary>
+        private void ResetColumns(DataGrid dataGrid)
+        {
+            // is dat wel genoeg? Daar krijg je echt de originele index niet mee terug
+            //try
+            //{
+            //    // Delete settings file
+            //    var settingsPath = GetSettingsFilePath();
+            //    if (File.Exists(settingsPath))
+            //        File.Delete(settingsPath);
+
+            //    // Reload default settings (you might need to refresh the view)
+            //    System.Diagnostics.Debug.WriteLine("Column settings reset to defaults");
+            //}
+            //catch (Exception ex)
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"Error resetting columns: {ex.Message}");
+            //}
+        }
+
+
+        /// <summary>
+        /// Show the signal column visibility window as a modal dialog
+        /// </summary>
+        private async void ShowColumnVisibilityWindow(DataGrid dataGrid)
+        {
+            if (this.GetVisualRoot() is not Window parentWindow)
+                return;
+
+            var columnVisibilityWindow = new ColumnVisibilityWindow
+            {
+                CanResize = false,
+                Title = "Select Visible Columns",
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                DataContext = new ColumnVisibilityViewModel(dataGrid.Columns)
+            };
+
+            await columnVisibilityWindow.ShowDialog(parentWindow);
+
+            // Save settings after user closes the dialog
+            SaveColumnSettings();
+        }
+
+        /// <summary>
+        /// Handle launch external program from context menu
+        /// </summary>
         private void OnLaunchExternal(object? sender, RoutedEventArgs e)
         {
-            var dataGrid = this.FindControl<DataGrid>("SymbolsDataGrid");
-            if (dataGrid != null && dataGrid.SelectedItem != null)
+            if (_dataGrid!.SelectedItem != null)
             {
                 if (DataContext is SymbolGridViewModel vm)
-                    vm.LaunchExternal();
+                {
+                    //vm.OpenExternalProgramCommand.Execute(_dataGrid.SelectedItem);
+                }
             }
+        }
+
+        private void ColumnsAdjust(object? sender, RoutedEventArgs e)
+        {
+            ShowColumnVisibilityWindow(_dataGrid);
         }
     }
 }
