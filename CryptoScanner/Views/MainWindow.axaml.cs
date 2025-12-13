@@ -4,11 +4,11 @@ using Avalonia.Markup.Xaml;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
-using CryptoScanner.Main.ViewModels;
+using CryptoScanner.ViewModels;
 
 using System.Reflection;
 
-namespace CryptoScanner.Main.Views;
+namespace CryptoScanner.Views;
 
 public partial class MainWindow: Window
 {

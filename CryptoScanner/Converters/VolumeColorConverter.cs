@@ -4,11 +4,13 @@ using Avalonia.Media;
 
 using System.Globalization;
 
+using CryptoScanner.Symbol.Model;
 using CryptoScanner.Signal.Model;
+using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Signal.Converters
+namespace CryptoScanner.Converters
 {
-    public class SignalVolumeColorConverter : IValueConverter
+    public class VolumeColorConverter : IValueConverter
     {
         private static IBrush? GetBrushResource(string key)
         {
@@ -23,24 +25,30 @@ namespace CryptoScanner.Signal.Converters
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            // Cast naar SymbolInfo - nu met directe property access!
-            if (value is not SignalInfo signalInfo)
+            decimal volume;
+            CryptoSymbol? symbol;
+
+            // This converter is called from a couple of different views
+            if (value is SignalInfo signalInfo)
+            {
+                volume = signalInfo.SignalVolume;
+                symbol = signalInfo.SignalObject.Symbol;
+            }
+            else if (value is SymbolInfo symbolInfo)
+            {
+                symbol = symbolInfo.SymbolObject;
+                volume = symbol.Volume;
+            }
+            else
+            {
+                return GetBrushResource("NormalVolumeBrush");
+            }
+
+            if (symbol == null)
                 return GetBrushResource("NormalVolumeBrush");
 
-            // Direct toegang tot alle properties
-            var volume = signalInfo.SignalVolume;
-            //var name = signalInfo.Symbol;
-            //var distance = signalInfo.Distance;
-            //var id = signalInfo.Id;
-
-            // Voorbeeld met meerdere condities:
-            // if (volume < 5000000m && distance > 10)
-            //     return GetBrushResource("WarningBrush");
-            // else if (name.Contains("BTC") && volume < 20000000m)
-            //     return GetBrushResource("LowVolumeBrush");
-
             // Huidige logica: volumes onder 10 miljoen zijn rood
-            return volume < 100000000m
+            return volume < symbol.QuoteData.MinimalVolume
                 ? GetBrushResource("LowVolumeBrush")
                 : GetBrushResource("NormalVolumeBrush");
         }

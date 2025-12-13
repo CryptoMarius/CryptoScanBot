@@ -1,14 +1,14 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
-namespace CryptoScanner.Signal.Views;
+namespace CryptoScanner.Views;
 
 /// <summary>
 /// Window for managing column visibility in the Signal Grid
 /// </summary>
-public partial class SignalColumnVisibilityWindow : Window
+public partial class ColumnVisibilityWindow : Window
 {
-    public SignalColumnVisibilityWindow()
+    public ColumnVisibilityWindow()
     {
         InitializeComponent();
     }

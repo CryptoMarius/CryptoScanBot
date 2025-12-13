@@ -6,11 +6,11 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
 using CryptoScanner.DashBoard.ViewModels;
-using CryptoScanner.Main.ViewModels;
-using CryptoScanner.Main.Views;
 using CryptoScanner.Services;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
+using CryptoScanner.Views;
+using CryptoScanner.ViewModels;
 
 using Microsoft.Extensions.DependencyInjection;
 

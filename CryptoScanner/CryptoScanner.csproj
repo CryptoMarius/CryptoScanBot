@@ -54,6 +54,9 @@
 	  <Compile Update="Symbol\Views\SymbolGridView.axaml.cs">
 	    <DependentUpon>SymbolGridView.axaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\ColumnVisibilityWindow.axaml.cs">
+	    <DependentUpon>ColumnVisibilityWindow.axaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -61,12 +64,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Include="Main\ViewModels\MainViewModel.cs" />
-	  <Compile Include="Main\Views\MainWindow.axaml.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
+	  <Folder Include="Main\ViewModels\" />
+	  <Folder Include="Main\Views\" />
 	  <Folder Include="Signal\%24klad\" />
+	  <Folder Include="Signal\Converters\" />
 	</ItemGroup>
 
 	<PropertyGroup>

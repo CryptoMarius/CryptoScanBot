@@ -4,7 +4,7 @@ using CryptoScanner.DashBoard.ViewModels;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
 
-namespace CryptoScanner.Main.ViewModels;
+namespace CryptoScanner.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {

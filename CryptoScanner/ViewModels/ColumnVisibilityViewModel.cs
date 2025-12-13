@@ -3,12 +3,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
-namespace CryptoScanner.Signal.ViewModels;
+namespace CryptoScanner.ViewModels;
 
 /// <summary>
 /// ViewModel for managing column visibility in the Signal Grid
 /// </summary>
-public partial class SignalColumnVisibilityViewModel : ObservableObject
+public partial class ColumnVisibilityViewModel : ObservableObject
 {
     /// <summary>
     /// Collection of column visibility items
@@ -19,7 +19,7 @@ public partial class SignalColumnVisibilityViewModel : ObservableObject
     /// <summary>
     /// Constructor that takes DataGrid columns and creates view models
     /// </summary>
-    public SignalColumnVisibilityViewModel(ObservableCollection<DataGridColumn> columns)
+    public ColumnVisibilityViewModel(ObservableCollection<DataGridColumn> columns)
     {
         foreach (var column in columns)
         {
