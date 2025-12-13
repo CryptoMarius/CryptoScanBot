@@ -3,7 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
-
+using CryptoScanner.Services;
 using CryptoScanner.Signal.ViewModels;
 
 namespace CryptoScanner.Signal.Views;
@@ -11,10 +11,26 @@ namespace CryptoScanner.Signal.Views;
 public partial class SignalGridView : UserControl
 {
     private const double HeaderHeight = 30.0;
+    private const string SettingsFileName = "signal-grid-columns.json";
+
+    private readonly DataGrid? _dataGrid;
+    private readonly IPlatformService? _platformService;
+    private readonly IDataGridColumnsService? _datagridService;
+
 
     public SignalGridView()
     {
         InitializeComponent();
+
+        // Get services from DI container
+        _platformService = App.GetService<IPlatformService>()
+            ?? throw new InvalidOperationException("IPlatformService not registered");
+        _datagridService = App.GetService<IDataGridColumnsService>()
+            ?? throw new InvalidOperationException("IDataGridColumnsService not registered");
+        _dataGrid = this.FindControl<DataGrid>("SignalDataGrid")
+            ?? throw new InvalidOperationException("SignalDataGrid not found");
+
+        LoadColumnSettings();
     }
 
     private void InitializeComponent()
@@ -23,33 +39,77 @@ public partial class SignalGridView : UserControl
     }
 
     /// <summary>
+    /// Get the full path to the settings file
+    /// </summary>
+    private string GetSettingsFileName()
+    {
+        string dataDir = _platformService!.GetDataDirectory();
+
+        if (!Directory.Exists(dataDir))
+            Directory.CreateDirectory(dataDir);
+
+        return Path.Combine(dataDir, SettingsFileName);
+    }
+
+    /// <summary>
+    /// Load saved column settings (width, order, visibility) from JSON file
+    /// </summary>
+    private void LoadColumnSettings()
+    {
+        var settingsFileName = GetSettingsFileName();
+        _datagridService!.LoadColumnSettings(_dataGrid!, settingsFileName);
+    }
+
+    /// <summary>
+    /// Save column settings to JSON file
+    /// </summary>
+    private void SaveColumnSettings()
+    {
+        var settingsFileName = GetSettingsFileName();
+        _datagridService!.SaveColumnSettings(_dataGrid!, settingsFileName);
+    }
+
+    /// <summary>
+    /// Handle column reordering
+    /// </summary>
+    private void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
+    {
+        SaveColumnSettings();
+    }
+
+    /// <summary>
+    /// Handle column display index changes
+    /// </summary>
+    private void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
+    {
+        SaveColumnSettings();
+    }
+
+    /// <summary>
     /// Handle pointer pressed events on the DataGrid
     /// Right-click on header shows column visibility window
-    /// Right-click on row shows context menu
     /// </summary>
     private void OnDataGridPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.RightButtonPressed)
         {
-            var dataGrid = this.FindControl<DataGrid>("SignalDataGrid");
-            if (dataGrid != null)
-            {
-                var gridPoint = e.GetPosition(dataGrid);
+            var gridPoint = e.GetPosition(_dataGrid!);
 
-                // Check if click is in header area (Y < HeaderHeight)
-                if (gridPoint.Y < HeaderHeight)
-                {
-                    // Header click
-                    ShowHeaderFlyout(dataGrid, e);
-                    e.Handled = true;
-                }
-                //else
-                //{
-                //    // Row click
-                //    ShowGridFlyout(dataGrid, e);
-                //    e.Handled = true;
-                //}
+            // Check if click is in header area (Y < HeaderHeight)
+            if (gridPoint.Y < HeaderHeight)
+            {
+                // Header click
+                //ShowHeaderFlyout(dataGrid, e);
+                // Header click - show column visibility window
+                ShowColumnVisibilityWindow(_dataGrid!);
+                e.Handled = true;
             }
+            //else
+            //{
+            //    // Row click
+            //    ShowGridFlyout(dataGrid, e);
+            //    e.Handled = true;
+            //}
         }
     }
 
@@ -90,9 +150,8 @@ public partial class SignalGridView : UserControl
 
         flyout.ShowAt(dataGrid, true);
     }
-
     /// <summary>
-    /// Show the signal column visibility window as a modal dialog centered on the parent window
+    /// Show the signal column visibility window as a modal dialog
     /// </summary>
     private async void ShowColumnVisibilityWindow(DataGrid dataGrid)
     {
@@ -110,6 +169,9 @@ public partial class SignalGridView : UserControl
         };
 
         await columnVisibilityWindow.ShowDialog(parentWindow);
+
+        // Save settings after user closes the dialog
+        SaveColumnSettings();
     }
 
     /// <summary>
@@ -117,25 +179,17 @@ public partial class SignalGridView : UserControl
     /// </summary>
     private void OnLaunchExternal(object? sender, RoutedEventArgs e)
     {
-        var dataGrid = this.FindControl<DataGrid>("SignalDataGrid");
-        if (dataGrid != null && dataGrid.SelectedItem != null)
+        if (_dataGrid!.SelectedItem != null)
         {
             if (DataContext is SignalGridViewModel vm)
             {
-                vm.OpenExternalProgramCommand.Execute(dataGrid.SelectedItem);
+                vm.OpenExternalProgramCommand.Execute(_dataGrid.SelectedItem);
             }
         }
     }
 
     private void ColumnsAdjust(object? sender, RoutedEventArgs e)
     {
-        var dataGrid = this.FindControl<DataGrid>("SignalDataGrid");
-        if (dataGrid != null)
-        {
-            //if (DataContext is SignalGridViewModel vm)
-            //{
-                ShowColumnVisibilityWindow(dataGrid);
-            //}
-        }
+        ShowColumnVisibilityWindow(_dataGrid);
     }
 }
