@@ -10,16 +10,16 @@ public class TickerData
     public string? Ticker { get; set; }
     public string? Url { get; set; }
 
-    public string DisplayFormat { get; set; } = "N2";
+    //public string DisplayFormat { get; set; }
     public DateTime? LastCheck { get; set; }
-    public decimal LastValue { get; set; } // For colors
+    //public decimal LastValue { get; set; }
 
     // Close value?
     public decimal _lp;
     public decimal Lp {
         get { return _lp; }
         set {
-            if (_lp != value)
+            //if (_lp != value)
             {
                 _lp = value;
                 DataReceived?.Invoke(this, this);
@@ -53,7 +53,7 @@ public class TradingViewSymbolInfo
     private TickerData SymbolValue = null!;
     private TradingViewSymbolWebSocket socket = null!;
 
-    public async void StartAsync(string tickerName, string displayName, string displayFormat,
+    public async void StartAsync(string tickerName, string displayName, 
         TickerData symbolValue, int startDelayMs = 250, int loopDelayMs = 6000,
         CancellationToken cancellationToken = default)
     {
@@ -62,13 +62,14 @@ public class TradingViewSymbolInfo
         SymbolValue = symbolValue;
         SymbolValue.Name = displayName;
         SymbolValue.Ticker = tickerName;
-        SymbolValue.DisplayFormat = displayFormat;
+        //SymbolValue.DisplayFormat = displayFormat;
 
         socket = new TradingViewSymbolWebSocket(tickerName);
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);
 
+        bool displayNext = false;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -77,6 +78,11 @@ public class TradingViewSymbolInfo
                 if (result)
                 {
                     await Task.Delay(loopDelayMs, cancellationToken);
+                    if (displayNext)
+                    {
+                        displayNext = false;
+                        System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} ok");
+                    }
                 }
                 else
                 {
@@ -86,6 +92,9 @@ public class TradingViewSymbolInfo
                     socket.DataFetched += OnValueFetched;
                     socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
                     socket.RequestData().Wait(cancellationToken);
+
+                    System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} not succeeded");
+                    displayNext = true;
                 }
             }
             catch (OperationCanceledException)
@@ -93,12 +102,13 @@ public class TradingViewSymbolInfo
                 // Normal cancellation - exit gracefully
                 break;
             }
-            catch (Exception)
+            catch (Exception error)
             {
                 // Other errors - continue trying
                 try
                 {
                     await Task.Delay(250, cancellationToken);
+                    System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} error {error.Message}");
                 }
                 catch (OperationCanceledException)
                 {
@@ -115,7 +125,7 @@ public class TradingViewSymbolInfo
     {
         try
         {
-            //// Debug display
+            //// Debug displayNext
             //foreach (string s in e)
             //{
             //    GlobalData.AddTextToLogTab(" ? " + s);

@@ -25,7 +25,7 @@ public partial class App : Application
     /// <summary>
     /// Singleton instance of GridStateService available throughout the application
     /// </summary>
-    public static GridStateService GridStateService { get; private set; }
+    public static GridStateService GridStateService { get; private set; } = null!;
 
 
     public override void Initialize()

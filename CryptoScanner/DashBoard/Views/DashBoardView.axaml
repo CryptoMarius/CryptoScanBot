@@ -80,7 +80,7 @@
                            Text="Bitcoin (BTC)" />
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                            Foreground="{Binding BtcUsdt.Color}"
-                           Text="{Binding BtcUsdt.Price, Converter={StaticResource LargeNumberConverter}}" />
+                           Text="{Binding BtcUsdt.Price}" />
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="value"
                            Foreground="{Binding BtcUsdt.Color}"
                            Text="{Binding BtcUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -91,7 +91,7 @@
                            Text="Ethereum (ETH)" />
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                            Foreground="{Binding EthUsdt.Color}"
-                           Text="{Binding EthUsdt.Price, Converter={StaticResource LargeNumberConverter}}" />
+                           Text="{Binding EthUsdt.Price}" />
                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="value"
                            Foreground="{Binding EthUsdt.Color}"
                            Text="{Binding EthUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -102,7 +102,7 @@
                            Text="BNB" />
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                            Foreground="{Binding BnbUsdt.Color}"
-                           Text="{Binding BnbUsdt.Price, StringFormat='${}{0:N2}'}" />
+                           Text="{Binding BnbUsdt.Price}" />
                 <TextBlock Grid.Row="2" Grid.Column="2" Classes="value"
                            Foreground="{Binding BnbUsdt.Color}"
                            Text="{Binding BnbUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -113,7 +113,7 @@
                            Text="Solana (SOL)" />
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                            Foreground="{Binding SolUsdt.Color}"
-                           Text="{Binding SolUsdt.Price, StringFormat='${}{0:N2}'}" />
+                           Text="{Binding SolUsdt.Price}" />
                 <TextBlock Grid.Row="3" Grid.Column="2" Classes="value"
                            Foreground="{Binding SolUsdt.Color}"
                            Text="{Binding SolUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -124,7 +124,7 @@
                            Text="XRP" />
                 <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
                            Foreground="{Binding XrpUsdt.Color}"
-                           Text="{Binding XrpUsdt.Price, StringFormat='${}{0:N4}'}" />
+                           Text="{Binding XrpUsdt.Price}" />
                 <TextBlock Grid.Row="4" Grid.Column="2" Classes="value"
                            Foreground="{Binding XrpUsdt.Color}"
                            Text="{Binding XrpUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />

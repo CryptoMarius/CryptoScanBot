@@ -18,7 +18,7 @@ public class FearAndGreedSymbolInfo
     private TickerData? SymbolValue;
     private readonly HttpClient httpClient = new();
 
-    public async void StartAsync(string url, string displayName, string displayFormat,
+    public async void StartAsync(string url, string displayName, 
         TickerData symbolValue, int startDelayMs = 250, int loopDelayMs = 6000,
         CancellationToken cancellationToken = default)
     {
@@ -27,7 +27,7 @@ public class FearAndGreedSymbolInfo
         SymbolValue.Url = url;
         SymbolValue = symbolValue;
         SymbolValue.Name = displayName;
-        SymbolValue.DisplayFormat = displayFormat;
+        //SymbolValue.DisplayFormat = displayFormat;
 
         // Okay, dit kan allemaal veel mooier, maar zo is voorlopig ook wel even goed
         while (!cancellationToken.IsCancellationRequested)
@@ -59,7 +59,7 @@ public class FearAndGreedSymbolInfo
                     string value = jsonData?.Data[0].Value ?? "";
                     //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
                     SymbolValue.Lp = decimal.Parse(value);
-                    SymbolValue.LastCheck = DateTime.UtcNow.AddHours(1); // = Next check
+                    SymbolValue.LastCheck = DateTime.UtcNow.AddMinutes(2); // = Next check
                 }
             }
             catch (OperationCanceledException)

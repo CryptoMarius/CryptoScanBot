@@ -12,6 +12,10 @@ public partial class MainWindowViewModel : ObservableObject
     public required SymbolGridViewModel SymbolGridViewModel { get; set; }
     public required SignalGridViewModel SignalGridViewModel { get; set; }
 
+    public MainWindowViewModel()
+    {
+    }
+
     public MainWindowViewModel(
         DashBoardViewModel dashBoardViewModel,
         SymbolGridViewModel symbolGridViewModel,
