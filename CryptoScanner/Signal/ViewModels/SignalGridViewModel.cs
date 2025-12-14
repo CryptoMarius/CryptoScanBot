@@ -1,6 +1,3 @@
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -26,8 +23,8 @@ public partial class SignalGridViewModel : ObservableObject
     /// <summary>
     /// Currently selected signal
     /// </summary>
-    [ObservableProperty]
-    private SignalInfo? _selectedSignal;
+    //[ObservableProperty]
+    //private SignalInfo? _selectedSignal;
 
     public SignalGridViewModel()
     {
@@ -55,7 +52,7 @@ public partial class SignalGridViewModel : ObservableObject
     /// Triggered from context menu
     /// </summary>
     [RelayCommand]
-    private void OpenExternalProgram(object? parameter)
+    private static void OpenExternalProgram(object? parameter)
     {
         if (parameter is not SignalInfo signal)
             return;
@@ -68,7 +65,7 @@ public partial class SignalGridViewModel : ObservableObject
     /// Command to view signal details
     /// </summary>
     [RelayCommand]
-    private void ViewDetails(object? parameter)
+    private static void ViewDetails(object? parameter)
     {
         if (parameter is not SignalInfo signal)
             return;
@@ -80,7 +77,7 @@ public partial class SignalGridViewModel : ObservableObject
     /// Command to copy signal to clipboard
     /// </summary>
     [RelayCommand]
-    private void CopySignal(object? parameter)
+    private static void CopySignal(object? parameter)
     {
         if (parameter is not SignalInfo signal)
             return;
@@ -88,4 +85,6 @@ public partial class SignalGridViewModel : ObservableObject
         var text = $"{signal.Symbol} - {signal.Side} @ {signal.SignalPrice:F8}";
         System.Diagnostics.Debug.WriteLine($"Copying signal to clipboard: {text}");
     }
+
+
 }

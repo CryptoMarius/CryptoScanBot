@@ -21,8 +21,13 @@ namespace CryptoScanner;
 public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
-    
-    
+
+    /// <summary>
+    /// Singleton instance of GridStateService available throughout the application
+    /// </summary>
+    public static GridStateService GridStateService { get; private set; }
+
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -61,11 +66,6 @@ public partial class App : Application
     
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Register Services as Singleton (één instantie voor hele app)
-        services.AddSingleton<ITradingViewService, TradingViewService>();
-        services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
-        services.AddSingleton<IDataGridColumnsService, DataGridColumnsService>();
-
         // Platform service - alleen desktop platforms
         if (OperatingSystem.IsWindows())
             services.AddSingleton<IPlatformService, WindowsPlatformService>();
@@ -76,6 +76,9 @@ public partial class App : Application
         else
             throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
 
+        // Register Services as Singleton (één instantie voor hele app)
+        services.AddSingleton<ITradingViewService, TradingViewService>();
+        services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
 
         // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
         services.AddTransient<MainWindowViewModel>();
@@ -94,21 +97,35 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
-        InitializeGlobalData();
-
         // Setup DI Container
         var services = new ServiceCollection();
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
+        // Initialize the GridStateService (loads settings from disk into memory)
+        GridStateService = new GridStateService();
+
+        // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
+        InitializeGlobalData();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Get MainView from DI container
             desktop.MainWindow = Services.GetRequiredService<MainWindow>();
+
+            // Save grid states on application exit
+            desktop.Exit += OnApplicationExit;
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    {
+        // Ensure all grid states are written to disk before exit
+        GridStateService.FlushToDisk();
+    }
 }
+
+
 

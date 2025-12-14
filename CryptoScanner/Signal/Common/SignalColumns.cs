@@ -4,6 +4,7 @@ using CryptoScanner.Signal.Model;
 
 using System;
 using System.Collections;
+using System.ComponentModel;
 
 namespace CryptoScanner.Signal.Common;
 
@@ -80,77 +81,59 @@ public enum ColumnEnum
 //#endif
 }
 
-// Helper class for column configuration
-public class SignalColumnDefinition
+public class SignalColumnComparer : IComparer
 {
-    public ColumnEnum Column { get; set; }
-    public string Caption { get; set; } = string.Empty;
-    public Type Type { get; set; } = typeof(string);
-    public HorizontalAlignment Align { get; set; } = HorizontalAlignment.Left;
+    // Kind of overkill, but its much nicer having everything in 1 comparer
+    private ColumnEnum? SortColumn { get; set; }
+    private readonly CaseInsensitiveComparer ObjectCompare = new();
 
-    // Other attributes
-    public int Index { get; set; }
-    public int Width { get; set; }
-    public bool Visible { get; set; } = true;
-    public string Format { get; set; } = string.Empty;
-}
-
-public class SignalColumnDefinitions
-{
-    private static readonly CaseInsensitiveComparer ObjectCompare = new();
-
-    public SignalColumnDefinition? SortColumn { get; set; }
-    public GridSortDirection? SortDirection { get; set; }
-
-    //    if (SortDirection == null)
-    //        SortDirection = GridSortDirection.Ascending;
-    //    //if (SortColumn == null || (int)SortDirection > Enum.GetNames<ColumnEnum>().Length)
-    //    //    SortColumn = ColumnEnum.Symbol;
-
-    public int Compare(SignalInfo a, SignalInfo b)
+    public SignalColumnComparer(ColumnEnum? sortColumn)
     {
-        if (SortColumn == null || SortDirection == null)
-            return 0;
+        SortColumn = sortColumn;
+    }
 
-        try
+
+    public int Compare(object? x, object? y)
+    {
+        if (SortColumn != null && x is SignalInfo a && y is SignalInfo b)
         {
-            int compareResult = SortColumn.Column switch
+            try
             {
-                ColumnEnum.Id => ObjectCompare.Compare(a.Id, b.Id),
-                ColumnEnum.Date => ObjectCompare.Compare(a.SignalObject.CloseDate, b.SignalObject.CloseDate),
-                ColumnEnum.Exchange => ObjectCompare.Compare(a.SignalObject.Exchange.Name, b.SignalObject.Exchange.Name),
-                ColumnEnum.Side => ObjectCompare.Compare(a.SignalObject.Side, b.SignalObject.Side),
-                ColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol, b.Symbol),
-                ColumnEnum.Text => ObjectCompare.Compare(a.SignalObject.EventText, b.SignalObject.EventText),
-                ColumnEnum.Interval => ObjectCompare.Compare(a.SignalObject.Interval.Name, b.SignalObject.Interval.Name),
-                ColumnEnum.Strategy => ObjectCompare.Compare(a.Strategy, b.Strategy),
-                ColumnEnum.SignalVolume => ObjectCompare.Compare(a.SignalObject.SignalVolume, b.SignalObject.SignalVolume),
-                ColumnEnum.SignalPrice => ObjectCompare.Compare(a.SignalObject.SignalPrice, b.SignalObject.SignalPrice),
-                ColumnEnum.PriceChange => ObjectCompare.Compare(a.SignalObject.Last24HoursChange, b.SignalObject.Last24HoursChange),
-                ColumnEnum.TfTrend => ObjectCompare.Compare(a.SignalObject.TrendInterval, b.SignalObject.TrendInterval),
-                // todo,, the rest of the Columns
-                _ => 0
-            };
+                int compareResult = SortColumn switch
+                {
+                    ColumnEnum.Id => ObjectCompare.Compare(a.Id, b.Id),
+                    ColumnEnum.Date => ObjectCompare.Compare(a.SignalObject.CloseDate, b.SignalObject.CloseDate),
+                    ColumnEnum.Exchange => ObjectCompare.Compare(a.SignalObject.Exchange.Name, b.SignalObject.Exchange.Name),
+                    ColumnEnum.Side => ObjectCompare.Compare(a.SignalObject.Side, b.SignalObject.Side),
+                    ColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol, b.Symbol),
+                    ColumnEnum.Text => ObjectCompare.Compare(a.SignalObject.EventText, b.SignalObject.EventText),
+                    ColumnEnum.Interval => ObjectCompare.Compare(a.SignalObject.Interval.Name, b.SignalObject.Interval.Name),
+                    ColumnEnum.Strategy => ObjectCompare.Compare(a.Strategy, b.Strategy),
+                    ColumnEnum.SignalVolume => ObjectCompare.Compare(a.SignalObject.SignalVolume, b.SignalObject.SignalVolume),
+                    ColumnEnum.SignalPrice => ObjectCompare.Compare(a.SignalObject.SignalPrice, b.SignalObject.SignalPrice),
+                    ColumnEnum.PriceChange => ObjectCompare.Compare(a.SignalObject.Last24HoursChange, b.SignalObject.Last24HoursChange),
+                    ColumnEnum.TfTrend => ObjectCompare.Compare(a.SignalObject.TrendInterval, b.SignalObject.TrendInterval),
+                    // todo,, the rest of the Columns (lots....)
+                    _ => 0
+                };
 
 
-            // secondary sort
-            if (compareResult == 0)
-                compareResult = ObjectCompare.Compare(a.Symbol, b.Symbol);
-            if (compareResult == 0)
-                compareResult = ObjectCompare.Compare(a.SignalObject.Interval.Duration, b.SignalObject.Interval.Duration);
+                // Sort on more columns because signal for example signal date needs much more!
+                if (compareResult == 0)
+                    compareResult = ObjectCompare.Compare(a.Symbol, b.Symbol);
+                if (compareResult == 0)
+                    compareResult = ObjectCompare.Compare(a.SignalObject.Interval.Duration, b.SignalObject.Interval.Duration);
+                if (compareResult == 0)
+                    compareResult = ObjectCompare.Compare(a.SignalObject.StrategyText, b.SignalObject.StrategyText);
 
-
-            // Calculate correct return value based on object comparison
-            if (SortDirection == GridSortDirection.Ascending)
-                return +compareResult;
-            else if (SortDirection == GridSortDirection.Descending)
-                return -compareResult;
-            else
+                return compareResult;
+            }
+            catch (Exception)
+            {
                 return 0;
+            }
         }
-        catch (Exception)
-        {
+        else 
             return 0;
-        }
     }
 }

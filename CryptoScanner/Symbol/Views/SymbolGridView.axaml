@@ -23,9 +23,7 @@
                   CanUserSortColumns="True"
                   GridLinesVisibility="None"
                   BorderThickness="1"
-                  BorderBrush="Transparent"
-                  ColumnReordered="OnColumnReordered"
-                  ColumnDisplayIndexChanged="OnColumnDisplayIndexChanged">
+                  BorderBrush="Transparent">
 
             <DataGrid.Columns >
                 <!-- Id -->

@@ -49,7 +49,8 @@ public class TradingViewSymbolInfo
     private SymbolValue SymbolValue = null!;
     private TradingViewSymbolWebSocket socket = null!;
 
-    public async void StartAsync(string tickerName, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
+    public async void StartAsync(string tickerName, string displayName, string displayFormat, 
+        SymbolValue symbolValue, int startDelayMs = 250, int loopDelayMs = 6000)
     {
         await Task.Delay(startDelayMs);
 
@@ -68,7 +69,7 @@ public class TradingViewSymbolInfo
             var result = socket.ReceiveData().Result;
             if (result)
             {
-                await Task.Delay(2000);
+                await Task.Delay(loopDelayMs);
             }
             else
             {

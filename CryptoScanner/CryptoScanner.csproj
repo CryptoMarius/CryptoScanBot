@@ -12,11 +12,14 @@
 	
 	<ItemGroup>
 	  <AvaloniaXaml Remove="BrowserView\**" />
+	  <AvaloniaXaml Remove="DashBoard\%24Claude\**" />
 	  <Compile Remove="BrowserView\**" />
-	  <Compile Remove="Main\**" />
+	  <Compile Remove="DashBoard\%24Claude\**" />
 	  <Compile Remove="TopBanner\**" />
 	  <EmbeddedResource Remove="BrowserView\**" />
+	  <EmbeddedResource Remove="DashBoard\%24Claude\**" />
 	  <None Remove="BrowserView\**" />
+	  <None Remove="DashBoard\%24Claude\**" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -64,9 +67,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Main\ViewModels\" />
-	  <Folder Include="Main\Views\" />
-	  <Folder Include="Signal\%24klad\" />
+	  <Folder Include="DashBoard\%24Claude\" />
 	  <Folder Include="Signal\Converters\" />
 	</ItemGroup>
 

@@ -1,11 +1,7 @@
-﻿using Avalonia.Controls;
-using Avalonia.Interactivity;
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Symbol.Common;
 using CryptoScanner.Symbol.Model;
 
 using System.Collections.ObjectModel;
@@ -19,9 +15,6 @@ public partial class SymbolGridViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<SymbolInfo> _symbols = [];
-
-
-    private readonly GridColumnDefinitions config = new();
 
 
     public SymbolGridViewModel()
@@ -50,31 +43,31 @@ public partial class SymbolGridViewModel : ObservableObject
     }
 
 
-    // Voeg nieuwe symbol toe (bijvoorbeeld bij live updates)
-    public void AddSymbol(SymbolInfo symbol)
-    {
-        Symbols.Add(symbol);
-        // Optioneel: direct op juiste plek invoegen als gesorteerd
-    }
+    //// Voeg nieuwe symbol toe (bijvoorbeeld bij live updates)
+    //public void AddSymbol(SymbolInfo symbol)
+    //{
+    //    Symbols.Add(symbol);
+    //    // Optioneel: direct op juiste plek invoegen als gesorteerd
+    //}
 
-    // Update bestaande symbol
-    public void UpdateSymbol(SymbolInfo symbol)
-    {
-        var existing = Symbols.FirstOrDefault(s => s.Id == symbol.Id);
-        if (existing != null)
-        {
-            existing.Symbol = symbol.Symbol;
-            existing.Volume = symbol.Volume;
-            existing.Distance = symbol.Distance;
-        }
-    }
+    //// Update bestaande symbol
+    //public void UpdateSymbol(SymbolInfo symbol)
+    //{
+    //    var existing = Symbols.FirstOrDefault(s => s.Id == symbol.Id);
+    //    if (existing != null)
+    //    {
+    //        existing.Symbol = symbol.Symbol;
+    //?        existing.Volume = symbol.Volume;
+    //        existing.Distance = symbol.Distance;
+    //    }
+    //}
 
     /// <summary>
     /// Command to open signal in external program
     /// Triggered from context menu
     /// </summary>
     [RelayCommand]
-    private void OpenExternalProgram(object? parameter)
+    private static void OpenExternalProgram(object? parameter)
     {
         if (parameter is not SymbolInfo symbol)
             return;
@@ -87,7 +80,7 @@ public partial class SymbolGridViewModel : ObservableObject
     /// Command to view signal details
     /// </summary>
     [RelayCommand]
-    private void ViewDetails(object? parameter)
+    private static void ViewDetails(object? parameter)
     {
         if (parameter is not SymbolInfo symbol)
             return;
@@ -99,7 +92,7 @@ public partial class SymbolGridViewModel : ObservableObject
     /// Command to copy signal to clipboard
     /// </summary>
     [RelayCommand]
-    private void CopySignal(object? parameter)
+    private static void CopySignal(object? parameter)
     {
         if (parameter is not SymbolInfo symbol)
             return;

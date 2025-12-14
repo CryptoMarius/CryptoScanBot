@@ -15,7 +15,7 @@
 
 
 	
-    <Grid ColumnDefinitions="300, 4, *">
+    <Grid Name="MainGrid" ColumnDefinitions="300, 4, *">
 
 		<!-- The symbols on the left Background="red" -->
 		<Grid Grid.Column ="0" x:Name="SymbolSplitView">
@@ -40,7 +40,7 @@
 
 		
 		<!-- Splitter between symbols and the signals -->
-		<GridSplitter Grid.Column="1" ResizeDirection="Columns"/>
+		<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
 
 
 		<!-- Main screen -->

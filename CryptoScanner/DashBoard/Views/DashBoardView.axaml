@@ -16,6 +16,7 @@
         
         <!-- Market Cap Total -->
         <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
+                   Foreground="{Binding MarketCapTotalColor}"
                    Text="Market Cap Total" />
         <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                    Foreground="{Binding MarketCapTotalColor}"
@@ -23,6 +24,7 @@
         
         <!-- Dollar Index -->
         <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
+                   Foreground="{Binding DollarIndexColor}"
                    Text="Dollar Index (DXY)" />
         <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                    Foreground="{Binding DollarIndexColor}"
@@ -30,6 +32,7 @@
 
         <!-- S&P 500 -->
         <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
+                   Foreground="{Binding Spx500Color}"
                    Text="S&amp;P 500" />
         <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                    Foreground="{Binding Spx500Color}"
@@ -37,6 +40,7 @@
 
         <!-- Bitcoin Dominance -->
         <TextBlock Grid.Row="3" Grid.Column="0" Classes="label"
+                   Foreground="{Binding BitcoinDominanceColor}"
                    Text="BTC Dominance" />
         <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                    Foreground="{Binding BitcoinDominanceColor}"
@@ -44,6 +48,7 @@
 
         <!-- Fear and Greed Index -->
         <TextBlock Grid.Row="4" Grid.Column="0" Classes="label"
+                   Foreground="{Binding FearAndGreedIndexColor}"
                    Text="Fear &amp; Greed Index" />
         <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
                    Foreground="{Binding FearAndGreedIndexColor}"

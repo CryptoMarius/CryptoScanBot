@@ -19,7 +19,8 @@ public class FearAndGreedSymbolInfo
     private SymbolValue? SymbolValue;
     private readonly HttpClient httpClient = new();
 
-    public async void StartAsync(string url, string displayName, string displayFormat, SymbolValue symbolValue, int startDelayMs)
+    public async void StartAsync(string url, string displayName, string displayFormat, 
+        SymbolValue symbolValue, int startDelayMs = 250, int loopDelayMs = 6000)
     {
         await Task.Delay(startDelayMs);
         SymbolValue = symbolValue;
@@ -67,7 +68,7 @@ public class FearAndGreedSymbolInfo
                 //GlobalData.FearAndGreedIndex.LastValue = decimal.Parse(FearAndGreedIndex);
             }
 
-            await Task.Delay(60 * 1000);
+            await Task.Delay(loopDelayMs);
         }
     }
 }

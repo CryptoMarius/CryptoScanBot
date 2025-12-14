@@ -7,7 +7,7 @@ namespace CryptoScanner.DashBoard.Services;
 public class TradingViewService : ITradingViewService
 {
     // Type=object because FearAndGreedSymbolInfo is different type
-    private readonly List<object> _symbolInfos = []; 
+    private readonly List<object> _symbolInfos = [];
 
     // Events
     public event EventHandler<decimal>? MarketCapTotalChanged;
@@ -57,7 +57,7 @@ public class TradingViewService : ITradingViewService
         Task.Factory.StartNew(() =>
         {
             var symbolInfo = new TradingViewSymbolInfo();
-            symbolInfo.StartAsync(symbol, description, format, ticker, 1000);
+            symbolInfo.StartAsync(symbol, description, format, ticker);
             _symbolInfos.Add(symbolInfo);
         });
     }
@@ -67,7 +67,7 @@ public class TradingViewService : ITradingViewService
         Task.Factory.StartNew(() =>
         {
             var symbolInfo = new FearAndGreedSymbolInfo();
-            symbolInfo.StartAsync(url, description, format, ticker, 1000);
+            symbolInfo.StartAsync(url, description, format, ticker);
             _symbolInfos.Add(symbolInfo);
         });
     }
@@ -111,6 +111,10 @@ public class TradingViewService : ITradingViewService
         TradingViewBitcoinDominance.DataReceived -= OnBitcoinDominanceReceived;
         FearAndGreedIndex.DataReceived -= OnFearAndGreedIndexChangedReceived;
 
+        //foreach (var _symbolInfo in _symbolInfos)
+        //{
+        //    _symbolInfo.();
+        //}
         _symbolInfos.Clear();
     }
 }

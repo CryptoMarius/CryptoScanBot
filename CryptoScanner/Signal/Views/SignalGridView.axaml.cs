@@ -4,38 +4,53 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
-using CryptoScanner.Services;
+using CryptoScanner.Signal.Common;
+using CryptoScanner.Signal.Model;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
+
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace CryptoScanner.Signal.Views;
 
 public partial class SignalGridView : UserControl
 {
     private const double HeaderHeight = 30.0;
-    private const string SettingsFileName = "signal-grid-columns.json";
 
-    private readonly DataGrid? _dataGrid;
-    private readonly IPlatformService? _platformService;
-    private readonly IDataGridColumnsService? _datagridService;
+    private readonly DataGrid _dataGrid;
 
+    private string? _currentSortColumn;
+    private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
 
     public SignalGridView()
     {
         InitializeComponent();
 
-        // Get services from DI container
-        _platformService = App.GetService<IPlatformService>()
-            ?? throw new InvalidOperationException("IPlatformService not registered");
-        _datagridService = App.GetService<IDataGridColumnsService>()
-            ?? throw new InvalidOperationException("IDataGridColumnsService not registered");
         _dataGrid = this.FindControl<DataGrid>("SignalDataGrid")
             ?? throw new InvalidOperationException("SignalDataGrid not found");
 
+        _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
+
+        // Register a custom comparer for each column based on its SortMemberPath
+        foreach (var column in _dataGrid.Columns)
+        {
+            if (Enum.TryParse<ColumnEnum>(column.SortMemberPath, out ColumnEnum a))
+            {
+                var comparer = new SignalColumnComparer(a);
+                column.CustomSortComparer = comparer;
+            }
+        }
+        // Restore grid state from the service
+        RestoreGridState();
+    }
+
+    private void DataGrid_Loaded(object? sender, RoutedEventArgs e)
+    {
+        _dataGrid.ColumnReordered += OnColumnReordered;
+        _dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
-    
-        LoadColumnSettings();
     }
 
     private void InitializeComponent()
@@ -43,43 +58,33 @@ public partial class SignalGridView : UserControl
         AvaloniaXamlLoader.Load(this);
     }
 
-    /// <summary>
-    /// Get the full path to the settings file
-    /// </summary>
-    private string GetSettingsFileName()
+
+
+    private void SaveGridState()
     {
-        string dataDir = _platformService!.GetDataDirectory();
-
-        if (!Directory.Exists(dataDir))
-            Directory.CreateDirectory(dataDir);
-
-        return Path.Combine(dataDir, SettingsFileName);
+        // Access the service via App.GridStateService
+        App.GridStateService.SaveGridState("SignalGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
-    /// <summary>
-    /// Load saved column settings (width, order, visibility) from JSON file
-    /// </summary>
-    private void LoadColumnSettings()
+    private void RestoreGridState()
     {
-        var settingsFileName = GetSettingsFileName();
-        _datagridService!.LoadColumnSettings(_dataGrid!, settingsFileName);
+        // Access the service via App.GridStateService
+        App.GridStateService.RestoreGridState("SignalGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
+
+        // Apply the sort to the collection
+        if (!string.IsNullOrEmpty(_currentSortColumn))
+        {
+            ApplySortToCollection(_currentSortColumn, _currentSortDirection);
+        }
     }
 
-    /// <summary>
-    /// Save column settings to JSON file
-    /// </summary>
-    private void SaveColumnSettings()
-    {
-        var settingsFileName = GetSettingsFileName();
-        _datagridService!.SaveColumnSettings(_dataGrid!, settingsFileName);
-    }
 
     /// <summary>
     /// Handle column reordering
     /// </summary>
     private void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
     {
-        SaveColumnSettings();
+        SaveGridState();
     }
 
     /// <summary>
@@ -87,7 +92,7 @@ public partial class SignalGridView : UserControl
     /// </summary>
     private void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
     {
-        SaveColumnSettings();
+        SaveGridState();
     }
 
     /// <summary>
@@ -98,29 +103,51 @@ public partial class SignalGridView : UserControl
     {
         if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.RightButtonPressed)
         {
-            var gridPoint = e.GetPosition(_dataGrid!);
+            var gridPoint = e.GetPosition(_dataGrid);
 
             // Check if click is in header area (Y < HeaderHeight)
             if (gridPoint.Y < HeaderHeight)
             {
                 // Header click
-                ShowHeaderContextMenu(_dataGrid!, e);
+                ShowHeaderContextMenu(_dataGrid);
                 e.Handled = true;
+                return;
             }
             else
             {
                 // Row click
-                ShowRowContextMenu(_dataGrid!, e);
+                ShowRowContextMenu(_dataGrid);
                 e.Handled = true;
+                return;
             }
         }
+
+        var source = e.Source as Control;
+        var header = source?.FindAncestorOfType<DataGridColumnHeader>();
+        if (header?.DataContext is DataGridColumn column && column.SortMemberPath != null)
+        {
+            // Toggle direction
+            var direction = (_currentSortColumn == column.SortMemberPath &&
+                           _currentSortDirection == ListSortDirection.Ascending)
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+
+            _currentSortColumn = column.SortMemberPath;
+            _currentSortDirection = direction;
+
+            // Save meteen
+            //_currentSortColumn = column.SortMemberPath;
+            //_currentSortDirection = direction.ToString();
+            //Settings.Default.Save();
+        }
     }
+
 
 
     /// <summary>
     /// Show context menu for header (column management)
     /// </summary>
-    private void ShowHeaderContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
+    private void ShowHeaderContextMenu(DataGrid dataGrid)
     {
         var flyout = new MenuFlyout();
 
@@ -131,7 +158,7 @@ public partial class SignalGridView : UserControl
         flyout.Items.Add(new Separator());
 
         var resetColumnsItem = new MenuItem { Header = "Reset Columns" };
-        resetColumnsItem.Click += (s, args) => ResetColumns(dataGrid);
+        resetColumnsItem.Click += (s, args) => ResetColumns();
         flyout.Items.Add(resetColumnsItem);
 
         flyout.ShowAt(dataGrid, true);
@@ -141,7 +168,7 @@ public partial class SignalGridView : UserControl
     /// <summary>
     /// Show context menu for rows (signal actions)
     /// </summary>
-    private void ShowRowContextMenu(DataGrid dataGrid, PointerPressedEventArgs e)
+    private void ShowRowContextMenu(DataGrid dataGrid)
     {
         var flyout = new MenuFlyout();
 
@@ -165,8 +192,9 @@ public partial class SignalGridView : UserControl
     /// <summary>
     /// Reset columns to default settings
     /// </summary>
-    private void ResetColumns(DataGrid dataGrid)
+    private void ResetColumns()
     {
+        _dataGrid.Columns.Clear();
         // is dat wel genoeg? Daar krijg je echt de originele index niet mee terug
         //try
         //{
@@ -204,7 +232,7 @@ public partial class SignalGridView : UserControl
         await columnVisibilityWindow.ShowDialog(parentWindow);
 
         // Save settings after user closes the dialog
-        SaveColumnSettings();
+        SaveGridState();
     }
 
     /// <summary>
@@ -212,7 +240,7 @@ public partial class SignalGridView : UserControl
     /// </summary>
     private void OnLaunchExternal(object? sender, RoutedEventArgs e)
     {
-        if (_dataGrid!.SelectedItem != null)
+        if (_dataGrid.SelectedItem != null)
         {
             if (DataContext is SignalGridViewModel vm)
             {
@@ -221,8 +249,34 @@ public partial class SignalGridView : UserControl
         }
     }
 
-    private void ColumnsAdjust(object? sender, RoutedEventArgs e)
+
+    private void ApplySortToCollection(string? sortMemberPath, ListSortDirection sortDirection)
     {
-        ShowColumnVisibilityWindow(_dataGrid);
+        if (!string.IsNullOrEmpty(sortMemberPath))
+        {
+            _currentSortColumn = sortMemberPath;
+            _currentSortDirection = sortDirection;
+
+            // Problem: GEEN indicator tot eerste click
+            if (_dataGrid.ItemsSource is ObservableCollection<SignalInfo> collection)
+            {
+                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == sortMemberPath);
+                if (column != null)
+                {
+                    var sorted = collection.ToArray(); // Naar array
+
+                    Array.Sort(sorted, column.CustomSortComparer);
+
+                    // Reverse als descending
+                    if (_currentSortDirection == ListSortDirection.Descending)
+                        Array.Reverse(sorted);
+
+                    collection.Clear();
+                    foreach (var item in sorted)
+                        collection.Add(item);
+                }
+            }
+        }
     }
 }
+

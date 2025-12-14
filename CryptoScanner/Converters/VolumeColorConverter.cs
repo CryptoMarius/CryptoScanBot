@@ -54,6 +54,9 @@ namespace CryptoScanner.Converters
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+        {
+            // ConvertBack not needed for OneWay binding
+            throw new NotImplementedException();
+        }
     }
 }

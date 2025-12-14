@@ -8,9 +8,9 @@ namespace CryptoScanner.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public DashBoardViewModel DashBoardViewModel { get; }
-    public SymbolGridViewModel SymbolGridViewModel { get; }
-    public SignalGridViewModel SignalGridViewModel { get; }
+    public required DashBoardViewModel DashBoardViewModel { get; set; }
+    public required SymbolGridViewModel SymbolGridViewModel { get; set; }
+    public required SignalGridViewModel SignalGridViewModel { get; set; }
 
     public MainWindowViewModel(
         DashBoardViewModel dashBoardViewModel,
