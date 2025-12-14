@@ -5,7 +5,6 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Core.Trader;
-using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
