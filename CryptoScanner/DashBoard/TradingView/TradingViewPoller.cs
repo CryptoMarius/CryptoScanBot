@@ -2,9 +2,9 @@
 
 using System.Text.Json;
 
-namespace CryptoScanner.Core.TradingView;
+namespace CryptoScanner.DashBoard.TradingView;
 
-public class SymbolValue
+public class TickerData
 {
     public string? Name { get; set; }
     public string? Ticker { get; set; }
@@ -26,6 +26,10 @@ public class SymbolValue
             }
         } }
 
+    public void ResetEvents()
+    {
+        DataReceived = null;
+    }
 
     // Onderstaand is in deze tool niet nodig, wellicht willen we er in de toekomt nog wat mee?
 
@@ -40,17 +44,17 @@ public class SymbolValue
     //public double OpenPrice { get; set; } // previous ?
     //public DateTime OpenTime { get; set; }
     //public string TimeZone { get; set; }
-    public event EventHandler<SymbolValue>? DataReceived;
+    public event EventHandler<TickerData>? DataReceived;
 }
 
 
 public class TradingViewSymbolInfo
 {
-    private SymbolValue SymbolValue = null!;
+    private TickerData SymbolValue = null!;
     private TradingViewSymbolWebSocket socket = null!;
 
     public async void StartAsync(string tickerName, string displayName, string displayFormat,
-        SymbolValue symbolValue, int startDelayMs = 250, int loopDelayMs = 6000,
+        TickerData symbolValue, int startDelayMs = 250, int loopDelayMs = 6000,
         CancellationToken cancellationToken = default)
     {
         await Task.Delay(startDelayMs, cancellationToken);
@@ -67,21 +71,44 @@ public class TradingViewSymbolInfo
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var result = socket.ReceiveData().Result;
-            if (result)
+            try
             {
-                await Task.Delay(loopDelayMs, cancellationToken);
+                var result = socket.ReceiveData().Result;
+                if (result)
+                {
+                    await Task.Delay(loopDelayMs, cancellationToken);
+                }
+                else
+                {
+                    // Failed, connect again..
+                    await Task.Delay(250, cancellationToken);
+                    socket = new TradingViewSymbolWebSocket(tickerName);
+                    socket.DataFetched += OnValueFetched;
+                    socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
+                    socket.RequestData().Wait(cancellationToken);
+                }
             }
-            else
+            catch (OperationCanceledException)
             {
-                // Failed, connect again..
-                await Task.Delay(250, cancellationToken);
-                socket = new TradingViewSymbolWebSocket(tickerName);
-                socket.DataFetched += OnValueFetched;
-                socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
-                socket.RequestData().Wait(cancellationToken);
+                // Normal cancellation - exit gracefully
+                break;
+            }
+            catch (Exception)
+            {
+                // Other errors - continue trying
+                try
+                {
+                    await Task.Delay(250, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
+
+        // Cleanup
+        socket.DataFetched -= OnValueFetched;
     }
 
     private void OnValueFetched(object? sender, List<string> values)

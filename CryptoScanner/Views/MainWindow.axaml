@@ -20,7 +20,7 @@
 		<!-- The symbols on the left Background="red" -->
 		<Grid Grid.Column ="0" x:Name="SymbolSplitView">
 		    <Grid RowDefinitions="Auto,*">
-			    <Panel Grid.Row="0" Height="100" >
+			    <Panel Grid.Row="0" Height="120" >
 				    <Menu>
 					    <MenuItem Header="Instellingen">
 						    <MenuItem Header="Algemeen" Click="OnSettingsClick" />
@@ -30,7 +30,7 @@
 			    </Panel>
 			    <Grid Grid.Row="1">
                     <TabControl Grid.Row="0" Margin="0" >
-                        <TabItem Header="Symbols" FontSize="15">
+                        <TabItem Header="Symbols" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 				            <symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}" Grid.Column="0"/>
                         </TabItem>
                     </TabControl>
@@ -48,7 +48,7 @@
             <!-- The top dashboard  Background="orange" -->
             
             <Grid ColumnDefinitions="Auto, Auto" Grid.Row="0">
-                <Panel Grid.Column="0" Height="100" >
+                <Panel Grid.Column="0" Height="120" >
                     <!--
 				    <TextBlock Text="Dashboard information" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
 	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
@@ -65,13 +65,13 @@
 
             <!-- The signals on the main screen Background="yellow" -->
             <TabControl Grid.Row="1" Margin="0" >
-              <TabItem Header="Signals" FontSize="15">
+              <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <Panel >
 				    <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
                     <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
                 </Panel>
               </TabItem>
-              <TabItem Header="Tradingview" FontSize="15">
+              <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <Panel Background="red">
                     <!-- NavigationCompleted="WebView_NavigationCompleted" -->
                     <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
@@ -88,17 +88,17 @@
                     <Decorator x:Name="browserWrapper"/>
                 </Panel>
               </TabItem>
-              <TabItem Header="Live Data" FontSize="15">
+              <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <TextBlock Margin="0">This is content</TextBlock>
               </TabItem>
-              <TabItem Header="Open positions" FontSize="15">
+              <TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <TextBlock Margin="5">This is content</TextBlock>
               </TabItem>
-              <TabItem Header="Closed positions" FontSize="15">
+              <TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <TextBlock Margin="5">This is content</TextBlock>
               </TabItem>
-              <TabItem Header="Log" FontSize="15">
-                <TextBlock Margin="5">This is content</TextBlock>
+              <TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                <TextBlock Margin="5">This is content</TextBlock >
               </TabItem>
             </TabControl>
         </Grid>

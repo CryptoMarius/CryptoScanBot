@@ -1,50 +1,52 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Avalonia.Media;
+
+using CryptoScanner.DashBoard.Model;
 using CryptoScanner.DashBoard.Services;
-using CryptoScanner.Helpers;
 
 namespace CryptoScanner.DashBoard.ViewModels;
 
 public partial class DashBoardViewModel : ObservableObject
 {
-    // Current values
-    [ObservableProperty]
-    private decimal? _marketCapTotal;
+    #region Market Indicators
 
     [ObservableProperty]
-    private decimal? _dollarIndex;
+    private SymbolData _marketCapTotal = new();
 
     [ObservableProperty]
-    private decimal? _spx500;
+    private SymbolData _dollarIndex = new();
 
     [ObservableProperty]
-    private decimal? _bitcoinDominance;
+    private SymbolData _spx500 = new();
 
     [ObservableProperty]
-    private decimal? _fearAndGreedIndex;
-
-    // Previous values (voor vergelijking)
-    private decimal? _previousMarketCapTotal;
-    private decimal? _previousDollarIndex;
-    private decimal? _previousSpx500;
-    private decimal? _previousBitcoinDominance;
-    private decimal? _previousFearAndGreedIndex;
-
-    // Colors (theme-aware via BrushHelper)
-    [ObservableProperty]
-    private IBrush _marketCapTotalColor = BrushHelper.PriceNeutral;
+    private SymbolData _bitcoinDominance = new();
 
     [ObservableProperty]
-    private IBrush _dollarIndexColor = BrushHelper.PriceNeutral;
+    private SymbolData _fearAndGreedIndex = new();
+
+    #endregion
+
+    #region Crypto Symbols
 
     [ObservableProperty]
-    private IBrush _spx500Color = BrushHelper.PriceNeutral;
+    private SymbolData _btcUsdt = new();
 
     [ObservableProperty]
-    private IBrush _bitcoinDominanceColor = BrushHelper.PriceNeutral;
+    private SymbolData _ethUsdt = new();
 
     [ObservableProperty]
-    private IBrush _fearAndGreedIndexColor = BrushHelper.PriceNeutral;
+    private SymbolData _bnbUsdt = new();
+
+    [ObservableProperty]
+    private SymbolData _solUsdt = new();
+
+    [ObservableProperty]
+    private SymbolData _xrpUsdt = new();
+
+    [ObservableProperty]
+    private SymbolData _adaUsdt = new();
+
+    #endregion
 
     private readonly ITradingViewService _tradingViewService;
 
@@ -52,69 +54,20 @@ public partial class DashBoardViewModel : ObservableObject
     {
         _tradingViewService = tradingViewService;
 
-        // Subscribe to all events
-        _tradingViewService.MarketCapTotalChanged += (s, v) => UpdateMarketCapTotal(v);
-        _tradingViewService.DollarIndexChanged += (s, v) => UpdateDollarIndex(v);
-        _tradingViewService.Spx500Changed += (s, v) => UpdateSpx500(v);
-        _tradingViewService.BitcoinDominanceChanged += (s, v) => UpdateBitcoinDominance(v);
-        _tradingViewService.FearAndGreedIndexChanged += (s, v) => UpdateFearAndGreedIndex(v);
+        // Subscribe to market indicator events
+        _tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v);
+        _tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v);
+        _tradingViewService.Spx500Changed += (s, v) => Spx500.Update(v);
+        _tradingViewService.BitcoinDominanceChanged += (s, v) => BitcoinDominance.Update(v);
+        _tradingViewService.FearAndGreedIndexChanged += (s, v) => FearAndGreedIndex.Update(v);
 
-        // Set initial values (null on startup)
-        //MarketCapTotal = _tradingViewService.MarketCapTotalValue;
-        //DollarIndex = _tradingViewService.DollarIndexValue;
-        //Spx500 = _tradingViewService.Spx500Value;
-        //BitcoinDominance = _tradingViewService.BitcoinDominanceValue;
-        //FearAndGreedIndex = _tradingViewService.FearAndGreedIndexValue;
+        // Subscribe to crypto symbol events
+        _tradingViewService.BtcUsdtChanged += (s, v) => BtcUsdt.Update(v);
+        _tradingViewService.EthUsdtChanged += (s, v) => EthUsdt.Update(v);
+        _tradingViewService.BnbUsdtChanged += (s, v) => BnbUsdt.Update(v);
+        _tradingViewService.SolUsdtChanged += (s, v) => SolUsdt.Update(v);
+        _tradingViewService.XrpUsdtChanged += (s, v) => XrpUsdt.Update(v);
 
         System.Diagnostics.Debug.WriteLine("DashBoardViewModel constructor called");
-    }
-
-    private void UpdateMarketCapTotal(decimal newValue)
-    {
-        MarketCapTotalColor = GetColorForChange(_previousMarketCapTotal, newValue);
-        _previousMarketCapTotal = MarketCapTotal;
-        MarketCapTotal = newValue;
-    }
-
-    private void UpdateDollarIndex(decimal newValue)
-    {
-        DollarIndexColor = GetColorForChange(_previousDollarIndex, newValue);
-        _previousDollarIndex = DollarIndex;
-        DollarIndex = newValue;
-    }
-
-    private void UpdateSpx500(decimal newValue)
-    {
-        Spx500Color = GetColorForChange(_previousSpx500, newValue);
-        _previousSpx500 = Spx500;
-        Spx500 = newValue;
-    }
-
-    private void UpdateBitcoinDominance(decimal newValue)
-    {
-        BitcoinDominanceColor = GetColorForChange(_previousBitcoinDominance, newValue);
-        _previousBitcoinDominance = BitcoinDominance;
-        BitcoinDominance = newValue;
-    }
-
-    private void UpdateFearAndGreedIndex(decimal newValue)
-    {
-        FearAndGreedIndexColor = GetColorForChange(_previousFearAndGreedIndex, newValue);
-        _previousFearAndGreedIndex = FearAndGreedIndex;
-        FearAndGreedIndex = newValue;
-    }
-
-    private static IBrush GetColorForChange(decimal? previousValue, decimal newValue)
-    {
-        if (!previousValue.HasValue)
-            return BrushHelper.PriceNeutral;
-
-        if (newValue > previousValue.Value)
-            return BrushHelper.PriceUp;
-
-        if (newValue < previousValue.Value)
-            return BrushHelper.PriceDown;
-
-        return BrushHelper.PriceNeutral;
     }
 }
