@@ -1,7 +1,8 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Signal.Common;
@@ -41,6 +42,8 @@ public partial class SignalGridView : UserControl
                 var comparer = new SignalColumnComparer(a);
                 column.CustomSortComparer = comparer;
             }
+            else
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
         }
         // Restore grid state from the service
         RestoreGridState();
@@ -48,10 +51,12 @@ public partial class SignalGridView : UserControl
 
     private void DataGrid_Loaded(object? sender, RoutedEventArgs e)
     {
+        _dataGrid.Sorting += OnDataGridSorting;
         _dataGrid.ColumnReordered += OnColumnReordered;
         _dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
     }
+
 
     private void InitializeComponent()
     {
@@ -76,6 +81,8 @@ public partial class SignalGridView : UserControl
         {
             ApplySortToCollection(_currentSortColumn, _currentSortDirection);
         }
+
+        MarkSortedColumn();
     }
 
 
@@ -93,6 +100,63 @@ public partial class SignalGridView : UserControl
     private void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
     {
         SaveGridState();
+    }
+
+
+    private void MarkSortedColumn()
+    {
+        // this does not work unfortunately
+        //return;
+        foreach (var c in _dataGrid.Columns)
+        {
+            //string headerText = c.Header?.ToString() ?? "";
+
+            //c.HeaderTemplate.FontWeight = FontWeight.Bold;
+
+            if (c.SortMemberPath == _currentSortColumn)
+            {
+                if (c.Header is DataGridColumnHeader column2)
+                {
+                    //DataGridColumnHeader HeaderCell
+                    //c.HeaderCell.FontWeight = FontWeight.Bold;
+                    //column2.FontWeight = FontWeight.Bold;
+                    //column2.Header.
+                    //column2.Header = new TextBlock
+                    //{
+                    //    Text = headerText,
+                    //    FontWeight = FontWeight.Bold,
+                    //    TextAlignment = TextAlignment.Center
+                    //};
+                }
+            }
+            else
+            {
+                if (c.Header is DataGridColumnHeader column2)
+                {
+                    column2.FontWeight = FontWeight.Normal;
+                    //column2.Header = new TextBlock
+                    //{
+                    //    Text = headerText,
+                    //    FontWeight = FontWeight.Normal,
+                    //    TextAlignment = TextAlignment.Center
+                    //};
+                }
+            }
+        }
+    }
+
+    private void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        if (e.Column.SortMemberPath != null)
+        {
+            var direction = (_currentSortColumn == e.Column.SortMemberPath &&
+                            _currentSortDirection == ListSortDirection.Ascending)
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+            _currentSortColumn = e.Column.SortMemberPath;
+            _currentSortDirection = direction;
+            MarkSortedColumn();
+        }
     }
 
     /// <summary>
@@ -122,24 +186,64 @@ public partial class SignalGridView : UserControl
             }
         }
 
-        var source = e.Source as Control;
-        var header = source?.FindAncestorOfType<DataGridColumnHeader>();
-        if (header?.DataContext is DataGridColumn column && column.SortMemberPath != null)
-        {
-            // Toggle direction
-            var direction = (_currentSortColumn == column.SortMemberPath &&
-                           _currentSortDirection == ListSortDirection.Ascending)
-                ? ListSortDirection.Descending
-                : ListSortDirection.Ascending;
+        //var source = e.Source as Control;
+        //var header = source?.FindAncestorOfType<DataGridColumnHeader>();
+        //if (header?.DataContext is DataGridColumn column)
+        //{
+        //    // Komt nooit tot hier...
+        //    if (column.SortMemberPath != null)
+        //    {
+        //        // Toggle direction
+        //        var direction = (_currentSortColumn == column.SortMemberPath &&
+        //                       _currentSortDirection == ListSortDirection.Ascending)
+        //            ? ListSortDirection.Descending
+        //            : ListSortDirection.Ascending;
 
-            _currentSortColumn = column.SortMemberPath;
-            _currentSortDirection = direction;
+        //        _currentSortColumn = column.SortMemberPath;
+        //        _currentSortDirection = direction;
+        //        MarkSortedColumn();
+        //    }
+        //}
 
-            // Save meteen
-            //_currentSortColumn = column.SortMemberPath;
-            //_currentSortDirection = direction.ToString();
-            //Settings.Default.Save();
-        }
+        //var source = e.Source as Control;
+        //DataGridColumnHeader header = source?.FindAncestorOfType<DataGridColumnHeader>();
+        //if (header?.Column != null)
+        //{
+        //    var column = header.Column;
+
+        //    // ***1 Komt nu wel hier!
+        //    if (column.SortMemberPath != null)
+        //    {
+        //        var direction = (_currentSortColumn == column.SortMemberPath &&
+        //                       _currentSortDirection == ListSortDirection.Ascending)
+        //            ? ListSortDirection.Descending
+        //            : ListSortDirection.Ascending;
+        //        _currentSortColumn = column.SortMemberPath;
+        //        _currentSortDirection = direction;
+        //        MarkSortedColumn();
+        //    }
+        //}
+
+        //var source = e.Source as Control;
+        //var header = source?.FindAncestorOfType<DataGridColumnHeader>();
+        //if (header != null)
+        //{
+        //    var columnIndex = _dataGrid.Columns.IndexOf(_dataGrid.Columns.FirstOrDefault(c => c.Header == header.Content));
+        //    if (columnIndex >= 0)
+        //    {
+        //        var column = _dataGrid.Columns[columnIndex];
+        //        if (column.SortMemberPath != null)
+        //        {
+        //            var direction = (_currentSortColumn == column.SortMemberPath &&
+        //                           _currentSortDirection == ListSortDirection.Ascending)
+        //                ? ListSortDirection.Descending
+        //                : ListSortDirection.Ascending;
+        //            _currentSortColumn = column.SortMemberPath;
+        //            _currentSortDirection = direction;
+        //            MarkSortedColumn();
+        //        }
+        //    }
+        //}
     }
 
 

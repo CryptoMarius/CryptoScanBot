@@ -135,8 +135,7 @@ public class GridStateService
             // Restore column settings
             foreach (var colSetting in gridState.Columns)
             {
-                var column = dataGrid.Columns.FirstOrDefault(c =>
-                    c.SortMemberPath == colSetting.SortMemberPath);
+                var column = dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == colSetting.SortMemberPath);
 
                 if (column != null)
                 {

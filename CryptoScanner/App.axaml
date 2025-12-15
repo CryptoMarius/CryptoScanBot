@@ -4,7 +4,11 @@
              RequestedThemeVariant="Default">
     
     <Application.Resources>
+
         <ResourceDictionary>
+            <!-- Suppress the datagrid sort indicator (takes up to much space) -->
+            <x:Double x:Key="DataGridSortIconMinWidth">32</x:Double>
+
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light theme resources -->
                 <ResourceDictionary x:Key="Light">
@@ -28,9 +32,12 @@
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
         </ResourceDictionary>
+
     </Application.Resources>
     
+
     <Application.Styles>
         <FluentTheme />
         <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
@@ -60,28 +67,34 @@
         
         <!-- Alle TextBlocks in dashboard krijgen margin en vertical alignment -->
         <Style Selector="TextBlock.dashboard">
-            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="Margin" Value="2" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         
         <!-- Labels (kolom 0) -->
         <Style Selector="TextBlock.label">
-            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="Margin" Value="2" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Left" />
         </Style>
         
         <!-- Values (kolom 1) -->
         <Style Selector="TextBlock.value">
-            <Setter Property="Margin" Value="2.5" />
+            <Setter Property="Margin" Value="2" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
 
         <!-- ============================================ -->
-        <!-- DATAGRID STYLES (voor alle DataGrids in app) -->
+        <!-- DATAGRID STYLES (for all DataGrids in app)   -->
         <!-- ============================================ -->
         
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Padding" Value="0,0,0,0" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+
         <!-- Alternating row colors -->
         <Style Selector="DataGridRow:nth-child(even)">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />

@@ -15,12 +15,12 @@
 
 
 	
-    <Grid Name="MainGrid" ColumnDefinitions="300, 4, *">
+    <Grid Name="MainGrid" ColumnDefinitions="300,1,4,*">
 
 		<!-- The symbols on the left Background="red" -->
 		<Grid Grid.Column ="0" x:Name="SymbolSplitView">
 		    <Grid RowDefinitions="Auto,*">
-			    <Panel Grid.Row="0" Height="120" >
+			    <Panel Grid.Row="0" Height="125" >
 				    <Menu>
 					    <MenuItem Header="Instellingen">
 						    <MenuItem Header="Algemeen" Click="OnSettingsClick" />
@@ -38,17 +38,16 @@
 			</Grid>
 		</Grid>
 
-		
-		<!-- Splitter between symbols and the signals -->
-		<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
+        <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
 
+		<!-- Splitter between symbols and the signals -->
+		<GridSplitter Grid.Column="2" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
 
 		<!-- Main screen -->
-        <Grid Grid.Column ="2" RowDefinitions="Auto,*">
+        <Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
             <!-- The top dashboard  Background="orange" -->
-            
             <Grid ColumnDefinitions="Auto, Auto" Grid.Row="0">
-                <Panel Grid.Column="0" Height="120" >
+                <Panel Grid.Column="0" Height="125" >
                     <!--
 				    <TextBlock Text="Dashboard information" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
 	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
@@ -62,9 +61,10 @@
                 </Panel>
             </Grid>
 
+            <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
             <!-- The signals on the main screen Background="yellow" -->
-            <TabControl Grid.Row="1" Margin="0" >
+            <TabControl Grid.Row="2" Margin="0" >
               <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                 <Panel >
 				    <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
@@ -72,8 +72,8 @@
                 </Panel>
               </TabItem>
               <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <Panel Background="red">
-                    <!-- NavigationCompleted="WebView_NavigationCompleted" -->
+                <Panel>
+                    <!-- NavigationCompleted="WebView_NavigationCompleted" Background="red" -->
                     <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
                     <!-- Dan gaat de tradingview browser waarschijnlijk vervallen, 219 euro per jaar 
                     

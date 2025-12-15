@@ -27,7 +27,15 @@
 
             <DataGrid.Columns >
                 <!-- Id -->
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="Auto" SortMemberPath="Id"/>
+                <!-- Id (Hidden by default) -->
+                <DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding Id, StringFormat='{}{0:#,##0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Name -->
                 <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" Width="Auto" SortMemberPath="Symbol"/>
