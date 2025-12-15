@@ -19,11 +19,11 @@ public class TradingViewService : ITradingViewService, IDisposable
     public event EventHandler<decimal>? FearAndGreedIndexChanged;
 
     // Events - crypto symbols
-    public event EventHandler<decimal>? BtcUsdtChanged;
-    public event EventHandler<decimal>? EthUsdtChanged;
-    public event EventHandler<decimal>? BnbUsdtChanged;
-    public event EventHandler<decimal>? SolUsdtChanged;
-    public event EventHandler<decimal>? XrpUsdtChanged;
+    public event EventHandler<(decimal Price, decimal Volume)>? BtcUsdtChanged;
+    public event EventHandler<(decimal Price, decimal Volume)>? EthUsdtChanged;
+    public event EventHandler<(decimal Price, decimal Volume)>? BnbUsdtChanged;
+    public event EventHandler<(decimal Price, decimal Volume)>? SolUsdtChanged;
+    public event EventHandler<(decimal Price, decimal Volume)>? XrpUsdtChanged;
 
     // Current values - market indicators
     public decimal? MarketCapTotalValue { get; private set; }
@@ -65,81 +65,64 @@ public class TradingViewService : ITradingViewService, IDisposable
 
             // Register market indicators
             RegisterTradingViewSymbol("CRYPTOCAP:TOTAL3", "Market Cap total",
-                v => { MarketCapTotalValue = v; MarketCapTotalChanged?.Invoke(this, v); }, token);
+                (price, volume) => { MarketCapTotalValue = price; MarketCapTotalChanged?.Invoke(this, price); }, token);
 
             RegisterTradingViewSymbol("TVC:DXY", "US Dollar Index",
-                v => { DollarIndexValue = v; DollarIndexChanged?.Invoke(this, v); }, token);
+                (price, volume) => { DollarIndexValue = price; DollarIndexChanged?.Invoke(this, price); }, token);
 
             RegisterTradingViewSymbol("SP:SPX", "S&P 500",
-                v => { Spx500Value = v; Spx500Changed?.Invoke(this, v); }, token);
+                (price, volume) => { Spx500Value = price; Spx500Changed?.Invoke(this, price); }, token);
 
-            RegisterTradingViewSymbol("CRYPTOCAP:BTC.D", "BTC Dominance", 
-                v => { BitcoinDominanceValue = v; BitcoinDominanceChanged?.Invoke(this, v); }, token);
+            RegisterTradingViewSymbol("CRYPTOCAP:BTC.D", "BTC Dominance",
+                (price, volume) => { BitcoinDominanceValue = price; BitcoinDominanceChanged?.Invoke(this, price); }, token);
 
             RegisterFearAndGreedSymbol("https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index",
-                v => { FearAndGreedIndexValue = v; FearAndGreedIndexChanged?.Invoke(this, v); }, token);
+                (price, volume) => { FearAndGreedIndexValue = price; FearAndGreedIndexChanged?.Invoke(this, price); }, token);
 
+            // TODO: Use the right exchangecode
             // Register crypto symbols
             RegisterTradingViewSymbol("BINANCE:BTCUSDT", "Bitcoin",
-                v => { BtcUsdtPriceValue = v; BtcUsdtVolumeValue = 1000*v; BtcUsdtChanged?.Invoke(this, v); }, token);
+                (price, volume) => { BtcUsdtPriceValue = price; BtcUsdtVolumeValue = volume; BtcUsdtChanged?.Invoke(this, (price, volume)); }, token);
 
             RegisterTradingViewSymbol("BINANCE:ETHUSDT", "Ethereum",
-                v => { EthUsdtPriceValue = v; EthUsdtChanged?.Invoke(this, v); }, token);
+                (price, volume) => { EthUsdtPriceValue = price; EthUsdtChanged?.Invoke(this, (price, volume)); }, token);
 
             RegisterTradingViewSymbol("BINANCE:BNBUSDT", "BNB",
-                v => { BnbUsdtPriceValue = v; BnbUsdtChanged?.Invoke(this, v); }, token);
+                (price, volume) => { BnbUsdtPriceValue = price; BnbUsdtChanged?.Invoke(this, (price, volume)); }, token);
 
             RegisterTradingViewSymbol("BINANCE:SOLUSDT", "Solana",
-                v => { SolUsdtPriceValue = v; SolUsdtChanged?.Invoke(this, v); }, token);
+                (price, volume) => { SolUsdtPriceValue = price; SolUsdtChanged?.Invoke(this, (price, volume)); }, token);
 
             RegisterTradingViewSymbol("BINANCE:XRPUSDT", "XRP",
-                v => { XrpUsdtPriceValue = v; XrpUsdtVolumeValue = v; XrpUsdtChanged?.Invoke(this, v); }, token);
+                (price, volume) => { XrpUsdtPriceValue = price; XrpUsdtVolumeValue = price; XrpUsdtChanged?.Invoke(this, (price, volume)); }, token);
 
             _isRunning = true;
-            System.Diagnostics.Debug.WriteLine("TradingViewService: Started 11 symbols (5 market indicators + 6 cryptos)");
+            System.Diagnostics.Debug.WriteLine("TradingViewService: Started");
         }
     }
 
     /// <summary>
     /// Registers a TradingView symbol with automatic event wiring
     /// </summary>
-    private static void RegisterTradingViewSymbol(string symbol, string description, 
-        Action<decimal> onValueReceived, CancellationToken token)
+    private static void RegisterTradingViewSymbol(string symbol, string displayName,
+        Action<decimal, decimal> onValueReceived, CancellationToken token)
     {
-        TickerData tickerData = new();
-
-        // Subscribe to DataReceived event
-        tickerData.DataReceived += (sender, data) =>
-        {
-            Dispatcher.UIThread.Post(() => onValueReceived(data.Lp));
-        };
-
         // Start the symbol polling
         Task.Factory.StartNew(() =>
         {
-            var symbolInfo = new TradingViewSymbolInfo();
-            symbolInfo.StartAsync(symbol, description, tickerData, cancellationToken: token);
+            var symbolInfo = new TradingViewSymbolExtractor();
+            symbolInfo.StartAsync(symbol, displayName, onValueReceived, cancellationToken: token);
         }, token);
     }
 
     /// <summary>
     /// Registers Fear & Greed Index with automatic event wiring
     /// </summary>
-    private static void RegisterFearAndGreedSymbol(string url, string description, 
-        Action<decimal> onValueReceived, CancellationToken token)
+    private static void RegisterFearAndGreedSymbol(string url, string displayName, 
+        Action<decimal, decimal> onValueReceived, CancellationToken token)
     {
-        TickerData tickerData = new();
-
-        // Subscribe to DataReceived event
-        tickerData.DataReceived += (sender, data) =>
-        {
-            Dispatcher.UIThread.Post(() => onValueReceived(data.Lp));
-        };
-        Task.Factory.StartNew(() =>
-        {
-            var symbolInfo = new FearAndGreedSymbolInfo();
-            symbolInfo.StartAsync(url, description, tickerData, cancellationToken: token);
-        }, token);
+        Task.Factory.StartNew(() => { FearAndGreedIndexExtractor.StartAsync(url, 
+            displayName, onValueReceived, cancellationToken: token);}, token);
     }
 
     public void Stop()

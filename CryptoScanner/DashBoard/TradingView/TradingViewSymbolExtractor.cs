@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Core;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Core;
 
 using System.Text.Json;
 
@@ -11,25 +13,12 @@ public class TickerData
     public string? Url { get; set; }
 
     //public string DisplayFormat { get; set; }
-    public DateTime? LastCheck { get; set; }
+    //public DateTime? LastCheck { get; set; }
     //public decimal LastValue { get; set; }
 
     // Close value?
-    public decimal _lp;
-    public decimal Lp {
-        get { return _lp; }
-        set {
-            //if (_lp != value)
-            {
-                _lp = value;
-                DataReceived?.Invoke(this, this);
-            }
-        } }
-
-    public void ResetEvents()
-    {
-        DataReceived = null;
-    }
+    public decimal Lp { get; set; }
+    public decimal Volume { get; set; }
 
     // Onderstaand is in deze tool niet nodig, wellicht willen we er in de toekomt nog wat mee?
 
@@ -44,27 +33,24 @@ public class TickerData
     //public double OpenPrice { get; set; } // previous ?
     //public DateTime OpenTime { get; set; }
     //public string TimeZone { get; set; }
-    public event EventHandler<TickerData>? DataReceived;
 }
 
 
-public class TradingViewSymbolInfo
+public class TradingViewSymbolExtractor
 {
-    private TickerData SymbolValue = null!;
-    private TradingViewSymbolWebSocket socket = null!;
+    private readonly TickerData _tickerData = new();
 
-    public async void StartAsync(string tickerName, string displayName, 
-        TickerData symbolValue, int startDelayMs = 250, int loopDelayMs = 6000,
+    public async void StartAsync(string tickerName, string displayName,
+        Action<decimal, decimal> onDataReceived,
+        int startDelayMs = 250, int loopDelayMs = 1000,
         CancellationToken cancellationToken = default)
     {
         await Task.Delay(startDelayMs, cancellationToken);
+        _tickerData.Name = displayName;
+        _tickerData.Ticker = tickerName;
 
-        SymbolValue = symbolValue;
-        SymbolValue.Name = displayName;
-        SymbolValue.Ticker = tickerName;
-        //SymbolValue.DisplayFormat = displayFormat;
 
-        socket = new TradingViewSymbolWebSocket(tickerName);
+        TradingViewSymbolWebSocket socket = new(tickerName); // TODO: implement dispose
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);
@@ -77,11 +63,12 @@ public class TradingViewSymbolInfo
                 var result = socket.ReceiveData().Result;
                 if (result)
                 {
+                    Dispatcher.UIThread.Post(() => onDataReceived(_tickerData.Lp, _tickerData.Volume));
                     await Task.Delay(loopDelayMs, cancellationToken);
                     if (displayNext)
                     {
                         displayNext = false;
-                        System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} ok");
+                        System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} ok");
                     }
                 }
                 else
@@ -93,7 +80,7 @@ public class TradingViewSymbolInfo
                     socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
                     socket.RequestData().Wait(cancellationToken);
 
-                    System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} not succeeded");
+                    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} not succeeded");
                     displayNext = true;
                 }
             }
@@ -108,7 +95,7 @@ public class TradingViewSymbolInfo
                 try
                 {
                     await Task.Delay(250, cancellationToken);
-                    System.Diagnostics.Debug.WriteLine($"{symbolValue.Name} error {error.Message}");
+                    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {error.Message}");
                 }
                 catch (OperationCanceledException)
                 {
@@ -120,6 +107,7 @@ public class TradingViewSymbolInfo
         // Cleanup
         socket.DataFetched -= OnValueFetched;
     }
+    
 
     private void OnValueFetched(object? sender, List<string> values)
     {
@@ -148,20 +136,25 @@ public class TradingViewSymbolInfo
             var res = TradingViewJsonParser.TryParse(json);
             if (res == null)
                 continue;
+            //if (_tickerData.Name == "Bitcoin")
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {json}");
+            //}
+
             flag += ApplyTickerCurrentValues(res);
             //flag += ApplyMarketStatus(res);
             //flag += ApplyCurrentSession(res);
             //flag += ApplyPreMarket(res);
         }
 
-        if (flag > 0)
-        {
-            SymbolValue.LastCheck = DateTime.UtcNow;
+        //if (flag > 0)
+        //{
+            //_tickerData.LastCheck = DateTime.UtcNow;
             //if (lastValue != value.Lp)
             //    ValueFetched?.Invoke(this, value);
             //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
             //GlobalData.AddTextToLogTab(value.Name + " value=" + value.Lp);
-        }
+        //}
     }
 
     //private int ApplyPreMarket(JsonDocument jDocument)
@@ -222,7 +215,12 @@ public class TradingViewSymbolInfo
     private int ApplyTickerCurrentValues(JsonDocument jDocument)
     {
         if (jDocument.RootElement.TryGetProperty("lp", out JsonElement lpValue) && lpValue.TryGetDecimal(out decimal lp))
-            SymbolValue.Lp = lp;
+            _tickerData.Lp = lp;
+
+        if (jDocument.RootElement.TryGetProperty("volume", out JsonElement volumeValue) && volumeValue.TryGetDecimal(out decimal volume))
+            _tickerData.Volume = volume;
+        //if (jDocument.RootElement.TryGetProperty("v", out JsonElement volumeValue2) && volumeValue2.TryGetDecimal(out decimal volume2))
+        //    _tickerData.Volume = volume2;
 
         //if (jDocument.RootElement.TryGetProperty("ch", out JsonElement chValue) && chValue.TryGetDouble(out double ch))
         //    value.Ch = ch;

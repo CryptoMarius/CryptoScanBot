@@ -209,22 +209,22 @@ public partial class TestForm : Form
 
         //SymbolValue valueDxy = new SymbolValue();
         //valueDxy.Name = "Dollar Index";
-        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", valueDxy, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("TVC:DXY", valueDxy, 10));
 
         //SymbolValue valueSpx500 = new SymbolValue();
         //valueSpx500.Name = "SPX 500";
-        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", valueSpx500, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("SP:SPX", valueSpx500, 10));
 
         //SymbolValue bitcoinDominance = new SymbolValue();
         //bitcoinDominance.Name = "BTC.D";
-        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", bitcoinDominance, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("CRYPTOCAP:BTC.D", bitcoinDominance, 10));
 
         //SymbolValue marketcapTotal = new SymbolValue();
         //marketcapTotal.Name = "Maerketcap total";
-        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
 
 
-        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
+        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
         Button1_Click(null, null);
     }
 

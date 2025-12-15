@@ -1,20 +1,73 @@
-﻿using System.Net.WebSockets;
+﻿using CryptoScanner.Core.Core;
+
+using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 namespace CryptoScanner.DashBoard.TradingView;
 
-public delegate void DataFetchedEvent(object? sender, List<string> e);
+// Think this can be simplified further, but for now this works
 
-// Gebaseerd op https://github.com/mli2805/WebListener/tree/master/BalisStandard/Pollers/TradingView
-// https://github.com/mli2805/WebListener/blob/master/BalisStandard/Pollers/TradingView/TikerExt.cs
-// informatief: https://github.com/Hattorius/Tradingview-ticker/blob/25d952a3b9c309cb8cc4c914a5e62cec2d8b53af/ticker.py
-// authentication ea: https://github.com/0xrushi/tradingview-scraper
-// Meer commando's: https://github.com/0xrushi/tradingview-scraper/issues/1
-// https://stackoverflow.com/questions/65741117/protocol-error-when-connecting-to-websocket-in-nodejs
-// https://stackoverflow.com/questions/63624043/web-scraping-an-interactive-chart
+public class TradingViewJsonRootObject
+{
+    public required string M { get; set; }
+    public required List<object> P { get; set; }
+}
+
+public class TradingViewJsonPayloadObject
+{
+    public required string N { get; set; }
+    public required string S { get; set; }
+    public required object V { get; set; }
+}
+
+public class TradingViewMarketStatusObject
+{
+    public required string Phase { get; set; }
+    public required string Tradingday { get; set; }
+}
+
+public static class TradingViewJsonParser
+{
+    public static JsonDocument? TryParse(string message)
+    {
+        try
+        {
+            if (!message.StartsWith("{\"m"))
+                return null;
+
+            JsonSerializerOptions options = new() { PropertyNameCaseInsensitive = true };
+            var root = JsonSerializer.Deserialize<TradingViewJsonRootObject>(message, options);
+            var p = root?.P[1].ToString() ?? "";
+            if (root?.M != "qsd")
+                return null;
+
+            var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, options);
+
+            return JsonDocument.Parse(branch?.V?.ToString() ?? "");
+        }
+        catch (Exception e)
+        {
+            ScannerLog.Logger.Error(e, "");
+            return null;
+        }
+    }
+
+}
+
 
 public class TradingViewSymbolWebSocket(string tickerName)
 {
+    public delegate void DataFetchedEvent(object? sender, List<string> e);
+
+    // Based on https://github.com/mli2805/WebListener/tree/master/BalisStandard/Pollers/TradingView
+    // https://github.com/mli2805/WebListener/blob/master/BalisStandard/Pollers/TradingView/TikerExt.cs
+    // informatief: https://github.com/Hattorius/Tradingview-ticker/blob/25d952a3b9c309cb8cc4c914a5e62cec2d8b53af/ticker.py
+    // authentication ea: https://github.com/0xrushi/tradingview-scraper
+    // Meer commando's: https://github.com/0xrushi/tradingview-scraper/issues/1
+    // https://stackoverflow.com/questions/65741117/protocol-error-when-connecting-to-websocket-in-nodejs
+    // https://stackoverflow.com/questions/63624043/web-scraping-an-interactive-chart
+
     private readonly string TickerName = tickerName;
     private readonly ClientWebSocket ClientWebSocket = new();
     private readonly CancellationTokenSource CancellationTokenSource = new();

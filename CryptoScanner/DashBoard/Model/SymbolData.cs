@@ -27,10 +27,13 @@ public partial class SymbolData : ObservableObject
     /// </summary>
     public void Update(decimal newPrice, decimal? volume = null)
     {
-        Color = GetColorForChange(_previousPrice, newPrice);
-        _previousPrice = Price;
-        Price = newPrice;
-        Volume = volume;
+        if (newPrice >= 0)
+        {
+            Color = GetColorForChange(_previousPrice, newPrice);
+            _previousPrice = Price;
+            Price = newPrice;
+            Volume = volume;
+        }
     }
 
     private static IBrush GetColorForChange(decimal? previousValue, decimal newValue)

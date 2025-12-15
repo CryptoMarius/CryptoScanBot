@@ -55,19 +55,19 @@ public partial class DashBoardViewModel : ObservableObject
         _tradingViewService = tradingViewService;
 
         // Subscribe to market indicator events
-        _tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v);
-        _tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v);
-        _tradingViewService.Spx500Changed += (s, v) => Spx500.Update(v);
-        _tradingViewService.BitcoinDominanceChanged += (s, v) => BitcoinDominance.Update(v);
-        _tradingViewService.FearAndGreedIndexChanged += (s, v) => FearAndGreedIndex.Update(v);
+        _tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v, null);
+        _tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v, null);
+        _tradingViewService.Spx500Changed += (s, v) => Spx500.Update(v, null);
+        _tradingViewService.BitcoinDominanceChanged += (s, v) => BitcoinDominance.Update(v, null);
+        _tradingViewService.FearAndGreedIndexChanged += (s, v) => FearAndGreedIndex.Update(v, null);
 
         // Subscribe to crypto symbol events
-        _tradingViewService.BtcUsdtChanged += (s, v) => BtcUsdt.Update(v);
-        _tradingViewService.EthUsdtChanged += (s, v) => EthUsdt.Update(v);
-        _tradingViewService.BnbUsdtChanged += (s, v) => BnbUsdt.Update(v);
-        _tradingViewService.SolUsdtChanged += (s, v) => SolUsdt.Update(v);
-        _tradingViewService.XrpUsdtChanged += (s, v) => XrpUsdt.Update(v);
-
+        _tradingViewService.BtcUsdtChanged += (s, data) => BtcUsdt.Update(data.Price, data.Volume);
+        _tradingViewService.EthUsdtChanged += (s, data) => EthUsdt.Update(data.Price, data.Volume);
+        _tradingViewService.BnbUsdtChanged += (s, data) => BnbUsdt.Update(data.Price, data.Volume);
+        _tradingViewService.SolUsdtChanged += (s, data) => SolUsdt.Update(data.Price, data.Volume);
+        _tradingViewService.XrpUsdtChanged += (s, data) => XrpUsdt.Update(data.Price, data.Volume);
+    
         System.Diagnostics.Debug.WriteLine("DashBoardViewModel constructor called");
     }
 }

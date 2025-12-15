@@ -10,11 +10,11 @@ public interface ITradingViewService
     event EventHandler<decimal>? FearAndGreedIndexChanged;
 
     // Events for crypto symbols
-    event EventHandler<decimal>? BtcUsdtChanged;
-    event EventHandler<decimal>? EthUsdtChanged;
-    event EventHandler<decimal>? BnbUsdtChanged;
-    event EventHandler<decimal>? SolUsdtChanged;
-    event EventHandler<decimal>? XrpUsdtChanged;
+    event EventHandler<(decimal Price, decimal Volume)>? BtcUsdtChanged;
+    event EventHandler<(decimal Price, decimal Volume)>? EthUsdtChanged;
+    event EventHandler<(decimal Price, decimal Volume)>? BnbUsdtChanged;
+    event EventHandler<(decimal Price, decimal Volume)>? SolUsdtChanged;
+    event EventHandler<(decimal Price, decimal Volume)>? XrpUsdtChanged;
 
     // Current values - market indicators
     decimal? MarketCapTotalValue { get; }
