@@ -1,20 +1,25 @@
-﻿using Avalonia;
-using Avalonia.Data.Converters;
-using Avalonia.Media;
+﻿using Avalonia.Data.Converters;
 
-using System;
-using System.Globalization;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Signal.Model;
 
 namespace CryptoScanner.Converters;
 
-public class SideColorConverter : IValueConverter
+public class SideColorConverter : ColorConverter, IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => value is true ? Brushes.LimeGreen : Brushes.Gray;
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
-        // ConvertBack not needed for OneWay binding
-        throw new NotImplementedException();
+        if (value is CryptoTradeSide side)
+        {
+            return GetBrushResource(side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
+        }
+        else if (value is SignalInfo signalInfo)
+        {
+            return GetBrushResource(signalInfo.Side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
+        }
+        else
+        {
+            return GetBrushResource("PriceNeutralBrush");
+        }
     }
 }

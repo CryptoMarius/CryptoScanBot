@@ -1,6 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Data.Converters;
-using Avalonia.Media;
+﻿using Avalonia.Data.Converters;
 
 using System.Globalization;
 
@@ -10,19 +8,8 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Converters
 {
-    public class VolumeColorConverter : IValueConverter
+    public class VolumeColorConverter : ColorConverter, IValueConverter
     {
-        private static IBrush? GetBrushResource(string key)
-        {
-            if (Application.Current != null &&
-                Application.Current.TryGetResource(key,
-                    Application.Current.ActualThemeVariant, out var resource))
-            {
-                return resource as IBrush;
-            }
-            return null;
-        }
-
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             decimal volume;
@@ -47,16 +34,7 @@ namespace CryptoScanner.Converters
             if (symbol == null)
                 return GetBrushResource("NormalVolumeBrush");
 
-            // Huidige logica: volumes onder 10 miljoen zijn rood
-            return volume < symbol.QuoteData.MinimalVolume
-                ? GetBrushResource("LowVolumeBrush")
-                : GetBrushResource("NormalVolumeBrush");
-        }
-
-        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            // ConvertBack not needed for OneWay binding
-            throw new NotImplementedException();
+            return GetBrushResource(volume < symbol.QuoteData.MinimalVolume ? "LowVolumeBrush" : "NormalVolumeBrush");
         }
     }
 }
