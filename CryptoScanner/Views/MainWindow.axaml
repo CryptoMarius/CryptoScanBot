@@ -14,20 +14,38 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-
 	
-    <Grid RowDefinitions="125,1,*">
+    <Grid RowDefinitions="Auto,125,1,*">
+
+        <!-- Menu bovenaan -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Settings" Click="OnSettingsClick"/>
+                <MenuItem Header="_Export"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
+            </MenuItem>
+            
+            <MenuItem Header="_View">
+                <MenuItem Header="_Dashboard"/>
+                <MenuItem Header="_Signals"/>
+            </MenuItem>
+            
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About"/>
+            </MenuItem>
+        </Menu>
 
         <!-- The top dashboard  Background="orange" -->
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="1">
             <Panel Height="130" >
 	            <dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
             </Panel>
         </Grid>
 
-        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
+        <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
-        <Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+        <Grid Grid.Row="3" Name="MainGrid" ColumnDefinitions="300,4,1,*">
 
 		    <!-- The symbols on the left Background="red" -->
 		    <Grid Grid.Column ="0" x:Name="SymbolSplitView">
@@ -72,7 +90,7 @@
                     
                         Eigen interop / native browser handles
                         Met Avalonia kun je het onderliggende platform-handle van de WebView ophalen (TryGetPlatformHandle) 
-                        en native browser-API’s gebruiken. docs.avaloniaui.net +1
+                        en native browser-API's gebruiken. docs.avaloniaui.net +1
                         Dit vereist wel extra werk per-platform, omdat je dan platform‐specifieke code moet schrijven 
                         (bijv. WebView2 op Windows, WebKit op macOS, WebKitGtk op Linux).
                         <NativeWebView Source="https://nu.nl/"  />

@@ -55,7 +55,7 @@ public class TradingViewSymbolExtractor
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);
 
-        bool displayNext = false;
+        //bool displayNext = false;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -65,11 +65,11 @@ public class TradingViewSymbolExtractor
                 {
                     Dispatcher.UIThread.Post(() => onDataReceived(_tickerData.Lp, _tickerData.Volume));
                     await Task.Delay(loopDelayMs, cancellationToken);
-                    if (displayNext)
-                    {
-                        displayNext = false;
-                        System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} ok");
-                    }
+                    //if (displayNext)
+                    //{
+                    //    displayNext = false;
+                    //    //System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} ok");
+                    //}
                 }
                 else
                 {
@@ -80,8 +80,8 @@ public class TradingViewSymbolExtractor
                     socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
                     socket.RequestData().Wait(cancellationToken);
 
-                    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} not succeeded");
-                    displayNext = true;
+                    //System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} not succeeded");
+                    //displayNext = true;
                 }
             }
             catch (OperationCanceledException)
@@ -95,7 +95,7 @@ public class TradingViewSymbolExtractor
                 try
                 {
                     await Task.Delay(250, cancellationToken);
-                    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {error.Message}");
+                    //System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {error.Message}");
                 }
                 catch (OperationCanceledException)
                 {

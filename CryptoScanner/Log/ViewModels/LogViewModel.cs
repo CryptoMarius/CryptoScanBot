@@ -10,7 +10,7 @@ namespace CryptoScanner.Log.ViewModels;
 public partial class LogViewModel : ObservableObject
 {
     private const int MaxLogLines = 5000;
-    private readonly DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
 
 
     [ObservableProperty]
@@ -27,6 +27,11 @@ public partial class LogViewModel : ObservableObject
         _updateTimer.Start();
     }
 
+    public void Dispose()
+    {
+        _updateTimer?.Stop();
+        _updateTimer = null;
+    }
 
     private void TimerAddLogLinesTick(object? sender, EventArgs? e)
     {

@@ -20,6 +20,9 @@ using System.Reflection;
 using Avalonia.Media;
 using CryptoScanner.Core.Model;
 using Avalonia.Threading;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
+
 
 namespace CryptoScanner;
 
@@ -41,7 +44,7 @@ public partial class App : Application
 
     public override void Initialize()
     {
-        
+        System.Diagnostics.Debug.WriteLine($"App.Initialize");
         LogQueue.EnsureCapacity(2500);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
@@ -59,6 +62,8 @@ public partial class App : Application
 
     private static void InitializeGlobalData()
     {
+        System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
+
         // Initialiseer app variabelen
         GlobalData.AppName = "CryptoScanBot";
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
@@ -98,6 +103,7 @@ public partial class App : Application
 
     private static void ApplySettings()
     {
+        System.Diagnostics.Debug.WriteLine($"App.ApplySettings");
         // Is done multiple times, but that is okay
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
         {
@@ -136,14 +142,14 @@ public partial class App : Application
         //GridPositionClosedView.InitCommandCaptions();
 
 
-        //TradingConfig.IndexStrategyInternally();
-        //TradingConfig.InitWhiteAndBlackListSettings();
+        TradingConfig.IndexStrategyInternally();
+        TradingConfig.InitWhiteAndBlackListSettings();
 
-        //SignalPrepare.Prepare();
-        //SignalExecute.Prepare();
+        SignalPrepare.Prepare();
+        SignalExecute.Prepare();
 
         //// De timertjes goed zetten
-        //ScannerSession.SetTimerDefaults();
+        ScannerSession.SetTimerDefaults();
 
         //ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
         //ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
@@ -156,6 +162,8 @@ public partial class App : Application
 
         //Refresh(); // Redraw
     }
+
+
 
     private static void ConfigureServices(IServiceCollection services)
     {
@@ -193,6 +201,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        System.Diagnostics.Debug.WriteLine($"App.OnFrameworkInitializationCompleted");
         // Setup DI Container
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -262,7 +271,6 @@ public partial class App : Application
     }
 
 
-
     public static IBrush GetBrushResource(string resourceKey)
     {
         if (Application.Current?.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) == true 
@@ -280,3 +288,4 @@ public partial class App : Application
     public static IBrush PriceDown => App.GetBrushResource("PriceDownBrush");
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
 }
+

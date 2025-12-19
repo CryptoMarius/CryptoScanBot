@@ -48,9 +48,8 @@
                 <!-- Date -->
                 <DataGridTextColumn Header="Date" 
                                     Binding="{Binding Date}" 
-                                    Width="160" 
-                                    SortMemberPath="Date" 
-                                    />
+                                    Width="*" MinWidth="180"
+                                    SortMemberPath="Date"/>
 
                 <!-- Exchange -->
                 <DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" SortMemberPath="Exchange" IsVisible="False"/>
@@ -58,12 +57,11 @@
                 <!-- Symbol -->
                 <DataGridTextColumn Header="Symbol" 
                                     Binding="{Binding Symbol}" 
-                                    Width="100" 
-                                    SortMemberPath="Symbol" 
-                                    />
+                                    Width="*" 
+                                    SortMemberPath="Symbol" />
 
                 <!-- Side -->
-                <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
+                <DataGridTemplateColumn Header="Side" Width="*" SortMemberPath="Side" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -74,10 +72,10 @@
                 </DataGridTemplateColumn>
 
                 <!-- Interval -->
-                <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="50" SortMemberPath="Interval" />
+                <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="*" SortMemberPath="Interval" />
 
                 <!-- Strategy -->
-                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="100" SortMemberPath="Strategy" />
+                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="*" SortMemberPath="Strategy" />
 
                 <!-- Text -->
                 <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" SortMemberPath="Text" />

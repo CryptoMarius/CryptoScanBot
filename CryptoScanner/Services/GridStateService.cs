@@ -89,6 +89,7 @@ public class GridStateService
 
         lock (_lock)
         {
+            //System.Diagnostics.Debug.WriteLine($"SaveGridState({gridName}, {sortColumn} {sortDirection})");
             var gridState = GetGridStateProperty(_states, gridName);
             if (gridState != null)
             {
@@ -131,6 +132,7 @@ public class GridStateService
                 sortColumn = gridState.SortColumn;
                 sortDirection = gridState.SortDirection.Value;
             }
+            //System.Diagnostics.Debug.WriteLine($"RestoreGridState({gridName}, {sortColumn} {sortDirection})");
 
             // Restore column settings
             foreach (var colSetting in gridState.Columns)

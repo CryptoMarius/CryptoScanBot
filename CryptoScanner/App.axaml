@@ -7,7 +7,7 @@
 
         <ResourceDictionary>
             <!-- Suppress the datagrid sort indicator (takes up to much space) -->
-            <x:Double x:Key="DataGridSortIconMinWidth">32</x:Double>
+            <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
 
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light theme resources -->
@@ -90,9 +90,8 @@
         <!-- ============================================ -->
         
         <Style Selector="DataGridColumnHeader">
-            <Setter Property="Margin" Value="2" />
-            <Setter Property="Padding" Value="0,0,0,0" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
         <!-- Alternating row colors -->

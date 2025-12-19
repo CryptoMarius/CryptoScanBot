@@ -7,7 +7,7 @@ using Xilium.CefGlue.Avalonia;
 using Xilium.CefGlue.Common.Handlers;
 using Xilium.CefGlue;
 
-namespace CryptoScanner.BrowserView
+namespace CryptoScanner.BrowserView.Views
 {
     public partial class BrowserView : UserControl
     {

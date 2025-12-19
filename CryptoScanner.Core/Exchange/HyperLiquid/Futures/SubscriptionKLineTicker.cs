@@ -71,8 +71,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
                             if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
-                                candle = new();
-                                candle.OpenTime = candleOpenUnix;
+                                candle = new()
+                                {
+                                    OpenTime = candleOpenUnix
+                                };
                                 candleCache.TryAdd(candleOpenUnix, candle);
 
                                 //CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);

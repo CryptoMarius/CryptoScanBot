@@ -1,15 +1,20 @@
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Signal.Common;
 using CryptoScanner.Signal.Model;
 
-using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Signal.ViewModels;
+
+
 
 /// <summary>
 /// ViewModel for the Signal Grid
@@ -17,10 +22,10 @@ namespace CryptoScanner.Signal.ViewModels;
 /// </summary>
 public partial class SignalGridViewModel : ObservableObject
 {
-    private readonly DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
 
     [ObservableProperty]
-    private ObservableCollection<SignalInfo> _signals = [];
+    private ObservableRangeCollection<SignalInfo> _signals = [];
 
 
 
@@ -28,9 +33,21 @@ public partial class SignalGridViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
+        GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
+
         _updateTimer.Tick += TimerAddSignalsTick;
         _updateTimer.Start();
     }
+
+    public void Dispose()
+    {
+        _updateTimer?.Stop();
+        _updateTimer = null;
+    }
+
+    public event EventHandler<SignalInfo>? RequestSortedInsert;
+    public event EventHandler? RequestSort;
+
 
     private void TimerAddSignalsTick(object? sender, EventArgs e)
     {
@@ -44,24 +61,74 @@ public partial class SignalGridViewModel : ObservableObject
             {
                 try
                 {
+                    List<SignalInfo> newSignals = [];
                     while (GlobalData.SignalQueue.Count > 0)
                     {
                         CryptoSignal signal = GlobalData.SignalQueue.Dequeue();
                         if (signal != null)
                         {
-                            Signals.Add(new SignalInfo
+                            var s = new SignalInfo
                             {
                                 SignalObject = signal,
-                            });
+                            };
+                            newSignals.Add(s);
                         }
                     }
-                    //Sorting? / AddRange()?
+
+                    if (newSignals.Count == 1)
+                    {
+                        RequestSortedInsert?.Invoke(this, newSignals[0]);
+                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {newSignals.Count} signal via binsearch");
+                    }
+                    else
+                    {
+                        Signals.AddRange(newSignals);
+                        RequestSort?.Invoke(this, EventArgs.Empty);
+                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {newSignals.Count} signals via complete sort");
+                    }
+
                 }
                 finally
                 {
                     Monitor.Exit(GlobalData.SignalQueue);
                 }
             }
+        }
+    }
+
+    private void AnalyzeSignalCreated(CryptoSignal signal)
+    {
+        GlobalData.CreatedSignalCount++;
+        string text = "Signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
+        GlobalData.AddTextToLogTab(text);
+
+        if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
+            GlobalData.SignalQueue.Enqueue(signal);
+
+        if (signal.BackTest)
+            return;
+
+
+        if (!signal.IsInvalid)
+        {
+            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, long lastSignalTime) x))
+            {
+                if (signal.EventTime > x.lastSignalTime)
+                {
+                    // Stay silent for the next 20 seconds (for his strategy)
+                    x.lastSignalTime = signal.EventTime + 20;
+                    GlobalData.StrategiesSettings[signal.Strategy] = x;
+
+                    string soundFile = signal.Side == CryptoTradeSide.Long ?
+                        x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;
+                    //PlaySound(signal, x.strategySettings.PlaySound, x.strategySettings.PlaySpeech, soundFile);
+                    //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
+                }
+                //else GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString() + " ignored");
+            }
+
+            //if (GlobalData.Telegram.SendSignalsToTelegram)
+            //    ThreadTelegramBot.SendSignal(signal);
         }
     }
 
@@ -78,6 +145,30 @@ public partial class SignalGridViewModel : ObservableObject
         // Implement your external program logic here
         System.Diagnostics.Debug.WriteLine($"Opening {signal.Symbol} in external program");
     }
+
+    [RelayCommand]
+    private static void LaunchTradingApp(object? parameter)
+    {
+        if (parameter is not SignalInfo signal)
+            return;
+
+        // Implement your external program logic here
+        System.Diagnostics.Debug.WriteLine($"Opening {signal.Symbol} in external program");
+
+        CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+
+
+        // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+        if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+            tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+        GlobalData.LoadLinkSettings(); // refresh links
+
+        var symbol = signal.SignalObject.Symbol;
+        var interval = signal.SignalObject.Interval;
+        if (symbol != null && interval != null)
+            ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+    }
+
 
     /// <summary>
     /// Command to view signal details
@@ -103,6 +194,36 @@ public partial class SignalGridViewModel : ObservableObject
         var text = $"{signal.Symbol} - {signal.Side} @ {signal.SignalPrice:F8}";
         System.Diagnostics.Debug.WriteLine($"Copying signal to clipboard: {text}");
     }
+
+    public static void ActivateTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
+    {
+        // Activate the trading application (and we use a dummy browser for Altrady)
+
+        (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(externalTradingApp, false, symbol, interval);
+        if (Url != "")
+        {
+            GlobalData.AddTextToLogTab($"Linktools activate {Url}");
+            //if (viaTradingBrowser == CryptoExternalUrlType.Internal)
+            //{
+            //await WebViewTradingView.ActivateUrlAsync(Url);
+            //if (activateTab && TabControl != null)
+            //    TabControl.SelectedTab = TabPageBrowser;
+            //}
+            //else
+            {
+                //if (Execute == CryptoExternalUrlType.Internal)
+                //{
+                //    await WebViewTradingApp.ActivateUrlAsync(Url);
+                //}
+                //else
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
+                }
+            }
+        }
+    }
+
+
 
 
 }

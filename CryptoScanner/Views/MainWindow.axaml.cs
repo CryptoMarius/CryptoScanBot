@@ -42,6 +42,8 @@ public partial class MainWindow : Window
 
         // Start TradingView service
         _tradingViewService.Start();
+
+        Title = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
     }
 
 
