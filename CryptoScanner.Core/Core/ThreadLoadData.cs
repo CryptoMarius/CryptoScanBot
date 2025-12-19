@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Barometer;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -186,8 +188,7 @@ public class ThreadLoadData
 
         }
 
-        // De (nieuwe)muntparen toevoegen aan de userinterface
-        GlobalData.SymbolsHaveChanged("");
+        Dispatcher.UIThread.Post(() => { GlobalData.SymbolsHaveChanged(""); });
     }
 
 
@@ -367,7 +368,6 @@ public class ThreadLoadData
                 ScannerSession.SetTimerDefaults();
 
                 GlobalData.ApplicationHasStarted?.Invoke("");
-
             }
         }
         catch (Exception error)

@@ -20,8 +20,13 @@ public partial class SymbolGridViewModel : ObservableObject
     public SymbolGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
+        GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
+        SymbolsHaveChangedEvent("");
+    }
 
 
+    private void SymbolsHaveChangedEvent(string text)
+    {
         // Laad symbols direct in de observable collection
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
@@ -34,12 +39,6 @@ public partial class SymbolGridViewModel : ObservableObject
                 Distance = 0.0
             });
         }
-
-        // Sorteer als er een sort configuratie is
-        //if (config.SortColumn != null)
-        //{
-        //    SortSymbols();
-        //}
     }
 
 

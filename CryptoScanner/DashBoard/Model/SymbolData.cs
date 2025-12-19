@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Avalonia.Media;
-using CryptoScanner.Helpers;
 
 namespace CryptoScanner.DashBoard.Model;
 
@@ -14,7 +13,7 @@ public partial class SymbolData : ObservableObject
     private decimal? _price;
 
     [ObservableProperty]
-    private IBrush _color = BrushHelper.PriceNeutral;
+    private IBrush _color = App.PriceNeutral;
 
     [ObservableProperty]
     private decimal? _volume;
@@ -39,14 +38,14 @@ public partial class SymbolData : ObservableObject
     private static IBrush GetColorForChange(decimal? previousValue, decimal newValue)
     {
         if (!previousValue.HasValue)
-            return BrushHelper.PriceNeutral;
+            return App.PriceNeutral;
 
         if (newValue > previousValue.Value)
-            return BrushHelper.PriceUp;
+            return App.PriceUp;
 
         if (newValue < previousValue.Value)
-            return BrushHelper.PriceDown;
+            return App.PriceDown;
 
-        return BrushHelper.PriceNeutral;
+        return App.PriceNeutral;
     }
 }

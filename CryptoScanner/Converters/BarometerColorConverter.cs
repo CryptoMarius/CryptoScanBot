@@ -2,15 +2,15 @@
 
 namespace CryptoScanner.Converters;
 
-public class MarketTrendColorConverter : ColorConverter, IValueConverter
+public class BarometerColorConverter : ColorConverter, IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
-        if (value is float marketTrend)
+        if (value is decimal valueDecimal)
         {
-            if (marketTrend == 0)
+            if (valueDecimal == 0)
                 return GetBrushResource("PriceNeutralBrush");
-            else if (marketTrend > 0)
+            else if (valueDecimal > 0)
                 return GetBrushResource("PriceUpBrush");
             else
                 return GetBrushResource("PriceDownBrush");

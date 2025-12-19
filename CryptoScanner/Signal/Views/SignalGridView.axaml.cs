@@ -81,8 +81,6 @@ public partial class SignalGridView : UserControl
         {
             ApplySortToCollection(_currentSortColumn, _currentSortDirection);
         }
-
-        MarkSortedColumn();
     }
 
 
@@ -103,48 +101,6 @@ public partial class SignalGridView : UserControl
     }
 
 
-    private void MarkSortedColumn()
-    {
-        // this does not work unfortunately
-        //return;
-        foreach (var c in _dataGrid.Columns)
-        {
-            //string headerText = c.Header?.ToString() ?? "";
-
-            //c.HeaderTemplate.FontWeight = FontWeight.Bold;
-
-            if (c.SortMemberPath == _currentSortColumn)
-            {
-                if (c.Header is DataGridColumnHeader column2)
-                {
-                    //DataGridColumnHeader HeaderCell
-                    //c.HeaderCell.FontWeight = FontWeight.Bold;
-                    //column2.FontWeight = FontWeight.Bold;
-                    //column2.Header.
-                    //column2.Header = new TextBlock
-                    //{
-                    //    Text = headerText,
-                    //    FontWeight = FontWeight.Bold,
-                    //    TextAlignment = TextAlignment.Center
-                    //};
-                }
-            }
-            else
-            {
-                if (c.Header is DataGridColumnHeader column2)
-                {
-                    column2.FontWeight = FontWeight.Normal;
-                    //column2.Header = new TextBlock
-                    //{
-                    //    Text = headerText,
-                    //    FontWeight = FontWeight.Normal,
-                    //    TextAlignment = TextAlignment.Center
-                    //};
-                }
-            }
-        }
-    }
-
     private void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
         if (e.Column.SortMemberPath != null)
@@ -155,7 +111,6 @@ public partial class SignalGridView : UserControl
                 : ListSortDirection.Ascending;
             _currentSortColumn = e.Column.SortMemberPath;
             _currentSortDirection = direction;
-            MarkSortedColumn();
         }
     }
 
@@ -201,7 +156,6 @@ public partial class SignalGridView : UserControl
 
         //        _currentSortColumn = column.SortMemberPath;
         //        _currentSortDirection = direction;
-        //        MarkSortedColumn();
         //    }
         //}
 
@@ -220,7 +174,6 @@ public partial class SignalGridView : UserControl
         //            : ListSortDirection.Ascending;
         //        _currentSortColumn = column.SortMemberPath;
         //        _currentSortDirection = direction;
-        //        MarkSortedColumn();
         //    }
         //}
 
@@ -240,7 +193,6 @@ public partial class SignalGridView : UserControl
         //                : ListSortDirection.Ascending;
         //            _currentSortColumn = column.SortMemberPath;
         //            _currentSortDirection = direction;
-        //            MarkSortedColumn();
         //        }
         //    }
         //}
@@ -259,10 +211,8 @@ public partial class SignalGridView : UserControl
         adjustColumnsItem.Click += (s, args) => ShowColumnVisibilityWindow(dataGrid);
         flyout.Items.Add(adjustColumnsItem);
 
-        flyout.Items.Add(new Separator());
-
-        var resetColumnsItem = new MenuItem { Header = "Reset Columns" };
-        resetColumnsItem.Click += (s, args) => ResetColumns();
+        var resetColumnsItem = new MenuItem { Header = "Reset Column width" };
+        //resetColumnsItem.Click += (s, args) => ResetColumns();
         flyout.Items.Add(resetColumnsItem);
 
         flyout.ShowAt(dataGrid, true);
@@ -275,6 +225,19 @@ public partial class SignalGridView : UserControl
     private void ShowRowContextMenu(DataGrid dataGrid)
     {
         var flyout = new MenuFlyout();
+
+
+        flyout.Items.Add(new MenuItem { Header = "Symbol Chart" });
+        flyout.Items.Add(new MenuItem { Header = "Altrady Binance Futures" });
+        flyout.Items.Add(new MenuItem { Header = "Tradingview internal" });
+        flyout.Items.Add(new MenuItem { Header = "Tradingview external" });
+        flyout.Items.Add(new MenuItem { Header = "Goto the exchange" });
+        flyout.Items.Add(new MenuItem { Header = "TV + Altrady" });
+        flyout.Items.Add(new MenuItem { Header = "-" });
+        flyout.Items.Add(new MenuItem { Header = "Copy symbol name" });
+        flyout.Items.Add(new MenuItem { Header = "Copy data cells" });
+        flyout.Items.Add(new MenuItem { Header = "Calculate  liquidity zones" });
+        flyout.Items.Add(new MenuItem { Header = "-" });
 
         var openExternalItem = new MenuItem { Header = "Open in External Program" };
         openExternalItem.Click += OnLaunchExternal;

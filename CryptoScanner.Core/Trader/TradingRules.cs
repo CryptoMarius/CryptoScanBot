@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Barometer;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -95,7 +97,8 @@ public static class TradingRules
             //GlobalData.AddTextToLogTab("CheckTradingRules()");
             CalculateTradingRules(pause, candleDate, candleDuration);
 
-            GlobalData.StatusesHaveChangedEvent?.Invoke("");
+
+            Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
             if (pause.Text != "")
                 return false;
         }

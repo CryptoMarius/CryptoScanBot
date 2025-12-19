@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.DashBoard.ViewModels;
+using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
 
@@ -11,7 +12,9 @@ public partial class MainWindowViewModel : ObservableObject
     public required DashBoardViewModel DashBoardViewModel { get; set; }
     public required SymbolGridViewModel SymbolGridViewModel { get; set; }
     public required SignalGridViewModel SignalGridViewModel { get; set; }
+    public required LogViewModel LogViewModel { get; set; }
 
+    
     public MainWindowViewModel()
     {
     }
@@ -19,17 +22,20 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         DashBoardViewModel dashBoardViewModel,
         SymbolGridViewModel symbolGridViewModel,
-        SignalGridViewModel signalGridViewModel)
+        SignalGridViewModel signalGridViewModel,
+        LogViewModel logViewModel)
     {
         DashBoardViewModel = dashBoardViewModel;
         SymbolGridViewModel = symbolGridViewModel;
         SignalGridViewModel = signalGridViewModel;
+        LogViewModel = logViewModel;
 
         // Debug output
         System.Diagnostics.Debug.WriteLine($"MainViewModel created");
         System.Diagnostics.Debug.WriteLine($"DashBoardViewModel: {DashBoardViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"SymbolGridViewModel: {SymbolGridViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"SignalGridViewModel: {SignalGridViewModel != null}");
+        System.Diagnostics.Debug.WriteLine($"Loh=dViewModel: {LogViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"Symbols count: {SymbolGridViewModel?.Symbols?.Count ?? 0}");
         System.Diagnostics.Debug.WriteLine($"Signals count: {SignalGridViewModel?.Signals?.Count ?? 0}");
     }

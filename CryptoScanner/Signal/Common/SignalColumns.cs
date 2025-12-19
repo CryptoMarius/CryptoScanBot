@@ -31,20 +31,19 @@ public enum ColumnEnum
 
     MarketTrendPrimary,
     MarketTrendSecondary,
-//    Change24h,
-//    MoveXDaysEffective,
+    Change24h,
+    MoveXDaysEffective,
     BB,
     BbUpper,
     BbLower,
     AvgBB,
     Rsi,
-//    Lux5m,
+    Lux5m,
 //    MacdValue,
 //    MacdSignal,
 //    MacdHistogram,
 //    Stoch,
 //    Signal,
-//    //StochSurface,
 //    Sma200,
 //    Sma50,
 //    Sma20,
@@ -57,14 +56,13 @@ public enum ColumnEnum
     Trend4h,
     Trend1d,
 
-//    Barometer15m,
-//    Barometer30m,
-//    Barometer1h,
-//    Barometer4h,
-//    Barometer1d,
+    Barometer15m,
+    Barometer30m,
+    Barometer1h,
+    Barometer4h,
+    Barometer1d,
 
 //    MinimumEntry,
-//    // statistics
 //    PriceMinPerc,
 //    PriceMaxPerc,
 //#if DEBUG
@@ -113,6 +111,9 @@ public class SignalColumnComparer : IComparer
                     ColumnEnum.TfTrend => ObjectCompare.Compare(a.SignalObject.TrendInterval, b.SignalObject.TrendInterval),
                     ColumnEnum.MarketTrendPrimary => ObjectCompare.Compare(a.SignalObject.TrendPercentagePrimary, b.SignalObject.TrendPercentagePrimary),
                     ColumnEnum.MarketTrendSecondary => ObjectCompare.Compare(a.SignalObject.TrendPercentageSecondary, b.SignalObject.TrendPercentageSecondary),
+                    ColumnEnum.Change24h => ObjectCompare.Compare(a.SignalObject.Last24HoursChange, b.SignalObject.Last24HoursChange),
+                    ColumnEnum.MoveXDaysEffective => ObjectCompare.Compare(a.SignalObject.LastXDaysEffective, b.SignalObject.LastXDaysEffective),
+                    ColumnEnum.Lux5m => ObjectCompare.Compare(a.SignalObject.LuxIndicator5m, b.SignalObject.LuxIndicator5m),
 
                     ColumnEnum.Rsi => ObjectCompare.Compare(a.SignalObject.Rsi, b.SignalObject.Rsi),
                     ColumnEnum.BB => ObjectCompare.Compare(a.SignalObject.BollingerBandsPercentage, b.SignalObject.BollingerBandsPercentage),
@@ -125,6 +126,12 @@ public class SignalColumnComparer : IComparer
                     ColumnEnum.Trend1h => ObjectCompare.Compare(a.SignalObject.Trend1h, b.SignalObject.Trend1h),
                     ColumnEnum.Trend4h => ObjectCompare.Compare(a.SignalObject.Trend4h, b.SignalObject.Trend4h),
                     ColumnEnum.Trend1d => ObjectCompare.Compare(a.SignalObject.Trend1d, b.SignalObject.Trend1d),
+
+                    ColumnEnum.Barometer15m => ObjectCompare.Compare(a.SignalObject.Barometer15m, b.SignalObject.Barometer15m),
+                    ColumnEnum.Barometer30m => ObjectCompare.Compare(a.SignalObject.Barometer30m, b.SignalObject.Barometer30m),
+                    ColumnEnum.Barometer1h => ObjectCompare.Compare(a.SignalObject.Barometer1h, b.SignalObject.Barometer1h),
+                    ColumnEnum.Barometer4h => ObjectCompare.Compare(a.SignalObject.Barometer4h, b.SignalObject.Barometer4h),
+                    ColumnEnum.Barometer1d => ObjectCompare.Compare(a.SignalObject.Barometer1d, b.SignalObject.Barometer1d),
                     // todo,, the rest of the Columns (lots....)
                     _ => 0
                 };

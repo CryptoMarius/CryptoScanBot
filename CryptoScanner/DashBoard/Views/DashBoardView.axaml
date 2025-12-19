@@ -6,63 +6,137 @@
              x:Class="CryptoScanner.DashBoard.Views.DashBoardView"
              xmlns:vm="using:CryptoScanner.DashBoard.ViewModels"
              xmlns:converters="using:CryptoScanner.DashBoard.Converters"
+             xmlns:convertersBase="using:CryptoScanner.Converters"
              x:DataType="vm:DashBoardViewModel">
 
     <UserControl.Resources>
         <converters:LargeNumberConverter x:Key="LargeNumberConverter" />
+        <convertersBase:BarometerColorConverter x:Key="BarometerColorConverter" />
     </UserControl.Resources>
   
-    <Grid ColumnDefinitions="1,Auto,Auto,1,Auto,Auto,Auto,1">
+    <Grid ColumnDefinitions="80,1,Auto,1,Auto,1,Auto,1,Auto,1,Auto,1">
         
-        <!-- TODO: Buttons -->
-        <!-- TODO: BM inputs / initializing -->
-        <!-- TODO: BM text -->
-        <!-- TODO: BM graph -->
+        <!-- Column=0, Traffic Lights -->
+        <StackPanel Grid.Column="0" Orientation="Vertical" MinWidth="50" Margin="20,0,2,0">
+            <TextBlock Text="Status" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
+            <!-- Row 1: Scanner Status -->
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="30" Height="40" Margin="0,0" >
+                <!-- Traffic Light: Scanner -->
+                <Ellipse Grid.Row="0" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
+                            Fill="{Binding ScannerStatusBrush}"
+                            Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                            StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- Traffic Light: Trader -->
+                <Ellipse Grid.Row="1" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
+                            Fill="{Binding TraderStatusBrush}"
+                            Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                            StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- Row 3: Rulez Status -->
+                <Ellipse Grid.Row="2" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
+                             Fill="{Binding RulezStatusBrush}"
+                            Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                            StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- Row 4: Application Status + Time Height="18" -->
+                <!-- Application Status Text -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding ApplicationStatus}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Grid>
+        </StackPanel>
+        <!-- Separator -->
+        <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
 
-        <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="15,0"/>
+        <!-- Baromer -->
+        <StackPanel Grid.Column="2" Orientation="Vertical" MinWidth="125" Margin="10,0,2,0">
+            <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
 
-        <!-- Left Section: Market Indicators -->
-        <StackPanel Grid.Column="1" Margin="0,0,2,0">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="0,75,Auto,30" Height="25">
+                <!-- ComboBox: Quote -->
+                <ComboBox Grid.Row="0" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
+                            SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                            ItemsSource="{Binding Quotes}" />
+                <!-- Barometer: 30m -->
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Barometer1h, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50"
+                            Foreground="{Binding Barometer1h, Converter={StaticResource BarometerColorConverter}}"
+                            TextAlignment="Right"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="1h" TextAlignment="Right"
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" />
+
+                <!-- ComboBox: Interval -->
+                <ComboBox Grid.Row="1" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
+                            SelectedItem="{Binding SelectedInterval}" VerticalAlignment="Center"  HorizontalAlignment="Left"
+                            ItemsSource="{Binding Intervals}" />
+                        
+                <!-- Barometer: 30m -->
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Barometer4h, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" MinWidth="50"
+                            Foreground="{Binding Barometer4h, Converter={StaticResource BarometerColorConverter}}"
+                            TextAlignment="Right"/>
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="4h" TextAlignment="Right"
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" />
+
+                <!-- Time Label -->
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BarometerTime}" Margin="0,5,0,5"
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <!-- Barometer: 30m -->
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Barometer1d, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50"
+                            Foreground="{Binding Barometer1d, Converter={StaticResource BarometerColorConverter}}"
+                            TextAlignment="Right" Margin="0,5,0,5"/>
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="1d"  TextAlignment="Right" Margin="0,5,0,5"
+                           FontSize="13"  VerticalAlignment="Center" HorizontalAlignment="Right"/>
+            </Grid>
+        </StackPanel>
+        <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>
+
+        <!-- Column=2, Barometer chart -->
+        <Border Grid.Column="4" MinWidth="400" MinHeight="100" Margin="0,2,2,0"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                BorderThickness="0">
+            <Image Source="{Binding ChartImage}" Width="400" Height="100" Stretch="Fill"/>
+        </Border>
+
+        <!-- Separator -->
+        <Border Grid.Column="5" Background="{DynamicResource SystemControlForegroundBaseMediumBrush}" Width="1" Margin="10,0" />
+
+        <!-- Column=4, Left Section: Market Indicators -->
+        <StackPanel Grid.Column="6" Margin="10,0,2,0">
             <TextBlock Text="Market Indicators" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
                 
                 <!-- Market Cap Total -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
-                           Foreground="{Binding MarketCapTotal.Color}"
-                           Text="Market Cap Total" />
+                           Text="Market Cap Total" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                            Foreground="{Binding MarketCapTotal.Color}"
                            Text="{Binding MarketCapTotal.Price, Converter={StaticResource LargeNumberConverter}}" />
                 
                 <!-- Dollar Index -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
-                           Foreground="{Binding DollarIndex.Color}"
-                           Text="Dollar Index (DXY)" />
+                           Text="Dollar Index (DXY)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                            Foreground="{Binding DollarIndex.Color}"
                            Text="{Binding DollarIndex.Price, StringFormat='{}{0:N2}'}" />
 
                 <!-- S&P 500 -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
-                           Foreground="{Binding Spx500.Color}"
-                           Text="S&amp;P 500" />
+                           Text="S&amp;P 500" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                            Foreground="{Binding Spx500.Color}"
                            Text="{Binding Spx500.Price, Converter={StaticResource LargeNumberConverter}}" />
 
                 <!-- Bitcoin Dominance -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="label"
-                           Foreground="{Binding BitcoinDominance.Color}"
-                           Text="BTC Dominance" />
+                           Text="BTC Dominance" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                            Foreground="{Binding BitcoinDominance.Color}"
                            Text="{Binding BitcoinDominance.Price, StringFormat='{}{0:N2} %'}" />
 
                 <!-- Fear and Greed Index -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Classes="label"
-                           Foreground="{Binding FearAndGreedIndex.Color}"
-                           Text="Fear &amp; Greed Index" />
+                           Text="Fear &amp; Greed Index" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
                            Foreground="{Binding FearAndGreedIndex.Color}"
                            Text="{Binding FearAndGreedIndex.Price, StringFormat='{}{0:N0} %'}" />
@@ -70,78 +144,68 @@
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="15,0"/>
+        <Border Grid.Column="7" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
 
-        <!-- Right Section: Crypto Prices -->
-        <StackPanel Grid.Column="4" Margin="2,0,0,0">
+        <!-- Column=6 Right Section: Crypto Prices -->
+        <StackPanel Grid.Column="8" Margin="10,0,2,0">
             <TextBlock Text="Crypto Prices" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto">
                 
                 <!-- Bitcoin -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
-                           Foreground="{Binding BtcUsdt.Color}"
-                           Text="Bitcoin (BTC)" />
+                           Text="Bitcoin (BTC)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                            Foreground="{Binding BtcUsdt.Color}"
-                           Text="{Binding BtcUsdt.Price}" />
+                           Text="{Binding BtcUsdt.Price}"  MinWidth="50"/>
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="value"
-                           Foreground="{Binding BtcUsdt.Color}"
-                           Text="{Binding BtcUsdt.Volume}" />
+                           Text="{Binding BtcUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
                 
                 <!-- Ethereum -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
-                           Foreground="{Binding EthUsdt.Color}"
-                           Text="Ethereum (ETH)" />
+                           Text="Ethereum (ETH)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                            Foreground="{Binding EthUsdt.Color}"
-                           Text="{Binding EthUsdt.Price}" />
+                           Text="{Binding EthUsdt.Price}"  MinWidth="50"/>
                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="value"
-                           Foreground="{Binding EthUsdt.Color}"
                            Text="{Binding EthUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
                 <!-- BNB -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
-                           Foreground="{Binding BnbUsdt.Color}"
-                           Text="BNB" />
+                           Text="BNB" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                            Foreground="{Binding BnbUsdt.Color}"
-                           Text="{Binding BnbUsdt.Price}" />
+                           Text="{Binding BnbUsdt.Price}"  MinWidth="50"/>
                 <TextBlock Grid.Row="2" Grid.Column="2" Classes="value"
-                           Foreground="{Binding BnbUsdt.Color}"
                            Text="{Binding BnbUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
                 <!-- Solana -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="label"
-                           Foreground="{Binding SolUsdt.Color}"
-                           Text="Solana (SOL)" />
+                           Text="Solana (SOL)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                            Foreground="{Binding SolUsdt.Color}"
-                           Text="{Binding SolUsdt.Price}" />
+                           Text="{Binding SolUsdt.Price}" MinWidth="50"/>
                 <TextBlock Grid.Row="3" Grid.Column="2" Classes="value"
-                           Foreground="{Binding SolUsdt.Color}"
                            Text="{Binding SolUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
                 <!-- XRP -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Classes="label"
-                           Foreground="{Binding XrpUsdt.Color}"
-                           Text="XRP" />
+                           Text="XRP" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
                            Foreground="{Binding XrpUsdt.Color}"
-                           Text="{Binding XrpUsdt.Price}" />
+                           Text="{Binding XrpUsdt.Price}"  MinWidth="50"/>
                 <TextBlock Grid.Row="4" Grid.Column="2" Classes="value"
-                           Foreground="{Binding XrpUsdt.Color}"
                            Text="{Binding XrpUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
             </Grid>
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="5" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="15,0"/>
+        <Border Grid.Column="9" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
 
         
         <!-- Tickers -->
-        <StackPanel Grid.Column="6" Margin="2,0,0,0">
+        <StackPanel Grid.Column="10" Margin="10,0,2,0">
             <TextBlock Text="Tickers" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
@@ -150,23 +214,23 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
                            Text="Kline Ticker Count" />
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
-                           Text="1234567890..." />
+                           Text="{Binding KlineTickerCount}" />
                
                 <!-- Scanner analyze count -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
                            Text="Scanner analyze Count" />
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
-                           Text="1234567890..." />
+                           Text="{Binding ScannerExecuteCount}" />
 
                 <!-- Scanner signal count -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
                            Text="Scanner signal Count" />
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
-                           Text="1234567890..." />
+                           Text="{Binding ScannerSignalCount}" />
             </Grid>
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="7" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="15,0"/>
+        <Border Grid.Column="11" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
     </Grid>
 </UserControl>

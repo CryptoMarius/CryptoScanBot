@@ -1,7 +1,10 @@
+using Avalonia.Threading;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Signal.Model;
 
 using System.Collections.ObjectModel;
@@ -14,37 +17,52 @@ namespace CryptoScanner.Signal.ViewModels;
 /// </summary>
 public partial class SignalGridViewModel : ObservableObject
 {
-    /// <summary>
-    /// Collection of signals to display in the grid
-    /// </summary>
+    private readonly DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+
     [ObservableProperty]
     private ObservableCollection<SignalInfo> _signals = [];
 
-    /// <summary>
-    /// Currently selected signal
-    /// </summary>
-    //[ObservableProperty]
-    //private SignalInfo? _selectedSignal;
+
 
     public SignalGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
+        _updateTimer.Tick += TimerAddSignalsTick;
+        _updateTimer.Start();
+    }
 
-        // Laad symbols direct in de observable collection
-        foreach (var signal in GlobalData.SignalQueue)
+    private void TimerAddSignalsTick(object? sender, EventArgs e)
+    {
+        if (GlobalData.ApplicationIsClosing)
+            return;
+
+        // Speed up adding signals
+        if (GlobalData.SignalQueue.Count > 0)
         {
-            Signals.Add(new SignalInfo
+            if (Monitor.TryEnter(GlobalData.SignalQueue))
             {
-                SignalObject = signal,
-            });
+                try
+                {
+                    while (GlobalData.SignalQueue.Count > 0)
+                    {
+                        CryptoSignal signal = GlobalData.SignalQueue.Dequeue();
+                        if (signal != null)
+                        {
+                            Signals.Add(new SignalInfo
+                            {
+                                SignalObject = signal,
+                            });
+                        }
+                    }
+                    //Sorting? / AddRange()?
+                }
+                finally
+                {
+                    Monitor.Exit(GlobalData.SignalQueue);
+                }
+            }
         }
-
-        //// Sorteer als er een sort configuratie is
-        //if (SignalShared.Columns.SortColumn != null)
-        //{
-        //    SortSymbols();
-        //}
     }
 
     /// <summary>

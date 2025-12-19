@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
@@ -19,6 +20,11 @@ public partial class MainWindow : Window
     public MainWindow(MainWindowViewModel viewModel, ITradingViewService tradingViewService)
     {
         _tradingViewService = tradingViewService;
+
+        // In code - behind of ViewModel
+        //var assets = AssetLoader.Open(new Uri("avares://CryptoScanner/Assets/app-icon.ico"));
+        //window.Icon = new WindowIcon(assets);
+
         InitializeComponent();
 
         _mainGrid = this.FindControl<Grid>("MainGrid")

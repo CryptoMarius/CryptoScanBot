@@ -1,5 +1,6 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:log="using:CryptoScanner.Log.Views"
         xmlns:symbol="using:CryptoScanner.Symbol.Views"
         xmlns:signal="using:CryptoScanner.Signal.Views"
         xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
@@ -15,95 +16,87 @@
 
 
 	
-    <Grid Name="MainGrid" ColumnDefinitions="300,1,4,*">
+    <Grid RowDefinitions="125,1,*">
 
-		<!-- The symbols on the left Background="red" -->
-		<Grid Grid.Column ="0" x:Name="SymbolSplitView">
-		    <Grid RowDefinitions="Auto,*">
-			    <Panel Grid.Row="0" Height="125" >
-				    <Menu>
-					    <MenuItem Header="Instellingen">
-						    <MenuItem Header="Algemeen" Click="OnSettingsClick" />
-					    </MenuItem>
-				    </Menu>
-				    <TextBlock Text="Search etc." FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-			    </Panel>
-			    <Grid Grid.Row="1">
-                    <TabControl Grid.Row="0" Margin="0" >
-                        <TabItem Header="Symbols" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            <symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}" Grid.Column="0"/>
-                        </TabItem>
-                    </TabControl>
-			    </Grid>
-			</Grid>
-		</Grid>
-
-        <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
-
-		<!-- Splitter between symbols and the signals -->
-		<GridSplitter Grid.Column="2" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
-
-		<!-- Main screen -->
-        <Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
-            <!-- The top dashboard  Background="orange" -->
-            <Grid ColumnDefinitions="Auto, Auto" Grid.Row="0">
-                <Panel Grid.Column="0" Height="125" >
-                    <!--
-				    <TextBlock Text="Dashboard information" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
-                    -->
-	                <dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
-                </Panel>
-                <Panel Grid.Column="1" Height="100" >
-                    <!--
-	                <dashboard:DashBoardView DataContext="{Binding DashBoardView}" />
-                    -->
-                </Panel>
-            </Grid>
-
-            <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
-
-            <!-- The signals on the main screen Background="yellow" -->
-            <TabControl Grid.Row="2" Margin="0" >
-              <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <Panel >
-				    <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
-                    <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
-                </Panel>
-              </TabItem>
-              <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <Panel>
-                    <!-- NavigationCompleted="WebView_NavigationCompleted" Background="red" -->
-                    <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
-                    <!-- Dan gaat de tradingview browser waarschijnlijk vervallen, 219 euro per jaar 
-                    
-                    Eigen interop / native browser handles
-                    Met Avalonia kun je het onderliggende platform-handle van de WebView ophalen (TryGetPlatformHandle) 
-                    en native browser-API’s gebruiken. docs.avaloniaui.net +1
-                    Dit vereist wel extra werk per-platform, omdat je dan platform‐specifieke code moet schrijven 
-                    (bijv. WebView2 op Windows, WebKit op macOS, WebKitGtk op Linux).
-                    <NativeWebView Source="https://nu.nl/"  />
-                    <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
-                    -->
-                    <Decorator x:Name="browserWrapper"/>
-                </Panel>
-              </TabItem>
-              <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <TextBlock Margin="0">This is content</TextBlock>
-              </TabItem>
-              <TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <TextBlock Margin="5">This is content</TextBlock>
-              </TabItem>
-              <TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <TextBlock Margin="5">This is content</TextBlock>
-              </TabItem>
-              <TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                <TextBlock Margin="5">This is content</TextBlock >
-              </TabItem>
-            </TabControl>
+        <!-- The top dashboard  Background="orange" -->
+        <Grid Grid.Row="0">
+            <Panel Height="130" >
+	            <dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
+            </Panel>
         </Grid>
 
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
-		
+        <Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+
+		    <!-- The symbols on the left Background="red" -->
+		    <Grid Grid.Column ="0" x:Name="SymbolSplitView">
+		        <Grid RowDefinitions="48,*">
+			        <Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
+				        <Menu IsVisible="False">
+					        <MenuItem Header="Instellingen">
+						        <MenuItem Header="Algemeen" Click="OnSettingsClick" />
+					        </MenuItem>
+				        </Menu>
+				        <TextBlock Grid.Column="1" Text="Symbol:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
+				        <TextBox Grid.Column="2" Text="" FontSize="12" BorderThickness="0" 
+                     HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
+			        </Grid>
+			        <Grid Grid.Row="1">
+    	                <symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
+			        </Grid>
+			    </Grid>
+		    </Grid>
+
+		    <!-- Splitter between symbols and the signals -->
+		    <GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
+
+            <Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
+
+		    <!-- Main screen -->
+            <Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
+
+                <!-- The signals on the main screen Background="yellow" -->
+                <TabControl Grid.Row="2" Margin="0" >
+                  <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <Panel >
+				        <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
+                        <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
+                    </Panel>
+                  </TabItem>
+                  <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <Panel>
+                        <!-- NavigationCompleted="WebView_NavigationCompleted" Background="red" -->
+                        <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
+                        <!-- Dan gaat de tradingview browser waarschijnlijk vervallen, 219 euro per jaar 
+                    
+                        Eigen interop / native browser handles
+                        Met Avalonia kun je het onderliggende platform-handle van de WebView ophalen (TryGetPlatformHandle) 
+                        en native browser-API’s gebruiken. docs.avaloniaui.net +1
+                        Dit vereist wel extra werk per-platform, omdat je dan platform‐specifieke code moet schrijven 
+                        (bijv. WebView2 op Windows, WebKit op macOS, WebKitGtk op Linux).
+                        <NativeWebView Source="https://nu.nl/"  />
+                        <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
+                        -->
+                        <Decorator x:Name="browserWrapper"/>
+                    </Panel>
+                  </TabItem>
+                  <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <TextBlock Margin="0">This is content</TextBlock>
+                  </TabItem>
+                  <TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <TextBlock Margin="5">This is content</TextBlock>
+                  </TabItem>
+                  <TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <TextBlock Margin="5">This is content</TextBlock>
+                  </TabItem>
+                  <TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <log:LogView DataContext="{Binding LogViewModel}"/>
+                  </TabItem>
+                </TabControl>
+            </Grid>
+
+
+		</Grid >
 	</Grid >
 </Window>

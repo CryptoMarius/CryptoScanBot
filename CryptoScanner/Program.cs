@@ -40,7 +40,7 @@ class Program
 
     public static void InitializeApplicationVariables()
     {
-        GlobalData.AppName = "CryptoScanBot";
+        GlobalData.AppName = "CryptoScanner";
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
         var assembly = Assembly.GetExecutingAssembly().GetName();
@@ -69,4 +69,5 @@ class Program
         ScannerLog.Logger.Error("");
         ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
     }
+
 }

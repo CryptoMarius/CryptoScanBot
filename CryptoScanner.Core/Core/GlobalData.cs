@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
@@ -31,8 +33,8 @@ public delegate void SetCandleTimerEnable(bool value);
 
 public static class GlobalData
 {
-    public static double PriceMinPerc = 0;
-    public static double PriceMaxPerc = 0;
+    //public static double PriceMinPerc = 0;
+    //public static double PriceMaxPerc = 0;
 
     public static string AppName { get; set; } = "CryptoScanBot";
     public static string AppPath { get; set; } = "";
@@ -64,7 +66,9 @@ public static class GlobalData
     public static CryptoApplicationStatus ApplicationStatus
     {
         get { return _applicationStatus; }
-        set { _applicationStatus = value; StatusesHaveChangedEvent?.Invoke(""); }
+        set { _applicationStatus = value;
+            Dispatcher.UIThread.Post(() => { StatusesHaveChangedEvent?.Invoke(""); });
+       }
     }
 
     public static int CreatedSignalCount { get; set; } // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
@@ -748,7 +752,7 @@ public static class GlobalData
     //}
 
     public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
-    public static void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
+    //public static void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
     public static void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
 
     public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);

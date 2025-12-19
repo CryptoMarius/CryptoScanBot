@@ -9,17 +9,16 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 	</PropertyGroup>
+
+	<PropertyGroup>
+		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+	</PropertyGroup>
 	
 	<ItemGroup>
 	  <AvaloniaXaml Remove="BrowserView\**" />
-	  <AvaloniaXaml Remove="DashBoard\%24\**" />
 	  <Compile Remove="BrowserView\**" />
-	  <Compile Remove="DashBoard\%24\**" />
-	  <Compile Remove="TopBanner\**" />
 	  <EmbeddedResource Remove="BrowserView\**" />
-	  <EmbeddedResource Remove="DashBoard\%24\**" />
 	  <None Remove="BrowserView\**" />
-	  <None Remove="DashBoard\%24\**" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -28,12 +27,13 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.3.9" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.9" />
+		<PackageReference Include="Avalonia" Version="11.3.10" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<!--
 		<PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
 		<PackageReference Include="CefGlue.Common" Version="120.6099.211" />
@@ -67,6 +67,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Helpers\" />
 	  <Folder Include="Signal\Converters\" />
 	</ItemGroup>
 

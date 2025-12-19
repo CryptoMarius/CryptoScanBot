@@ -26,12 +26,16 @@ namespace CryptoScanner.Signal.Model
         public float TrendPercentagePrimary { get => SignalObject.TrendPercentagePrimary; set { } }
         public float TrendPercentageSecondary { get => SignalObject.TrendPercentageSecondary; set { } }
 
+        public double Last24HoursChange { get => SignalObject.Last24HoursChange; set { } }
+        public double LastXDaysEffective { get => SignalObject.LastXDaysEffective; set { } }
+
         public double AvgBB { get => SignalObject.AvgBB; set { } }
         public double? BB { get => SignalObject.BollingerBandsPercentage; set { } }
         public double? BbLower { get => SignalObject.BollingerBandsLowerBand; set { } }
         public double? BbUpper { get => SignalObject.BollingerBandsUpperBand; set { } }
 
         public double? Rsi { get => SignalObject.Rsi; set { } }
+        public int LuxIndicator5m { get => SignalObject.LuxIndicator5m; set { } }
 
         public CryptoTrendIndicator TfTrend { get => SignalObject.TrendInterval; set { } }
         public CryptoTrendIndicator? Trend15m { get => SignalObject.Trend15m; set { } }
@@ -39,6 +43,12 @@ namespace CryptoScanner.Signal.Model
         public CryptoTrendIndicator? Trend1h { get => SignalObject.Trend1h; set { } }
         public CryptoTrendIndicator? Trend4h { get => SignalObject.Trend4h; set { } }
         public CryptoTrendIndicator? Trend1d { get => SignalObject.Trend1d; set { } }
+
+        public decimal? Barometer15m { get => SignalObject.Barometer15m; set { } }
+        public decimal? Barometer30m { get => SignalObject.Barometer30m; set { } }
+        public decimal? Barometer1h { get => SignalObject.Barometer1h; set { } }
+        public decimal? Barometer4h { get => SignalObject.Barometer4h; set { } }
+        public decimal? Barometer1d { get => SignalObject.Barometer1d; set { } }
 
 
         public event PropertyChangedEventHandler? PropertyChanged;

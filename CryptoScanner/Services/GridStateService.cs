@@ -76,7 +76,7 @@ public class GridStateService
         if (!Directory.Exists(directory))
             Directory.CreateDirectory(directory);
 
-        _filePath = Path.Combine(directory, "GridStates.json");
+        _filePath = Path.Combine(directory, "CryptoScanBot-user.json");
 
         // Load states on initialization
         _states = LoadFromFile();
