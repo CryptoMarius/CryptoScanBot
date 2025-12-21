@@ -98,7 +98,7 @@
                         <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
                         -->
                         <Decorator x:Name="browserWrapper"/>
-                        <browser:BrowserView DataContext="{Binding BrowserViewModel}"/>
+                        <browser:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
                     </Panel>
                   </TabItem>
                   <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">

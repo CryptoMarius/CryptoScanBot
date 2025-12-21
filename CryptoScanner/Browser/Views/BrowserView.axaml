@@ -1,15 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="CryptoScanner.Browser.Views.BrowserView"
-             xmlns:vm="using:CryptoScanner.Browser.ViewModels"
-             x:DataType="vm:BrowserViewModel">
-
-    <DockPanel>
-        <!-- Browser Content  Background="White" -->
-        <Decorator x:Name="browserWrapper" />
-       
-    </DockPanel>
+             x:Class="CryptoScanner.Browser.Views.BrowserView">
+    
+    <!-- Simple container - browser created on demand -->
+    <Decorator x:Name="browserWrapper"/>
+    
 </UserControl>

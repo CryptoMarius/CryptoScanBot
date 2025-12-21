@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
+using CryptoScanner.Browser.Views;
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
 using CryptoScanner.ViewModels;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
 {
     private readonly ITradingViewService _tradingViewService;
     private readonly Grid _mainGrid = null!;
+    private BrowserView? _browserView;
 
     public MainWindow(MainWindowViewModel viewModel, ITradingViewService tradingViewService)
     {
@@ -26,7 +28,15 @@ public partial class MainWindow : Window
             ?? throw new InvalidOperationException("MainGrid not found");
         Closing += Window_Closing; // - save layout + splitter
 
+        _browserView = this.FindControl<BrowserView>("BrowserView")
+            ?? throw new InvalidOperationException("BrowserView not found");
+
         DataContext = viewModel;
+
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.BrowserView = _browserView;
+        }
 
         // Restore window position, size, state and splitter
         App.GridStateService.RestoreWindowState("MainWindow", this);

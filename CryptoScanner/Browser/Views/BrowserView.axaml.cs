@@ -1,185 +1,137 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Threading;
-using Avalonia;
-
 using Xilium.CefGlue.Avalonia;
-using Xilium.CefGlue.Common.Handlers;
-using Xilium.CefGlue;
-
-using CryptoScanner.Browser.ViewModels;
+using System;
 
 namespace CryptoScanner.Browser.Views
 {
     public partial class BrowserView : UserControl
     {
         private AvaloniaCefBrowser? _browser;
-        private BrowserViewModel? _viewModel;
+        private bool _isInitializing;
+        private string? _pendingUrl;
 
         public BrowserView()
         {
             InitializeComponent();
-
-            DataContextChanged += OnDataContextChanged;
-        
-            // BELANGRIJK: Initialize browser bij Loaded event
-            Loaded += OnLoaded;
+            System.Diagnostics.Debug.WriteLine("BrowserView created (browser NOT initialized yet)");
         }
 
-        private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        /// <summary>
+        /// Navigate to URL - creates browser on first call
+        /// </summary>
+        public void Navigate(string url)
         {
-            System.Diagnostics.Debug.WriteLine("BrowserView Loaded event");
+            System.Diagnostics.Debug.WriteLine($"Navigate called: {url}");
 
-            // Initialize browser als het nog niet bestaat
-            if (_browser == null)
+            // If browser exists, just navigate
+            if (_browser != null)
             {
-                InitializeBrowser();
-            }
-        }
-
-        private void OnDataContextChanged(object? sender, System.EventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("BrowserView DataContextChanged");
-
-            // Unsubscribe from old ViewModel
-            if (_viewModel != null)
-            {
-                _viewModel.NavigateRequested -= OnNavigateRequested;
-            }
-
-            // Subscribe to new ViewModel
-            if (DataContext is BrowserViewModel vm)
-            {
-                _viewModel = vm;
-                _viewModel.NavigateRequested += OnNavigateRequested;
-
-                System.Diagnostics.Debug.WriteLine($"ViewModel attached, CurrentUrl: {_viewModel.CurrentUrl}");
-
-                // Navigate naar initial URL als browser al bestaat
-                if (_browser != null && !string.IsNullOrEmpty(_viewModel.CurrentUrl))
-                {
-                    System.Diagnostics.Debug.WriteLine($"Navigating to initial URL: {_viewModel.CurrentUrl}");
-                    _browser.Address = _viewModel.CurrentUrl;
-                }
-            }
-        }
-
-        private void InitializeBrowser()
-        {
-            var browserWrapper = this.FindControl<Decorator>("browserWrapper");
-            if (browserWrapper == null)
-            {
-                System.Diagnostics.Debug.WriteLine("ERROR: browserWrapper not found!");
+                System.Diagnostics.Debug.WriteLine("Browser exists, navigating directly");
+                _browser.Address = url;
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("Initializing CefBrowser...");
+            // Browser doesn't exist yet - create it
+            System.Diagnostics.Debug.WriteLine("Browser doesn't exist, initializing now...");
+            _pendingUrl = url;
+
+            if (!_isInitializing)
+            {
+                _isInitializing = true;
+                InitializeBrowserLazy();
+            }
+        }
+
+        private void InitializeBrowserLazy()
+        {
+            System.Diagnostics.Debug.WriteLine("InitializeBrowserLazy starting...");
+
+            // Force tab to become visible first
+            // Find parent TabControl and switch to this tab
+            var parent = this.Parent;
+            while (parent != null)
+            {
+                if (parent is TabControl tabControl)
+                {
+                    // Find which tab contains this view
+                    for (int i = 0; i < tabControl.Items.Count; i++)
+                    {
+                        var tabItem = tabControl.Items[i] as TabItem;
+                        if (tabItem?.Content == this || IsChildOf(tabItem?.Content, this))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Switching to tab {i} to make browser visible");
+                            tabControl.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                    break;
+                }
+                parent = parent.Parent;
+            }
+
+            // Wait a bit for tab to become visible
+            Dispatcher.UIThread.Post(() =>
+            {
+                CreateBrowser();
+            }, DispatcherPriority.Background);
+        }
+
+        private bool IsChildOf(object? potentialParent, Control child)
+        {
+            if (potentialParent == child) return true;
+            if (potentialParent is Panel panel)
+            {
+                foreach (var c in panel.Children)
+                {
+                    if (c == child) return true;
+                }
+            }
+            return false;
+        }
+
+        private void CreateBrowser()
+        {
+            System.Diagnostics.Debug.WriteLine("CreateBrowser starting...");
 
             try
             {
-                _browser = new AvaloniaCefBrowser();
+                var browserWrapper = this.FindControl<Decorator>("browserWrapper");
+                if (browserWrapper == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("ERROR: browserWrapper not found!");
+                    _isInitializing = false;
+                    return;
+                }
 
-                // Set initial address
-                var initialUrl = _viewModel?.CurrentUrl ?? "https://www.tradingview.com";
-                System.Diagnostics.Debug.WriteLine($"Setting browser address to: {initialUrl}");
-                _browser.Address = initialUrl;
+                System.Diagnostics.Debug.WriteLine("Creating AvaloniaCefBrowser instance...");
 
-                // Subscribe to events
-                _browser.LoadEnd += OnBrowserLoadEnd;
-                _browser.LoadError += OnBrowserLoadError;
-                _browser.LifeSpanHandler = new BrowserLifeSpanHandler();
+                _browser = new AvaloniaCefBrowser
+                {
+                    Address = _pendingUrl ?? "about:blank"
+                };
 
-                // Add to UI
+                _browser.LoadEnd += (s, e) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Browser loaded: {e.Frame.Url}");
+                };
+
+                _browser.LoadError += (s, e) =>
+                {
+                    System.Diagnostics.Debug.WriteLine($"Browser error: {e.ErrorText}");
+                };
+
                 browserWrapper.Child = _browser;
 
-                System.Diagnostics.Debug.WriteLine($"Browser initialized successfully. IsInitialized: {_browser.IsInitialized}");
+                System.Diagnostics.Debug.WriteLine($"Browser created successfully, navigating to: {_pendingUrl}");
+                _isInitializing = false;
+                _pendingUrl = null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ERROR initializing browser: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-        }
-
-        private void OnNavigateRequested(object? sender, string url)
-        {
-            System.Diagnostics.Debug.WriteLine($"OnNavigateRequested: {url}");
-
-            if (_browser == null)
-            {
-                System.Diagnostics.Debug.WriteLine("WARNING: Browser is null, initializing now...");
-                InitializeBrowser();
-            }
-
-            if (_browser != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"Setting browser.Address to: {url}");
-                _browser.Address = url;
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("ERROR: Browser still null after initialization attempt!");
-            }
-        }
-
-        private void OnBrowserLoadEnd(object? sender, Xilium.CefGlue.Common.Events.LoadEndEventArgs e)
-        {
-            if (e.Frame.Browser.IsPopup || !e.Frame.IsMain)
-                return;
-
-            System.Diagnostics.Debug.WriteLine($"LoadEnd: {e.Frame.Url} (HttpStatusCode: {e.HttpStatusCode})");
-        }
-
-        private void OnBrowserLoadError(object? sender, Xilium.CefGlue.Common.Events.LoadErrorEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine($"LoadError: {e.ErrorCode} - {e.ErrorText} for URL: {e.FailedUrl}");
-        }
-
-        public void Dispose()
-        {
-            System.Diagnostics.Debug.WriteLine("BrowserView Dispose");
-
-            if (_viewModel != null)
-            {
-                _viewModel.NavigateRequested -= OnNavigateRequested;
-            }
-
-            _browser?.Dispose();
-        }
-
-        private class BrowserLifeSpanHandler : LifeSpanHandler
-        {
-            protected override bool OnBeforePopup(
-                CefBrowser browser,
-                CefFrame frame,
-                string targetUrl,
-                string targetFrameName,
-                CefWindowOpenDisposition targetDisposition,
-                bool userGesture,
-                CefPopupFeatures popupFeatures,
-                CefWindowInfo windowInfo,
-                ref CefClient client,
-                CefBrowserSettings settings,
-                ref CefDictionaryValue extraInfo,
-                ref bool noJavascriptAccess)
-            {
-                System.Diagnostics.Debug.WriteLine($"Popup requested: {targetUrl}");
-
-                var bounds = windowInfo.Bounds;
-                Dispatcher.UIThread.Post(() =>
-                {
-                    var window = new Window();
-                    var popupBrowser = new AvaloniaCefBrowser
-                    {
-                        Address = targetUrl
-                    };
-                    window.Content = popupBrowser;
-                    window.Position = new PixelPoint(bounds.X, bounds.Y);
-                    window.Height = bounds.Height;
-                    window.Width = bounds.Width;
-                    window.Title = targetUrl;
-                    window.Show();
-                });
-                return true;
+                System.Diagnostics.Debug.WriteLine($"ERROR creating browser: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
+                _isInitializing = false;
             }
         }
     }

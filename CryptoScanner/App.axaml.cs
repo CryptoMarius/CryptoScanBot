@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 
 using CryptoScanner.Browser.Helpers;
+using CryptoScanner.Browser.Services;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
@@ -27,7 +28,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 using Xilium.CefGlue;
-using CryptoScanner.Browser.Services;
 
 namespace CryptoScanner;
 
@@ -308,6 +308,8 @@ public partial class App : Application
 
     private static void InitializeCefBrowser()
     {
+        return;
+
         var platformService = Services.GetRequiredService<IPlatformService>();
         string dataPath = platformService.GetDataDirectory();
 

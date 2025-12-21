@@ -13,12 +13,12 @@
                 <!-- Light theme resources -->
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="LowVolumeBrush">#E61A1A</SolidColorBrush>
-                    <SolidColorBrush x:Key="NormalVolumeBrush">#000000</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#202020</SolidColorBrush>
                     
                     <!-- Price change colors -->
                     <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceNeutralBrush">#000000</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
                 </ResourceDictionary>
                 
                 <!-- Dark theme resources -->
@@ -28,7 +28,7 @@
                     
                     <!-- Price change colors (aangepast voor dark mode) -->
                     <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceDownBrush">#EF5350</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>

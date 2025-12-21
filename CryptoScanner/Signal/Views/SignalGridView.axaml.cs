@@ -126,7 +126,7 @@ public partial class SignalGridView : UserControl
     //    {
     //        if (e.Key == Key.End || e.Key == Key.Home)
     //        {
-    //            e.Handled = true;  // ✅ VOOR de actie!
+    //            e.Handled = true;  // VOOR de actie!
 
     //            // Save scroll position
     //            var scrollViewer = _dataGrid.FindDescendantOfType<ScrollViewer>();

@@ -193,7 +193,7 @@ public partial class SignalGridViewModel : ObservableObject
         var symbol = signal.SignalObject.Symbol;
         var interval = signal.SignalObject.Interval;
         if (symbol != null && interval != null)
-            ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+            ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, tradingAppInternExtern);
     }
 
     [RelayCommand]
@@ -216,7 +216,7 @@ public partial class SignalGridViewModel : ObservableObject
         var symbol = signal.SignalObject.Symbol;
         var interval = signal.SignalObject.Interval;
         if (symbol != null && interval != null)
-            ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+            ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, tradingAppInternExtern);
     }
 
 

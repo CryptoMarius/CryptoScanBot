@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Browser.ViewModels;
+using CryptoScanner.Browser.Views;
 using CryptoScanner.DashBoard.ViewModels;
 using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Signal.Model;
@@ -17,6 +18,7 @@ public partial class MainWindowViewModel : ObservableObject
     public required BrowserViewModel BrowserViewModel { get; set; }
     public required LogViewModel LogViewModel { get; set; }
 
+    public BrowserView? BrowserView { get; set; }
 
     public MainWindowViewModel()
     {
@@ -50,14 +52,16 @@ public partial class MainWindowViewModel : ObservableObject
     
     }
 
-    [ObservableProperty]
-    private int _selectedTabIndex;
-
     private void OnOpenInInternalBrowserRequested(object? sender, string  url)
     {
-        BrowserViewModel.NavigateToTradingView(url);
+        //BrowserViewModel.NavigateToTradingView(url);
+        if (BrowserView != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
+            
+            // Navigate triggers initialization + tab switch automatically
+            BrowserView.Navigate(url);
+        }
 
-        // Switch to browser tab (index 1 of 2, afhankelijk van je layout)
-        SelectedTabIndex = 1; // Browser tab
     }
 }
