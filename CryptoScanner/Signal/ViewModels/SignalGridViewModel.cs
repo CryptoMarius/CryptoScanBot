@@ -253,26 +253,30 @@ public partial class SignalGridViewModel : ObservableObject
         if (Url != "")
         {
             GlobalData.AddTextToLogTab($"Linktools activate {Url}");
-            // Open the url via our own hidden browser (to avoid the Altrady jump-step)
+            EventOpenInInternalBrowser?.Invoke(this, Url);
+
+            //// Open the url via our own hidden browser (to avoid the Altrady jump-step)
             //if (viaTradingBrowser == CryptoExternalUrlType.Internal)
             //{
-            //await WebViewTradingView.ActivateUrlAsync(Url);
-            //if (activateTab && TabControl != null)
-            //    TabControl.SelectedTab = TabPageBrowser;
+            //    //await WebViewTradingView.ActivateUrlAsync(Url);
+            //    //if (activateTab && TabControl != null)
+            //    //    TabControl.SelectedTab = TabPageBrowser;
+            //    // Usage anywhere:
+            //    App.HiddenBrowser.Navigate(Url);
             //}
             //else
-            {
-                if (Execute == CryptoExternalUrlType.Internal)
-                {
-                    // Send url-event via the MainWindowViewModel
-                    EventOpenInInternalBrowser?.Invoke(this, Url);
-                }
-                else
-                {
-                    // Open via the external (system) browser
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
-                }
-            }
+            //{
+            //    if (Execute == CryptoExternalUrlType.Internal)
+            //    {
+            //        // Send url-event via the MainWindowViewModel
+            //        EventOpenInInternalBrowser?.Invoke(this, Url);
+            //    }
+            //    else
+            //    {
+            //        // Open via the external (system) browser
+            //        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
+            //    }
+            //}
         }
     }
 

@@ -27,6 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 using Xilium.CefGlue;
+using CryptoScanner.Browser.Services;
 
 namespace CryptoScanner;
 
@@ -45,6 +46,7 @@ public partial class App : Application
     /// </summary>
     public static readonly Queue<string> LogQueue = new();
 
+    public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
 
     public override void Initialize()
     {
@@ -184,6 +186,7 @@ public partial class App : Application
         // Register Services as Singleton (één instantie voor hele app)
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
+        services.AddSingleton<HiddenBrowserService>();
 
         // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
         services.AddTransient<MainWindowViewModel>();
@@ -220,6 +223,8 @@ public partial class App : Application
 
         // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
         InitializeGlobalData();
+        var hiddenBrowser = Services.GetRequiredService<HiddenBrowserService>();
+        hiddenBrowser.Initialize();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -239,6 +244,10 @@ public partial class App : Application
         await DataStore.SaveCandlesAsync();
         // Ensure all grid states are written to disk before exit
         GridStateService.FlushToDisk();
+
+        // Dispose hidden browser
+        var hiddenBrowser = Services.GetService<HiddenBrowserService>();
+        hiddenBrowser?.Dispose();
     }
 
 

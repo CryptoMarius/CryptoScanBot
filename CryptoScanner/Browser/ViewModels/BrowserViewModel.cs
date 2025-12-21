@@ -32,10 +32,8 @@ public partial class BrowserViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(url))
             return;
 
-        // Add https:// if missing
-        if (!url.StartsWith("http://") && !url.StartsWith("https://"))
-            url = "https://" + url;
-
+        // Override for testing
+        url = "https://github.com/OutSystems/CefGlue?tab=readme-ov-file";
         CurrentUrl = url;
         NavigateRequested?.Invoke(this, url);
     }
@@ -46,15 +44,6 @@ public partial class BrowserViewModel : ObservableObject
     public void NavigateToTradingView(string url)
     {
         Navigate(url);
-    }
-
-
-    /// <summary>
-    /// Update from View when URL changes
-    /// </summary>
-    public void UpdateUrl(string url)
-    {
-        CurrentUrl = url;
     }
 
 }
