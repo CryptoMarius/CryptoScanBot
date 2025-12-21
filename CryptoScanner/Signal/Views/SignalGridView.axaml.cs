@@ -279,14 +279,21 @@ public partial class SignalGridView : UserControl
     {
         var flyout = new MenuFlyout();
 
+        MenuItem menuItem;
 
         flyout.Items.Add(new MenuItem { Header = "Symbol Chart" });
-        var openTradingApp = new MenuItem { Header = "Altrady Binance Futures" };
-        openTradingApp.Click += OnLaunchTradingApp;
-        flyout.Items.Add(openTradingApp);
+        menuItem = new MenuItem { Header = "Altrady Binance Futures" };
+        menuItem.Click += OnLaunchTradingApp;
+        flyout.Items.Add(menuItem);
 
-        flyout.Items.Add(new MenuItem { Header = "Tradingview internal" });
-        flyout.Items.Add(new MenuItem { Header = "Tradingview external" });
+        menuItem = new MenuItem { Header = "Tradingview internal" };
+        menuItem.Click += OnLaunchTradingViewInternal;
+        flyout.Items.Add(menuItem);
+
+        menuItem = new MenuItem { Header = "Tradingview External" };
+        menuItem.Click += OnLaunchTradingViewExternal;
+        flyout.Items.Add(menuItem);
+
         flyout.Items.Add(new MenuItem { Header = "Goto the exchange" });
         flyout.Items.Add(new MenuItem { Header = "TV + Altrady" });
         flyout.Items.Add(new MenuItem { Header = "-" });
@@ -311,6 +318,7 @@ public partial class SignalGridView : UserControl
 
         flyout.ShowAt(dataGrid, true);
     }
+
 
 
     /// <summary>
@@ -383,6 +391,28 @@ public partial class SignalGridView : UserControl
             if (DataContext is SignalGridViewModel vm)
             {
                 vm.LaunchTradingAppCommand.Execute(_dataGrid.SelectedItem);
+            }
+        }
+    }
+
+    private void OnLaunchTradingViewInternal(object? sender, RoutedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem != null)
+        {
+            if (DataContext is SignalGridViewModel vm)
+            {
+                vm.LaunchTradingViewInternalCommand.Execute(_dataGrid.SelectedItem);
+            }
+        }
+    }
+
+    private void OnLaunchTradingViewExternal(object? sender, RoutedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem != null)
+        {
+            if (DataContext is SignalGridViewModel vm)
+            {
+                vm.LaunchTradingViewExternalCommand.Execute(_dataGrid.SelectedItem);
             }
         }
     }

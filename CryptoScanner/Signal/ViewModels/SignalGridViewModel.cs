@@ -27,7 +27,8 @@ public partial class SignalGridViewModel : ObservableObject
     [ObservableProperty]
     private ObservableRangeCollection<SignalInfo> _signals = [];
 
-
+    // Event voor parent ViewModel
+    public event EventHandler<string>? EventOpenInInternalBrowser;
 
     public SignalGridViewModel()
     {
@@ -119,10 +120,12 @@ public partial class SignalGridViewModel : ObservableObject
                     x.lastSignalTime = signal.EventTime + 20;
                     GlobalData.StrategiesSettings[signal.Strategy] = x;
 
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
                         x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;
-                    //PlaySound(signal, x.strategySettings.PlaySound, x.strategySettings.PlaySpeech, soundFile);
-                    //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+                               //PlaySound(signal, x.strategySettings.PlaySound, x.strategySettings.PlaySpeech, soundFile);
+                               //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
                 }
                 //else GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString() + " ignored");
             }
@@ -147,7 +150,54 @@ public partial class SignalGridViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private static void LaunchTradingApp(object? parameter)
+    private void LaunchTradingApp(object? parameter)
+    {
+        if (parameter is not SignalInfo signal)
+            return;
+
+        // Implement your external program logic here
+        System.Diagnostics.Debug.WriteLine($"Opening {signal.Symbol} in external program");
+
+        CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+
+
+        // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+        if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+            tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+        GlobalData.LoadLinkSettings(); // refresh links
+
+        var symbol = signal.SignalObject.Symbol;
+        var interval = signal.SignalObject.Interval;
+        if (symbol != null && interval != null)
+            ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+    }
+
+    
+    [RelayCommand]
+    private void LaunchTradingViewInternal(object? parameter)
+    {
+        if (parameter is not SignalInfo signal)
+            return;
+
+        // Implement your external program logic here
+        System.Diagnostics.Debug.WriteLine($"Opening {signal.Symbol} in external program");
+
+        CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+
+
+        // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
+        if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+            tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+        GlobalData.LoadLinkSettings(); // refresh links
+
+        var symbol = signal.SignalObject.Symbol;
+        var interval = signal.SignalObject.Interval;
+        if (symbol != null && interval != null)
+            ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+    }
+
+    [RelayCommand]
+    private void LaunchTradingViewExternal(object? parameter)
     {
         if (parameter is not SignalInfo signal)
             return;
@@ -195,7 +245,7 @@ public partial class SignalGridViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"Copying signal to clipboard: {text}");
     }
 
-    public static void ActivateTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
+    public void ActivateTradingApp(CryptoTradingApp externalTradingApp, CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {
         // Activate the trading application (and we use a dummy browser for Altrady)
 
@@ -203,6 +253,7 @@ public partial class SignalGridViewModel : ObservableObject
         if (Url != "")
         {
             GlobalData.AddTextToLogTab($"Linktools activate {Url}");
+            // Open the url via our own hidden browser (to avoid the Altrady jump-step)
             //if (viaTradingBrowser == CryptoExternalUrlType.Internal)
             //{
             //await WebViewTradingView.ActivateUrlAsync(Url);
@@ -211,12 +262,14 @@ public partial class SignalGridViewModel : ObservableObject
             //}
             //else
             {
-                //if (Execute == CryptoExternalUrlType.Internal)
-                //{
-                //    await WebViewTradingApp.ActivateUrlAsync(Url);
-                //}
-                //else
+                if (Execute == CryptoExternalUrlType.Internal)
                 {
+                    // Send url-event via the MainWindowViewModel
+                    EventOpenInInternalBrowser?.Invoke(this, Url);
+                }
+                else
+                {
+                    // Open via the external (system) browser
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Url) { UseShellExecute = true });
                 }
             }

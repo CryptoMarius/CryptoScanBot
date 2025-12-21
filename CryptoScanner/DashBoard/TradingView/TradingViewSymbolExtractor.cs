@@ -89,7 +89,7 @@ public class TradingViewSymbolExtractor
                 // Normal cancellation - exit gracefully
                 break;
             }
-            catch (Exception error)
+            catch (Exception)
             {
                 // Other errors - continue trying
                 try

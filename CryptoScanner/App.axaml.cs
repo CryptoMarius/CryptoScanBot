@@ -1,28 +1,32 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Threading;
 
+using CryptoScanner.Browser.Helpers;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
 using CryptoScanner.DashBoard.Services;
 using CryptoScanner.DashBoard.ViewModels;
-using CryptoScanner.Core.Exchange;
+using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Services;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
-using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Views;
 using CryptoScanner.ViewModels;
+
+using CryptoScanner.Browser.ViewModels;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using System.Reflection;
-using Avalonia.Media;
-using CryptoScanner.Core.Model;
-using Avalonia.Threading;
-using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.Trader;
 
+using Xilium.CefGlue;
 
 namespace CryptoScanner;
 
@@ -186,6 +190,7 @@ public partial class App : Application
         services.AddTransient<DashBoardViewModel>();
         services.AddTransient<SymbolGridViewModel>();
         services.AddTransient<SignalGridViewModel>();
+        services.AddTransient<BrowserViewModel>();
         services.AddTransient<LogViewModel>();
 
         // Register Views
@@ -206,6 +211,9 @@ public partial class App : Application
         var services = new ServiceCollection();
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
+
+        // Initialize CefGlue browser
+        InitializeCefBrowser();
 
         // Initialize the GridStateService (loads settings from disk into memory)
         GridStateService = new GridStateService();
@@ -287,5 +295,25 @@ public partial class App : Application
     public static IBrush PriceUp => App.GetBrushResource("PriceUpBrush");
     public static IBrush PriceDown => App.GetBrushResource("PriceDownBrush");
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
+
+
+    private static void InitializeCefBrowser()
+    {
+        var platformService = Services.GetRequiredService<IPlatformService>();
+        string dataPath = platformService.GetDataDirectory();
+
+        // Load CefGlue runtime
+        CefRuntime.Load();
+
+        var settings = new CefSettings
+        {
+            CachePath = Path.Combine(dataPath, "Browser"),
+            LogFile = Path.Combine(dataPath, "Browser", "cef.log"),
+            LogSeverity = CefLogSeverity.Warning,
+        };
+
+        var mainArgs = new CefMainArgs([]);
+        CefRuntime.Initialize(mainArgs, settings, new CustomCefApp(), IntPtr.Zero);
+    }
 }
 

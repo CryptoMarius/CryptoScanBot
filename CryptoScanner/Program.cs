@@ -1,11 +1,8 @@
 ﻿using Avalonia;
 
-using CryptoScanner;
 using CryptoScanner.Core.Core;
 
-using System;
 using System.Reflection;
-using System.Threading;
 
 namespace CryptoScanner;
 
@@ -30,6 +27,7 @@ class Program
         //Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
+
 
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
@@ -69,5 +67,6 @@ class Program
         ScannerLog.Logger.Error("");
         ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
     }
+
 
 }

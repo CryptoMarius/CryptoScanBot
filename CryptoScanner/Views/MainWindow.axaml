@@ -1,6 +1,7 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:log="using:CryptoScanner.Log.Views"
+        xmlns:browser="using:CryptoScanner.Browser.Views"
         xmlns:symbol="using:CryptoScanner.Symbol.Views"
         xmlns:signal="using:CryptoScanner.Signal.Views"
         xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
@@ -97,6 +98,7 @@
                         <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
                         -->
                         <Decorator x:Name="browserWrapper"/>
+                        <browser:BrowserView DataContext="{Binding BrowserViewModel}"/>
                     </Panel>
                   </TabItem>
                   <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
