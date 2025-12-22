@@ -161,7 +161,7 @@ public partial class DashBoardViewModel : ObservableObject
     private void StatusesHaveChangedEvent(string text)
     {
         if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-            ApplicationStatus = "";
+            ApplicationStatus = DateTime.Now.ToString("HH:mm");
         else
             ApplicationStatus = GlobalData.ApplicationStatus.ToString();
 
