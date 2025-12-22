@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Browser.ViewModels;
 using CryptoScanner.Browser.Views;
@@ -64,4 +65,15 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
     }
+
+
+    /// <summary>
+    /// Command to view signal details
+    /// </summary>
+    [RelayCommand]
+    private static void OnSettingsCommand(object? parameter)
+    {
+        System.Diagnostics.Debug.WriteLine($"OnSettingsCommand");
+    }
+
 }

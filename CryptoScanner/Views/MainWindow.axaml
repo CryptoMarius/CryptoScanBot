@@ -9,7 +9,10 @@
 		xmlns:controls="using:CryptoScanner.Controls"
         x:Class="CryptoScanner.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="CryptoScanBot" Width="1000" Height="800" FontSize="10">
+        Title="CryptoScanBot" Width="1000" Height="800" FontSize="10"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="32">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
@@ -52,12 +55,7 @@
 		    <Grid Grid.Column ="0" x:Name="SymbolSplitView">
 		        <Grid RowDefinitions="48,*">
 			        <Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
-				        <Menu IsVisible="False">
-					        <MenuItem Header="Instellingen">
-						        <MenuItem Header="Algemeen" Click="OnSettingsClick" />
-					        </MenuItem>
-				        </Menu>
-				        <TextBlock Grid.Column="1" Text="Symbol:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
+				        <TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
 				        <TextBox Grid.Column="2" Text="" FontSize="12" BorderThickness="0" 
                      HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
 			        </Grid>
@@ -75,28 +73,16 @@
 		    <!-- Main screen -->
             <Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
 
-                <!-- The signals on the main screen Background="yellow" -->
+                    <!-- The signals on the main screen -->
                 <TabControl Grid.Row="2" Margin="0" >
                   <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                     <Panel >
-				        <!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
+			<!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
                         <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
                     </Panel>
                   </TabItem>
                   <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                     <Panel>
-                        <!-- NavigationCompleted="WebView_NavigationCompleted" Background="red" -->
-                        <!-- Probleem, hier is een commerciele licentie voor nodig (nu een trial)-->
-                        <!-- Dan gaat de tradingview browser waarschijnlijk vervallen, 219 euro per jaar 
-                    
-                        Eigen interop / native browser handles
-                        Met Avalonia kun je het onderliggende platform-handle van de WebView ophalen (TryGetPlatformHandle) 
-                        en native browser-API's gebruiken. docs.avaloniaui.net +1
-                        Dit vereist wel extra werk per-platform, omdat je dan platform‐specifieke code moet schrijven 
-                        (bijv. WebView2 op Windows, WebKit op macOS, WebKitGtk op Linux).
-                        <NativeWebView Source="https://nu.nl/"  />
-                        <TextBox x:Name="addressTextBox" DockPanel.Dock="Top" KeyDown="OnAddressTextBoxKeyDown" />
-                        -->
                         <Decorator x:Name="browserWrapper"/>
                         <browser:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
                     </Panel>
