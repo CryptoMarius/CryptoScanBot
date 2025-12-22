@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Xilium.CefGlue.Avalonia;
 using System;
+using CryptoScanner.Browser.Helpers;
 
 namespace CryptoScanner.Browser.Views
 {
@@ -62,6 +63,7 @@ namespace CryptoScanner.Browser.Views
                         {
                             System.Diagnostics.Debug.WriteLine($"Switching to tab {i} to make browser visible");
                             tabControl.SelectedIndex = i;
+                            //var timer = new System.Timers.Timer(1000); // Was 100ms
                             break;
                         }
                     }
@@ -77,7 +79,7 @@ namespace CryptoScanner.Browser.Views
             }, DispatcherPriority.Background);
         }
 
-        private bool IsChildOf(object? potentialParent, Control child)
+        private static bool IsChildOf(object? potentialParent, Control child)
         {
             if (potentialParent == child) return true;
             if (potentialParent is Panel panel)
