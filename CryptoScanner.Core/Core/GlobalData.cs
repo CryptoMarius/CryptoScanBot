@@ -1,5 +1,6 @@
 ﻿using Avalonia.Threading;
 
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
@@ -36,11 +37,10 @@ public static class GlobalData
     //public static double PriceMinPerc = 0;
     //public static double PriceMaxPerc = 0;
 
-    public static string AppName { get; set; } = "CryptoScanBot";
     public static string AppPath { get; set; } = "";
     public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
-    private static string? AppDataFolder { get; set; } = ""; // depends on startup parameters
+    public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
 
     public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
@@ -386,16 +386,16 @@ public static class GlobalData
     {
         try
         {
-            string filename = GetBaseDir() + $"{AppName}-settings.json";
+            string filename = Path.Combine(GetBaseDir(), $"{Constants.AppName}-settings.json");
             if (File.Exists(filename))
             {
-                //using (FileStream readStream = new FileStream(filename, FileMode.Open))
+                //using (FileStream readStream = new FileStream(fileName, FileMode.Open))
                 //{
                 //    BinaryFormatter formatter = new BinaryFormatter();
                 //    Settings = (Settings)formatter.Deserialize(readStream);
                 //    readStream.Close();
                 //}
-                //string text = File.ReadAllText(filename);
+                //string text = File.ReadAllText(fileName);
                 //var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.DeSerializerOptions);
                 using FileStream stream = File.OpenRead(filename);
                 var value = JsonSerializer.Deserialize<SettingsBasic>(stream, JsonTools.DeSerializerOptions);
@@ -425,10 +425,10 @@ public static class GlobalData
 
     public static void LoadLinkSettings()
     {
-        string filename = $"{AppName}-weblinks.json";
+        string filename = $"{Constants.AppName}-weblinks.json";
         try
         {
-            string fullName = GetBaseDir() + filename;
+            string fullName = Path.Combine(GetBaseDir(), filename);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -461,10 +461,10 @@ public static class GlobalData
     /// </summary>
     public static void LoadUserSettings()
     {
-        string filename = $"{AppName}-user.json";
+        string fileName = $"{Constants.AppName}-user.json";
         try
         {
-            string fullName = GetBaseDir() + filename;
+            string fullName = Path.Combine(GetBaseDir(), fileName);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -478,16 +478,16 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString());
+            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
     public static void LoadTelegramSettings()
     {
-        string filename = $"{AppName}-telegram.json";
+        string fileName = $"{Constants.AppName}-telegram.json";
         try
         {
-            string fullName = GetBaseDir() + filename;
+            string fullName = Path.Combine(GetBaseDir(), fileName);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -501,16 +501,16 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString());
+            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
     public static void LoadExchangeSettings()
     {
-        string filename = $"{AppName}-exchange.json";
+        string fileName = $"{Constants.AppName}-exchange.json";
         try
         {
-            string fullName = GetBaseDir() + filename;
+            string fullName = Path.Combine(GetBaseDir(), fileName);
             if (File.Exists(fullName))
             {
                 File.Delete(fullName);
@@ -531,14 +531,14 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString());
+            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
         }
 
 
-        filename = $"{AppName}-altrady.json";
+        fileName = $"{Constants.AppName}-altrady.json";
         try
         {
-            string fullName = GetBaseDir() + filename;
+            string fullName = Path.Combine(GetBaseDir(), fileName);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -552,7 +552,7 @@ public static class GlobalData
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {filename} " + error.ToString());
+            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
         }
     }
 
@@ -606,7 +606,7 @@ public static class GlobalData
     {
         var baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
-        var filename = baseFolder + $"{AppName}-user.json";
+        var filename = Path.Combine(baseFolder, $"{Constants.AppName}-user.json");
         string text = JsonSerializer.Serialize(SettingsUser, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
     }
@@ -616,42 +616,42 @@ public static class GlobalData
         string baseFolder = GetBaseDir();
         Directory.CreateDirectory(baseFolder);
 
-        //using (FileStream writeStream = new FileStream(filename, FileMode.Create))
+        //using (FileStream writeStream = new FileStream(fileName, FileMode.Create))
         //{
         //    BinaryFormatter formatter = new BinaryFormatter();
         //    formatter.Serialize(writeStream, GlobalData.Settings);
         //    writeStream.Close();
         //}
 
-        string filename = baseFolder + $"{AppName}-settings.json";
+        string filename = Path.Combine(baseFolder, $"{Constants.AppName}-settings.json");
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{AppName}-telegram.json";
+        filename = baseFolder + $"{Constants.AppName}-telegram.json";
         text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        //filename = baseFolder + $"{AppName}-exchange.json";
+        //fileName = baseFolder + $"{AppName}-exchange.json";
         //text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
-        //File.WriteAllText(filename, text);
+        //File.WriteAllText(fileName, text);
 
-        filename = baseFolder + $"{AppName}-altrady.json";
+        filename = baseFolder + $"{Constants.AppName}-altrady.json";
         text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
         //#if DEBUG
         //        //// Ter debug om te zien of alles okay is
-        //        filename = GlobalData.GetBaseDir();
-        //        Directory.CreateDirectory(filename);
-        //        filename += "settingsSignalsCompiled.json";
+        //        fileName = GlobalData.GetBaseDir();
+        //        Directory.CreateDirectory(fileName);
+        //        fileName += "settingsSignalsCompiled.json";
         //        text = JsonSerializer.Serialize(TradingConfig.Signals, options);
-        //        File.WriteAllText(filename, text);
+        //        File.WriteAllText(fileName, text);
 
-        //        filename = GlobalData.GetBaseDir();
-        //        Directory.CreateDirectory(filename);
-        //        filename += "settingsTradingCompiled.json";
+        //        fileName = GlobalData.GetBaseDir();
+        //        Directory.CreateDirectory(fileName);
+        //        fileName += "settingsTradingCompiled.json";
         //        text = JsonSerializer.Serialize(TradingConfig.Trading, options);
-        //        File.WriteAllText(filename, text);
+        //        File.WriteAllText(fileName, text);
         //#endif
     }
 
@@ -765,13 +765,7 @@ public static class GlobalData
     public static string GetBaseDir()
     {
         if (string.IsNullOrEmpty(AppDataFolder))
-        {
-            ApplicationParams.InitApplicationOptions();
-            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                ApplicationParams.Options?.AppDataFolder ?? AppName);
-            Directory.CreateDirectory(AppDataFolder);
-            AppDataFolder += @"\";
-        }
+            throw new InvalidOperationException("AppDataFolder not set");
         return AppDataFolder;
     }
 

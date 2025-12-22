@@ -46,8 +46,7 @@ public class StorageHistoricalData
     /// </summary>
     public static string GetFolder(CryptoSymbol symbol, CryptoInterval interval)
     {
-        string folder = $@"{GlobalData.GetBaseDir()}\Emulator\Data\{symbol.Quote.ToLower()}\{symbol.Base.ToLower()}\{interval.Name}\";
-        return folder;
+        return Path.Combine(GlobalData.GetBaseDir(), "Emulator", "Data", symbol.Quote.ToLower(), symbol.Base.ToLower(), interval.Name);
     }
 
     public static string GetFolder(CryptoSymbol symbol, CryptoInterval interval, DateTime date)

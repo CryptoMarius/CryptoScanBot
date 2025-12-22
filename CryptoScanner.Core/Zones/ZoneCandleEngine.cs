@@ -48,18 +48,18 @@ public class ZoneCandleEngine
     public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
     {
         // load candles (kind of quick and dirty)
-        string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-        string filenameBin = baseFolder + $"{symbol.Name}-{interval.Name}.bin";
-        if (File.Exists(filenameBin))
+        string baseFolder = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string fileName = Path.Combine(baseFolder, $"{symbol.Name}-{interval.Name}.bin");
+        if (File.Exists(fileName))
         {
             try
             {
-                await ReadFromBin(symbol, interval, filenameBin);
+                await ReadFromBin(symbol, interval, fileName);
             }
             catch (Exception error)
             {
                 GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
-                File.Delete(filenameBin);
+                File.Delete(fileName);
                 throw;
             }
         }
@@ -115,17 +115,17 @@ public class ZoneCandleEngine
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-                string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-                Directory.CreateDirectory(baseFolder);
+                string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+                Directory.CreateDirectory(folderName);
 
-                string filenameBin = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.bin";
-                await WriteToBin(symbol, symbolInterval.Interval, filenameBin);
+                string fileName = Path.Combine(folderName, $"{symbol.Name}-{symbolInterval.Interval.Name}.bin");
+                await WriteToBin(symbol, symbolInterval.Interval, fileName);
 
-                //string filenameTxt = baseFolder + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
+                //string filenameTxt = folderName + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
                 //await WriteToTxt(symbol, symbolInterval.Interval, filenameTxt);
 
                 //log.AppendLine($"saving {filename}");
-                //ScannerLog.Logger.Info($"Saving {filenameBin}");
+                //ScannerLog.Logger.Info($"Saving {fileName}");
                 loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
 
                 //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");

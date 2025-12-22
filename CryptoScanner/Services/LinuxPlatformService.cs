@@ -1,7 +1,6 @@
-﻿using System;
+﻿using CryptoScanner.Core.Core;
+
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace CryptoScanner.Services;
 
@@ -9,9 +8,11 @@ public class LinuxPlatformService : IPlatformService
 {
     public string GetDataDirectory()
     {
-        // Linux: ~/.local/share/CryptoScanBot
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return Path.Combine(home, ".local", "share", "CryptoScanner");
+        // And allow user defined data folder
+        ApplicationParams.InitApplicationOptions();
+        var folder = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share"),
+            ApplicationParams.Options?.AppDataFolder ?? CryptoScanner.Core.Const.Constants.AppName);
+        return folder;
     }
 
     public Task<bool> OpenExternalApp(string appName)

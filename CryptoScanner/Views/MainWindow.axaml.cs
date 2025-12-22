@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
 using CryptoScanner.Browser.Views;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.DashBoard.Services;
 using CryptoScanner.ViewModels;
@@ -49,36 +50,13 @@ public partial class MainWindow : Window
         _tradingViewService.Start();
 
         // Set application title (we have multiple instances)
-        Title = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        Title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
     }
 
 
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
-    }
-
-    public static void InitAppVariables()
-    {
-        GlobalData.AppName = "CryptoScanBot";
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
-
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version!.ToString();
-        while (appVersion.EndsWith(".0.0"))
-            appVersion = appVersion[0..^2];
-
-        GlobalData.AppVersion = appVersion;
-    }
-
-    private void ExitMenuItem_Click(object? sender, RoutedEventArgs e)
-    {
-        Close();
-    }
-
-    private void OnSettingsClick(object? sender, RoutedEventArgs e)
-    {
-        // Placeholder: Open instellingen-window of dialog later
     }
 
     private void GridSplitter_DragCompleted(object? sender, Avalonia.Input.VectorEventArgs e)
@@ -97,4 +75,19 @@ public partial class MainWindow : Window
         // Save window state
         App.GridStateService.SaveWindowState("MainWindow", this);
     }
+
+    private void ExitMenuItem_Click(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    /// Open settings window 
+    private void OnSettingsClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.SettingsCommandCommand.Execute(e);
+        }
+    }
+
 }

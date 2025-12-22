@@ -1,6 +1,7 @@
 ﻿using Avalonia.Threading;
 
 using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -335,9 +336,9 @@ public class ThreadLoadData
 
 
                 ScannerLog.Logger.Trace("");
-                ScannerLog.Logger.Trace(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
-                GlobalData.AddTextToLogTab(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
-                GlobalData.AddTextToTelegram(GlobalData.AppName + " " + GlobalData.AppVersion + " ready");
+                ScannerLog.Logger.Trace(Constants.AppName + " " + GlobalData.AppVersion + " ready");
+                GlobalData.AddTextToLogTab(Constants.AppName + " " + GlobalData.AppVersion + " ready");
+                GlobalData.AddTextToTelegram(Constants.AppName + " " + GlobalData.AppVersion + " ready");
                 GlobalData.AddTextToTelegram("");
 
 

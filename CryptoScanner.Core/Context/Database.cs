@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -28,7 +29,7 @@ public class CryptoDatabase : IDisposable
 
     public CryptoDatabase()
     {
-        Connection = new("Filename=" + basePath + GlobalData.AppName + ".db;Mode=ReadWriteCreate;"); //Pooling=True;default)
+        Connection = new("Filename=" + basePath + Constants.AppName + ".db;Mode=ReadWriteCreate;"); //Pooling=True;default)
     }
 
     public SqliteTransaction BeginTransaction()

@@ -1,7 +1,6 @@
-﻿using System;
+﻿using CryptoScanner.Core.Core;
+
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace CryptoScanner.Services;
 
@@ -9,9 +8,11 @@ public class MacOSPlatformService : IPlatformService
 {
     public string GetDataDirectory()
     {
-        // macOS: ~/Library/Application Support/CryptoScanBot
-        var appSupport = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        return Path.Combine(appSupport, "CryptoScanner");
+        // And allow user defined data folder
+        ApplicationParams.InitApplicationOptions();
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            ApplicationParams.Options?.AppDataFolder ?? CryptoScanner.Core.Const.Constants.AppName);
+        return folder;
     }
 
     public Task<bool> OpenExternalApp(string appName)

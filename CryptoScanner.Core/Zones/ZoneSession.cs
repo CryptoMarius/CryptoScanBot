@@ -60,11 +60,11 @@ public class ZoneSession
     public static ZoneSession LoadSessionSettings()
     {
         // load previous Session settings
-        string baseFolder = GlobalData.GetBaseDir() + @"Pivots\";
-        string filename = baseFolder + $"session.json";
-        if (File.Exists(filename))
+        string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string fileName = Path.Combine(folderName, $"session.json");
+        if (File.Exists(fileName))
         {
-            string text = File.ReadAllText(filename);
+            string text = File.ReadAllText(fileName);
             var session = JsonSerializer.Deserialize<ZoneSession>(text, JsonTools.DeSerializerOptions);
             if (session != null)
                 return session;
@@ -76,10 +76,10 @@ public class ZoneSession
     public void SaveSessionSettings()
     {
         // save current Session settings
-        string baseFolder = GlobalData.GetBaseDir() + @"\Pivots\";
-        string filename = baseFolder + $"session.json";
-        Directory.CreateDirectory(baseFolder);
+        string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string fileName = Path.Combine(folderName, $"session.json");
+        Directory.CreateDirectory(folderName);
         string text = JsonSerializer.Serialize(this, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
+        File.WriteAllText(fileName, text);
     }
 }

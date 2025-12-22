@@ -19,20 +19,15 @@ public class DataStore
 
     public static void LoadCandleForSymbol(string exchangeStoragePath, CryptoSymbol symbol)
     {
-        //symbol.AskPrice = null;
-        //symbol.BidPrice = null;
         symbol.LastPrice = null;
-        string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
-
-        // Verwijder het bestand indien niet relevant of niet actief
-        string filename = dirSymbol + symbol.Base.ToLower(); // + ".json.bin";
+        string fileName = Path.Combine(exchangeStoragePath, symbol.Quote.ToLower(), symbol.Base.ToLower());
 
         // reset the previous collected trend data (once a day is preferred)
         CryptoSymbolData accountSymbolData = symbol.Data;
         accountSymbolData.ResetTrendData();
 
         // Load alll intervals
-        if (File.Exists(filename))
+        if (File.Exists(fileName))
         {
             try
             {
@@ -41,7 +36,7 @@ public class DataStore
                 long futureCandles = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(1), 60);
 
                 // Een experiment (vanwege de obfuscator)
-                using FileStream readStream = new(filename, FileMode.Open);
+                using FileStream readStream = new(fileName, FileMode.Open);
 
                 using (BinaryReader binaryReader = new(readStream, Encoding.UTF8, false))
                 {
@@ -95,7 +90,7 @@ public class DataStore
             catch (InvalidCastException error)
             {
                 // Een vorig formaat
-                File.Delete(filename);
+                File.Delete(fileName);
                 ScannerLog.Logger.Error(error, symbol.Name);
                 GlobalData.AddTextToLogTab(error.ToString());
                 //throw;
@@ -106,7 +101,7 @@ public class DataStore
                 ScannerLog.Logger.Error(error, "");
                 GlobalData.AddTextToLogTab(error.ToString());
                 // Een vorig formaat
-                File.Delete(filename);
+                File.Delete(fileName);
                 //throw;
             }
 
@@ -120,12 +115,10 @@ public class DataStore
         // In het algemeen is een minimum van 2 dagen OF 215 candles nodig (indicators)
         GlobalData.AddTextToLogTab("Loading candle information (please wait!)");
 
-        //int aantaltotaal = 0;
-        string baseStoragePath = GlobalData.GetBaseDir();
         var exchange = GlobalData.ActiveExchange;
         if (exchange != null)
         {
-            string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
+            string folderName = Path.Combine(GlobalData.GetBaseDir(), exchange.Name.ToLower());
 
             foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
             {
@@ -140,7 +133,7 @@ public class DataStore
                         continue;
                     }
 
-                    LoadCandleForSymbol(exchangeStoragePath, symbol);
+                    LoadCandleForSymbol(folderName, symbol);
                 }
             }
         }
@@ -155,23 +148,22 @@ public class DataStore
         {
             GlobalData.AddTextToLogTab("Saving candle information (please wait!)");
 
-            string baseStoragePath = GlobalData.GetBaseDir();
             foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
             {
-                string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
+                string folderName = Path.Combine(GlobalData.GetBaseDir(), exchange.Name.ToLower());
 
                 for (int i = 0; i < exchange.SymbolListName.Count; i++)
                 {
                     CryptoSymbol symbol = exchange.SymbolListName.Values[i];
-                    string dirSymbol = exchangeStoragePath + symbol.Quote.ToLower() + @"\";
+                    string quoteFolder = Path.Combine(folderName, symbol.Quote.ToLower());
                     try
                     {
                         // Delete the file if the symbol is not active anymore
-                        string filename = dirSymbol + symbol.Base.ToLower();
+                        string fileName = Path.Combine(quoteFolder, symbol.Base.ToLower());
                         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
                         {
-                            if (File.Exists(filename))
-                                File.Delete(filename);
+                            if (File.Exists(fileName))
+                                File.Delete(fileName);
                             continue;
                         }
                         // Dont save candles for symbols below the minimal volume treshold
@@ -224,8 +216,8 @@ public class DataStore
                                                 }
                                             }
                                         }
-                                        Directory.CreateDirectory(dirSymbol);
-                                        using (FileStream writeStream = new(filename, FileMode.Create))
+                                        Directory.CreateDirectory(quoteFolder);
+                                        using (FileStream writeStream = new(fileName, FileMode.Create))
                                         {
                                             memoryStream.Position = 0;
                                             memoryStream.CopyTo(writeStream);

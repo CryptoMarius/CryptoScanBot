@@ -1,14 +1,19 @@
-﻿using System;
+﻿using CryptoScanner.Core.Core;
+
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace CryptoScanner.Services;
 
 public class WindowsPlatformService : IPlatformService
 {
-    public string GetDataDirectory() =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CryptoScanner");
+    public string GetDataDirectory()
+    {
+        // And allow user defined data folder
+        ApplicationParams.InitApplicationOptions();
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            ApplicationParams.Options?.AppDataFolder ?? CryptoScanner.Core.Const.Constants.AppName);
+        return folder;
+    }
 
     public Task<bool> OpenExternalApp(string appName)
     {

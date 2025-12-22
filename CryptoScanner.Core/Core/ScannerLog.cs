@@ -1,4 +1,6 @@
-﻿using NLog;
+﻿using CryptoScanner.Core.Const;
+
+using NLog;
 
 namespace CryptoScanner.Core.Core;
 
@@ -9,8 +11,8 @@ public class ScannerLog
 
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {
-        string logName = GlobalData.LogName == "" ? GlobalData.AppName : GlobalData.LogName;
-        string filename = GlobalData.GetBaseDir() + @"\Log\" + logName;
+        string logName = GlobalData.LogName == "" ? Constants.AppName : GlobalData.LogName;
+        string filename = Path.Combine(GlobalData.GetBaseDir(), "Log", logName);
 
         return new NLog.Targets.FileTarget
         {
