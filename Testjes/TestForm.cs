@@ -294,7 +294,7 @@ public partial class TestForm : Form
                 var exchange = GlobalData.ActiveExchange;
                 if (exchange != null)
                 {
-                    string exchangeStoragePath = baseStoragePath + exchange.Name.ToLower() + @"\";
+                    string exchangeStoragePath = Path.Combine(baseStoragePath, exchange.Name.ToLower());
                     if (!symbol.IsBarometerSymbol() && symbol.QuoteData!.FetchCandles && symbol.Status == 1)
                         DataStore.LoadCandleForSymbol(exchangeStoragePath, symbol);
                 }
@@ -767,13 +767,12 @@ public partial class TestForm : Form
     {
         //Laad de gecachte 1m candlesticks (langere historie, minder overhad)
         //string x = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        string filename = GlobalData.GetBaseDir();
-        filename += @"\backtest\";
-        //Directory.CreateDirectory(filename);
-        filename += "backtest.json";
-        if (System.IO.File.Exists(filename))
+        string folderName = Path.Combine(GlobalData.GetBaseDir(), "backtest");
+        //Directory.CreateDirectory(folderName);
+        string fileName = Path.Combine(folderName, "backtest.json");
+        if (System.IO.File.Exists(fileName))
         {
-            string text = System.IO.File.ReadAllText(filename);
+            string text = System.IO.File.ReadAllText(fileName);
             config = JsonSerializer.Deserialize<CryptoBackConfig>(text, JsonTools.DeSerializerOptions)!;
         }
     }
@@ -783,12 +782,11 @@ public partial class TestForm : Form
     {
         //Laad de gecachte 1m candlesticks (langere historie, minder overhad)
         //string x = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        string filename = GlobalData.GetBaseDir();
-        filename += @"\backtest\";
-        //Directory.CreateDirectory(filename);
-        filename += "backtest.json";
+        string folderName = Path.Combine(GlobalData.GetBaseDir(), "backtest");
+        //Directory.CreateDirectory(folderName);
+        string fileName = Path.Combine(folderName, "backtest.json");
         string text = JsonSerializer.Serialize(config, JsonTools.JsonSerializerIndented);
-        System.IO.File.WriteAllText(filename, text);
+        System.IO.File.WriteAllText(fileName, text);
     }
 
 

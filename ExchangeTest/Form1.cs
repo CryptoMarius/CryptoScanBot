@@ -1,6 +1,7 @@
 using Bybit.Net.Clients;
 
 using CryptoScanner.Core.Barometer;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -97,10 +98,10 @@ public partial class Form1 : Form
 
     public static void LoadExchangeSettings(string name)
     {
-        string filename = $"{GlobalData.AppName}-exchange{name}.json";
+        string filename = $"{Constants.AppName}-exchange{name}.json";
         try
         {
-            string fullName = GlobalData.GetBaseDir() + filename;
+            string fullName = Path.Combine(GlobalData.GetBaseDir(), filename);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -117,10 +118,10 @@ public partial class Form1 : Form
         }
 
 
-        filename = $"{GlobalData.AppName}-altrady{name}.json";
+        filename = $"{Constants.AppName}-altrady{name}.json";
         try
         {
-            string fullName = GlobalData.GetBaseDir() + filename;
+            string fullName = Path.Combine(GlobalData.GetBaseDir(), filename);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
