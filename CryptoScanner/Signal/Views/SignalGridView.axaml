@@ -48,7 +48,7 @@
                 <!-- Date -->
                 <DataGridTextColumn Header="Date" 
                                     Binding="{Binding Date}" 
-                                    Width="*" MinWidth="180"
+                                    Width="180" 
                                     SortMemberPath="Date"/>
 
                 <!-- Exchange -->
@@ -57,11 +57,11 @@
                 <!-- Symbol -->
                 <DataGridTextColumn Header="Symbol" 
                                     Binding="{Binding Symbol}" 
-                                    Width="*" 
+                                    Width="100" 
                                     SortMemberPath="Symbol" />
 
                 <!-- Side -->
-                <DataGridTemplateColumn Header="Side" Width="*" SortMemberPath="Side" >
+                <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -72,10 +72,10 @@
                 </DataGridTemplateColumn>
 
                 <!-- Interval -->
-                <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="*" SortMemberPath="Interval" />
+                <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="60" SortMemberPath="Interval" />
 
                 <!-- Strategy -->
-                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="*" SortMemberPath="Strategy" />
+                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="60" SortMemberPath="Strategy" />
 
                 <!-- Text -->
                 <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" SortMemberPath="Text" />
