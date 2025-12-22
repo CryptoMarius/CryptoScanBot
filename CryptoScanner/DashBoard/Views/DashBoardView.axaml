@@ -17,74 +17,73 @@
     <Grid ColumnDefinitions="80,1,Auto,1,Auto,1,Auto,1,Auto,1,Auto,1">
         
         <!-- Column=0, Traffic Lights -->
-        <StackPanel Grid.Column="0" Orientation="Vertical" MinWidth="50" Margin="20,0,2,0">
+        <StackPanel Grid.Column="0" Orientation="Vertical" MinWidth="80" Margin="20,0,2,0">
             <TextBlock Text="Status" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
             <!-- Row 1: Scanner Status -->
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="30" Height="40" Margin="0,0" >
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="30,50" Height="40" Margin="0,0" >
                 <!-- Traffic Light: Scanner -->
                 <Ellipse Grid.Row="0" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
                             Fill="{Binding ScannerStatusBrush}"
                             Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                             StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="Scanner" 
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <!-- Traffic Light: Trader -->
                 <Ellipse Grid.Row="1" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
                             Fill="{Binding TraderStatusBrush}"
                             Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                             StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="Trader" 
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <!-- Row 3: Rulez Status -->
                 <Ellipse Grid.Row="2" Grid.Column="0" Width="20" Height="20" Margin="2,2,2,2"
-                             Fill="{Binding RulezStatusBrush}"
+                            Fill="{Binding RulezStatusBrush}"
                             Stroke="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                             StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <!-- Row 4: Application Status + Time Height="18" -->
-                <!-- Application Status Text -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding ApplicationStatus}" 
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="Rulez" 
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <!-- Row 4: Application Status or Time -->
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ApplicationStatus}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left"/>
             </Grid>
         </StackPanel>
         <!-- Separator -->
         <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
 
         <!-- Baromer -->
-        <StackPanel Grid.Column="2" Orientation="Vertical" MinWidth="125" Margin="10,0,2,0">
+        <StackPanel Grid.Column="2" Orientation="Vertical" MinWidth="125" Margin="0,0,2,0">
             <TextBlock Text="Barometer" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
 
-            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="0,75,Auto,30" Height="25">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,70" Height="25">
                 <!-- ComboBox: Quote -->
-                <ComboBox Grid.Row="0" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
+                <ComboBox Grid.Row="0" Grid.Column="0" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
                             ItemsSource="{Binding Quotes}" />
-                <!-- Barometer: 30m -->
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Barometer1h, StringFormat='{}{0:N2}'}" 
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50"
-                            Foreground="{Binding Barometer1h, Converter={StaticResource BarometerColorConverter}}"
-                            TextAlignment="Right"/>
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="1h" TextAlignment="Right"
-                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" />
-
                 <!-- ComboBox: Interval -->
-                <ComboBox Grid.Row="1" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
+                <ComboBox Grid.Row="0" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedInterval}" VerticalAlignment="Center"  HorizontalAlignment="Left"
                             ItemsSource="{Binding Intervals}" />
-                        
-                <!-- Barometer: 30m -->
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Barometer4h, StringFormat='{}{0:N2}'}" 
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" MinWidth="50"
-                            Foreground="{Binding Barometer4h, Converter={StaticResource BarometerColorConverter}}"
-                            TextAlignment="Right"/>
-                <TextBlock Grid.Row="1" Grid.Column="3" Text="4h" TextAlignment="Right"
-                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" />
 
-                <!-- Time Label -->
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BarometerTime}" Margin="0,5,0,5"
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
-                <!-- Barometer: 30m -->
-                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Barometer1d, StringFormat='{}{0:N2}'}" 
-                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50"
-                            Foreground="{Binding Barometer1d, Converter={StaticResource BarometerColorConverter}}"
-                            TextAlignment="Right" Margin="0,5,0,5"/>
-                <TextBlock Grid.Row="2" Grid.Column="3" Text="1d"  TextAlignment="Right" Margin="0,5,0,5"
-                           FontSize="13"  VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <!-- Barometer: 1h -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Barometer 1h:" 
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Barometer1h, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                            Foreground="{Binding Barometer1h, Converter={StaticResource BarometerColorConverter}}"/>
+                        
+                <!-- Barometer: 11h TextAlignment="Left" -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Barometer 4h:" 
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Barometer4h, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                            Foreground="{Binding Barometer4h, Converter={StaticResource BarometerColorConverter}}"/>
+
+                <!-- Barometer: 1d -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Barometer 1d:"
+                           FontSize="13"  VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Barometer1d, StringFormat='{}{0:N2}'}" 
+                            FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                            Foreground="{Binding Barometer1d, Converter={StaticResource BarometerColorConverter}}"/>
             </Grid>
         </StackPanel>
         <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="0" Margin="1,0"/>
