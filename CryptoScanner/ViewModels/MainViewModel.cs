@@ -6,6 +6,7 @@ using CryptoScanner.Browser.Views;
 using CryptoScanner.DashBoard.ViewModels;
 using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Services;
+using CryptoScanner.Settings.Views;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
 using CryptoScanner.Views;
@@ -24,6 +25,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     public BrowserView? BrowserView { get; set; }
 
+    public MainWindowViewModel()
+    {
+        System.Diagnostics.Debug.WriteLine($"MainViewModel default constructor called");
+    }
 
     public MainWindowViewModel(
         DashBoardViewModel dashBoardViewModel,
@@ -72,16 +77,17 @@ public partial class MainWindowViewModel : ObservableObject
     private void Close()
     {
         System.Diagnostics.Debug.WriteLine($"Close");
-        //base Close();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
+    public event EventHandler? CloseRequested;
 
 
     [RelayCommand]
-    private void Settings()
+    private async Task Settings()
     {
         System.Diagnostics.Debug.WriteLine($"Settings");
-        //if (DialogService != null)
-        // await _dialogService.ShowDialogAsync<SettingsWindow>();
+        if (DialogService != null)
+            await DialogService.ShowDialogAsync<SettingsWindow>();
     }
 
     [RelayCommand]

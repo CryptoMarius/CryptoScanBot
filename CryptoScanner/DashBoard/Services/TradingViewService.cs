@@ -49,6 +49,7 @@ public class TradingViewService : ITradingViewService, IDisposable
 
     public void Start()
     {
+        return;
         lock (_lock)
         {
             if (_isRunning)

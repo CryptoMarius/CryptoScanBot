@@ -19,19 +19,18 @@
 	</Design.DataContext>
 
 	<DockPanel>
-		<Border DockPanel.Dock="Top" Height="32" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" >
-			<!-- PointerPressed="OnTitleBarPointerPressed" -->
-			<!-- SystemControlBackgroundChromeMediumBrush -->
+		<!-- Custom titlebar overlay on top of system chrome -->
+		<Grid DockPanel.Dock="Top" Height="38">
+			<!-- Background layer: fully transparent to hit testing → allows system chrome to handle dragging -->
+			<Border Background="#22FFFFFF" IsHitTestVisible="False"/>
 
+			<!-- Titlebar content (on top of the background) -->
 			<Grid ColumnDefinitions="Auto,Auto,*,Auto">
-				<!-- Left: App Icon (Draggable) -->
-				<Image Grid.Column="0"
-                       Source="/Assets/AppIcon.ico"
-                       Width="24" Height="24"
-                       Margin="8,0,8,0"
-                       VerticalAlignment="Center"/>
+				<!-- Left: App Icon -->
+				<Image Grid.Column="0" Source="/Assets/AppIcon.ico" Width="32" Height="32" Margin="12,0,8,0" VerticalAlignment="Center"/>
 
-				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12" >
+				<!-- Menu -->
+				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="White" FontSize="12" >
 					<MenuItem Header="_File">
 						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="True"/>
 						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="True"/>
@@ -46,18 +45,18 @@
 					</MenuItem>
 				</Menu>
 
-				<!-- Center: Title (Draggable area) -->
+				<!-- Center: Title -->
 				<TextBlock Grid.Column="2"
                            Text="{Binding $parent[Window].Title}"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Left"
+                           Foreground="White"
                            FontSize="12" Margin="20,0,0,0"/>
 
-				<!-- Right: Empty space for future controls -->
-				<StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,12,0">
-				</StackPanel>
+				<!-- Right: Reserved space for system window buttons -->
+				<Border Grid.Column="3" Width="138" Background="Transparent"/>
 			</Grid>
-		</Border>
+		</Grid>
 
 		<!-- Main Content -->
 		<Grid RowDefinitions="125,1,*">

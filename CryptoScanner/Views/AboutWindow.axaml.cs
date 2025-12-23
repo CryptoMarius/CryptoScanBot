@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
 using CryptoScanner.ViewModels;
@@ -20,8 +19,5 @@ public partial class AboutWindow : Window
         viewModel.CloseRequested += (s, e) => Close();
     }
 
-    private void InitializeComponent()
-    {
-    }
 
 }

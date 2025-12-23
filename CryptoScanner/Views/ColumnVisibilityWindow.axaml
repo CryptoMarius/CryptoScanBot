@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="400"
+        mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="400"
         x:Class="CryptoScanner.Views.ColumnVisibilityWindow"
         x:DataType="vm:ColumnVisibilityViewModel"
         x:CompileBindings="False"
@@ -33,23 +33,16 @@
         </ScrollViewer>
 
         <!-- Action buttons -->
-        <StackPanel Grid.Row="1" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right"
-                    Spacing="10"
-                    Margin="0,10,0,0">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="10" Margin="0,10,0,0">
             
-            <Button Content="Select All" 
-                    Command="{Binding SelectAllCommand}"
-                    Width="100"/>
+            <Button Content="Select All" HorizontalContentAlignment="Center" 
+                    Command="{Binding SelectAllCommand}" Width="100"/>
             
-            <Button Content="Deselect All" 
-                    Command="{Binding DeselectAllCommand}"
-                    Width="100"/>
+            <Button Content="Deselect All" HorizontalContentAlignment="Center" 
+                    Command="{Binding DeselectAllCommand}" Width="100"/>
             
-            <Button Content="Close" 
-                    Click="OnCloseClick"
-                    Width="100"/>
+            <Button Content="Close" HorizontalContentAlignment="Center" Click="OnCloseClick" Width="100"/>
         </StackPanel>
     </Grid>
 </Window>

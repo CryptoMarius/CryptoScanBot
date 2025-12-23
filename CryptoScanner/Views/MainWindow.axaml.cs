@@ -19,6 +19,13 @@ public partial class MainWindow : Window
     private readonly Grid _mainGrid = null!;
     private readonly BrowserView? _browserView;
 
+    public MainWindow()
+    {
+        // for the designer
+        _browserView = null;
+        _tradingViewService = null!;
+    }
+
     public MainWindow(MainWindowViewModel viewModel, ITradingViewService tradingViewService)
     {
         _tradingViewService = tradingViewService;
@@ -37,6 +44,7 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel vm)
         {
             vm.BrowserView = _browserView;
+            vm.CloseRequested += (s, e) => Close();
             vm.DialogService = new DialogService(this);
         }
 
