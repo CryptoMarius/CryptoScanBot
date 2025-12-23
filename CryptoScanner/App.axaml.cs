@@ -4,35 +4,26 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-using CryptoScanner.Browser.Helpers;
-using CryptoScanner.Browser.Services;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
-using CryptoScanner.DashBoard.Services;
-using CryptoScanner.DashBoard.ViewModels;
-using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Services;
-using CryptoScanner.Signal.ViewModels;
-using CryptoScanner.Symbol.ViewModels;
 using CryptoScanner.Views;
-using CryptoScanner.ViewModels;
-
-using CryptoScanner.Browser.ViewModels;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using System.Reflection;
 
-using Xilium.CefGlue;
-
 namespace CryptoScanner;
 
 public partial class App : Application
 {
+    //Dialogs/DialogsServices
+    //https://github.com/AvaloniaUI/Avalonia/discussions/12551
+
     public static IServiceProvider Services { get; private set; } = null!;
 
     /// <summary>
@@ -46,7 +37,7 @@ public partial class App : Application
     /// </summary>
     public static readonly Queue<string> LogQueue = new();
 
-    public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
+    //public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
 
     public override void Initialize()
     {
@@ -54,7 +45,7 @@ public partial class App : Application
         LogQueue.EnsureCapacity(2500);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
-        AvaloniaXamlLoader.Load(this);
+        InitializeComponent();
 
         //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
@@ -65,13 +56,16 @@ public partial class App : Application
         //ScannerSession.TimerShowInformation.Elapsed += dashBoardInformation1.TimerShowInformation_Tick;
     }
 
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
 
     private static void InitializeGlobalData()
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
 
         // Initialiseer app variabelen
-        GlobalData.AppName = "CryptoScanBot";
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
         var assembly = Assembly.GetExecutingAssembly().GetName();
@@ -170,37 +164,6 @@ public partial class App : Application
     }
 
 
-
-    private static void ConfigureServices(IServiceCollection services)
-    {
-        // Platform service - alleen desktop platforms
-        if (OperatingSystem.IsWindows())
-            services.AddSingleton<IPlatformService, WindowsPlatformService>();
-        else if (OperatingSystem.IsMacOS())
-            services.AddSingleton<IPlatformService, MacOSPlatformService>();
-        else if (OperatingSystem.IsLinux())
-            services.AddSingleton<IPlatformService, LinuxPlatformService>();
-        else
-            throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
-
-        // Register Services as Singleton (één instantie voor hele app)
-        services.AddSingleton<ITradingViewService, TradingViewService>();
-        services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
-        services.AddSingleton<HiddenBrowserService>();
-
-        // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
-        services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<DashBoardViewModel>();
-        services.AddTransient<SymbolGridViewModel>();
-        services.AddTransient<SignalGridViewModel>();
-        services.AddTransient<BrowserViewModel>();
-        services.AddTransient<LogViewModel>();
-
-        // Register Views
-        services.AddTransient<MainWindow>();
-    }
-    
-
     public static T? GetService<T>() where T : class
     {
         return Services?.GetService<T>();
@@ -210,21 +173,19 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         System.Diagnostics.Debug.WriteLine($"App.OnFrameworkInitializationCompleted");
+
         // Setup DI Container
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        MyServices.ConfigureServices(services);
         Services = services.BuildServiceProvider();
-
-        // Initialize CefGlue browser
-        InitializeCefBrowser();
 
         // Initialize the GridStateService (loads settings from disk into memory)
         GridStateService = new GridStateService();
 
         // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
         InitializeGlobalData();
-        var hiddenBrowser = Services.GetRequiredService<HiddenBrowserService>();
-        hiddenBrowser.Initialize();
+        //var hiddenBrowser = Services.GetRequiredService<HiddenBrowserService>();
+        //hiddenBrowser.Initialize();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -233,6 +194,9 @@ public partial class App : Application
 
             // Save grid states on application exit
             desktop.Exit += OnApplicationExit;
+
+            // Initialize CefGlue browser
+            //CustomCefApp.InitializeCefRuntime();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -241,13 +205,14 @@ public partial class App : Application
 
     private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
+        await ScannerSession.StopAsync();
         await DataStore.SaveCandlesAsync();
         // Ensure all grid states are written to disk before exit
         GridStateService.FlushToDisk();
 
         // Dispose hidden browser
-        var hiddenBrowser = Services.GetService<HiddenBrowserService>();
-        hiddenBrowser?.Dispose();
+        //var hiddenBrowser = Services.GetService<HiddenBrowserService>();
+        //hiddenBrowser?.Dispose();
     }
 
 
@@ -306,25 +271,6 @@ public partial class App : Application
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
 
 
-    private static void InitializeCefBrowser()
-    {
-        return;
 
-        var platformService = Services.GetRequiredService<IPlatformService>();
-        string dataPath = platformService.GetDataDirectory();
-
-        // Load CefGlue runtime
-        CefRuntime.Load();
-
-        var settings = new CefSettings
-        {
-            CachePath = Path.Combine(dataPath, "Browser"),
-            LogFile = Path.Combine(dataPath, "Browser", "cef.log"),
-            LogSeverity = CefLogSeverity.Warning,
-        };
-
-        var mainArgs = new CefMainArgs([]);
-        CefRuntime.Initialize(mainArgs, settings, new CustomCefApp(), IntPtr.Zero);
-    }
 }
 

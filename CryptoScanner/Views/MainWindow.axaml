@@ -1,5 +1,9 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CryptoScanBot" Width="1000" Height="800" FontSize="10"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="32"
         xmlns:log="using:CryptoScanner.Log.Views"
         xmlns:browser="using:CryptoScanner.Browser.Views"
         xmlns:symbol="using:CryptoScanner.Symbol.Views"
@@ -8,101 +12,117 @@
         xmlns:vm="using:CryptoScanner.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
         x:Class="CryptoScanner.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Title="CryptoScanBot" Width="1000" Height="800" FontSize="10"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="PreferSystemChrome"
-        ExtendClientAreaTitleBarHeightHint="32">
+        x:DataType="vm:MainWindowViewModel">
 
-    <Design.DataContext>
-        <vm:MainWindowViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:MainWindowViewModel />
+	</Design.DataContext>
 
-	
-    <Grid RowDefinitions="Auto,125,1,*">
+	<DockPanel>
+		<Border DockPanel.Dock="Top" Height="32" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" >
+			<!-- PointerPressed="OnTitleBarPointerPressed" -->
+			<!-- SystemControlBackgroundChromeMediumBrush -->
 
-        <!-- Menu bovenaan -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Settings" Click="OnSettingsClick"/>
-                <MenuItem Header="_Export"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
-            </MenuItem>
-            
-            <MenuItem Header="_View">
-                <MenuItem Header="_Dashboard"/>
-                <MenuItem Header="_Signals"/>
-            </MenuItem>
-            
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About"/>
-            </MenuItem>
-        </Menu>
+			<Grid ColumnDefinitions="Auto,Auto,*,Auto">
+				<!-- Left: App Icon (Draggable) -->
+				<Image Grid.Column="0"
+                       Source="/Assets/AppIcon.ico"
+                       Width="24" Height="24"
+                       Margin="8,0,8,0"
+                       VerticalAlignment="Center"/>
 
-        <!-- The top dashboard  Background="orange" -->
-        <Grid Grid.Row="1">
-            <Panel Height="130" >
-	            <dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
-            </Panel>
-        </Grid>
+				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12" >
+					<MenuItem Header="_File">
+						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="True"/>
+						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="True"/>
+						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="True"/>
+						<Separator/>
+						<MenuItem Header="_Settings" Command="{Binding SettingsCommand}"/>
+						<Separator/>
+						<MenuItem Header="E_xit" Command="{Binding CloseCommand}"/>
+					</MenuItem>
+					<MenuItem Header="_Help">
+						<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+					</MenuItem>
+				</Menu>
 
-        <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
+				<!-- Center: Title (Draggable area) -->
+				<TextBlock Grid.Column="2"
+                           Text="{Binding $parent[Window].Title}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Left"
+                           FontSize="12" Margin="20,0,0,0"/>
 
-        <Grid Grid.Row="3" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+				<!-- Right: Empty space for future controls -->
+				<StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,12,0">
+				</StackPanel>
+			</Grid>
+		</Border>
 
-		    <!-- The symbols on the left Background="red" -->
-		    <Grid Grid.Column ="0" x:Name="SymbolSplitView">
-		        <Grid RowDefinitions="48,*">
-			        <Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
-				        <TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
-				        <TextBox Grid.Column="2" Text="" FontSize="12" BorderThickness="0" 
-                     HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
-			        </Grid>
-			        <Grid Grid.Row="1">
-    	                <symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
-			        </Grid>
-			    </Grid>
-		    </Grid>
+		<!-- Main Content -->
+		<Grid RowDefinitions="125,1,*">
 
-		    <!-- Splitter between symbols and the signals -->
-		    <GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="GridSplitter_DragCompleted"/>
+			<!-- The top dashboard -->
+			<Grid Grid.Row="0">
+				<Panel Height="130">
+					<dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
+				</Panel>
+			</Grid>
 
-            <Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
+			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
-		    <!-- Main screen -->
-            <Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
+			<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
 
-                    <!-- The signals on the main screen -->
-                <TabControl Grid.Row="2" Margin="0" >
-                  <TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <Panel >
-			<!-- <TextBlock Text="This is tab 1 content" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/> -->
-                        <signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
-                    </Panel>
-                  </TabItem>
-                  <TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <Panel>
-                        <Decorator x:Name="browserWrapper"/>
-                        <browser:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
-                    </Panel>
-                  </TabItem>
-                  <TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <TextBlock Margin="0">This is content</TextBlock>
-                  </TabItem>
-                  <TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <TextBlock Margin="5">This is content</TextBlock>
-                  </TabItem>
-                  <TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <TextBlock Margin="5">This is content</TextBlock>
-                  </TabItem>
-                  <TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                    <log:LogView DataContext="{Binding LogViewModel}"/>
-                  </TabItem>
-                </TabControl>
-            </Grid>
+				<!-- The symbols on the left -->
+				<Grid Grid.Column ="0" x:Name="SymbolSplitView">
+					<Grid RowDefinitions="48,*">
+						<Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
+							<TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
+							<TextBox Grid.Column="2" Text="" FontSize="12" BorderThickness="0"
+						 HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
+						</Grid>
+						<Grid Grid.Row="1">
+							<symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
+						</Grid>
+					</Grid>
+				</Grid>
 
+				<!-- Splitter between symbols and the signals -->
+				<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
 
-		</Grid >
-	</Grid >
+				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
+
+				<!-- Main screen -->
+				<Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
+					<!-- The signals on the main screen -->
+					<TabControl Grid.Row="2" Margin="0" >
+						<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<Panel >
+								<signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
+							</Panel>
+						</TabItem>
+						<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<Panel>
+								<Decorator x:Name="browserWrapper"/>
+								<browser:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
+							</Panel>
+						</TabItem>
+						<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<TextBlock Margin="0">This is content</TextBlock>
+						</TabItem>
+						<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<TextBlock Margin="5">This is content</TextBlock>
+						</TabItem>
+						<TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<TextBlock Margin="5">This is content</TextBlock>
+						</TabItem>
+						<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<log:LogView DataContext="{Binding LogViewModel}"/>
+						</TabItem>
+					</TabControl>
+				</Grid>
+
+			</Grid>
+		</Grid>
+	</DockPanel>
 </Window>

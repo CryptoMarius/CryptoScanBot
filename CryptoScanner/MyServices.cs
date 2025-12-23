@@ -5,10 +5,10 @@ using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Signal.ViewModels;
 using CryptoScanner.Symbol.ViewModels;
 using CryptoScanner.ViewModels;
+using CryptoScanner.Views;
 using CryptoScanner.Services;
 
 using Microsoft.Extensions.DependencyInjection;
-using CryptoScanner.Views;
 
 namespace CryptoScanner;
 
@@ -30,7 +30,7 @@ internal class MyServices
     {
         ConfigurePlatformServices(services);
 
-        // Register Services as Singleton (één instantie voor hele app)
+        // Register Services as Singleton
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
         //services.AddSingleton<HiddenBrowserService>();
@@ -42,7 +42,7 @@ internal class MyServices
         services.AddTransient<SignalGridViewModel>();
         services.AddTransient<BrowserViewModel>();
         services.AddTransient<LogViewModel>();
-
+        
         // Register Views
         services.AddTransient<MainWindow>();
     }

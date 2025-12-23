@@ -19,6 +19,7 @@
                     <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
+                   
                 </ResourceDictionary>
                 
                 <!-- Dark theme resources -->
@@ -30,6 +31,9 @@
                     <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
+
+                    <!-- Background color -->
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush">#202020</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -42,6 +46,15 @@
         <FluentTheme />
         <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <!-- ============================================ -->
+        <!-- WINDOW TITLE BAR THEMING -->
+        <!-- ============================================ -->
+        
+        <!-- Title bar theme-aware styling -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+        </Style>
 
         <!-- ============================================ -->
         <!-- GLOBALE TEXTBLOCK/CONTROL STYLES -->

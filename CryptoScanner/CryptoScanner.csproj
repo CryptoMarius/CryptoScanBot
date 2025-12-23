@@ -8,8 +8,24 @@
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+		<!-- Assembly Version Info -->
+		<AssemblyVersion>3.1.9.0</AssemblyVersion>
+		<FileVersion>3.1.9.0</FileVersion>
+		<Version>3.1.9</Version>
+
+		<!-- Product Info -->
+		<Product>CryptoScanBot</Product>
+		<Company>Marius</Company>
+		<Copyright>Copyright © 2026 Marius</Copyright>
+		<Description>Cryptoscanner and trading bot</Description>
+
+		<!-- Optional -->
+		<Authors>Marius</Authors>
+		<PackageProjectUrl>https://github.com/CryptoMarius/CryptoScanBot</PackageProjectUrl>
 	</PropertyGroup>
 
+	
 	<PropertyGroup>
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
 	</PropertyGroup>
@@ -17,7 +33,6 @@
 	<ItemGroup>
 	  <Compile Remove="Signal\Common\ExtendedColumnDefinitionInfo.cs" />
 	</ItemGroup>
-
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.3.10" />
@@ -53,8 +68,9 @@
 	  </Compile>
 	</ItemGroup>
 
+
 	<ItemGroup>
-		<AvaloniaResourceX Include="Assets" />
+		<AvaloniaResource Include="Assets\*.*" />
 	</ItemGroup>
 
 	<ItemGroup>

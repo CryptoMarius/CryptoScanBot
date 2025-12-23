@@ -90,10 +90,10 @@
 
 
   <ItemGroup>
-	  <PackageReference Include="Avalonia" Version="11.3.9" />
-	  <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
-	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
-	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.9" />
+	  <PackageReference Include="Avalonia" Version="11.3.10" />
+	  <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
+	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
+	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	  <PackageReference Include="Binance.Net" Version="11.11.0" />
     <PackageReference Include="BitMart.Net" Version="2.12.0" />

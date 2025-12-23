@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CryptoScanner.ViewModels"
+        x:Class="CryptoScanner.Views.AboutWindow"
+        x:DataType="vm:AboutViewModel"
+        Title="{Binding Title}"
+        Width="400" Height="550"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="BorderOnly">
+
+    
+    <Window.Styles>
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8"/>
+        </Style>
+        
+        <Style Selector="TextBlock.version">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+        
+        <Style Selector="TextBlock.copyright">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4"/>
+        </Style>
+    </Window.Styles>
+    
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="8">
+
+    <DockPanel>
+        <!-- OK Button at bottom -->
+        <Button DockPanel.Dock="Bottom" Content="Close" Width="100" Height="32" 
+				HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+				Margin="0,8,16,16" Command="{Binding OkayCommand}" IsDefault="True"/>
+        
+        <!-- Main content -->
+        <StackPanel Margin="20">
+            
+            <!-- Logo -->
+            <Image Source="/Assets/AppIcon.ico" Width="80" Height="80" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+            
+            <!-- App Name -->
+            <TextBlock Text="CryptoScanBot" Classes="title"/>
+            
+            <!-- Version -->
+            <TextBlock Text="{Binding Version}" Classes="version"/>
+            
+            <!-- Copyright -->
+            <TextBlock Text="{Binding Copyright}" Classes="copyright"/>
+            
+            <!-- Author -->
+            <TextBlock Text="{Binding Author}" Classes="copyright" Margin="0,0,0,16"/>
+            
+            <!-- Supported Exchanges Label -->
+            <TextBlock Text="Supported Exchanges:" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,4"/>
+            
+            <!-- Exchanges ListBox -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                        BorderThickness="1" CornerRadius="4" Height="200">
+                <ListBox ItemsSource="{Binding Exchanges}" Background="Transparent" BorderThickness="0">
+                    <ListBox.Styles>
+                        <!-- Reduce item spacing -->
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="4,2"/>
+                            <Setter Property="MinHeight" Value="0"/>
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="11"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+            
+        </StackPanel>
+    </DockPanel>
+    </Border>
+</Window>
