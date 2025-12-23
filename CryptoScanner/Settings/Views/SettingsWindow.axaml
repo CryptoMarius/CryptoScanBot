@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+        xmlns:settings="using:CryptoScanner.Settings.Views"
+        x:Class="CryptoScanner.Settings.Views.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="{Binding Title}"
+        Width="300" Height="800"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="BorderOnly">
+
+   
+    <!-- Border around entire content -->
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="8">
+
+    <DockPanel>
+
+		<!-- Main content -->
+        <StackPanel Margin="10">
+            
+        <!-- RSI -->
+        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters">
+            <settings:RsiView DataContext="{Binding RsiViewModel}" />
+        </HeaderedContentControl>  
+        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters 2">
+            <settings:RsiView DataContext="{Binding RsiViewModel}" />
+        </HeaderedContentControl>  
+        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters 3">
+            <settings:RsiView DataContext="{Binding RsiViewModel}" />
+        </HeaderedContentControl>  
+                                    
+		<StackPanel Orientation="Horizontal" Spacing="10">
+			<Button Content="Cancel" Width="100" Height="32" HorizontalContentAlignment="Center" Command="{Binding CancelCommand}"/>
+			<Button Content="Save" Width="100" Height="32" HorizontalContentAlignment="Center" Command="{Binding OkayCommand}"/>
+		</StackPanel>
+            
+        </StackPanel>
+    </DockPanel>
+    </Border>
+</Window>
