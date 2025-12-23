@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
@@ -74,28 +75,31 @@ public partial class App : Application
             appVersion = appVersion[0..^2];
         GlobalData.AppVersion = appVersion;
 
-        // Laad alle data
-        GlobalData.LoadSettings();
-        ScannerLog.InitializeLogging();
-        CryptoDatabase.SetDatabaseDefaults();
-        GlobalData.LoadExchanges();
-        GlobalData.LoadIntervals();
-        ApplicationParams.InitApplicationOptions();
-        GlobalData.InitializeExchange();
-        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
+        if (!Design.IsDesignMode)
+        {
+            // Laad alle data
+            GlobalData.LoadSettings();
+            ScannerLog.InitializeLogging();
+            CryptoDatabase.SetDatabaseDefaults();
+            GlobalData.LoadExchanges();
+            GlobalData.LoadIntervals();
+            ApplicationParams.InitApplicationOptions();
+            GlobalData.InitializeExchange();
+            GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
 
-        GlobalData.LoadSymbols();
-        GlobalData.LoadSignals();
+            GlobalData.LoadSymbols();
+            GlobalData.LoadSignals();
 
-        ApplySettings();
+            ApplySettings();
 
-        //TradeTools.LoadAssets();
-        //TradeTools.LoadOpenPositions();
-        //TradeTools.LoadClosedPositions();
-        //PositionsHaveChangedEvent("");
+            //TradeTools.LoadAssets();
+            //TradeTools.LoadOpenPositions();
+            //TradeTools.LoadClosedPositions();
+            //PositionsHaveChangedEvent("");
 
-        ScannerSession.Start(0);
-        //LinkTools.InitializeTradingView();
+            ScannerSession.Start(0);
+            //LinkTools.InitializeTradingView();
+        }
 
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
     }

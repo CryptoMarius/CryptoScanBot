@@ -1,4 +1,5 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Controls;
+using Avalonia.Threading;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
@@ -764,6 +765,11 @@ public static class GlobalData
 
     public static string GetBaseDir()
     {
+        if (Design.IsDesignMode)
+        {
+            ApplicationParams.InitApplicationOptions();
+            AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
+        }
         if (string.IsNullOrEmpty(AppDataFolder))
             throw new InvalidOperationException("AppDataFolder not set");
         return AppDataFolder;

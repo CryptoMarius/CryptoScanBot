@@ -1,4 +1,6 @@
-﻿using CommandLine;
+﻿using Avalonia.Controls;
+
+using CommandLine;
 
 namespace CryptoScanner.Core.Core;
 
@@ -17,12 +19,26 @@ public class ApplicationParams
 
     public static ApplicationParams? Options { get; set; }
 
+
+
     public static void InitApplicationOptions()
     {
         if (Options == null)
         {
-            string[] args = Environment.GetCommandLineArgs();
-            Options = Parser.Default.ParseArguments<ApplicationParams>(args).Value;
+            if (Design.IsDesignMode)
+            {
+                Options = new()
+                {
+                    ExchangeName = "Binance Futures",
+                    AppDataFolder = "CryptoScanBot\\Design"
+                };
+            }
+            else
+            {
+                string[] args = Environment.GetCommandLineArgs();
+                Options = Parser.Default.ParseArguments<ApplicationParams>(args).Value;
+            }
+            System.Diagnostics.Debug.WriteLine($"InitApplicationOptions() {Options.ExchangeName} {Options.AppDataFolder}");
         }
     }
 

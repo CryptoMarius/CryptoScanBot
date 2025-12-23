@@ -2,11 +2,6 @@
 
 namespace CryptoScanner.Core.Settings;
 
-//public interface ISettings 
-//{
-//    public SettingsGeneral General { get; set; }
-//}
-
 [Serializable]
 public class SettingsBasic //: ISettings
 {
