@@ -24,9 +24,4 @@ public class SignalStatusColorConverter : ColorConverter, IValueConverter
         return GetBrushResource("PriceNeutralBrush");
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-    {
-        // ConvertBack not needed for OneWay binding
-        throw new NotImplementedException();
-    }
 }
