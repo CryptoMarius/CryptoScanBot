@@ -3,7 +3,7 @@
         Title="CryptoScanBot" Width="1000" Height="800" FontSize="10"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="PreferSystemChrome"
-        ExtendClientAreaTitleBarHeightHint="32"
+        ExtendClientAreaTitleBarHeightHint="-1"
         xmlns:log="using:CryptoScanner.Log.Views"
         xmlns:browser="using:CryptoScanner.Browser.Views"
         xmlns:symbol="using:CryptoScanner.Symbol.Views"

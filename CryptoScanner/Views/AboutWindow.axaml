@@ -4,12 +4,11 @@
         x:Class="CryptoScanner.Views.AboutWindow"
         x:DataType="vm:AboutViewModel"
         Title="{Binding Title}"
-        Width="400" Height="550"
+        Width="400" Height="600"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         SystemDecorations="BorderOnly">
 
-    
     <Window.Styles>
         <Style Selector="TextBlock.title">
             <Setter Property="FontSize" Value="18"/>
@@ -41,7 +40,7 @@
 				Margin="0,8,16,16" Command="{Binding OkayCommand}" IsDefault="True"/>
         
         <!-- Main content -->
-        <StackPanel Margin="20">
+        <StackPanel Margin="10">
             
             <!-- Logo -->
             <Image Source="/Assets/AppIcon.ico" Width="80" Height="80" HorizontalAlignment="Center" Margin="0,20,0,0"/>
@@ -63,7 +62,7 @@
             
             <!-- Exchanges ListBox -->
             <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                        BorderThickness="1" CornerRadius="4" Height="200">
+                        BorderThickness="1" CornerRadius="4" Height="250">
                 <ListBox ItemsSource="{Binding Exchanges}" Background="Transparent" BorderThickness="0">
                     <ListBox.Styles>
                         <!-- Reduce item spacing -->

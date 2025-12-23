@@ -1,70 +1,8 @@
 ﻿using CryptoScanner.Signal.Model;
 
 using System.Collections;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.ComponentModel;
 
 namespace CryptoScanner.Signal.Common;
-
-public class ObservableRangeCollection<T> : ObservableCollection<T>
-{
-    public void AddRange(IEnumerable<T> items)
-    {
-        foreach (var item in items)
-            Items.Add(item);
-
-        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-    }
-
-    public void Replace(IEnumerable<T> items)
-    {
-        Items.Clear();
-        AddRange(items);
-    }
-
-
-    public void AddItem(T a, IComparer comparer, ListSortDirection sortDirection)
-    {
-        if (Items.Count == 0 || comparer == null)
-        {
-            Items.Add(a);
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, a, Items.Count - 1));
-            return;
-        }
-
-        // Binary search voor insert positie
-        int index = FindInsertPosition(a, comparer, sortDirection);
-
-        Items.Insert(index, a);
-        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, a, index));
-    }
-
-    private int FindInsertPosition(T item, IComparer comparer, ListSortDirection sortDirection)
-    {
-        int left = 0;
-        int right = Items.Count;
-
-        while (left < right)
-        {
-            int mid = (left + right) / 2;
-            int compare = comparer.Compare(Items[mid], item);
-
-            // Reverse als descending
-            if (sortDirection == ListSortDirection.Descending)
-                compare = -compare;
-
-            if (compare < 0)
-                left = mid + 1;
-            else
-                right = mid;
-        }
-
-        return left;
-    }
-
-
-}
 
 public enum GridSortDirection
 {
@@ -97,16 +35,16 @@ public enum ColumnEnum
     AvgBB,
     Rsi,
     Lux5m,
-//    MacdValue,
-//    MacdSignal,
-//    MacdHistogram,
-//    Stoch,
-//    Signal,
-//    Sma200,
-//    Sma50,
-//    Sma20,
-//    PSar,
-//    FundingRate,
+    MacdValue,
+    MacdSignal,
+    MacdHistogram,
+    Stoch,
+    Signal,
+    Sma200,
+    Sma50,
+    Sma20,
+    PSar,
+    // FundingRate, only for trading futures
 
     Trend15m,
     Trend30m,
@@ -120,12 +58,12 @@ public enum ColumnEnum
     Barometer4h,
     Barometer1d,
 
-//    MinimumEntry,
-//    PriceMinPerc,
-//    PriceMaxPerc,
-//#if DEBUG
-//    SignalStatus,
-//#endif
+    MinimumEntry,
+    PriceMinPerc,
+    PriceMaxPerc,
+    SignalStatus,
+
+    // BBMA properties, but the strategy isn't working properly yet
 //#if StrategyBbma
 //        // Debug
 //        Wma05Low,
@@ -173,6 +111,16 @@ public class SignalColumnComparer : IComparer
                     ColumnEnum.MoveXDaysEffective => ObjectCompare.Compare(a.SignalObject.LastXDaysEffective, b.SignalObject.LastXDaysEffective),
                     ColumnEnum.Lux5m => ObjectCompare.Compare(a.SignalObject.LuxIndicator5m, b.SignalObject.LuxIndicator5m),
 
+                    ColumnEnum.MacdValue => ObjectCompare.Compare(a.SignalObject.MacdValue, b.SignalObject.MacdValue),
+                    ColumnEnum.MacdSignal => ObjectCompare.Compare(a.SignalObject.MacdSignal, b.SignalObject.MacdSignal),
+                    ColumnEnum.MacdHistogram => ObjectCompare.Compare(a.SignalObject.MacdHistogram, b.SignalObject.MacdHistogram),
+                    ColumnEnum.Stoch => ObjectCompare.Compare(a.SignalObject.StochOscillator, b.SignalObject.StochOscillator),
+                    ColumnEnum.Signal => ObjectCompare.Compare(a.SignalObject.StochSignal, b.SignalObject.StochSignal),
+                    ColumnEnum.Sma200 => ObjectCompare.Compare(a.SignalObject.Sma200, b.SignalObject.Sma200),
+                    ColumnEnum.Sma50 => ObjectCompare.Compare(a.SignalObject.Sma50, b.SignalObject.Sma50),
+                    ColumnEnum.Sma20 => ObjectCompare.Compare(a.SignalObject.Sma20, b.SignalObject.Sma20),
+                    ColumnEnum.PSar => ObjectCompare.Compare(a.SignalObject.PSar, b.SignalObject.PSar),
+
                     ColumnEnum.Rsi => ObjectCompare.Compare(a.SignalObject.Rsi, b.SignalObject.Rsi),
                     ColumnEnum.BB => ObjectCompare.Compare(a.SignalObject.BollingerBandsPercentage, b.SignalObject.BollingerBandsPercentage),
                     ColumnEnum.BbLower => ObjectCompare.Compare(a.SignalObject.BollingerBandsLowerBand, b.SignalObject.BollingerBandsLowerBand),
@@ -190,7 +138,13 @@ public class SignalColumnComparer : IComparer
                     ColumnEnum.Barometer1h => ObjectCompare.Compare(a.SignalObject.Barometer1h, b.SignalObject.Barometer1h),
                     ColumnEnum.Barometer4h => ObjectCompare.Compare(a.SignalObject.Barometer4h, b.SignalObject.Barometer4h),
                     ColumnEnum.Barometer1d => ObjectCompare.Compare(a.SignalObject.Barometer1d, b.SignalObject.Barometer1d),
-                    // todo,, the rest of the Columns (lots....)
+
+                    ColumnEnum.MinimumEntry => ObjectCompare.Compare(a.SignalObject.MinEntry, b.SignalObject.MinEntry),
+
+                    ColumnEnum.PriceMinPerc => ObjectCompare.Compare(a.SignalObject.PriceMinPerc, b.SignalObject.PriceMinPerc),
+                    ColumnEnum.PriceMaxPerc => ObjectCompare.Compare(a.SignalObject.PriceMaxPerc, b.SignalObject.PriceMaxPerc),
+                    ColumnEnum.SignalStatus => ObjectCompare.Compare(a.SignalObject.SignalStatus, b.SignalObject.SignalStatus),
+
                     _ => 0
                 };
 

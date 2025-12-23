@@ -37,6 +37,16 @@ namespace CryptoScanner.Signal.Model
         public double? Rsi { get => SignalObject.Rsi; set { } }
         public int LuxIndicator5m { get => SignalObject.LuxIndicator5m; set { } }
 
+        public double? MacdValue { get => SignalObject.MacdValue; set { } }
+        public double? MacdSignal { get => SignalObject.MacdSignal; set { } }
+        public double? MacdHistogram { get => SignalObject.MacdHistogram; set { } }
+        public double? StochOscillator { get => SignalObject.StochOscillator; set { } }
+        public double? StochSignal { get => SignalObject.StochSignal; set { } }
+        public double? Sma200 { get => SignalObject.Sma200; set { } }
+        public double? Sma50 { get => SignalObject.Sma50; set { } }
+        public double? Sma20 { get => SignalObject.Sma20; set { } }
+        public double? PSar { get => SignalObject.PSar; set { } }
+
         public CryptoTrendIndicator TfTrend { get => SignalObject.TrendInterval; set { } }
         public CryptoTrendIndicator? Trend15m { get => SignalObject.Trend15m; set { } }
         public CryptoTrendIndicator? Trend30m { get => SignalObject.Trend30m; set { } }
@@ -49,6 +59,11 @@ namespace CryptoScanner.Signal.Model
         public decimal? Barometer1h { get => SignalObject.Barometer1h; set { } }
         public decimal? Barometer4h { get => SignalObject.Barometer4h; set { } }
         public decimal? Barometer1d { get => SignalObject.Barometer1d; set { } }
+
+        public decimal MinEntry { get => SignalObject.MinEntry; set { } }
+        public double PriceMinPerc { get => SignalObject.PriceMinPerc; set { } }
+        public double PriceMaxPerc{ get => SignalObject.PriceMaxPerc; set { } }
+        public CryptoSignalStatus SignalStatus{ get => SignalObject.SignalStatus; set { } }
 
 
         public event PropertyChangedEventHandler? PropertyChanged;

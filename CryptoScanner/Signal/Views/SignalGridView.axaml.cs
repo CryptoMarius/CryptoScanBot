@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
+using CryptoScanner.Model;
 using CryptoScanner.Signal.Common;
 using CryptoScanner.Signal.Model;
 using CryptoScanner.Signal.ViewModels;

@@ -8,7 +8,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
-using CryptoScanner.Signal.Common;
+using CryptoScanner.Model;
 using CryptoScanner.Signal.Model;
 
 
