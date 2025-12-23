@@ -67,7 +67,8 @@ public partial class DashBoardViewModel : ObservableObject
     private decimal _barometer1d = 0;
 
     [ObservableProperty]
-    private string _barometerTime = "";
+    private string _barometerTime = string.Empty;
+    private string _barometerCalculated = string.Empty;
 
     [ObservableProperty]
     private string _applicationStatus = "";
@@ -208,7 +209,7 @@ public partial class DashBoardViewModel : ObservableObject
         Intervals = new ObservableCollection<string>(intervals);
         SelectedInterval = intervals[0];
 
-        BarometerTime = DateTime.Now.ToString("HH:mm");
+        BarometerTime = _barometerCalculated; 
     }
 
     partial void OnSelectedQuoteChanged(string? value)
@@ -233,8 +234,8 @@ public partial class DashBoardViewModel : ObservableObject
             {
                 if (CalculateBarometer())
                 {
+                    BarometerTime = _barometerCalculated;
                     BarometerLastMinute = DateTime.Now.Minute;
-                    BarometerTime = DateTime.Now.ToString("HH:mm");
                 }
             }
         }
@@ -521,7 +522,7 @@ public partial class DashBoardViewModel : ObservableObject
             if (symbolPeriod.CandleList.Values.Count > 0)
             {
                 CryptoCandle candle = symbolPeriod.CandleList.Values.Last();
-                BarometerTime = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
+                _barometerCalculated = CandleTools.GetUnixDate((long)candle.OpenTime + 60).ToLocalTime().ToString("HH:mm");
             }
 
             GC.Collect();
