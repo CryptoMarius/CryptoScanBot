@@ -28,9 +28,9 @@ public partial class App : Application
     public static IServiceProvider Services { get; private set; } = null!;
 
     /// <summary>
-    /// Singleton instance of GridStateService available throughout the application
+    /// Singleton instance of ApplicationStateService available throughout the application
     /// </summary>
-    public static GridStateService GridStateService { get; private set; } = null!;
+    public static ApplicationStateService ApplicationStateService { get; private set; } = null!;
 
     /// <summary>
     /// Queued text for the Log tab
@@ -183,8 +183,8 @@ public partial class App : Application
         MyServices.ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
-        // Initialize the GridStateService (loads settings from disk into memory)
-        GridStateService = new GridStateService();
+        // Initialize the ApplicationStateService (loads settings from disk into memory)
+        ApplicationStateService = new ApplicationStateService();
 
         // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
         InitializeGlobalData();
@@ -212,7 +212,7 @@ public partial class App : Application
         await ScannerSession.StopAsync();
         await DataStore.SaveCandlesAsync();
         // Ensure all grid states are written to disk before exit
-        GridStateService.FlushToDisk();
+        ApplicationStateService.FlushToDisk();
 
         // Dispose hidden browser
         //var hiddenBrowser = Services.GetService<HiddenBrowserService>();

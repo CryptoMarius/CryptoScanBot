@@ -49,10 +49,10 @@ public partial class MainWindow : Window
         }
 
         // Restore window position, size, state and splitter
-        App.GridStateService.RestoreWindowState("MainWindow", this);
+        App.ApplicationStateService.RestoreWindowState("MainWindow", this);
 
         // Restore splitter position
-        var position = App.GridStateService.GetSplitterPosition("MainWindow", 300);
+        var position = App.ApplicationStateService.GetSplitterPosition("MainWindow", 300);
         _mainGrid.ColumnDefinitions[0].Width = new GridLength(position);
 
         // Start TradingView service
@@ -74,17 +74,17 @@ public partial class MainWindow : Window
     {
         // Save splitter position
         var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        App.GridStateService.SaveSplitterPosition("MainWindow", position);
+        App.ApplicationStateService.SaveSplitterPosition("MainWindow", position);
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         // Save splitter position
         var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        App.GridStateService.SaveSplitterPosition("MainWindow", position);
+        App.ApplicationStateService.SaveSplitterPosition("MainWindow", position);
 
         // Save window state
-        App.GridStateService.SaveWindowState("MainWindow", this);
+        App.ApplicationStateService.SaveWindowState("MainWindow", this);
     }
 
 }

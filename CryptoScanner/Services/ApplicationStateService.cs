@@ -27,15 +27,25 @@ public class WindowState
     public double Y { get; set; }
     public double Width { get; set; }
     public double Height { get; set; }
-    public string State { get; set; } = "";  // "Normal", "Minimized", "Maximized", "FullScreen", empty= not initialized
+    public string State { get; set; } = string.Empty;  // "Normal", "Minimized", "Maximized", "FullScreen", empty= not initialized
 }
 
-public class AllGridStates
+
+public class BarometerState
 {
-    // todo: Window state, Size, Position, Monitor etc.
+    public string Quote { get; set; } = "USDT";
+    public string Interval { get; set; } = "1H";
+}
+
+public class ApplicationState
+{
+    // Last selected Barometer settings
+    private BarometerState _BarometerState = new();
 
     // Splitter position MainWindow (Size left panel)
     public double MainWindowSplitterPosition { get; set; } = 300;
+
+    // Window state, Size, Position, Monitor etc.
     public WindowState MainWindow { get; set; } = new();
 
     public GridState SignalGrid { get; set; } = new();
@@ -44,26 +54,27 @@ public class AllGridStates
     //public GridState OrderGrid { get; set; } = new();
     //public GridState HistoryGrid { get; set; } = new();
 
-    public AllGridStates()
+    public ApplicationState()
     {
         // Default sort settings
         SignalGrid.SortColumn = "Date"; // = SortMemberPath
         SignalGrid.SortDirection = ListSortDirection.Descending;
 
+        // Default sort settings
         SymbolGrid.SortColumn = "Symbol"; // = SortMemberPath
         SymbolGrid.SortDirection = ListSortDirection.Ascending;
     }
 }
 
-public class GridStateService
+public class ApplicationStateService
 {
-    private AllGridStates _states;
+    private ApplicationState _states;
     private readonly string _filePath;
     private readonly Lock _lock = new();
     private readonly IPlatformService? _platformService;
     private readonly IJsonSerializerService? _jsonService;
 
-    public GridStateService()
+    public ApplicationStateService()
     {
         _platformService = App.GetService<IPlatformService>()
             ?? throw new InvalidOperationException("IPlatformService not registered");
@@ -164,7 +175,7 @@ public class GridStateService
     {
         lock (_lock)
         {
-            _states = new AllGridStates();
+            _states = new ApplicationState();
 
             if (File.Exists(_filePath))
             {
@@ -230,25 +241,25 @@ public class GridStateService
         }
     }
 
-    private AllGridStates LoadFromFile()
+    private ApplicationState LoadFromFile()
     {
         if (!File.Exists(_filePath))
-            return new AllGridStates();
+            return new ApplicationState();
 
         try
         {
             var json = File.ReadAllText(_filePath);
-            return JsonSerializer.Deserialize<AllGridStates>(json) ?? new AllGridStates();
+            return JsonSerializer.Deserialize<ApplicationState>(json) ?? new ApplicationState();
         }
         catch (Exception ex)
         {
             // Log error but don't throw - return empty state instead
             System.Diagnostics.Debug.WriteLine($"Failed to load grid states: {ex.Message}");
-            return new AllGridStates();
+            return new ApplicationState();
         }
     }
 
-    private static GridState? GetGridStateProperty(AllGridStates states, string gridName)
+    private static GridState? GetGridStateProperty(ApplicationState states, string gridName)
     {
         // AI introduced names, a better solution would be enumerations, but voila..
         return gridName switch
