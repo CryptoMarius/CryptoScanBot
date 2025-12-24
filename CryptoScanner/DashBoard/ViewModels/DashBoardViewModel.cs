@@ -126,7 +126,6 @@ public partial class DashBoardViewModel : ObservableObject
     [ObservableProperty]
     private int _scannerSignalCount = 0;
 
-
     private readonly ITradingViewService _tradingViewService;
 
     public DashBoardViewModel(ITradingViewService tradingViewService)
@@ -157,6 +156,15 @@ public partial class DashBoardViewModel : ObservableObject
         _barometerTimer.Start();
 
         StatusesHaveChangedEvent("");
+    }
+
+    private void SelectedQuoteChanged()
+    {
+        //App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
+    }
+    private void SelectedIntervalChanged()
+    {
+        //App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
     private void StatusesHaveChangedEvent(string text)

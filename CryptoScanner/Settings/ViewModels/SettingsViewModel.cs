@@ -1,69 +1,143 @@
+using Avalonia.Controls;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 
 using System.Collections.ObjectModel;
-using System.Reflection;
 
 namespace CryptoScanner.Settings.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _title = $"About {Constants.AppName}";
-
-    [ObservableProperty]
-    private string _version = $"Version {GlobalData.AppVersion}";
-
-    [ObservableProperty]
-    private string _copyright = $"{Constants.AppName} © {DateTime.Now.Year}";
-
-    [ObservableProperty]
-    private string _author = "Marius";
-
-    [ObservableProperty]
     private ObservableCollection<string> _exchanges = [];
+
+    [ObservableProperty]
+    private ExchangeViewModel _exchangeViewModel;
+    [ObservableProperty]
+    private CommonViewModel _commonViewModel;
 
     [ObservableProperty]
     private RsiViewModel _rsiViewModel;
 
+    [ObservableProperty]
+    private StochViewModel _stochViewModel;
+
+    [ObservableProperty]
+    private BollingerBandViewModel _bollingerBandViewModel;
+
+    [ObservableProperty]
+    private TrendViewModel _primaryTrend;
+
+    [ObservableProperty]
+    private TrendViewModel _secondaryTrend;
+
+    [ObservableProperty]
+    private BlackAndWhiteListViewModel _blackListLong;
+    [ObservableProperty]
+    private BlackAndWhiteListViewModel _blackListShort;
+    [ObservableProperty]
+    private BlackAndWhiteListViewModel _whiteListLong;
+    [ObservableProperty]
+    private BlackAndWhiteListViewModel _whiteListShort;
+
+    [ObservableProperty]
+    private QuotesViewModel _quotesViewModel;
+
+    [ObservableProperty]
+    private StrategyViewModel _strategyViewModel;
+
+    [ObservableProperty]
+    private IntervalsViewModel _intervalsViewModel;
+    
+
+
     public SettingsViewModel()
     {
         // Initialize child view models
-        _rsiViewModel = new RsiViewModel();
+        _exchangeViewModel = new();
+        _commonViewModel = new();
+        _rsiViewModel = new();
+        _stochViewModel = new();
+        _bollingerBandViewModel = new();
+
+        _primaryTrend = new();
+        _secondaryTrend = new();
+
+        _blackListLong = new();
+        _blackListShort = new();
+        _whiteListLong = new();
+        _whiteListShort = new();
+
+        _quotesViewModel = new();
+        _strategyViewModel = new();
+        _intervalsViewModel = new();
+
+        LoadConfig();
     }
 
-    //private void LoadCopyright()
-    //{
-    //    // Get copyright from assembly
-    //    var assembly = Assembly.GetExecutingAssembly();
-    //    var copyrightAttr = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>();
-    //    Copyright = copyrightAttr?.Copyright ?? $"{Constants.AppName} © {DateTime.Now.Year}";
-    //}
 
-    //private void LoadExchanges()
-    //{
-    //    foreach (var exchange in GlobalData.ExchangeListName.Keys.OrderBy(k => k))
-    //    {
-    //        Exchanges.Add($"-{exchange}");
-    //    }
-    //}
+    private void LoadConfig()
+    {
+        ExchangeViewModel.LoadConfig(GlobalData.Settings.General);
+        CommonViewModel.LoadConfig(GlobalData.Settings.General);
+
+        RsiViewModel.LoadConfig(GlobalData.Settings.General.SettingsRsi);
+        StochViewModel.LoadConfig(GlobalData.Settings.General.SettingsStoch);
+        BollingerBandViewModel.LoadConfig(GlobalData.Settings.General.SettingsBb);
+
+        PrimaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
+        SecondaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
+
+        BlackListLong.LoadConfig(GlobalData.Settings.BlackListOversold);
+        BlackListShort.LoadConfig(GlobalData.Settings.BlackListOverbought);
+        WhiteListLong.LoadConfig(GlobalData.Settings.WhiteListOversold);
+        WhiteListShort.LoadConfig(GlobalData.Settings.WhiteListOverbought);
+
+        //QuoteViewModel.LoadConfig(
+        //StrategyViewModel.LoadConfig(
+        //_intervalViewModel
+    }
+
+    private void SaveConfig()
+    {
+        ExchangeViewModel.SaveConfig(GlobalData.Settings.General);
+        CommonViewModel.SaveConfig(GlobalData.Settings.General);
+
+        RsiViewModel.SaveConfig(GlobalData.Settings.General.SettingsRsi);
+        StochViewModel.SaveConfig(GlobalData.Settings.General.SettingsStoch);
+        BollingerBandViewModel.SaveConfig(GlobalData.Settings.General.SettingsBb);
+
+        PrimaryTrend.SaveConfig(GlobalData.Settings.Trend.Secondary);
+        SecondaryTrend.SaveConfig(GlobalData.Settings.Trend.Secondary);
+
+        BlackListLong.SaveConfig(GlobalData.Settings.BlackListOversold);
+        BlackListShort.SaveConfig(GlobalData.Settings.BlackListOverbought);
+        WhiteListLong.SaveConfig(GlobalData.Settings.WhiteListOversold);
+        WhiteListShort.SaveConfig(GlobalData.Settings.WhiteListOverbought);
+
+        //QuoteViewModel.SaveConfig(
+        //StrategyViewModel.SaveConfig(
+        //_intervalViewModel
+    }
+
+
+    // todo: Reset?
+    // todo: Test Speech
+    // todo: Datafolder
 
     [RelayCommand]
-    private void Okay()
+    private void Okay(Window dialogWindow)
     {
-        // TODO: Save settings
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        SaveConfig();
+        dialogWindow.Close(true);
     }
 
     [RelayCommand]
-    private void Cancel()
+    private static void Cancel(Window dialogWindow)
     {
-        // TODO: Revert changes if needed
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        dialogWindow.Close(false);
     }
-
-    public event EventHandler? CloseRequested;
 }

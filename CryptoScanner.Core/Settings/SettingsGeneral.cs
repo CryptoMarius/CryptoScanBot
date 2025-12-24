@@ -1,16 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 
-using Dapper.Contrib.Extensions;
-
-using System.Text.Json.Serialization;
-
 namespace CryptoScanner.Core.Settings;
-
-public enum CryptoDoubleClickAction
-{
-    ActivateTradingApp,
-    ActivateChartForm,
-}
 
 [Serializable]
 /// Settings Bollingerbands indicator
@@ -82,20 +72,26 @@ public class SettingsGeneral
     public string ExchangeName { get; set; } = "Bybit Spot";
     public string ActivateExchangeName { get; set; } = "";
 
+    // will be replaced by Theme
     public bool BlackTheming { get; set; } = false;
+    public string Theme { get; set; } = string.Empty;
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
     public CryptoDoubleClickAction DoubleClickAction { get; set; } = CryptoDoubleClickAction.ActivateTradingApp;
 
+    // Barometer goes into ApplicationState
+    // Need two other states for sound and signal
     public bool SoundTradeNotification { get; set; }
     public string SelectedBarometerQuote { get; set; } = "USDT";
     public string SelectedBarometerInterval { get; set; } = "1H";
 
+    // Avalinia: will not be supported
     public string FontNameNew { get; set; } = "Segoe UI";
     public float FontSizeNew { get; set; } = 9f;
 
     public int GetCandleInterval { get; set; } = 60;
 
+    // Wil not be supported?
     public bool HideSelectedRow { get; set; } = false;
     public bool ShowInvalidSignals { get; set; } = false;
     public bool HideSymbolsOnTheLeft { get; set; } = false;

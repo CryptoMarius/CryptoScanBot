@@ -57,6 +57,15 @@
 	  <Compile Update="MainForm\Views\MainWindow.axaml.cs">
 	    <DependentUpon>MainWindow.axaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Settings\Views\ExchangeView.axaml.cs">
+	    <DependentUpon>ExchangeView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\QuotesView.axaml.cs">
+	    <DependentUpon>QuotesView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyView.axaml.cs">
+	    <DependentUpon>StrategyView.axaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Settings\Views\SettingsWindow.axaml.cs">
 	    <DependentUpon>SettingsWindow.axaml</DependentUpon>
 	  </Compile>
@@ -78,6 +87,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Helpers\" />
+	  <Folder Include="Settings\ViewModels\New folder\" />
 	</ItemGroup>
 
 	<PropertyGroup>

@@ -4,37 +4,189 @@
         xmlns:settings="using:CryptoScanner.Settings.Views"
         x:Class="CryptoScanner.Settings.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
-        Title="{Binding Title}"
-        Width="300" Height="800"
-        WindowStartupLocation="CenterOwner"
-        SystemDecorations="BorderOnly">
+        Title="Scanner configuration"
+        Width="1000" Height="800"
+        WindowStartupLocation="CenterOwner">
 
-   
     <!-- Border around entire content -->
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="8">
 
-    <DockPanel>
+      <Grid RowDefinitions="*,50">
+            <DockPanel Grid.Row="0" >
 
-		<!-- Main content -->
-        <StackPanel Margin="10">
+			    <TabControl Grid.Row="0" Margin="0" >
+                    <!-- Exchange -->
+				    <TabItem Header="Exchange" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" >
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                <HeaderedContentControl Classes="groupbox" Header="Exchange parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:ExchangeView DataContext="{Binding ExchangeViewModel}" />
+                                </HeaderedContentControl>
+                                <!-- Force new line -->
+                                <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
+
+                                <HeaderedContentControl Classes="groupbox" Header="Common parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:CommonView DataContext="{Binding CommonViewModel}" />
+                                </HeaderedContentControl>
+                            </WrapPanel>
+                        </ScrollViewer>
+				    </TabItem>
+
+                    <!-- Indicators -->
+				    <TabItem Header="Indicators" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+					    <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                <HeaderedContentControl Classes="groupbox" Header="Stochastic parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:StochView DataContext="{Binding StochViewModel}" />
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Classes="groupbox" Header="RSI parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:RsiView DataContext="{Binding RsiViewModel}" />
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Classes="groupbox" Header="Bollinger bands parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:BollingerBandView DataContext="{Binding BollingerBandViewModel}" />
+                                </HeaderedContentControl>
+
+                                <!-- Force new line -->
+                                <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
+
+                                <HeaderedContentControl Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:TrendView DataContext="{Binding PrimaryTrend}" />
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                    <settings:TrendView DataContext="{Binding SecondaryTrend}" />
+                                </HeaderedContentControl>
+					        </WrapPanel>
+                        </ScrollViewer>
+				    </TabItem>
+
+                    <!-- Base coins -->
+				    <TabItem Header="Basecoins" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" >
+					        <WrapPanel>
+                                <settings:QuotesView DataContext="{Binding QuotesViewModel}" />
+					        </WrapPanel>
+                        </ScrollViewer>
+				    </TabItem>
+
+                    <!-- Strategies -->
+				    <TabItem Header="Strategies" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <TabControl Grid.Row="2" Margin="0" >
+				            <TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                            </TabItem>
+				            <TabItem Header="SBM" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="JUMP" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="FVG" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="NWE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+                        </TabControl>				
+				    </TabItem>
+
+                    <!-- Analyze -->
+				    <TabItem Header="Analyze" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <TabControl Grid.Row="2" Margin="0" >
+				            <TabItem Header="Analyze common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                    </WrapPanel>
+                                </ScrollViewer>
+				            </TabItem>
+				            <TabItem Header="Analyze long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                    </WrapPanel>
+                                </ScrollViewer>
+				            </TabItem>
+				            <TabItem Header="Analyze short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                    </WrapPanel>
+                                </ScrollViewer>
+				            </TabItem>
+                        </TabControl>				
+				    </TabItem>
+
+                    <!-- Trading -->
+				    <TabItem Header="Trading" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <TabControl Grid.Row="2" Margin="0" >
+				            <TabItem Header="Trading common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="Trading long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                    </WrapPanel>
+                                </ScrollViewer>
+				            </TabItem>
+				            <TabItem Header="Trading short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
+                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                    </WrapPanel>
+                                </ScrollViewer>
+				            </TabItem>
+				            <TabItem Header="Trading rulez" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+                        </TabControl>				
+				    </TabItem>
+
+                    <!-- API keys -->
+				    <TabItem Header="API keys" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <TabControl Grid.Row="2" Margin="0" >
+				            <TabItem Header="Telegram" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+				            <TabItem Header="Altrady" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				            </TabItem>
+                        </TabControl>				
+				    </TabItem>
+
+                    <!-- Black/White list -->
+				    <TabItem Header="Black/White list" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <TabControl Grid.Row="2" Margin="0" >
+				            <TabItem Header="Whitelist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:BlackAndWhiteListView DataContext="{Binding WhiteListLong}" />
+				            </TabItem>
+				            <TabItem Header="Whitelist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+					            <settings:BlackAndWhiteListView DataContext="{Binding WhiteListShort}" />
+				            </TabItem>
+				            <TabItem Header="Blacklist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:BlackAndWhiteListView DataContext="{Binding BlackListLong}" />
+				            </TabItem>
+				            <TabItem Header="Blacklist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:BlackAndWhiteListView DataContext="{Binding BlackListShort}" />
+				            </TabItem>
+                        </TabControl>				
+                    </TabItem>
+				    <TabItem Header="Debug" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+				    </TabItem>
+			    </TabControl>
             
-        <!-- RSI -->
-        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters">
-            <settings:RsiView DataContext="{Binding RsiViewModel}" />
-        </HeaderedContentControl>  
-        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters 2">
-            <settings:RsiView DataContext="{Binding RsiViewModel}" />
-        </HeaderedContentControl>  
-        <HeaderedContentControl Classes="groupbox" Header="RSI Parameters 3">
-            <settings:RsiView DataContext="{Binding RsiViewModel}" />
-        </HeaderedContentControl>  
-                                    
-		<StackPanel Orientation="Horizontal" Spacing="10">
-			<Button Content="Cancel" Width="100" Height="32" HorizontalContentAlignment="Center" Command="{Binding CancelCommand}"/>
-			<Button Content="Save" Width="100" Height="32" HorizontalContentAlignment="Center" Command="{Binding OkayCommand}"/>
-		</StackPanel>
-            
-        </StackPanel>
-    </DockPanel>
+
+            </DockPanel>
+
+            <!-- Buttons at bottom -->
+            <StackPanel Grid.Row="1" DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="10" Margin="10" HorizontalAlignment="Right"> 
+                <Button Content="Cancel" Width="100" Height="32" HorizontalContentAlignment="Center" 
+                        Command="{Binding CancelCommand}" CommandParameter="{Binding $parent[Window]}"/>
+                <Button Content="Save" Width="100" Height="32"  HorizontalContentAlignment="Center" 
+                        Command="{Binding OkayCommand}"  CommandParameter="{Binding $parent[Window]}"/>
+            </StackPanel>
+
+        </Grid>
     </Border>
 </Window>

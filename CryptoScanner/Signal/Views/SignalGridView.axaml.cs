@@ -158,14 +158,14 @@ public partial class SignalGridView : UserControl
 
     private void SaveGridState()
     {
-        // Access the service via App.GridStateService
-        App.GridStateService.SaveGridState("SignalGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
+        // Access the service via App.ApplicationStateService
+        App.ApplicationStateService.SaveGridState("SignalGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
     private void RestoreGridState()
     {
-        // Access the service via App.GridStateService
-        App.GridStateService.RestoreGridState("SignalGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
+        // Access the service via App.ApplicationStateService
+        App.ApplicationStateService.RestoreGridState("SignalGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
     }
 
 

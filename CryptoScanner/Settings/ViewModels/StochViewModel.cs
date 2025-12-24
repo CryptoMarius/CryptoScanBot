@@ -4,27 +4,37 @@ using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.Settings.ViewModels;
 
-public partial class RsiViewModel : ObservableObject
+public partial class StochViewModel : ObservableObject
 {
     [ObservableProperty]
     private int _length = 14;
 
     [ObservableProperty]
-    private double _oversold = 30;
+    private int _d = 3;
 
     [ObservableProperty]
-    private double _overbought = 70;
+    private int _k = 3;
 
-    internal void LoadConfig(SettingsGeneralRsi settings)
+    [ObservableProperty]
+    private double _oversold = 20;
+
+    [ObservableProperty]
+    private double _overbought = 80;
+
+    internal void LoadConfig(SettingsGeneralStoch settings)
     {
         Length = settings.Length;
+        D = settings.SmoothingD;
+        K = settings.SmoothingK;
         Oversold = settings.Oversold;
         Overbought = settings.Overbought;
     }
 
-    internal void SaveConfig(SettingsGeneralRsi settings)
+    internal void SaveConfig(SettingsGeneralStoch settings)
     {
         settings.Length = Length;
+        settings.SmoothingD = D;
+        settings.SmoothingK = K;
         settings.Oversold = Oversold;
         settings.Overbought = Overbought;
     }

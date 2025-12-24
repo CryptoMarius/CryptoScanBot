@@ -60,14 +60,14 @@ public partial class SymbolGridView : UserControl
 
     private void SaveGridState()
     {
-        // Access the service via App.GridStateService
-        App.GridStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
+        // Access the service via App.ApplicationStateService
+        App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
     private void RestoreGridState()
     {
-        // Access the service via App.GridStateService
-        App.GridStateService.RestoreGridState("SymbolGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
+        // Access the service via App.ApplicationStateService
+        App.ApplicationStateService.RestoreGridState("SymbolGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
 
         // Apply the sort to the collection
         if (!string.IsNullOrEmpty(_currentSortColumn))
