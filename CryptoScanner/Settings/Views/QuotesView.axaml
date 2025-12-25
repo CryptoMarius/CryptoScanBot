@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             xmlns:controls="using:Avalonia.Controls"
              xmlns:vm="using:CryptoScanner.Settings.ViewModels"
              x:DataType="vm:QuotesViewModel"
              x:Class="CryptoScanner.Settings.Views.QuotesView">
@@ -74,13 +75,9 @@
                                            Height="26" FontSize="12" Padding="6,2" CornerRadius="4" BorderThickness="0"
                                            HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
 
-                            <!-- Color picker button -->
-                            <Button Grid.Column="6" Content="Pick" Height="26" Width="60" Padding="8,2" FontSize="12"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                                <Button.Background>
-                                    <SolidColorBrush Color="{Binding BackgroundColor}"/>
-                                </Button.Background>
-                            </Button>
+                            <!-- BackgroundColor -->
+                            <controls:ColorPicker Grid.Column="6" Color="{Binding BackgroundColor}" 
+                                         Height="24" Width="100" HorizontalAlignment="Stretch"/>
 
                             <!-- Symbol count (right aligned) -->
                             <TextBlock Grid.Column="7" Text="{Binding SymbolCount, StringFormat='{}{0} symbols'}"

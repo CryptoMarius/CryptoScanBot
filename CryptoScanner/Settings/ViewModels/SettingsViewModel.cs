@@ -51,9 +51,13 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private IntervalsViewModel _intervalsViewModel;
+
+    [ObservableProperty]
+    private ColorAndSoundViewModel _longColorSound;
+    [ObservableProperty]
+    private ColorAndSoundViewModel _shortColorSound;
+
     
-
-
     public SettingsViewModel()
     {
         // Initialize child view models
@@ -74,6 +78,9 @@ public partial class SettingsViewModel : ObservableObject
         _quotesViewModel = new();
         _strategyViewModel = new();
         _intervalsViewModel = new();
+
+        _longColorSound = new();
+        _shortColorSound = new();
 
         LoadConfig();
     }
@@ -99,6 +106,9 @@ public partial class SettingsViewModel : ObservableObject
         //QuoteViewModel.LoadConfig(
         //StrategyViewModel.LoadConfig(
         //_intervalViewModel
+
+        LongColorSound.LoadConfig("SBM Long", GlobalData.Settings.Signal.Stobb.ColorLong, GlobalData.Settings.Signal.Stobb.SoundFileLong);
+        ShortColorSound.LoadConfig("SBM Short", GlobalData.Settings.Signal.Stobb.ColorShort, GlobalData.Settings.Signal.Stobb.SoundFileShort);
     }
 
     private void SaveConfig()
