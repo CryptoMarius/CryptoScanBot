@@ -3,7 +3,7 @@ using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Model;
 
 using System.Collections.ObjectModel;
 
@@ -11,22 +11,38 @@ namespace CryptoScanner.Settings.ViewModels;
 
 public partial class QuoteItem : ObservableObject
 {
-    [ObservableProperty] 
-    private bool isEnabled;
-    [ObservableProperty] 
+    // Remember object to write changes back
+    public CryptoQuoteData QuoteData { get; set; }
+
+    [ObservableProperty]
+    internal bool isEnabled;
+    [ObservableProperty]
     private string symbol = string.Empty;
-    [ObservableProperty] 
+    [ObservableProperty]
     private decimal minVolume;
-    [ObservableProperty] 
+    [ObservableProperty]
     private decimal minPrice;
-    [ObservableProperty] 
+    [ObservableProperty]
     private decimal amount;
-    [ObservableProperty] 
+    [ObservableProperty]
     private decimal percentage;
-    [ObservableProperty] 
+    [ObservableProperty]
     private Color backgroundColor;
-    [ObservableProperty] 
+    [ObservableProperty]
     private int symbolCount;
+
+    public QuoteItem(CryptoQuoteData quoteData)
+    {
+        QuoteData = quoteData;
+        Symbol = quoteData.Name;
+        IsEnabled = quoteData.FetchCandles;
+        MinVolume = quoteData.MinimalVolume + 100000m;
+        MinPrice = quoteData.MinimalPrice + 0.00001m;
+        Amount = quoteData.EntryAmount + 0.00145m;
+        Percentage = quoteData.EntryPercentage + 0.15m;
+        BackgroundColor = quoteData.DisplayColor;
+        SymbolCount = quoteData.SymbolList.Count;
+    }
 }
 
 public partial class QuotesViewModel : ObservableObject
@@ -34,21 +50,25 @@ public partial class QuotesViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<QuoteItem> _quotes = [];
 
-    public QuotesViewModel()
+    internal void LoadConfig(SortedList<string, CryptoQuoteData> quoteCoins)
     {
         foreach (var quote in GlobalData.Settings.QuoteCoins.Values)
         {
-            Quotes.Add(new QuoteItem { 
-                Symbol = quote.Name,
-                IsEnabled = quote.FetchCandles,
-                MinVolume = quote.MinimalVolume + 100000,
-                MinPrice = quote.MinimalPrice + 0.00001m,
-                Amount = quote.EntryAmount + 0.00145m,
-                Percentage = quote.EntryPercentage + 0.15m,
-                BackgroundColor = quote.DisplayColor,
-                SymbolCount = quote.SymbolList.Count,
-            });
+            Quotes.Add(new QuoteItem(quoteData: quote));
         }
     }
 
+    internal void SaveConfig()
+    {
+        foreach (var quote in Quotes)
+        {
+            var quoteData = quote.QuoteData;
+            quoteData.FetchCandles = quote.IsEnabled;
+            quoteData.MinimalVolume = quote.MinVolume;
+            quoteData.MinimalPrice = quote.MinPrice;
+            quoteData.EntryAmount = quote.Amount;
+            quoteData.EntryPercentage = quote.Percentage;
+            quoteData.DisplayColor = quote.BackgroundColor;
+        }
+    }
 }
