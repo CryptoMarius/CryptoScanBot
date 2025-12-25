@@ -14,7 +14,7 @@ public partial class TrendView : UserControl
         // Set DataContext if not already set by parent
         if (DataContext == null)
         {
-            DataContext = new StochViewModel();
+            DataContext = new TrendViewModel();
         }
     }
 

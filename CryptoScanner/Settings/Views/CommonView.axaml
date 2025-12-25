@@ -12,7 +12,7 @@
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Trading app:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding TradingAppList}"
                   SelectedValue="{Binding TradingApp}" SelectedValueBinding="{Binding Key}"
-                 Width="150" Height="22" MinHeight="26" 
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
                 <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
             </ComboBox>
@@ -21,7 +21,7 @@
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Double click action:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding DoubleClickActionList}" 
                   SelectedValue="{Binding DoubleClickAction}" SelectedValueBinding="{Binding Key}"
-                 Width="150" Height="22" MinHeight="26" 
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
                 <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
             </ComboBox>
@@ -49,7 +49,7 @@
         <TextBlock Grid.Row="5" Grid.Column="0" Text="Theme:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding ThemeList}" 
                   SelectedValue="{Binding Theme}" SelectedValueBinding="{Binding Key}"
-                 Width="150" Height="22" MinHeight="26" 
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
                 <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
             </ComboBox>

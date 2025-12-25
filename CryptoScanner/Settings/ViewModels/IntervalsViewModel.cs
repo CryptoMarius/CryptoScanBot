@@ -38,52 +38,43 @@ public partial class IntervalsViewModel : ObservableObject
 
     public IntervalsViewModel()
     {
-        InitializeIntervals();
     }
 
-    private void InitializeIntervals()
+
+    public void LoadConfig(List<string> intervalList)
     {
+        DayIntervals.Clear();
+        HourIntervals.Clear();
+        MinuteIntervals.Clear();
         foreach (var interval in GlobalData.IntervalListPeriod.Values)
         {
+            ObservableCollection<IntervalItem> target;
             if (interval.IntervalPeriod < CryptoIntervalPeriod.interval1h)
-                MinuteIntervals.Add(new IntervalItem(interval.Name, false));
+                target = MinuteIntervals;
             else if (interval.IntervalPeriod < CryptoIntervalPeriod.interval1d)
-                HourIntervals.Add(new IntervalItem(interval.Name, false));
+                target = HourIntervals;
             else
-                DayIntervals.Add(new IntervalItem(interval.Name, false));
+                target = DayIntervals;
+
+            var item = new IntervalItem(interval.Name, intervalList.Contains(interval.Name));
+            target.Add(item);
         }
     }
 
-    ///// <summary>
-    ///// Get all enabled interval names
-    ///// </summary>
-    //public List<string> GetEnabledIntervals()
-    //{
-    //    var enabled = new List<string>();
-        
-    //    foreach (var interval in MinuteIntervals.Where(x => x.IsEnabled))
-    //        enabled.Add(interval.Name);
-        
-    //    foreach (var interval in HourIntervals.Where(x => x.IsEnabled))
-    //        enabled.Add(interval.Name);
-        
-    //    foreach (var interval in DayIntervals.Where(x => x.IsEnabled))
-    //        enabled.Add(interval.Name);
-        
-    //    return enabled;
-    //}
+    public void SaveConfig(List<string> intervalList)
+    {
+        ObservableCollection<IntervalItem>[] source = [DayIntervals, HourIntervals, MinuteIntervals];
 
-    //public void SetEnabledIntervals(IEnumerable<string> intervalNames)
-    //{
-    //    var nameSet = new HashSet<string>(intervalNames);
-
-    //    foreach (var interval in MinuteIntervals)
-    //        interval.IsEnabled = nameSet.Contains(interval.Name);
-
-    //    foreach (var interval in HourIntervals)
-    //        interval.IsEnabled = nameSet.Contains(interval.Name);
-
-    //    foreach (var interval in DayIntervals)
-    //        interval.IsEnabled = nameSet.Contains(interval.Name);
-    //}
+        intervalList.Clear();
+        foreach (var item in source)
+        {
+            foreach (var interval in item)
+            {
+                if (interval.IsEnabled)
+                {
+                    intervalList.Add(interval.Name);
+                }
+            }
+        }
+    }
 }

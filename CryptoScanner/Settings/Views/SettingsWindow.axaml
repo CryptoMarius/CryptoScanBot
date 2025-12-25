@@ -18,47 +18,49 @@
                     <!-- Exchange -->
 				    <TabItem Header="Exchange" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" >
                         <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                <HeaderedContentControl Classes="groupbox" Header="Exchange parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                            <Grid RowDefinitions="Auto,Auto">
+                                <HeaderedContentControl Grid.Row="0" Classes="groupbox" Header="Exchange parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:ExchangeView DataContext="{Binding ExchangeViewModel}" />
                                 </HeaderedContentControl>
-                                <!-- Force new line -->
+                                <!-- Force new line 
                                 <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
+                                -->
 
-                                <HeaderedContentControl Classes="groupbox" Header="Common parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                <HeaderedContentControl Grid.Row="1" Classes="groupbox" Header="Common parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:CommonView DataContext="{Binding CommonViewModel}" />
                                 </HeaderedContentControl>
-                            </WrapPanel>
+                            </Grid>
                         </ScrollViewer>
 				    </TabItem>
 
                     <!-- Indicators -->
 				    <TabItem Header="Indicators" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 					    <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                <HeaderedContentControl Classes="groupbox" Header="Stochastic parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto">
+                                <HeaderedContentControl Grid.Row="0" Grid.Column="0" Classes="groupbox" Header="Stochastic parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:StochView DataContext="{Binding StochViewModel}" />
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Classes="groupbox" Header="RSI parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="RSI parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:RsiView DataContext="{Binding RsiViewModel}" />
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Classes="groupbox" Header="Bollinger bands parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                <HeaderedContentControl Grid.Row="0" Grid.Column="2" Classes="groupbox" Header="Bollinger bands parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:BollingerBandView DataContext="{Binding BollingerBandViewModel}" />
                                 </HeaderedContentControl>
 
-                                <!-- Force new line -->
+                                <!-- Force new line 
                                 <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
+                                -->
 
-                                <HeaderedContentControl Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                <HeaderedContentControl Grid.Row="1" Grid.Column="0" Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:TrendView DataContext="{Binding PrimaryTrend}" />
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                                <HeaderedContentControl Grid.Row="1" Grid.Column="1" Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:TrendView DataContext="{Binding SecondaryTrend}" />
                                 </HeaderedContentControl>
-					        </WrapPanel>
+					        </Grid>
                         </ScrollViewer>
 				    </TabItem>
 
@@ -75,8 +77,12 @@
 				    <TabItem Header="Strategies" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                         <TabControl Grid.Row="2" Margin="0" >
 				            <TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+					        <WrapPanel>
+                                <settings:SoundAndColorsView DataContext="{Binding StobbColorAndSound}" />
+					        </WrapPanel>
                             </TabItem>
 				            <TabItem Header="SBM" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:SoundAndColorsView DataContext="{Binding SbmColorAndSound}" />
 				            </TabItem>
 				            <TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 				            </TabItem>
@@ -103,16 +109,16 @@
 				            <TabItem Header="Analyze long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" >
                                     <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                        <settings:StrategyView DataContext="{Binding StrategySignalLongViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalSignalLongViewModel}" />
                                     </WrapPanel>
                                 </ScrollViewer>
 				            </TabItem>
 				            <TabItem Header="Analyze short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" >
                                     <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                        <settings:StrategyView DataContext="{Binding StrategySignalShortViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalSignalShortViewModel}" />
                                     </WrapPanel>
                                 </ScrollViewer>
 				            </TabItem>
@@ -127,16 +133,16 @@
 				            <TabItem Header="Trading long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" >
                                     <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                        <settings:StrategyView DataContext="{Binding StrategyTradingLongViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalTradingLongViewModel}" />
                                     </WrapPanel>
                                 </ScrollViewer>
 				            </TabItem>
 				            <TabItem Header="Trading short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" >
                                     <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalsViewModel}" />
+                                        <settings:StrategyView DataContext="{Binding StrategyTradingShortViewModel}" />
+                                        <settings:IntervalsView DataContext="{Binding IntervalTradingShortViewModel}" />
                                     </WrapPanel>
                                 </ScrollViewer>
 				            </TabItem>

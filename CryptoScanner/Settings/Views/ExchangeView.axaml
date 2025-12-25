@@ -18,7 +18,7 @@
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Active exchange:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding ExchangeList}" 
                   SelectedValue="{Binding ActiveExchange}" SelectedValueBinding="{Binding Key}"
-                 Width="150" Height="22" MinHeight="26" 
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
                 <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
             </ComboBox>
@@ -27,7 +27,7 @@
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Activate exchange:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ExchangeList}" 
                   SelectedValue="{Binding ActivateExchange}" SelectedValueBinding="{Binding Key}"
-                 Width="150" Height="22" MinHeight="26" 
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
                 <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
             </ComboBox>

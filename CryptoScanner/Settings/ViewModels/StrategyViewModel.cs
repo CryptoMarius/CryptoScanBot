@@ -1,7 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 
 using System.Collections.ObjectModel;
@@ -24,9 +22,31 @@ public partial class StrategyViewModel : ObservableObject
 
     public StrategyViewModel()
     {
+    }
+
+    public void LoadConfig(List<string> strategyList)
+    {
+        StrategyList.Clear();
         foreach (var algorithm in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
-            StrategyList.Add(new StrategyItem { Name = algorithm.Name, IsEnabled = false });
+            var item = new StrategyItem
+            {
+                Name = algorithm.Name,
+                IsEnabled = strategyList.Contains(algorithm.Name)
+            };
+            StrategyList.Add(item);
+        }
+    }
+
+    public void SaveConfig(List<string> strategyList)
+    {
+        strategyList.Clear();
+        foreach (var strategy in StrategyList)
+        {
+            if (strategy.IsEnabled)
+            {
+                strategyList.Add(strategy.Name);
+            }
         }
     }
 }
