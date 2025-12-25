@@ -592,7 +592,7 @@ public class BackTest
     //    Log.AppendLine(Outcome);
 
     //    string s = Log.ToString();
-    //    //filename = filename + @"\data\" + Exchange.Name + @"\BackTest\" + Symbol.Name + @"\"; // + interval.Name + @"\";
+    //    //filename = Path.Combine(...filename + @"\data\" + Exchange.Name + @"\BackTest\" + Symbol.Name + @"\"; // + interval.Name + @"\";
     //    baseFolder += Symbol.Name + @"\";
     //    Directory.CreateDirectory(baseFolder);
     //    File.WriteAllText(baseFolder + Symbol.Name + "-" + Interval.Name + ".txt", s);

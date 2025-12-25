@@ -18,18 +18,15 @@ public class CryptoDatabase : IDisposable
     public static void SetDatabaseDefaults()
     {
         SqlMapper.Settings.CommandTimeout = 180;
-
-        basePath = GlobalData.GetBaseDir();
         CreateDatabase();
     }
 
-
-    private static string? basePath;
     public SqliteConnection Connection { get; set; }
 
     public CryptoDatabase()
     {
-        Connection = new("Filename=" + basePath + Constants.AppName + ".db;Mode=ReadWriteCreate;"); //Pooling=True;default)
+        Connection = new("Filename=" + Path.Combine(GlobalData.GetBaseDir(), Constants.AppName + ".db;Mode=ReadWriteCreate;")); 
+        //Pooling=True;default)
     }
 
     public SqliteTransaction BeginTransaction()

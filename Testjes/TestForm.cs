@@ -461,7 +461,7 @@ public partial class TestForm : Form
 
         ////string iconPath = Path.GetDirectoryName((System.Reflection.Assembly.GetEntryAssembly().Location)); GlobalData.GetBaseDir();
         //string iconPath = @"C:\inetpub\Sites\Cryptobot\wwwroot\images\coins\";
-        ////iconPath = iconPath + @"\data\icons\";
+        ////iconPath = Path.Combine(...iconPath + @"\data\icons\";
 
         //var iconArray = System.IO.Directory.EnumerateFiles(iconPath).ToArray();
         //foreach (string file in iconArray)
@@ -2126,7 +2126,7 @@ public partial class TestForm : Form
     //    if (dateList.Any())
     //    {
     //        string downLoadFolder = GlobalData.GetBaseDir();
-    //        downLoadFolder += @"\backtest\Downloads\";
+    //        downLoadFolder += Path.Combine(.... @"\backtest\Downloads\";
     //        Directory.CreateDirectory(downLoadFolder);
 
     //        foreach (long unix in dateList.Keys)
