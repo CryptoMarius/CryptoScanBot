@@ -12,16 +12,23 @@ public partial class LogViewModel : ObservableObject
     private const int MaxLogLines = 5000;
     private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
 
+    /// <summary>
+    /// Queued text for the Log tab
+    /// LogViewModel pulls the text via a timer.
+    /// </summary>
+    public static readonly Queue<string> LogQueue = new();
 
     [ObservableProperty]
     private ObservableCollection<string> _logLines = [];
 
     [ObservableProperty]
-    private bool _autoScroll = true;
+    private bool _autoScroll = true; // does not work properly
 
     public LogViewModel()
     {
         System.Diagnostics.Debug.WriteLine("LogViewModel constructor called");
+        LogQueue.EnsureCapacity(2500);
+        GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         _updateTimer.Tick += TimerAddLogLinesTick;
         _updateTimer.Start();
@@ -33,23 +40,47 @@ public partial class LogViewModel : ObservableObject
         _updateTimer = null;
     }
 
+    private void AddTextToLogTab(string text)
+    {
+        // The queue can be overwhelmed (and there is a max array size)
+        try
+        {
+            // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
+            ScannerLog.Logger.Info(text);
+            text = text.Trim();
+
+            if (text != "")
+            {
+                if (GlobalData.BackTest)
+                    text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
+                else
+                    text = DateTime.Now.ToLocalTime() + " " + text;
+            }
+            LogQueue.Enqueue(text);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "adding " + text);
+        }
+    }
+
     private void TimerAddLogLinesTick(object? sender, EventArgs? e)
     {
         if (GlobalData.ApplicationIsClosing)
             return;
 
         // Speed up adding text
-        if (App.LogQueue.Count > 0)
+        if (LogQueue.Count > 0)
         {
-            if (Monitor.TryEnter(App.LogQueue))
+            if (Monitor.TryEnter(LogQueue))
             {
                 try
                 {
                     StringBuilder stringBuilder = new();
 
-                    while (App.LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
+                    while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
                     {
-                        string text = App.LogQueue.Dequeue();
+                        string text = LogQueue.Dequeue();
                         stringBuilder.AppendLine(text);
                         //LogLines.Add(logEntry);
                     }
@@ -62,7 +93,7 @@ public partial class LogViewModel : ObservableObject
                 }
                 finally
                 {
-                    Monitor.Exit(App.LogQueue);
+                    Monitor.Exit(LogQueue);
                 }
             }
         }
@@ -103,8 +134,8 @@ public partial class LogViewModel : ObservableObject
         while (LogLines.Count > MaxLogLines)
             LogLines.RemoveAt(0);
         
-        if (AutoScroll)
-            RequestScrollToEnd?.Invoke(this, EventArgs.Empty);
+        //if (AutoScroll)
+        //    RequestScrollToEnd?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

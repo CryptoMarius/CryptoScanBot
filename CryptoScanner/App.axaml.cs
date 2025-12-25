@@ -10,6 +10,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Sounds;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Services;
 using CryptoScanner.Views;
@@ -32,23 +33,15 @@ public partial class App : Application
     /// </summary>
     public static ApplicationStateService ApplicationStateService { get; private set; } = null!;
 
-    /// <summary>
-    /// Queued text for the Log tab
-    /// LogViewModel pulls the text via a timer.
-    /// </summary>
-    public static readonly Queue<string> LogQueue = new();
 
     //public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
 
     public override void Initialize()
     {
         System.Diagnostics.Debug.WriteLine($"App.Initialize");
-        LogQueue.EnsureCapacity(2500);
-        GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         InitializeComponent();
 
-        //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
 
         //// Events inregelen
@@ -96,6 +89,10 @@ public partial class App : Application
             //TradeTools.LoadOpenPositions();
             //TradeTools.LoadClosedPositions();
             //PositionsHaveChangedEvent("");
+
+            //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
+            GlobalData.Settings.Signal.SoundsActive = true;
+            GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
             ScannerSession.Start(0);
             //LinkTools.InitializeTradingView();
@@ -209,7 +206,8 @@ public partial class App : Application
 
     private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        await ScannerSession.StopAsync();
+        ThreadSoundPlayer.StopSoundThread();
+        await ScannerSession.StopAsync(); // Blocks..
         await DataStore.SaveCandlesAsync();
         // Ensure all grid states are written to disk before exit
         ApplicationStateService.FlushToDisk();
@@ -232,30 +230,11 @@ public partial class App : Application
         Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
     }
 
-    private void AddTextToLogTab(string text)
+    private static void PlaySound(string text, bool test)
     {
-        // The queue can be overwhelmed (and there is a max array size)
-        try
-        {
-            // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
-            ScannerLog.Logger.Info(text);
-            text = text.Trim();
-
-            if (text != "")
-            {
-                if (GlobalData.BackTest)
-                    text = GlobalData.BackTestDateTime.ToLocalTime() + " " + text;
-                else
-                    text = DateTime.Now.ToLocalTime() + " " + text;
-            }
-            LogQueue.Enqueue(text);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "adding " + text);
-        }
+        if (GlobalData.Settings.Signal.SoundsActive)
+            ThreadSoundPlayer.AddToQueue(text, test);
     }
-
 
     public static IBrush GetBrushResource(string resourceKey)
     {

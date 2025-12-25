@@ -14,7 +14,9 @@
             
             <TextBox Grid.Row="1" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True"
                     Watermark="COINUSDT Put your comments behind it if needed" CornerRadius="4"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="0" MinWidth="0" Margin="10"/>
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="0" MinWidth="0" 
+                    VerticalContentAlignment="Top" Margin="10"/>
+            
         </Grid>
 
 </UserControl>
