@@ -77,8 +77,8 @@ public class ZoneSession
     {
         // save current Session settings
         string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
-        string fileName = Path.Combine(folderName, $"session.json");
         Directory.CreateDirectory(folderName);
+        string fileName = Path.Combine(folderName, $"session.json");
         string text = JsonSerializer.Serialize(this, JsonTools.JsonSerializerIndented);
         File.WriteAllText(fileName, text);
     }

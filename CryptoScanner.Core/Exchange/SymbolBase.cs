@@ -28,10 +28,9 @@ public class SymbolBase()
         // Save for debug
         try
         {
-            string filename = GlobalData.GetBaseDir();
-            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-            Directory.CreateDirectory(filename);
-            filename += name;
+            string folderName = Path.Combine(GlobalData.GetBaseDir(), ExchangeBase.ExchangeOptions.ExchangeName);
+            Directory.CreateDirectory(folderName);
+            string filename = Path.Combine(folderName, name);
 
             string text = JsonSerializer.Serialize(exchangeInfo, JsonTools.JsonSerializerIndented);
             File.WriteAllText(filename, text);
@@ -54,10 +53,9 @@ public class SymbolBase()
         // Save for debug
         try
         {
-            string filename = GlobalData.GetBaseDir();
-            filename += $@"\{ExchangeBase.ExchangeOptions.ExchangeName}\";
-            Directory.CreateDirectory(filename);
-            filename += name;
+            string folderName = Path.Combine(GlobalData.GetBaseDir(), ExchangeBase.ExchangeOptions.ExchangeName);
+            Directory.CreateDirectory(folderName);
+            string filename = Path.Combine(folderName, name);
 
             File.WriteAllText(filename, text);
         }
