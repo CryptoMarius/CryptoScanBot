@@ -1,4 +1,4 @@
-using Avalonia.Interactivity;
+﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,7 +9,6 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Model;
-using CryptoScanner.Services;
 using CryptoScanner.Signal.Model;
 using CryptoScanner.Visualisation.ViewModels;
 using CryptoScanner.Visualisation.Views;
@@ -19,9 +18,12 @@ namespace CryptoScanner.Signal.ViewModels;
 
 public partial class SignalGridViewModel : ObservableObject
 {
-    private readonly IDialogService _dialogService;
-
     private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(1000) };
+    private Window? _owner;
+    public void SetOwner(Window owner)
+    {
+        _owner = owner;
+    }
 
     [ObservableProperty]
     private ObservableRangeCollection<SignalInfo> _signals = [];
@@ -29,9 +31,8 @@ public partial class SignalGridViewModel : ObservableObject
     // Event voor parent ViewModel
     public event EventHandler<string>? EventOpenInInternalBrowser;
 
-    public SignalGridViewModel(IDialogService dialogService)
+    public SignalGridViewModel()
     {
-        _dialogService = dialogService;
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
@@ -293,21 +294,47 @@ public partial class SignalGridViewModel : ObservableObject
         }
     }
 
+    //public static bool IsAnyModalOpened()
+    //{
+    //    return Application.Current.Windows.OfType<Window>().Any(IsModal);
+    //}
+
+    //public static bool IsModal(this Window window)
+    //{
+    //    var fieldInfo = typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic);
+    //    return fieldInfo != null && (bool)fieldInfo.GetValue(window);
+    //}
 
     [RelayCommand]
     private async Task OpenChart(object? parameter)
     {
-        if (_dialogService == null) 
+        // Implement your external program logic here
+        System.Diagnostics.Debug.WriteLine($"OpenChart");
+
+        if (parameter is not SignalInfo signal)
+            return;
+
+        var symbol = signal.SignalObject.Symbol;
+        var interval = signal.SignalObject.Interval;
+        if (symbol == null || interval == null)
             return;
 
         var vm = new VisualisationViewModel();
         //if (parameter is ValueTuple<SignalInfo, string, int> tuple)
-        //{
-        //    var (item, extraParam, number) = tuple;
-        //    vm.Initialize(item.Symbol, item.Interval); parameters?
-        //}
-        var window = new VisualisationWindow { DataContext = vm };
-        await _dialogService.ShowDialogAsync<VisualisationWindow>(window);
+        vm.SymbolSelector.SelectedBase = symbol.Base;
+        vm.SymbolSelector.SelectedQuote = symbol.Quote;
+        vm.SymbolSelector.SelectedInterval = interval.Name;
+        var window = new VisualisationWindow { 
+            DataContext = vm,
+            CanResize = true,
+            Title = "Chart form",
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+        };
+
+        // Hacky, needs work...
+        await window.ShowDialog(_owner!);
+        //await DialogService.ShowDialogAsync<VisualisationWindow>(window);
+
 
         //if (parameter is ValueTuple<SignalInfo, string, int> tuple)
         //{

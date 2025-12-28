@@ -50,6 +50,16 @@ public partial class SignalGridView : UserControl
         DataContextChanged += OnDataContextChanged;
         _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
 
+        // Kind of Hacky, needs work...
+        Loaded += (s, e) =>
+        {
+            if (DataContext is SignalGridViewModel vm)
+            {
+                var owner = TopLevel.GetTopLevel(this) as Window;
+                vm.SetOwner(owner);
+            }
+        };
+
         // Register a custom comparer for each column based on its SortMemberPath
         foreach (var column in _dataGrid.Columns)
         {
