@@ -57,7 +57,7 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
 		<PackageReference Include="OxyPlot.Core" Version="2.1.2" />
-		<PackageReference Include="OxyPlot.Avalonia" Version="2.1.0" />
+		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 	</ItemGroup>
 
 	<ItemGroup>
