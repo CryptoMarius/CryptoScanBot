@@ -64,10 +64,10 @@
 				    <TabItem Header="API keys" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                         <TabControl Grid.Row="2" Margin="0" >
 				            <TabItem Header="Telegram" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:ApiAltradyView DataContext="{Binding ApiAltradyViewModel}" />
+                                <settings:ApiTelegramView DataContext="{Binding ApiTelegramViewModel}" />
 				            </TabItem>
 				            <TabItem Header="Altrady" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:ApiTelegramView DataContext="{Binding ApiTelegramViewModel}" />
+                                <settings:ApiAltradyView DataContext="{Binding ApiAltradyViewModel}" />
 				            </TabItem>
                         </TabControl>				
 				    </TabItem>
