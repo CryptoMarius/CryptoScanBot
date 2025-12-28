@@ -32,6 +32,9 @@ public static class ThreadSoundPlayer
         }
         else
         {
+            if (!GlobalData.Settings.Options.SoundsActive)
+                return;
+
             // Ignore recently played sounds
             DateTime now = DateTime.Now;
             bool isPlayedRecently = false;

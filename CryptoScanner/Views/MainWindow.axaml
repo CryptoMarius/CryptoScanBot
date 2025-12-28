@@ -30,11 +30,11 @@
 				<Image Grid.Column="0" Source="/Assets/AppIcon.ico" Width="32" Height="32" Margin="12,0,8,0" VerticalAlignment="Center"/>
 
 				<!-- Menu -->
-				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="White" FontSize="12" >
+				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="White" FontSize="12">
 					<MenuItem Header="_File">
-						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="True"/>
-						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="True"/>
-						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="True"/>
+						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
+						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
+						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
 						<Separator/>
 						<MenuItem Header="_Settings" Command="{Binding SettingsCommand}"/>
 						<Separator/>
@@ -44,6 +44,7 @@
 						<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
 					</MenuItem>
 				</Menu>
+
 
 				<!-- Center: Title -->
 				<TextBlock Grid.Column="2"

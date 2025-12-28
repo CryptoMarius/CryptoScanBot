@@ -8,28 +8,29 @@
              x:DataType="vm:ColorAndSoundViewModel"
              x:Class="CryptoScanner.Settings.Views.ColorAndSoundView">
 
-    <Grid ColumnDefinitions="100,120,70,*,30,30" RowDefinitions="Auto" Margin="0,2">
+    <Grid ColumnDefinitions="100,120,70,*,30,30" RowDefinitions="Auto" Margin="0">
         
         <!-- Caption Label -->
-        <TextBlock Grid.Column="0" Text="{Binding Caption}" VerticalAlignment="Center" FontSize="12" Margin="0,0,12,0" />
+        <TextBlock Grid.Column="0" Text="{Binding Caption}" VerticalAlignment="Center" FontSize="12" Margin="4,0,0,0" />
 
         <!-- BackgroundColor -->
         <controls:ColorPicker Grid.Column="1" Color="{Binding SelectedColor}" Height="24" Width="100" HorizontalAlignment="Stretch"/>
 
         <!-- Sound File Label -->
-        <TextBlock Grid.Column="2" Text="Sound file:" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+        <TextBlock Grid.Column="2" Text="Sound file:" FontSize="12" VerticalAlignment="Center" />
 
         <!-- Sound File TextBox -->
-        <TextBox Grid.Column="3" Text="{Binding SoundFile, Mode=TwoWay}" Height="26"
-                 FontSize="12" Padding="6,2" CornerRadius="4" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        <TextBox Grid.Column="3" Text="{Binding SoundFile, Mode=TwoWay}" Height="24"
+                 FontSize="12" Padding="6,6" Margin="0,1" CornerRadius="4" VerticalAlignment="Center"/>
 
         <!-- Browse Sound File Button -->
-        <Button Grid.Column="4" Content="..." Click="ButtonSelectSound_Click" Height="26" Width="26" Padding="0"
-                FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0" ToolTip.Tip="Browse for sound file"/>
+        <Button Grid.Column="4" Content="..." Click="ButtonSelectSound_Click" Height="29" Width="26" Padding="0"
+                FontSize="12" Margin="3,0" VerticalAlignment="Center" ToolTip.Tip="Browse for sound file"/>
 
         <!-- Play Sound Button -->
         <Button Grid.Column="5" Content="▶" Command="{Binding PlaySoundCommand}" Height="26" Width="26"
-                Padding="0" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" ToolTip.Tip="Play sound"/>
+                Padding="0" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" 
+                HorizontalContentAlignment="Center" ToolTip.Tip="Play sound"/>
 
     </Grid>
 

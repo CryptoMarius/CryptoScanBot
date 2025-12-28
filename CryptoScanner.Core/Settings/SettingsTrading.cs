@@ -68,8 +68,6 @@ public class CryptoDcaEntry
 [Serializable]
 public class SettingsTrading
 {
-    // Is de BOT actief
-    public bool Active { get; set; } = false;
     [Computed]
     public bool ActiveBackup { get; set; } = false;
 

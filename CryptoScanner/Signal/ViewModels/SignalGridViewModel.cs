@@ -9,20 +9,19 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Model;
+using CryptoScanner.Services;
 using CryptoScanner.Signal.Model;
+using CryptoScanner.Visualisation.ViewModels;
+using CryptoScanner.Visualisation.Views;
 
 
 namespace CryptoScanner.Signal.ViewModels;
 
-
-
-/// <summary>
-/// ViewModel for the Signal Grid
-/// Manages trading signals and their display
-/// </summary>
 public partial class SignalGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+    private readonly IDialogService _dialogService;
+
+    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(1000) };
 
     [ObservableProperty]
     private ObservableRangeCollection<SignalInfo> _signals = [];
@@ -30,8 +29,9 @@ public partial class SignalGridViewModel : ObservableObject
     // Event voor parent ViewModel
     public event EventHandler<string>? EventOpenInInternalBrowser;
 
-    public SignalGridViewModel()
+    public SignalGridViewModel(IDialogService dialogService)
     {
+        _dialogService = dialogService;
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
         GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
@@ -150,6 +150,19 @@ public partial class SignalGridViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void LaunchTradingChart(object? parameter)
+    {
+        if (parameter is not SignalInfo signal)
+            return;
+
+        // Implement your external program logic here
+        System.Diagnostics.Debug.WriteLine($"Opening {signal.Symbol} in trading chart");
+
+
+    }
+
+
+    [RelayCommand]
     private void LaunchTradingApp(object? parameter)
     {
         if (parameter is not SignalInfo signal)
@@ -172,7 +185,7 @@ public partial class SignalGridViewModel : ObservableObject
             ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
     }
 
-    
+
     [RelayCommand]
     private void LaunchTradingViewInternal(object? parameter)
     {
@@ -281,6 +294,31 @@ public partial class SignalGridViewModel : ObservableObject
     }
 
 
+    [RelayCommand]
+    private async Task OpenChart(object? parameter)
+    {
+        if (_dialogService == null) 
+            return;
 
+        var vm = new VisualisationViewModel();
+        //if (parameter is ValueTuple<SignalInfo, string, int> tuple)
+        //{
+        //    var (item, extraParam, number) = tuple;
+        //    vm.Initialize(item.Symbol, item.Interval); parameters?
+        //}
+        var window = new VisualisationWindow { DataContext = vm };
+        await _dialogService.ShowDialogAsync<VisualisationWindow>(window);
+
+        //if (parameter is ValueTuple<SignalInfo, string, int> tuple)
+        //{
+        //    var (item, extraParam, number) = tuple;
+
+        //    var vm = new VisualisationViewModel();
+        //    //vm.Initialize(item.Symbol, item.Interval);
+
+        //    var window = new VisualisationWindow { DataContext = vm };
+        //    await _dialogService.ShowDialogAsync<VisualisationWindow>(window);
+        //}
+    }
 
 }

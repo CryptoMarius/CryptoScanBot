@@ -58,11 +58,11 @@
                 <!-- ComboBox: Quote -->
                 <ComboBox Grid.Row="0" Grid.Column="0" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedQuote}" VerticalAlignment="Center" HorizontalAlignment="Left"
-                            ItemsSource="{Binding Quotes}" />
+                            ItemsSource="{Binding Quotes}" IsDropDownOpen="False"/>
                 <!-- ComboBox: Interval -->
                 <ComboBox Grid.Row="0" Grid.Column="1" FontSize="13" BorderThickness="0" Margin="0,0,0,0"
                             SelectedItem="{Binding SelectedInterval}" VerticalAlignment="Center"  HorizontalAlignment="Left"
-                            ItemsSource="{Binding Intervals}" />
+                            ItemsSource="{Binding Intervals}" IsDropDownOpen="False"/>
 
                 <!-- Barometer: 1h -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Barometer 1h:" 

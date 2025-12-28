@@ -1,0 +1,167 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="700"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             x:DataType="vm:AnalyzerCommonViewModel"
+             x:Class="CryptoScanner.Settings.Views.AnalyzerCommonView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="4" Spacing="4">
+
+            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+				
+                <!-- Check relative change% 24 hours -->
+                <HeaderedContentControl Grid.Row="0" Classes="groupbox" Header="Check relative change% 24 hours">
+                    <StackPanel Margin="4" Spacing="2">
+                        <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto,Auto">
+                            <TextBlock Grid.Column="0" Text="24 hour change:" VerticalAlignment="Center" 
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Column="1" Text="{Binding AnalysisMinChangePercentage, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="2" Text="{Binding AnalysisMaxChangePercentage, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <CheckBox Grid.Row="1" IsChecked="{Binding LogAnalysisMinMaxChangePercentage, Mode=TwoWay}"
+                                  Grid.ColumnSpan="3" Content="Log if outside boundary" FontSize="12"/>
+                        </Grid>
+                    
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Check effective change% over multiple days -->
+                <HeaderedContentControl Grid.Row="1" Classes="groupbox" Header="Check effective change% over multiple days">
+                    <StackPanel Margin="4" Spacing="2">
+                        <Grid ColumnDefinitions="Auto,*,80,40" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
+                            <TextBlock Grid.Column="0" Text="Check effective percentage:" VerticalAlignment="Center" 
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Column="2" Text="{Binding AnalysisEffectivePercentage, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Check effective days:" VerticalAlignment="Center" 
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding AnalysisEffectiveDays, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="days" VerticalAlignment="Center" FontSize="12"/>
+
+                            <CheckBox Grid.Row="3" IsChecked="{Binding AnalysisMaxEffectiveLog, Mode=TwoWay}"
+                                  Grid.ColumnSpan="3" Content="Log if outside boundary" FontSize="12"/>
+                        </Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Check volume multiple days -->
+                <HeaderedContentControl Grid.Row="2" Classes="groupbox" Header="Check volume multiple days">
+                    <StackPanel Margin="4" Spacing="2">
+                   
+                        <Grid ColumnDefinitions="Auto,*,80,40" RowDefinitions="Auto,Auto,Auto" RowSpacing="2">
+                            <CheckBox IsChecked="{Binding CheckVolumeOverPeriod, Mode=TwoWay}"
+                                  Content="Check volume over multiple days" FontSize="12"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Check over days:" VerticalAlignment="Center" FontSize="12"/>
+                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CheckVolumeOverDays, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="days" VerticalAlignment="Center" FontSize="12"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="(using the minimal volume from the basecoins)" Grid.ColumnSpan="3" FontSize="11"/>
+                        </Grid>
+                    
+                    </StackPanel>
+                </HeaderedContentControl>
+
+
+                <!-- Other settings -->
+                <HeaderedContentControl Grid.Column="1" Grid.RowSpan="2" Classes="groupbox" Header="Other settings">
+                    <StackPanel Margin="4" Spacing="2">
+                        <Grid ColumnDefinitions="Auto,*,80,40" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Remove signals after:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding RemoveSignalAfterxCandles, TargetNullValue='0', FallbackValue='0'}" 
+                                     Height="22" MinHeight="26" FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
+                                </TextBox>
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="candles" VerticalAlignment="Center" FontSize="12" Margin="4"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Show invalid signals:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <CheckBox Grid.Row="1" Grid.Column="2" IsChecked="{Binding ShowInvalidSignals, Mode=TwoWay}" 
+                                     FontSize="12" Padding="6,2" CornerRadius="4" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Symbol must exists days:" VerticalAlignment="Center" 
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding SymbolMustExistsDays, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="days" VerticalAlignment="Center" FontSize="12" Margin="4"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Log if it is a new coin:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <CheckBox Grid.Row="3" Grid.Column="2" IsChecked="{Binding LogSymbolMustExistsDays, Mode=TwoWay}"
+                                  Grid.ColumnSpan="3" FontSize="12"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Minimum tick percentage:" VerticalAlignment="Center" 
+                                       Margin="0,0,12,0" FontSize="12"/>
+                            <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding MinimumTickPercentage, Mode=TwoWay, StringFormat=N2}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12" Margin="4"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Log if tick is above this:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <CheckBox Grid.Row="5" Grid.Column="2"  IsChecked="{Binding LogMinimumTickPercentage, Mode=TwoWay}"
+                                  Grid.ColumnSpan="3" FontSize="12"/>
+                        </Grid>
+                    
+                    </StackPanel>
+                </HeaderedContentControl>
+
+
+
+                <!-- Other settings -->
+                <HeaderedContentControl Grid.Row="3" Grid.Column="0" Grid.RowSpan="2" Classes="groupbox" Header="Check the last 60 candles">
+                    <StackPanel Margin="4" Spacing="2">
+                        <Grid ColumnDefinitions="*,80,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
+
+                            <CheckBox Grid.Row="0" Grid.Column="0" Content="Check the number of flat candles"
+                                      IsChecked="{Binding CandlesWithFlatPriceCheck, Mode=TwoWay}" 
+                                     FontSize="12" Padding="6,2" CornerRadius="4" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding CandlesWithFlatPrice, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4" />
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Larger value is a nogo" 
+                                       VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
+
+                            <CheckBox Grid.Row="1" Grid.Column="0" Content="Check the candles without volume"
+                                      IsChecked="{Binding CandlesWithZeroVolumeCheck, Mode=TwoWay}" 
+                                     FontSize="12" Padding="6,2" CornerRadius="4" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CandlesWithZeroVolume, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="Larger value is a nogo" 
+                                       VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
+
+                            <CheckBox Grid.Row="2" Grid.Column="0" Content="Check if candles are above bb.center"
+                                      IsChecked="{Binding AboveBollingerBandsSmaCheck, Mode=TwoWay}" 
+                                     FontSize="12" Padding="6,2" CornerRadius="4" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding AboveBollingerBandsSma, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="Smaller value is a nogo" 
+                                       VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
+
+                            <CheckBox Grid.Row="3" Grid.Column="0" Content="Check if candles are above bb.upper"
+                                      IsChecked="{Binding AboveBollingerBandsUpperCheck, Mode=TwoWay}" 
+                                     FontSize="12" Padding="6,2" CornerRadius="4" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding AboveBollingerBandsUpper, Mode=TwoWay}" 
+                                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                            <TextBlock Grid.Row="3" Grid.Column="3" Text="Smaller value is a nogo" 
+                                       VerticalAlignment="Center" FontSize="12" Margin="10,0,0,0"/>
+                        </Grid>
+                    
+                    </StackPanel>
+                </HeaderedContentControl>
+            </Grid>
+
+            
+
+
+
+
+        </StackPanel>
+    </ScrollViewer>
+
+
+
+</UserControl>

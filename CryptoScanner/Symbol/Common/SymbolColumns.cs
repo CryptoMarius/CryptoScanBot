@@ -1,0 +1,74 @@
+﻿using CryptoScanner.Symbol.Model;
+
+using System.Collections;
+
+namespace CryptoScanner.Symbol.Common;
+
+
+public enum SymbolColumnEnum
+{
+    Id,
+    Symbol,
+    Volume,
+    //Price
+    Distance,
+    //MarketTrendPrimary, to much cpu needed
+}
+
+
+
+public class SymbolColumnComparer : IComparer
+{
+    // Kind of overkill, but its much nicer having everything in 1 comparer
+    private SymbolColumnEnum? SortColumn { get; set; }
+    private readonly CaseInsensitiveComparer ObjectCompare = new();
+
+
+    public SymbolColumnComparer(SymbolColumnEnum? sortColumn)
+    {
+        SortColumn = sortColumn;
+    }
+
+
+    public int Compare(object? x, object? y)
+    {
+        if (SortColumn != null && x is SymbolInfo a && y is SymbolInfo b)
+        {
+
+            try
+            {
+                int compareResult = SortColumn switch
+                {
+                    SymbolColumnEnum.Id => ObjectCompare.Compare(a.Id, b.Id),
+                    SymbolColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol, b.Symbol),
+                    SymbolColumnEnum.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
+                    //SymbolColumnEnum.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
+                    //SymbolColumnEnum.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a), ZoneTools.ZoneDistance(b)),
+                    //SymbolColumnEnum.MarketTrendPrimary => ObjectCompare.Compare(MarketTrendPrimary(a), MarketTrendPrimary(b)),
+                    _ => 0
+                };
+
+
+                // secondary sort
+                if (compareResult == 0)
+                    compareResult = ObjectCompare.Compare(a.Symbol, b.Symbol);
+
+
+                //// Calculate correct return value based on object comparison
+                //if (SortDirection == GridSortDirection.Ascending)
+                //    return +compareResult;
+                //else if (SortDirection == GridSortDirection.Descending)
+                //    return -compareResult;
+                //else
+                //    return 0;
+
+                return compareResult;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+        return 0;
+    }
+}

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="150"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             x:DataType="vm:StrategyDlzSettingsZoneFilterViewModel"
+             x:Class="CryptoScanner.Settings.Views.StrategyDlzSettingsZoneFilterView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Filter">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <!-- Filter on start of zone -->
+            <CheckBox IsChecked="{Binding ZoneStartApply, Mode=TwoWay}"
+                      Content="Filter on start of zone"
+                      FontSize="12"/>
+
+            <!-- Candle count -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Candles back:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding ZoneStartCandleCount, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Percentage -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Percentage:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding ZoneStartPercentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="32"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             x:DataType="vm:BarometerFilterRangeViewModel"
+             x:Class="CryptoScanner.Settings.Views.BarometerFilterRangeView">
+
+    <Grid ColumnDefinitions="Auto,100,30,100" RowDefinitions="Auto" ColumnSpacing="8">
+        
+        <!-- Checkbox with caption -->
+        <CheckBox Grid.Column="0" 
+                  IsChecked="{Binding IsActive, Mode=TwoWay}"
+                  Content="{Binding Caption}"
+                  FontSize="12" 
+                  VerticalAlignment="Center"
+                  MinWidth="80"/>
+
+        <!-- Min value -->
+        <TextBox Grid.Column="1" 
+                 Text="{Binding MinValue, Mode=TwoWay, StringFormat=N2}" 
+                 IsEnabled="{Binding IsActive}"
+                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+
+        <!-- Separator -->
+        <TextBlock Grid.Column="2" Text=".." 
+                   VerticalAlignment="Center" 
+                   HorizontalAlignment="Center"
+                   FontSize="12"/>
+
+        <!-- Max value -->
+        <TextBox Grid.Column="3" 
+                 Text="{Binding MaxValue, Mode=TwoWay, StringFormat=N2}" 
+                 IsEnabled="{Binding IsActive}"
+                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+
+    </Grid>
+
+</UserControl>

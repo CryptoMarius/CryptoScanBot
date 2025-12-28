@@ -15,6 +15,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.DashBoard.Model;
 using CryptoScanner.DashBoard.Services;
+using CryptoScanner.Services;
 
 using SkiaSharp;
 
@@ -45,13 +46,13 @@ public partial class DashBoardViewModel : ObservableObject
     private ObservableCollection<string> _quotes = ["USDT", "BTC", "EUR"];
 
     [ObservableProperty]
-    private string? _selectedQuote = "USDT";
+    private string _selectedQuote = "USDT";
 
     [ObservableProperty]
     private ObservableCollection<string> _intervals = ["15m", "30m", "1h", "4h", "1d"];
 
     [ObservableProperty]
-    private string? _selectedInterval = "1h";
+    private string _selectedInterval = "1h";
 
     [ObservableProperty]
     private WriteableBitmap? _chartImage;
@@ -126,10 +127,14 @@ public partial class DashBoardViewModel : ObservableObject
     [ObservableProperty]
     private int _scannerSignalCount = 0;
 
+    private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
 
-    public DashBoardViewModel(ITradingViewService tradingViewService)
+    public DashBoardViewModel(
+        ApplicationStateService applicationStateService,
+        ITradingViewService tradingViewService)
     {
+        _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
 
         // Subscribe to market indicator events
@@ -158,15 +163,6 @@ public partial class DashBoardViewModel : ObservableObject
         StatusesHaveChangedEvent("");
     }
 
-    private void SelectedQuoteChanged()
-    {
-        //App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
-    }
-    private void SelectedIntervalChanged()
-    {
-        //App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
-    }
-
     private void StatusesHaveChangedEvent(string text)
     {
         if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
@@ -174,12 +170,12 @@ public partial class DashBoardViewModel : ObservableObject
         else
             ApplicationStatus = GlobalData.ApplicationStatus.ToString();
 
-        if (GlobalData.Settings.Trading.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+        if (GlobalData.Settings.Options.TraderActive && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             TraderStatusBrush = App.GetBrushResource("PriceUpBrush");
         else
             TraderStatusBrush = App.GetBrushResource("PriceDownBrush");
 
-        if (GlobalData.Settings.Signal.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+        if (GlobalData.Settings.Options.AnalyzerActive && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             ScannerStatusBrush = App.GetBrushResource("PriceUpBrush");
         else
             ScannerStatusBrush = App.GetBrushResource("PriceDownBrush");
@@ -220,14 +216,16 @@ public partial class DashBoardViewModel : ObservableObject
         BarometerTime = _barometerCalculated; 
     }
 
-    partial void OnSelectedQuoteChanged(string? value)
+    partial void OnSelectedQuoteChanged(string value)
     {
+        _applicationStateService.BarometerQuote = value;
         System.Diagnostics.Debug.WriteLine($"Quote changed to: {value}");
         Task.Run(CalculateBarometer);
     }
 
-    partial void OnSelectedIntervalChanged(string? value)
+    partial void OnSelectedIntervalChanged(string value)
     {
+        _applicationStateService.BarometerInterval = value;
         System.Diagnostics.Debug.WriteLine($"Interval changed to: {value}");
         Task.Run(CalculateBarometer);
     }

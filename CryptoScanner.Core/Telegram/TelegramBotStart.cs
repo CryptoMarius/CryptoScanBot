@@ -25,9 +25,9 @@ public class TelegramBotStart
 
         if (soundSignal)
         {
-            if (!GlobalData.Settings.Signal.SoundsActive)
+            if (!GlobalData.Settings.Options.SoundsActive)
             {
-                GlobalData.Settings.Signal.SoundsActive = true;
+                GlobalData.Settings.Options.SoundsActive = true;
                 stringbuilder.AppendLine("Sound started!");
                 GlobalData.SaveSettings();
                 GlobalData.TelegramHasChanged("");
@@ -61,9 +61,9 @@ public class TelegramBotStart
         //}
         else if (signalsBot)
         {
-            if (!GlobalData.Settings.Signal.Active)
+            if (!GlobalData.Settings.Options.AnalyzerActive)
             {
-                GlobalData.Settings.Signal.Active = true;
+                GlobalData.Settings.Options.AnalyzerActive = true;
                 stringbuilder.AppendLine("Signal bot started!");
                 GlobalData.SaveSettings();
                 GlobalData.TelegramHasChanged("");
@@ -73,9 +73,9 @@ public class TelegramBotStart
         }
         else if (tradingBot)
         {
-            if (!GlobalData.Settings.Trading.Active)
+            if (!GlobalData.Settings.Options.TraderActive)
             {
-                GlobalData.Settings.Trading.Active = true;
+                GlobalData.Settings.Options.TraderActive = true;
                 stringbuilder.AppendLine("Trading bot started!");
                 GlobalData.SaveSettings();
                 GlobalData.TelegramHasChanged("");
@@ -85,9 +85,9 @@ public class TelegramBotStart
         }
         else
         {
-            if (!GlobalData.Settings.Trading.Active)
+            if (!GlobalData.Settings.Options.TraderActive)
             {
-                GlobalData.Settings.Trading.Active = true;
+                GlobalData.Settings.Options.TraderActive = true;
                 stringbuilder.AppendLine("Bot started!");
                 GlobalData.SaveSettings();
                 GlobalData.TelegramHasChanged("");

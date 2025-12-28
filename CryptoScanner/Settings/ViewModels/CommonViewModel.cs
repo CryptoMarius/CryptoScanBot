@@ -23,15 +23,9 @@ public partial class CommonViewModel : ObservableObject
     //public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
     [ObservableProperty]
-    private int _removeSignalAfterxCandles = 15;
-
-    [ObservableProperty]
     private string _theme = string.Empty;
     [ObservableProperty]
     private List<KeyValuePair<string, string>> __themeList = [];
-
-    [ObservableProperty]
-    private bool _showInvalidSignals  = false;
 
 
     //public bool ShowInvalidSignals { get; set; } = false;         ?
@@ -81,9 +75,6 @@ public partial class CommonViewModel : ObservableObject
         TradingApp = general.TradingApp;
         DoubleClickAction = general.DoubleClickAction;
         SoundHeartBeatMinutes = general.SoundHeartBeatMinutes;
-        RemoveSignalAfterxCandles = general.RemoveSignalAfterxCandles;
-
-        ShowInvalidSignals = general.ShowInvalidSignals;
         Theme = general.Theme;
     }
 
@@ -92,9 +83,6 @@ public partial class CommonViewModel : ObservableObject
         general.TradingApp = TradingApp;
         general.DoubleClickAction = DoubleClickAction;
         general.SoundHeartBeatMinutes = SoundHeartBeatMinutes;
-        general.RemoveSignalAfterxCandles = RemoveSignalAfterxCandles;
-
-        general.ShowInvalidSignals = ShowInvalidSignals;
         general.Theme = Theme;
     }
 }

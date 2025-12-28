@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             xmlns:controls="using:Avalonia.Controls"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             xmlns:settings="using:CryptoScanner.Settings.Views"
+             x:DataType="vm:IndicatorsTabViewModel"
+             x:Class="CryptoScanner.Settings.Views.IndicatorsTabView">
+
+	<ScrollViewer VerticalScrollBarVisibility="Auto" >
+        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto">
+            <HeaderedContentControl Grid.Row="0" Grid.Column="0" Classes="groupbox" Header="Stochastic parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                <settings:IndicatorStochView DataContext="{Binding IndicatorStochViewModel}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="RSI parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                <settings:IndicatorRsiView DataContext="{Binding IndicatorRsiViewModel}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Grid.Row="0" Grid.Column="2" Classes="groupbox" Header="Bollinger bands parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                <settings:IndicatorBollingerBandView DataContext="{Binding IndicatorBollingerBandViewModel}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Grid.Row="1" Grid.Column="0" Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                <settings:IndicatorZigZagView DataContext="{Binding IndicatorPrimaryTrend}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Grid.Row="1" Grid.Column="1" Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+                <settings:IndicatorZigZagView DataContext="{Binding IndicatorSecondaryTrend}" />
+            </HeaderedContentControl>
+		</Grid>
+    </ScrollViewer>
+
+</UserControl>

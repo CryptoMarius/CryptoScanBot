@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="250"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             x:DataType="vm:TraderEntryConditionsViewModel"
+             x:Class="CryptoScanner.Settings.Views.TraderEntryConditionsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Entry condities">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <!-- Entry Conditions -->
+            <CheckBox IsChecked="{Binding CheckIncreasingRsi, Mode=TwoWay}"
+                      Content="RSI must be increasing/decreasing"
+                      FontSize="12"/>
+
+            <CheckBox IsChecked="{Binding CheckIncreasingMacd, Mode=TwoWay}"
+                      Content="MACD must be increasing/decreasing"
+                      FontSize="12"/>
+
+            <CheckBox IsChecked="{Binding CheckIncreasingStoch, Mode=TwoWay}"
+                      Content="Stoch not overbought/oversold"
+                      FontSize="12"/>
+
+            <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
+                      Content="Check price decrease/increase"
+                      FontSize="12"/>
+
+            <!-- Slot Limits -->
+            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
+                <StackPanel Margin="8" Spacing="8">
+                    
+                    <!-- Long Slots -->
+                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                        <TextBlock Grid.Column="0" Text="Long:" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,12,0" FontSize="12"/>
+                        <TextBox Grid.Column="2" 
+                                 Text="{Binding SlotsMaximalLong, Mode=TwoWay}" 
+                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                    </Grid>
+
+                    <!-- Short Slots -->
+                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                        <TextBlock Grid.Column="0" Text="Short:" 
+                                   VerticalAlignment="Center" 
+                                   Margin="0,0,12,0" FontSize="12"/>
+                        <TextBox Grid.Column="2" 
+                                 Text="{Binding SlotsMaximalShort, Mode=TwoWay}" 
+                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                    </Grid>
+
+                </StackPanel>
+            </HeaderedContentControl>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

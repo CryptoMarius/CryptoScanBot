@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 
 using System.Collections.ObjectModel;
 
@@ -11,6 +12,7 @@ namespace CryptoScanner.Settings.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+
     [ObservableProperty]
     private ObservableCollection<string> _exchanges = [];
 
@@ -19,61 +21,43 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private CommonViewModel _commonViewModel;
 
+    // Indicators
     [ObservableProperty]
-    private RsiViewModel _rsiViewModel;
-
-    [ObservableProperty]
-    private StochViewModel _stochViewModel;
-
-    [ObservableProperty]
-    private BollingerBandViewModel _bollingerBandViewModel;
-
-    [ObservableProperty]
-    private TrendViewModel _primaryTrend;
-
-    [ObservableProperty]
-    private TrendViewModel _secondaryTrend;
-
-    [ObservableProperty]
-    private BlackAndWhiteListViewModel _blackListLong;
-    [ObservableProperty]
-    private BlackAndWhiteListViewModel _blackListShort;
-    [ObservableProperty]
-    private BlackAndWhiteListViewModel _whiteListLong;
-    [ObservableProperty]
-    private BlackAndWhiteListViewModel _whiteListShort;
-
-    [ObservableProperty]
-    private QuotesViewModel _quotesViewModel;
-
-
-    // Signals
-    [ObservableProperty]
-    private IntervalsViewModel _intervalSignalLongViewModel;
-    [ObservableProperty]
-    private StrategyViewModel _strategySignalLongViewModel;
-    [ObservableProperty]
-    private IntervalsViewModel _intervalSignalShortViewModel;
-    [ObservableProperty]
-    private StrategyViewModel _strategySignalShortViewModel;
-
-
-    // Trading
-    [ObservableProperty]
-    private IntervalsViewModel _intervalTradingLongViewModel;
-    [ObservableProperty]
-    private StrategyViewModel _strategyTradingLongViewModel;
-    [ObservableProperty]
-    private IntervalsViewModel _intervalTradingShortViewModel;
-    [ObservableProperty]
-    private StrategyViewModel _strategyTradingShortViewModel;
-
-    [ObservableProperty]
-    private SoundAndColorsViewModel _sbmColorAndSound;
-    [ObservableProperty]
-    private SoundAndColorsViewModel _stobbColorAndSound;
-
+    private IndicatorsTabViewModel _indicatorsTabViewModel;
     
+    // Base coins
+    [ObservableProperty]
+    private QuoteTabViewModel _quoteTabViewModel;
+
+    // Strategies
+    [ObservableProperty]
+    private StrategyTabViewModel _strategyTabViewModel;
+
+    // Analyzer
+    [ObservableProperty]
+    private AnalyzerTabViewModel _analyzerTabViewModel;
+
+    // Trader
+    [ObservableProperty]
+    private TraderTabViewModel _traderTabViewModel;
+
+    // Rulez
+    [ObservableProperty]
+    private TraderRulesViewModel _traderRulesViewModel;
+
+    // Api's
+    [ObservableProperty]
+    private ApiAltradyViewModel _apiAltradyViewModel;
+    [ObservableProperty]
+    private ApiTelegramViewModel _apiTelegramViewModel;
+
+    // Black and White lists
+    [ObservableProperty]
+    private BlackAndWhiteListTabViewModel _blackAndWhiteListTabViewModel;
+
+    [ObservableProperty]
+    private DebugTabViewModel _debugTabViewModel;
+
     public SettingsViewModel()
     {
         // Exchange and common
@@ -81,125 +65,105 @@ public partial class SettingsViewModel : ObservableObject
         _commonViewModel = new();
 
         // Indicators
-        _rsiViewModel = new();
-        _stochViewModel = new();
-        _bollingerBandViewModel = new();
-        _primaryTrend = new();
-        _secondaryTrend = new();
+        _indicatorsTabViewModel = new();
 
         // Base coins
-        _quotesViewModel = new();
-
-        // Signals
-        _intervalSignalLongViewModel = new();
-        _strategySignalLongViewModel = new();
-        _intervalSignalShortViewModel = new();
-        _strategySignalShortViewModel = new();
-
-        // Trading
-        _intervalTradingLongViewModel = new();
-        _strategyTradingLongViewModel = new();
-        _intervalTradingShortViewModel = new();
-        _strategyTradingShortViewModel = new();
+        _quoteTabViewModel = new();
 
         // Strategies
-        _sbmColorAndSound = new();
-        _stobbColorAndSound = new();
+        _strategyTabViewModel = new();
+
+        // Analyzer
+        _analyzerTabViewModel = new();
+
+        // Trader
+        _traderTabViewModel = new();
+
+        // Rulez
+        _traderRulesViewModel = new();
+
+        // Api's
+        _apiAltradyViewModel = new();
+        _apiTelegramViewModel = new();
 
         // Black and White lists
-        _blackListLong = new();
-        _blackListShort = new();
-        _whiteListLong = new();
-        _whiteListShort = new();
-
-        LoadConfig();
-    }
-
-
-    private void LoadConfig()
-    {
-        // Exchange and Common
-        ExchangeViewModel.LoadConfig(GlobalData.Settings.General);
-        CommonViewModel.LoadConfig(GlobalData.Settings.General);
-
-        // Indicators
-        RsiViewModel.LoadConfig(GlobalData.Settings.General.SettingsRsi);
-        StochViewModel.LoadConfig(GlobalData.Settings.General.SettingsStoch);
-        BollingerBandViewModel.LoadConfig(GlobalData.Settings.General.SettingsBb);
-        PrimaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
-        SecondaryTrend.LoadConfig(GlobalData.Settings.Trend.Secondary);
-
-        // Base coins
-        QuotesViewModel.LoadConfig(GlobalData.Settings.QuoteCoins);
-
-        // Signals
-        IntervalSignalLongViewModel.LoadConfig(GlobalData.Settings.Signal.Long.Strategy);
-        StrategySignalLongViewModel.LoadConfig(GlobalData.Settings.Signal.Long.Interval);
-        IntervalSignalShortViewModel.LoadConfig(GlobalData.Settings.Signal.Short.Strategy);
-        StrategySignalShortViewModel.LoadConfig(GlobalData.Settings.Signal.Short.Interval);
-
-        // Trading
-        IntervalTradingLongViewModel.LoadConfig(GlobalData.Settings.Trading.Long.Strategy);
-        StrategyTradingLongViewModel.LoadConfig(GlobalData.Settings.Trading.Long.Interval);
-        IntervalTradingShortViewModel.LoadConfig(GlobalData.Settings.Trading.Short.Strategy);
-        StrategyTradingShortViewModel.LoadConfig(GlobalData.Settings.Trading.Short.Interval);
-
-        // Strategies
-        SbmColorAndSound.LoadConfig("SBM", GlobalData.Settings.Signal.Sbm);
-        StobbColorAndSound.LoadConfig("STOBB", GlobalData.Settings.Signal.Stobb);
-        //Enzovoort..
-
-        // Black and White lists
-        BlackListLong.LoadConfig(GlobalData.Settings.BlackListOversold);
-        BlackListShort.LoadConfig(GlobalData.Settings.BlackListOverbought);
-        WhiteListLong.LoadConfig(GlobalData.Settings.WhiteListOversold);
-        WhiteListShort.LoadConfig(GlobalData.Settings.WhiteListOverbought);
+        _blackAndWhiteListTabViewModel = new();
 
         // Debug
-        // ..
+        _debugTabViewModel = new();
+
+
+        LoadConfig(GlobalData.Settings);
     }
 
-    private void SaveConfig()
+    private void LoadConfig(SettingsBasic settings)
     {
         // Exchange and Common
-        ExchangeViewModel.SaveConfig(GlobalData.Settings.General);
-        CommonViewModel.SaveConfig(GlobalData.Settings.General);
+        ExchangeViewModel.LoadConfig(settings.General);
+        CommonViewModel.LoadConfig(settings.General);
 
         // Indicators
-        RsiViewModel.SaveConfig(GlobalData.Settings.General.SettingsRsi);
-        StochViewModel.SaveConfig(GlobalData.Settings.General.SettingsStoch);
-        BollingerBandViewModel.SaveConfig(GlobalData.Settings.General.SettingsBb);
-        PrimaryTrend.SaveConfig(GlobalData.Settings.Trend.Secondary);
-        SecondaryTrend.SaveConfig(GlobalData.Settings.Trend.Secondary);
+        IndicatorsTabViewModel.LoadConfig(settings);
+
+        // Base coins
+        QuoteTabViewModel.LoadConfig(settings.QuoteCoins);
+
+        // Strategies
+        StrategyTabViewModel.LoadConfig(settings.Signal);
+
+        // Analyzer
+        AnalyzerTabViewModel.LoadConfig(settings.Signal);
+
+        // Trader
+        TraderTabViewModel.LoadConfig(settings.Trading);
+
+        // Rulez
+        TraderRulesViewModel.LoadConfig(settings.Trading);
+
+        // Apis
+        ApiAltradyViewModel.LoadConfig(GlobalData.AltradyApi);
+        ApiTelegramViewModel.LoadConfig(GlobalData.Telegram);
+
+        // Black and White lists
+        BlackAndWhiteListTabViewModel.LoadConfig(settings);
+
+        // Debug
+        DebugTabViewModel.LoadConfig(settings.General);
+    }
+
+    private void SaveConfig(SettingsBasic settings)
+    {
+        // Exchange and Common
+        ExchangeViewModel.SaveConfig(settings.General);
+        CommonViewModel.SaveConfig(settings.General);
+
+        // Indicators
+        IndicatorsTabViewModel.SaveConfig(settings);
 
         // Quotes
-        QuotesViewModel.SaveConfig();
-
-        // Signals
-        IntervalSignalLongViewModel.SaveConfig(GlobalData.Settings.Signal.Long.Strategy);
-        StrategySignalLongViewModel.SaveConfig(GlobalData.Settings.Signal.Long.Interval);
-        IntervalSignalShortViewModel.SaveConfig(GlobalData.Settings.Signal.Short.Strategy);
-        StrategySignalShortViewModel.SaveConfig(GlobalData.Settings.Signal.Short.Interval);
-
-        // Trading
-        IntervalTradingLongViewModel.SaveConfig(GlobalData.Settings.Trading.Long.Strategy);
-        StrategyTradingLongViewModel.SaveConfig(GlobalData.Settings.Trading.Long.Interval);
-        IntervalTradingShortViewModel.SaveConfig(GlobalData.Settings.Trading.Short.Strategy);
-        StrategyTradingShortViewModel.SaveConfig(GlobalData.Settings.Trading.Short.Interval);
+        QuoteTabViewModel.SaveConfig();
 
         // Strategies
-        SbmColorAndSound.SaveConfig(GlobalData.Settings.Signal.Sbm);
-        StobbColorAndSound.SaveConfig(GlobalData.Settings.Signal.Stobb);
-        //Enzovoort..
+        StrategyTabViewModel.SaveConfig(settings.Signal);
+
+        // Analyzer
+        AnalyzerTabViewModel.SaveConfig(settings.Signal);
+
+        // Trader
+        TraderTabViewModel.SaveConfig(settings.Trading);
+
+        // Rulez
+        TraderRulesViewModel.SaveConfig(settings.Trading);
+
+        // Apis
+        ApiAltradyViewModel.SaveConfig(GlobalData.AltradyApi);
+        ApiTelegramViewModel.SaveConfig(GlobalData.Telegram);
 
         // Black and White lists
-        BlackListLong.SaveConfig(GlobalData.Settings.BlackListOversold);
-        BlackListShort.SaveConfig(GlobalData.Settings.BlackListOverbought);
-        WhiteListLong.SaveConfig(GlobalData.Settings.WhiteListOversold);
-        WhiteListShort.SaveConfig(GlobalData.Settings.WhiteListOverbought);
+        BlackAndWhiteListTabViewModel.SaveConfig(settings);
 
         // Debug
-        // ..
+        DebugTabViewModel.SaveConfig(settings.General);
     }
 
 
@@ -210,7 +174,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void Okay(Window dialogWindow)
     {
-        SaveConfig();
+        SaveConfig(GlobalData.Settings);
         dialogWindow.Close(true);
     }
 

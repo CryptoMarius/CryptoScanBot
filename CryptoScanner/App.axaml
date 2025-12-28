@@ -20,6 +20,10 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
                    
+                    <!-- Background color + grid oneven color -->
+                    <SolidColorBrush x:Key="BackgroundBrush">#f0f0f0</SolidColorBrush>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush">#f0f0f0</SolidColorBrush>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2">#eeeeee</SolidColorBrush>
                 </ResourceDictionary>
                 
                 <!-- Dark theme resources -->
@@ -32,8 +36,10 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
 
-                    <!-- Background color -->
+                    <!-- Background color + grid oneven color -->
+                    <SolidColorBrush x:Key="BackgroundBrush">#202020</SolidColorBrush>
                     <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush">#202020</SolidColorBrush>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2">#222222</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -46,6 +52,7 @@
         <FluentTheme />
         <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
 
         <!-- ============================================ -->
         <!-- WINDOW TITLE BAR THEMING -->
@@ -63,15 +70,21 @@
         <!-- Globale style voor TextBlock -->
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
         <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
         <Style Selector="Button">
             <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
         
         <Style Selector="Label">
             <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="TextBox:not(:multiline)">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <!-- ============================================ -->
@@ -109,7 +122,7 @@
 
         <!-- Alternating row colors -->
         <Style Selector="DataGridRow:nth-child(even)">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" />
         </Style>
         
         <!-- Kleinere row height -->
@@ -138,10 +151,12 @@
         <!-- ============================================ -->
         
         <Style Selector="HeaderedContentControl.groupbox">
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,8,8,8"/>
-            <Setter Property="Margin" Value="0,2,0,8"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="4,10,4,4"/>
             <Setter Property="Template">
                 <ControlTemplate>
                     <Grid>

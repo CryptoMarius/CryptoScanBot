@@ -5,7 +5,7 @@
         x:Class="CryptoScanner.Settings.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
         Title="Scanner configuration"
-        Width="1000" Height="800"
+        Width="1300" Height="800"
         WindowStartupLocation="CenterOwner">
 
     <!-- Border around entire content -->
@@ -22,9 +22,6 @@
                                 <HeaderedContentControl Grid.Row="0" Classes="groupbox" Header="Exchange parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:ExchangeView DataContext="{Binding ExchangeViewModel}" />
                                 </HeaderedContentControl>
-                                <!-- Force new line 
-                                <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
-                                -->
 
                                 <HeaderedContentControl Grid.Row="1" Classes="groupbox" Header="Common parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
                                     <settings:CommonView DataContext="{Binding CommonViewModel}" />
@@ -35,150 +32,54 @@
 
                     <!-- Indicators -->
 				    <TabItem Header="Indicators" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-					    <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto">
-                                <HeaderedContentControl Grid.Row="0" Grid.Column="0" Classes="groupbox" Header="Stochastic parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
-                                    <settings:StochView DataContext="{Binding StochViewModel}" />
-                                </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="RSI parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
-                                    <settings:RsiView DataContext="{Binding RsiViewModel}" />
-                                </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="0" Grid.Column="2" Classes="groupbox" Header="Bollinger bands parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
-                                    <settings:BollingerBandView DataContext="{Binding BollingerBandViewModel}" />
-                                </HeaderedContentControl>
-
-                                <!-- Force new line 
-                                <Rectangle Width="{Binding RelativeSource={RelativeSource AncestorType=WrapPanel}, Path=Bounds.Width}" Height="0" Opacity="0"/>
-                                -->
-
-                                <HeaderedContentControl Grid.Row="1" Grid.Column="0" Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
-                                    <settings:TrendView DataContext="{Binding PrimaryTrend}" />
-                                </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="1" Grid.Column="1" Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
-                                    <settings:TrendView DataContext="{Binding SecondaryTrend}" />
-                                </HeaderedContentControl>
-					        </Grid>
-                        </ScrollViewer>
+                        <settings:IndicatorsTabView DataContext="{Binding IndicatorsTabViewModel}" />
 				    </TabItem>
 
                     <!-- Base coins -->
 				    <TabItem Header="Basecoins" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" >
-					        <WrapPanel>
-                                <settings:QuotesView DataContext="{Binding QuotesViewModel}" />
-					        </WrapPanel>
-                        </ScrollViewer>
+                        <settings:QuoteTabView DataContext="{Binding QuoteTabViewModel}" />
 				    </TabItem>
 
                     <!-- Strategies -->
 				    <TabItem Header="Strategies" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                        <TabControl Grid.Row="2" Margin="0" >
-				            <TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-					        <WrapPanel>
-                                <settings:SoundAndColorsView DataContext="{Binding StobbColorAndSound}" />
-					        </WrapPanel>
-                            </TabItem>
-				            <TabItem Header="SBM" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:SoundAndColorsView DataContext="{Binding SbmColorAndSound}" />
-				            </TabItem>
-				            <TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-				            <TabItem Header="JUMP" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-				            <TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-				            <TabItem Header="FVG" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-				            <TabItem Header="NWE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-                        </TabControl>				
+                        <settings:StrategyTabView DataContext="{Binding StrategyTabViewModel}" />
 				    </TabItem>
 
                     <!-- Analyze -->
-				    <TabItem Header="Analyze" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                        <TabControl Grid.Row="2" Margin="0" >
-				            <TabItem Header="Analyze common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                    </WrapPanel>
-                                </ScrollViewer>
-				            </TabItem>
-				            <TabItem Header="Analyze long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategySignalLongViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalSignalLongViewModel}" />
-                                    </WrapPanel>
-                                </ScrollViewer>
-				            </TabItem>
-				            <TabItem Header="Analyze short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategySignalShortViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalSignalShortViewModel}" />
-                                    </WrapPanel>
-                                </ScrollViewer>
-				            </TabItem>
-                        </TabControl>				
+				    <TabItem Header="Analyzer" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <settings:AnalyzerTabView DataContext="{Binding AnalyzerTabViewModel}" />                        
 				    </TabItem>
 
                     <!-- Trading -->
 				    <TabItem Header="Trading" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                        <TabControl Grid.Row="2" Margin="0" >
-				            <TabItem Header="Trading common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-				            <TabItem Header="Trading long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyTradingLongViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalTradingLongViewModel}" />
-                                    </WrapPanel>
-                                </ScrollViewer>
-				            </TabItem>
-				            <TabItem Header="Trading short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" >
-                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
-                                        <settings:StrategyView DataContext="{Binding StrategyTradingShortViewModel}" />
-                                        <settings:IntervalsView DataContext="{Binding IntervalTradingShortViewModel}" />
-                                    </WrapPanel>
-                                </ScrollViewer>
-				            </TabItem>
-				            <TabItem Header="Trading rulez" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-				            </TabItem>
-                        </TabControl>				
+                        <settings:TraderTabView DataContext="{Binding TraderTabViewModel}" />                        
+				    </TabItem>
+
+                    <!-- Rulez -->
+				    <TabItem Header="Rulez" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <settings:TraderRulesView DataContext="{Binding TraderRulesViewModel}" />                        
 				    </TabItem>
 
                     <!-- API keys -->
 				    <TabItem Header="API keys" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                         <TabControl Grid.Row="2" Margin="0" >
 				            <TabItem Header="Telegram" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:ApiAltradyView DataContext="{Binding ApiAltradyViewModel}" />
 				            </TabItem>
 				            <TabItem Header="Altrady" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                                <settings:ApiTelegramView DataContext="{Binding ApiTelegramViewModel}" />
 				            </TabItem>
                         </TabControl>				
 				    </TabItem>
 
                     <!-- Black/White list -->
 				    <TabItem Header="Black/White list" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                        <TabControl Grid.Row="2" Margin="0" >
-				            <TabItem Header="Whitelist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:BlackAndWhiteListView DataContext="{Binding WhiteListLong}" />
-				            </TabItem>
-				            <TabItem Header="Whitelist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-					            <settings:BlackAndWhiteListView DataContext="{Binding WhiteListShort}" />
-				            </TabItem>
-				            <TabItem Header="Blacklist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:BlackAndWhiteListView DataContext="{Binding BlackListLong}" />
-				            </TabItem>
-				            <TabItem Header="Blacklist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-                                <settings:BlackAndWhiteListView DataContext="{Binding BlackListShort}" />
-				            </TabItem>
-                        </TabControl>				
+                        <settings:BlackAndWhiteListTabView DataContext="{Binding BlackAndWhiteListTabViewModel}" />
                     </TabItem>
+
+                    <!-- Debug -->
 				    <TabItem Header="Debug" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                        <settings:DebugTabView DataContext="{Binding DebugTabViewModel}" />
 				    </TabItem>
 			    </TabControl>
             

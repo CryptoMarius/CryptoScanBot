@@ -56,6 +56,8 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
 		<PackageReference Include="SkiaSharp" Version="3.119.1" />
+		<PackageReference Include="OxyPlot.Core" Version="2.1.2" />
+		<PackageReference Include="OxyPlot.Avalonia" Version="2.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -69,17 +71,65 @@
 	  <Compile Update="MainForm\Views\MainWindow.axaml.cs">
 	    <DependentUpon>MainWindow.axaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Settings\Views\TrendIntervalFilterView.axaml.cs">
+	    <DependentUpon>TrendIntervalFilterView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\BarometerFilterRangeView.axaml.cs">
+	    <DependentUpon>BarometerFilterRangeView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\IndicatorBollingerBandView.axaml.cs">
+	    <DependentUpon>IndicatorBollingerBandView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\IndicatorRsiView.axaml.cs">
+	    <DependentUpon>IndicatorRsiView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\IntervalView.axaml.cs">
+	    <DependentUpon>IntervalView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\AnalyzerCommonView.axaml.cs">
+	    <DependentUpon>AnalyzerCommonView.axaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Settings\Views\ExchangeView.axaml.cs">
 	    <DependentUpon>ExchangeView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Settings\Views\QuotesView.axaml.cs">
-	    <DependentUpon>QuotesView.axaml</DependentUpon>
+	  <Compile Update="Settings\Views\QuoteTabView.axaml.cs">
+	    <DependentUpon>QuoteTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\IndicatorStochView.axaml.cs">
+	    <DependentUpon>IndicatorStochView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyDlzSettingsView.axaml.cs">
+	    <DependentUpon>StrategyDlzSettingsView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyDlzTabView.axaml.cs">
+	    <DependentUpon>StrategyDlzTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyFvgTabView.axaml.cs">
+	    <DependentUpon>StrategyFvgTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyJumpTabView.axaml.cs">
+	    <DependentUpon>StrategyJumpTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyNweTabView.axaml.cs">
+	    <DependentUpon>StrategyNweTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategySbmTabView.axaml.cs">
+	    <DependentUpon>StrategySbmTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyStobbTabView.axaml.cs">
+	    <DependentUpon>StrategyStobbTabView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\StrategyStorsiTabView.axaml.cs">
+	    <DependentUpon>StrategyStorsiTabView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Settings\Views\StrategyView.axaml.cs">
 	    <DependentUpon>StrategyView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Settings\Views\SettingsWindow.axaml.cs">
 	    <DependentUpon>SettingsWindow.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Settings\Views\IndicatorZigZagView.axaml.cs">
+	    <DependentUpon>IndicatorZigZagView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Signal\Views\SignalGridView.axaml.cs">
 	    <DependentUpon>SignalGridView.axaml</DependentUpon>
@@ -99,7 +149,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Helpers\" />
-	  <Folder Include="Settings\ViewModels\New folder\" />
 	</ItemGroup>
 
 	<PropertyGroup>

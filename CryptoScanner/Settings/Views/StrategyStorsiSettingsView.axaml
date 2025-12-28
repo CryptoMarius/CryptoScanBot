@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="240"
+             xmlns:vm="using:CryptoScanner.Settings.ViewModels"
+             x:DataType="vm:StrategyStorsiSettingsViewModel"
+             x:Class="CryptoScanner.Settings.Views.StrategyStorsiSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <!-- Correction RSI -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Correction RSI:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding AddRsiAmount, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Check if price is near the BB band -->
+            <CheckBox IsChecked="{Binding CheckBollingerBandsCondition, Mode=TwoWay}"
+                      Content="Check if price is near the BB band"
+                      FontSize="12"/>
+
+            <!-- Only if there is a previous storsi signal -->
+            <CheckBox IsChecked="{Binding SkipFirstSignal, Mode=TwoWay}"
+                      Content="Only if there is a previous storsi signal"
+                      FontSize="12"/>
+
+            <!-- Only when macd shows recovery -->
+            <CheckBox IsChecked="{Binding CheckMacdRecovery, Mode=TwoWay}"
+                      Content="Only when macd shows recovery"
+                      FontSize="12"/>
+
+            <!-- Only if lux 5m at 100% -->
+            <CheckBox IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
+                      Content="Only if lux 5m at 100%"
+                      FontSize="12"/>
+
+            <!-- Filter on BB% -->
+            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding BbMinPercentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2" Text="{Binding BbMaxPercentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

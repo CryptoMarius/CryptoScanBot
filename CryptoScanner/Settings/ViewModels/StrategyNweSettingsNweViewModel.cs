@@ -1,0 +1,26 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using CryptoScanner.Core.Settings.Strategy;
+
+namespace CryptoScanner.Settings.ViewModels;
+
+public partial class StrategyNweSettingsNweViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private decimal _bandWidth = 8.0m;
+
+    [ObservableProperty]
+    private decimal _multiplication = 3.0m;
+
+    public void LoadConfig(SettingsSignalStrategyNwe settings)
+    {
+        BandWidth = settings.BandWidth;
+        Multiplication = settings.Multiplication;
+    }
+
+    public void SaveConfig(SettingsSignalStrategyNwe settings)
+    {
+        settings.BandWidth = BandWidth;
+        settings.Multiplication = Multiplication;
+    }
+}

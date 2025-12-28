@@ -2,24 +2,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="180"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
              xmlns:vm="using:CryptoScanner.Settings.ViewModels"
              xmlns:settings="using:CryptoScanner.Settings.Views"
              x:DataType="vm:SoundAndColorsViewModel"
              x:Class="CryptoScanner.Settings.Views.SoundAndColorsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Sound and colors">
-        <StackPanel Margin="8" Spacing="8">
+        <StackPanel Margin="4" Spacing="1">
             
             <!-- Play Sound Checkbox -->
-            <CheckBox IsChecked="{Binding PlaySound, Mode=TwoWay}"
-                      Content="Play sound"
-                      FontSize="12"/>
+            <CheckBox IsChecked="{Binding PlaySound, Mode=TwoWay}" Content="Play sound" FontSize="12"/>
 
-            <!-- Play Speech Checkbox -->
-            <CheckBox IsChecked="{Binding PlaySpeech, Mode=TwoWay}"
-                      Content="Play speech"
-                      FontSize="12"/>
+            <!-- Play Speech Checkbox 
+            <CheckBox IsChecked="{Binding PlaySpeech, Mode=TwoWay}" Content="Play speech" FontSize="12"/>
+            -->
 
             <!-- Long Settings -->
             <settings:ColorAndSoundView DataContext="{Binding LongSettings}" />

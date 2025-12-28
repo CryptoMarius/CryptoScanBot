@@ -7,11 +7,11 @@
              x:DataType="vm:StrategyViewModel"
              x:Class="CryptoScanner.Settings.Views.StrategyView">
 
-    <StackPanel Margin="10" Spacing="10">
-        <HeaderedContentControl Classes="groupbox" Header="Strategies" Padding="10">
+    <StackPanel >
+        <HeaderedContentControl Classes="groupbox" Header="Strategies">
             <ScrollViewer>
                 <UniformGrid Columns="2" Rows="0">
-                    <ItemsControl ItemsSource="{Binding StrategyList}">
+                    <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>

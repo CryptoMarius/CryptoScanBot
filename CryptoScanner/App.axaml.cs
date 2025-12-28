@@ -31,7 +31,7 @@ public partial class App : Application
     /// <summary>
     /// Singleton instance of ApplicationStateService available throughout the application
     /// </summary>
-    public static ApplicationStateService ApplicationStateService { get; private set; } = null!;
+    //public static ApplicationStateService ApplicationStateService { get; private set; } = null!;
 
 
     //public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
@@ -91,10 +91,9 @@ public partial class App : Application
             //PositionsHaveChangedEvent("");
 
             //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
-            GlobalData.Settings.Signal.SoundsActive = true;
             GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
-            ScannerSession.Start(0);
+            //ScannerSession.Start(0);
             //LinkTools.InitializeTradingView();
         }
 
@@ -123,7 +122,12 @@ public partial class App : Application
             }
         }
 
-
+        // TODO: Rethink this double boolean's
+        ApplicationStateService applicationStateService = App.GetService<ApplicationStateService>() 
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
+        GlobalData.Settings.Options.AnalyzerActive = applicationStateService.AnalyzerActive;
+        GlobalData.Settings.Options.SoundsActive = applicationStateService.SoundsActive;
+        GlobalData.Settings.Options.TraderActive = applicationStateService.TraderActive;
 
         //// Eventueel de nieuwe quotes zetten enz.
         //dashBoardInformation1.InitializeBarometer();
@@ -181,7 +185,9 @@ public partial class App : Application
         Services = services.BuildServiceProvider();
 
         // Initialize the ApplicationStateService (loads settings from disk into memory)
-        ApplicationStateService = new ApplicationStateService();
+      //  ApplicationStateService = Services?.GetService<ApplicationStateService>()
+      //      ?? throw new InvalidOperationException("ApplicationStateService not registered");
+
 
         // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
         InitializeGlobalData();
@@ -209,8 +215,16 @@ public partial class App : Application
         ThreadSoundPlayer.StopSoundThread();
         await ScannerSession.StopAsync(); // Blocks..
         await DataStore.SaveCandlesAsync();
-        // Ensure all grid states are written to disk before exit
-        ApplicationStateService.FlushToDisk();
+
+        // Ensure all states are written to disk before exit
+
+        // TODO: Rethink this boolean storage
+        ApplicationStateService applicationStateService = App.GetService<ApplicationStateService>()
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
+        applicationStateService.AnalyzerActive = GlobalData.Settings.Options.AnalyzerActive;
+        applicationStateService.SoundsActive = GlobalData.Settings.Options.SoundsActive;
+        applicationStateService.TraderActive = GlobalData.Settings.Options.TraderActive;
+        applicationStateService.FlushToDisk();
 
         // Dispose hidden browser
         //var hiddenBrowser = Services.GetService<HiddenBrowserService>();
@@ -232,8 +246,7 @@ public partial class App : Application
 
     private static void PlaySound(string text, bool test)
     {
-        if (GlobalData.Settings.Signal.SoundsActive)
-            ThreadSoundPlayer.AddToQueue(text, test);
+        ThreadSoundPlayer.AddToQueue(text, test);
     }
 
     public static IBrush GetBrushResource(string resourceKey)

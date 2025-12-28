@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="100"
+             xmlns:vm="using:CryptoScanner.Visualisation.ViewModels"
+             x:DataType="vm:SymbolSelectorViewModel"
+             x:Class="CryptoScanner.Visualisation.Views.SymbolSelectorView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Symbol">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <!-- Base Symbol -->
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Base:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,8,0" FontSize="12" Width="50"/>
+                <ComboBox Grid.Column="1" 
+                          ItemsSource="{Binding BaseSymbols}"
+                          SelectedItem="{Binding SelectedBase, Mode=TwoWay}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Quote Symbol -->
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Quote:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,8,0" FontSize="12" Width="50"/>
+                <ComboBox Grid.Column="1" 
+                          ItemsSource="{Binding QuoteSymbols}"
+                          SelectedItem="{Binding SelectedQuote, Mode=TwoWay}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Interval -->
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Interval:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,8,0" FontSize="12" Width="50"/>
+                <ComboBox Grid.Column="1" 
+                          ItemsSource="{Binding Intervals}"
+                          SelectedItem="{Binding SelectedInterval, Mode=TwoWay}"
+                          FontSize="12"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

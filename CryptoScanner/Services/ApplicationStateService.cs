@@ -30,17 +30,26 @@ public class WindowState
     public string State { get; set; } = string.Empty;  // "Normal", "Minimized", "Maximized", "FullScreen", empty= not initialized
 }
 
-
 public class BarometerState
 {
     public string Quote { get; set; } = "USDT";
     public string Interval { get; set; } = "1H";
 }
 
+public class ApplicationOptions
+{
+    public bool AnalyzerActive { get; set; } = true;
+    public bool SoundsActive { get; set; } = true;
+    public bool TraderActive { get; set; } = false;
+}
+
 public class ApplicationState
 {
+    // Sounds, Analyzer and Trader options
+    public ApplicationOptions ApplicationOptions = new();
+    
     // Last selected Barometer settings
-    private BarometerState _BarometerState = new();
+    public BarometerState BarometerState = new();
 
     // Splitter position MainWindow (Size left panel)
     public double MainWindowSplitterPosition { get; set; } = 300;
@@ -93,6 +102,12 @@ public class ApplicationStateService
         _states = LoadFromFile();
     }
 
+    public bool AnalyzerActive { get { return _states.ApplicationOptions.AnalyzerActive; } set { _states.ApplicationOptions.AnalyzerActive = value; } }
+    public bool SoundsActive { get { return _states.ApplicationOptions.SoundsActive; } set { _states.ApplicationOptions.SoundsActive = value; } }
+    public bool TraderActive { get { return _states.ApplicationOptions.TraderActive; } set { _states.ApplicationOptions.TraderActive = value; } }
+
+    public string BarometerQuote { get { return _states.BarometerState.Quote; } set { _states.BarometerState.Quote = value; } }
+    public string BarometerInterval { get { return _states.BarometerState.Interval; } set { _states.BarometerState.Interval = value; } }
 
     public void SaveGridState(string gridName, DataGrid dataGrid, string? sortColumn, ListSortDirection? sortDirection)
     {

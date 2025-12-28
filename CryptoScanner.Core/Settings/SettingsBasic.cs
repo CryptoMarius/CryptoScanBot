@@ -3,8 +3,18 @@
 namespace CryptoScanner.Core.Settings;
 
 [Serializable]
-public class SettingsBasic //: ISettings
+public class ApplicationOptions
 {
+    public bool AnalyzerActive { get; set; } = true;
+    public bool SoundsActive { get; set; } = true;
+    public bool TraderActive { get; set; } = false;
+}
+
+[Serializable]
+public class SettingsBasic
+{
+    public ApplicationOptions Options { get; set; } = new();
+
     /// <summary>
     /// Standaard instellingen
     /// </summary>

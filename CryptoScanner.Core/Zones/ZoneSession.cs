@@ -56,6 +56,14 @@ public class ZoneSession
     public bool ShowSmaLinesSbm { get; set; } = true;
     public bool ShowTrendLines { get; set; } = false;
 
+    // Toegevoegd 
+    public bool Transparent { get; set; } = false;
+    public bool ShowDlzZones { get; set; } = false;
+    public bool ShowPivots { get; set; } = false;
+    public int TrendIndicator { get; set; } = 0;
+    public bool ShowFib { get; set; } = false;
+
+
 
     public static ZoneSession LoadSessionSettings()
     {

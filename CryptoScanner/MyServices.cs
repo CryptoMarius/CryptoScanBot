@@ -31,11 +31,13 @@ internal class MyServices
         ConfigurePlatformServices(services);
 
         // Register Services as Singleton
+        services.AddSingleton<ApplicationStateService>();
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
+
         //services.AddSingleton<HiddenBrowserService>();
 
-        // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
+    // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashBoardViewModel>();
         services.AddTransient<SymbolGridViewModel>();

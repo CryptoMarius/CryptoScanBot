@@ -15,15 +15,24 @@ namespace CryptoScanner.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
+    public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardViewModel DashBoardViewModel { get; set; }
     public required SymbolGridViewModel SymbolGridViewModel { get; set; }
     public required SignalGridViewModel SignalGridViewModel { get; set; }
     public required BrowserViewModel BrowserViewModel { get; set; }
     public required LogViewModel LogViewModel { get; set; }
 
+
     public IDialogService? DialogService { get; set; }
 
     public BrowserView? BrowserView { get; set; }
+
+    [ObservableProperty]
+    private bool _analyzerActive = false;
+    [ObservableProperty]
+    private bool _soundsActive = false;
+    [ObservableProperty]
+    private bool _traderActive = false;
 
     public MainWindowViewModel()
     {
@@ -31,12 +40,14 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     public MainWindowViewModel(
+        ApplicationStateService applicationStateService,
         DashBoardViewModel dashBoardViewModel,
         SymbolGridViewModel symbolGridViewModel,
         SignalGridViewModel signalGridViewModel,
         BrowserViewModel browserViewModel,
         LogViewModel logViewModel)
     {
+        ApplicationStateService = applicationStateService;
         DashBoardViewModel = dashBoardViewModel;
         SymbolGridViewModel = symbolGridViewModel;
         SignalGridViewModel = signalGridViewModel;
@@ -56,7 +67,11 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Subscribe to SignalGrid events
         SignalGridViewModel!.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
-    
+
+        // TODO: Not happy with this (multiple boolean's, bleh)
+        AnalyzerActive = ApplicationStateService.AnalyzerActive;
+        TraderActive = ApplicationStateService.TraderActive;
+        SoundsActive = ApplicationStateService.SoundsActive;
     }
 
     private void OnOpenInInternalBrowserRequested(object? sender, string  url)
@@ -72,6 +87,24 @@ public partial class MainWindowViewModel : ObservableObject
 
     }
 
+    partial void OnAnalyzerActiveChanged(bool value)
+    {
+        // should work, but does nothing except error in immediate output
+        System.Diagnostics.Debug.WriteLine($"OnAnalyzerActiveChanged changed to: {AnalyzerActive}");
+    }
+
+    partial void OnSoundsActiveChanged(bool value)
+    {
+        // should work, but does nothing except error in immediate output
+        System.Diagnostics.Debug.WriteLine($"OnSoundsActiveChanged changed to: {SoundsActive}");
+    }
+
+    partial void OnTraderActiveChanged(bool value)
+    {
+        // should work, but does nothing except error in immediate output
+        // Breakpoint hier - werkt NU wel als je via code triggert
+        System.Diagnostics.Debug.WriteLine($"OnTraderActiveChanged changed to: {TraderActive}");
+    }
 
     [RelayCommand]
     private void Close()

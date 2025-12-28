@@ -15,19 +15,17 @@ namespace CryptoScanner.Views;
 
 public partial class MainWindow : Window
 {
+    private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
     private readonly Grid _mainGrid = null!;
     private readonly BrowserView? _browserView;
 
-    public MainWindow()
-    {
-        // for the designer
-        _browserView = null;
-        _tradingViewService = null!;
-    }
 
-    public MainWindow(MainWindowViewModel viewModel, ITradingViewService tradingViewService)
+    public MainWindow(MainWindowViewModel viewModel,
+        ApplicationStateService applicationStateService,
+        ITradingViewService tradingViewService)
     {
+        _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
 
         AvaloniaXamlLoader.Load(this);
@@ -49,15 +47,16 @@ public partial class MainWindow : Window
         }
 
         // Restore window position, size, state and splitter
-        App.ApplicationStateService.RestoreWindowState("MainWindow", this);
+        _applicationStateService.RestoreWindowState("MainWindow", this);
 
         // Restore splitter position
-        var position = App.ApplicationStateService.GetSplitterPosition("MainWindow", 300);
+        var position = _applicationStateService.GetSplitterPosition("MainWindow", 300);
         _mainGrid.ColumnDefinitions[0].Width = new GridLength(position);
 
         // Start TradingView service
         _tradingViewService.Start();
 
+        // TODO: place somewhere else..
         // Set application title (we have multiple instances)
         Title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
     }
@@ -74,17 +73,17 @@ public partial class MainWindow : Window
     {
         // Save splitter position
         var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        App.ApplicationStateService.SaveSplitterPosition("MainWindow", position);
+        _applicationStateService.SaveSplitterPosition("MainWindow", position);
     }
 
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         // Save splitter position
         var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        App.ApplicationStateService.SaveSplitterPosition("MainWindow", position);
+        _applicationStateService.SaveSplitterPosition("MainWindow", position);
 
         // Save window state
-        App.ApplicationStateService.SaveWindowState("MainWindow", this);
+        _applicationStateService.SaveWindowState("MainWindow", this);
     }
 
 }

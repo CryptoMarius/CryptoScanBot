@@ -4,13 +4,14 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
+using CryptoScanner.Model;
+using CryptoScanner.Services;
 using CryptoScanner.Symbol.Common;
 using CryptoScanner.Symbol.Model;
 using CryptoScanner.Symbol.ViewModels;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace CryptoScanner.Symbol.Views;
@@ -19,26 +20,42 @@ public partial class SymbolGridView : UserControl
 {
     private const double HeaderHeight = 30.0;
     private readonly DataGrid _dataGrid;
+    private readonly ApplicationStateService _applicationStateService;
+
     private string? _currentSortColumn;
     private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
 
     public SymbolGridView()
     {
         InitializeComponent();
+        if (Design.IsDesignMode)
+        {
+            // Designer mode
+            _dataGrid = null!;
+            _applicationStateService = null!;
+            return;
+        }
+
+        // Runtime - get service from App
+        _applicationStateService = App.GetService<ApplicationStateService>()
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
 
         _dataGrid = this.FindControl<DataGrid>("SymbolDataGrid")
             ?? throw new InvalidOperationException("SymbolDataGrid not found");
 
+        DataContextChanged += OnDataContextChanged;
         _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
 
         // Register a custom comparer for each column based on its SortMemberPath
         foreach (var column in _dataGrid.Columns)
         {
-            if (Enum.TryParse<GridColumn>(column.SortMemberPath, out GridColumn a))
+            if (Enum.TryParse<SymbolColumnEnum>(column.SortMemberPath, out SymbolColumnEnum a))
             {
                 var comparer = new SymbolColumnComparer(a);
                 column.CustomSortComparer = comparer;
             }
+            else
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
         }
         // Restore grid state from the service
         RestoreGridState();
@@ -46,10 +63,50 @@ public partial class SymbolGridView : UserControl
 
     private void DataGrid_Loaded(object? sender, RoutedEventArgs e)
     {
-        _dataGrid!.ColumnReordered += OnColumnReordered;
+        System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_currentSortColumn} {_currentSortDirection}");
+
+        _dataGrid.Sorting += OnDataGridSorting;
+        _dataGrid.ColumnReordered += OnColumnReordered;
         _dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
     }
+
+
+    private SymbolGridViewModel? _currentViewModel;
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        // Unsubscribe old
+        if (_currentViewModel != null)
+        {
+            _currentViewModel.RequestSort -= OnRequestSort;
+            _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+        }
+
+        // Subscribe new
+        if (DataContext is SymbolGridViewModel vm)
+        {
+            _currentViewModel = vm;
+            vm.RequestSort += OnRequestSort;
+            vm.RequestSortedInsert += OnRequestSortedInsert;
+        }
+    }
+
+    private void OnRequestSort(object? sender, EventArgs e)
+    {
+        // Bewaar selectie
+        var selectedItem = _dataGrid.SelectedItem;
+
+        // Re-sort met huidige sort column/direction
+        ApplySortToCollection(_currentSortColumn, _currentSortDirection);
+
+        // Herstel selectie + scroll
+        if (selectedItem != null)
+        {
+            _dataGrid.SelectedItem = selectedItem;
+            _dataGrid.ScrollIntoView(selectedItem, null);
+        }
+    }
+
 
     private void InitializeComponent()
     {
@@ -61,19 +118,13 @@ public partial class SymbolGridView : UserControl
     private void SaveGridState()
     {
         // Access the service via App.ApplicationStateService
-        App.ApplicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
+        _applicationStateService.SaveGridState("SymbolGrid", _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
     private void RestoreGridState()
     {
         // Access the service via App.ApplicationStateService
-        App.ApplicationStateService.RestoreGridState("SymbolGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
-
-        // Apply the sort to the collection
-        if (!string.IsNullOrEmpty(_currentSortColumn))
-        {
-            ApplySortToCollection(_currentSortColumn, _currentSortDirection);
-        }
+        _applicationStateService.RestoreGridState("SymbolGrid", _dataGrid, out _currentSortColumn, out _currentSortDirection);
     }
 
 
@@ -93,6 +144,21 @@ public partial class SymbolGridView : UserControl
         SaveGridState();
     }
 
+
+    private void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"OnDataGridSorting {_currentSortColumn} {_currentSortDirection}");
+        if (e.Column.SortMemberPath != null)
+        {
+            var direction = (_currentSortColumn == e.Column.SortMemberPath &&
+                            _currentSortDirection == ListSortDirection.Ascending)
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+            _currentSortColumn = e.Column.SortMemberPath;
+            _currentSortDirection = direction;
+            SaveGridState();
+        }
+    }
 
 
     /// <summary>
@@ -121,25 +187,6 @@ public partial class SymbolGridView : UserControl
                 return;
             }
         }
-
-        var source = e.Source as Control;
-        var header = source?.FindAncestorOfType<DataGridColumnHeader>();
-        if (header?.DataContext is DataGridColumn column && column.SortMemberPath != null)
-        {
-            // Toggle direction
-            var direction = (_currentSortColumn == column.SortMemberPath &&
-                           _currentSortDirection == ListSortDirection.Ascending)
-                ? ListSortDirection.Descending
-                : ListSortDirection.Ascending;
-
-            _currentSortColumn = column.SortMemberPath;
-            _currentSortDirection = direction;
-
-            // Save meteen
-            //_currentSortColumn = column.SortMemberPath;
-            //_currentSortDirection = direction.ToString();
-            //Settings.Default.Save();
-        }
     }
 
 
@@ -155,10 +202,8 @@ public partial class SymbolGridView : UserControl
         adjustColumnsItem.Click += (s, args) => ShowColumnVisibilityWindow(dataGrid);
         flyout.Items.Add(adjustColumnsItem);
 
-        flyout.Items.Add(new Separator());
-
-        var resetColumnsItem = new MenuItem { Header = "Reset Columns" };
-        resetColumnsItem.Click += (s, args) => ResetColumns();
+        var resetColumnsItem = new MenuItem { Header = "Reset Column width" };
+        //resetColumnsItem.Click += (s, args) => ResetColumns();
         flyout.Items.Add(resetColumnsItem);
 
         flyout.ShowAt(dataGrid, true);
@@ -172,6 +217,28 @@ public partial class SymbolGridView : UserControl
     {
         var flyout = new MenuFlyout();
 
+        MenuItem menuItem;
+
+        flyout.Items.Add(new MenuItem { Header = "Symbol Chart" });
+        menuItem = new MenuItem { Header = "Altrady Binance Futures" };
+        menuItem.Click += OnLaunchTradingApp;
+        flyout.Items.Add(menuItem);
+
+        menuItem = new MenuItem { Header = "Tradingview internal" };
+        menuItem.Click += OnLaunchTradingViewInternal;
+        flyout.Items.Add(menuItem);
+
+        menuItem = new MenuItem { Header = "Tradingview External" };
+        menuItem.Click += OnLaunchTradingViewExternal;
+        flyout.Items.Add(menuItem);
+
+        flyout.Items.Add(new MenuItem { Header = "Goto the exchange" });
+        flyout.Items.Add(new MenuItem { Header = "TV + Altrady" });
+        flyout.Items.Add(new MenuItem { Header = "-" });
+        flyout.Items.Add(new MenuItem { Header = "Copy symbol name" });
+        flyout.Items.Add(new MenuItem { Header = "Copy data cells" });
+        flyout.Items.Add(new MenuItem { Header = "Calculate  liquidity zones" });
+        flyout.Items.Add(new MenuItem { Header = "-" });
         var openExternalItem = new MenuItem { Header = "Open in External Program" };
         openExternalItem.Click += OnLaunchExternal;
         flyout.Items.Add(openExternalItem);
@@ -181,13 +248,15 @@ public partial class SymbolGridView : UserControl
         var copyItem = new MenuItem { Header = "Copy Symbol" };
         copyItem.Click += (s, args) =>
         {
-            //if (DataContext is SymbolGridViewModel vm && dataGrid.SelectedItem != null)
-            //    vm.CopySignalCommand.Execute(dataGrid.SelectedItem);
+            if (DataContext is SymbolGridViewModel vm && dataGrid.SelectedItem != null)
+                vm.CopySignalCommand.Execute(dataGrid.SelectedItem);
         };
         flyout.Items.Add(copyItem);
 
         flyout.ShowAt(dataGrid, true);
     }
+
+
 
     /// <summary>
     /// Reset columns to default settings
@@ -249,33 +318,88 @@ public partial class SymbolGridView : UserControl
         }
     }
 
+    /// <summary>
+    /// Open Altrady or Hypertrader application
+    /// </summary>
+    private void OnLaunchTradingApp(object? sender, RoutedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem != null)
+        {
+            if (DataContext is SymbolGridViewModel vm)
+            {
+                vm.LaunchTradingAppCommand.Execute(_dataGrid.SelectedItem);
+            }
+        }
+    }
+
+    private void OnLaunchTradingViewInternal(object? sender, RoutedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem != null)
+        {
+            if (DataContext is SymbolGridViewModel vm)
+            {
+                vm.LaunchTradingViewInternalCommand.Execute(_dataGrid.SelectedItem);
+            }
+        }
+    }
+
+    private void OnLaunchTradingViewExternal(object? sender, RoutedEventArgs e)
+    {
+        if (_dataGrid.SelectedItem != null)
+        {
+            if (DataContext is SymbolGridViewModel vm)
+            {
+                vm.LaunchTradingViewExternalCommand.Execute(_dataGrid.SelectedItem);
+            }
+        }
+    }
 
     private void ApplySortToCollection(string? sortMemberPath, ListSortDirection sortDirection)
     {
+        System.Diagnostics.Debug.WriteLine($"ApplySortToCollection {sortMemberPath} {sortDirection}");
+
         if (!string.IsNullOrEmpty(sortMemberPath))
         {
             _currentSortColumn = sortMemberPath;
             _currentSortDirection = sortDirection;
 
             // Problem: GEEN indicator tot eerste click
-            if (_dataGrid!.ItemsSource is ObservableCollection<SymbolInfo> collection)
+            if (_dataGrid!.ItemsSource is ObservableRangeCollection<SymbolInfo> collection)
             {
                 var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == sortMemberPath);
                 if (column != null)
                 {
-                    var sorted = collection.ToArray(); // Naar array
+                    var sorted = collection.ToArray();
 
                     Array.Sort(sorted, column.CustomSortComparer);
 
-                    // Reverse als descending
+                    //}
+
                     if (_currentSortDirection == ListSortDirection.Descending)
                         Array.Reverse(sorted);
 
-                    collection.Clear();
-                    foreach (var item in sorted)
-                        collection.Add(item);
+                    collection.Replace(sorted);
                 }
             }
         }
     }
+
+
+    private void OnRequestSortedInsert(object? sender, SymbolInfo newSignal)
+    {
+        if (!string.IsNullOrEmpty(_currentSortColumn))
+        {
+            System.Diagnostics.Debug.WriteLine($"OnRequestSortedInsert {_currentSortColumn} {_currentSortDirection}");
+
+            if (_dataGrid.ItemsSource is ObservableRangeCollection<SymbolInfo> collection)
+            {
+                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == _currentSortColumn);
+                if (column != null)
+                {
+                    collection.AddItem(newSignal, column.CustomSortComparer, _currentSortDirection);
+                }
+            }
+        }
+    }
+
 }

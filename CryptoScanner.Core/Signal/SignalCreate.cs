@@ -403,7 +403,7 @@ public class SignalCreate
             // Bied het aan het monitorings systeem (indien aangevinkt) 
             // (lagere intervallen hebben hogere prioriteit - via EventTime, klopt dat?)
             // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
-            if (!signal.IsInvalid && GlobalData.Settings.Trading.Active)
+            if (!signal.IsInvalid && GlobalData.Settings.Options.TraderActive)
             {
                 if (TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                 {
