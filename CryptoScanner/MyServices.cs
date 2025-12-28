@@ -37,14 +37,18 @@ internal class MyServices
 
         //services.AddSingleton<HiddenBrowserService>();
 
-    // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
+        // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashBoardViewModel>();
         services.AddTransient<SymbolGridViewModel>();
         services.AddTransient<SignalGridViewModel>();
         services.AddTransient<BrowserViewModel>();
         services.AddTransient<LogViewModel>();
-        
+
+        //services.AddTransient<IDialogService, DialogService>(); // Als DialogService parameterless constructor heeft
+        //services.AddTransient<IDialogService>(provider => new DialogService(mainWindow));
+
+
         // Register Views
         services.AddTransient<MainWindow>();
     }
