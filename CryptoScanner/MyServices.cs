@@ -9,6 +9,7 @@ using CryptoScanner.Views;
 using CryptoScanner.Services;
 
 using Microsoft.Extensions.DependencyInjection;
+using CryptoScanner.LiveData.ViewModels;
 
 namespace CryptoScanner;
 
@@ -42,6 +43,7 @@ internal class MyServices
         services.AddTransient<DashBoardViewModel>();
         services.AddTransient<SymbolGridViewModel>();
         services.AddTransient<SignalGridViewModel>();
+        services.AddTransient<LiveDataGridViewModel>();
         services.AddTransient<BrowserViewModel>();
         services.AddTransient<LogViewModel>();
 

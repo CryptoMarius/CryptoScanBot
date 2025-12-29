@@ -93,7 +93,7 @@ public partial class App : Application
             //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
             GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
-            //ScannerSession.Start(0);
+            ScannerSession.Start(0);
             //LinkTools.InitializeTradingView();
         }
 

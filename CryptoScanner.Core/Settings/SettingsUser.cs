@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 
+using System.ComponentModel;
 using System.Drawing;
 using System.Text.Json.Serialization;
 
@@ -29,7 +30,7 @@ public class FormDimensions
 public class GridSettingsUser
 {
     public int? SortColumn = null;
-    public GridSortOrder? SortOrder = null;
+    public ListSortDirection SortOrder = ListSortDirection.Ascending;
     public SortedList<string, ColumnSetting> ColumnList { get; set; } = [];
 }
 

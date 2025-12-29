@@ -363,7 +363,7 @@ public class CandleIndicatorData : CryptoData
         CryptoCandle? lastCandle = history[^1];
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
 
-        float luxValue = 0;
+        int luxValue = 0;
         if (luxOverBought > 0)
             luxValue += luxOverBought;
         if (luxOverSold > 0)

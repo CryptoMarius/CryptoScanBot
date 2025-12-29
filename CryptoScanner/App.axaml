@@ -66,6 +66,9 @@
         <!-- ============================================ -->
         <!-- GLOBALE TEXTBLOCK/CONTROL STYLES -->
         <!-- ============================================ -->
+        <Style Selector="Grid">
+            <Setter Property="RowSpacing" Value="2" />
+        </Style>
         
         <!-- Globale style voor TextBlock -->
         <Style Selector="TextBlock">
@@ -82,6 +85,7 @@
         <Style Selector="Label">
             <Setter Property="FontSize" Value="12" />
         </Style>
+
 
         <Style Selector="TextBox:not(:multiline)">
             <Setter Property="VerticalContentAlignment" Value="Center"/>

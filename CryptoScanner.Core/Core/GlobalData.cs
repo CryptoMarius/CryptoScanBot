@@ -150,6 +150,7 @@ public static class GlobalData
     public static ZoneThreadCalculate? ThreadZoneCalculate { get; set; }
 
 
+    // Moved to the dashboard service
     // On special request of a hardcore trader.. (moved to CryptoScanner.DashBoard.Services)
     //public static SymbolValue FearAndGreedIndex { get; set; } = new();
     //public static SymbolValue TradingViewDollarIndex { get; set; } = new();

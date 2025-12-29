@@ -55,9 +55,9 @@ public class SymbolColumnComparer : IComparer
 
 
                 //// Calculate correct return value based on object comparison
-                //if (SortDirection == GridSortDirection.Ascending)
+                //if (SortDirection == ListSortDirection.Ascending)
                 //    return +compareResult;
-                //else if (SortDirection == GridSortDirection.Descending)
+                //else if (SortDirection == ListSortDirection.Descending)
                 //    return -compareResult;
                 //else
                 //    return 0;

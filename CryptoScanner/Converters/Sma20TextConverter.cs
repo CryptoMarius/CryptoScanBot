@@ -1,6 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Enums;
+using CryptoScanner.LiveData.Model;
 using CryptoScanner.Signal.Model;
 
 namespace CryptoScanner.Converters;
@@ -14,6 +15,11 @@ public class Sma20TextConverter : IValueConverter
         {
             var price = signalInfo.Sma20;
             return price?.ToString(signalInfo.SignalObject.Symbol.PriceDisplayFormat);
+        }
+        else if (value is LiveDataInfo liveDataInfo)
+        {
+            var price = liveDataInfo.Sma20;
+            return price?.ToString(liveDataInfo.LiveDataObject.Symbol.PriceDisplayFormat);
         }
         return "?";
     }

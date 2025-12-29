@@ -19,8 +19,6 @@ public class ApplicationParams
 
     public static ApplicationParams? Options { get; set; }
 
-
-
     public static void InitApplicationOptions()
     {
         if (Options == null)

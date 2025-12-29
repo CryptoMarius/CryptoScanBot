@@ -1,6 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.LiveData.Model;
 using CryptoScanner.Signal.Model;
 
 namespace CryptoScanner.Converters;
@@ -14,6 +15,11 @@ public class PriceTextConverter : IValueConverter
         {
             decimal price = signalInfo.SignalPrice;
             return price.ToString0(signalInfo.SignalObject.Symbol.PriceDisplayFormat);
+        }
+        else if (value is LiveDataInfo liveDataInfo)
+        {
+            decimal price = liveDataInfo.Price;
+            return price.ToString0(liveDataInfo.LiveDataObject.Symbol.PriceDisplayFormat);
         }
         return "?";
     }
