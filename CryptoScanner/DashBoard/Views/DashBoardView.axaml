@@ -11,6 +11,7 @@
 
     <UserControl.Resources>
         <converters:LargeNumberConverter x:Key="LargeNumberConverter" />
+        <convertersBase:PriceTextConverter x:Key="PriceTextConverter" />
         <convertersBase:BarometerColorConverter x:Key="BarometerColorConverter" />
     </UserControl.Resources>
   
@@ -156,7 +157,7 @@
                            Text="Bitcoin (BTC)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                            Foreground="{Binding BtcUsdt.Color}"
-                           Text="{Binding BtcUsdt.Price}"  MinWidth="50"/>
+                           Text="{Binding BtcUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="value"
                            Text="{Binding BtcUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
                 
@@ -165,7 +166,7 @@
                            Text="Ethereum (ETH)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                            Foreground="{Binding EthUsdt.Color}"
-                           Text="{Binding EthUsdt.Price}"  MinWidth="50"/>
+                           Text="{Binding EthUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="value"
                            Text="{Binding EthUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
@@ -174,7 +175,7 @@
                            Text="BNB" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                            Foreground="{Binding BnbUsdt.Color}"
-                           Text="{Binding BnbUsdt.Price}"  MinWidth="50"/>
+                           Text="{Binding BnbUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="2" Grid.Column="2" Classes="value"
                            Text="{Binding BnbUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
@@ -183,7 +184,7 @@
                            Text="Solana (SOL)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                            Foreground="{Binding SolUsdt.Color}"
-                           Text="{Binding SolUsdt.Price}" MinWidth="50"/>
+                           Text="{Binding SolUsdt.Price, Converter={StaticResource PriceTextConverter}}" MinWidth="50"/>
                 <TextBlock Grid.Row="3" Grid.Column="2" Classes="value"
                            Text="{Binding SolUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
@@ -192,7 +193,7 @@
                            Text="XRP" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
                            Foreground="{Binding XrpUsdt.Color}"
-                           Text="{Binding XrpUsdt.Price}"  MinWidth="50"/>
+                           Text="{Binding XrpUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="4" Grid.Column="2" Classes="value"
                            Text="{Binding XrpUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
 
