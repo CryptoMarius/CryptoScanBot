@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:oxy="http://oxyplot.org/avalonia"
+        xmlns:skia="using:SkiaSharp.Views.Avalonia"
         xmlns:vm="using:CryptoScanner.Visualisation.ViewModels"
         xmlns:views="using:CryptoScanner.Visualisation.Views"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="950"
@@ -11,10 +11,10 @@
         x:Class="CryptoScanner.Visualisation.Views.VisualisationWindow"
         Title="{Binding WindowTitle}">
 
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
+    <Grid ColumnDefinitions="220,*" RowDefinitions="*">
         
         <!-- Left Panel - Controls -->
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="220">
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="8" Spacing="2">
                 
                 <!-- Symbol Selector -->
@@ -133,12 +133,12 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Right Panel - Chart -->
-        <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                BorderThickness="1" Margin="8">
-            <oxy:PlotView Model="{Binding PlotModel}"/>
-        </Border>
-
     </Grid>
+        <!-- Right Panel - Chart -->
+        <Border x:Name="ChartBorder" Grid.Column="1" Background="White" BorderBrush="Black" BorderThickness="2" Margin="8">
+            <skia:SKCanvasView x:Name="SkiaCanvas" PaintSurface="OnPaintSurface"/>
+        </Border>
+    </Grid>
+    
 
 </Window>

@@ -2,18 +2,20 @@ using System.Diagnostics;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OxyPlot;
-using OxyPlot.Annotations;
-using OxyPlot.Axes;
 
-using CryptoScanner.Core.Context;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Annotations;
+
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Core.Trend;
-using CryptoScanner.Visualisation.Chart;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Visualisation.Chart;
+using CryptoScanner.ZoneVisualisation;
+using OxyPlot.Series;
 
 namespace CryptoScanner.Visualisation.ViewModels;
 
@@ -43,9 +45,12 @@ public partial class VisualisationViewModel : ObservableObject
     private ZoneSession _session = new();
     private ZoneConfig? _data;
 
+    // Crosshair annotations (public for View access)
+    public LineAnnotation? VerticalLine { get; private set; }
+    public LineAnnotation? HorizontalLine { get; private set; }
     // Crosshair annotations
-    private LineAnnotation? _verticalLine;
-    private LineAnnotation? _horizontalLine;
+    //private LineAnnotation? _verticalLine;
+    //private LineAnnotation? _horizontalLine;
 
     [ObservableProperty]
     private string _windowTitle = "Crypto Visualisation";
@@ -68,17 +73,100 @@ public partial class VisualisationViewModel : ObservableObject
 
         // Initialize plot
         _plotModel = new PlotModel { Title = "Chart" };
-        InitializePlot();
 
-        // Subscribe to changes from sub-ViewModels
-        SymbolSelector.PropertyChanged += OnSymbolChanged;
-        TrendSettings.PropertyChanged += OnTrendSettingsChanged;
-        FibSettings.PropertyChanged += OnFibSettingsChanged;
-        DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
-        PlaybackControls.PlaybackRequested += OnPlaybackRequested;
+        //InitializePlot();
 
-        // Load session
-        LoadSession();
+        //// Subscribe to changes from sub-ViewModels
+        //SymbolSelector.PropertyChanged += OnSymbolChanged;
+        //TrendSettings.PropertyChanged += OnTrendSettingsChanged;
+        //FibSettings.PropertyChanged += OnFibSettingsChanged;
+        //DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
+        //PlaybackControls.PlaybackRequested += OnPlaybackRequested;
+
+        //// Load session
+        //LoadSession();
+
+        CreateTestChart();
+    }
+
+    // In CreateTestChart():
+    public void CreateTestChart()
+    {
+        var testModel = new PlotModel
+        {
+            Title = "TEST CHART",
+            // ✓ PROBEER VERSCHILLENDE BACKGROUNDS:
+            Background = OxyColors.DarkGray,  // Niet wit/zwart
+            PlotAreaBackground = OxyColors.LightGray,
+            PlotAreaBorderColor = OxyColors.Black,
+            PlotAreaBorderThickness = new OxyThickness(2),
+            TextColor = OxyColors.Black
+        };
+
+        var xAxis = new LinearAxis
+        {
+            Position = AxisPosition.Bottom,
+            Minimum = -1,
+            Maximum = 5,
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColors.Gray
+        };
+        var yAxis = new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            Minimum = -1,
+            Maximum = 10,
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColors.Gray
+        };
+
+        testModel.Axes.Add(xAxis);
+        testModel.Axes.Add(yAxis);
+
+        var series = new LineSeries
+        {
+            Color = OxyColors.Yellow,
+            StrokeThickness = 5,  // ✓ DIKKER
+            LineStyle = LineStyle.Solid
+        };
+        series.Points.Add(new DataPoint(0, 0));
+        series.Points.Add(new DataPoint(1, 1));
+        series.Points.Add(new DataPoint(2, 4));
+        series.Points.Add(new DataPoint(3, 9));
+
+        testModel.Series.Add(series);
+
+        PlotModel = testModel;
+    }
+
+    public void CreateTestChart2()
+    {
+        var testModel = new PlotModel
+        {
+            Title = "TEST CHART",
+            Background = OxyColors.White,
+            TextColor = OxyColors.Black
+        };
+
+        testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
+        testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left });
+
+        var series = new LineSeries
+        {
+            Color = OxyColors.Red,
+            StrokeThickness = 3
+        };
+        series.Points.Add(new DataPoint(0, 0));
+        series.Points.Add(new DataPoint(1, 1));
+        series.Points.Add(new DataPoint(2, 4));
+        series.Points.Add(new DataPoint(3, 9));
+        series.Points.Add(new DataPoint(100, 100));
+
+        testModel.Series.Add(series);
+
+        PlotModel = testModel;
+
+        Debug.WriteLine($"Test chart - Series: {PlotModel.Series.Count}, Points: {series.Points.Count}");
     }
 
     private void InitializePlot()
@@ -140,7 +228,8 @@ public partial class VisualisationViewModel : ObservableObject
         FibSettings.SaveToSession(_session);
         DisplayOptions.SaveToSession(_session);
 
-        ZoneSession.SaveSessionSettings(_session);
+        // ✓ FIXED: No parameters needed
+        _session.SaveSessionSettings();
     }
 
     #region Event Handlers
@@ -227,7 +316,7 @@ public partial class VisualisationViewModel : ObservableObject
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
 
             GlobalData.LoadLinkSettings();
-            LinkTools.OpenTradingApp(_data.Symbol, _data.Interval, tradingAppInternExtern);
+            //GlobalData.OpenTradingApp(_data.Symbol, _data.Interval, tradingAppInternExtern);
         }
     }
 
@@ -281,15 +370,17 @@ public partial class VisualisationViewModel : ObservableObject
         _session.TrendIndicator = TrendSettings.TrendType;
         _session.TrendShowZigZag = TrendSettings.ShowZigZag;
 
-        // FIB settings
-        _session.FibIndicator = FibSettings.FibTrend;
-        _session.FibShowFib = FibSettings.ShowFib;
+        // ✓ FIXED: Use local properties instead of non-existent session properties
+        // FIB settings stored locally in FibSettings, not in session
+        // _session.FibIndicator = FibSettings.FibTrend;  // REMOVED - doesn't exist in ZoneSession
+        // _session.FibShowFib = FibSettings.ShowFib;      // REMOVED - doesn't exist in ZoneSession
         _session.FibShowZigZag = FibSettings.ShowZigZag;
 
         // Display options
         _session.ShowSignals = DisplayOptions.ShowSignals;
         _session.ShowDlzZones = DisplayOptions.ShowDlzZones;
-        _session.ShowFvgZones = DisplayOptions.ShowFvgZones;
+        // ✓ FIXED: ShowFvgZones stored locally in DisplayOptions
+        // _session.ShowFvgZones = DisplayOptions.ShowFvgZones;  // REMOVED - use local property
         _session.ShowDtb = DisplayOptions.ShowDtb;
         _session.ShowPivots = DisplayOptions.ShowPivots;
         _session.ShowBollingerBand = DisplayOptions.ShowBollingerBand;
@@ -375,10 +466,10 @@ public partial class VisualisationViewModel : ObservableObject
         try
         {
             // Hide crosshair cursor
-            if (_verticalLine != null && _horizontalLine != null)
+            if (VerticalLine != null && HorizontalLine != null)
             {
-                _verticalLine.LineStyle = LineStyle.None;
-                _horizontalLine.LineStyle = LineStyle.None;
+                VerticalLine.LineStyle = LineStyle.None;
+                HorizontalLine.LineStyle = LineStyle.None;
             }
 
             _data.Symbol.Data.CalculatingZones = true;
@@ -445,66 +536,85 @@ public partial class VisualisationViewModel : ObservableObject
         CryptoTrendIndicator trendIndicator = TrendInterval.InterpretZigZagPoints(mainIndicator, null);
 
         // Create the chart with crosshairs
-        PlotModel = Visualisation.Chart.Chart.Create(_data.Symbol, _data.Interval, out _horizontalLine, out _verticalLine);
-        PlotModel.Title = $"{_session.SymbolBase}{_session.SymbolQuote} {_data.Interval.Name} UTC " +
+        var newPlotModel = Chart.Chart.Create(_data.Symbol, _data.Interval, out var horizontalLine, out var verticalLine);
+        newPlotModel.Title = $"{_session.SymbolBase}{_session.SymbolQuote} {_data.Interval.Name} UTC " +
             $"{trendIndicator} candles={mainIndicator.CandleCount} points={mainIndicator.ZigZagList.Count}";
 
         // Draw candles
         await ZoneCandleEngine.LoadCandleDataFromDiskAsync(_data.Symbol, _data.Interval);
-        Candles.Draw(PlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate);
+        Candles.Draw(newPlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate);
 
         // Draw trend zigzag
         if (_session.TrendShowZigZag)
-            ZigZag.Draw(PlotModel, mainIndicator.ZigZagList, "maintrend", OxyColors.White, _session.MinDate, _session.MaxDate);
+            ZigZag.Draw(newPlotModel, mainIndicator.ZigZagList, "maintrend", OxyColors.White, _session.MinDate, _session.MaxDate);
 
         // Draw pivots
         if (_session.ShowPivots)
-            Points.Draw(PlotModel, mainIndicator.PivotList, _session.MinDate, _session.MaxDate);
+            Points.Draw(newPlotModel, mainIndicator.PivotList, _session.MinDate, _session.MaxDate);
 
         // Draw double top/bottom
         if (_session.ShowDtb)
-            Dtb.Draw(PlotModel, _data.Interval, mainIndicator);
+            Dtb.Draw(newPlotModel, _data.Interval, mainIndicator);
 
+        // ✓ FIXED: Use local FibSettings properties
         // Draw FIB retracement
-        if (_session.FibShowFib)
-            FibRetracement.Draw(PlotModel, _data.Symbol, _data.Interval, _data.IndicatorList[(_session.FibIndicator, true)]);
+        if (FibSettings.ShowFib)
+            FibRetracement.Draw(newPlotModel, _data.Symbol, _data.Interval,
+                _data.IndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)]);
 
         // Draw FIB zigzag
-        if (_session.FibShowZigZag)
-            ZigZag.Draw(PlotModel, _data.IndicatorList[(_session.FibIndicator, true)].ZigZagList,
+        if (FibSettings.ShowZigZag)
+            ZigZag.Draw(newPlotModel,
+                _data.IndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)].ZigZagList,
                 "fib", OxyColors.White, _session.MinDate, _session.MaxDate);
 
         // Draw DLZ zones
         if (_session.ShowDlzZones)
-            DlzZones.Draw(PlotModel, _data.Symbol, _session.MinDate, _session.MaxDate);
+            DlzZones.Draw(newPlotModel, _data.Symbol, _session.MinDate, _session.MaxDate);
 
+        // ✓ FIXED: Use local DisplayOptions property
         // Draw FVG zones
-        if (_session.ShowFvgZones)
-            FvgZones.Draw(PlotModel, _data.Symbol, _session.MinDate, _session.MaxDate);
+        if (DisplayOptions.ShowFvgZones)
+            Chart.FvgZones.Draw(newPlotModel, _data.Symbol, _session.MinDate, _session.MaxDate);
 
         // Draw signals
         if (_session.ShowSignals)
-            Signals.Draw(PlotModel, _data.Signals, _session.MinDate, _session.MaxDate);
+            Signals.Draw(newPlotModel, _data.Signals, _session.MinDate, _session.MaxDate);
 
         // Draw Nadaraya Watson Envelope
         if (_session.ShowNadarayaWatsonEnvelope)
-            NadarayaWatsonEnvelope.Draw(PlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate,
+            NadarayaWatsonEnvelope.Draw(newPlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate,
                 _session.ShowNadarayaWatsonEnvelopeRepainting);
 
         // Draw Bollinger Bands
         if (_session.ShowBollingerBand)
-            Bollingerbands.Draw(PlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate);
+            Bollingerbands.Draw(newPlotModel, _data.Symbol, _data.Interval, _session.MinDate, _session.MaxDate);
 
         // Draw SMA lines
         if (_session.ShowSmaLinesSbm)
         {
-            Sma.Draw(PlotModel, _data.Symbol, _data.Interval, 200, OxyColors.Red, _session.MinDate, _session.MaxDate);
-            Sma.Draw(PlotModel, _data.Symbol, _data.Interval, 50, OxyColors.Orange, _session.MinDate, _session.MaxDate);
-            Sma.Draw(PlotModel, _data.Symbol, _data.Interval, 20, OxyColors.Green, _session.MinDate, _session.MaxDate);
+            Sma.Draw(newPlotModel, _data.Symbol, _data.Interval, 200, OxyColors.Red, _session.MinDate, _session.MaxDate);
+            Sma.Draw(newPlotModel, _data.Symbol, _data.Interval, 50, OxyColors.Orange, _session.MinDate, _session.MaxDate);
+            Sma.Draw(newPlotModel, _data.Symbol, _data.Interval, 20, OxyColors.Green, _session.MinDate, _session.MaxDate);
         }
 
-        RefreshPlot();
+        //RefreshPlot();
+        PlotModel = newPlotModel;
+
+        //await RenderChartToImage();
     }
+
+    //public async Task RenderChartToImage()
+    //{
+    //    var pngExporter = new OxyPlot.PngExporter { Width = 1200, Height = 800 };
+    //    using var stream = new MemoryStream();
+    //    pngExporter.Export(PlotModel, stream);
+    //    stream.Position = 0;
+
+    //    // Convert to Avalonia Bitmap
+    //    var bitmap = new Avalonia.Media.Imaging.Bitmap(stream);
+    //    OnPropertyChanged(nameof(ChartBitmap)); // Bind to Image
+    //}
 
     private void RefreshPlot()
     {
@@ -516,10 +626,61 @@ public partial class VisualisationViewModel : ObservableObject
         WindowTitle = text;
     }
 
+    // Helper method for View to update crosshair and subtitle
+    public void UpdateCrosshair(double x, double y)
+    {
+        if (_data == null || VerticalLine == null || HorizontalLine == null)
+            return;
+
+        var symbolInterval = _data.Symbol.GetSymbolInterval(_session.ActiveInterval);
+        long unix = (long)x + symbolInterval.Interval.Duration / 2;
+        unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
+
+        if (unix < 0)
+            return;
+
+        try
+        {
+            // Update crosshair coordinates
+            VerticalLine.X = unix;
+            HorizontalLine.Y = y;
+            VerticalLine.LineStyle = LineStyle.DashDot;
+            HorizontalLine.LineStyle = LineStyle.DashDot;
+
+            string subtitle;
+            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+            {
+                subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
+                subtitle += $" (O: {candle.Open.ToString(_data.Symbol.PriceDisplayFormat)}";
+                subtitle += $" H: {candle.High.ToString(_data.Symbol.PriceDisplayFormat)}";
+                subtitle += $" L: {candle.Low.ToString(_data.Symbol.PriceDisplayFormat)}";
+                subtitle += $" C: {candle.Close.ToString(_data.Symbol.PriceDisplayFormat)}";
+                subtitle += $" V: {candle.Volume.ToString0()})";
+            }
+            else
+            {
+                DateTime date = CandleTools.GetUnixDate(unix);
+                subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
+            }
+
+            PlotModel.Subtitle = subtitle;
+            PlaybackControls.UpdateIntervalDisplay(_session.ActiveInterval.ToString());
+            PlotModel.InvalidatePlot(true);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Info("UpdateCrosshair.Error " + error.ToString());
+        }
+    }
+
     #endregion
 
     public void OnClosing()
     {
         SaveSession();
     }
+
+    // Expose data for View access
+    public ZoneConfig? Data => _data;
+    public ZoneSession Session => _session;
 }
