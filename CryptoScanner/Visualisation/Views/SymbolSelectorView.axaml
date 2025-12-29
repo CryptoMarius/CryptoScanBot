@@ -7,9 +7,9 @@
              x:DataType="vm:SymbolSelectorViewModel"
              x:Class="CryptoScanner.Visualisation.Views.SymbolSelectorView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Symbol">
-        <StackPanel Margin="4" >
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" >
+    <HeaderedContentControl Classes="groupbox" Header="Symbol" Padding="4">
+        <StackPanel >
+            <Grid ColumnDefinitions="Auto,80" RowDefinitions="Auto,Auto,Auto" Margin="4" Grid.RowSpacing="2">
                 <!-- Quote Base -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Base:" VerticalAlignment="Center" 
                            Margin="0,0,8,0" FontSize="12" Width="50"/>

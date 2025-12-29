@@ -1,3 +1,6 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -17,7 +20,7 @@ namespace CryptoScanner.ZoneVisualisation;
 
 public delegate object? GetNextObject(object? current, int direction = 1);
 
-public partial class CryptoVisualisation : Form
+public partial class CryptoVisualisation : Window
 {
     private PlotModel? plotModel;
     private LineAnnotation? verticalLine;
@@ -37,10 +40,10 @@ public partial class CryptoVisualisation : Form
 
     public CryptoVisualisation()
     {
-        StartPosition = FormStartPosition.CenterParent;
+        //StartPosition = FormStartPosition.CenterParent;
         InitializeComponent();
 
-        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        //Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         if (GlobalData.IntervalList.Count == 0)
             InitializeStandAloneStuff();
@@ -61,7 +64,7 @@ public partial class CryptoVisualisation : Form
         ButtonZoomLast.Click += ButtonFocusLastCandlesClick;
         EditTransparant.Click += TransparentClick;
         ButtonOpenTradingApp.Click += ButtonOpenTradingAppClick;
-        plotView.MouseMove += PlotView_MouseMove;
+        plotView.PointerMoved += PlotView_PointerMoved;
         KeyDown += FormKeyDown;
         KeyPreview = true;
 
@@ -210,26 +213,27 @@ public partial class CryptoVisualisation : Form
     {
         if (EditTransparant.Checked)
         {
-            BackColor = Color.Lime;
-            TransparencyKey = Color.Lime;
-            plotView.BackColor = Color.Lime;
+            //BackColor = Color.Lime;
+            //TransparencyKey = Color.Lime;
+            //plotView.BackColor = Color.Lime;
         }
         else
         {
-            BackColor = SystemColors.Control;
-            TransparencyKey = Color.Lime;
-            plotView.BackColor = Color.Black;
+            //BackColor = SystemColors.Control;
+            //TransparencyKey = Color.Lime;
+            //plotView.BackColor = Color.Black;
         }
         flowLayoutPanel1.BackColor = SystemColors.Control;
     }
 
 
-    private void PlotView_MouseMove(object? sender, MouseEventArgs e)
+    private void PlotView_PointerMoved(object? sender, PointerEventArgs e)
     {
         if (Data != null && horizontalLine != null && verticalLine != null) // exception on drawing annotations? whats wrong?
         {
             var model = plotView.Model;
-            var screenPoint = new ScreenPoint(e.X, e.Y);
+            var position = e.GetPosition(plotView);
+            var screenPoint = new ScreenPoint(position.X, position.Y);
             double x = model.Axes[0].InverseTransform(screenPoint.X);
             double y = model.Axes[1].InverseTransform(screenPoint.Y);
 
@@ -816,10 +820,10 @@ public partial class CryptoVisualisation : Form
         labelInterval.Text = Session.ActiveInterval.ToString();
         labelMaxTime.Text = CandleTools.GetUnixDate(Session.MaxDate).ToLocalTime().ToString("dd MMM HH:mm");
 
-        UseWaitCursor = true;
+        //UseWaitCursor = true;
         ButtonZoomLast.Enabled = false;
         ButtonCalculate.Enabled = false;
-        Cursor.Current = Cursors.WaitCursor;
+        //Cursor.Current = Cursors.WaitCursor;
         try
         {
             try
@@ -842,8 +846,8 @@ public partial class CryptoVisualisation : Form
         {
             ButtonZoomLast.Enabled = true;
             ButtonCalculate.Enabled = true;
-            Cursor.Current = Cursors.Default;
-            UseWaitCursor = false;
+            //Cursor.Current = Cursors.Default;
+            //UseWaitCursor = false;
         }
     }
 

@@ -21,6 +21,10 @@ public class PriceTextConverter : IValueConverter
             decimal price = liveDataInfo.Price;
             return price.ToString0(liveDataInfo.LiveDataObject.Symbol.PriceDisplayFormat);
         }
+        else if (value is decimal valueDecimal)
+        {
+            return valueDecimal.ToString0("N2");
+        }
         return "?";
     }
 

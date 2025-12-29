@@ -30,9 +30,6 @@
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 	
-	<ItemGroup>
-	  <Compile Remove="Signal\Common\ExtendedColumnDefinitionInfo.cs" />
-	</ItemGroup>
 
 	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
 		<DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
@@ -51,12 +48,11 @@
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.10" />
 		<PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
 		<PackageReference Include="CefGlue.Common" Version="120.6099.211" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-		<PackageReference Include="SkiaSharp" Version="3.119.1" />
-		<PackageReference Include="OxyPlot.Core" Version="2.1.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 	</ItemGroup>
 

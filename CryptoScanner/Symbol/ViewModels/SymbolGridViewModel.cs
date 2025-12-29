@@ -14,7 +14,7 @@ using CryptoScanner.Symbol.Model;
 
 namespace CryptoScanner.Symbol.ViewModels;
 
-public partial class SymbolGridViewModel : ObservableObject
+public partial class SymbolGridViewModel : ObservableObjectWithOwner
 {
     /// <summary>
     /// Collection of signals to display in the grid

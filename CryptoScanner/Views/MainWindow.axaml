@@ -8,6 +8,7 @@
         xmlns:browser="using:CryptoScanner.Browser.Views"
         xmlns:symbol="using:CryptoScanner.Symbol.Views"
         xmlns:signal="using:CryptoScanner.Signal.Views"
+        xmlns:livedata="using:CryptoScanner.LiveData.Views"
         xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
         xmlns:vm="using:CryptoScanner.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
@@ -22,7 +23,7 @@
 		<!-- Custom titlebar overlay on top of system chrome -->
 		<Grid DockPanel.Dock="Top" Height="38">
 			<!-- Background layer: fully transparent to hit testing → allows system chrome to handle dragging -->
-			<Border Background="#22FFFFFF" IsHitTestVisible="False"/>
+			<Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" IsHitTestVisible="False"/>
 
 			<!-- Titlebar content (on top of the background) -->
 			<Grid ColumnDefinitions="Auto,Auto,*,Auto">
@@ -69,7 +70,7 @@
 				</Panel>
 			</Grid>
 
-			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
+			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Height="1" Margin="0,0"/>
 
 			<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
 
@@ -90,7 +91,7 @@
 				<!-- Splitter between symbols and the signals -->
 				<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
 
-				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
+				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Width="1" Margin="0,0,0,2"/>
 
 				<!-- Main screen -->
 				<Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
@@ -108,7 +109,7 @@
 							</Panel>
 						</TabItem>
 						<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<TextBlock Margin="0">This is content</TextBlock>
+							<livedata:LiveDataGridView DataContext="{Binding LiveDataGridViewModel}"/>
 						</TabItem>
 						<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 							<TextBlock Margin="5">This is content</TextBlock>

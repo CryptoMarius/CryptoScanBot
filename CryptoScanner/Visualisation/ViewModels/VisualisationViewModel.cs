@@ -71,103 +71,196 @@ public partial class VisualisationViewModel : ObservableObject
         _displayOptions = new DisplayOptionsViewModel();
         _playbackControls = new PlaybackControlsViewModel();
 
-        // Initialize plot
-        _plotModel = new PlotModel { Title = "Chart" };
+        //Initialize plot
+        _plotModel = new PlotModel { Title = "Chart 1.2.3." };
 
-        //InitializePlot();
+        InitializePlot();
 
-        //// Subscribe to changes from sub-ViewModels
-        //SymbolSelector.PropertyChanged += OnSymbolChanged;
-        //TrendSettings.PropertyChanged += OnTrendSettingsChanged;
-        //FibSettings.PropertyChanged += OnFibSettingsChanged;
-        //DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
-        //PlaybackControls.PlaybackRequested += OnPlaybackRequested;
+        // Subscribe to changes from sub-ViewModels
+        SymbolSelector.PropertyChanged += OnSymbolChanged;
+        TrendSettings.PropertyChanged += OnTrendSettingsChanged;
+        FibSettings.PropertyChanged += OnFibSettingsChanged;
+        DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
+        PlaybackControls.PlaybackRequested += OnPlaybackRequested;
 
-        //// Load session
-        //LoadSession();
+        // Load session
+        LoadSession();
 
-        CreateTestChart();
+        //PlotModel  = CreateTestChart();
+        //PlotModel = CreatePlotModel();
+        System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
     }
 
-    // In CreateTestChart():
-    public void CreateTestChart()
-    {
-        var testModel = new PlotModel
-        {
-            Title = "TEST CHART",
-            // ✓ PROBEER VERSCHILLENDE BACKGROUNDS:
-            Background = OxyColors.DarkGray,  // Niet wit/zwart
-            PlotAreaBackground = OxyColors.LightGray,
-            PlotAreaBorderColor = OxyColors.Black,
-            PlotAreaBorderThickness = new OxyThickness(2),
-            TextColor = OxyColors.Black
-        };
+    //private PlotModel CreatePlotModel()
+    //{
+    //    var model = new PlotModel
+    //    {
+    //        Title = "Voorbeeld Grafiek",
+    //        Subtitle = "Lijn- en puntgrafiek"
+    //    };
 
-        var xAxis = new LinearAxis
-        {
-            Position = AxisPosition.Bottom,
-            Minimum = -1,
-            Maximum = 5,
-            MajorGridlineStyle = LineStyle.Solid,
-            MajorGridlineColor = OxyColors.Gray
-        };
-        var yAxis = new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            Minimum = -1,
-            Maximum = 10,
-            MajorGridlineStyle = LineStyle.Solid,
-            MajorGridlineColor = OxyColors.Gray
-        };
+    //    // X-as configureren
+    //    model.Axes.Add(new LinearAxis
+    //    {
+    //        Position = AxisPosition.Bottom,
+    //        Title = "X-waarde",
+    //        MajorGridlineStyle = LineStyle.Solid,
+    //        MinorGridlineStyle = LineStyle.Dot
+    //    });
 
-        testModel.Axes.Add(xAxis);
-        testModel.Axes.Add(yAxis);
+    //    // Y-as configureren
+    //    model.Axes.Add(new LinearAxis
+    //    {
+    //        Position = AxisPosition.Left,
+    //        Title = "Y-waarde",
+    //        MajorGridlineStyle = LineStyle.Solid,
+    //        MinorGridlineStyle = LineStyle.Dot
+    //    });
 
-        var series = new LineSeries
-        {
-            Color = OxyColors.Yellow,
-            StrokeThickness = 5,  // ✓ DIKKER
-            LineStyle = LineStyle.Solid
-        };
-        series.Points.Add(new DataPoint(0, 0));
-        series.Points.Add(new DataPoint(1, 1));
-        series.Points.Add(new DataPoint(2, 4));
-        series.Points.Add(new DataPoint(3, 9));
+    //    // Lijngrafiek toevoegen
+    //    var lineSeries = new LineSeries
+    //    {
+    //        Title = "Sinusgolf",
+    //        Color = OxyColors.Blue,
+    //        StrokeThickness = 2,
+    //        MarkerType = MarkerType.Circle,
+    //        MarkerSize = 4,
+    //        MarkerFill = OxyColors.Blue
+    //    };
 
-        testModel.Series.Add(series);
+    //    // Data punten genereren voor sinusgolf
+    //    for (double x = 0; x <= 10; x += 0.5)
+    //    {
+    //        lineSeries.Points.Add(new DataPoint(x, Math.Sin(x)));
+    //    }
 
-        PlotModel = testModel;
-    }
+    //    model.Series.Add(lineSeries);
 
-    public void CreateTestChart2()
-    {
-        var testModel = new PlotModel
-        {
-            Title = "TEST CHART",
-            Background = OxyColors.White,
-            TextColor = OxyColors.Black
-        };
+    //    // Scatter plot toevoegen
+    //    var scatterSeries = new ScatterSeries
+    //    {
+    //        Title = "Random Punten",
+    //        MarkerType = MarkerType.Diamond,
+    //        MarkerSize = 6,
+    //        MarkerFill = OxyColors.Red
+    //    };
 
-        testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
-        testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left });
+    //    // Random punten genereren
+    //    var random = new Random(42);
+    //    for (int i = 0; i < 15; i++)
+    //    {
+    //        double x = random.NextDouble() * 10;
+    //        double y = random.NextDouble() * 2 - 1;
+    //        scatterSeries.Points.Add(new ScatterPoint(x, y));
+    //    }
 
-        var series = new LineSeries
-        {
-            Color = OxyColors.Red,
-            StrokeThickness = 3
-        };
-        series.Points.Add(new DataPoint(0, 0));
-        series.Points.Add(new DataPoint(1, 1));
-        series.Points.Add(new DataPoint(2, 4));
-        series.Points.Add(new DataPoint(3, 9));
-        series.Points.Add(new DataPoint(100, 100));
+    //    model.Series.Add(scatterSeries);
 
-        testModel.Series.Add(series);
+    //    // Legenda configureren (OxyPlot 2.1.0+ gebruikt Legends collectie)
+    //    model.Legends.Add(new OxyPlot.Legends.Legend
+    //    {
+    //        LegendTitle = "Series",
+    //        LegendPosition = OxyPlot.Legends.LegendPosition.RightTop
+    //    });
 
-        PlotModel = testModel;
+    //    System.Diagnostics.Debug.WriteLine($"VisualisationViewModel some graphics created");
 
-        Debug.WriteLine($"Test chart - Series: {PlotModel.Series.Count}, Points: {series.Points.Count}");
-    }
+    //    return model;
+    //}
+
+    //// In CreateTestChart():
+    //public PlotModel CreateTestChart()
+    //{
+    //    var testModel = new PlotModel
+    //    {
+    //        Title = "TEST CHART",
+    //        // ✓ PROBEER VERSCHILLENDE BACKGROUNDS:
+    //        Background = OxyColors.DarkGray,  // Niet wit/zwart
+    //        PlotAreaBackground = OxyColors.LightGray,
+    //        PlotAreaBorderColor = OxyColors.Black,
+    //        PlotAreaBorderThickness = new OxyThickness(2),
+    //        TextColor = OxyColors.Black
+    //    };
+
+    //    var xAxis = new LinearAxis
+    //    {
+    //        Position = AxisPosition.Bottom,
+    //        Minimum = -1,
+    //        Maximum = 5,
+    //        MajorGridlineStyle = LineStyle.Solid,
+    //        MajorGridlineColor = OxyColors.Gray
+    //    };
+    //    var yAxis = new LinearAxis
+    //    {
+    //        Position = AxisPosition.Left,
+    //        Minimum = -1,
+    //        Maximum = 10,
+    //        MajorGridlineStyle = LineStyle.Solid,
+    //        MajorGridlineColor = OxyColors.Gray
+    //    };
+
+    //    testModel.Axes.Add(xAxis);
+    //    testModel.Axes.Add(yAxis);
+
+    //    var series = new LineSeries
+    //    {
+    //        Color = OxyColors.Yellow,
+    //        StrokeThickness = 5,  // ✓ DIKKER
+    //        LineStyle = LineStyle.Solid
+    //    };
+    //    series.Points.Add(new DataPoint(0, 0));
+    //    series.Points.Add(new DataPoint(1, 1));
+    //    series.Points.Add(new DataPoint(2, 4));
+    //    series.Points.Add(new DataPoint(3, 9));
+    //    testModel.Series.Add(series);
+
+
+
+    //    var series2 = new LineSeries
+    //    {
+    //        Color = OxyColors.White,
+    //        StrokeThickness = 5,  // ✓ DIKKER
+    //        LineStyle = LineStyle.Solid
+    //    };
+    //    series2.Points.Add(new DataPoint(5, 0));
+    //    series2.Points.Add(new DataPoint(4, 1));
+    //    series2.Points.Add(new DataPoint(3, 4));
+    //    series2.Points.Add(new DataPoint(2, 9));
+    //    testModel.Series.Add(series2);
+
+
+    //    return testModel;
+    //}
+
+    ////public void CreateTestChart2()
+    ////{
+    ////    var testModel = new PlotModel
+    ////    {
+    ////        Title = "TEST CHART",
+    ////        Background = OxyColors.White,
+    ////        TextColor = OxyColors.Black
+    ////    };
+
+    ////    testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
+    ////    testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left });
+
+    ////    var series = new LineSeries
+    ////    {
+    ////        Color = OxyColors.Red,
+    ////        StrokeThickness = 3
+    ////    };
+    ////    series.Points.Add(new DataPoint(0, 0));
+    ////    series.Points.Add(new DataPoint(1, 1));
+    ////    series.Points.Add(new DataPoint(2, 4));
+    ////    series.Points.Add(new DataPoint(3, 9));
+    ////    series.Points.Add(new DataPoint(100, 100));
+
+    ////    testModel.Series.Add(series);
+
+    ////    PlotModel = testModel;
+
+    ////    Debug.WriteLine($"Test chart - Series: {PlotModel.Series.Count}, Points: {series.Points.Count}");
+    ////}
 
     private void InitializePlot()
     {

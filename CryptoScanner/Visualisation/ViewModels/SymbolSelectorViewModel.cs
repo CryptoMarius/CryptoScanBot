@@ -44,18 +44,18 @@ public partial class SymbolSelectorViewModel : ObservableObject
         {
             foreach (var symbol in exchange.SymbolListName.Values.OrderBy(x => x.Base))
             {
-                if (!BaseSymbols.Contains(symbol.Base))
+                if (symbol.QuoteData.FetchCandles)
                     BaseSymbols.Add(symbol.Base);
             }
         }
 
         // Quote symbols
         QuoteSymbols.Clear();
-        QuoteSymbols.Add("USDT");
-        QuoteSymbols.Add("BUSD");
-        QuoteSymbols.Add("BTC");
-        QuoteSymbols.Add("ETH");
-        QuoteSymbols.Add("BNB");
+        foreach (var quoteData in GlobalData.Settings.QuoteCoins.Values.OrderBy(x => x.Name))
+        {
+            if (quoteData.FetchCandles)
+                QuoteSymbols.Add(quoteData.Name);
+        }
     }
 
     private void InitializeIntervals()

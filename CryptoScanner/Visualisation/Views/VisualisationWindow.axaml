@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:skia="using:SkiaSharp.Views.Avalonia"
+        xmlns:oxy="http://oxyplot.org/avalonia"
         xmlns:vm="using:CryptoScanner.Visualisation.ViewModels"
         xmlns:views="using:CryptoScanner.Visualisation.Views"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="950"
@@ -14,15 +14,15 @@
     <Grid ColumnDefinitions="220,*" RowDefinitions="*">
         
         <!-- Left Panel - Controls -->
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="8" Spacing="2">
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="220">
+            <StackPanel Margin="8,0,0,2" Spacing="2">
                 
                 <!-- Symbol Selector -->
                 <views:SymbolSelectorView DataContext="{Binding SymbolSelector}"/>
 
                 <!-- Trend Settings -->
                 <HeaderedContentControl Classes="groupbox" Header="Trend">
-                    <StackPanel Margin="4" >
+                    <StackPanel Margin="4,8,0,2" >
                         <ComboBox SelectedIndex="{Binding TrendSettings.TrendType, Mode=TwoWay}"
                                   FontSize="12">
                             <ComboBoxItem Content="Primary trend"/>
@@ -133,10 +133,11 @@
             </StackPanel>
         </ScrollViewer>
 
-    </Grid>
         <!-- Right Panel - Chart -->
-        <Border x:Name="ChartBorder" Grid.Column="1" Background="White" BorderBrush="Black" BorderThickness="2" Margin="8">
-            <skia:SKCanvasView x:Name="SkiaCanvas" PaintSurface="OnPaintSurface"/>
+        <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumBrush2}"
+                BorderThickness="1" Margin="8">
+            <oxy:PlotView x:Name="PlotViewControl" Model="{Binding PlotModel}" 
+                          Background="{DynamicResource SystemControlBackgroundChromeMediumBrush2}"/>
         </Border>
     </Grid>
     

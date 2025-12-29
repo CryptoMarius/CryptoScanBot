@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CryptoScanner.Browser.ViewModels;
 using CryptoScanner.Browser.Views;
 using CryptoScanner.DashBoard.ViewModels;
+using CryptoScanner.LiveData.ViewModels;
 using CryptoScanner.Log.ViewModels;
 using CryptoScanner.Services;
 using CryptoScanner.Settings.Views;
@@ -19,6 +20,7 @@ public partial class MainWindowViewModel : ObservableObject
     public required DashBoardViewModel DashBoardViewModel { get; set; }
     public required SymbolGridViewModel SymbolGridViewModel { get; set; }
     public required SignalGridViewModel SignalGridViewModel { get; set; }
+    public required LiveDataGridViewModel LiveDataGridViewModel { get; set; }
     public required BrowserViewModel BrowserViewModel { get; set; }
     public required LogViewModel LogViewModel { get; set; }
 
@@ -44,6 +46,7 @@ public partial class MainWindowViewModel : ObservableObject
         DashBoardViewModel dashBoardViewModel,
         SymbolGridViewModel symbolGridViewModel,
         SignalGridViewModel signalGridViewModel,
+        LiveDataGridViewModel liveDataGridViewModel,
         BrowserViewModel browserViewModel,
         LogViewModel logViewModel)
     {
@@ -51,6 +54,7 @@ public partial class MainWindowViewModel : ObservableObject
         DashBoardViewModel = dashBoardViewModel;
         SymbolGridViewModel = symbolGridViewModel;
         SignalGridViewModel = signalGridViewModel;
+        LiveDataGridViewModel = liveDataGridViewModel;
         BrowserViewModel = browserViewModel;
         LogViewModel = logViewModel;
 
@@ -60,6 +64,7 @@ public partial class MainWindowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"DashBoardViewModel: {DashBoardViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"SymbolGridViewModel: {SymbolGridViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"SignalGridViewModel: {SignalGridViewModel != null}");
+        System.Diagnostics.Debug.WriteLine($"LiveDataGridViewModel: {LiveDataGridViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"BrowserViewModel: {BrowserViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"LogViewModel: {LogViewModel != null}");
         System.Diagnostics.Debug.WriteLine($"Symbols count: {SymbolGridViewModel?.Symbols?.Count ?? 0}");
@@ -68,7 +73,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Subscribe to SignalGrid events
         SignalGridViewModel!.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
 
-        // TODO: Not happy with this (multiple boolean's, bleh)
+        // TODO: Is there a better way
         AnalyzerActive = ApplicationStateService.AnalyzerActive;
         TraderActive = ApplicationStateService.TraderActive;
         SoundsActive = ApplicationStateService.SoundsActive;

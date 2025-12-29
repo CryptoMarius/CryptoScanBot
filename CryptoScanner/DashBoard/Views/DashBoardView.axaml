@@ -104,7 +104,7 @@
         <StackPanel Grid.Column="6" Margin="10,0,2,0" MinWidth="180">
             <TextBlock Text="Market Indicators" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,80">
                 
                 <!-- Market Cap Total -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
@@ -144,19 +144,19 @@
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="7" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
+        <Border Grid.Column="7" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Width="1" Margin="10,0"/>
 
         <!-- Column=6 Right Section: Crypto Prices -->
         <StackPanel Grid.Column="8" Margin="10,0,2,0" MinWidth="180">
             <TextBlock Text="Crypto Prices" FontWeight="Bold" FontSize="16" Margin="0,0,0,2"/>
             
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,80,80">
                 
                 <!-- Bitcoin -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label"
                            Text="Bitcoin (BTC)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
-                           Foreground="{Binding BtcUsdt.Color}"
+                           Foreground="{Binding BtcUsdt.Color}" 
                            Text="{Binding BtcUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="value"
                            Text="{Binding BtcUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -165,7 +165,7 @@
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label"
                            Text="Ethereum (ETH)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
-                           Foreground="{Binding EthUsdt.Color}"
+                           Foreground="{Binding EthUsdt.Color}" 
                            Text="{Binding EthUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="value"
                            Text="{Binding EthUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -174,7 +174,7 @@
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="label"
                            Text="BNB" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
-                           Foreground="{Binding BnbUsdt.Color}"
+                           Foreground="{Binding BnbUsdt.Color}" 
                            Text="{Binding BnbUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="2" Grid.Column="2" Classes="value"
                            Text="{Binding BnbUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -183,7 +183,7 @@
                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="label"
                            Text="Solana (SOL)" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
-                           Foreground="{Binding SolUsdt.Color}"
+                           Foreground="{Binding SolUsdt.Color}" 
                            Text="{Binding SolUsdt.Price, Converter={StaticResource PriceTextConverter}}" MinWidth="50"/>
                 <TextBlock Grid.Row="3" Grid.Column="2" Classes="value"
                            Text="{Binding SolUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -192,7 +192,7 @@
                 <TextBlock Grid.Row="4" Grid.Column="0" Classes="label"
                            Text="XRP" Tapped="OnSymbolTapped"/>
                 <TextBlock Grid.Row="4" Grid.Column="1" Classes="value"
-                           Foreground="{Binding XrpUsdt.Color}"
+                           Foreground="{Binding XrpUsdt.Color}" 
                            Text="{Binding XrpUsdt.Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"/>
                 <TextBlock Grid.Row="4" Grid.Column="2" Classes="value"
                            Text="{Binding XrpUsdt.Volume, Converter={StaticResource LargeNumberConverter}}" />
@@ -201,7 +201,7 @@
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="9" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
+        <Border Grid.Column="9" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Width="1" Margin="10,0"/>
 
         
         <!-- Tickers -->
@@ -231,6 +231,6 @@
         </StackPanel>
 
         <!-- Separator -->
-        <Border Grid.Column="11" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
+        <Border Grid.Column="11" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Width="1" Margin="10,0"/>
     </Grid>
 </UserControl>

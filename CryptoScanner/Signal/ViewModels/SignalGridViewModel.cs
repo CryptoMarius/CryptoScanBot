@@ -16,14 +16,9 @@ using CryptoScanner.Visualisation.Views;
 
 namespace CryptoScanner.Signal.ViewModels;
 
-public partial class SignalGridViewModel : ObservableObject
+public partial class SignalGridViewModel : ObservableObjectWithOwner
 {
     private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(1000) };
-    private Window? _owner;
-    public void SetOwner(Window owner)
-    {
-        _owner = owner;
-    }
 
     [ObservableProperty]
     private ObservableRangeCollection<SignalInfo> _signals = [];
@@ -63,7 +58,7 @@ public partial class SignalGridViewModel : ObservableObject
             {
                 try
                 {
-                    List<SignalInfo> newSignals = [];
+                    List<SignalInfo> signalList = [];
                     while (GlobalData.SignalQueue.Count > 0)
                     {
                         CryptoSignal signal = GlobalData.SignalQueue.Dequeue();
@@ -73,20 +68,20 @@ public partial class SignalGridViewModel : ObservableObject
                             {
                                 SignalObject = signal,
                             };
-                            newSignals.Add(s);
+                            signalList.Add(s);
                         }
                     }
 
-                    if (newSignals.Count == 1)
+                    if (signalList.Count == 1)
                     {
-                        RequestSortedInsert?.Invoke(this, newSignals[0]);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {newSignals.Count} signal via binsearch");
+                        RequestSortedInsert?.Invoke(this, signalList[0]);
+                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signal via binsearch");
                     }
                     else
                     {
-                        Signals.AddRange(newSignals);
+                        Signals.AddRange(signalList);
                         RequestSort?.Invoke(this, EventArgs.Empty);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {newSignals.Count} signals via complete sort");
+                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signals via complete sort");
                     }
 
                 }
@@ -324,7 +319,7 @@ public partial class SignalGridViewModel : ObservableObject
         vm.SymbolSelector.SelectedBase = symbol.Base;
         vm.SymbolSelector.SelectedQuote = symbol.Quote;
         vm.SymbolSelector.SelectedInterval = interval.Name;
-        var window = new VisualisationWindow { 
+        var window = new VisualisationWindow {
             DataContext = vm,
             CanResize = true,
             Title = "Chart form",
@@ -332,7 +327,7 @@ public partial class SignalGridViewModel : ObservableObject
         };
 
         // Hacky, needs work...
-        await window.ShowDialog(_owner!);
+        window.Show(_owner!);
         //await DialogService.ShowDialogAsync<VisualisationWindow>(window);
 
 

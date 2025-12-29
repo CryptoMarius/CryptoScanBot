@@ -21,12 +21,8 @@
         </StackPanel>
 
         <!-- Log display met virtualisatie -->
-        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                BorderThickness="1"
-                Margin="4">
-            <ScrollViewer x:Name="LogScrollViewer"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Auto">
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="4">
+            <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding LogLines}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
