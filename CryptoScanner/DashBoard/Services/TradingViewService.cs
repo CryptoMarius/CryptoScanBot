@@ -1,6 +1,4 @@
-﻿using Avalonia.Threading;
-
-using CryptoScanner.DashBoard.TradingView;
+﻿using CryptoScanner.DashBoard.TradingView;
 
 namespace CryptoScanner.DashBoard.Services;
 
@@ -49,7 +47,6 @@ public class TradingViewService : ITradingViewService, IDisposable
 
     public void Start()
     {
-        return;
         lock (_lock)
         {
             if (_isRunning)
