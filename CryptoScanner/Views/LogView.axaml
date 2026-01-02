@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="CryptoScanner.Views.LogView"
+             xmlns:vm="using:CryptoScanner.ViewModels"
+             x:DataType="vm:LogViewModel">
+
+    <DockPanel>
+        <!-- Toolbar bovenaan -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4" Spacing="8">
+            <Button Content="Clear Log" Command="{Binding ClearLogCommand}"/>
+            
+            <Separator Width="1" Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            
+            <TextBlock Text="Lines:" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding LogLines.Count}" VerticalAlignment="Center" FontWeight="Bold"/>
+            
+            <CheckBox Content="Auto-scroll" IsChecked="{Binding AutoScroll}" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Log display met virtualisatie -->
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="4">
+            <ScrollViewer x:Name="LogScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding LogLines}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                                       <!-- FontFamily="Consolas,Courier New" -->
+                            <SelectableTextBlock Text="{Binding}" TextWrapping="NoWrap"
+                                SelectionBrush="{DynamicResource SystemAccentColorLight1}"
+                                SelectionForegroundBrush="{DynamicResource SystemControlForegroundChromeWhiteBrush}"
+                                FontSize="13" Margin="2,0" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </DockPanel>
+</UserControl>

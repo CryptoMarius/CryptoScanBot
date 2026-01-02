@@ -1,0 +1,54 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Model;
+
+
+namespace CryptoScanner.ViewModels;
+
+public partial class SymbolGridViewModel : ObservableObject
+{
+    /// <summary>
+    /// Collection of signals to display in the grid
+    /// </summary>
+    [ObservableProperty]
+    private ObservableRangeCollection<SymbolViewModel> _symbols = [];
+
+    public SymbolGridViewModel()
+    {
+        System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
+        GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
+        SymbolsHaveChangedEvent("");
+    }
+
+
+    public event EventHandler<SymbolViewModel>? RequestSortedInsert;
+    public event EventHandler? RequestSort;
+
+
+    private void SymbolsHaveChangedEvent(string text)
+    {
+        // Laad symbols direct in de observable collection
+        List<SymbolViewModel> symbols = [];
+        foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
+        {
+            if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+            {
+                symbols.Add(new SymbolViewModel
+                {
+                    Object = symbol,
+                    Id = symbol.Id,
+                    Symbol = symbol.Name,
+                    Volume = symbol.Volume,
+                    Distance = 0.0
+                });
+            }
+        }
+        Symbols.AddRange(symbols);
+    }
+
+
+}

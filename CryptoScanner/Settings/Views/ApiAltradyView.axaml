@@ -12,38 +12,18 @@
             
             <!-- API Key -->
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="API key:" 
-                           VerticalAlignment="Center" 
-                           Margin="0,0,12,0" FontSize="12" Width="80"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding Key, Mode=TwoWay}" 
-                         PasswordChar="*"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
-                         Width="230" HorizontalAlignment="Left"/>
-                <TextBlock Grid.Column="2" 
-                           Text="{Binding KeyDisplay}" 
-                           VerticalAlignment="Center"
-                           Margin="12,0,0,0"
-                           FontSize="12"
-                           Foreground="Gray"/>
+                <TextBlock Grid.Column="0" Text="API key:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12" Width="80"/>
+                <TextBox Grid.Column="1" Text="{Binding Key, Mode=TwoWay}" PasswordChar="*" Height="26" Width="230" 
+                         FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Column="2" Text="{Binding KeyDisplay}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
             </Grid>
 
             <!-- API Secret -->
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="API secret:" 
-                           VerticalAlignment="Center" 
-                           Margin="0,0,12,0" FontSize="12" Width="80"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding Secret, Mode=TwoWay}" 
-                         PasswordChar="*"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
-                         Width="230" HorizontalAlignment="Left"/>
-                <TextBlock Grid.Column="2" 
-                           Text="{Binding SecretDisplay}" 
-                           VerticalAlignment="Center"
-                           Margin="12,0,0,0"
-                           FontSize="12"
-                           Foreground="Gray"/>
+                <TextBlock Grid.Column="0" Text="API secret:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12" Width="80"/>
+                <TextBox Grid.Column="1" Text="{Binding Secret, Mode=TwoWay}" PasswordChar="*" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Width="230" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Column="2" Text="{Binding SecretDisplay}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
             </Grid>
 
         </StackPanel>

@@ -4,15 +4,10 @@
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="PreferSystemChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
-        xmlns:log="using:CryptoScanner.Log.Views"
-        xmlns:browser="using:CryptoScanner.Browser.Views"
-        xmlns:symbol="using:CryptoScanner.Symbol.Views"
-        xmlns:signal="using:CryptoScanner.Signal.Views"
-        xmlns:livedata="using:CryptoScanner.LiveData.Views"
-        xmlns:dashboard="using:CryptoScanner.DashBoard.Views"
+		xmlns:views="using:CryptoScanner.Views"
         xmlns:vm="using:CryptoScanner.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
-        x:Class="CryptoScanner.Views.MainWindow"
+	    x:Class="CryptoScanner.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel">
 
 	<Design.DataContext>
@@ -23,38 +18,32 @@
 		<!-- Custom titlebar overlay on top of system chrome -->
 		<Grid DockPanel.Dock="Top" Height="38">
 			<!-- Background layer: fully transparent to hit testing → allows system chrome to handle dragging -->
-			<Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" IsHitTestVisible="False"/>
+
+			<!-- Background="{DynamicResource SystemControlBackgroundChromeMediumBrush2}"  -->
+			<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" IsHitTestVisible="False"/>
 
 			<!-- Titlebar content (on top of the background) -->
 			<Grid ColumnDefinitions="Auto,Auto,*,Auto">
 				<!-- Left: App Icon -->
 				<Image Grid.Column="0" Source="/Assets/AppIcon.ico" Width="32" Height="32" Margin="12,0,8,0" VerticalAlignment="Center"/>
 
-				<!-- Menu -->
-				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="White" FontSize="12">
-					<MenuItem Header="_File">
+				<!-- Menu Foreground="White" -->
+				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12">
+					<MenuItem x:Name="MenuFile" Header="_File">
 						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
 						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
 						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
-						<Separator/>
-						<MenuItem Header="_Settings" Command="{Binding SettingsCommand}"/>
-						<Separator/>
-						<MenuItem Header="E_xit" Command="{Binding CloseCommand}"/>
 					</MenuItem>
-					<MenuItem Header="_Help">
-						<MenuItem Header="_About" Command="{Binding AboutCommand}"/>
+					<MenuItem x:Name="MenuHelp" Header="_Help">
 					</MenuItem>
 				</Menu>
 
 
 				<!-- Center: Title -->
-				<TextBlock Grid.Column="2"
-                           Text="{Binding $parent[Window].Title}"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Left"
-                           Foreground="White"
-                           FontSize="12" Margin="20,0,0,0"/>
+				<TextBlock Grid.Column="2" Text="{Binding $parent[Window].Title}"
+                           VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12" Margin="20,0,0,0"/>
 
+                     <!--       Foreground="White" -->
 				<!-- Right: Reserved space for system window buttons -->
 				<Border Grid.Column="3" Width="138" Background="Transparent"/>
 			</Grid>
@@ -66,11 +55,11 @@
 			<!-- The top dashboard -->
 			<Grid Grid.Row="0">
 				<Panel Height="130">
-					<dashboard:DashBoardView DataContext="{Binding DashBoardViewModel}" />
+					<views:DashBoardInformationView DataContext="{Binding DashBoardInformationViewModel}" />
 				</Panel>
 			</Grid>
 
-			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Height="1" Margin="0,0"/>
+			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
 			<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
 
@@ -83,7 +72,7 @@
 						 HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
 						</Grid>
 						<Grid Grid.Row="1">
-							<symbol:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
+							<views:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
 						</Grid>
 					</Grid>
 				</Grid>
@@ -91,7 +80,7 @@
 				<!-- Splitter between symbols and the signals -->
 				<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
 
-				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush3}" Width="1" Margin="0,0,0,2"/>
+				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
 
 				<!-- Main screen -->
 				<Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
@@ -99,26 +88,29 @@
 					<TabControl Grid.Row="2" Margin="0" >
 						<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 							<Panel >
-								<signal:SignalGridView DataContext="{Binding SignalGridViewModel}" />
+								<views:SignalGridView DataContext="{Binding SignalGridViewModel}" />
 							</Panel>
 						</TabItem>
 						<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 							<Panel>
 								<Decorator x:Name="browserWrapper"/>
-								<browser:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
+								<views:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
 							</Panel>
 						</TabItem>
 						<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<livedata:LiveDataGridView DataContext="{Binding LiveDataGridViewModel}"/>
+							<views:LiveDataGridView DataContext="{Binding LiveDataGridViewModel}"/>
+						</TabItem>
+						<TabItem Header="Dashboard" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+							<views:DashboardPositionsView DataContext="{Binding DashboardPositionsViewModel}"/>
 						</TabItem>
 						<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<TextBlock Margin="5">This is content</TextBlock>
+							<views:PositionOpenGridView DataContext="{Binding PositionOpenGridViewModel}"/>
 						</TabItem>
 						<TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<TextBlock Margin="5">This is content</TextBlock>
+							<views:PositionClosedGridView DataContext="{Binding PositionClosedGridViewModel}"/>
 						</TabItem>
 						<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<log:LogView DataContext="{Binding LogViewModel}"/>
+							<views:LogView DataContext="{Binding LogViewModel}"/>
 						</TabItem>
 					</TabControl>
 				</Grid>

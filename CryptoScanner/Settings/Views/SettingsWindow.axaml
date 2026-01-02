@@ -10,6 +10,7 @@
 
     <!-- Border around entire content -->
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" Margin="8">
+    
 
       <Grid RowDefinitions="*,50">
             <DockPanel Grid.Row="0" >

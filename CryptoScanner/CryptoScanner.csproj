@@ -4,6 +4,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>FacIcon1.jpg</PackageIcon>
 		<TargetFramework>net10.0</TargetFramework>
+		<RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
 		<Nullable>enable</Nullable>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -53,7 +54,9 @@
 		<PackageReference Include="CefGlue.Common" Version="120.6099.211" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
+		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -61,11 +64,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="DashBoard\Views\DashBoardView.axaml.cs">
-	    <DependentUpon>DashBoardView.axaml</DependentUpon>
+	  <Compile Update="Views\DashBoardInformationView.axaml.cs">
+	    <DependentUpon>DashBoardInformationView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="MainForm\Views\MainWindow.axaml.cs">
 	    <DependentUpon>MainWindow.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\DashboardPositionsView.axaml.cs">
+	    <DependentUpon>DashboardPositionsView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\PositionOpenGridView.axaml.cs">
+	    <DependentUpon>PositionOpenGridView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Settings\Views\TrendIntervalFilterView.axaml.cs">
 	    <DependentUpon>TrendIntervalFilterView.axaml</DependentUpon>
@@ -127,24 +136,20 @@
 	  <Compile Update="Settings\Views\IndicatorZigZagView.axaml.cs">
 	    <DependentUpon>IndicatorZigZagView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Signal\Views\SignalGridView.axaml.cs">
+	  <Compile Update="Views\SignalGridView.axaml.cs">
 	    <DependentUpon>SignalGridView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Symbol\Views\SymbolGridView.axaml.cs">
+	  <Compile Update="Views\SymbolGridView.axaml.cs">
 	    <DependentUpon>SymbolGridView.axaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Views\ColumnVisibilityWindow.axaml.cs">
-	    <DependentUpon>ColumnVisibilityWindow.axaml</DependentUpon>
+	  <Compile Update="Views\ColumnWindow.axaml.cs">
+	    <DependentUpon>ColumnWindow.axaml</DependentUpon>
 	  </Compile>
 	</ItemGroup>
 
 
 	<ItemGroup>
 		<AvaloniaResource Include="Assets\*.*" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Helpers\" />
 	</ItemGroup>
 
 	<PropertyGroup>

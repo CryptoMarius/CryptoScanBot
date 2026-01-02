@@ -1,9 +1,6 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Threading;
 
 using CryptoScanner.Visualisation.ViewModels;
-
-using OxyPlot.Series;
 
 namespace CryptoScanner.Visualisation.Views;
 
@@ -36,45 +33,45 @@ public partial class VisualisationWindow : Window
         //    }
         //};
 
-        this.Loaded += (s, e) =>
-        {
-            var plotView = this.FindControl<OxyPlot.Avalonia.PlotView>("PlotViewControl");
+        //this.Loaded += (s, e) =>
+        //{
+        //    var plotView = this.FindControl<OxyPlot.Avalonia.PlotView>("PlotViewControl");
 
-            // ✓ CHECK SIZE:
-            System.Diagnostics.Debug.WriteLine($"PlotView.Bounds: {plotView?.Bounds}");
-            System.Diagnostics.Debug.WriteLine($"PlotView.Width: {plotView?.Width}");
-            System.Diagnostics.Debug.WriteLine($"PlotView.Height: {plotView?.Height}");
-            System.Diagnostics.Debug.WriteLine($"Window.Width: {this.Width}");
-            System.Diagnostics.Debug.WriteLine($"Window.Height: {this.Height}");
+        //    // ✓ CHECK SIZE:
+        //    System.Diagnostics.Debug.WriteLine($"PlotView.Bounds: {plotView?.Bounds}");
+        //    System.Diagnostics.Debug.WriteLine($"PlotView.Width: {plotView?.Width}");
+        //    System.Diagnostics.Debug.WriteLine($"PlotView.Height: {plotView?.Height}");
+        //    System.Diagnostics.Debug.WriteLine($"Window.Width: {this.Width}");
+        //    System.Diagnostics.Debug.WriteLine($"Window.Height: {this.Height}");
 
-            if (plotView != null && DataContext is VisualisationViewModel vm)
-            {
-                plotView.Model = vm.PlotModel;
-                plotView.InvalidatePlot(true);
+        //    if (plotView != null && DataContext is VisualisationViewModel vm)
+        //    {
+        //        plotView.Model = vm.PlotModel;
+        //        plotView.InvalidatePlot(true);
 
-                // ✓ CHECK AXES RANGE:
-                var model = vm.PlotModel;
-                System.Diagnostics.Debug.WriteLine($"Axes count: {model.Axes.Count}");
-                if (model.Axes.Count >= 2)
-                {
-                    System.Diagnostics.Debug.WriteLine($"X-Axis: Min={model.Axes[0].ActualMinimum}, Max={model.Axes[0].ActualMaximum}");
-                    System.Diagnostics.Debug.WriteLine($"Y-Axis: Min={model.Axes[1].ActualMinimum}, Max={model.Axes[1].ActualMaximum}");
-                }
+        //        // ✓ CHECK AXES RANGE:
+        //        var model = vm.PlotModel;
+        //        System.Diagnostics.Debug.WriteLine($"Axes count: {model.Axes.Count}");
+        //        if (model.Axes.Count >= 2)
+        //        {
+        //            System.Diagnostics.Debug.WriteLine($"X-Axis: Min={model.Axes[0].ActualMinimum}, Max={model.Axes[0].ActualMaximum}");
+        //            System.Diagnostics.Debug.WriteLine($"Y-Axis: Min={model.Axes[1].ActualMinimum}, Max={model.Axes[1].ActualMaximum}");
+        //        }
 
-                System.Diagnostics.Debug.WriteLine($"LineSeries: {model.Series.Count}");
+        //        System.Diagnostics.Debug.WriteLine($"LineSeries: {model.Series.Count}");
 
-                // ✓ CHECK SERIES DATA:
-                if (model.Series.Count > 0 && model.Series[0] is LineSeries line)
-                {
-                    System.Diagnostics.Debug.WriteLine($"LineSeries points: {line.Points.Count}");
-                    if (line.Points.Count > 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"First point: X={line.Points[0].X}, Y={line.Points[0].Y}");
-                        System.Diagnostics.Debug.WriteLine($"Last point: X={line.Points[^1].X}, Y={line.Points[^1].Y}");
-                    }
-                }
-            }
-        };
+        //        // ✓ CHECK SERIES DATA:
+        //        if (model.Series.Count > 0 && model.Series[0] is LineSeries line)
+        //        {
+        //            System.Diagnostics.Debug.WriteLine($"LineSeries points: {line.Points.Count}");
+        //            if (line.Points.Count > 0)
+        //            {
+        //                System.Diagnostics.Debug.WriteLine($"First point: X={line.Points[0].X}, Y={line.Points[0].Y}");
+        //                System.Diagnostics.Debug.WriteLine($"Last point: X={line.Points[^1].X}, Y={line.Points[^1].Y}");
+        //            }
+        //        }
+        //    }
+        //};
 
         if (DataContext == null)
         {
@@ -144,6 +141,5 @@ public partial class VisualisationWindow : Window
 
         base.OnClosing(e);
     }
-
 
 }

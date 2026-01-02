@@ -75,7 +75,7 @@ public class SettingsGeneral
     // will be replaced by Theme
     public bool BlackTheming { get; set; } = false;
     public string Theme { get; set; } = string.Empty;
-    public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
+    public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.AltradyStandard;
     public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
     public CryptoDoubleClickAction DoubleClickAction { get; set; } = CryptoDoubleClickAction.ActivateTradingApp;
 

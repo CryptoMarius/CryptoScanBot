@@ -1,10 +1,9 @@
 ﻿using Avalonia.Data.Converters;
 
 using System.Globalization;
-
-using CryptoScanner.Symbol.Model;
-using CryptoScanner.Signal.Model;
+using CryptoScanner.Model;
 using CryptoScanner.Core.Model;
+using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Converters
 {
@@ -16,14 +15,14 @@ namespace CryptoScanner.Converters
             CryptoSymbol? symbol;
 
             // This converter is called from a couple of different views
-            if (value is SignalInfo signalInfo)
+            if (value is SignalViewModel signalInfo)
             {
                 volume = signalInfo.SignalVolume;
-                symbol = signalInfo.SignalObject.Symbol;
+                symbol = signalInfo.Object.Symbol;
             }
-            else if (value is SymbolInfo symbolInfo)
+            else if (value is SymbolViewModel symbolInfo)
             {
-                symbol = symbolInfo.SymbolObject;
+                symbol = symbolInfo.Object;
                 volume = symbol.Volume;
             }
             else

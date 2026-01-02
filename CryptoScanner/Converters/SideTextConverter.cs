@@ -1,7 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Signal.Model;
+using CryptoScanner.Model;
 
 namespace CryptoScanner.Converters;
 

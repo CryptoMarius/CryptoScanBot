@@ -1,0 +1,91 @@
+﻿using Avalonia.Controls;
+
+using CryptoScanner.Core.Core;
+using CryptoScanner.Model;
+using CryptoScanner.Services;
+using CryptoScanner.ViewModels;
+
+
+namespace CryptoScanner.Views;
+
+public partial class PositionOpenGridView : UserControlWithGrid<PositionViewModel>
+{
+    public PositionOpenGridView()
+    {
+        _gridName = "SymbolGrid";
+        InitializeComponent();
+
+        if (Design.IsDesignMode)
+        {
+            // Designer mode
+            _dataGrid = null!;
+            _applicationStateService = null!;
+            return;
+        }
+
+        // Runtime - get service from App
+        _applicationStateService = GlobalData.GetService<ApplicationStateService>()
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
+
+        _dataGrid = this.FindControl<DataGrid>("SymbolDataGrid")
+            ?? throw new InvalidOperationException("SymbolDataGrid not found");
+
+        DataContextChanged += OnDataContextChanged;
+        _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
+
+
+        //// Kind of Hacky, needs work... (is it really needed?)
+        //Unloaded += (s, e) =>
+        //{
+        //    if (DataContext is PositionOpenGridViewModel vm)
+        //    {
+        //        vm.RequestSort -= OnRequestSort;
+        //        vm.RequestSortedInsert -= OnRequestSortedInsert;
+        //    }
+        //};
+
+        // Register a custom comparer for each column based on its SortMemberPath
+        foreach (var column in _dataGrid.Columns)
+        {
+            if (Enum.TryParse<PositionOpenColumnEnum>(column.SortMemberPath, out PositionOpenColumnEnum a))
+            {
+                var comparer = new PositionOpenColumnComparer(a);
+                column.CustomSortComparer = comparer;
+            }
+            else
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+        }
+
+        // Restore grid state from the service
+        RestoreGridState();
+    }
+
+
+    private PositionOpenGridViewModel? _currentViewModel;
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        // Unsubscribe old
+        if (_currentViewModel != null)
+        {
+            _currentViewModel.RequestSort -= OnRequestSort;
+            _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+        }
+
+        // Subscribe new
+        if (DataContext is PositionOpenGridViewModel vm)
+        {
+            _currentViewModel = vm;
+            vm.RequestSort += OnRequestSort;
+            vm.RequestSortedInsert += OnRequestSortedInsert;
+        }
+    }
+
+
+    internal override void ShowRowContextMenu(DataGrid dataGrid)
+    {
+        var flyout = new MenuFlyout();
+        AddStandardGridRowCommands(flyout, TargetViewModel.Position);
+        flyout.ShowAt(dataGrid, true);
+    }
+
+}

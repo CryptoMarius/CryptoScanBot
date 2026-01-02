@@ -34,10 +34,10 @@ public class AssetTools
         //    // TODO: Make check in the space of the exchange
         //}
 
-        //if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
+        //if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.AltradyStandard)
         //{
         //    if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
-        //        return (false, "No Altrady API credentials available");
+        //        return (false, "No AltradyStandard API credentials available");
         //    // TODO Kucoin - check additional password conditions
         //    // TODO: Make check in the space of the exchange
         //}
@@ -46,7 +46,7 @@ public class AssetTools
         //// Niet bij iedere keer de assets verversen (hammering) - difficult when not to refresh.. not to repeat the same action..
         //if (forceRefresh || GlobalData.ActiveExchange!.Data.LastRefreshAssets == null || GlobalData.ActiveExchange.Data.LastRefreshAssets?.AddMinutes(1) < GlobalData.GetCurrentDateTime())
         //{
-        //    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.Altrady)
+        //    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading || GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.AltradyStandard)
         //    {
         //        //var api = GlobalData.ActiveExchange!.GetApiInstance();
         //        //await api.Asset.GetAssets(activeExchange); // from exchange

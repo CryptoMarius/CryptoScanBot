@@ -14,6 +14,8 @@ using CryptoScanner.Core.Zones;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using System.Globalization;
 using System.Text.Json;
 
@@ -35,8 +37,10 @@ public delegate void SetCandleTimerEnable(bool value);
 
 public static class GlobalData
 {
-    //public static double PriceMinPerc = 0;
-    //public static double PriceMaxPerc = 0;
+    // DI (but moved to GlobalData so we can use it in class lib)
+    public static IServiceProvider Services { get; set; } = null!;
+    public static T? GetService<T>() where T : class => Services?.GetService<T>();
+    public static Window? MainWindow { get; set; } = null!;
 
     public static string AppPath { get; set; } = "";
     public static string LogName { get; set; } = "";
@@ -85,7 +89,7 @@ public static class GlobalData
     public static SettingsExchangeApi TradingApi { get; set; } = new();
 
     /// <summary>
-    /// Altrady API settings
+    /// AltradyStandard API settings
     /// </summary>
     public static SettingsAltradyApi AltradyApi { get; set; } = new();
 

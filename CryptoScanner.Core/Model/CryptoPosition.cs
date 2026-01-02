@@ -27,7 +27,7 @@ public class CryptoPosition : CryptoData2
 
     public int? IntervalId { get; set; }
     [Computed]
-    public required CryptoInterval? Interval { get; set; }
+    public required virtual CryptoInterval Interval { get; set; }
 
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval!.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }

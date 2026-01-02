@@ -7,11 +7,8 @@ using Avalonia.Threading;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Exchange;
-using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
-using CryptoScanner.Core.Trader;
 using CryptoScanner.Services;
 using CryptoScanner.Views;
 
@@ -26,15 +23,14 @@ public partial class App : Application
     //Dialogs/DialogsServices
     //https://github.com/AvaloniaUI/Avalonia/discussions/12551
 
-    public static IServiceProvider Services { get; private set; } = null!;
+    private static PowerMonitorService _powerMonitor = new();
 
-    /// <summary>
-    /// Singleton instance of ApplicationStateService available throughout the application
-    /// </summary>
-    //public static ApplicationStateService ApplicationStateService { get; private set; } = null!;
+    // Forward url to our visible browser tabsheet
+    public static event EventHandler<string>? EventOpenInInternalBrowser;
+    public static void OpenInInternalBrowser(object sender, string url) => EventOpenInInternalBrowser?.Invoke(sender, url);
 
-
-    //public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
+    // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
+    public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
 
     public override void Initialize()
     {
@@ -55,6 +51,32 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
+    public override void OnFrameworkInitializationCompleted()
+    {
+        System.Diagnostics.Debug.WriteLine($"App.OnFrameworkInitializationCompleted");
+
+        // Setup DI Container
+        var services = new ServiceCollection();
+        MyServices.ConfigureServices(services);
+        GlobalData.Services = services.BuildServiceProvider();
+
+        InitializeGlobalData(); // Needs the DI services
+        
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            // Get MainView from DI container
+            desktop.MainWindow = GlobalData.Services.GetRequiredService<MainWindow>();
+
+            // Save grid states on application exit
+            desktop.Exit += OnApplicationExit;
+
+            // Initialize CefGlue browser
+            //CustomCefApp.InitializeCefRuntime();
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+
     private static void InitializeGlobalData()
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
@@ -70,156 +92,40 @@ public partial class App : Application
 
         if (!Design.IsDesignMode)
         {
-            // Laad alle data
-            GlobalData.LoadSettings();
-            ScannerLog.InitializeLogging();
-            CryptoDatabase.SetDatabaseDefaults();
-            GlobalData.LoadExchanges();
-            GlobalData.LoadIntervals();
-            ApplicationParams.InitApplicationOptions();
-            GlobalData.InitializeExchange();
-            GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
-
-            GlobalData.LoadSymbols();
-            GlobalData.LoadSignals();
-
-            ApplySettings();
-
-            //TradeTools.LoadAssets();
-            //TradeTools.LoadOpenPositions();
-            //TradeTools.LoadClosedPositions();
+            _powerMonitor.PowerModeChanged += OnPowerModeChanged;
             //PositionsHaveChangedEvent("");
-
-            //GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
             GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
-            ScannerSession.Start(0);
+            var hiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
+            hiddenBrowser.Initialize();
+
+            var scannerSession = GlobalData.GetService<IScannerSession>()
+                ?? throw new InvalidOperationException("ScannerSession not registered");
+            scannerSession.AfterStarup();
+            scannerSession.ApplySettings();
+            scannerSession.Start(0);
             //LinkTools.InitializeTradingView();
         }
 
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
     }
 
-
-    private static void ApplySettings()
-    {
-        System.Diagnostics.Debug.WriteLine($"App.ApplySettings");
-        // Is done multiple times, but that is okay
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? exchange))
-        {
-            GlobalData.ActiveExchange = exchange;
-        }
-
-        var api = GlobalData.ActiveExchange!.GetApiInstance();
-        string? defaultQuote = api.GetExchangeOptions().DefaultQuote;
-        if (defaultQuote != null)
-        {
-            if (!GlobalData.Settings.QuoteCoins.TryGetValue(defaultQuote, out CryptoQuoteData? _))
-            {
-                CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
-                defaultQuoteData.FetchCandles = true;
-                GlobalData.Settings.General.SelectedBarometerQuote = defaultQuote;
-            }
-        }
-
-        // TODO: Rethink this double boolean's
-        ApplicationStateService applicationStateService = App.GetService<ApplicationStateService>() 
-            ?? throw new InvalidOperationException("ApplicationStateService not registered");
-        GlobalData.Settings.Options.AnalyzerActive = applicationStateService.AnalyzerActive;
-        GlobalData.Settings.Options.SoundsActive = applicationStateService.SoundsActive;
-        GlobalData.Settings.Options.TraderActive = applicationStateService.TraderActive;
-
-        //// Eventueel de nieuwe quotes zetten enz.
-        //dashBoardInformation1.InitializeBarometer();
-
-        //if ((GlobalData.Settings.General.FontSizeNew != Font.Size) || (GlobalData.Settings.General.FontNameNew.Equals(Font.Name)))
-        //{
-        //    Font = new System.Drawing.Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
-        //        System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-
-        //    dashBoardControl1.Font = Font;
-        //}
-
-        //GridSymbolView.InitCommandCaptions();
-        //GridSignalView.InitCommandCaptions();
-        //GridLiveDataView.InitCommandCaptions();
-        //GridPositionOpenView.InitCommandCaptions();
-        //GridPositionClosedView.InitCommandCaptions();
-
-
-        TradingConfig.IndexStrategyInternally();
-        TradingConfig.InitWhiteAndBlackListSettings();
-
-        SignalPrepare.Prepare();
-        SignalExecute.Prepare();
-
-        //// De timertjes goed zetten
-        ScannerSession.SetTimerDefaults();
-
-        //ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
-        //ApplicationPlaySounds.Checked = GlobalData.Settings.Signal.SoundsActive;
-        //ApplicationCreateSignals.Checked = GlobalData.Settings.Signal.Active;
-
-        //splitContainer1.Panel1Collapsed = GlobalData.Settings.General.HideSymbolsOnTheLeft;
-
-        //GlobalData.StatusesHaveChangedEvent?.Invoke("");
-        //SetApplicationTitle();
-
-        //Refresh(); // Redraw
-    }
-
-
-    public static T? GetService<T>() where T : class
-    {
-        return Services?.GetService<T>();
-    }
-
-
-    public override void OnFrameworkInitializationCompleted()
-    {
-        System.Diagnostics.Debug.WriteLine($"App.OnFrameworkInitializationCompleted");
-
-        // Setup DI Container
-        var services = new ServiceCollection();
-        MyServices.ConfigureServices(services);
-        Services = services.BuildServiceProvider();
-
-        // Initialize the ApplicationStateService (loads settings from disk into memory)
-      //  ApplicationStateService = Services?.GetService<ApplicationStateService>()
-      //      ?? throw new InvalidOperationException("ApplicationStateService not registered");
-
-
-        // BELANGRIJK: Initialiseer GlobalData VOOR DI setup
-        InitializeGlobalData();
-        //var hiddenBrowser = Services.GetRequiredService<HiddenBrowserService>();
-        //hiddenBrowser.Initialize();
-
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            // Get MainView from DI container
-            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
-
-            // Save grid states on application exit
-            desktop.Exit += OnApplicationExit;
-
-            // Initialize CefGlue browser
-            //CustomCefApp.InitializeCefRuntime();
-        }
-
-        base.OnFrameworkInitializationCompleted();
-    }
-
-
     private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
+        _powerMonitor?.Dispose();
+        _powerMonitor = null!;
+
         ThreadSoundPlayer.StopSoundThread();
-        await ScannerSession.StopAsync(); // Blocks..
+
+        var scannersession = GlobalData.GetService<IScannerSession>()
+            ?? throw new InvalidOperationException("ScannerSession not registered");
+        await scannersession.StopAsync(); // Blocks..
         await DataStore.SaveCandlesAsync();
 
         // Ensure all states are written to disk before exit
 
         // TODO: Rethink this boolean storage
-        ApplicationStateService applicationStateService = App.GetService<ApplicationStateService>()
+        ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
         applicationStateService.AnalyzerActive = GlobalData.Settings.Options.AnalyzerActive;
         applicationStateService.SoundsActive = GlobalData.Settings.Options.SoundsActive;
@@ -227,10 +133,32 @@ public partial class App : Application
         applicationStateService.FlushToDisk();
 
         // Dispose hidden browser
-        //var hiddenBrowser = Services.GetService<HiddenBrowserService>();
-        //hiddenBrowser?.Dispose();
+        var hiddenBrowser = GlobalData.GetService<HiddenBrowserService>();
+        hiddenBrowser?.Dispose();
+        //hiddenBrowser? = null;
     }
 
+    private static async void OnPowerModeChanged(object? sender, PowerModeEventArgs e)
+    {
+        switch (e.Mode)
+        {
+            case PowerMode.Suspend:
+                GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
+                var scannersession1 = GlobalData.GetService<IScannerSession>()
+                    ?? throw new InvalidOperationException("ScannerSession not registered");
+                await scannersession1.StopAsync(); // Blocks..
+                await DataStore.SaveCandlesAsync();
+                break;
+
+            case PowerMode.Resume:
+                GlobalData.AddTextToLogTab("System resumed - reconnecting...");
+                await Task.Delay(2000); // wait for netwerk
+                var scannersession2 = GlobalData.GetService<IScannerSession>()
+                    ?? throw new InvalidOperationException("ScannerSession not registered");
+                scannersession2.Start(5000);
+                break;
+        }
+    }
 
     private void ApplicationHasStarted(string text)
     {
@@ -265,8 +193,4 @@ public partial class App : Application
     public static IBrush PriceUp => App.GetBrushResource("PriceUpBrush");
     public static IBrush PriceDown => App.GetBrushResource("PriceDownBrush");
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
-
-
-
 }
-

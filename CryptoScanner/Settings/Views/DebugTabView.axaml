@@ -23,42 +23,30 @@
             <!-- Debug symbol -->
             <StackPanel Spacing="8" Margin="0,8,0,0">
                 <Grid ColumnDefinitions="120,*" RowDefinitions="Auto">
-                    <TextBox Grid.Column="0" 
-                             Text="{Binding DebugSymbol, Mode=TwoWay}" 
-                             Height="28" 
-                             FontSize="12" 
-                             Padding="6,2" 
-                             CornerRadius="4"
-                             Watermark="SYMBOL"/>
-                    <TextBlock Grid.Column="1" 
+                    <TextBox Grid.Column="0" Text="{Binding DebugSymbol, Mode=TwoWay}" 
+                             Height="28" FontSize="12" Padding="6,2" 
+                             CornerRadius="4" Watermark="SYMBOL"/>
+                    <TextBlock Grid.Column="1"  VerticalAlignment="Center"
                                Text="Limit Debug stuff to this symbol (less information)" 
-                               VerticalAlignment="Center"
-                               Margin="12,0,0,0"
-                               FontSize="12"
-                               Foreground="Gray"/>
+                               Margin="12,0,0,0" FontSize="12"/>
                 </Grid>
             </StackPanel>
 
             <!-- Debug KLine receive -->
             <CheckBox IsChecked="{Binding DebugKLineReceive, Mode=TwoWay}"
-                      Content="Debug KLineReceive (does kline ticker work)"
-                      FontSize="12"
-                      Margin="0,8,0,0"/>
+                      Content="Debug KLineReceive (does kline ticker work)" FontSize="12" Margin="0,8,0,0"/>
 
             <!-- Debug signal create -->
             <CheckBox IsChecked="{Binding DebugSignalCreate, Mode=TwoWay}"
-                      Content="Debug SignalCreate (does coin go to analyzer)"
-                      FontSize="12"/>
+                      Content="Debug SignalCreate (does coin go to analyzer)" FontSize="12"/>
 
             <!-- Debug asset management -->
             <CheckBox IsChecked="{Binding DebugAssetManagement, Mode=TwoWay}"
-                      Content="Debug asset management (papertrading/emulator)"
-                      FontSize="12"/>
+                      Content="Debug asset management (papertrading/emulator)" FontSize="12"/>
 
             <!-- Debug zone candles -->
             <CheckBox IsChecked="{Binding DebugZoneCandles, Mode=TwoWay}"
-                      Content="Debug candle management zones"
-                      FontSize="12"/>
+                      Content="Debug candle management zones" FontSize="12"/>
 
         </StackPanel>
     </ScrollViewer>

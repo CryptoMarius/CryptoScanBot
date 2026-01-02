@@ -20,12 +20,14 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
 
-                    <!-- Background color + grid oneven color -->
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FDFDFD"/>
+
+                    <!--  Background color + grid oneven color 
                     <Color x:Key="MyBackground1">#f0f0f0</Color>
                     <Color x:Key="MyBackground2">#e8e8e8</Color>
                     <Color x:Key="MyBackground3">#b8b8b8</Color>
 
-                    <!-- Override Avalonia fluent colors (perhaps a bit too much?)-->
+                    Override Avalonia fluent colors (perhaps a bit too much?)
                     <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
@@ -34,6 +36,7 @@
                     <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
+                    -->
                 </ResourceDictionary>
                 
                 <!-- Dark theme resources -->
@@ -46,12 +49,14 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
 
-                    <!-- Background color + grid oneven color -->
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#222222"/>
+
+                    <!-- Background color + grid oneven color
                     <Color x:Key="MyBackground1">#202020</Color>
                     <Color x:Key="MyBackground2">#282828</Color>
                     <Color x:Key="MyBackground3">#585858</Color>
 
-                    <!-- Override Avalonia fluent colors (perhaps a bit too much?)-->
+                    Override Avalonia fluent colors (perhaps a bit too much?)
                     <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
@@ -60,6 +65,7 @@
                     <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
                     <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
+                    -->
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -74,6 +80,17 @@
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
+
+        <FluentTheme>
+
+        <FluentTheme.Palettes>
+            <!-- Light mode: kies een lichtere accentkleur -->
+            <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
+
+            <!-- Dark mode: behoud standaard of pas aan -->
+            <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
+        </FluentTheme.Palettes>
+    </FluentTheme>
 
         <!-- ============================================ -->
         <!-- WINDOW TITLE BAR THEMING -->
@@ -93,15 +110,19 @@
         </Style>-->
         
        
+        <!--
         <Style Selector="ComboBox">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
         </Style>
+        -->
 
         <!-- Globale style voor TextBlock -->
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <!--
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+            -->
         </Style>
         
         <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
@@ -114,10 +135,11 @@
             <Setter Property="FontSize" Value="12" />
         </Style>
 
-
         <Style Selector="TextBox:not(:multiline)">
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <!--
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush2}"/>
+        -->
         </Style>
 
         <!-- ============================================ -->
@@ -153,12 +175,17 @@
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="1" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <!--
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+            -->
         </Style>
 
         <!-- Alternating row colors -->
         <Style Selector="DataGridRow:nth-child(even)">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" />
+            <!--
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeHighBrush}" />
+            -->
+            <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
         </Style>
         
         <!-- Kleinere row height -->
@@ -189,7 +216,7 @@
         <Style Selector="HeaderedContentControl.groupbox">
             <Setter Property="VerticalAlignment" Value="Top"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush3}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="4"/>
             <Setter Property="Margin" Value="4,10,4,4"/>
@@ -205,14 +232,13 @@
                         </Border>
                         
                         <!-- Header text positioned over the border -->
-                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                        <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                                 Padding="5,0"
                                 Margin="10,0,0,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top">
-                            <TextBlock Text="{TemplateBinding Header}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                            <TextBlock Text="{TemplateBinding Header}" FontSize="12"/>
+                            <!-- Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"-->
                         </Border>
                     </Grid>
                 </ControlTemplate>

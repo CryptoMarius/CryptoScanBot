@@ -18,7 +18,7 @@ public class CryptoExchangeData
 
 
     // Assets
-    // Assets + locking (unused as we are aiming for Altrady as platform)
+    // Assets + locking (unused as we are aiming for AltradyStandard as platform)
     // Key = assetName
     public SemaphoreSlim AssetListSemaphore { get; set; } = new(1);
     public DateTime? LastRefreshAssets { get; set; } = null;

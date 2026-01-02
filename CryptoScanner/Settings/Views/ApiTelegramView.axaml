@@ -12,20 +12,13 @@
             
             <!-- Token -->
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
-                <TextBlock Grid.Column="0" Text="Token:" 
-                           VerticalAlignment="Center" 
+                <TextBlock Grid.Column="0" Text="Token:" VerticalAlignment="Center" 
                            Margin="0,0,12,0" FontSize="12" Width="80"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding Token, Mode=TwoWay}" 
-                         PasswordChar="*"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
+                <TextBox Grid.Column="1" Text="{Binding Token, Mode=TwoWay}" 
+                         PasswordChar="*" Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
                          Width="230" HorizontalAlignment="Left"/>
-                <TextBlock Grid.Column="2" 
-                           Text="{Binding TokenDisplay}" 
-                           VerticalAlignment="Center"
-                           Margin="12,0,0,0"
-                           FontSize="12"
-                           Foreground="Gray"/>
+                <TextBlock Grid.Column="2" Text="{Binding TokenDisplay}" VerticalAlignment="Center"
+                           Margin="12,0,0,0" FontSize="12" />
             </Grid>
 
             <!-- ChatId -->
@@ -33,39 +26,26 @@
                 <TextBlock Grid.Column="0" Text="ChatId:" 
                            VerticalAlignment="Center" 
                            Margin="0,0,12,0" FontSize="12" Width="80"/>
-                <TextBox Grid.Column="1" 
-                         Text="{Binding ChatId, Mode=TwoWay}" 
-                         PasswordChar="*"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
+                <TextBox Grid.Column="1" Text="{Binding ChatId, Mode=TwoWay}" 
+                         PasswordChar="*" Height="26" FontSize="12" Padding="6,2" CornerRadius="4" 
                          Width="230" HorizontalAlignment="Left"/>
-                <TextBlock Grid.Column="2" 
-                           Text="{Binding ChatIdDisplay}" 
-                           VerticalAlignment="Center"
-                           Margin="12,0,0,0"
-                           FontSize="12"
-                           Foreground="Gray"/>
+                <TextBlock Grid.Column="2" Text="{Binding ChatIdDisplay}" 
+                           VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
             </Grid>
 
             <!-- Buttons -->
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                 <CheckBox IsChecked="{Binding SendSignalsToTelegram, Mode=TwoWay}"
-                          Content="Stuur meldingen naar telegram"
-                          FontSize="12"
+                          Content="Stuur meldingen naar telegram" FontSize="12"
                           VerticalAlignment="Center"/>
-                <Button Content="Stop/Start" 
-                        Command="{Binding StartStopTelegramCommand}"
-                        Width="90"
-                        FontSize="12"/>
-                <Button Content="Test" 
-                        Command="{Binding TestTelegramCommand}"
-                        Width="75"
-                        FontSize="12"/>
+                <Button Content="Stop/Start"  Command="{Binding StartStopTelegramCommand}" Width="90"
+                        FontSize="12"/> <Button Content="Test" Command="{Binding TestTelegramCommand}"
+                        Width="75" FontSize="12"/>
             </StackPanel>
 
             <!-- Emoji Option -->
             <CheckBox IsChecked="{Binding EmojiInTrend, Mode=TwoWay}"
-                      Content="Gebruik Emoji's in de trend"
-                      FontSize="12"/>
+                      Content="Gebruik Emoji's in de trend" FontSize="12"/>
 
         </StackPanel>
     </HeaderedContentControl>

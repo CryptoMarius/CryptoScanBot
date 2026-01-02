@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
+             xmlns:vm="using:CryptoScanner.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="CryptoScanner.Views.DashboardPositionsView"
+             x:DataType="vm:DashboardPositionsViewModel">
+
+    <DockPanel>
+        <!-- Top panel met statistieken -->
+        <Border DockPanel.Dock="Top" 
+                BorderThickness="0,0,0,1"
+                Padding="10">
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Toolbar bovenaan -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="8" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                    <ComboBox ItemsSource="{Binding QuoteOptions}" SelectedItem="{Binding SelectedQuote}" MinWidth="120"/>
+                    <Button Content="Ververs" Command="{Binding RefreshCommand}"/>
+                </StackPanel>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Openstaand" FontWeight="Bold"/>
+                <!-- Open positions - Labels -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Aantal posities"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Geinvesteerd"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Geretourneerd"/>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Commissie"/>
+                <!-- Virtuele data -->
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Totaal"/>
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="Huidige waarde"/>
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="Virtuele opbrengst"/>
+                <TextBlock Grid.Row="11" Grid.Column="0" Text="Virtuele opbrengst"/>
+
+                <!-- Open positions - Values -->
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding OpenData.Positions}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding OpenData.InvestedFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding OpenData.ReturnedFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding OpenData.CommissionFormatted}" TextAlignment="Right"/>
+
+                <TextBlock Grid.Row="8" Grid.Column="2" Text="{Binding NettoPnlValue}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="9" Grid.Column="2" Text="{Binding CurrentValue}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="10" Grid.Column="2" Text="{Binding VirtualProfit}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="11" Grid.Column="2" Text="{Binding VirtualProfitPercentage}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="11" Grid.Column="3" Text="%"/>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="2" Grid.Column="4" Text="Gesloten" FontWeight="Bold"/>
+                <!-- Closed positions - Labels -->
+                <TextBlock Grid.Row="3" Grid.Column="4" Text="Aantal posities"/>
+                <TextBlock Grid.Row="4" Grid.Column="4" Text="Geinvesteerd"/>
+                <TextBlock Grid.Row="5" Grid.Column="4" Text="Geretourneerd"/>
+                <TextBlock Grid.Row="6" Grid.Column="4" Text="Commissie"/>
+                <!-- Closed profit/losses-->
+                <TextBlock Grid.Row="8" Grid.Column="4" Text="Winst/verlies"/>
+                <TextBlock Grid.Row="9" Grid.Column="4" Text="Opbrengst"/>
+
+                <!-- Closed positions - Values -->
+                <TextBlock Grid.Row="3" Grid.Column="6" Text="{Binding ClosedData.Positions}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="4" Grid.Column="6" Text="{Binding ClosedData.InvestedFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="5" Grid.Column="6" Text="{Binding ClosedData.ReturnedFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="6" Grid.Column="6" Text="{Binding ClosedData.CommissionFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="8" Grid.Column="6" Text="{Binding ClosedData.TotalProfitFormatted}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="9" Grid.Column="6" Text="{Binding ClosedProfitPercentage}" TextAlignment="Right"/>
+                <TextBlock Grid.Row="9" Grid.Column="7" Text="%"/>
+            </Grid>
+        </Border>
+
+        <!-- Charts in scrollable area -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <WrapPanel Margin="10" Orientation="Horizontal">
+                
+                <!-- Chart 1: Posities per dag -->
+                <Border Margin="5" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartPositionsPerDay}"/>
+                </Border>
+
+                <!-- Chart 2: Profit percentage per dag -->
+                <Border Margin="5" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartProfitPercentagePerDay}" Background="Transparent"/>
+                </Border>
+
+                <!-- Chart 3: Profits per dag -->
+                <Border Margin="5" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="Transparent"/>
+                </Border>
+
+                <!-- Chart 4: Invested/Returned per dag -->
+                <Border Margin="5" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartInvestedReturnedPerDay}" Background="Transparent"/>
+                </Border>
+
+                <!-- Chart 5: Doorlooptijden -->
+                <Border Margin="5" Width="600" Height="300">
+                    <oxy:PlotView Model="{Binding ChartDoorlooptijden}" Background="Transparent"/>
+                </Border>
+
+            </WrapPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

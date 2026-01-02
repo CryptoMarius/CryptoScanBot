@@ -102,7 +102,7 @@ public partial class VisualisationViewModel : ObservableObject
     //    // X-as configureren
     //    model.Axes.Add(new LinearAxis
     //    {
-    //        Position = AxisPosition.Bottom,
+    //        Object = AxisPosition.Bottom,
     //        Title = "X-waarde",
     //        MajorGridlineStyle = LineStyle.Solid,
     //        MinorGridlineStyle = LineStyle.Dot
@@ -111,7 +111,7 @@ public partial class VisualisationViewModel : ObservableObject
     //    // Y-as configureren
     //    model.Axes.Add(new LinearAxis
     //    {
-    //        Position = AxisPosition.Left,
+    //        Object = AxisPosition.Left,
     //        Title = "Y-waarde",
     //        MajorGridlineStyle = LineStyle.Solid,
     //        MinorGridlineStyle = LineStyle.Dot
@@ -184,7 +184,7 @@ public partial class VisualisationViewModel : ObservableObject
 
     //    var xAxis = new LinearAxis
     //    {
-    //        Position = AxisPosition.Bottom,
+    //        Object = AxisPosition.Bottom,
     //        Minimum = -1,
     //        Maximum = 5,
     //        MajorGridlineStyle = LineStyle.Solid,
@@ -192,7 +192,7 @@ public partial class VisualisationViewModel : ObservableObject
     //    };
     //    var yAxis = new LinearAxis
     //    {
-    //        Position = AxisPosition.Left,
+    //        Object = AxisPosition.Left,
     //        Minimum = -1,
     //        Maximum = 10,
     //        MajorGridlineStyle = LineStyle.Solid,
@@ -241,8 +241,8 @@ public partial class VisualisationViewModel : ObservableObject
     ////        TextColor = OxyColors.Black
     ////    };
 
-    ////    testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom });
-    ////    testModel.Axes.Add(new LinearAxis { Position = AxisPosition.Left });
+    ////    testModel.Axes.Add(new LinearAxis { Object = AxisPosition.Bottom });
+    ////    testModel.Axes.Add(new LinearAxis { Object = AxisPosition.Left });
 
     ////    var series = new LineSeries
     ////    {
@@ -288,18 +288,18 @@ public partial class VisualisationViewModel : ObservableObject
         PlotModel.Axes.Add(yAxis);
     }
 
-    public void Initialize(string symbol, string interval)
+    public void Initialize()
     {
-        // Split symbol into base/quote
-        if (symbol.Length > 4)
-        {
-            SymbolSelector.SelectedBase = symbol[..^4]; // First part (e.g., "BTC")
-            SymbolSelector.SelectedQuote = symbol[^4..]; // Last 4 chars (e.g., "USDT")
-        }
-        SymbolSelector.SelectedInterval = interval;
+        //// Split symbol into base/quote
+        //if (symbol.Length > 4)
+        //{
+        //    SymbolSelector.SelectedBase = symbol[..^4]; // First part (e.g., "BTC")
+        //    SymbolSelector.SelectedQuote = symbol[^4..]; // Last 4 chars (e.g., "USDT")
+        //}
+        //SymbolSelector.SelectedInterval = interval;
 
         // Auto-load
-        RefreshCommand.Execute(null);
+        RefreshCommand.ExecuteAsync(null);
     }
 
     private void LoadSession()
@@ -333,7 +333,7 @@ public partial class VisualisationViewModel : ObservableObject
             e.PropertyName == nameof(SymbolSelectorViewModel.SelectedInterval))
         {
             // Symbol or interval changed - reload chart
-            RefreshCommand.Execute(null);
+            RefreshCommand.ExecuteAsync(null);
         }
     }
 
@@ -702,7 +702,7 @@ public partial class VisualisationViewModel : ObservableObject
     //    var pngExporter = new OxyPlot.PngExporter { Width = 1200, Height = 800 };
     //    using var stream = new MemoryStream();
     //    pngExporter.Export(PlotModel, stream);
-    //    stream.Position = 0;
+    //    stream.Object = 0;
 
     //    // Convert to Avalonia Bitmap
     //    var bitmap = new Avalonia.Media.Imaging.Bitmap(stream);

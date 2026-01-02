@@ -1,7 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 using Avalonia.Media;
 
-using CryptoScanner.Signal.Model;
+using CryptoScanner.ViewModels;
 
 using System.Globalization;
 
@@ -12,10 +12,10 @@ namespace CryptoScanner.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is SignalInfo signal)
+            if (value is SignalViewModel signal)
             {
-                //if (signal.SignalObject.Symbol.QuoteData.DisplayColor != Color.tra)
-                        return signal.SignalObject.Symbol.QuoteData.DisplayColor;
+                //if (signal.Object.Symbol.QuoteData.DisplayColor != Color.tra)
+                        return signal.Object.Symbol.QuoteData.DisplayColor;
             }
             return GetBrushResource("SystemControlBackgroundChromeMediumBrush");
         }

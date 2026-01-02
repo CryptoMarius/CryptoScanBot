@@ -94,8 +94,7 @@
                                                  Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
                                         <TextBlock Grid.Column="3" Text="Minuten" 
                                                    VerticalAlignment="Center"
-                                                   FontSize="12"
-                                                   Foreground="Gray"/>
+                                                   FontSize="12"/>
                                     </Grid>
 
                                 </StackPanel>

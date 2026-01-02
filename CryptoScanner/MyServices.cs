@@ -1,15 +1,9 @@
-﻿using CryptoScanner.Browser.ViewModels;
-using CryptoScanner.DashBoard.Services;
-using CryptoScanner.DashBoard.ViewModels;
-using CryptoScanner.Log.ViewModels;
-using CryptoScanner.Signal.ViewModels;
-using CryptoScanner.Symbol.ViewModels;
+﻿using CryptoScanner.Core.Services;
+using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
-using CryptoScanner.Services;
 
 using Microsoft.Extensions.DependencyInjection;
-using CryptoScanner.LiveData.ViewModels;
 
 namespace CryptoScanner;
 
@@ -35,15 +29,18 @@ internal class MyServices
         services.AddSingleton<ApplicationStateService>();
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
-
-        //services.AddSingleton<HiddenBrowserService>();
+        services.AddSingleton<IScannerSession, ScannerSession>();
+        services.AddSingleton<HiddenBrowserService>();
 
         // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
         services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<DashBoardViewModel>();
+        services.AddTransient<DashBoardInformationViewModel>();
+        services.AddTransient<DashboardPositionsViewModel>();
         services.AddTransient<SymbolGridViewModel>();
         services.AddTransient<SignalGridViewModel>();
         services.AddTransient<LiveDataGridViewModel>();
+        services.AddTransient<PositionOpenGridViewModel>();
+        services.AddTransient<PositionClosedGridViewModel>();
         services.AddTransient<BrowserViewModel>();
         services.AddTransient<LogViewModel>();
 

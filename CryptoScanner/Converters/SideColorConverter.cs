@@ -1,7 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Signal.Model;
+using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Converters;
 
@@ -13,7 +13,7 @@ public class SideColorConverter : ColorConverter, IValueConverter
         {
             return GetBrushResource(side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
         }
-        else if (value is SignalInfo signalInfo)
+        else if (value is SignalViewModel signalInfo)
         {
             return GetBrushResource(signalInfo.Side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
         }

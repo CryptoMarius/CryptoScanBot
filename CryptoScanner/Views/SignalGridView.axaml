@@ -1,0 +1,493 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" 
+             x:Class="CryptoScanner.Views.SignalGridView"
+             xmlns:vm="using:CryptoScanner.ViewModels"
+             xmlns:converter="using:CryptoScanner.Converters"
+             x:DataType="vm:SignalGridViewModel">
+
+    <UserControl.Resources>
+        <converter:BarometerColorConverter x:Key="BarometerColorConverter" />
+        <converter:MarketTrendColorConverter x:Key="MarketTrendColorConverter" />
+		<converter:MinimumEntryTextConverter x:Key="MinimumEntryTextConverter" />
+		<converter:PriceTextConverter x:Key="PriceTextConverter" />
+        <converter:PSarColorConverter x:Key="PSarColorConverter" />
+        <converter:PSarTextConverter x:Key="PSarTextConverter" />
+        <converter:RsiColorConverter x:Key="RsiColorConverter" />     
+        <converter:SideTextConverter x:Key="SideTextConverter" />
+        <converter:SideColorConverter x:Key="SideColorConverter" />
+		<converter:SignalStatusColorConverter x:Key="SignalStatusColorConverter" />
+		<converter:SignalStatusTextConverter x:Key="SignalStatusTextConverter" />
+        <converter:Sma200TextConverter x:Key="Sma200TextConverter" />
+        <converter:Sma20ColorConverter x:Key="Sma20ColorConverter" />
+        <converter:Sma20TextConverter x:Key="Sma20TextConverter" />
+        <converter:Sma50ColorConverter x:Key="Sma50ColorConverter" />
+        <converter:Sma50TextConverter x:Key="Sma50TextConverter" />
+        <converter:StochColorConverter x:Key="StochColorConverter" />
+		<converter:TrendColorConverter x:Key="TrendColorConverter" />
+        <converter:TrendTextConverter x:Key="TrendTextConverter" />
+        <converter:VolumeColorConverter x:Key="VolumeColorConverter" />
+	</UserControl.Resources>
+
+    <Grid>
+        <DataGrid x:Name="SignalDataGrid"
+                  ItemsSource="{Binding Signals}"
+                  IsReadOnly="True" 
+                  AutoGenerateColumns="False"
+                  SelectionMode="Extended"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="None"
+                  BorderThickness="1"
+                  BorderBrush="Transparent"
+                  ColumnHeaderHeight="32">
+
+            <DataGrid.Columns>
+                <!-- Id (Hidden by default) -->
+                <DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding Id, StringFormat='{}{0:#,##0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Date -->
+                <DataGridTextColumn Header="Date" 
+                                    Binding="{Binding Date}" 
+                                    Width="180" MinWidth="90" 
+                                    SortMemberPath="Date"/>
+
+                <!-- Exchange -->
+                <DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>
+
+                <!-- Symbol -->
+                <DataGridTextColumn Header="Symbol" 
+                                    Binding="{Binding Symbol}" 
+                                    Width="100" MinWidth="90" 
+                                    SortMemberPath="Symbol" />
+
+                <!-- Side -->
+                <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Side, Converter={StaticResource SideTextConverter}}"
+                                       Foreground="{Binding ., Converter={StaticResource SideColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Interval -->
+                <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="60" MinWidth="50" SortMemberPath="Interval" />
+
+                <!-- Strategy -->
+                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="60" MinWidth="50" SortMemberPath="Strategy" />
+
+                <!-- Text -->
+                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" MinWidth="90" SortMemberPath="Text" />
+
+                <!-- Signal Price -->
+                <DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding ., Converter={StaticResource PriceTextConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Price Change (Hidden by default) -->
+                <DataGridTemplateColumn Header="Change" Width="75" SortMemberPath="PriceChange">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding PriceChange, StringFormat='{}{0:##0.#0}'}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Signal Volume with color converter -->
+                <DataGridTemplateColumn Header="Volume" Width="75" SortMemberPath="SignalVolume" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding SignalVolume, StringFormat='{}{0:#,##0}'}"
+                                       Foreground="{Binding SignalVolume, Converter={StaticResource VolumeColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- TfTrend -->
+                <DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TfTrend">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding TfTrend, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding TfTrend, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- primary market trend -->
+                <DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="MarketTrendPrimary" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding TrendPercentagePrimary, StringFormat='{}{0:##0.#0}'}"
+                                       Foreground="{Binding TrendPercentagePrimary, Converter={StaticResource MarketTrendColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- secondary market trend -->
+                <DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="MarketTrendSecondary">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding TrendPercentageSecondary, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding TrendPercentageSecondary, Converter={StaticResource MarketTrendColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Change24h -->
+                <DataGridTemplateColumn Header="24h Change" Width="75" SortMemberPath="Change24h">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding Last24HoursChange, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Last24HoursChange, Converter={StaticResource MarketTrendColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- secondary market trend -->
+                <DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="MoveXDaysEffective">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding LastXDaysEffective, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding LastXDaysEffective, Converter={StaticResource MarketTrendColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- BB% -->
+                <DataGridTemplateColumn Header="BB%" Width="75" SortMemberPath="BB" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding BB, StringFormat='{}{0:##0.#0}'}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            
+                <!-- BB.Lower -->
+                <DataGridTemplateColumn Header="BbLower" Width="60" SortMemberPath="BbLower" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding BbLower, StringFormat='{}{0:#,##0}'}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- BB.Upper -->
+                <DataGridTemplateColumn Header="BbUpper" Width="60" SortMemberPath="BbUpper" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding BbUpper, StringFormat='{}{0:#,##0}'}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- AvgBB% -->
+                <DataGridTemplateColumn Header="Avg BB%" Width="75" SortMemberPath="AvgBB" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding AvgBB, StringFormat='{}{0:##0.#0}'}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- RSI -->
+                <DataGridTemplateColumn Header="Rsi" Width="60" SortMemberPath="Rsi" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding Rsi, StringFormat='{}{0:#,##0}'}"
+                                       Foreground="{Binding Rsi, Converter={StaticResource RsiColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- LuxIndicator5m -->
+                <DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="Lux5m">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding LuxIndicator5m, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding LuxIndicator5m, Converter={StaticResource MarketTrendColorConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+				<!-- MacdValue -->
+				<DataGridTemplateColumn Header="Macd Value" Width="75" SortMemberPath="MacdValue" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding MacdValue, StringFormat='{}{0:##0.###0}'}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- MacdSignal -->
+				<DataGridTemplateColumn Header="Macd Signal" Width="75" SortMemberPath="MacdSignal" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- MacdHistogram -->
+				<DataGridTemplateColumn Header="Macd Histo" Width="75" SortMemberPath="MacdHistogram" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding MacdHistogram, StringFormat='{}{0:##0.#0}'}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- Stoch Oscillator -->
+				<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="Stoch" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding StochOscillator, StringFormat='{}{0:##0.#0}'}"
+                                       Foreground="{Binding StochOscillator, Converter={StaticResource StochColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- Stoch hSignal -->
+				<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="Signal" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding StochSignal, StringFormat='{}{0:##0.#0}'}"
+                                       Foreground="{Binding StochSignal, Converter={StaticResource StochColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- Sma200 -->
+				<DataGridTemplateColumn Header="Sma200" Width="75" SortMemberPath="Sma200" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding ., Converter={StaticResource Sma200TextConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- Sma50 -->
+				<DataGridTemplateColumn Header="Sma50" Width="75" SortMemberPath="Sma50" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding ., Converter={StaticResource Sma50TextConverter}}"
+                                       Foreground="{Binding ., Converter={StaticResource Sma50ColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- Sma20 -->
+				<DataGridTemplateColumn Header="Sma20" Width="75" SortMemberPath="Sma20" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding ., Converter={StaticResource Sma20TextConverter}}"
+                                       Foreground="{Binding ., Converter={StaticResource Sma20ColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- PSar -->
+				<DataGridTemplateColumn Header="PSar" Width="75" SortMemberPath="PSar" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Text="{Binding ., Converter={StaticResource PSarTextConverter}}"
+                                       Foreground="{Binding ., Converter={StaticResource PSarColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				
+
+				<!-- Trend15m -->
+                <DataGridTemplateColumn Header="Trend 15m" Width="60" SortMemberPath="Trend15m" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Trend15m, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding Trend15m, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Trend30m -->
+                <DataGridTemplateColumn Header="Trend 30m" Width="60" SortMemberPath="Trend30m" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Trend30m, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding Trend30m, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Trend1h -->
+                <DataGridTemplateColumn Header="Trend 1h" Width="60" SortMemberPath="Trend1h">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Trend1h, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding Trend1h, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Trend4h -->
+                <DataGridTemplateColumn Header="Trend 4h" Width="60" SortMemberPath="Trend4h">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Trend4h, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding Trend4h, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                                
+                <!-- Trend1d -->
+                <DataGridTemplateColumn Header="Trend 1d" Width="60" SortMemberPath="Trend1d">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Trend1d, Converter={StaticResource TrendTextConverter}}" 
+                                       Foreground="{Binding Trend1d, Converter={StaticResource TrendColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+
+                <!-- Barometer15m -->
+                <DataGridTemplateColumn Header="Bm 15m" Width="60" SortMemberPath="Barometer15m" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Barometer15m, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Barometer15m, Converter={StaticResource BarometerColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Barometer30m -->
+                <DataGridTemplateColumn Header="Bm 30m" Width="60" SortMemberPath="Barometer30m" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Barometer30m, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Barometer30m, Converter={StaticResource BarometerColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Barometer1h -->
+                <DataGridTemplateColumn Header="Bm 1h" Width="60" SortMemberPath="Barometer1h">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Barometer1h, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Barometer1h, Converter={StaticResource BarometerColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Barometer4h -->
+                <DataGridTemplateColumn Header="Bm 4h" Width="60" SortMemberPath="Barometer4h">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Barometer4h,StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Barometer4h, Converter={StaticResource BarometerColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                                
+                <!-- Barometer1d -->
+                <DataGridTemplateColumn Header="Bm 1d" Width="60" SortMemberPath="Barometer1d">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding Barometer1d, StringFormat='{}{0:##0.#0}'}" 
+                                       Foreground="{Binding Barometer1d, Converter={StaticResource BarometerColorConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+				<!-- MinimumEntry -->
+				<DataGridTemplateColumn Header="Min Entry" Width="60" SortMemberPath="MinimumEntry">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding ., Converter={StaticResource MinimumEntryTextConverter }}"/> 
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- PriceMinPerc -->
+				<DataGridTemplateColumn Header="Price min perc" Width="60" SortMemberPath="PriceMinPerc">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding PriceMinPerc, StringFormat='{}{0:##0.#0}'}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- PriceMaxPerc -->
+				<DataGridTemplateColumn Header="Price max perc" Width="60" SortMemberPath="PriceMaxPerc">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding PriceMaxPerc, StringFormat='{}{0:##0.#0}'}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+				<!-- SignalStatus -->
+				<DataGridTemplateColumn Header="signal Status" Width="60" SortMemberPath="SignalStatus">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Text="{Binding SignalStatus, Converter={StaticResource SignalStatusTextConverter}}"
+							    Foreground="{Binding SignalStatus, Converter={StaticResource SignalStatusColorConverter}}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+
+			</DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

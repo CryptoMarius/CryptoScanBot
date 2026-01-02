@@ -3,6 +3,7 @@ using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
 
 namespace CryptoScanner.Core.Exchange;
 
@@ -104,14 +105,18 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
     {
         ConnectionLostCount++;
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} ticker for group {GroupName} connection lost");
-        ScannerSession.ConnectionWasLost("");
+        IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
+            ?? throw new InvalidOperationException("IScannerSession not registered in services");
+        _scannerSession.ConnectionWasLost("");
     }
 
 
     internal void TickerConnectionRestored(TimeSpan timeSpan)
     {
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} {TickerType} ticker for group {GroupName} connection restored");
-        ScannerSession.ConnectionWasRestored("");
+        IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
+            ?? throw new InvalidOperationException("IScannerSession not registered in services");
+        _scannerSession.ConnectionWasRestored("");
     }
 
 

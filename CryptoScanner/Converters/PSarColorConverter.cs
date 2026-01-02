@@ -1,7 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Signal.Model;
+using CryptoScanner.ViewModels;
 
 using System.Globalization;
 
@@ -11,7 +11,7 @@ namespace CryptoScanner.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is SignalInfo signal)
+            if (value is SignalViewModel signal)
             {
                 if (signal.Side == CryptoTradeSide.Long)
                 {

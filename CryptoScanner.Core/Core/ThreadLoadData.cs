@@ -6,11 +6,15 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
+
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace CryptoScanner.Core.Core;
 
@@ -366,7 +370,10 @@ public class ThreadLoadData
                 // Assume we now can run
                 GlobalData.ApplicationStatus = CryptoApplicationStatus.Running;
                 //GlobalData.DumpSessionInformation();
-                ScannerSession.SetTimerDefaults();
+
+                IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
+                    ?? throw new InvalidOperationException("IScannerSession not registered in services");
+                _scannerSession.SetTimerDefaults();
 
                 GlobalData.ApplicationHasStarted?.Invoke("");
             }

@@ -1,17 +1,18 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
-using System;
-using System.Diagnostics;
-using Xilium.CefGlue.Avalonia;
 
-namespace CryptoScanner.Browser.Services;
+using CryptoScanner.Views;
+
+using System.Diagnostics;
+
+namespace CryptoScanner.Services;
 
 /// <summary>
-/// Hidden browser service for handling URL redirects (e.g., Altrady OAuth)
+/// Hidden browser service for handling URL redirects (e.g., AltradyStandard OAuth)
 /// </summary>
 public class HiddenBrowserService : IDisposable
 {
-    private AvaloniaCefBrowser? _hiddenBrowser;
+    private BrowserView? _hiddenBrowser;
     private Window? _hiddenWindow;
     private bool _isInitialized;
 
@@ -40,14 +41,11 @@ public class HiddenBrowserService : IDisposable
                 };
 
                 // Create hidden browser
-                _hiddenBrowser = new AvaloniaCefBrowser
-                {
-                    Address = "about:blank"
-                };
+                _hiddenBrowser = new BrowserView();
 
                 // Subscribe to navigation events
-                _hiddenBrowser.LoadStart += OnLoadStart;
-                _hiddenBrowser.LoadEnd += OnLoadEnd;
+                //_hiddenBrowser.LoadStart += OnLoadStart;
+                //_hiddenBrowser.LoadEnd += OnLoadEnd;
 
                 _hiddenWindow.Content = _hiddenBrowser;
                 
@@ -55,7 +53,7 @@ public class HiddenBrowserService : IDisposable
                 _hiddenWindow.Show();
                 
                 // Immediately hide from view
-                _hiddenWindow.WindowState = WindowState.Minimized;
+                _hiddenWindow.WindowState = Avalonia.Controls.WindowState.Minimized;
 
                 _isInitialized = true;
                 Debug.WriteLine("HiddenBrowserService initialized");
@@ -82,31 +80,31 @@ public class HiddenBrowserService : IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             Debug.WriteLine($"HiddenBrowser navigating to: {url}");
-            _hiddenBrowser?.Address = url;
+            _hiddenBrowser?.Navigate(url);
         });
     }
 
 
-    private void OnLoadStart(object? sender, Xilium.CefGlue.Common.Events.LoadStartEventArgs e)
-    {
-        Debug.WriteLine($"HiddenBrowser LoadStart: {e.Frame.Url}");
-    }
+    //private void OnLoadStart(object? sender, Xilium.CefGlue.Common.Events.LoadStartEventArgs e)
+    //{
+    //    Debug.WriteLine($"HiddenBrowser LoadStart: {e.Frame.Url}");
+    //}
 
-    private void OnLoadEnd(object? sender, Xilium.CefGlue.Common.Events.LoadEndEventArgs e)
-    {
-        Debug.WriteLine($"HiddenBrowser LoadEnd: {e.Frame.Url}");
-    }
+    //private void OnLoadEnd(object? sender, Xilium.CefGlue.Common.Events.LoadEndEventArgs e)
+    //{
+    //    Debug.WriteLine($"HiddenBrowser LoadEnd: {e.Frame.Url}");
+    //}
 
     public void Dispose()
     {
         Debug.WriteLine("HiddenBrowserService Dispose");
         
-        if (_hiddenBrowser != null)
-        {
-            _hiddenBrowser.LoadStart -= OnLoadStart;
-            _hiddenBrowser.LoadEnd -= OnLoadEnd;
-            _hiddenBrowser.Dispose();
-        }
+        //if (_hiddenBrowser != null)
+        //{
+        //    _hiddenBrowser.LoadStart -= OnLoadStart;
+        //    _hiddenBrowser.LoadEnd -= OnLoadEnd;
+        //    _hiddenBrowser.Dispose();
+        //}
 
         _hiddenWindow?.Close();
         _isInitialized = false;

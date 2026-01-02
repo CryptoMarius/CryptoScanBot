@@ -13,52 +13,7 @@ namespace CryptoScanner.Core.Trader;
 
 public class TradeTools
 {
-    public static void LoadAssets()
-    {
-        //GlobalData.AddTextToLogTab("Reading asset information");
-
-        if (GlobalData.ActiveExchange != null)
-        {
-            // ALLE assets laden
-            GlobalData.ActiveExchange.Data.AssetList.Clear();
-
-            using var database = new CryptoDatabase();
-            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
-            {
-                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
-            }
-        }
-    }
-
-    public static void LoadClosedPositions()
-    {
-        // Alle gesloten posities lezen 
-        // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
-        //GlobalData.AddTextToLogTab("Reading closed positions");
-        string sql = "select * from position where exchangeid=@exchangeid and not closetime is null order by id desc";
-        if (!GlobalData.BackTest)
-            sql += " limit 300";
-        using var database = new CryptoDatabase();
-
-        GlobalData.PositionsClosed.Clear();
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
-            PositionTools.AddPositionClosed(position);
-    }
-
-    public static void LoadOpenPositions()
-    {
-        // Alle openstaande posities lezen 
-        //GlobalData.AddTextToLogTab("Reading open positions");
-
-        using var database = new CryptoDatabase();
-        string sql = "select * from position where exchangeid=@exchangeid and closetime is null and status < 2";
-        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
-        {
-            PositionTools.AddPosition(position);
-            PositionTools.LoadPosition(database, position);
-        }
-    }
-
+  
     public static async Task CheckOpenPositions()
     {
         // De openstaande posities controleren

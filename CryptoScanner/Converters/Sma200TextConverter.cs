@@ -1,7 +1,7 @@
 ﻿using Avalonia.Data.Converters;
 
-using CryptoScanner.LiveData.Model;
-using CryptoScanner.Signal.Model;
+using CryptoScanner.Model;
+using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Converters;
 
@@ -10,15 +10,15 @@ public class Sma200TextConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
     {
         // Display the price using the symbol's price format
-        if (value is SignalInfo signalInfo)
+        if (value is SignalViewModel signalInfo)
         {
             var price = signalInfo.Sma200;
-            return price?.ToString(signalInfo.SignalObject.Symbol.PriceDisplayFormat);
+            return price?.ToString(signalInfo.Object.Symbol.PriceDisplayFormat);
         }
-        else if (value is LiveDataInfo liveDataInfo)
+        else if (value is LiveDataViewModel liveDataInfo)
         {
             var price = liveDataInfo.Sma200;
-            return price?.ToString(liveDataInfo.LiveDataObject.Symbol.PriceDisplayFormat);
+            return price?.ToString(liveDataInfo.Object.Symbol.PriceDisplayFormat);
         }
 
         return "?";

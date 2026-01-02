@@ -44,8 +44,10 @@ public partial class SymbolSelectorViewModel : ObservableObject
         {
             foreach (var symbol in exchange.SymbolListName.Values.OrderBy(x => x.Base))
             {
-                if (symbol.QuoteData.FetchCandles)
+                if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+                {
                     BaseSymbols.Add(symbol.Base);
+                }
             }
         }
 

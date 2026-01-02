@@ -78,7 +78,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 }
 
                                 //Het is erg belangrijk om de delisted munten zo snel mogelijk te detecteren.
-                                //(ik heb wat slechte ervaringen met de Altrady bot die op paniek pieken handelt)
+                                //(ik heb wat slechte ervaringen met de AltradyStandard bot die op paniek pieken handelt)
 
                                 // https://api.bybit.com/v5/market/instruments-info?category=spot
                                 /*
