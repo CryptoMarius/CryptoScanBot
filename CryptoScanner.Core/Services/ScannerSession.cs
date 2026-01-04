@@ -108,7 +108,7 @@ public class ScannerSession : IScannerSession
             {
                 CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
                 defaultQuoteData.FetchCandles = true;
-                GlobalData.Settings.General.SelectedBarometerQuote = defaultQuote;
+                //GlobalData.Settings.General.SelectedBarometerQuote = defaultQuote;
             }
         }
 
