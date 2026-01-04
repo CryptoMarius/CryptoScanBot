@@ -33,29 +33,6 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
         DataContextChanged += OnDataContextChanged;
         _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
 
-        // Kind of Hacky, needs work...
-        Loaded += (s, e) =>
-        {
-            if (DataContext is LiveDataGridViewModel vm)
-            {
-                var owner = TopLevel.GetTopLevel(this) as Window
-                    ?? throw new InvalidOperationException("No parent window available");
-                //vm.SetOwner(owner);
-                //vm.RequestSort += OnRequestSort;
-                //vm.RequestSortedInsert += OnRequestSortedInsert;
-            }
-        };
-
-        //// Kind of Hacky, needs work... (is it really needed?)
-        //Unloaded += (s, e) =>
-        //{
-        //    if (DataContext is LiveDataGridViewModel vm)
-        //    {
-        //        vm.RequestSort -= OnRequestSort;
-        //        vm.RequestSortedInsert -= OnRequestSortedInsert;
-        //    }
-        //};
-
         // Register a custom comparer for each column based on its SortMemberPath
         foreach (var column in _dataGrid.Columns)
         {
@@ -65,7 +42,7 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
                 column.CustomSortComparer = comparer;
             }
             else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
         }
 
         // Restore grid state from the service
@@ -78,20 +55,22 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
     private LiveDataGridViewModel? _currentViewModel;
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        // Unsubscribe old
-        if (_currentViewModel != null)
-        {
-            _currentViewModel.RequestSort -= OnRequestSort;
-            _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
-        }
+        //System.Diagnostics.Debug.WriteLine($"OnDataContextChanged {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
-        // Subscribe new
-        if (DataContext is LiveDataGridViewModel vm)
-        {
-            _currentViewModel = vm;
-            vm.RequestSort += OnRequestSort;
-            vm.RequestSortedInsert += OnRequestSortedInsert;
-        }
+        //// Unsubscribe old
+        //if (_currentViewModel != null)
+        //{
+        //    _currentViewModel.RequestSort -= OnRequestSort;
+        //    _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+        //}
+
+        //// Subscribe new
+        //if (DataContext is LiveDataGridViewModel vm)
+        //{
+        //    _currentViewModel = vm;
+        //    vm.RequestSort += OnRequestSort;
+        //    vm.RequestSortedInsert += OnRequestSortedInsert;
+        //}
     }
 
 

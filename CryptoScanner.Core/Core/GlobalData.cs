@@ -89,7 +89,7 @@ public static class GlobalData
     public static SettingsExchangeApi TradingApi { get; set; } = new();
 
     /// <summary>
-    /// AltradyStandard API settings
+    /// Altrady API settings
     /// </summary>
     public static SettingsAltradyApi AltradyApi { get; set; } = new();
 
@@ -226,7 +226,7 @@ public static class GlobalData
             AddSymbol(symbol);
     }
 
-    public static void LoadSignals()
+    public static void LoadSignals(string filterText = "")
     {
         //GlobalData.AddTextToLogTab("Reading some signals");
 
@@ -255,9 +255,20 @@ public static class GlobalData
         }
         else
         {
-
+            string sql;
             using var database = new CryptoDatabase();
-            string sql = "select * from signal where exchangeid=@exchangeid and BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
+            if (string.IsNullOrEmpty(filterText))
+                sql = "select * from signal where exchangeid=@exchangeid and BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
+            else
+            {
+                sql = "select * from signal " +
+                    "inner join symbol on signal.symbolid=symbol.id " +
+                    "where signal.exchangeid=@exchangeid and signal.BackTest=0 and signal.ExpirationDate >= @FromDate " +
+                    $"and symbol.name like '%{filterText}%' " +
+                    "order by signal.OpenDate ";
+            }
+
+            SignalQueue.Clear();
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))

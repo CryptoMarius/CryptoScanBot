@@ -1,4 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Services;
@@ -8,6 +11,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
+    public required ITradingViewService TradingViewService { get; set; }
     public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardInformationViewModel DashBoardInformationViewModel { get; set; }
     public required DashboardPositionsViewModel DashboardPositionsViewModel { get; set; }
@@ -20,9 +24,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     public required LogViewModel LogViewModel { get; set; }
 
-
-    public IDialogService? DialogService { get; set; }
-
     public BrowserView? BrowserView { get; set; }
 
     [ObservableProperty]
@@ -32,12 +33,21 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _traderActive = false;
 
+    [ObservableProperty]
+    private int _selectedTabIndex = 0;
+
+    [ObservableProperty]
+    private string _symbolFilterText = string.Empty;
+    public event EventHandler<string>? FilterTextChanged;
+
+
     public MainWindowViewModel()
     {
         System.Diagnostics.Debug.WriteLine($"MainViewModel default constructor called");
     }
 
     public MainWindowViewModel(
+        ITradingViewService tradingViewService,
         ApplicationStateService applicationStateService,
         DashBoardInformationViewModel dashBoardInformationViewModel,
         DashboardPositionsViewModel dashBoardPositionsViewModel,
@@ -49,6 +59,7 @@ public partial class MainWindowViewModel : ObservableObject
         BrowserViewModel browserViewModel,
         LogViewModel logViewModel)
     {
+        TradingViewService = tradingViewService;
         ApplicationStateService = applicationStateService;
         DashBoardInformationViewModel = dashBoardInformationViewModel;
         DashboardPositionsViewModel = dashBoardPositionsViewModel;
@@ -60,71 +71,86 @@ public partial class MainWindowViewModel : ObservableObject
         BrowserViewModel = browserViewModel;
         LogViewModel = logViewModel;
 
-
-        // Debug output
-        System.Diagnostics.Debug.WriteLine($"MainViewModel created");
-        System.Diagnostics.Debug.WriteLine($"DashBoardInformationViewModel: {DashBoardInformationViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"SymbolGridViewModel: {SymbolGridViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"LiveDataGridViewModel: {LiveDataGridViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"PositionOpenGridViewModel: {PositionOpenGridViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"PositionClosedGridViewModel: {PositionOpenGridViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"BrowserViewModel: {BrowserViewModel != null}");
-        System.Diagnostics.Debug.WriteLine($"LogViewModel: {LogViewModel != null}");
-
-        System.Diagnostics.Debug.WriteLine($"Symbols count: {SymbolGridViewModel?.Symbols?.Count ?? 0}");
-        System.Diagnostics.Debug.WriteLine($"Signals count: {SignalGridViewModel?.Signals?.Count ?? 0}");
-        System.Diagnostics.Debug.WriteLine($"LiveData count: {LiveDataGridViewModel?.LiveDatas?.Count ?? 0}");
-        System.Diagnostics.Debug.WriteLine($"Positions open count: {PositionOpenGridViewModel?.Positions?.Count ?? 0}");
-        System.Diagnostics.Debug.WriteLine($"Positions closed count: {PositionClosedGridViewModel?.Positions?.Count ?? 0}");
-        System.Diagnostics.Debug.WriteLine($"LogLine count: {LogViewModel?.LogLines?.Count ?? 0}");
-
         // TODO: Is there a better way
         AnalyzerActive = ApplicationStateService.AnalyzerActive;
         TraderActive = ApplicationStateService.TraderActive;
         SoundsActive = ApplicationStateService.SoundsActive;
 
+        // Subscribe child ViewModels to filter event
+        FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
+        FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
+
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
     }
 
-    private void OnOpenInInternalBrowserRequested(object? sender, string  url)
+    private void OnOpenInInternalBrowserRequested(object? sender, string url)
     {
         //BrowserViewModel.NavigateToTradingView(url);
         if (BrowserView != null)
         {
             System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
-            
+
+            // switch to the browser tab
+            SelectedTabIndex = 1;
+
             // Navigate triggers initialization + tab switch automatically
             BrowserView.Navigate(url);
         }
-
     }
 
-    partial void OnAnalyzerActiveChanged(bool value)
+
+    public async Task ExitApp()
     {
-        // should work, but does nothing except error in immediate output
-        System.Diagnostics.Debug.WriteLine($"OnAnalyzerActiveChanged changed to: {AnalyzerActive}");
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.TryShutdown();
+        }
+        else
+        {
+            // Fallback 
+            Environment.Exit(0);
+        }
     }
 
-    partial void OnSoundsActiveChanged(bool value)
-    {
-        // should work, but does nothing except error in immediate output
-        System.Diagnostics.Debug.WriteLine($"OnSoundsActiveChanged changed to: {SoundsActive}");
-    }
+    // not needed, but nice experiment
+    //partial void OnAnalyzerActiveChanged(bool value)
+    //{
+    //    // should work, but does nothing except error in immediate output
+    //    System.Diagnostics.Debug.WriteLine($"OnAnalyzerActiveChanged changed to: {AnalyzerActive}");
+    //}
 
-    partial void OnTraderActiveChanged(bool value)
-    {
-        // should work, but does nothing except error in immediate output
-        // Breakpoint hier - werkt NU wel als je via code triggert
-        System.Diagnostics.Debug.WriteLine($"OnTraderActiveChanged changed to: {TraderActive}");
-    }
+    //partial void OnSoundsActiveChanged(bool value)
+    //{
+    //    // should work, but does nothing except error in immediate output
+    //    System.Diagnostics.Debug.WriteLine($"OnSoundsActiveChanged changed to: {SoundsActive}");
+    //}
+
+    //partial void OnTraderActiveChanged(bool value)
+    //{
+    //    // should work, but does nothing except error in immediate output
+    //    // Breakpoint hier - werkt NU wel als je via code triggert
+    //    System.Diagnostics.Debug.WriteLine($"OnTraderActiveChanged changed to: {TraderActive}");
+    //}
+
+    //partial void OnSymbolFilterTextChanged(string value)
+    //{
+    //    FilterTextChanged?.Invoke(this, value);
+    //}
+
+    //// Dit wordt NIET bij elke toetsaanslag aangeroepen, alleen bij LostFocus of Enter
+    //partial void OnSymbolFilterTextChanged(string value)
+    //{
+    //    System.Diagnostics.Debug.WriteLine($"Filter changed to: {value}");
+    //    FilterTextChanged?.Invoke(this, value);
+    //}
 
     [RelayCommand]
-    private void Close()
+    private void ApplyFilter(string? filterText)
     {
-        System.Diagnostics.Debug.WriteLine($"Close");
-        CloseRequested?.Invoke(this, EventArgs.Empty);
+        if (filterText != null)
+        {
+            SymbolFilterText = filterText;
+            FilterTextChanged?.Invoke(this, filterText);
+        }
     }
-    public event EventHandler? CloseRequested;
-
-
 }

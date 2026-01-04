@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
 using CommunityToolkit.Mvvm.Input;
@@ -43,8 +44,6 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel vm)
         {
             vm.BrowserView = _browserView;
-            vm.CloseRequested += (s, e) => Close();
-            vm.DialogService = new DialogService(this);
         }
 
         // Restore window position, size, state and splitter
@@ -61,6 +60,7 @@ public partial class MainWindow : Window
         // Set application title (we have multiple instances)
         Title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
 
+        Closing += OnWindowClosing; // Save state
 
 
         //MenuItem menuItem;
@@ -69,16 +69,12 @@ public partial class MainWindow : Window
         {
             // There are already three items bound to the application states (sound, trading and analyzer)
             menuFile.Items.Add(new MenuItem { Header = "-" });
-            menuFile.Items.Add(new MenuItem { Header = "Settings", Command = new CommandShowAbout(), CommandParameter = this });
+            menuFile.Items.Add(new MenuItem { Header = "Settings", Command = new CommandSettings(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "Clear log and ticker count", Command = new CommandClearLogAndTicker(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "-" });
+            //menuFile.Items.Add(new MenuItem { Header = "-" });
 
 
-            //menuItem = new MenuItem { Header = "E_xit", CommandParameter = this };
-            //var binding = new Binding("CloseCommand") { Mode = BindingMode.OneWay, Source = menuItem.DataContext };
-            //menuItem.Bind(MenuItem.CommandProperty, binding);
-            //menuFile.Items.Add(menuItem);
 
             menuFile.Items.Add(new MenuItem { Header = "-" });
             //menuFile.Items.Add(new MenuItem { Header = "Export Tradingview import files", Command.TradingViewImportList);
@@ -96,14 +92,14 @@ public partial class MainWindow : Window
             menuFile.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "-" });
 
-            menuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(window => window?.Close(true)), CommandParameter = this});
+            menuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
         }
 
 
         var menuHelp = this.FindControl<MenuItem>("MenuHelp");
         if (menuHelp != null)
         {
-            menuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this});
+            menuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this });
         }
     }
 
@@ -122,14 +118,37 @@ public partial class MainWindow : Window
         _applicationStateService.SaveSplitterPosition("MainWindow", position);
     }
 
-    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    private bool hasEnded = false;
+    private async void OnWindowClosing(object? sender, CancelEventArgs e)
     {
+        if (hasEnded)
+            return;
+
+        // Twee possible calls, 1 via windows - close button or via menu->exit
+        hasEnded = true;
+        Closing -= OnWindowClosing; // observed multiple calls..
+        //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
+
         // Save splitter position
         var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
         _applicationStateService.SaveSplitterPosition("MainWindow", position);
 
         // Save window state
         _applicationStateService.SaveWindowState("MainWindow", this);
+
+        if (DataContext is MainWindowViewModel vm)
+        {
+            await vm.ExitApp();
+        }
     }
 
+
+    private void OnFilterApply(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox && DataContext is MainWindowViewModel vm)
+        {
+            vm.SymbolFilterText = textBox.Text;
+        }
+    }
 }
+

@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Model;
@@ -53,7 +54,7 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
                 column.CustomSortComparer = comparer;
             }
             else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
         }
 
         // Restore grid state from the service
@@ -87,5 +88,7 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
         AddStandardGridRowCommands(flyout, TargetViewModel.Symbol);
         flyout.ShowAt(dataGrid, true);
     }
+
+
 
 }

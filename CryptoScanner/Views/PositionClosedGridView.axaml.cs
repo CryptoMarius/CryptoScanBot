@@ -12,7 +12,7 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
 {
     public PositionClosedGridView()
     {
-        _gridName = "SymbolGrid";
+        _gridName = "PositionClosedGrid";
         InitializeComponent();
 
         if (Design.IsDesignMode)
@@ -52,7 +52,7 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
                 column.CustomSortComparer = comparer;
             }
             else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
         }
 
         // Restore grid state from the service

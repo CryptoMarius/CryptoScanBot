@@ -68,8 +68,14 @@
 					<Grid RowDefinitions="48,*">
 						<Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
 							<TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
-							<TextBox Grid.Column="2" Text="" FontSize="12" BorderThickness="0"
-						 HorizontalAlignment="Left" Margin="10" Width="100" Height="15"/>
+							<TextBox Grid.Column="2" FontSize="12" x:Name="FilterTextBox" BorderThickness="0" HorizontalAlignment="Left" Margin="10" Width="100" Height="15"
+								Text="{Binding SymbolFilterText}">
+								<TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter" 
+                                Command="{Binding ApplyFilterCommand}" 
+                                CommandParameter="{Binding #FilterTextBox.Text}"/>
+                </TextBox.KeyBindings>
+							</TextBox>
 						</Grid>
 						<Grid Grid.Row="1">
 							<views:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
@@ -85,7 +91,7 @@
 				<!-- Main screen -->
 				<Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
 					<!-- The signals on the main screen -->
-					<TabControl Grid.Row="2" Margin="0" >
+					<TabControl Grid.Row="2" Margin="0" SelectedIndex="{Binding SelectedTabIndex}">
 						<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 							<Panel >
 								<views:SignalGridView DataContext="{Binding SignalGridViewModel}" />

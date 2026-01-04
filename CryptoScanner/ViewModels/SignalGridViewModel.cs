@@ -6,6 +6,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Telegram;
 using CryptoScanner.Model;
 
 
@@ -13,7 +14,6 @@ namespace CryptoScanner.ViewModels;
 
 public partial class SignalGridViewModel : ObservableObject
 {
-    //private Lock _signalsLock = new ();
     private DispatcherTimer? _timerAddSignalsFromQueue = new() { Interval = TimeSpan.FromMilliseconds(1000) };
     private DispatcherTimer? _timerClearAndUpdateSignals = new () { Interval = TimeSpan.FromMinutes(1) };
 
@@ -25,7 +25,7 @@ public partial class SignalGridViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("SignalGridViewModel constructor called");
 
-        GlobalData.AnalyzeSignalCreated = AnalyzeSignalCreated;
+        GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
         _timerAddSignalsFromQueue.Tick += TimerAddSignalsFromQueueTick;
         _timerAddSignalsFromQueue.Start();
@@ -66,11 +66,15 @@ public partial class SignalGridViewModel : ObservableObject
                         CryptoSignal signal = GlobalData.SignalQueue.Dequeue();
                         if (signal != null)
                         {
-                            var s = new SignalViewModel
+                            var symbol = signal.Symbol;
+                            if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                             {
-                                Object = signal,
-                            };
-                            signalList.Add(s);
+                                var s = new SignalViewModel
+                                {
+                                    Object = signal,
+                                };
+                                signalList.Add(s);
+                            }
                         }
                     }
 
@@ -95,7 +99,7 @@ public partial class SignalGridViewModel : ObservableObject
         }
     }
 
-    private void AnalyzeSignalCreated(CryptoSignal signal)
+    private void ReceivedCreatedSignals(CryptoSignal signal)
     {
         GlobalData.CreatedSignalCount++;
         string text = "Signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
@@ -118,18 +122,16 @@ public partial class SignalGridViewModel : ObservableObject
                     x.lastSignalTime = signal.EventTime + 20;
                     GlobalData.StrategiesSettings[signal.Strategy] = x;
 
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
                         x.strategySettings.SoundFileLong : x.strategySettings.SoundFileShort;
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-                               //PlaySound(signal, x.strategySettings.PlaySound, x.strategySettings.PlaySpeech, soundFile);
-                               //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
+                    GlobalData.PlaySomeMusic(soundFile, false);
+                    //GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString());
                 }
                 //else GlobalData.AddTextToLogTab("Sound " + signal.Symbol.Name + " " + signal.StrategyText + " " + x.lastSignalTime.ToString() + " ignored");
             }
 
-            //if (GlobalData.Telegram.SendSignalsToTelegram)
-            //    ThreadTelegramBot.SendSignal(signal);
+            if (GlobalData.Telegram.SendSignalsToTelegram)
+                ThreadTelegramBot.SendSignal(signal);
         }
     }
 
@@ -182,5 +184,12 @@ public partial class SignalGridViewModel : ObservableObject
         }
     }
 
+    string _currentFilter = string.Empty;
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
 
+        Signals.Clear();
+        GlobalData.LoadSignals(_currentFilter);
+    }
 }

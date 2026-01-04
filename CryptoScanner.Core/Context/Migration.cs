@@ -657,7 +657,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            // Note: Add a AT signal string to the position table from the AltradyStandard response
+            // Note: Add a AT signal string to the position table from the Altrady response
             database.Connection.Execute("alter table Position add AltradyPositionId Text null", transaction);
 
             // update version
@@ -1119,7 +1119,7 @@ public class Migration
         // 18-10-2025
         // Kraken spot is unstable, high cpu and no signals
         // Bybit EU Futures does yet not have any symbols
-        // HyperLiquid Spot does not have any symbols and AltradyStandard doesn't support it
+        // HyperLiquid Spot does not have any symbols and Altrady doesn't support it
         // Kraken is not stable enough (memory overflow problems etc)
         // Store the symbol name of the exchange (the mapping is getting complicated)
         if (CurrentVersion > version.Version && version.Version == 53)

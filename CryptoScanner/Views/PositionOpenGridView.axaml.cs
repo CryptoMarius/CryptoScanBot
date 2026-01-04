@@ -12,7 +12,7 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
 {
     public PositionOpenGridView()
     {
-        _gridName = "SymbolGrid";
+        _gridName = "PositionOpenGrid";
         InitializeComponent();
 
         if (Design.IsDesignMode)
@@ -53,7 +53,7 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
                 column.CustomSortComparer = comparer;
             }
             else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
         }
 
         // Restore grid state from the service

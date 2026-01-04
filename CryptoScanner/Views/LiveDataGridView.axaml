@@ -147,11 +147,11 @@
 				</DataGridTemplateColumn>
 
 				<!-- MacdLiveData -->
-				<DataGridTemplateColumn Header="Macd LiveData" Width="75" SortMemberPath="MacdLiveData" >
+				<DataGridTemplateColumn Header="Macd LiveData" Width="75" SortMemberPath="MacdSignal" >
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding MacdLiveData, StringFormat='{}{0:##0.###0}'}" />
+                                       Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" />
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
@@ -167,7 +167,7 @@
 				</DataGridTemplateColumn>
 
 				<!-- Stoch Oscillator -->
-				<DataGridTemplateColumn Header="Stoch LiveData" Width="75" SortMemberPath="Stoch" >
+				<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="Stoch" >
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -177,13 +177,13 @@
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
 
-				<!-- Stoch hLiveData -->
-				<DataGridTemplateColumn Header="Stoch LiveData" Width="75" SortMemberPath="LiveData" >
+				<!-- Stoch signal -->
+				<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="Signal" >
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding StochLiveData, StringFormat='{}{0:##0.#0}'}"
-                                       Foreground="{Binding StochLiveData, Converter={StaticResource StochColorConverter}}"/>
+                                       Text="{Binding StochSignal, StringFormat='{}{0:##0.#0}'}"
+                                       Foreground="{Binding StochSignal, Converter={StaticResource StochColorConverter}}"/>
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>

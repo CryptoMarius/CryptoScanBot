@@ -8,7 +8,7 @@ using System.Diagnostics;
 namespace CryptoScanner.Services;
 
 /// <summary>
-/// Hidden browser service for handling URL redirects (e.g., AltradyStandard OAuth)
+/// Hidden browser service for handling URL redirects (e.g., Altrady OAuth)
 /// </summary>
 public class HiddenBrowserService : IDisposable
 {

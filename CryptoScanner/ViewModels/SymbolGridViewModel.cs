@@ -1,9 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Interactivity;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Model;
 
 
@@ -17,6 +17,7 @@ public partial class SymbolGridViewModel : ObservableObject
     [ObservableProperty]
     private ObservableRangeCollection<SymbolViewModel> _symbols = [];
 
+
     public SymbolGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
@@ -24,11 +25,10 @@ public partial class SymbolGridViewModel : ObservableObject
         SymbolsHaveChangedEvent("");
     }
 
-
     public event EventHandler<SymbolViewModel>? RequestSortedInsert;
     public event EventHandler? RequestSort;
 
-
+    private string _currentFilter = string.Empty;
     private void SymbolsHaveChangedEvent(string text)
     {
         // Laad symbols direct in de observable collection
@@ -37,18 +37,28 @@ public partial class SymbolGridViewModel : ObservableObject
         {
             if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
             {
-                symbols.Add(new SymbolViewModel
+                if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                 {
-                    Object = symbol,
-                    Id = symbol.Id,
-                    Symbol = symbol.Name,
-                    Volume = symbol.Volume,
-                    Distance = 0.0
-                });
+                    symbols.Add(new SymbolViewModel
+                    {
+                        Object = symbol,
+                        Id = symbol.Id,
+                        Symbol = symbol.Name,
+                        Volume = symbol.Volume,
+                        Distance = 0.0
+                    });
+                }
             }
         }
-        Symbols.AddRange(symbols);
+        Symbols.Replace(symbols);
+        // Request sort na filtering
+        RequestSort?.Invoke(this, EventArgs.Empty);
     }
 
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
+        SymbolsHaveChangedEvent("");
+    }
 
 }

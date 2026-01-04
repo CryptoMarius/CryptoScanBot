@@ -9,7 +9,7 @@ namespace CryptoScanner.Settings.ViewModels;
 public partial class CommonViewModel : ObservableObject
 {
     [ObservableProperty]
-    private CryptoTradingApp _tradingApp = CryptoTradingApp.AltradyStandard;
+    private CryptoTradingApp _tradingApp = CryptoTradingApp.Altrady;
     [ObservableProperty]
     private List<KeyValuePair<CryptoTradingApp, string>> _tradingAppList = [];
 
@@ -62,8 +62,7 @@ public partial class CommonViewModel : ObservableObject
     private void BuildTradingAppList()
     {
         TradingAppList.Clear();
-        TradingAppList.Add(new(CryptoTradingApp.AltradyStandard, "Altrady (standard)"));
-        TradingAppList.Add(new(CryptoTradingApp.AltradyHidden, "Altrady (hidden)"));
+        TradingAppList.Add(new(CryptoTradingApp.Altrady, "Altrady"));
         TradingAppList.Add(new(CryptoTradingApp.Hypertrader, "Hypertrader"));
         TradingAppList.Add(new(CryptoTradingApp.TradingView, "TradingView"));
         TradingAppList.Add(new(CryptoTradingApp.ExchangeUrl, "Exchange"));

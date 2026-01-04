@@ -43,8 +43,12 @@ public enum PositionOpenColumnEnum
     MarketTrendSecondary,
     Change24h,
     MoveLastXDaysEffective,
+
     BB,
+    BbUpper,
+    BbLower,
     AvgBB,
+
     Rsi,
     Lux5m,
     //SlopeRsi,

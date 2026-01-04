@@ -1,136 +1,35 @@
 ﻿using Avalonia.Controls;
 
+using CryptoScanner.Core.Core;
+using CryptoScanner.Services;
 using CryptoScanner.Visualisation.ViewModels;
+
+using System.ComponentModel;
 
 namespace CryptoScanner.Visualisation.Views;
 
 public partial class VisualisationWindow : Window
 {
+    private readonly ApplicationStateService _applicationStateService;
+
     public VisualisationWindow()
     {
+        // Runtime - get service from App
+        _applicationStateService = GlobalData.GetService<ApplicationStateService>()
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
+
         InitializeComponent();
 
-        //this.Loaded += OnWindowLoaded;
+        // Restore window position, size, state and splitter
+        _applicationStateService.RestoreWindowState("ChartWindow", this);
 
-        //this.Loaded += (s, e) =>
-        //{
-        //    var plotView = this.FindControl<OxyPlot.Avalonia.PlotView>("PlotViewControl");
-
-        //    if (plotView != null && DataContext is VisualisationViewModel vm)
-        //    {
-        //        plotView.Model = vm.PlotModel;
-
-        //        // ✓ FORCE RESIZE (workaround voor rendering bug)
-        //        plotView.InvalidatePlot(true);
-        //        plotView.InvalidateVisual();
-        //        plotView.InvalidateMeasure();
-
-        //        // ✓ Delay render (hack)
-        //        Dispatcher.UIThread.Post(() =>
-        //        {
-        //            plotView.InvalidatePlot(true);
-        //        }, DispatcherPriority.Render);
-        //    }
-        //};
-
-        //this.Loaded += (s, e) =>
-        //{
-        //    var plotView = this.FindControl<OxyPlot.Avalonia.PlotView>("PlotViewControl");
-
-        //    // ✓ CHECK SIZE:
-        //    System.Diagnostics.Debug.WriteLine($"PlotView.Bounds: {plotView?.Bounds}");
-        //    System.Diagnostics.Debug.WriteLine($"PlotView.Width: {plotView?.Width}");
-        //    System.Diagnostics.Debug.WriteLine($"PlotView.Height: {plotView?.Height}");
-        //    System.Diagnostics.Debug.WriteLine($"Window.Width: {this.Width}");
-        //    System.Diagnostics.Debug.WriteLine($"Window.Height: {this.Height}");
-
-        //    if (plotView != null && DataContext is VisualisationViewModel vm)
-        //    {
-        //        plotView.Model = vm.PlotModel;
-        //        plotView.InvalidatePlot(true);
-
-        //        // ✓ CHECK AXES RANGE:
-        //        var model = vm.PlotModel;
-        //        System.Diagnostics.Debug.WriteLine($"Axes count: {model.Axes.Count}");
-        //        if (model.Axes.Count >= 2)
-        //        {
-        //            System.Diagnostics.Debug.WriteLine($"X-Axis: Min={model.Axes[0].ActualMinimum}, Max={model.Axes[0].ActualMaximum}");
-        //            System.Diagnostics.Debug.WriteLine($"Y-Axis: Min={model.Axes[1].ActualMinimum}, Max={model.Axes[1].ActualMaximum}");
-        //        }
-
-        //        System.Diagnostics.Debug.WriteLine($"LineSeries: {model.Series.Count}");
-
-        //        // ✓ CHECK SERIES DATA:
-        //        if (model.Series.Count > 0 && model.Series[0] is LineSeries line)
-        //        {
-        //            System.Diagnostics.Debug.WriteLine($"LineSeries points: {line.Points.Count}");
-        //            if (line.Points.Count > 0)
-        //            {
-        //                System.Diagnostics.Debug.WriteLine($"First point: X={line.Points[0].X}, Y={line.Points[0].Y}");
-        //                System.Diagnostics.Debug.WriteLine($"Last point: X={line.Points[^1].X}, Y={line.Points[^1].Y}");
-        //            }
-        //        }
-        //    }
-        //};
+        Closing += OnWindowClosing; // - save state
 
         if (DataContext == null)
         {
             DataContext = new VisualisationViewModel();
         }
     }
-
-    //private void OnWindowLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    //{
-    //    var border = this.FindControl<Border>("ChartBorder");
-    //    if (border == null) return;
-
-    //    var plotView = new OxyPlot.Avalonia.PlotView
-    //    {
-    //        Background = Avalonia.Media.Brushes.Yellow,
-    //        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-    //        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
-    //    };
-
-    //    if (DataContext is VisualisationViewModel vm)
-    //    {
-    //        plotView.Model = vm.PlotModel;
-    //        System.Diagnostics.Debug.WriteLine($"PlotModel assigned - Series: {vm.PlotModel.Series.Count}");
-    //    }
-
-    //    border.Child = plotView;
-
-    //    // ✓ MULTIPLE render passes (OxyPlot bug workaround)
-    //    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-    //    {
-    //        System.Diagnostics.Debug.WriteLine($"Pass 1 - PlotView.Bounds: {plotView.Bounds}");
-    //        System.Diagnostics.Debug.WriteLine($"Pass 1 - PlotView.ActualModel: {plotView.ActualModel != null}");
-
-    //        plotView.InvalidatePlot(true);
-    //        plotView.InvalidateVisual();
-    //        plotView.InvalidateMeasure();
-
-    //        // ✓ SECOND pass
-    //        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-    //        {
-    //            System.Diagnostics.Debug.WriteLine($"Pass 2 - Forcing render again");
-    //            plotView.InvalidatePlot(true);
-
-    //            // ✓ THIRD pass (nuclear option)
-    //            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-    //            {
-    //                System.Diagnostics.Debug.WriteLine($"Pass 3 - Final render");
-
-    //                // ✓ Reassign model (force complete refresh)
-    //                var model = plotView.Model;
-    //                plotView.Model = null;
-    //                plotView.InvalidatePlot(true);
-    //                plotView.Model = model;
-    //                plotView.InvalidatePlot(true);
-
-    //            }, Avalonia.Threading.DispatcherPriority.Loaded);
-    //        }, Avalonia.Threading.DispatcherPriority.Render);
-    //    }, Avalonia.Threading.DispatcherPriority.ApplicationIdle);
-    //}
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
@@ -142,4 +41,10 @@ public partial class VisualisationWindow : Window
         base.OnClosing(e);
     }
 
+
+    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    {
+        // Save window state
+        _applicationStateService.SaveWindowState("ChartWindow", this);
+    }
 }

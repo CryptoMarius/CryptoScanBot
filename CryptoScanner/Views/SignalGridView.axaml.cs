@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Model;
@@ -32,15 +33,6 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
         DataContextChanged += OnDataContextChanged;
         _dataGrid.Loaded += DataGrid_Loaded; // Sorting stuff
 
-        //// Kind of Hacky, needs work... (is it really needed?)
-        //Unloaded += (s, e) =>
-        //{
-        //    if (DataContext is SignalGridViewModel vm)
-        //    {
-        //        vm.RequestSort -= OnRequestSort;
-        //        vm.RequestSortedInsert -= OnRequestSortedInsert;
-        //    }
-        //};
 
         // Register a custom comparer for each column based on its SortMemberPath
         foreach (var column in _dataGrid.Columns)
@@ -51,7 +43,7 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
                 column.CustomSortComparer = comparer;
             }
             else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {column} not set");
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
         }
 
         // Restore grid state from the service
@@ -62,6 +54,8 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
     private SignalGridViewModel? _currentViewModel;
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"OnDataContextChanged {_gridName}");
+
         // Unsubscribe old
         if (_currentViewModel != null)
         {
@@ -76,6 +70,17 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
             vm.RequestSort += OnRequestSort;
             vm.RequestSortedInsert += OnRequestSortedInsert;
         }
+
+        // Post de sort-actie async
+        //Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            System.Diagnostics.Debug.WriteLine($"{_gridName} restore sortindicator {_currentSortColumn} {_currentSortDirection}");
+
+            var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath.ToString() == _currentSortColumn);
+            if (column != null)
+                column.Sort(_currentSortDirection);
+        }; //, DispatcherPriority.Background); // Background zorgt voor delay na render
+
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 
+using CryptoScanner.ViewModels;
+
 namespace CryptoScanner.Views;
 
 public partial class DashBoardInformationView : UserControl
@@ -10,19 +12,11 @@ public partial class DashBoardInformationView : UserControl
         InitializeComponent();
     }
 
-
-    /// <summary>
-    /// Handle symbol click to open chart or details
-    /// </summary>
     private void OnSymbolTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is TextBlock textBlock)
+        if (sender is TextBlock { Tag: DashboardSymbolViewModel symbol } && DataContext is DashBoardInformationViewModel vm)
         {
-            System.Diagnostics.Debug.WriteLine($"Symbol clicked: {textBlock.Text}");
-
-            // TODO: Implement navigation to symbol details or TradingView
-            // Example: Open TradingView with this symbol
+            vm.OnSymbolTapped(symbol);
         }
     }
-
 }

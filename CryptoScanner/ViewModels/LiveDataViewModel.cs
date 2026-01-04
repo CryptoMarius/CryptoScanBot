@@ -33,10 +33,10 @@ public class LiveDataViewModel : INotifyPropertyChanged
     public int LuxIndicator5m { get => Object.Candle.CandleData!.Lux5mValue; set { } }
 
     public double? MacdValue { get => Object.Candle.CandleData!.MacdValue; set { } }
-    public double? MacdLiveData { get => Object.Candle.CandleData!.MacdSignal; set { } }
+    public double? MacdSignal { get => Object.Candle.CandleData!.MacdSignal; set { } }
     public double? MacdHistogram { get => Object.Candle.CandleData!.MacdHistogram; set { } }
     public double? StochOscillator { get => Object.Candle.CandleData!.StochOscillator; set { } }
-    public double? StochLiveData { get => Object.Candle.CandleData!.StochSignal; set { } }
+    public double? StochSignal { get => Object.Candle.CandleData!.StochSignal; set { } }
     public double? Sma200 { get => Object.Candle.CandleData!.Sma200; set { } }
     public double? Sma50 { get => Object.Candle.CandleData!.Sma50; set { } }
     public double? Sma20 { get => Object.Candle.CandleData!.Sma20; set { } }
