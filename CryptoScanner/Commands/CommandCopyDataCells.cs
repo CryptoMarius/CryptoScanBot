@@ -1,12 +1,14 @@
-﻿using Avalonia.Controls;
-
-using CryptoScanner.Core.Model;
-
-namespace CryptoScanner.Commands;
+﻿namespace CryptoScanner.Commands;
 
 public class CommandCopyDataCells : CommandBase
 {
-    public async Task Execute(object? parameter)
+    public override void Execute(object? parameter)
+    {
+        // Fire-and-forget
+        _ = ExecuteAsync(parameter);
+    }
+
+    public async Task ExecuteAsync(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"Copying cells to clipboard");
 

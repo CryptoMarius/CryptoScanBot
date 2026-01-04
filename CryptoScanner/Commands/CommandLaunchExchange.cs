@@ -1,8 +1,4 @@
-﻿using Avalonia.Controls;
-
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Enums;
 
 using CryptoScanner.Helpers;
 
@@ -14,15 +10,9 @@ public class CommandLaunchExchange : CommandBase
     {
         if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null)
         {
+            System.Diagnostics.Debug.WriteLine($"CommandLaunchExchange {dto.symbol.Name}");
             System.Diagnostics.Debug.WriteLine($"Open {dto.symbol.Name} in exchange");
-
-            // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
-            CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
-            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
-                tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-            GlobalData.LoadLinkSettings(); // refresh links
-
-            this.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, tradingAppInternExtern);
+            CommandHelper.ActivateTradingApp(CryptoTradingApp.ExchangeUrl, dto.symbol, dto.interval, CryptoExternalUrlType.External);
         }
     }
 }

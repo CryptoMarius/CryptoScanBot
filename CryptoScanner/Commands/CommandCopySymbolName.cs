@@ -6,7 +6,13 @@ namespace CryptoScanner.Commands;
 
 public class CommandCopySymbolName : CommandBase
 {
-    public async Task Execute(object? parameter)
+    public override void Execute(object? parameter)
+    {
+        // Fire-and-forget
+        _ = ExecuteAsync(parameter);
+    }
+
+    public async Task ExecuteAsync(object? parameter)
     {
         //System.Diagnostics.Debug.WriteLine($"Copyy symbing cells to clipboard");
 

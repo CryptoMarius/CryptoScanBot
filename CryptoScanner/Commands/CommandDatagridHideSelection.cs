@@ -2,7 +2,7 @@
 
 public class CommandDatagridHideSelection : CommandBase
 {
-    public void Execute(object? parameter)
+    public override void Execute(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"Copying cells to clipboard");
 

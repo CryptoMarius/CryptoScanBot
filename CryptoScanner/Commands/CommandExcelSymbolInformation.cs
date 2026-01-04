@@ -4,7 +4,13 @@ namespace CryptoScanner.Commands;
 
 public class CommandExcelSymbolInformation : CommandBase
 {
-    public override async void Execute(object? parameter)
+    public override void Execute(object? parameter)
+    {
+        // Fire-and-forget
+        _ = ExecuteAsync(parameter);
+    }
+
+    public async Task ExecuteAsync(object? parameter)
     {
         if (GetObjectInformation(parameter, out parameterObjects dto) && dto.signal != null)
         {

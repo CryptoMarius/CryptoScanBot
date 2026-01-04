@@ -1,7 +1,9 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
@@ -10,7 +12,6 @@ using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 
 using System.ComponentModel;
-using System.Windows.Input;
 
 namespace CryptoScanner.Model;
 
@@ -20,7 +21,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
     internal string _gridName = string.Empty;
     internal DataGrid _dataGrid { get; set; } = null!;
 
-    internal string? _currentSortColumn;
+    internal string _currentSortColumn;
     internal ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
 
     internal ApplicationStateService _applicationStateService { get; set; }
@@ -75,7 +76,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
 
     internal void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"OnDataGridSorting {_gridName} {_gridName} {_currentSortColumn} {_currentSortDirection}");
+        System.Diagnostics.Debug.WriteLine($"OnDataGridSorting {_gridName} {_currentSortColumn} {_currentSortDirection}");
         if (e.Column.SortMemberPath != null)
         {
             var direction = (_currentSortColumn == e.Column.SortMemberPath &&
@@ -85,9 +86,9 @@ public abstract partial class UserControlWithGrid<T> : UserControl
             _currentSortColumn = e.Column.SortMemberPath;
             _currentSortDirection = direction;
             SaveGridState();
+
         }
     }
-
 
     /// <summary>
     /// Show the signal column visibility window as a modal dialog
@@ -129,7 +130,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
     }
 
 
-    internal void ApplySortToCollection(string? sortMemberPath, ListSortDirection sortDirection)
+    internal void ApplySortToCollection(string sortMemberPath, ListSortDirection sortDirection)
     {
         System.Diagnostics.Debug.WriteLine($"ApplySortToCollection {_gridName} {sortMemberPath} {sortDirection}");
 
@@ -149,6 +150,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
                     if (_currentSortDirection == ListSortDirection.Descending)
                         Array.Reverse(sorted);
                     collection.Replace(sorted);
+
                 }
             }
         }
@@ -178,9 +180,6 @@ public abstract partial class UserControlWithGrid<T> : UserControl
             var parentWindow = this.FindAncestorOfType<Window>();
             var command = new CommandLaunchTradingAppStandard();
             command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
-
-
-
             e.Handled = true;
         }
     }
@@ -276,7 +275,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         flyout.Items.Add(new MenuItem { Header = "Open trading app", Command = new CommandLaunchTradingAppStandard(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
-        flyout.Items.Add(new MenuItem { Header = "Open the exchange", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Open the exchange", Command = new CommandLaunchExchange(), CommandParameter = parameter });
 
         if (target == TargetViewModel.Position)
         {
@@ -304,6 +303,5 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         flyout.Items.Add(new MenuItem { Header = "-"});
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
     }
-
 
 }

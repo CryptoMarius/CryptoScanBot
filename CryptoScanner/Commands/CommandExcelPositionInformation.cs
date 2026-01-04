@@ -8,7 +8,13 @@ namespace CryptoScanner.Commands;
 
 public class CommandExcelPositionInformation : CommandBase
 {
-    public override async void Execute(object? parameter)
+    public override void Execute(object? parameter)
+    {
+        // Fire-and-forget
+        _ = ExecuteAsync(parameter);
+    }
+
+    public async Task ExecuteAsync(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandExcelPositionInformation");
         if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.position != null)

@@ -1,8 +1,5 @@
-﻿using Avalonia.Controls;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 
 using CryptoScanner.Helpers;
 
@@ -14,6 +11,7 @@ public class CommandLaunchTradingAppStandard : CommandBase
     {
         if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null)
         {
+            System.Diagnostics.Debug.WriteLine($"CommandLaunchTradingAppStandard {dto.symbol.Name}");
             System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in trading program via standard browser");
 
             // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
@@ -21,8 +19,7 @@ public class CommandLaunchTradingAppStandard : CommandBase
             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
             GlobalData.LoadLinkSettings(); // refresh links
-
-            this.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, tradingAppInternExtern);
+            CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, tradingAppInternExtern);
         }
     }
 }

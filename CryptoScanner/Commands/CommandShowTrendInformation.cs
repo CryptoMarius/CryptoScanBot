@@ -44,14 +44,20 @@ public class CommandShowTrendInformation : CommandBase
                 log.AppendLine(s);
             }
 
+
             string t;
-            float marketTrend = (float)symbolTrend.Percentage!;
-            if (marketTrend < 0)
-                t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% bearish";
-            else if (marketTrend > 0)
-                t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% bullish";
+            if (symbolTrend.Percentage == null)
+                t = $"{dto.symbol.Name} Markettrend unknown";
             else
-                t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% unknown";
+            {
+                var marketTrend = symbolTrend.Percentage;
+                if (marketTrend < 0)
+                    t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% bearish";
+                else if (marketTrend > 0)
+                    t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% bullish";
+                else
+                    t = $"{dto.symbol.Name} Markettrend={marketTrend:N2}% unknown";
+            }
             GlobalData.AddTextToLogTab(t);
             log.AppendLine(t);
 

@@ -44,9 +44,7 @@ public abstract class CommandBase : ICommand
         return true;
     }
 
-    public virtual void Execute(object? parameter)
-    {
-    }
+    public abstract void Execute(object? parameter);
 
     // TODO: Fix the casing of the properties when all commands are finished
     internal class parameterObjects
