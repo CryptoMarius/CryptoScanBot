@@ -20,17 +20,17 @@ namespace CryptoScanner;
 
 public partial class App : Application
 {
-    //Dialogs/DialogsServices
-    //https://github.com/AvaloniaUI/Avalonia/discussions/12551
-
+    // Listen to shutsown messages (multi platform)
     private static PowerMonitorService _powerMonitor = new();
 
     // Forward url to our visible browser tabsheet
     public static event EventHandler<string>? EventOpenInInternalBrowser;
     public static void OpenInInternalBrowser(object sender, string url) => EventOpenInInternalBrowser?.Invoke(sender, url);
-
+    
     // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
-    public static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
+    internal static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
+    internal static void OpenInHiddenBrowser(string url) => HiddenBrowser?.Navigate(url);
+
 
     public override void Initialize()
     {
@@ -64,18 +64,19 @@ public partial class App : Application
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Only close when requested
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             // Get MainView from DI container
             desktop.MainWindow = GlobalData.Services.GetRequiredService<MainWindow>();
 
-            // Save grid states on application exit
-            desktop.Exit += OnApplicationExit;
-
-            // Initialize CefGlue browser
-            //CustomCefApp.InitializeCefRuntime();
+            // Save states on application exit
+            desktop.ShutdownRequested += This_ShutdownRequested;
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
 
     private static void InitializeGlobalData()
     {
@@ -93,11 +94,10 @@ public partial class App : Application
         if (!Design.IsDesignMode)
         {
             _powerMonitor.PowerModeChanged += OnPowerModeChanged;
-            //PositionsHaveChangedEvent("");
             GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
-            var hiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
-            hiddenBrowser.Initialize();
+            HiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
+            HiddenBrowser.Initialize();
 
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
@@ -110,21 +110,29 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
     }
 
-    private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    private async void This_ShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start)");
+
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
         _powerMonitor?.Dispose();
         _powerMonitor = null!;
 
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(ThreadSoundPlayer.StopSoundThread)");
         ThreadSoundPlayer.StopSoundThread();
 
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
         var scannersession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("ScannerSession not registered");
         await scannersession.StopAsync(); // Blocks..
+
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(DataStore.SaveCandlesAsync)");
         await DataStore.SaveCandlesAsync();
 
         // Ensure all states are written to disk before exit
 
         // TODO: Rethink this boolean storage
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(applicationStateService.FlushToDisk)");
         ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
         applicationStateService.AnalyzerActive = GlobalData.Settings.Options.AnalyzerActive;
@@ -133,10 +141,18 @@ public partial class App : Application
         applicationStateService.FlushToDisk();
 
         // Dispose hidden browser
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser?.Dispose)");
         var hiddenBrowser = GlobalData.GetService<HiddenBrowserService>();
         hiddenBrowser?.Dispose();
         //hiddenBrowser? = null;
+
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(exit)");
     }
+
+    //private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    //{
+
+    //}
 
     private static async void OnPowerModeChanged(object? sender, PowerModeEventArgs e)
     {
@@ -189,6 +205,7 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"GetBrushResource({resourceKey}) returned default");
         return Brushes.Black;
     }
+
 
     public static IBrush PriceUp => App.GetBrushResource("PriceUpBrush");
     public static IBrush PriceDown => App.GetBrushResource("PriceDownBrush");
