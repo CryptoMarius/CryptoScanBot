@@ -263,7 +263,7 @@ public class ThreadLoadData
 
 
                 //************************************************************************************
-                // Diverse informatie tickers (moved to CryptoScanner.DashBoard.Services)
+                // Diverse informatie tickers (moved to TradingViewService)
                 //************************************************************************************
                 //await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("TVC:DXY", "US Dollar Index", "N2", GlobalData.TradingViewDollarIndex, 1000));
                 //await Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("SP:SPX", "S&P 500", "N2", GlobalData.TradingViewSpx500, 1000));
