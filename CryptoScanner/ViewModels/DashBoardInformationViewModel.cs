@@ -13,7 +13,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.DashBoard.Model;
+using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 
 using SkiaSharp;
@@ -41,11 +41,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     #region Barometer
 
+    // Could extract barometer code to its own userControl and service..
+
     [ObservableProperty]
     private ObservableCollection<string> _quotes = ["USDT", "BTC", "EUR"];
 
     [ObservableProperty]
-    private string _selectedQuote = "USDT";
+    private string _selectedQuote = "";
 
     [ObservableProperty]
     private ObservableCollection<string> _intervals = ["15m", "30m", "1h", "4h", "1d"];
@@ -55,7 +57,6 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     [ObservableProperty]
     private WriteableBitmap? _chartImage;
-
 
     [ObservableProperty]
     private decimal _barometer1h = 0;
@@ -76,45 +77,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
     #endregion
 
 
-
-    #region Market Indicators
-
-    [ObservableProperty]
-    private SymbolDataViewModel _marketCapTotal = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _dollarIndex = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _spx500 = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _bitcoinDominance = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _fearAndGreedIndex = new();
-
-    #endregion
-
     #region Crypto Symbols
 
-    [ObservableProperty]
-    private SymbolDataViewModel _btcUsdt = new();
+    // De collection voor binding in de UI
+    public ObservableCollection<DashboardSymbolViewModel> TvSymbols { get; set; } = [];
+    public ObservableCollection<DashboardSymbolViewModel> TopSymbols { get; set; } = [];
 
-    [ObservableProperty]
-    private SymbolDataViewModel _ethUsdt = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _bnbUsdt = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _solUsdt = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _xrpUsdt = new();
-
-    [ObservableProperty]
-    private SymbolDataViewModel _adaUsdt = new();
 
     #endregion
 
@@ -125,6 +93,10 @@ public partial class DashBoardInformationViewModel : ObservableObject
     private int _scannerExecuteCount = 0;
     [ObservableProperty]
     private int _scannerSignalCount = 0;
+    [ObservableProperty]
+    private string _scannerPositionCount = "";
+
+    
 
     private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
@@ -136,19 +108,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
 
-        // Subscribe to market indicator events
-        _tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v, null);
-        _tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v, null);
-        _tradingViewService.Spx500Changed += (s, v) => Spx500.Update(v, null);
-        _tradingViewService.BitcoinDominanceChanged += (s, v) => BitcoinDominance.Update(v, null);
-        _tradingViewService.FearAndGreedIndexChanged += (s, v) => FearAndGreedIndex.Update(v, null);
 
-        // Subscribe to crypto symbol events
-        _tradingViewService.BtcUsdtChanged += (s, data) => BtcUsdt.Update(data.Price, data.Volume);
-        _tradingViewService.EthUsdtChanged += (s, data) => EthUsdt.Update(data.Price, data.Volume);
-        _tradingViewService.BnbUsdtChanged += (s, data) => BnbUsdt.Update(data.Price, data.Volume);
-        _tradingViewService.SolUsdtChanged += (s, data) => SolUsdt.Update(data.Price, data.Volume);
-        _tradingViewService.XrpUsdtChanged += (s, data) => XrpUsdt.Update(data.Price, data.Volume);
+        // Subscribe to market indicator events
+        //_tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v, null);
+        //_tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v, null);
+        //_tradingViewService.Spx500Changed += (s, v) => Spx500.Update(v, null);
+        //_tradingViewService.BitcoinDominanceChanged += (s, v) => BitcoinDominance.Update(v, null);
+        //_tradingViewService.FearAndGreedIndexChanged += (s, v) => FearAndGreedIndex.Update(v, null);
 
         System.Diagnostics.Debug.WriteLine("DashBoardInformationViewModel constructor called");
 
@@ -159,8 +125,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _barometerTimer.Tick += OnBarometerTimer;
         _barometerTimer.Start();
 
-        StatusesHaveChangedEvent("");
+        RegisterExchangeSymbols();
+        RegisterTradingViewSymbols();
+        StatusesHaveChangedEvent(""); // -- event is not set properly?
     }
+
 
     private void StatusesHaveChangedEvent(string text)
     {
@@ -190,6 +159,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         else RulezStatusBrush = App.GetBrushResource("PriceNeutralBrush");
     }
 
+
+
     public void InitializeBarometer()
     {
         // Add the active quotes (default=usdt)
@@ -202,7 +173,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
         if (quotes.Count == 0)
             quotes.Add("USDT");
         Quotes = new ObservableCollection<string>(quotes);
-        SelectedQuote = quotes[0];
+
+        if (string.IsNullOrEmpty(_applicationStateService.BarometerQuote) || !quotes.Contains(_applicationStateService.BarometerQuote))
+            SelectedQuote = quotes[0];
+        else
+            SelectedQuote = _applicationStateService.BarometerQuote;
 
         // Add all intervals (default=1h)
         List<string> intervals = [];
@@ -210,23 +185,76 @@ public partial class DashBoardInformationViewModel : ObservableObject
         intervals.Add("4h");
         intervals.Add("1d");
         Intervals = new ObservableCollection<string>(intervals);
-        SelectedInterval = intervals[0];
 
-        BarometerTime = _barometerCalculated; 
+        if (string.IsNullOrEmpty(_applicationStateService.BarometerInterval) || !Intervals.Contains(_applicationStateService.BarometerInterval))
+            SelectedInterval = intervals[0];
+        else
+            SelectedInterval = _applicationStateService.BarometerInterval;
+
+        BarometerTime = _barometerCalculated;
+
+        // If nothing changed we need to fill the symbols
+        if (TopSymbols.Count == 0)
+            RegisterExchangeSymbols();
+        UpdateSymbolPrices(); // try? Not sure if everything is initialized
     }
+
 
     partial void OnSelectedQuoteChanged(string value)
     {
         _applicationStateService.BarometerQuote = value;
         System.Diagnostics.Debug.WriteLine($"Quote changed to: {value}");
         Task.Run(CalculateBarometer);
+
+        RegisterExchangeSymbols();
+        UpdateSymbolPrices();
     }
+
 
     partial void OnSelectedIntervalChanged(string value)
     {
         _applicationStateService.BarometerInterval = value;
         System.Diagnostics.Debug.WriteLine($"Interval changed to: {value}");
         Task.Run(CalculateBarometer);
+    }
+
+
+    private void RegisterExchangeSymbols()
+    {
+        List<DashboardSymbolViewModel> topSymbols = [];
+
+        string quote = SelectedQuote;
+        var exchange = GlobalData.ActiveExchange;
+        if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData) && exchange != null)
+        {
+            // Might just sort de exchange symbols and take the top 5 volume wise...?
+            foreach (string baseCoin in GlobalData.Settings.ShowSymbolInformation)
+            {
+                if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol) 
+                    || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
+                {
+                    topSymbols.Add(new(IndicatorType.Exchange, symbol.Name, symbol.Name));
+                }
+            }
+        }
+
+        while (topSymbols.Count < 10)
+        {
+            topSymbols.Add(new(IndicatorType.Exchange, "", ""));
+        }
+        TopSymbols = new ObservableCollection<DashboardSymbolViewModel>(topSymbols);
+    }
+
+
+    private void RegisterTradingViewSymbols()
+    {
+        TvSymbols.Clear();
+        TvSymbols.Add(new(IndicatorType.TradingView, "CRYPTOCAP:TOTAL3", "Market Cap Total"));
+        TvSymbols.Add(new(IndicatorType.TradingView, "TVC:DXY", "US Dollar Index"));
+        TvSymbols.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500"));
+        TvSymbols.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance"));
+        TvSymbols.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index"));
+        _tradingViewService.TvSymbols = TvSymbols; // forward..
     }
 
     private int BarometerLastMinute = -1;
@@ -241,6 +269,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 {
                     BarometerTime = _barometerCalculated;
                     BarometerLastMinute = DateTime.Now.Minute;
+                    UpdateSymbolPrices();
                 }
             }
         }
@@ -260,8 +289,42 @@ public partial class DashBoardInformationViewModel : ObservableObject
             ScannerExecuteCount = SignalExecute.AnalyseCount;
         if (ScannerSignalCount != GlobalData.CreatedSignalCount)
             ScannerSignalCount = GlobalData.CreatedSignalCount;
+
+        string text = "";
+        if (GlobalData.Settings.Options.TraderActive)
+        {
+            int positionCount = 0;
+            if (GlobalData.ActiveExchange!.Data.PositionList.Count != 0)
+            {
+                foreach (var position in GlobalData.ActiveExchange!.Data.PositionList.Values)
+                {
+                    positionCount++;
+                }
+            }
+            text = $"({GlobalData.Settings.Trading.SlotsMaximalLong}/{GlobalData.Settings.Trading.SlotsMaximalShort}) {positionCount}";
+        }
+        if (ScannerPositionCount != text)
+            ScannerPositionCount = text;
     }
 
+
+    
+    public void UpdateSymbolPrices()
+    {
+        foreach (var symbolViewModel in TopSymbols)
+        {
+            if (!string.IsNullOrEmpty(symbolViewModel.Name) && 
+                GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Name, out CryptoSymbol? symbol))
+            {
+                if (symbol.LastPrice.HasValue)
+                {
+                    symbolViewModel.Update(symbol.LastPrice.Value, symbol.Volume);
+                }
+                else 
+                    symbolViewModel.Update(0, symbol.Volume);
+            }
+        }
+    }
 
 
     private static SKColor GetThemeColor(string themeColor)
@@ -330,7 +393,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             return;
 
 
-        // ranges x and y
+        // ranges symbolViewModel and y
         float screenX = hiX - loX; // unix time
         float screenY = hiY - loY; // barometer, something like -5 .. +5
         if (screenY < 5)
@@ -542,4 +605,33 @@ public partial class DashBoardInformationViewModel : ObservableObject
             return false;
         }
     }
+
+
+    internal void OnSymbolTapped(DashboardSymbolViewModel symbolViewModel)
+    {
+        switch (symbolViewModel.Type)
+        {
+            case IndicatorType.Exchange:
+                CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
+                if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+                    tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
+                GlobalData.LoadLinkSettings(); // refresh links
+
+                if (!string.IsNullOrEmpty(symbolViewModel.Symbol) &&
+                    GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Symbol, out CryptoSymbol? symbol))
+                {
+                    var interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+                    CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
+                }
+                break;
+            case IndicatorType.TradingView:
+            case IndicatorType.FearAndGreed:
+                App.OpenInInternalBrowser(null!, symbolViewModel.GetUrl());
+                break;
+        }
+
+
+    }
+
+
 }

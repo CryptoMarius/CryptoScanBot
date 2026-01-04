@@ -2,8 +2,7 @@
 
 using System.Net.Http.Json;
 
-
-namespace CryptoScanner.DashBoard.TradingView;
+namespace CryptoScanner.TradingView;
 
 
 public class FearAndGreedIndexExtractor
@@ -28,11 +27,6 @@ public class FearAndGreedIndexExtractor
 
         DateTime? _lastCheck = null;
 
-        TickerData? _tickerData = new()
-        {
-            Url = url,
-            Name = displayName
-        };
 
         using HttpClient httpClient = new();
         {
@@ -66,10 +60,10 @@ public class FearAndGreedIndexExtractor
                         if (!string.IsNullOrEmpty(value))
                         {
                             //FearAndGreedIndex = jsonData["data"][0]["value"].Value<string>();
-                            _tickerData.Lp = decimal.Parse(value);
+                            decimal lp = decimal.Parse(value);
                             _lastCheck = DateTime.UtcNow.AddMinutes(2); // = Next check
                                                                         //onDataReceived(_tickerData.Lp);
-                            Dispatcher.UIThread.Post(() => onDataReceived(_tickerData.Lp, 0));
+                            Dispatcher.UIThread.Post(() => onDataReceived(lp, 0));
                         }
                         else await Task.Delay(250, cancellationToken);
                     }

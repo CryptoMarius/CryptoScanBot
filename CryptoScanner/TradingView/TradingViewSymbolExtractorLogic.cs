@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 
-namespace CryptoScanner.DashBoard.TradingView;
+namespace CryptoScanner.TradingView;
 
 // Think this can be simplified further, but for now this works
 

@@ -4,13 +4,13 @@ using CryptoScanner.Core.Core;
 
 using System.Text.Json;
 
-namespace CryptoScanner.DashBoard.TradingView;
+namespace CryptoScanner.TradingView;
 
 public class TickerData
 {
-    public string? Name { get; set; }
+    //public string? Name { get; set; }
     public string? Ticker { get; set; }
-    public string? Url { get; set; }
+    //public string? Url { get; set; }
 
     //public string DisplayFormat { get; set; }
     //public DateTime? LastCheck { get; set; }
@@ -46,7 +46,7 @@ public class TradingViewSymbolExtractor
         CancellationToken cancellationToken = default)
     {
         await Task.Delay(startDelayMs, cancellationToken);
-        _tickerData.Name = displayName;
+        //_tickerData.Name = displayName;
         _tickerData.Ticker = tickerName;
 
 
