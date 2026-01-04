@@ -34,7 +34,7 @@ public class WindowState
 
 public class BarometerState
 {
-    public string Quote { get; set; } = "USDT";
+    public string Quote { get; set; } = "";
     public string Interval { get; set; } = "1H";
 }
 
@@ -48,22 +48,26 @@ public class ApplicationOptions
 public class ApplicationState : IApplicationState
 {
     // Sounds, Analyzer and Trader options
-    public ApplicationOptions ApplicationOptions = new();
+    public ApplicationOptions ApplicationOptions { get; set; } = new();
 
     // Last selected Barometer settings
-    public BarometerState BarometerState = new();
+    public BarometerState BarometerState { get; set; } = new();
 
     // Splitter position MainWindow (Size left panel)
     public double MainWindowSplitterPosition { get; set; } = 300;
 
     // Window state, Size, Object, Monitor etc.
     public WindowState MainWindow { get; set; } = new();
+    public WindowState ChartWindow { get; set; } = new();
+    public Dictionary<string, WindowState> WindowStates { get; set; } = [];
 
     public GridState SignalGrid { get; set; } = new();
     public GridState SymbolGrid { get; set; } = new();
-    //public GridState PositionGrid { get; set; } = new();
-    //public GridState OrderGrid { get; set; } = new();
-    //public GridState HistoryGrid { get; set; } = new();
+    public GridState LiveDataGrid { get; set; } = new();
+    public GridState PositionOpenGrid { get; set; } = new();
+    public GridState PositionClosedGrid { get; set; } = new();
+
+    public Dictionary<string, GridState> GridStates { get; set; } = [];
 
     public ApplicationState()
     {
@@ -74,6 +78,18 @@ public class ApplicationState : IApplicationState
         // Default sort settings
         SymbolGrid.SortColumn = "Symbol"; // = SortMemberPath
         SymbolGrid.SortDirection = ListSortDirection.Ascending;
+
+        // Default sort settings
+        LiveDataGrid.SortColumn = "Date"; // = SortMemberPath
+        LiveDataGrid.SortDirection = ListSortDirection.Ascending;
+
+        // Default sort settings
+        PositionOpenGrid.SortColumn = "Created"; // = SortMemberPath
+        PositionOpenGrid.SortDirection = ListSortDirection.Ascending;
+
+        // Default sort settings
+        PositionClosedGrid.SortColumn = "Created"; // = SortMemberPath
+        PositionClosedGrid.SortDirection = ListSortDirection.Ascending;
     }
 }
 
@@ -251,10 +267,10 @@ public class ApplicationStateService
 
             File.WriteAllText(_filePath, json);
         }
-        catch (Exception ex)
+        catch (Exception exc)
         {
-            // Log error but don't throw - grid state is not critical
-            System.Diagnostics.Debug.WriteLine($"Failed to save grid states: {ex.Message}");
+            // Log exc but don't throw - grid state is not critical
+            System.Diagnostics.Debug.WriteLine($"Failed to save application state: {exc.Message}");
         }
     }
 
@@ -270,8 +286,8 @@ public class ApplicationStateService
         }
         catch (Exception ex)
         {
-            // Log error but don't throw - return empty state instead
-            System.Diagnostics.Debug.WriteLine($"Failed to load grid states: {ex.Message}");
+            // Log exc but don't throw - return empty state instead
+            System.Diagnostics.Debug.WriteLine($"Failed to load application state: {ex.Message}");
             return new ApplicationState();
         }
     }
@@ -283,9 +299,9 @@ public class ApplicationStateService
         {
             "SignalGrid" => states.SignalGrid,
             "SymbolGrid" => states.SymbolGrid,
-            //"PositionGrid" => states.PositionGrid,
-            //"OrderGrid" => states.OrderGrid,
-            //"HistoryGrid" => states.HistoryGrid,
+            "LiveDataGrid" => states.LiveDataGrid,
+            "PositionOpenGrid" => states.PositionOpenGrid,
+            "PositionClosedGrid" => states.PositionClosedGrid,
             _ => null
         };
     }
@@ -300,7 +316,6 @@ public class ApplicationStateService
                 case "MainWindow":
                     _states.MainWindowSplitterPosition = position;
                     break;
-                    // Voeg meer toe indien nodig
             }
 
             FlushToDisk();
@@ -371,6 +386,7 @@ public class ApplicationStateService
         return windowName switch
         {
             "MainWindow" => _states.MainWindow,
+            "ChartWindow" => _states.ChartWindow,
             _ => null
         };
     }
