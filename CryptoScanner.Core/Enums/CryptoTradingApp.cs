@@ -2,8 +2,7 @@
 
 public enum CryptoTradingApp
 {
-    AltradyStandard, // Jump start via browser (browser asks to jump to Altrady)
-    AltradyHidden, // Jump start via a hidden browser
+    Altrady, // Jump start via hidden browser (browser jump directly to Altrady app)
     Hypertrader, // not sure if it still exists?
     TradingView,
     ExchangeUrl,

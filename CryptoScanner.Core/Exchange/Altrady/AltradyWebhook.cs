@@ -92,7 +92,7 @@ public class AltradyWebhook
             url = "https://api.altrady.com/v2/signal_bot_positions";
 
 
-        //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to AltradyStandard webhook"); //  LastTradeDate={position.Symbol.LastTradeDate}
+        //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook"); //  LastTradeDate={position.Symbol.LastTradeDate}
 
         HttpWebRequest? httpWebRequest;
         HttpWebResponse? httpResponse;
@@ -207,7 +207,7 @@ public class AltradyWebhook
             using StreamReader streamReader = new(httpResponse.GetResponseStream());
             string result = streamReader.ReadToEnd();
 
-            //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to AltradyStandard webhook");
+            //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 
             string info = "";
             try
@@ -239,8 +239,8 @@ public class AltradyWebhook
         catch (WebException error)
         {
             ScannerLog.Logger.Error(error);
-            //ScannerLog.Logger.Trace(Dump("AltradyStandard webhook request", position, httpWebRequest));
-            //ScannerLog.Logger.Trace(Dump("AltradyStandard webhook response", position, httpResponse)); null
+            //ScannerLog.Logger.Trace(Dump("Altrady webhook request", position, httpWebRequest));
+            //ScannerLog.Logger.Trace(Dump("Altrady webhook response", position, httpResponse)); null
             ScannerLog.Logger.Trace(Dump("Altrady webhook error.response", position, error.Response));
 
             string errorResponseBody = "";
@@ -249,7 +249,7 @@ public class AltradyWebhook
                 using StreamReader errorStreamReader = new(errorResponse.GetResponseStream());
                 errorResponseBody = errorStreamReader.ReadToEnd();
                 GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {error.Message} {errorResponseBody}");
-                //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} AltradyStandard webhook response body error={error.Message} {errorResponseBody}");
+                //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook response body error={error.Message} {errorResponseBody}");
             }
             else
             {
@@ -259,10 +259,10 @@ public class AltradyWebhook
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error);
-            //ScannerLog.Logger.Trace(Dump("AltradyStandard webhook request", position, httpWebRequest));
-            //ScannerLog.Logger.Trace(Dump("AltradyStandard webhook response", position, httpResponse)); null
+            //ScannerLog.Logger.Trace(Dump("Altrady webhook request", position, httpWebRequest));
+            //ScannerLog.Logger.Trace(Dump("Altrady webhook response", position, httpResponse)); null
 
-            //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} AltradyStandard webhook error {error.Message}");
+            //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook error {error.Message}");
             GlobalData.AddTextToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
         }
     }
