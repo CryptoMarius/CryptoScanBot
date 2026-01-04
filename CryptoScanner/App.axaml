@@ -20,7 +20,7 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
 
-                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FDFDFD"/>
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
 
                     <!--  Background color + grid oneven color 
                     <Color x:Key="MyBackground1">#f0f0f0</Color>
@@ -49,7 +49,7 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
 
-                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#222222"/>
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
 
                     <!-- Background color + grid oneven color
                     <Color x:Key="MyBackground1">#202020</Color>
