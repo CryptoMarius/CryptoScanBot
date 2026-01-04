@@ -16,7 +16,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     {
         // This can/should be some kind of service..
 
-        // AltradyStandard: Codes on webpage
+        // Altrady: Codes on webpage
         // https://support.altrady.com/en/article/valid-values-for-exchange-and-symbol-1xrzfap/
         // TradingView: Codes are in the symbol description (kind of hidden)
 
@@ -73,7 +73,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
     {
         string text = tradingApp switch
         {
-            CryptoTradingApp.AltradyStandard => $"Altrady {exchangeName}",
+            CryptoTradingApp.Altrady => $"Altrady {exchangeName}",
             CryptoTradingApp.Hypertrader => $"Hypertrader {exchangeName}",
             CryptoTradingApp.TradingView => $"TradingView {exchangeName}",
             CryptoTradingApp.ExchangeUrl => $"Exchange {exchangeName}",
@@ -111,7 +111,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
             CryptoExternalUrl? externalUrl = externalApp switch
             {
-                CryptoTradingApp.AltradyStandard => externalUrls.Altrady,
+                CryptoTradingApp.Altrady => externalUrls.Altrady,
                 CryptoTradingApp.Hypertrader => externalUrls.HyperTrader,
                 CryptoTradingApp.TradingView => externalUrls.TradingView,
                 CryptoTradingApp.ExchangeUrl => externalUrls.ExchangeUrl,

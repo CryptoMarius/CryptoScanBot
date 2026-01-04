@@ -73,17 +73,17 @@ public class SettingsGeneral
     public string ActivateExchangeName { get; set; } = "";
 
     // will be replaced by Theme
-    public bool BlackTheming { get; set; } = false;
+    //public bool BlackTheming { get; set; } = false;
     public string Theme { get; set; } = string.Empty;
-    public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.AltradyStandard;
+    public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
     public CryptoDoubleClickAction DoubleClickAction { get; set; } = CryptoDoubleClickAction.ActivateTradingApp;
 
     // Barometer goes into ApplicationState
     // Need two other states for sound and signal
     public bool SoundTradeNotification { get; set; }
-    public string SelectedBarometerQuote { get; set; } = "USDT";
-    public string SelectedBarometerInterval { get; set; } = "1H";
+    //public string SelectedBarometerQuote { get; set; } = "USDT";
+    //public string SelectedBarometerInterval { get; set; } = "1H";
 
     // Avalinia: will not be supported
     public string FontNameNew { get; set; } = "Segoe UI";
