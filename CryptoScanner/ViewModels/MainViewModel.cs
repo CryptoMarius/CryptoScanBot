@@ -26,12 +26,51 @@ public partial class MainWindowViewModel : ObservableObject
 
     public BrowserView? BrowserView { get; set; }
 
-    [ObservableProperty]
-    private bool _analyzerActive = false;
-    [ObservableProperty]
-    private bool _soundsActive = false;
-    [ObservableProperty]
-    private bool _traderActive = false;
+    //[ObservableProperty]
+    //private bool _analyzerActive = false;
+    public bool AnalyzerActive
+    {
+        get => ApplicationStateService.AnalyzerActive;
+        set
+        {
+            if (ApplicationStateService.AnalyzerActive != value)
+            {
+                ApplicationStateService.AnalyzerActive = value;
+                OnPropertyChanged(nameof(AnalyzerActive));
+            }
+        }
+    }
+
+    //[ObservableProperty]
+    //private bool _soundsActive = false;
+    public bool SoundsActive
+    {
+        get => ApplicationStateService.SoundsActive;
+        set
+        {
+            if (ApplicationStateService.SoundsActive != value)
+            {
+                ApplicationStateService.SoundsActive = value;
+                OnPropertyChanged(nameof(SoundsActive));
+            }
+        }
+    }
+
+    //[ObservableProperty]
+    //private bool _traderActive = false;
+    public bool TraderActive
+    {
+        get => ApplicationStateService.TraderActive;
+        set
+        {
+            if (ApplicationStateService.TraderActive != value)
+            {
+                ApplicationStateService.TraderActive = value;
+                OnPropertyChanged(nameof(TraderActive));
+            }
+        }
+    }
+
 
     [ObservableProperty]
     private int _selectedTabIndex = 0;
@@ -72,9 +111,9 @@ public partial class MainWindowViewModel : ObservableObject
         LogViewModel = logViewModel;
 
         // TODO: Is there a better way
-        AnalyzerActive = ApplicationStateService.AnalyzerActive;
-        TraderActive = ApplicationStateService.TraderActive;
-        SoundsActive = ApplicationStateService.SoundsActive;
+        //AnalyzerActive = ApplicationStateService.AnalyzerActive;
+        //TraderActive = ApplicationStateService.TraderActive;
+        //SoundsActive = ApplicationStateService.SoundsActive;
 
         // Subscribe child ViewModels to filter event
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
@@ -112,37 +151,6 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    // not needed, but nice experiment
-    //partial void OnAnalyzerActiveChanged(bool value)
-    //{
-    //    // should work, but does nothing except error in immediate output
-    //    System.Diagnostics.Debug.WriteLine($"OnAnalyzerActiveChanged changed to: {AnalyzerActive}");
-    //}
-
-    //partial void OnSoundsActiveChanged(bool value)
-    //{
-    //    // should work, but does nothing except error in immediate output
-    //    System.Diagnostics.Debug.WriteLine($"OnSoundsActiveChanged changed to: {SoundsActive}");
-    //}
-
-    //partial void OnTraderActiveChanged(bool value)
-    //{
-    //    // should work, but does nothing except error in immediate output
-    //    // Breakpoint hier - werkt NU wel als je via code triggert
-    //    System.Diagnostics.Debug.WriteLine($"OnTraderActiveChanged changed to: {TraderActive}");
-    //}
-
-    //partial void OnSymbolFilterTextChanged(string value)
-    //{
-    //    FilterTextChanged?.Invoke(this, value);
-    //}
-
-    //// Dit wordt NIET bij elke toetsaanslag aangeroepen, alleen bij LostFocus of Enter
-    //partial void OnSymbolFilterTextChanged(string value)
-    //{
-    //    System.Diagnostics.Debug.WriteLine($"Filter changed to: {value}");
-    //    FilterTextChanged?.Invoke(this, value);
-    //}
 
     [RelayCommand]
     private void ApplyFilter(string? filterText)
