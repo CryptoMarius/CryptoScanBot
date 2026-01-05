@@ -33,7 +33,7 @@
 	</UserControl.Resources>
 
     <Grid> 
-        <DataGrid x:Name="SymbolDataGrid"
+        <DataGrid x:Name="PositionClosedGrid"
                   ItemsSource="{Binding Positions}"
                   IsReadOnly="True"
                   AutoGenerateColumns="False"
@@ -343,7 +343,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- secondary market trend -->
-                <DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="MoveXDaysEffective">
+                <DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="MoveLastXDaysEffective">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
