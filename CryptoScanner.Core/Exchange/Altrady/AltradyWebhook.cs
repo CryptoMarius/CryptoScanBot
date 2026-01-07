@@ -5,6 +5,8 @@ using CryptoScanner.Core.Model;
 using Newtonsoft.Json.Linq;
 
 using System.Net;
+using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanner.Core.Exchange.Altrady;
@@ -59,6 +61,12 @@ public class AltradyWebhook
 {
     private static readonly JsonSerializerOptions AltradySerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
+
+    private static readonly HttpClient _httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
     public static AltradyWebhookPayload? TryParse(string message)
     {
         //JsonDocument?
@@ -80,7 +88,7 @@ public class AltradyWebhook
     }
 
 
-    public static void DelegateControlToAltrady(CryptoPosition position, string url = "", string command = "open")
+    public static async Task DelegateControlToAltradyAsync(CryptoPosition position, string url = "", string command = "open")
     {
         if (GlobalData.AltradyApi.Key == "" || GlobalData.AltradyApi.Secret == "")
         {
@@ -94,8 +102,6 @@ public class AltradyWebhook
 
         //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook"); //  LastTradeDate={position.Symbol.LastTradeDate}
 
-        HttpWebRequest? httpWebRequest;
-        HttpWebResponse? httpResponse;
         try
         {
             GlobalData.ExternalUrls.GetExternalRef(position.Symbol.Exchange, out CryptoExternalUrls? externalUrls);
@@ -184,28 +190,15 @@ public class AltradyWebhook
             }
 
 
-            // send
-
-            // todo, replace obsolete WebRequest with HttpClient..
-            //HttpClient httpClient = new();
-            //var jsonData = await httpClient.GetFromJsonAsync<request>("https://api.alternative.me/fng/");
-            //await httpClient.SendAsync("/api/v3/exchangeInfo", HttpMethod.Post);????
-
-            httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Method = "POST";
-
+            // Send request using HttpClient
             string json = request.ToString();
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                streamWriter.Write(json);
-                GlobalData.AddTextToLogTab(json);
-            }
+            GlobalData.AddTextToLogTab(json);
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook json {json}");
 
-            httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using StreamReader streamReader = new(httpResponse.GetResponseStream());
-            string result = streamReader.ReadToEnd();
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PostAsync(url, content);
+
+            string result = await response.Content.ReadAsStringAsync();
 
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 
@@ -236,35 +229,35 @@ public class AltradyWebhook
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name}Altrady webhook result {result} {info}");
             GlobalData.AddTextToTelegram($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook {position.Side} price={position.EntryPrice}", position);
         }
-        catch (WebException error)
+        catch (HttpRequestException error)
         {
             ScannerLog.Logger.Error(error);
-            //ScannerLog.Logger.Trace(Dump("Altrady webhook request", position, httpWebRequest));
-            //ScannerLog.Logger.Trace(Dump("Altrady webhook response", position, httpResponse)); null
-            ScannerLog.Logger.Trace(Dump("Altrady webhook error.response", position, error.Response));
 
-            string errorResponseBody = "";
-            if (error.Response is HttpWebResponse errorResponse) // && errorResponse.StatusCode == (HttpStatusCode)422)
+            string errorMessage = $"HTTP error: {error.Message}";
+            if (error.StatusCode.HasValue)
             {
-                using StreamReader errorStreamReader = new(errorResponse.GetResponseStream());
-                errorResponseBody = errorStreamReader.ReadToEnd();
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {error.Message} {errorResponseBody}");
-                //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook response body error={error.Message} {errorResponseBody}");
+                errorMessage += $" (Status: {error.StatusCode})";
             }
-            else
-            {
-                GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook error error={error}");
-            }
+
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook error {errorMessage}");
+        }
+        catch (TaskCanceledException error)
+        {
+            ScannerLog.Logger.Error(error);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook timeout: {error.Message}");
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error);
-            //ScannerLog.Logger.Trace(Dump("Altrady webhook request", position, httpWebRequest));
-            //ScannerLog.Logger.Trace(Dump("Altrady webhook response", position, httpResponse)); null
-
-            //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval.Name} Altrady webhook error {error.Message}");
             GlobalData.AddTextToLogTab($" {position.Symbol.Name} {position.Interval!.Name} Webhook error:error={error}");
         }
+    }
+
+    // Synchronous wrapper for backward compatibility
+    public static void DelegateControlToAltrady(CryptoPosition position, string url = "", string command = "open")
+    {
+        // Run async method synchronously (not ideal but maintains compatibility)
+        DelegateControlToAltradyAsync(position, url, command).GetAwaiter().GetResult();
     }
 
     private static string Dump(string caption, CryptoPosition position, object? obj)

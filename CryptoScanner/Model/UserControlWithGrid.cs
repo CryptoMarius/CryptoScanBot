@@ -1,33 +1,49 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
-using CryptoScanner.Services;
+using CryptoScanner.Core.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 
+using System.Collections;
 using System.ComponentModel;
 
 namespace CryptoScanner.Model;
 
-public abstract partial class UserControlWithGrid<T> : UserControl
-{
-    internal const double HeaderHeight = 30.0;
-    internal string _gridName = string.Empty;
-    internal DataGrid _dataGrid { get; set; } = null!;
 
-    internal string _currentSortColumn;
+//public interface IGridViewModel
+//{
+//    event EventHandler? RequestSort;
+//    event EventHandler<T>? RequestSortedInsert;
+//}
+
+//public abstract partial class UserControlWithGrid<T> : UserControl
+public abstract partial class UserControlWithGrid<T> : UserControl where T : class
+{
+    protected enum TargetMenu
+    {
+        Log,
+        Symbol,
+        Position,
+        Signal,
+        LiveData,
+    };
+
+    protected TargetMenu _targetMenu;
+    protected string _gridName = string.Empty;
+
+    //protected T? _currentViewModel;
+    protected DataGrid _dataGrid { get; set; } = null!;
+
+    internal bool _onDataGridSortingSkipFirst = true;
+    internal string _currentSortColumn = string.Empty;
     internal ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
 
-    internal ApplicationStateService _applicationStateService { get; set; }
-
-
-    internal abstract void ShowRowContextMenu(DataGrid dataGrid);
+    internal ApplicationStateService _applicationStateService { get; set; } = null!;
 
 
     internal void InitializeComponent()
@@ -35,11 +51,35 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         AvaloniaXamlLoader.Load(this);
     }
 
+    //protected void OnDataContextChanged(object? sender, EventArgs e)
+    //{
+    //    // Unsubscribe old
+    //    if (_currentViewModel != null)
+    //    {
+    //        _currentViewModel.RequestSort -= OnRequestSort;
+    //        _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+    //    }
+
+    //    // Subscribe new
+    //    if (DataContext is T vm)
+    //    {
+    //        _currentViewModel = vm;
+    //        vm.RequestSort += OnRequestSort;
+    //        vm.RequestSortedInsert += OnRequestSortedInsert;
+    //    }
+    //}
+
+    //protected abstract void OnRequestSort(object? sender, EventArgs e);
+    //protected abstract void OnRequestSortedInsert(object? sender, object e);
     internal void DataGrid_Loaded(object? sender, RoutedEventArgs e)
     {
         System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
-        _dataGrid.Sorting += OnDataGridSorting;
+        var column = _dataGrid.Columns.First(c => c.SortMemberPath == _currentSortColumn);
+        if (column != null)
+            column.Sort(_currentSortDirection);
+
+        _dataGrid.Sorting += OnDataGridSorting; // to early, sorting gets messed up.. --> introduced _onDataGridSortingSkipFirst
         _dataGrid.ColumnReordered += OnColumnReordered;
         _dataGrid.DoubleTapped += OnDataGridDoubleTapped;
         _dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
@@ -76,17 +116,24 @@ public abstract partial class UserControlWithGrid<T> : UserControl
 
     internal void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"OnDataGridSorting {_gridName} {_currentSortColumn} {_currentSortDirection}");
-        if (e.Column.SortMemberPath != null)
+        if (_onDataGridSortingSkipFirst)
         {
-            var direction = (_currentSortColumn == e.Column.SortMemberPath &&
-                            _currentSortDirection == ListSortDirection.Ascending)
-                ? ListSortDirection.Descending
-                : ListSortDirection.Ascending;
-            _currentSortColumn = e.Column.SortMemberPath;
-            _currentSortDirection = direction;
-            SaveGridState();
-
+            _onDataGridSortingSkipFirst = false;
+        }
+        else
+        {
+            string text = $"OnDataGridSorting {_gridName} {_currentSortColumn} {_currentSortDirection}";
+            if (e.Column.SortMemberPath != null)
+            {
+                var direction = (_currentSortColumn == e.Column.SortMemberPath &&
+                                _currentSortDirection == ListSortDirection.Ascending)
+                    ? ListSortDirection.Descending
+                    : ListSortDirection.Ascending;
+                _currentSortColumn = e.Column.SortMemberPath;
+                _currentSortDirection = direction;
+                System.Diagnostics.Debug.WriteLine($"{text} direction is now {_currentSortDirection}");
+                SaveGridState();
+            }
         }
     }
 
@@ -113,15 +160,33 @@ public abstract partial class UserControlWithGrid<T> : UserControl
     }
 
 
-    internal void OnRequestSort(object? sender, EventArgs e)
+    protected void OnRequestSortedInsert(object? sender, T newItem)
     {
-        // Bewaar selectie
+        if (!string.IsNullOrEmpty(_currentSortColumn))
+        {
+            System.Diagnostics.Debug.WriteLine($"OnRequestSortedInsert {_gridName} {_currentSortColumn} {_currentSortDirection}");
+
+            if (_dataGrid.ItemsSource is ObservableRangeCollection<T> collection)
+            {
+                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == _currentSortColumn);
+                if (column != null)
+                {
+                    collection.AddItem(newItem, column.CustomSortComparer, _currentSortDirection);
+                }
+            }
+        }
+    }
+
+
+    protected void OnRequestSort(object? sender, EventArgs e)
+    {
+        // Save selected item
         var selectedItem = _dataGrid.SelectedItem;
 
         // Re-sort met huidige sort column/direction
         ApplySortToCollection(_currentSortColumn, _currentSortDirection);
 
-        // Herstel selectie + scroll
+        // Restore selected item
         if (selectedItem != null)
         {
             _dataGrid.SelectedItem = selectedItem;
@@ -156,23 +221,6 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         }
     }
 
-    internal void OnRequestSortedInsert(object? sender, T newSignal)
-    {
-        if (!string.IsNullOrEmpty(_currentSortColumn))
-        {
-            System.Diagnostics.Debug.WriteLine($"OnRequestSortedInsert {_gridName} {_currentSortColumn} {_currentSortDirection}");
-
-            if (_dataGrid.ItemsSource is ObservableRangeCollection<T> collection)
-            {
-                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == _currentSortColumn);
-                if (column != null)
-                {
-                    collection.AddItem(newSignal, column.CustomSortComparer, _currentSortDirection);
-                }
-            }
-        }
-    }
-
     private void OnDataGridDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (_dataGrid.SelectedItem != null)
@@ -195,6 +243,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl
             var gridPoint = e.GetPosition(_dataGrid);
 
             // Check if click is in header area (Y < HeaderHeight)
+            double HeaderHeight = 30.0;
             if (gridPoint.Y < HeaderHeight)
             {
                 // Header click
@@ -258,18 +307,23 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         flyout.ShowAt(dataGrid, true);
     }
 
-    internal enum TargetViewModel
+    internal virtual void ShowRowContextMenu(DataGrid dataGrid)
     {
-        Symbol,
-        Position,
-        Signal,
-        LiveData,
-    };
+        var flyout = new MenuFlyout();
+        AddStandardGridRowCommands(flyout);
+        flyout.ShowAt(dataGrid, true);
+    }
 
-    internal void AddStandardGridRowCommands(MenuFlyout flyout, TargetViewModel target)
+    internal void AddStandardGridRowCommands(MenuFlyout flyout)
     {
         var parentWindow = this.FindAncestorOfType<Window>();
         var parameter = (_dataGrid, _dataGrid.SelectedItem, parentWindow);
+
+        if (_targetMenu == TargetMenu.Log)
+        {
+            // Clear..?
+            return;
+        }
 
         flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowGraph(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open trading app", Command = new CommandLaunchTradingAppStandard(), CommandParameter = parameter });
@@ -277,31 +331,61 @@ public abstract partial class UserControlWithGrid<T> : UserControl
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open the exchange", Command = new CommandLaunchExchange(), CommandParameter = parameter });
 
-        if (target == TargetViewModel.Position)
+        if (_targetMenu == TargetMenu.Position)
         {
-            flyout.Items.Add(new MenuItem { Header = "-"});
+            flyout.Items.Add(new MenuItem { Header = "-" });
             flyout.Items.Add(new MenuItem { Header = "Position recalculate", Command = new CommandPositionCalculate(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Position delete from database", Command = new CommandPositionDelete(), CommandParameter = parameter });
-            flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter }); 
-            flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter }); 
+            flyout.Items.Add(new MenuItem { Header = "Position add additional DCA", Command = new CommandPositionCreateAdditionalDca(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export position information to Excel", Command = new CommandExcelPositionInformation(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = parameter });
         }
 
-        flyout.Items.Add(new MenuItem { Header = "-"});
+        flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Copy symbol name", Command = new CommandCopySymbolName(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Copy all data cells", Command = new CommandCopyDataCells(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Calculate liquidity zones", Command = new CommandCalculateDlzForSymbol(), CommandParameter = parameter });
-        flyout.Items.Add(new MenuItem { Header = "-"});
+        flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Export trend information to log", Command = new CommandShowTrendInformation(), CommandParameter = parameter });
-        if (target == TargetViewModel.Signal)
+        if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Export signal information to Excel", Command = new CommandExcelSignalInformation(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Export symbol information to Excel", Command = new CommandExcelSymbolInformation(), CommandParameter = parameter });
-        if (target == TargetViewModel.Signal)
+        if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = parameter });
 
-        flyout.Items.Add(new MenuItem { Header = "-"});
+        flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
+    }
+
+    internal void InitializeGrid<TEnum, TComparer>(string defaultSortColumn = "", ListSortDirection defaultsortDirection = ListSortDirection.Ascending
+
+        ) where TEnum : struct, Enum where TComparer : IComparer
+    {
+        _dataGrid.Loaded += DataGrid_Loaded;
+
+        foreach (var column in _dataGrid.Columns)
+        {
+            if (Enum.TryParse<TEnum>(column.SortMemberPath, out TEnum columnEnum))
+            {
+                var comparer = (IComparer)Activator.CreateInstance(typeof(TComparer), columnEnum)!;
+                column.CustomSortComparer = comparer;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column.SortMemberPath} not set");
+            }
+        }
+
+        // Restore grid state from the service
+        RestoreGridState();
+
+        if (string.IsNullOrEmpty(_currentSortColumn))
+        {
+            _currentSortColumn = defaultSortColumn;
+            _currentSortDirection = defaultsortDirection;
+        }
+
     }
 
 }

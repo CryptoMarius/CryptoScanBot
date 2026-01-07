@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using CryptoScanner.Core.Zones;
+
+using System.Collections;
 
 namespace CryptoScanner.ViewModels;
 
@@ -41,7 +43,7 @@ public class SymbolColumnComparer : IComparer
                     SymbolColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol, b.Symbol),
                     SymbolColumnEnum.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
                     //SymbolColumnEnum.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
-                    //SymbolColumnEnum.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a), ZoneTools.ZoneDistance(b)),
+                    SymbolColumnEnum.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a.Object), ZoneTools.ZoneDistance(b.Object)),
                     //SymbolColumnEnum.MarketTrendPrimary => ObjectCompare.Compare(MarketTrendPrimary(a), MarketTrendPrimary(b)),
                     _ => 0
                 };

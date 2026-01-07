@@ -1,10 +1,11 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Interactivity;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
-using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
+
+using System.ComponentModel;
 
 
 namespace CryptoScanner.Views;
@@ -14,6 +15,7 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
     public SymbolGridView()
     {
         _gridName = "SymbolGrid";
+        _targetMenu = TargetMenu.Symbol;
         InitializeComponent();
 
         if (Design.IsDesignMode)
@@ -32,33 +34,9 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
             ?? throw new InvalidOperationException("SymbolDataGrid not found");
 
         DataContextChanged += OnDataContextChanged;
-        _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
-
-
-        //// Kind of Hacky, needs work... (is it really needed?)
-        //Unloaded += (s, e) =>
-        //{
-        //    if (DataContext is SymbolGridViewModel vm)
-        //    {
-        //        vm.RequestSort -= OnRequestSort;
-        //        vm.RequestSortedInsert -= OnRequestSortedInsert;
-        //    }
-        //};
 
         // Register a custom comparer for each column based on its SortMemberPath
-        foreach (var column in _dataGrid.Columns)
-        {
-            if (Enum.TryParse<SymbolColumnEnum>(column.SortMemberPath, out SymbolColumnEnum a))
-            {
-                var comparer = new SymbolColumnComparer(a);
-                column.CustomSortComparer = comparer;
-            }
-            else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
-        }
-
-        // Restore grid state from the service
-        RestoreGridState();
+        InitializeGrid<SymbolColumnEnum, SymbolColumnComparer>("Symbol", ListSortDirection.Ascending);
     }
 
 
@@ -80,15 +58,5 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
             vm.RequestSortedInsert += OnRequestSortedInsert;
         }
     }
-
-
-    internal override void ShowRowContextMenu(DataGrid dataGrid)
-    {
-        var flyout = new MenuFlyout();
-        AddStandardGridRowCommands(flyout, TargetViewModel.Symbol);
-        flyout.ShowAt(dataGrid, true);
-    }
-
-
 
 }

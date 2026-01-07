@@ -15,8 +15,8 @@ public partial class PositionViewModel : ObservableObject
     public int Id => Object.Id;
     public string? AltradyPositionId => Object.AltradyPositionId;
     public string CreateTime => Object.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-    public string UpdateTime => Object.UpdateTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
-    public string CloseTime => Object.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+    public string UpdateTime => Object.UpdateTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")!;
+    public string CloseTime => Object.CloseTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")!;
     public string Duration => Object.DurationText();
     public string Exchange => Object.Exchange.Name;
     public string Symbol => Object.Symbol.Name;

@@ -1,11 +1,14 @@
-﻿using CryptoScanner.Core.Model;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace CryptoScanner.ViewModels
 {
-    public class SymbolViewModel : INotifyPropertyChanged
+    public class SymbolViewModel : ObservableObject
     {
         public required CryptoSymbol Object { get; set; }
 
@@ -13,20 +16,20 @@ namespace CryptoScanner.ViewModels
         public string Symbol { get => Object.Name; set { } }
         public decimal Volume { get => Object.Volume; set { } }
 
-        private double _distance;
-        public double Distance
+        //private decimal?_distance = ZoneTools.ZoneDistance(Object);
+        public decimal? Distance
         {
-            get => _distance;
-            set { _distance = value; OnPropertyChanged(); }
+            get => ZoneTools.ZoneDistance(Object);
+            set { //_distance = value; OnPropertyChanged();
+                  }
         }
 
-        // Voeg andere properties toe uit je repo (bijv. voor exchanges)
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        //public event PropertyChangedEventHandler? PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        //protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        //{
+        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        //}
     }
 }

@@ -87,12 +87,12 @@ public class HiddenBrowserService : IDisposable
 
     //private void OnLoadStart(object? sender, Xilium.CefGlue.Common.Events.LoadStartEventArgs e)
     //{
-    //    Debug.WriteLine($"HiddenBrowser LoadStart: {e.Frame.Url}");
+    //    Debug.WriteLine($"EventOpenHiddenBrowser LoadStart: {e.Frame.Url}");
     //}
 
     //private void OnLoadEnd(object? sender, Xilium.CefGlue.Common.Events.LoadEndEventArgs e)
     //{
-    //    Debug.WriteLine($"HiddenBrowser LoadEnd: {e.Frame.Url}");
+    //    Debug.WriteLine($"EventOpenHiddenBrowser LoadEnd: {e.Frame.Url}");
     //}
 
     public void Dispose()

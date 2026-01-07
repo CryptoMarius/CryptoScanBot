@@ -12,6 +12,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
@@ -138,12 +139,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
         else
             ApplicationStatus = GlobalData.ApplicationStatus.ToString();
 
-        if (GlobalData.Settings.Options.TraderActive && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+        if (GlobalData.Settings.Trading.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             TraderStatusBrush = App.GetBrushResource("PriceUpBrush");
         else
             TraderStatusBrush = App.GetBrushResource("PriceDownBrush");
 
-        if (GlobalData.Settings.Options.AnalyzerActive && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+        if (GlobalData.Settings.Signal.Active && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             ScannerStatusBrush = App.GetBrushResource("PriceUpBrush");
         else
             ScannerStatusBrush = App.GetBrushResource("PriceDownBrush");
@@ -291,7 +292,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             ScannerSignalCount = GlobalData.CreatedSignalCount;
 
         string text = "";
-        if (GlobalData.Settings.Options.TraderActive)
+        if (GlobalData.Settings.Trading.Active)
         {
             int positionCount = 0;
             if (GlobalData.ActiveExchange!.Data.PositionList.Count != 0)

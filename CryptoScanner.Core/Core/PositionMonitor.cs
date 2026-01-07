@@ -244,7 +244,7 @@ public class PositionMonitor //: IDisposable
 
         // Als de bot niet actief is dan ook geen monitoring (queue leegmaken)
         // Blijkbaar is de bot dan door de gebruiker uitgezet, verwijder de signalen
-        if (!GlobalData.Settings.Options.TraderActive)
+        if (!GlobalData.Settings.Trading.Active)
         {
             reaction = "trade-bot deactivated";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
@@ -1839,7 +1839,7 @@ public class PositionMonitor //: IDisposable
     {
         try
         {
-            if (!GlobalData.Settings.Options.AnalyzerActive || 
+            if (!GlobalData.Settings.Signal.Active || 
                 !Symbol.QuoteData!.FetchCandles || 
                 Symbol.Status == 0 || 
                 !Symbol.LastPrice.HasValue)

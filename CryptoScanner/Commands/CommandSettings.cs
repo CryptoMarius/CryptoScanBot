@@ -55,7 +55,7 @@ public class CommandSettings : CommandBase
                 return;
 
             GlobalData.SaveSettings();
-            GlobalData.SaveUserSettings(); // custom colors (not sure?)
+            //GlobalData.SaveUserSettings(); // custom colors (not sure?)
 
             // Don't save exchange immediately, lots of data still in memory etc
             if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? newActiveExchange))

@@ -89,7 +89,8 @@
                 <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="60" MinWidth="50" SortMemberPath="Strategy" />
 
                 <!-- Text -->
-                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" MinWidth="90" SortMemberPath="Text" />
+                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" MinWidth="90" 
+                                     SortMemberPath="Text" IsVisible="False"/>
 
                 <!-- Signal Price -->
                 <DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" >

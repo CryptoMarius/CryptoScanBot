@@ -28,8 +28,8 @@ public partial class App : Application
     public static void OpenInInternalBrowser(object sender, string url) => EventOpenInInternalBrowser?.Invoke(sender, url);
     
     // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
-    internal static HiddenBrowserService HiddenBrowser { get; private set; } = null!;
-    internal static void OpenInHiddenBrowser(string url) => HiddenBrowser?.Navigate(url);
+    internal static HiddenBrowserService EventOpenHiddenBrowser { get; private set; } = null!;
+    internal static void OpenInHiddenBrowser(string url) => EventOpenHiddenBrowser?.Navigate(url);
 
 
     public override void Initialize()
@@ -39,11 +39,6 @@ public partial class App : Application
         InitializeComponent();
 
         GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
-
-        //// Events inregelen
-        //ScannerSession.TimerAddSignal.Elapsed += TimerAddLogLinesTick;
-        //ScannerSession.TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
-        //ScannerSession.TimerShowInformation.Elapsed += dashBoardInformation1.TimerShowInformation_Tick;
     }
 
     private void InitializeComponent()
@@ -82,29 +77,46 @@ public partial class App : Application
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
 
-        // Initialiseer app variabelen
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+        // Already done?
 
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version!.ToString();
-        while (appVersion.EndsWith(".0.0"))
-            appVersion = appVersion[0..^2];
-        GlobalData.AppVersion = appVersion;
+        //// Initialize app variables
+        //GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+
+        //var assembly = Assembly.GetExecutingAssembly().GetName();
+        //string appVersion = assembly.Version!.ToString();
+        //while (appVersion.EndsWith(".0.0"))
+        //    appVersion = appVersion[0..^2];
+        //GlobalData.AppVersion = appVersion;
 
         if (!Design.IsDesignMode)
         {
-            _powerMonitor.PowerModeChanged += OnPowerModeChanged;
-            GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
+            // Subscribe the global event handler
+            Dispatcher.UIThread.UnhandledException += OnUnhandledException;
+            // Add the event handler for handling non-UI thread exceptions to the event. 
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledException);
 
-            HiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
-            HiddenBrowser.Initialize();
+            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            {
+                ScannerLog.Logger.Info("");
+                ScannerLog.Logger.Info("Error " + e.Exception.Message);
+                ScannerLog.Logger.Error("");
+                ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
+                
+                Console.WriteLine($"UnobservedTaskException exception: {e.Exception.Message}");
+                e.SetObserved(); // Mark as observed to avoid crash
+            };
+
+            _powerMonitor.PowerModeChanged += OnPowerModeChanged;
 
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStarup();
             scannerSession.ApplySettings();
             scannerSession.Start(0);
-            //LinkTools.InitializeTradingView();
+
+            // Initialize a hidden browser to avoid the Altrady start question in the browser
+            EventOpenHiddenBrowser = GlobalData.Services.GetRequiredService<HiddenBrowserService>();
+            EventOpenHiddenBrowser.Initialize();
         }
 
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
@@ -112,6 +124,9 @@ public partial class App : Application
 
     private async void This_ShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
+        // Not a neat solution, replace with a global token??
+        GlobalData.ApplicationIsClosing = true;
+
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start)");
 
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
@@ -130,14 +145,12 @@ public partial class App : Application
         await DataStore.SaveCandlesAsync();
 
         // Ensure all states are written to disk before exit
+        GlobalData.SaveSettings();
 
         // TODO: Rethink this boolean storage
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(applicationStateService.FlushToDisk)");
         ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
-        applicationStateService.AnalyzerActive = GlobalData.Settings.Options.AnalyzerActive;
-        applicationStateService.SoundsActive = GlobalData.Settings.Options.SoundsActive;
-        applicationStateService.TraderActive = GlobalData.Settings.Options.TraderActive;
         applicationStateService.FlushToDisk();
 
         // Dispose hidden browser
@@ -149,10 +162,6 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(exit)");
     }
 
-    //private async void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
-    //{
-
-    //}
 
     private static async void OnPowerModeChanged(object? sender, PowerModeEventArgs e)
     {
@@ -188,11 +197,6 @@ public partial class App : Application
         Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
     }
 
-    private static void PlaySound(string text, bool test)
-    {
-        ThreadSoundPlayer.AddToQueue(text, test);
-    }
-
     public static IBrush GetBrushResource(string resourceKey)
     {
         if (Application.Current?.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) == true 
@@ -210,4 +214,38 @@ public partial class App : Application
     public static IBrush PriceUp => App.GetBrushResource("PriceUpBrush");
     public static IBrush PriceDown => App.GetBrushResource("PriceDownBrush");
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
+
+
+    private static void OnUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        // Handle the exception
+        ScannerLog.Logger.Info("");
+        ScannerLog.Logger.Info("Unhandled UI exception " + e.Exception.Message);
+
+        ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
+        e.Handled = true;
+    }
+
+    static void UnhandledException(object? sender, UnhandledExceptionEventArgs eventArgs)
+    {
+        // The application will still crash, but at least the error is logged
+
+        Exception e = (Exception)eventArgs.ExceptionObject;
+        ScannerLog.Logger.Info("");
+        ScannerLog.Logger.Info("Unhandled exception " + e.Message);
+
+        if (eventArgs.IsTerminating)
+            ScannerLog.Logger.Error(e, "UnhandledException (terminating)");
+        else
+            ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
+    }
+
+    //static void OnThreadException(object? sender, ThreadExceptionEventArgs eventArgs)
+    //{
+    //    ScannerLog.Logger.Info("");
+    //    ScannerLog.Logger.Info("Error " + eventArgs.Exception.Message);
+    //    ScannerLog.Logger.Error("");
+    //    ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
+    //}
+
 }

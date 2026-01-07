@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Services;
@@ -17,16 +18,35 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        SetMyAppVariables();
+        // We need a version from the main assembly
+        var assembly = Assembly.GetExecutingAssembly().GetName();
+        string appVersion = assembly.Version!.ToString();
+        while (appVersion.EndsWith(".0.0"))
+            appVersion = appVersion[0..^2];
+        GlobalData.AppVersion = appVersion;
+        System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
 
-        // Vroeger dan alle andere..
+        // We need a folder for accessing the Sounds
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+        System.Diagnostics.Debug.WriteLine($"GlobalData.AppPath =  {GlobalData.AppPath}");
+
+        // We need a data folder to store our data (temporary dependency injection to hide details)
+        var services = new ServiceCollection();
+        MyServices.ConfigurePlatformServices(services);
+        var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
+            ?? throw new InvalidOperationException("IPlatformService not registered");
+        GlobalData.AppDataFolder = platformService.GetDataDirectory();
+        System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
+
+        // In design mode we just give it an place so it can preview the axaml, otherwise return
+        if (Design.IsDesignMode)
+        {
+            ApplicationParams.InitApplicationOptions();
+            //GlobalData.AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
+            System.Diagnostics.Debug.WriteLine($"Running in IsDesignMode");
+        }
+        // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging();
-
-        // Add the event handler for handling non-UI thread exceptions to the event. 
-        AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledException);
-
-        // Add the event handler for handling UI thread exceptions to the event.
-        //Application.ThreadException += new ThreadExceptionEventHandler(OnThreadException);
 
         // Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
         // https://docs.avaloniaui.net/docs/concepts/unhandledexceptions
@@ -43,14 +63,18 @@ class Program
             AfterSetup(_ => { InitCefBrowser();  })
             .LogToTrace();
 
+
+    /// <summary>
+    /// Initialize the CEF browser environment
+    /// </summary>
     private static void InitCefBrowser()
     {
         // Setup Dependency Injection (just the platform for now to hide those details)
-        var services = new ServiceCollection();
-        MyServices.ConfigurePlatformServices(services);
-        var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
-            ?? throw new InvalidOperationException("IPlatformService not registered");
-        var dataFolder = platformService.GetDataDirectory();
+        //var services = new ServiceCollection();
+        //MyServices.ConfigurePlatformServices(services);
+        //var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
+        //    ?? throw new InvalidOperationException("IPlatformService not registered");
+        var dataFolder = GlobalData.AppDataFolder;
 
         var settings = new CefSettings()
         {
@@ -58,12 +82,9 @@ class Program
             CachePath = Path.Combine(dataFolder, "Browser"),
             RootCachePath = Path.Combine(dataFolder, "Browser"),
             LogFile = Path.Combine(dataFolder, "Browser", "cef.log"),
-            NoSandbox = true,
-            PersistSessionCookies = true,
-            PersistUserPreferences = true,
+            NoSandbox = true, PersistSessionCookies = true, PersistUserPreferences = true,
             UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            // its recommended to leave this off (false), since its less performant and can cause more issues
-            WindowlessRenderingEnabled = false,
+            WindowlessRenderingEnabled = false, // its recommended to leave this off, since its less performant and can cause more issues
         };
 
         // Add command line switches 
@@ -83,46 +104,5 @@ class Program
         //var mainArgs = new CefMainArgs([]);
         //CefRuntime.Initialize(mainArgs, settings, new CustomCefApp(), IntPtr.Zero);
     }
-
-    private static void SetMyAppVariables()
-    {
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
-
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version!.ToString();
-        while (appVersion.EndsWith(".0.0"))
-            appVersion = appVersion[0..^2];
-        GlobalData.AppVersion = appVersion;
-
-
-        // Setup Dependency Injection (just the platform for now to hide those details)
-        var services = new ServiceCollection();
-        MyServices.ConfigurePlatformServices(services);
-        var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
-            ?? throw new InvalidOperationException("IPlatformService not registered");
-
-        // TODO: Avoid this global variable (DI work), it works for now
-        GlobalData.AppDataFolder = platformService.GetDataDirectory();
-    }
-
-
-    static void UnhandledException(object? sender, UnhandledExceptionEventArgs eventArgs)
-    {
-        //MessageBox.Show("UnhandledException!!!!");
-        Exception e = (Exception)eventArgs.ExceptionObject;
-        if (eventArgs.IsTerminating)
-            ScannerLog.Logger.Error(e, "UnhandledException (terminating)");
-        else
-            ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
-    }
-
-    static void OnThreadException(object? sender, ThreadExceptionEventArgs eventArgs)
-    {
-        ScannerLog.Logger.Info("");
-        ScannerLog.Logger.Info("Error " + eventArgs.Exception.Message);
-        ScannerLog.Logger.Error("");
-        ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
-    }
-
 
 }

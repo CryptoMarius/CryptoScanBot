@@ -4,6 +4,11 @@ using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Services;
+using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 using CryptoScanner.Views;
 
@@ -12,6 +17,7 @@ namespace CryptoScanner.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     public required ITradingViewService TradingViewService { get; set; }
+    public required LogGridViewModel LogGridViewModel { get; set; }
     public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardInformationViewModel DashBoardInformationViewModel { get; set; }
     public required DashboardPositionsViewModel DashboardPositionsViewModel { get; set; }
@@ -22,7 +28,6 @@ public partial class MainWindowViewModel : ObservableObject
     public required PositionOpenGridViewModel PositionOpenGridViewModel { get; set; }
     public required PositionClosedGridViewModel PositionClosedGridViewModel { get; set; }
 
-    public required LogViewModel LogViewModel { get; set; }
 
     public BrowserView? BrowserView { get; set; }
 
@@ -30,12 +35,12 @@ public partial class MainWindowViewModel : ObservableObject
     //private bool _analyzerActive = false;
     public bool AnalyzerActive
     {
-        get => ApplicationStateService.AnalyzerActive;
+        get => GlobalData.Settings.Signal.Active;
         set
         {
-            if (ApplicationStateService.AnalyzerActive != value)
+            if (GlobalData.Settings.Signal.Active != value)
             {
-                ApplicationStateService.AnalyzerActive = value;
+                GlobalData.Settings.Signal.Active = value;
                 OnPropertyChanged(nameof(AnalyzerActive));
             }
         }
@@ -45,12 +50,12 @@ public partial class MainWindowViewModel : ObservableObject
     //private bool _soundsActive = false;
     public bool SoundsActive
     {
-        get => ApplicationStateService.SoundsActive;
+        get => GlobalData.Settings.Signal.SoundsActive;
         set
         {
-            if (ApplicationStateService.SoundsActive != value)
+            if (GlobalData.Settings.Signal.SoundsActive != value)
             {
-                ApplicationStateService.SoundsActive = value;
+                GlobalData.Settings.Signal.SoundsActive = value;
                 OnPropertyChanged(nameof(SoundsActive));
             }
         }
@@ -60,12 +65,12 @@ public partial class MainWindowViewModel : ObservableObject
     //private bool _traderActive = false;
     public bool TraderActive
     {
-        get => ApplicationStateService.TraderActive;
+        get => GlobalData.Settings.Trading.Active;
         set
         {
-            if (ApplicationStateService.TraderActive != value)
+            if (GlobalData.Settings.Trading.Active != value)
             {
-                ApplicationStateService.TraderActive = value;
+                GlobalData.Settings.Trading.Active = value;
                 OnPropertyChanged(nameof(TraderActive));
             }
         }
@@ -96,7 +101,7 @@ public partial class MainWindowViewModel : ObservableObject
         PositionOpenGridViewModel positionOpenGridViewModel,
         PositionClosedGridViewModel positionClosedGridViewModel,
         BrowserViewModel browserViewModel,
-        LogViewModel logViewModel)
+        LogGridViewModel logGridViewModel)
     {
         TradingViewService = tradingViewService;
         ApplicationStateService = applicationStateService;
@@ -108,18 +113,18 @@ public partial class MainWindowViewModel : ObservableObject
         PositionOpenGridViewModel = positionOpenGridViewModel;
         PositionClosedGridViewModel = positionClosedGridViewModel;
         BrowserViewModel = browserViewModel;
-        LogViewModel = logViewModel;
-
-        // TODO: Is there a better way
-        //AnalyzerActive = ApplicationStateService.AnalyzerActive;
-        //TraderActive = ApplicationStateService.TraderActive;
-        //SoundsActive = ApplicationStateService.SoundsActive;
+        LogGridViewModel = logGridViewModel;
 
         // Subscribe child ViewModels to filter event
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
         FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
+
+        // Initialize the visible browser to the BTCUSDT (if it exists) - TODO: Move code?
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+        if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? symbol))
+            CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }
 
     private void OnOpenInInternalBrowserRequested(object? sender, string url)

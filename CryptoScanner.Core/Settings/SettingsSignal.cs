@@ -5,6 +5,12 @@ namespace CryptoScanner.Core.Settings;
 [Serializable]
 public class SettingsSignal
 {
+    // Naar general wellicht? (want het geld voor alles)
+    public bool SoundsActive { get; set; } = true;
+
+    // Is het signal algoritme actief
+    public bool Active { get; set; } = true;
+
     // Aantal dagen dat de munt moet bestaan
     public int SymbolMustExistsDays { get; set; } = 60;
     public bool LogSymbolMustExistsDays { get; set; } = false;

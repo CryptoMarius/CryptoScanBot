@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Services;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Visualisation.ViewModels;
 
 using System.ComponentModel;

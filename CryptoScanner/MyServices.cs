@@ -41,8 +41,9 @@ internal class MyServices
         services.AddTransient<LiveDataGridViewModel>();
         services.AddTransient<PositionOpenGridViewModel>();
         services.AddTransient<PositionClosedGridViewModel>();
+        services.AddTransient<LogGridViewModel>();
+
         services.AddTransient<BrowserViewModel>();
-        services.AddTransient<LogViewModel>();
 
         // Register Views
         services.AddTransient<MainWindow>();

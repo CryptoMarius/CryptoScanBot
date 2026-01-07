@@ -1,9 +1,7 @@
-﻿using Avalonia.Interactivity;
-
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Zones;
 using CryptoScanner.Model;
 
 
@@ -45,7 +43,7 @@ public partial class SymbolGridViewModel : ObservableObject
                         Id = symbol.Id,
                         Symbol = symbol.Name,
                         Volume = symbol.Volume,
-                        Distance = 0.0
+                        Distance = ZoneTools.ZoneDistance(symbol),
                     });
                 }
             }

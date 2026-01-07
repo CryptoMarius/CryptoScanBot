@@ -346,18 +346,7 @@ public class ThreadLoadData
                 GlobalData.AddTextToTelegram("");
 
 
-                // Heb me dag lopen af te vragen waarom er geen signalen kwamen, iets met white&black, right
-                //if (GlobalData.Settings.UseWhiteListOversold)
-                //    GlobalData.AddTextToLogTab("Oversold whitelist activated!");
-                //if (GlobalData.Settings.UseBlackListOversold)
-                //    GlobalData.AddTextToLogTab("Oversold blacklist activated!");
-
-                //if (GlobalData.Settings.UseWhiteListOverbought)
-                //    GlobalData.AddTextToLogTab("Overbought whitelist activated!");
-                //if (GlobalData.Settings.UseBlackListOverbought)
-                //    GlobalData.AddTextToLogTab("Overbought blacklist activated!");
-
-                // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
+               // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
                 //RecalculateLastXCandles(1);
 
 

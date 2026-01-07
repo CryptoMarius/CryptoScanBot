@@ -27,7 +27,7 @@ public class CommandLaunchTradingAppHidden : CommandBase
             if (Url != "")
             {
                 GlobalData.AddTextToLogTab($"Linktools activate {Url}");
-                App.HiddenBrowser.Navigate(Url);
+                App.EventOpenHiddenBrowser.Navigate(Url);
             }
         }
     }

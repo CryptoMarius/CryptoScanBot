@@ -219,8 +219,8 @@ public static class CandleTools
             UpdateCandleFetched(symbol, higherInterval);
             //GlobalData.Logger.Info(higherIntervalCandle.OhlcText(symbol, higherInterval, symbol.PriceDisplayFormat, true, true, true));
         }
-        else
-            GlobalData.AddTextToLogTab($"Unable to calculate a full candle {symbol.Name} {higherInterval.Name} {GetUnixDate(higherIntervalOpenTime)} using the {lowerTimeFrame.Name}");
+        //else
+        //    GlobalData.AddTextToLogTab($"Unable to calculate a full candle {symbol.Name} {higherInterval.Name} {GetUnixDate(higherIntervalOpenTime)} using the {lowerTimeFrame.Name}");
     }
 
 

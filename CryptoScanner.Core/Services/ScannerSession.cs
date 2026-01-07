@@ -8,7 +8,6 @@ using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
-using CryptoScanner.Services;
 
 using Dapper.Contrib.Extensions;
 
@@ -81,13 +80,7 @@ public class ScannerSession : IScannerSession
         GlobalData.LoadSymbols();
         GlobalData.LoadSignals();
 
-        GlobalData.Settings.General.DebugSignalStrength = true; // for debugging
-
-
         LoadAssets();
-        //LoadOpenPositions(); // Moved to the PositionOpenGridViewModel
-        //LoadClosedPositions(); // Moved to the PositionClosedGridViewModel
-        //PositionsHaveChangedEvent("");?
     }
 
     public void ApplySettings()
@@ -112,16 +105,10 @@ public class ScannerSession : IScannerSession
             }
         }
 
-        // TODO: Rethink this double boolean's
-        ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
-            ?? throw new InvalidOperationException("ApplicationStateService not registered");
-        GlobalData.Settings.Options.AnalyzerActive = applicationStateService.AnalyzerActive;
-        GlobalData.Settings.Options.SoundsActive = applicationStateService.SoundsActive;
-        GlobalData.Settings.Options.TraderActive = applicationStateService.TraderActive;
-
         //// Eventueel de nieuwe quotes zetten enz.
         //dashBoardInformation1.InitializeBarometer();
 
+        // ????? Do we need something like this, looks like a lot of work in Avalonia...
         //if ((GlobalData.Settings.General.FontSizeNew != Font.Size) || (GlobalData.Settings.General.FontNameNew.Equals(Font.Name)))
         //{
         //    Font = new System.Drawing.Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
@@ -129,12 +116,6 @@ public class ScannerSession : IScannerSession
 
         //    dashBoardControl1.Font = Font;
         //}
-
-        //GridSymbolView.InitCommandCaptions();
-        //GridSignalView.InitCommandCaptions();
-        //GridLiveDataView.InitCommandCaptions();
-        //GridPositionOpenView.InitCommandCaptions();
-        //GridPositionClosedView.InitCommandCaptions();
 
 
         TradingConfig.IndexStrategyInternally();
@@ -146,14 +127,7 @@ public class ScannerSession : IScannerSession
         //// De timertjes goed zetten
         SetTimerDefaults();
 
-
-        //ApplicationTradingBot.Checked = GlobalData.Settings.Trading.Active;
-        //ApplicationPlaySounds.Checked = GlobalData.Settings.Object.SoundsActive;
-        //ApplicationCreateSignals.Checked = GlobalData.Settings.Object.Active;
-
-        //GlobalData.StatusesHaveChangedEvent?.Invoke("");
         //SetApplicationTitle();
-
         //Refresh(); // Redraw
     }
 
@@ -163,7 +137,7 @@ public class ScannerSession : IScannerSession
 
         if (GlobalData.ActiveExchange != null)
         {
-            // ALLE assets laden
+            // Load all assets
             GlobalData.ActiveExchange.Data.AssetList.Clear();
 
             using var database = new CryptoDatabase();

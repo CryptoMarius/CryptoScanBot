@@ -32,7 +32,7 @@ public static class ThreadSoundPlayer
         }
         else
         {
-            if (!GlobalData.Settings.Options.SoundsActive)
+            if (!GlobalData.Settings.Signal.SoundsActive)
                 return;
 
             // Ignore recently played sounds

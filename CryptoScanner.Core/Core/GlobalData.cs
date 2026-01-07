@@ -47,21 +47,21 @@ public static class GlobalData
     public static string AppVersion { get; set; } = "";
     public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
 
-    public static bool ApplicationIsShowed { get; set; } = false;
+    //public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
 
 
-    // todo, uitfaseren want backtest komt in een seperaat product
-    // Emulator kan alleen de backTest zetten (anders gaan er onverwachte zaken naar de database enzo)
-    // (staat op de nominatie om te vervallen dmv de Trading.TradeVia == BackTest of GlobalData.ActiveAccount)
-    // todo cleanup? (more and more properties voor backtest for the candle and candle.Close date)
+    // todo, kill these properties, the emulator is now excluded and these are left overs..
+    // And for the emulator we need to introduce a datetime service + candleservice or something like that
     public static bool BackTest { get; set; }
     public static DateTime BackTestDateTime { get; set; }
     public static CryptoCandle? BackTestCandle { get; set; }
 
+
+    // Replace with a proper DateTimeService
     public static DateTime GetCurrentDateTime()
     {
-        if (GlobalData.BackTest)
+        if (BackTest)
             return BackTestDateTime; // or BackTestCandle.OpenTime + 1 minute
         else
             return DateTime.UtcNow;
@@ -76,15 +76,16 @@ public static class GlobalData
        }
     }
 
-    public static int CreatedSignalCount { get; set; } // Tellertje met het aantal meldingen (komt in de taakbalk c.q. applicatie titel)
+    // Amount of signals created
+    public static int CreatedSignalCount { get; set; }
 
     /// <summary>
-    /// Alle instellingen van de scanner/trader
+    /// Scanner settings
     /// </summary>
     public static SettingsBasic Settings { get; set; } = new();
 
     /// <summary>
-    /// Exchange API settings
+    /// Exchange API settings (not used at this moment)
     /// </summary>
     public static SettingsExchangeApi TradingApi { get; set; } = new();
 
@@ -94,17 +95,12 @@ public static class GlobalData
     public static SettingsAltradyApi AltradyApi { get; set; } = new();
 
     /// <summary>
-    /// Settings for visability and widths of columns + window coordinates
-    /// </summary>
-    public static SettingsUser SettingsUser { get; set; } = new();
-
-    /// <summary>
-    /// Telegram gerelateerde instellingen
+    /// Telegram related instellingen
     /// </summary>
     public static SettingsTelegram Telegram { get; set; } = new();
 
     /// <summary>
-    /// De url's van de exchanges en/of tradingapps
+    /// Url's settings for all exchanges
     /// </summary>
     public static CryptoExternalUrlList ExternalUrls { get; set; } = [];
 
@@ -154,15 +150,7 @@ public static class GlobalData
     public static ZoneThreadCalculate? ThreadZoneCalculate { get; set; }
 
 
-    // Moved to the dashboard service
-    // On special request of a hardcore trader.. (moved to CryptoScanner.DashBoard.Services)
-    //public static SymbolValue FearAndGreedIndex { get; set; } = new();
-    //public static SymbolValue TradingViewDollarIndex { get; set; } = new();
-    //public static SymbolValue TradingViewSpx500 { get; set; } = new();
-    //public static SymbolValue TradingViewBitcoinDominance { get; set; } = new();
-    //public static SymbolValue TradingViewMarketCapTotal { get; set; } = new();
-
-    // Indexed strategies for colors, soundfiles etc.
+    // Indexed strategies for colors and soundfiles etc...
     public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy)> StrategiesSettings = [];
 
 
@@ -473,104 +461,78 @@ public static class GlobalData
     }
 
 
-    /// <summary>
-    /// Window coordinates, active columns etc.
-    /// </summary>
-    public static void LoadUserSettings()
-    {
-        string fileName = $"{Constants.AppName}-user.json";
-        try
-        {
-            string fullName = Path.Combine(GetBaseDir(), fileName);
-            if (File.Exists(fullName))
-            {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsUser>(text, JsonTools.DeSerializerOptions);
-                if (value != null)
-                    SettingsUser = value;
-                else
-                    SettingsUser = new();
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
-        }
-    }
-
     public static void LoadTelegramSettings()
     {
-        string fileName = $"{Constants.AppName}-telegram.json";
-        try
-        {
-            string fullName = Path.Combine(GetBaseDir(), fileName);
-            if (File.Exists(fullName))
-            {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsTelegram>(text, JsonTools.DeSerializerOptions);
-                if (value != null)
-                    Telegram = value;
-                else
-                    Telegram = new();
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
-        }
+        //string fileName = $"{Constants.AppName}-telegram.json";
+        //try
+        //{
+        //    string fullName = Path.Combine(GetBaseDir(), fileName);
+        //    if (File.Exists(fullName))
+        //    {
+        //        string text = File.ReadAllText(fullName);
+        //        var value = JsonSerializer.Deserialize<SettingsTelegram>(text, JsonTools.DeSerializerOptions);
+        //        if (value != null)
+        //            Telegram = value;
+        //        else
+        //            Telegram = new();
+        //    }
+        //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+        //}
     }
 
     public static void LoadExchangeSettings()
     {
-        string fileName = $"{Constants.AppName}-exchange.json";
-        try
-        {
-            string fullName = Path.Combine(GetBaseDir(), fileName);
-            if (File.Exists(fullName))
-            {
-                File.Delete(fullName);
-                //        string text = File.ReadAllText(fullName);
-                //        var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
-                //        if (value != null)
-                //            TradingApi = value;
-                //        else
-                //            TradingApi = new();
-            }
+        //string fileName = $"{Constants.AppName}-exchange.json";
+        //try
+        //{
+        //    string fullName = Path.Combine(AppDataFolder, fileName);
+        //    if (File.Exists(fullName))
+        //    {
+        //        File.Delete(fullName);
+        //        //        string text = File.ReadAllText(fullName);
+        //        //        var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
+        //        //        if (value != null)
+        //        //            TradingApi = value;
+        //        //        else
+        //        //            TradingApi = new();
+        //    }
 
-            //    // Exchange API no longer supported, clear it just in case
-            //    // (Better to remove it but i'm still hesitating about this)
-            //    TradingApi.Key = "";
-            //    TradingApi.Secret = "";
-            //    TradingApi.PassPhrase = "";
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
-        }
+        //    //    // Exchange API no longer supported, clear it just in case
+        //    //    // (Better to remove it but i'm still hesitating about this)
+        //    //    TradingApi.Key = "";
+        //    //    TradingApi.Secret = "";
+        //    //    TradingApi.PassPhrase = "";
+        //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+        //}
 
 
-        fileName = $"{Constants.AppName}-altrady.json";
-        try
-        {
-            string fullName = Path.Combine(GetBaseDir(), fileName);
-            if (File.Exists(fullName))
-            {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
-                if (value != null)
-                    AltradyApi = value;
-                else
-                    AltradyApi = new();
-            }
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "");
-            AddTextToLogTab($"Error loading {fileName} " + error.ToString());
-        }
+        //fileName = $"{Constants.AppName}-altrady.json";
+        //try
+        //{
+        //    string fullName = Path.Combine(AppDataFolder, fileName);
+        //    if (File.Exists(fullName))
+        //    {
+        //        string text = File.ReadAllText(fullName);
+        //        var value = JsonSerializer.Deserialize<SettingsAltradyApi>(text, JsonTools.DeSerializerOptions);
+        //        if (value != null)
+        //            AltradyApi = value;
+        //        else
+        //            AltradyApi = new();
+        //    }
+        //}
+        //catch (Exception error)
+        //{
+        //    ScannerLog.Logger.Error(error, "");
+        //    AddTextToLogTab($"Error loading {fileName} " + error.ToString());
+        //}
     }
 
 
@@ -578,10 +540,9 @@ public static class GlobalData
     public static void LoadSettings()
     {
         LoadBaseSettings();
-        LoadExchangeSettings();
-        LoadTelegramSettings();
+        //LoadExchangeSettings();
+        //LoadTelegramSettings();
         LoadLinkSettings();
-        LoadUserSettings();
     }
 
 
@@ -619,18 +580,9 @@ public static class GlobalData
         }
     }
 
-    public static void SaveUserSettings()
-    {
-        var baseFolder = GetBaseDir();
-        Directory.CreateDirectory(baseFolder);
-        var filename = Path.Combine(baseFolder, $"{Constants.AppName}-user.json");
-        string text = JsonSerializer.Serialize(SettingsUser, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
-    }
-
     public static void SaveSettings()
     {
-        string baseFolder = GetBaseDir();
+        string baseFolder = AppDataFolder;
         Directory.CreateDirectory(baseFolder);
 
         //using (FileStream writeStream = new FileStream(fileName, FileMode.Create))
@@ -644,17 +596,17 @@ public static class GlobalData
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{Constants.AppName}-telegram.json";
-        text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
+        //filename = baseFolder + $"{Constants.AppName}-telegram.json";
+        //text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
+        //File.WriteAllText(filename, text);
 
-        //fileName = baseFolder + $"{AppName}-exchange.json";
-        //text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
-        //File.WriteAllText(fileName, text);
+        ////fileName = baseFolder + $"{AppName}-exchange.json";
+        ////text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
+        ////File.WriteAllText(fileName, text);
 
-        filename = baseFolder + $"{Constants.AppName}-altrady.json";
-        text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(filename, text);
+        //filename = baseFolder + $"{Constants.AppName}-altrady.json";
+        //text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
+        //File.WriteAllText(filename, text);
 
         //#if DEBUG
         //        //// Ter debug om te zien of alles okay is
@@ -743,30 +695,6 @@ public static class GlobalData
         }
     }
 
-    //public static void AddTextToTelegram(string text, CryptoSymbol symbol)
-    //{
-    //    if (LogToTelegram is null)
-    //        return;
-    //    try
-    //    {
-    //        if (symbol is not null)
-    //        {
-    //            string symbolName = symbol.Name.ToUpper();
-    //            (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(Settings.General.TradingApp, true, symbol, IntervalList[0]);
-    //            if (Url != "")
-    //            {
-    //                string x = $"<a href='{Url}'>{symbolName}</a>";
-    //                text = text.Replace(symbolName, x);
-    //            }
-    //        }
-    //        LogToTelegram(text);
-    //    }
-    //    catch (Exception error)
-    //    {
-    //        ScannerLog.Logger.Error(error, "");
-    //        AddTextToLogTab(" error telegram thread(2)" + error.ToString());
-    //    }
-    //}
 
     public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
     //public static void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
@@ -781,11 +709,12 @@ public static class GlobalData
 
     public static string GetBaseDir()
     {
-        if (Design.IsDesignMode)
-        {
-            ApplicationParams.InitApplicationOptions();
-            AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
-        }
+        //// In desgn mode we just give it an place so it can preview the axaml, otherwise return
+        //if (Design.IsDesignMode)
+        //{
+        //    ApplicationParams.InitApplicationOptions();
+        //    AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
+        //}
         if (string.IsNullOrEmpty(AppDataFolder))
             throw new InvalidOperationException("AppDataFolder not set");
         return AppDataFolder;
@@ -835,6 +764,7 @@ public static class GlobalData
     //    }
     //}
 
+    // Index for the most important strategies
     public static void AddStrategySettings()
     {
         StrategiesSettings = [];

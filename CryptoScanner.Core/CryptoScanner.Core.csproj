@@ -5,6 +5,7 @@
 	  <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>CryptoScanner.Core</RootNamespace>
+    <Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />

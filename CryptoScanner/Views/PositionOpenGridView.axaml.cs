@@ -1,9 +1,11 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
-using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
+
+using System.ComponentModel;
 
 
 namespace CryptoScanner.Views;
@@ -12,6 +14,7 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
 {
     public PositionOpenGridView()
     {
+        _targetMenu = TargetMenu.Symbol;
         _gridName = "PositionOpenGrid";
         InitializeComponent();
 
@@ -27,37 +30,13 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
         _applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
 
-        _dataGrid = this.FindControl<DataGrid>("SymbolDataGrid")
-            ?? throw new InvalidOperationException("SymbolDataGrid not found");
+        _dataGrid = this.FindControl<DataGrid>("PositionOpenGrid")
+            ?? throw new InvalidOperationException("PositionOpenGrid not found");
 
         DataContextChanged += OnDataContextChanged;
-        _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
-
-
-        //// Kind of Hacky, needs work... (is it really needed?)
-        //Unloaded += (s, e) =>
-        //{
-        //    if (DataContext is PositionOpenGridViewModel vm)
-        //    {
-        //        vm.RequestSort -= OnRequestSort;
-        //        vm.RequestSortedInsert -= OnRequestSortedInsert;
-        //    }
-        //};
 
         // Register a custom comparer for each column based on its SortMemberPath
-        foreach (var column in _dataGrid.Columns)
-        {
-            if (Enum.TryParse<PositionOpenColumnEnum>(column.SortMemberPath, out PositionOpenColumnEnum a))
-            {
-                var comparer = new PositionOpenColumnComparer(a);
-                column.CustomSortComparer = comparer;
-            }
-            else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
-        }
-
-        // Restore grid state from the service
-        RestoreGridState();
+        InitializeGrid<PositionOpenColumnEnum, PositionOpenColumnComparer>("Created", ListSortDirection.Ascending);
     }
 
 
@@ -80,12 +59,5 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
         }
     }
 
-
-    internal override void ShowRowContextMenu(DataGrid dataGrid)
-    {
-        var flyout = new MenuFlyout();
-        AddStandardGridRowCommands(flyout, TargetViewModel.Position);
-        flyout.ShowAt(dataGrid, true);
-    }
 
 }

@@ -2,11 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Services;
 
 using System.ComponentModel;
 using System.Text.Json;
 
-namespace CryptoScanner.Services;
+namespace CryptoScanner.Core.Services;
 
 public class GridColumn
 {
@@ -38,18 +39,9 @@ public class BarometerState
     public string Interval { get; set; } = "1H";
 }
 
-public class ApplicationOptions
-{
-    public bool AnalyzerActive { get; set; } = true;
-    public bool SoundsActive { get; set; } = true;
-    public bool TraderActive { get; set; } = false;
-}
 
 public class ApplicationState : IApplicationState
 {
-    // Sounds, Analyzer and Trader options
-    public ApplicationOptions ApplicationOptions { get; set; } = new();
-
     // Last selected Barometer settings
     public BarometerState BarometerState { get; set; } = new();
 
@@ -57,40 +49,9 @@ public class ApplicationState : IApplicationState
     public double MainWindowSplitterPosition { get; set; } = 300;
 
     // Window state, Size, Object, Monitor etc.
-    public WindowState MainWindow { get; set; } = new();
-    public WindowState ChartWindow { get; set; } = new();
     public Dictionary<string, WindowState> WindowStates { get; set; } = [];
 
-    public GridState SignalGrid { get; set; } = new();
-    public GridState SymbolGrid { get; set; } = new();
-    public GridState LiveDataGrid { get; set; } = new();
-    public GridState PositionOpenGrid { get; set; } = new();
-    public GridState PositionClosedGrid { get; set; } = new();
-
     public Dictionary<string, GridState> GridStates { get; set; } = [];
-
-    public ApplicationState()
-    {
-        // Default sort settings
-        SignalGrid.SortColumn = "Date"; // = SortMemberPath
-        SignalGrid.SortDirection = ListSortDirection.Descending;
-
-        // Default sort settings
-        SymbolGrid.SortColumn = "Symbol"; // = SortMemberPath
-        SymbolGrid.SortDirection = ListSortDirection.Ascending;
-
-        // Default sort settings
-        LiveDataGrid.SortColumn = "Date"; // = SortMemberPath
-        LiveDataGrid.SortDirection = ListSortDirection.Ascending;
-
-        // Default sort settings
-        PositionOpenGrid.SortColumn = "Created"; // = SortMemberPath
-        PositionOpenGrid.SortDirection = ListSortDirection.Ascending;
-
-        // Default sort settings
-        PositionClosedGrid.SortColumn = "Created"; // = SortMemberPath
-        PositionClosedGrid.SortDirection = ListSortDirection.Ascending;
-    }
 }
 
 public class ApplicationStateService
@@ -119,10 +80,6 @@ public class ApplicationStateService
         // Load states on initialization
         _states = LoadFromFile();
     }
-
-    public bool AnalyzerActive { get { return _states.ApplicationOptions.AnalyzerActive; } set { _states.ApplicationOptions.AnalyzerActive = value; } }
-    public bool SoundsActive { get { return _states.ApplicationOptions.SoundsActive; } set { _states.ApplicationOptions.SoundsActive = value; } }
-    public bool TraderActive { get { return _states.ApplicationOptions.TraderActive; } set { _states.ApplicationOptions.TraderActive = value; } }
 
     public string BarometerQuote { get { return _states.BarometerState.Quote; } set { _states.BarometerState.Quote = value; } }
     public string BarometerInterval { get { return _states.BarometerState.Interval; } set { _states.BarometerState.Interval = value; } }
@@ -157,13 +114,13 @@ public class ApplicationStateService
     }
 
 
-    public void RestoreGridState(string gridName, DataGrid dataGrid, out string? sortColumn, out ListSortDirection sortDirection)
+    public void RestoreGridState(string gridName, DataGrid dataGrid, out string sortColumn, out ListSortDirection sortDirection)
     {
         ArgumentNullException.ThrowIfNull(dataGrid);
 
         lock (_lock)
         {
-            sortColumn = null;
+            sortColumn = string.Empty;
             sortDirection = ListSortDirection.Ascending;
 
             var gridState = GetGridStateProperty(_states, gridName);
@@ -294,16 +251,12 @@ public class ApplicationStateService
 
     private static GridState? GetGridStateProperty(ApplicationState states, string gridName)
     {
-        // AI introduced names, a better solution would be enumerations, but voila..
-        return gridName switch
-        {
-            "SignalGrid" => states.SignalGrid,
-            "SymbolGrid" => states.SymbolGrid,
-            "LiveDataGrid" => states.LiveDataGrid,
-            "PositionOpenGrid" => states.PositionOpenGrid,
-            "PositionClosedGrid" => states.PositionClosedGrid,
-            _ => null
-        };
+        if (states.GridStates.TryGetValue(gridName, out var state))
+            return state;
+
+        state = new GridState();
+        states.GridStates.Add(gridName, state);
+        return state;
     }
 
 
@@ -339,7 +292,7 @@ public class ApplicationStateService
     {
         lock (_lock)
         {
-            var state = GetWindowStateProperty(windowName);
+            var state = GetWindowStateProperty(_states, windowName);
             if (state != null)
             {
                 state.X = window.Position.X;
@@ -357,7 +310,7 @@ public class ApplicationStateService
     {
         lock (_lock)
         {
-            var state = GetWindowStateProperty(windowName);
+            var state = GetWindowStateProperty(_states, windowName);
             if (state == null) 
                 return;
 
@@ -380,15 +333,14 @@ public class ApplicationStateService
         }
     }
 
-    private WindowState? GetWindowStateProperty(string windowName)
+    private WindowState? GetWindowStateProperty(ApplicationState states, string windowName)
     {
-        // AI introduced names, a better solution would be enumerations, but voila..
-        return windowName switch
-        {
-            "MainWindow" => _states.MainWindow,
-            "ChartWindow" => _states.ChartWindow,
-            _ => null
-        };
+        if (_states.WindowStates.TryGetValue(windowName, out var state))
+            return state;
+
+        state = new();
+        _states.WindowStates.Add(windowName, state);
+        return state;
     }
 
     private static bool IsPositionOnScreen(Window window, double x, double y)

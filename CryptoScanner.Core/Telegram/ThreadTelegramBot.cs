@@ -174,9 +174,9 @@ public class ThreadTelegramBotInstance
         if (token == "")
             return;
 
-        // Bij het testen staat vaak de scanner aan, daatom bij sql telegram ff uit
+        // Bij het testen staat vaak de scanner aan, daarom bij sql telegram ff uit
 
-        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+       // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
         bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
         try

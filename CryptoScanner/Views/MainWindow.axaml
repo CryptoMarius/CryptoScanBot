@@ -116,7 +116,7 @@
 							<views:PositionClosedGridView DataContext="{Binding PositionClosedGridViewModel}"/>
 						</TabItem>
 						<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:LogView DataContext="{Binding LogViewModel}"/>
+							<views:LogGridView DataContext="{Binding LogGridViewModel}"/>
 						</TabItem>
 					</TabControl>
 				</Grid>

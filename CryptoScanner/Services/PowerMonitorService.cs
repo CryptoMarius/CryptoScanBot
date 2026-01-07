@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 
 namespace CryptoScanner.Services;
@@ -45,13 +46,13 @@ public class PowerMonitorService : IDisposable
 
     #region Windows Implementation
 
+    [SupportedOSPlatform("windows")]
     private void InitializeWindows()
     {
-#if WINDOWS
         try
         {
             Microsoft.Win32.SystemEvents.PowerModeChanged += OnWindowsPowerModeChanged;
-            
+
             // Aanvullende polling voor battery percentage (SystemEvents geeft dit niet)
             StartPolling(TimeSpan.FromMinutes(1));
         }
@@ -61,12 +62,9 @@ public class PowerMonitorService : IDisposable
             // Fallback naar polling
             StartPolling(TimeSpan.FromSeconds(30));
         }
-#else
-        StartPolling(TimeSpan.FromSeconds(30));
-#endif
     }
 
-#if WINDOWS
+    [SupportedOSPlatform("windows")]
     private void OnWindowsPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
     {
         var mode = e.Mode switch
@@ -78,11 +76,10 @@ public class PowerMonitorService : IDisposable
         };
 
         PowerModeChanged?.Invoke(this, new PowerModeEventArgs(mode));
-        
+
         // Check status change
         CheckForStatusChange();
     }
-#endif
 
     #endregion
 
@@ -201,7 +198,7 @@ public class PowerMonitorService : IDisposable
             // Output format:
             // Now drawing from 'AC Power'
             // -InternalBattery-0 (id=123456)	95%; charging; 1:23 remaining present: true
-            
+
             status.IsPluggedIn = output.Contains("'AC Power'") || output.Contains("AC attached");
             status.IsCharging = output.Contains("charging");
 
@@ -212,7 +209,7 @@ public class PowerMonitorService : IDisposable
                 if (line.Contains("InternalBattery") || line.Contains("Battery"))
                 {
                     status.HasBattery = true;
-                    
+
                     // Percentage is tussen het begin en %;
                     var percentIndex = line.IndexOf('%');
                     if (percentIndex > 0)
@@ -223,7 +220,7 @@ public class PowerMonitorService : IDisposable
                         {
                             numStart--;
                         }
-                        
+
                         var percentStr = line.Substring(numStart + 1, percentIndex - numStart - 1).Trim();
                         if (int.TryParse(percentStr, out int percentage))
                         {
@@ -321,11 +318,11 @@ public class PowerMonitorService : IDisposable
         }
     }
 
+    [SupportedOSPlatform("windows")]
     private PowerStatus GetWindowsPowerStatus()
     {
         var status = new PowerStatus();
 
-#if WINDOWS
         try
         {
             // P/Invoke naar GetSystemPowerStatus
@@ -355,15 +352,15 @@ public class PowerMonitorService : IDisposable
         {
             System.Diagnostics.Debug.WriteLine($"Windows power status error: {ex.Message}");
         }
-#endif
 
         return status;
     }
 
-#if WINDOWS
+    [SupportedOSPlatform("windows")]
     [DllImport("kernel32.dll")]
     private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
 
+    [SupportedOSPlatform("windows")]
     [StructLayout(LayoutKind.Sequential)]
     private struct SYSTEM_POWER_STATUS
     {
@@ -374,7 +371,6 @@ public class PowerMonitorService : IDisposable
         public int BatteryLifeTime;        // Seconds remaining (-1 = Unknown)
         public int BatteryFullLifeTime;    // Seconds when full (-1 = Unknown)
     }
-#endif
 
     #endregion
 
@@ -386,18 +382,28 @@ public class PowerMonitorService : IDisposable
 
         _disposed = true;
 
-#if WINDOWS
-        try
+        if (OperatingSystem.IsWindows())
         {
-            Microsoft.Win32.SystemEvents.PowerModeChanged -= OnWindowsPowerModeChanged;
+            UnregisterWindowsEvents();
         }
-        catch { }
-#endif
 
         _pollingTimer?.Dispose();
         _pollingTimer = null;
 
         GC.SuppressFinalize(this);
+    }
+
+    [SupportedOSPlatform("windows")]
+    private void UnregisterWindowsEvents()
+    {
+        try
+        {
+            Microsoft.Win32.SystemEvents.PowerModeChanged -= OnWindowsPowerModeChanged;
+        }
+        catch
+        {
+            // Ignore errors during cleanup
+        }
     }
 
     #endregion
@@ -447,7 +453,7 @@ public class PowerStatus
         var plugged = IsPluggedIn ? "Plugged in" : "On battery";
         var charging = IsCharging ? ", Charging" : "";
         var percentage = BatteryPercentage >= 0 ? $", {BatteryPercentage}%" : "";
-        
+
         return $"{plugged}{charging}{percentage} ({BatteryStatus})";
     }
 }

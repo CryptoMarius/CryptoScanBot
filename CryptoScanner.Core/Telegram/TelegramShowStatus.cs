@@ -11,14 +11,14 @@ public class TelegramShowStatus
             stringbuilder.AppendLine("not supported");
 
         //Bot status
-        if (GlobalData.Settings.Options.TraderActive)
+        if (GlobalData.Settings.Trading.Active)
             stringbuilder.AppendLine($"Trade bot is active! (slots long={GlobalData.Settings.Trading.SlotsMaximalLong}, slots short={GlobalData.Settings.Trading.SlotsMaximalShort})");
         else
             stringbuilder.AppendLine("Trade bot is not active!");
 
 
         // Create signals
-        if (GlobalData.Settings.Options.AnalyzerActive)
+        if (GlobalData.Settings.Signal.Active)
             stringbuilder.AppendLine("Signal bot is active!");
         else
             stringbuilder.AppendLine("Signal bot is not active!");

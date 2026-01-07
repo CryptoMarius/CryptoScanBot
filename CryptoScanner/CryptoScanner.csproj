@@ -4,16 +4,16 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>FacIcon1.jpg</PackageIcon>
 		<TargetFramework>net10.0</TargetFramework>
-		<RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
+		<RuntimeIdentifiers>osx-arm64;osx-x64;win-x64;linux-x64</RuntimeIdentifiers>
 		<Nullable>enable</Nullable>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
 		<!-- Assembly Version Info -->
-		<AssemblyVersion>3.1.9.0</AssemblyVersion>
-		<FileVersion>3.1.9.0</FileVersion>
-		<Version>3.1.9</Version>
+		<AssemblyVersion>2.5.0.0</AssemblyVersion>
+		<FileVersion>2.5.0.0</FileVersion>
+		<Version>2.5.0</Version>
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
@@ -24,22 +24,12 @@
 		<!-- Optional -->
 		<Authors>Marius</Authors>
 		<PackageProjectUrl>https://github.com/CryptoMarius/CryptoScanBot</PackageProjectUrl>
+		<Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
 	</PropertyGroup>
 
 	
 	<PropertyGroup>
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
-	</PropertyGroup>
-	
-
-	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-		<DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-		<DefineConstants>$(DefineConstants);LINUX</DefineConstants>
-	</PropertyGroup>
-	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-		<DefineConstants>$(DefineConstants);MACOS</DefineConstants>
 	</PropertyGroup>
 
 
@@ -59,6 +49,7 @@
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 	</ItemGroup>
@@ -72,6 +63,9 @@
 	  </Compile>
 	  <Compile Update="Views\DashboardPositionsView.axaml.cs">
 	    <DependentUpon>DashboardPositionsView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\LogGridView.axaml.cs">
+	    <DependentUpon>LogGridView.axaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Views\PositionOpenGridView.axaml.cs">
 	    <DependentUpon>PositionOpenGridView.axaml</DependentUpon>

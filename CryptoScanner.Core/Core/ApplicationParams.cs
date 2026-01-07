@@ -4,7 +4,9 @@ using CommandLine;
 
 namespace CryptoScanner.Core.Core;
 
-// Define a class to receive parsed values
+/// 
+/// A class to parse the application arguments
+/// 
 public class ApplicationParams
 {
 
@@ -28,7 +30,7 @@ public class ApplicationParams
                 Options = new()
                 {
                     ExchangeName = "Binance Futures",
-                    AppDataFolder = "CryptoScanBot\\Design"
+                    AppDataFolder = Path.Combine("CryptoScanBot", "Design"),
                 };
             }
             else

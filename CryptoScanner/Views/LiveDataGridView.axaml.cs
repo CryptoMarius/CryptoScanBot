@@ -1,9 +1,11 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
-using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
+
+using System.ComponentModel;
 
 namespace CryptoScanner.Views;
 
@@ -12,6 +14,7 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
 
     public LiveDataGridView()
     {
+        _targetMenu = TargetMenu.LiveData;
         _gridName = "LiveDataGrid";
         InitializeComponent();
 
@@ -31,53 +34,30 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
             ?? throw new InvalidOperationException("LiveDataDataGrid not found");
 
         DataContextChanged += OnDataContextChanged;
-        _dataGrid.Loaded += DataGrid_Loaded; // - restore layout and sort
 
-        // Register a custom comparer for each column based on its SortMemberPath
-        foreach (var column in _dataGrid.Columns)
-        {
-            if (Enum.TryParse<LiveDataColumnEnum>(column.SortMemberPath, out LiveDataColumnEnum a))
-            {
-                var comparer = new LiveDataColumnComparer(a);
-                column.CustomSortComparer = comparer;
-            }
-            else
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column} {column.SortMemberPath} not set");
-        }
-
-        // Restore grid state from the service
-        RestoreGridState();
+        InitializeGrid<LiveDataColumnEnum, LiveDataColumnComparer>("Date", ListSortDirection.Ascending);
     }
-
-
 
 
     private LiveDataGridViewModel? _currentViewModel;
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        //System.Diagnostics.Debug.WriteLine($"OnDataContextChanged {_gridName} {_currentSortColumn} {_currentSortDirection}");
+        System.Diagnostics.Debug.WriteLine($"OnDataContextChanged {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
-        //// Unsubscribe old
-        //if (_currentViewModel != null)
-        //{
-        //    _currentViewModel.RequestSort -= OnRequestSort;
-        //    _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
-        //}
+        // Unsubscribe old
+        if (_currentViewModel != null)
+        {
+            _currentViewModel.RequestSort -= OnRequestSort;
+            _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+        }
 
-        //// Subscribe new
-        //if (DataContext is LiveDataGridViewModel vm)
-        //{
-        //    _currentViewModel = vm;
-        //    vm.RequestSort += OnRequestSort;
-        //    vm.RequestSortedInsert += OnRequestSortedInsert;
-        //}
+        // Subscribe new
+        if (DataContext is LiveDataGridViewModel vm)
+        {
+            _currentViewModel = vm;
+            vm.RequestSort += OnRequestSort;
+            vm.RequestSortedInsert += OnRequestSortedInsert;
+        }
     }
 
-
-    internal override void ShowRowContextMenu(DataGrid dataGrid)
-    {
-        var flyout = new MenuFlyout();
-        AddStandardGridRowCommands(flyout, TargetViewModel.LiveData);
-        flyout.ShowAt(dataGrid, true);
-    }
 }

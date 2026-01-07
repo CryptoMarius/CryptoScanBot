@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.Input;
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
+using CryptoScanner.Core.Sounds;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 
@@ -61,6 +63,7 @@ public partial class MainWindow : Window
         Title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
 
         Closing += OnWindowClosing; // Save state
+        GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
 
         //MenuItem menuItem;
@@ -150,5 +153,11 @@ public partial class MainWindow : Window
             vm.SymbolFilterText = textBox.Text;
         }
     }
+
+    private static void PlaySound(string text, bool test)
+    {
+        ThreadSoundPlayer.AddToQueue(text, test);
+    }
+
 }
 

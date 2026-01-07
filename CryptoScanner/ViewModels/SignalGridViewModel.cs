@@ -191,5 +191,7 @@ public partial class SignalGridViewModel : ObservableObject
 
         Signals.Clear();
         GlobalData.LoadSignals(_currentFilter);
+        // Request sort na filtering
+        RequestSort?.Invoke(this, EventArgs.Empty);
     }
 }
