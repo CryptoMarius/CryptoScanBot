@@ -14,8 +14,6 @@ using CryptoScanner.Views;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Reflection;
-
 namespace CryptoScanner;
 
 public partial class App : Application

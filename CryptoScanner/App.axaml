@@ -120,14 +120,12 @@
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <!--
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
-            -->
         </Style>
         
         <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
         <Style Selector="Button">
             <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
         
@@ -137,9 +135,6 @@
 
         <Style Selector="TextBox:not(:multiline)">
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <!--
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush2}"/>
-        -->
         </Style>
 
         <!-- ============================================ -->
@@ -175,16 +170,10 @@
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="1" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <!--
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
-            -->
         </Style>
 
         <!-- Alternating row colors -->
         <Style Selector="DataGridRow:nth-child(even)">
-            <!--
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeHighBrush}" />
-            -->
             <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
         </Style>
         

@@ -25,8 +25,8 @@ public class CryptoDatabase : IDisposable
 
     public CryptoDatabase()
     {
-        Connection = new("Filename=" + Path.Combine(GlobalData.GetBaseDir(), Constants.AppName + ".db;Mode=ReadWriteCreate;")); 
-        //Pooling=True;default)
+        string dbFile = Path.Combine(GlobalData.AppDataFolder, Constants.AppName + ".db");
+        Connection = new($"Filename={dbFile};Mode=ReadWriteCreate;"); 
     }
 
     public SqliteTransaction BeginTransaction()
