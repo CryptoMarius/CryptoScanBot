@@ -19,7 +19,6 @@ public class TestBase
 
     public static void InitializeApplicationVariables()
     {
-        GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
         var assembly = Assembly.GetExecutingAssembly().GetName();
@@ -41,7 +40,6 @@ public class TestBase
             //ScannerLog.InitializeLogging();
 
             // Description: toevoegen en mergen van candles (de happy flow)
-            GlobalData.AppName = "CryptoScanBot.Core.Test";
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent += AddTextToLogTab;
