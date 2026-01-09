@@ -345,7 +345,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     private void CreateBarometerBitmap(CryptoSymbolInterval symbolPeriod)
     {
-        int blocks = Constants.BarometerGraphHours;
+        int blocks = CryptoScanner.Core.Const.Constants.BarometerGraphHours;
 
         // Dimensions 
         int intWidth = 400;
@@ -560,7 +560,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                 return false;
 
-            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol))
+            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(CryptoScanner.Core.Const.Constants.SymbolNameBarometerPrice + quoteData.Name, out CryptoSymbol? symbol))
                 return false;
 
             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);

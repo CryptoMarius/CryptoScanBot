@@ -60,7 +60,7 @@ public partial class MainWindow : Window
 
         // TODO: place somewhere else..
         // Set application title (we have multiple instances)
-        Title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        Title = $"{CryptoScanner.Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
 
         Closing += OnWindowClosing; // Save state
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);

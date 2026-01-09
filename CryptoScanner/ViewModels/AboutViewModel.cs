@@ -12,13 +12,13 @@ namespace CryptoScanner.ViewModels;
 public partial class AboutViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _title= $"About {Constants.AppName}";
+    private string _title= $"About {CryptoScanner.Core.Const.Constants.AppName}";
 
     [ObservableProperty]
     private string _version = $"Version {GlobalData.AppVersion}";
 
     [ObservableProperty]
-    private string _copyright = $"{Constants.AppName} © {DateTime.Now.Year}";
+    private string _copyright = $"{CryptoScanner.Core.Const.Constants.AppName} © {DateTime.Now.Year}";
 
     [ObservableProperty]
     private string _author = "Marius";
@@ -37,7 +37,7 @@ public partial class AboutViewModel : ObservableObject
         // Get copyright from assembly
         var assembly = Assembly.GetExecutingAssembly();
         var copyrightAttr = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>();
-        Copyright = copyrightAttr?.Copyright ?? $"{Constants.AppName} © {DateTime.Now.Year}";
+        Copyright = copyrightAttr?.Copyright ?? $"{CryptoScanner.Core.Const.Constants.AppName} © {DateTime.Now.Year}";
     }
 
     private void LoadExchanges()
