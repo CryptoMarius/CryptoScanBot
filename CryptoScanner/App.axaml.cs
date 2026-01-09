@@ -24,7 +24,7 @@ public partial class App : Application
     // Forward url to our visible browser tabsheet
     public static event EventHandler<string>? EventOpenInInternalBrowser;
     public static void OpenInInternalBrowser(object sender, string url) => EventOpenInInternalBrowser?.Invoke(sender, url);
-    
+
     // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
     internal static HiddenBrowserService EventOpenHiddenBrowser { get; private set; } = null!;
     internal static void OpenInHiddenBrowser(string url) => EventOpenHiddenBrowser?.Navigate(url);
@@ -36,7 +36,7 @@ public partial class App : Application
 
         InitializeComponent();
 
-        GlobalData.ApplicationHasStarted += new AddTextEvent(ApplicationHasStarted);
+        GlobalData.ApplicationHasStarted += new AddTextEvent(DoWhenApplicationHasStarted);
     }
 
     private void InitializeComponent()
@@ -53,8 +53,9 @@ public partial class App : Application
         MyServices.ConfigureServices(services);
         GlobalData.Services = services.BuildServiceProvider();
 
+        // Basicly start the whole scanner
         InitializeGlobalData(); // Needs the DI services
-        
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Only close when requested
@@ -64,7 +65,7 @@ public partial class App : Application
             desktop.MainWindow = GlobalData.Services.GetRequiredService<MainWindow>();
 
             // Save states on application exit
-            desktop.ShutdownRequested += This_ShutdownRequested;
+            desktop.ShutdownRequested += DoWhenShutdownRequested;
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -89,9 +90,9 @@ public partial class App : Application
         if (!Design.IsDesignMode)
         {
             // Subscribe the global event handler
-            Dispatcher.UIThread.UnhandledException += OnUnhandledException;
-            // Add the event handler for handling non-UI thread exceptions to the event. 
-            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledException);
+            Dispatcher.UIThread.UnhandledException += WoWhenUnhandledException;
+            // Add the event handler for handling non-UI thread exceptions to the event.
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(DoWhenUnhandledException);
 
             TaskScheduler.UnobservedTaskException += (sender, e) =>
             {
@@ -99,12 +100,12 @@ public partial class App : Application
                 ScannerLog.Logger.Info("Error " + e.Exception.Message);
                 ScannerLog.Logger.Error("");
                 ScannerLog.Logger.Error(e.Exception, "Global Thread Exception");
-                
+
                 Console.WriteLine($"UnobservedTaskException exception: {e.Exception.Message}");
                 e.SetObserved(); // Mark as observed to avoid crash
             };
 
-            _powerMonitor.PowerModeChanged += OnPowerModeChanged;
+            _powerMonitor.PowerModeChanged += DoWhenPowerModeChanged;
 
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
@@ -120,12 +121,50 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"GlobalData initialized - Symbols: {GlobalData.ActiveExchange?.SymbolListName.Count ?? 0}, Signals: {GlobalData.SignalQueue.Count}");
     }
 
-    private async void This_ShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    private void DoWhenShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start) - Canceling shutdown to run async cleanup");
+
+        // Cancel the shutdown request to prevent immediate closure
+        e.Cancel = true;
+
+        // Run shutdown async and then manually exit
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await PerformShutdownAsync();
+            }
+            catch (Exception ex)
+            {
+                ScannerLog.Logger.Error(ex, "Error during shutdown");
+                System.Diagnostics.Debug.WriteLine($"Shutdown error: {ex.Message}");
+            }
+            finally
+            {
+                // After all cleanup is done, force the shutdown
+                System.Diagnostics.Debug.WriteLine($"OnApplicationExit(forcing shutdown now)");
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                    {
+                        // Unsubscribe to prevent re-entry
+                        desktop.ShutdownRequested -= DoWhenShutdownRequested;
+                        // Force shutdown
+                        desktop.Shutdown();
+                    }
+                });
+            }
+        });
+    }
+
+    private static async Task PerformShutdownAsync()
     {
         // Not a neat solution, replace with a global token??
         GlobalData.ApplicationIsClosing = true;
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start)");
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start async operations)");
 
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
         _powerMonitor?.Dispose();
@@ -134,15 +173,16 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(ThreadSoundPlayer.StopSoundThread)");
         ThreadSoundPlayer.StopSoundThread();
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(ScannerSession.StopAsync)");
         var scannersession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("ScannerSession not registered");
-        await scannersession.StopAsync(); // Blocks..
+        await scannersession.StopAsync(); // This will now complete!
 
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(DataStore.SaveCandlesAsync)");
         await DataStore.SaveCandlesAsync();
 
         // Ensure all states are written to disk before exit
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(GlobalData.SaveSettings)");
         GlobalData.SaveSettings();
 
         // TODO: Rethink this boolean storage
@@ -154,36 +194,68 @@ public partial class App : Application
         // Dispose hidden browser
         System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser?.Dispose)");
         var hiddenBrowser = GlobalData.GetService<HiddenBrowserService>();
-        hiddenBrowser?.Dispose();
-        //hiddenBrowser? = null;
+        if (hiddenBrowser != null)
+        {
+            // Dispatch to UI thread for browser disposal
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    hiddenBrowser.Dispose();
+                    System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser disposed successfully)");
+                }
+                catch (Exception ex)
+                {
+                    ScannerLog.Logger.Error(ex, "Error disposing hidden browser");
+                    System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser dispose error: {ex.Message})");
+                }
+            });
+        }
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(exit)");
+        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(all operations completed)");
     }
 
 
-    private static async void OnPowerModeChanged(object? sender, PowerModeEventArgs e)
+    private static void DoWhenPowerModeChanged(object? sender, PowerModeEventArgs e)
     {
-        switch (e.Mode)
-        {
-            case PowerMode.Suspend:
-                GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
-                var scannersession1 = GlobalData.GetService<IScannerSession>()
-                    ?? throw new InvalidOperationException("ScannerSession not registered");
-                await scannersession1.StopAsync(); // Blocks..
-                await DataStore.SaveCandlesAsync();
-                break;
+        // Fire-and-forget with error handling
+        _ = HandlePowerModeChangeAsync(e.Mode);
+    }
 
-            case PowerMode.Resume:
-                GlobalData.AddTextToLogTab("System resumed - reconnecting...");
-                await Task.Delay(2000); // wait for netwerk
-                var scannersession2 = GlobalData.GetService<IScannerSession>()
-                    ?? throw new InvalidOperationException("ScannerSession not registered");
-                scannersession2.Start(5000);
-                break;
+    private static async Task HandlePowerModeChangeAsync(PowerMode mode)
+    {
+        try
+        {
+            switch (mode)
+            {
+                case PowerMode.Suspend:
+                    GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
+                    var scannersession1 = GlobalData.GetService<IScannerSession>()
+                        ?? throw new InvalidOperationException("ScannerSession not registered");
+                    await scannersession1.StopAsync();
+                    ThreadSoundPlayer.StopSoundThread();
+                    await DataStore.SaveCandlesAsync();
+                    GlobalData.AddTextToLogTab("Disconnected successfully");
+                    break;
+
+                case PowerMode.Resume:
+                    GlobalData.AddTextToLogTab("System resumed - reconnecting...");
+                    await Task.Delay(2000); // wait for network
+                    var scannersession2 = GlobalData.GetService<IScannerSession>()
+                        ?? throw new InvalidOperationException("ScannerSession not registered");
+                    scannersession2.Start(5000);
+                    GlobalData.AddTextToLogTab("Reconnected successfully");
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            ScannerLog.Logger.Error(ex, $"Error handling power mode change: {mode}");
+            GlobalData.AddTextToLogTab($"Power mode {mode} error: {ex.Message}");
         }
     }
 
-    private void ApplicationHasStarted(string text)
+    private void DoWhenApplicationHasStarted(string text)
     {
         // Show the symbols
         Dispatcher.UIThread.Post(() => { GlobalData.SymbolsHaveChanged(""); });
@@ -197,7 +269,7 @@ public partial class App : Application
 
     public static IBrush GetBrushResource(string resourceKey)
     {
-        if (Application.Current?.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) == true 
+        if (Application.Current?.TryGetResource(resourceKey, Application.Current.ActualThemeVariant, out var resource) == true
             && resource is IBrush brush)
         {
             return brush;
@@ -214,7 +286,7 @@ public partial class App : Application
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
 
 
-    private static void OnUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    private static void WoWhenUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
     {
         // Handle the exception
         ScannerLog.Logger.Info("");
@@ -224,7 +296,7 @@ public partial class App : Application
         e.Handled = true;
     }
 
-    static void UnhandledException(object? sender, UnhandledExceptionEventArgs eventArgs)
+    static void DoWhenUnhandledException(object? sender, UnhandledExceptionEventArgs eventArgs)
     {
         // The application will still crash, but at least the error is logged
 
@@ -237,13 +309,5 @@ public partial class App : Application
         else
             ScannerLog.Logger.Error(e, "UnhandledException (not terminating)");
     }
-
-    //static void OnThreadException(object? sender, ThreadExceptionEventArgs eventArgs)
-    //{
-    //    ScannerLog.Logger.Info("");
-    //    ScannerLog.Logger.Info("Error " + eventArgs.Exception.Message);
-    //    ScannerLog.Logger.Error("");
-    //    ScannerLog.Logger.Error(eventArgs.Exception, "Global Thread Exception");
-    //}
 
 }
