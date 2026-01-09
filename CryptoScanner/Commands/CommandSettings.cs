@@ -9,8 +9,6 @@ using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Settings.Views;
 
-using Nito.AsyncEx;
-
 namespace CryptoScanner.Commands;
 
 public class CommandSettings : CommandBase
@@ -79,7 +77,8 @@ public class CommandSettings : CommandBase
             {
                 GlobalData.AddTextToLogTab("");
 
-                AsyncContext.Run(scannerSession.StopAsync);
+                //AsyncContext.Run(scannerSession.StopAsync);
+                await scannerSession.StopAsync();
 
                 // Stop the current exchange
                 if (exchangeChanged && previousExchange != null)
