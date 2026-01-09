@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Services;
 
 using System.ComponentModel;
 using System.Text.Json;

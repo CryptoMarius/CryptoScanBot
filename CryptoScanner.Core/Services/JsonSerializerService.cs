@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace CryptoScanner.Services;
+namespace CryptoScanner.Core.Services;
 
 public class JsonSerializerService : IJsonSerializerService
 {
