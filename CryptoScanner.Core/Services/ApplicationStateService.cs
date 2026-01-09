@@ -57,7 +57,7 @@ public class ApplicationStateService
 {
     private ApplicationState _states;
     private readonly string _filePath;
-    private readonly Lock _lock = new();
+    private readonly object _lock = new();
     private readonly IPlatformService? _platformService;
     private readonly IJsonSerializerService? _jsonService;
 

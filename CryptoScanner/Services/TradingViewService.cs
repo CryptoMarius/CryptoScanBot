@@ -6,7 +6,7 @@ namespace CryptoScanner.Services;
 public class TradingViewService : ITradingViewService, IDisposable
 {
     private CancellationTokenSource? _cancellationTokenSource;
-    private readonly Lock _lock = new();
+    private readonly object _lock = new();
     private bool _isRunning;
     private bool _disposed;
 
