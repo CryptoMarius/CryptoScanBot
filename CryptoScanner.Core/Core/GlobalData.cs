@@ -42,7 +42,7 @@ public static class GlobalData
     public static T? GetService<T>() where T : class => Services?.GetService<T>();
     public static Window? MainWindow { get; set; } = null!;
 
-    public static string AppPath { get; set; } = "";
+    public static string AppPath { get; set; } = ""; // For sounds
     public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
     public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
@@ -312,15 +312,12 @@ public static class GlobalData
 #if LIMITSYMBOLS
         // Test with limits anount of symbols for debugging purposes
         if (
-            symbol.Name.Equals("BTCUSDT") ||
-            symbol.Name.Equals("ETHUSDT") ||
-            symbol.Name.Equals("SOLUSDT") ||
-            symbol.Name.Equals("TRXUSDT") ||
-            symbol.Name.Equals("ENAUSDT") ||
-            symbol.Name.Equals("ZKJUSDT") ||
-            symbol.Name.Equals("PUMPUSDT") ||
-            symbol.Name.Equals("JAILSTOOL") ||
-            symbol.Name.StartsWith("$BMP")
+            symbol.Base.Equals("BTC") || symbol.Base.Equals("ETH") ||
+            symbol.Base.Equals("ADA") || symbol.Base.Equals("SOL") ||
+            symbol.Base.Equals("TRX") || symbol.Base.Equals("ENA") ||
+            symbol.Base.Equals("ZKJ") || symbol.Base.Equals("SUI") ||
+            symbol.Base.Equals("ZEC") || symbol.Base.Equals("XRP") ||
+            symbol.Base.StartsWith("$BMP")
           )
 #endif
 
