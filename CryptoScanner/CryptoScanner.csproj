@@ -40,15 +40,13 @@
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.10" />
-		<PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
-		<PackageReference Include="CefGlue.Common" Version="120.6099.211" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-		<PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
+		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>
-
 
 	<ItemGroup>
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />

@@ -1,113 +1,141 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
 
-using CryptoScanner.Views;
+using AvaloniaWebView;
 
-using System.Diagnostics;
 
 namespace CryptoScanner.Services;
 
 /// <summary>
-/// Hidden browser service for handling URL redirects (e.g., Altrady OAuth)
+/// Hidden browser service for background operations
+/// Uses official Avalonia.Controls.WebView with platform-native browser engines
 /// </summary>
 public class HiddenBrowserService : IDisposable
 {
-    private BrowserView? _hiddenBrowser;
+    private WebView? _webView;
     private Window? _hiddenWindow;
-    private bool _isInitialized;
+    private bool _disposed;
 
-    /// <summary>
-    /// Initialize the hidden browser
-    /// Call this once at startup
-    /// </summary>
     public void Initialize()
     {
-        if (_isInitialized)
-            return;
-
-        Dispatcher.UIThread.Post(() =>
+        try
         {
-            try
+            System.Diagnostics.Debug.WriteLine("HiddenBrowserService: Initializing WebView...");
+
+            //// Create official Avalonia WebView
+            //_webView = new WebView();
+
+            ////// Subscribe to events
+            ////_webView.NavigationStarting += (s, e) =>
+            ////{
+            ////    System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Navigation starting: {e.Url}");
+            ////};
+
+            ////_webView.NavigationCompleted += (s, e) =>
+            ////{
+            ////    System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Navigation completed: {e.Url}");
+            ////};
+
+            //System.Diagnostics.Debug.WriteLine("HiddenBrowserService: WebView initialized successfully");
+            // Run op UI-thread om visual tree te initialiseren
+            Dispatcher.UIThread.InvokeAsync(() =>
             {
-                // Create hidden window (1x1 pixel, invisible)
+                // Creëer de hidden window
                 _hiddenWindow = new Window
                 {
-                    Width = 1,
-                    Height = 1,
-                    ShowInTaskbar = false,
-                    Opacity = 0,
+                    Width = 800, // Geef het een minimale size voor rendering
+                    Height = 600,
+                    WindowState = WindowState.Minimized, // Of gebruik Position voor off-screen
+                    // Position = new PixelPoint(-10000, -10000), // Alternatief: Off-screen verplaatsen
+                    ShowInTaskbar = false, // Niet in taskbar tonen
                     CanResize = false,
-                    SystemDecorations = SystemDecorations.None
+                    Title = "Hidden Browser"
                 };
 
-                // Create hidden browser
-                _hiddenBrowser = new BrowserView();
+                // Create official Avalonia WebView
+                _webView = new WebView();
 
-                // Subscribe to navigation events
-                //_hiddenBrowser.LoadStart += OnLoadStart;
-                //_hiddenBrowser.LoadEnd += OnLoadEnd;
+                // Set WebView als content van de window
+                _hiddenWindow.Content = _webView;
 
-                _hiddenWindow.Content = _hiddenBrowser;
-                
-                // Show window (but it's invisible)
+                // Show de window (nodig voor init), maar houd het hidden/minimized
                 _hiddenWindow.Show();
-                
-                // Immediately hide from view
-                _hiddenWindow.WindowState = Avalonia.Controls.WindowState.Minimized;
+                _hiddenWindow.Hide(); // Direct verbergen na show, of houd minimized
 
-                _isInitialized = true;
-                Debug.WriteLine("HiddenBrowserService initialized");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"ERROR initializing HiddenBrowserService: {ex.Message}");
-            }
-        });
+                System.Diagnostics.Debug.WriteLine("HiddenBrowserService: WebView initialized successfully");
+            }).Wait(); // Wacht synchroon als je niet async bent (pas aan als nodig)
+
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Failed to initialize WebView: {ex.Message}");
+        }
     }
 
-    /// <summary>
-    /// Navigate to URL and capture redirects
-    /// </summary>
-    /// <param name="url">URL to navigate to</param>
     public void Navigate(string url)
     {
-        if (!_isInitialized)
+        if (_webView == null)
         {
-            Debug.WriteLine("WARNING: HiddenBrowserService not initialized, initializing now...");
+            System.Diagnostics.Debug.WriteLine("HiddenBrowserService: WebView not initialized, initializing now...");
             Initialize();
         }
 
-        Dispatcher.UIThread.Post(() =>
+        if (_webView != null)
         {
-            Debug.WriteLine($"HiddenBrowser navigating to: {url}");
-            _hiddenBrowser?.Navigate(url);
-        });
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Navigating to {url}");
+
+                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                {
+                    // Update UI op UI thread (in Avalonia gebruik Dispatcher)
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        _webView.Url = uri; 
+                    });
+                    
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Invalid URL: {url}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Navigation error: {ex.Message}");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"HiddenBrowserService: Failed to navigate to {url} - WebView is null");
+        }
     }
-
-
-    //private void OnLoadStart(object? sender, Xilium.CefGlue.Common.Events.LoadStartEventArgs e)
-    //{
-    //    Debug.WriteLine($"EventOpenHiddenBrowser LoadStart: {e.Frame.Url}");
-    //}
-
-    //private void OnLoadEnd(object? sender, Xilium.CefGlue.Common.Events.LoadEndEventArgs e)
-    //{
-    //    Debug.WriteLine($"EventOpenHiddenBrowser LoadEnd: {e.Frame.Url}");
-    //}
 
     public void Dispose()
     {
-        Debug.WriteLine("HiddenBrowserService Dispose");
-        
-        //if (_hiddenBrowser != null)
-        //{
-        //    _hiddenBrowser.LoadStart -= OnLoadStart;
-        //    _hiddenBrowser.LoadEnd -= OnLoadEnd;
-        //    _hiddenBrowser.Dispose();
-        //}
+        if (_disposed)
+            return;
 
-        _hiddenWindow?.Close();
-        _isInitialized = false;
+        System.Diagnostics.Debug.WriteLine("HiddenBrowserService: Disposing...");
+
+
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (_hiddenWindow != null)
+            {
+                _hiddenWindow.Close();
+                _hiddenWindow = null;
+            }
+
+            // Unsubscribe events
+            if (_webView != null)
+            {
+                // Clear any event handlers if needed
+                _webView = null;
+            }
+        }).Wait();
+
+        _disposed = true;
         GC.SuppressFinalize(this);
     }
 }

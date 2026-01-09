@@ -1,19 +1,28 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
-using Xilium.CefGlue.Avalonia;
+
+using AvaloniaWebView;
+
 
 namespace CryptoScanner.Views
 {
+    /// <summary>
+    /// Browser view using official Avalonia.Controls.WebView
+    /// Uses platform-native browsers:
+    /// - Windows: WebView2 (Edge/Chromium)
+    /// - macOS: WKWebView (Safari)
+    /// - Linux: WebKitGTK
+    /// </summary>
     public partial class BrowserView : UserControl
     {
-        private AvaloniaCefBrowser? _browser;
+        private WebView? _webView;
         private bool _isInitializing;
         private string? _pendingUrl;
 
         public BrowserView()
         {
             InitializeComponent();
-            System.Diagnostics.Debug.WriteLine("BrowserView created (browser NOT initialized yet)");
+            System.Diagnostics.Debug.WriteLine("BrowserView created (WebView NOT initialized yet)");
         }
 
         /// <summary>
@@ -24,15 +33,24 @@ namespace CryptoScanner.Views
             System.Diagnostics.Debug.WriteLine($"Navigate called: {url}");
 
             // If browser exists, just navigate
-            if (_browser != null)
+            if (_webView != null)
             {
-                System.Diagnostics.Debug.WriteLine("Browser exists, navigating directly");
-                _browser.Address = url;
+                System.Diagnostics.Debug.WriteLine("WebView exists, navigating directly");
+
+                // Navigate using Uri
+                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                {
+                    _webView.Url = uri;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid URL: {url}");
+                }
                 return;
             }
 
             // Browser doesn't exist yet - create it
-            System.Diagnostics.Debug.WriteLine("Browser doesn't exist, initializing now...");
+            System.Diagnostics.Debug.WriteLine("WebView doesn't exist, initializing now...");
             _pendingUrl = url;
 
             if (!_isInitializing)
@@ -61,7 +79,6 @@ namespace CryptoScanner.Views
                         {
                             System.Diagnostics.Debug.WriteLine($"Switching to tab {i} to make browser visible");
                             tabControl.SelectedIndex = i;
-                            //var timer = new System.Timers.Timer(1000); // Was 100ms
                             break;
                         }
                     }
@@ -104,36 +121,67 @@ namespace CryptoScanner.Views
                     return;
                 }
 
-                System.Diagnostics.Debug.WriteLine("Creating AvaloniaCefBrowser instance...");
+                System.Diagnostics.Debug.WriteLine("Creating official Avalonia WebView instance...");
 
-                _browser = new AvaloniaCefBrowser
+                // Create Avalonia.Controls.WebView
+                _webView = new WebView();
+
+                // Subscribe to navigation events
+                //_webView.NavigationStarted += WebView_NavigationStarted2;
+                //_webView.NavigationCompleted += WebView_NavigationCompleted2;
+
+                // Navigate to URL if we have one
+                if (!string.IsNullOrEmpty(_pendingUrl))
                 {
-                    Address = _pendingUrl ?? "about:blank"
-                };
+                    if (Uri.TryCreate(_pendingUrl, UriKind.Absolute, out var uri))
+                    {
+                        _webView.Url = uri;
+                    }
+                }
 
-                _browser.LoadEnd += (s, e) =>
-                {
-                    System.Diagnostics.Debug.WriteLine($"Browser loaded: {e.Frame.Url}");
-                };
+                browserWrapper.Child = _webView;
 
-                _browser.LoadError += (s, e) =>
-                {
-                    System.Diagnostics.Debug.WriteLine($"Browser error: {e.ErrorText}");
-                };
-
-                browserWrapper.Child = _browser;
-
-                System.Diagnostics.Debug.WriteLine($"Browser created successfully, navigating to: {_pendingUrl}");
+                System.Diagnostics.Debug.WriteLine($"WebView created successfully, navigated to: {_pendingUrl}");
                 _isInitializing = false;
                 _pendingUrl = null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ERROR creating browser: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ERROR creating WebView: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
                 _isInitializing = false;
+
+                // Show error message in the browser wrapper
+                ShowError(ex.Message);
+            }
+        }
+
+        //private void WebView_NavigationStarted2(object? sender, WebViewNavigationStartingEventArgs e)
+        //{
+        //    System.Diagnostics.Debug.WriteLine($"WebView navigation starting: {e.Uri}");
+        //}
+
+        //private void WebView_NavigationCompleted(object? sender, NavigationCompletedEventArgs e)
+        //{
+        //    System.Diagnostics.Debug.WriteLine($"WebView navigation completed: {e.Url}");
+        //}
+
+        private void ShowError(string errorMessage)
+        {
+            var browserWrapper = this.FindControl<Decorator>("browserWrapper");
+            if (browserWrapper != null)
+            {
+                var textBlock = new TextBlock
+                {
+                    Text = $"⚠️ Browser Error\n\n{errorMessage}\n\nRequested URL: {_pendingUrl}",
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                    Margin = new Avalonia.Thickness(20),
+                    FontSize = 14
+                };
+                browserWrapper.Child = textBlock;
             }
         }
     }
-
 }

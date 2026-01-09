@@ -5,6 +5,8 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
 
+using AvaloniaWebView;
+
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
@@ -42,6 +44,12 @@ public partial class App : Application
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
+    }
+
+    public override void RegisterServices()
+    {
+        base.RegisterServices();
+        AvaloniaWebViewBuilder.Initialize(default);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -90,7 +98,7 @@ public partial class App : Application
         if (!Design.IsDesignMode)
         {
             // Subscribe the global event handler
-            Dispatcher.UIThread.UnhandledException += WoWhenUnhandledException;
+            Dispatcher.UIThread.UnhandledException += DoWhenUnhandledException;
             // Add the event handler for handling non-UI thread exceptions to the event.
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(DoWhenUnhandledException);
 
@@ -286,7 +294,7 @@ public partial class App : Application
     public static IBrush PriceNeutral => App.GetBrushResource("PriceNeutralBrush");
 
 
-    private static void WoWhenUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    private static void DoWhenUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
     {
         // Handle the exception
         ScannerLog.Logger.Info("");

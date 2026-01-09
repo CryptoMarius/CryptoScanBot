@@ -4,5 +4,8 @@
     
     <!-- Simple container - browser created on demand -->
     <Decorator x:Name="browserWrapper"/>
+    <!-- 
+    <WebView x:Name="browser" Url="https://www.tradingview.com" />
+    -->
     
 </UserControl>
