@@ -1,4 +1,4 @@
-﻿namespace CryptoScanner.Services;
+﻿namespace CryptoScanner.Core.Services;
 
 public interface IPlatformService
 {

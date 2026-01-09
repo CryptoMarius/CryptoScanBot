@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 
-namespace CryptoScanner.Services;
+namespace CryptoScanner.Core.Services;
 
 public class LinuxPlatformService : IPlatformService
 {
@@ -11,7 +11,7 @@ public class LinuxPlatformService : IPlatformService
         // And allow user defined data folder
         ApplicationParams.InitApplicationOptions();
         var folder = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share"),
-            ApplicationParams.Options?.AppDataFolder ?? CryptoScanner.Core.Const.Constants.AppName);
+            ApplicationParams.Options?.AppDataFolder ?? Const.Constants.AppName);
         return folder;
     }
 
