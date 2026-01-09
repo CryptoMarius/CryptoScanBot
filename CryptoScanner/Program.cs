@@ -2,7 +2,7 @@
 using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Services;
+using CryptoScanner.Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -38,13 +38,6 @@ class Program
         GlobalData.AppDataFolder = platformService.GetDataDirectory();
         System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
 
-        // In design mode we just give it an place so it can preview the axaml, otherwise return
-        if (Design.IsDesignMode)
-        {
-            ApplicationParams.InitApplicationOptions();
-            //GlobalData.AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
-            System.Diagnostics.Debug.WriteLine($"Running in IsDesignMode");
-        }
         // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging();
 
@@ -59,7 +52,6 @@ class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect().
-            //.WithInterFont()
             AfterSetup(_ => { InitCefBrowser();  })
             .LogToTrace();
 
