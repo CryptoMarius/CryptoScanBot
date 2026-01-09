@@ -10,7 +10,7 @@ public static class ThreadSoundPlayer
 {
     private static Thread? soundThread = null;
     private static Dictionary<string, DateTime> FilesPlayed = [];
-    private static readonly BlockingCollection<string> soundQueue = new();
+    private static readonly BlockingCollection<string> soundQueue = [];
     private static readonly CancellationTokenSource soundCancelToken = new();
 
 
