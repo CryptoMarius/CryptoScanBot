@@ -43,7 +43,7 @@ class Program
 
         // Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
         // https://docs.avaloniaui.net/docs/concepts/unhandledexceptions
-        // Avalonia UI does not offer any mechanism to handle exceptions globally and mark this as handled. 
+        // Avalonia UI does not offer any mechanism to handle exceptions globally and mark this as handled.
         //Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
@@ -79,7 +79,7 @@ class Program
             WindowlessRenderingEnabled = false, // its recommended to leave this off, since its less performant and can cause more issues
         };
 
-        // Add command line switches 
+        // Add command line switches
         var args = new[]
         {
             // Optional: Disable GPU for compatibility (linux?)
