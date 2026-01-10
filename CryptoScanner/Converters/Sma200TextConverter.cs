@@ -1,6 +1,5 @@
 ﻿using Avalonia.Data.Converters;
 
-using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Converters;
