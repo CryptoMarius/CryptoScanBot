@@ -62,7 +62,7 @@ public partial class App : Application
         GlobalData.Services = services.BuildServiceProvider();
 
         // Basicly start the whole scanner
-        InitializeGlobalData(); // Needs the DI services
+        InitializeGlobalDataAsync(); // Needs the DI services
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -80,7 +80,7 @@ public partial class App : Application
     }
 
 
-    private static void InitializeGlobalData()
+    private static void InitializeGlobalDataAsync()
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
 
@@ -117,8 +117,8 @@ public partial class App : Application
 
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
-            scannerSession.AfterStarup();
-            scannerSession.ApplySettings();
+            scannerSession.AfterStartup();
+            _ = scannerSession.ApplySettingsAsync();
             scannerSession.Start(0);
 
             // Initialize a hidden browser to avoid the Altrady start question in the browser
