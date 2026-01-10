@@ -97,34 +97,34 @@
 
         <!-- Charts in scrollable area -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <WrapPanel Margin="10" Orientation="Horizontal">
+            <Grid Margin="10" Grid.ColumnSpacing="5" Grid.RowSpacing="5" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto">
                 
                 <!-- Chart 1: Posities per dag -->
-                <Border Margin="5" Width="600" Height="300">
-                    <oxy:PlotView Model="{Binding ChartPositionsPerDay}"/>
+                <Border Grid.Row="0" Grid.Column="0" Width="600" Height="300"> 
+                    <oxy:PlotView Model="{Binding ChartPositionsPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
                 </Border>
 
                 <!-- Chart 2: Profit percentage per dag -->
-                <Border Margin="5" Width="600" Height="300">
-                    <oxy:PlotView Model="{Binding ChartProfitPercentagePerDay}" Background="Transparent"/>
+                <Border Grid.Row="0" Grid.Column="1" Width="600" Height="300"> 
+                    <oxy:PlotView Model="{Binding ChartProfitPercentagePerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
                 </Border>
 
                 <!-- Chart 3: Profits per dag -->
-                <Border Margin="5" Width="600" Height="300">
-                    <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="Transparent"/>
+                <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300"> 
+                    <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
                 </Border>
 
                 <!-- Chart 4: Invested/Returned per dag -->
-                <Border Margin="5" Width="600" Height="300">
-                    <oxy:PlotView Model="{Binding ChartInvestedReturnedPerDay}" Background="Transparent"/>
+                <Border Grid.Row="1" Grid.Column="1" Width="600" Height="300"> 
+                    <oxy:PlotView Model="{Binding ChartInvestedReturnedPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
                 </Border>
 
                 <!-- Chart 5: Doorlooptijden -->
-                <Border Margin="5" Width="600" Height="300">
-                    <oxy:PlotView Model="{Binding ChartDoorlooptijden}" Background="Transparent"/>
+                <Border Grid.Row="2" Grid.Column="0" Width="600" Height="300"> 
+                    <oxy:PlotView Model="{Binding ChartDoorlooptijden}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
                 </Border>
 
-            </WrapPanel>
+            </Grid>
         </ScrollViewer>
     </DockPanel>
 </UserControl>

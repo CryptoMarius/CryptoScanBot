@@ -188,9 +188,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("sum(position.Returned) as Returned,");
         builder.AppendLine("sum(position.Commission) as Commission,");
         builder.AppendLine("sum(position.Profit) as TotalProfit,");
-        builder.AppendLine("min(position.ProfitPercentage) as MinPerc,");
-        builder.AppendLine("avg(position.ProfitPercentage) as AvgPerc,");
-        builder.AppendLine("max(position.ProfitPercentage) as MaxPerc");
+        builder.AppendLine("min(position.Percentage) as MinPerc,");
+        builder.AppendLine("avg(position.Percentage) as AvgPerc,");
+        builder.AppendLine("max(position.Percentage) as MaxPerc");
         builder.AppendLine("from Position");
         builder.AppendLine("inner join symbol on Position.symbolid = symbol.id");
         builder.AppendLine("where position.Invested > 0");
