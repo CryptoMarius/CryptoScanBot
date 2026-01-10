@@ -27,7 +27,7 @@ public class ExcelExchangeDump(Model.CryptoExchange exchange) : ExcelBase(exchan
 
     //            csv.AppendLine(newLine);
     //        }
-    //        string filename = GlobalData.GetBaseDir();
+    //        string filename = GlobalData.AppDataFolder;
     //        filename = Path.Combine(..filename + @"\data\" + exchange.Name + @"\";
     //        Directory.CreateDirectory(filename);
     //        File.WriteAllText(filename + "symbols.csv", csv.ToString());

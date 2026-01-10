@@ -68,7 +68,7 @@ public class ZoneSession
     public static ZoneSession LoadSessionSettings()
     {
         // load previous Session settings
-        string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
         string fileName = Path.Combine(folderName, $"session.json");
         if (File.Exists(fileName))
         {
@@ -84,7 +84,7 @@ public class ZoneSession
     public void SaveSessionSettings()
     {
         // save current Session settings
-        string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
         Directory.CreateDirectory(folderName);
         string fileName = Path.Combine(folderName, $"session.json");
         string text = JsonSerializer.Serialize(this, JsonTools.JsonSerializerIndented);

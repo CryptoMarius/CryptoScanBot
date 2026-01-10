@@ -28,7 +28,7 @@ public class SymbolBase()
         // Save for debug
         try
         {
-            string folderName = Path.Combine(GlobalData.GetBaseDir(), ExchangeBase.ExchangeOptions.ExchangeName);
+            string folderName = Path.Combine(GlobalData.AppDataFolder, ExchangeBase.ExchangeOptions.ExchangeName);
             Directory.CreateDirectory(folderName);
             string filename = Path.Combine(folderName, name);
 
@@ -53,7 +53,7 @@ public class SymbolBase()
         // Save for debug
         try
         {
-            string folderName = Path.Combine(GlobalData.GetBaseDir(), ExchangeBase.ExchangeOptions.ExchangeName);
+            string folderName = Path.Combine(GlobalData.AppDataFolder, ExchangeBase.ExchangeOptions.ExchangeName);
             Directory.CreateDirectory(folderName);
             string filename = Path.Combine(folderName, name);
 

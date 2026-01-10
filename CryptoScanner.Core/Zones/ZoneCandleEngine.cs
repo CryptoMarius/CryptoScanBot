@@ -4,8 +4,6 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
-using NPOI.SS.Formula.Functions;
-
 using System.Text;
 
 namespace CryptoScanner.Core.Zones;
@@ -48,7 +46,7 @@ public class ZoneCandleEngine
     public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
     {
         // load candles (kind of quick and dirty)
-        string baseFolder = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+        string baseFolder = Path.Combine(GlobalData.AppDataFolder, "Pivots");
         string fileName = Path.Combine(baseFolder, $"{symbol.Name}-{interval.Name}.bin");
         if (File.Exists(fileName))
         {
@@ -115,7 +113,7 @@ public class ZoneCandleEngine
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-                string folderName = Path.Combine(GlobalData.GetBaseDir(), "Pivots");
+                string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
                 Directory.CreateDirectory(folderName);
 
                 string fileName = Path.Combine(folderName, $"{symbol.Name}-{symbolInterval.Interval.Name}.bin");

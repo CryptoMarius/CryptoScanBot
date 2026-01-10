@@ -163,7 +163,7 @@ public abstract class ExcelBase
     {
         GlobalData.AddTextToLogTab($"Information dump {title} {symbolName}");
 
-        string folderName = Path.Combine(GlobalData.GetBaseDir(), "Excel");
+        string folderName = Path.Combine(GlobalData.AppDataFolder, "Excel");
         Directory.CreateDirectory(folderName);
 
         string filename = Path.Combine(folderName, symbolName + " " + title + ".xls");

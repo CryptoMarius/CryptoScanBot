@@ -368,7 +368,7 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
         string text = RegisterAlgorithms.GetAlgorithm(strategy);
         GlobalData.AddTextToLogTab(string.Format("Backtest {0} {1} ready", Symbol.Name, text));
 
-        string folderName = Path.Combine(GlobalData.GetBaseDir(), "BackTest");
+        string folderName = Path.Combine(GlobalData.AppDataFolder, "BackTest");
         Directory.CreateDirectory(folderName);
         string fileName = Path.Combine(folderName, Symbol.Name + "-" + text + ".xls");
         using var fs = new FileStream(fileName, FileMode.Create);

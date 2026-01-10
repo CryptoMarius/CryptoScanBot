@@ -317,6 +317,8 @@ public static class GlobalData
             symbol.Base.Equals("TRX") || symbol.Base.Equals("ENA") ||
             symbol.Base.Equals("ZKJ") || symbol.Base.Equals("SUI") ||
             symbol.Base.Equals("ZEC") || symbol.Base.Equals("XRP") ||
+            symbol.Base.Equals("MTL") || symbol.Base.Equals("XTZ") ||
+            symbol.Base.Equals("MAGIC") || symbol.Base.Equals("ROSE") ||
             symbol.Base.StartsWith("$BMP")
           )
 #endif
@@ -388,7 +390,7 @@ public static class GlobalData
     {
         try
         {
-            string filename = Path.Combine(GetBaseDir(), $"{Constants.AppName}-settings.json");
+            string filename = Path.Combine(GlobalData.AppDataFolder, $"{Constants.AppName}-settings.json");
             if (File.Exists(filename))
             {
                 //using (FileStream readStream = new FileStream(fileName, FileMode.Open))
@@ -430,7 +432,7 @@ public static class GlobalData
         string filename = $"{Constants.AppName}-weblinks.json";
         try
         {
-            string fullName = Path.Combine(GetBaseDir(), filename);
+            string fullName = Path.Combine(GlobalData.AppDataFolder, filename);
             if (File.Exists(fullName))
             {
                 string text = File.ReadAllText(fullName);
@@ -463,7 +465,7 @@ public static class GlobalData
         //string fileName = $"{Constants.AppName}-telegram.json";
         //try
         //{
-        //    string fullName = Path.Combine(GetBaseDir(), fileName);
+        //    string fullName = Path.Combine(GlobalData.AppDataFolder, fileName);
         //    if (File.Exists(fullName))
         //    {
         //        string text = File.ReadAllText(fullName);
@@ -607,13 +609,13 @@ public static class GlobalData
 
         //#if DEBUG
         //        //// Ter debug om te zien of alles okay is
-        //        fileName = GlobalData.GetBaseDir();
+        //        fileName = GlobalData.AppDataFolder;
         //        Directory.CreateDirectory(fileName);
         //        fileName += "settingsSignalsCompiled.json";
         //        text = JsonSerializer.Serialize(TradingConfig.Signals, options);
         //        File.WriteAllText(fileName, text);
 
-        //        fileName = GlobalData.GetBaseDir();
+        //        fileName = GlobalData.AppDataFolder;
         //        Directory.CreateDirectory(fileName);
         //        fileName += "settingsTradingCompiled.json";
         //        text = JsonSerializer.Serialize(TradingConfig.Trading, options);
@@ -702,20 +704,6 @@ public static class GlobalData
 
     public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
     public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
-
-
-    public static string GetBaseDir()
-    {
-        //// In desgn mode we just give it an place so it can preview the axaml, otherwise return
-        //if (Design.IsDesignMode)
-        //{
-        //    ApplicationParams.InitApplicationOptions();
-        //    AppDataFolder = ApplicationParams.Options!.AppDataFolder!;
-        //}
-        if (string.IsNullOrEmpty(AppDataFolder))
-            throw new InvalidOperationException("AppDataFolder not set");
-        return AppDataFolder;
-    }
 
 
     public static void InitializeExchange()

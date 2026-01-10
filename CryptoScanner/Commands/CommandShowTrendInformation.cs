@@ -63,7 +63,7 @@ public class CommandShowTrendInformation : CommandBase
 
 
             // debug
-            string filename = GlobalData.GetBaseDir() + "Trend information.txt";
+            string filename = Path.Combine(GlobalData.AppDataFolder, "Trend information.txt");
             File.WriteAllText(filename, log.ToString());
         }
     }
