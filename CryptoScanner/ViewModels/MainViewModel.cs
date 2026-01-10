@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -30,6 +31,10 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     public BrowserView? BrowserView { get; set; }
+
+    [ObservableProperty]
+    private string _title  = CryptoScanner.Core.Const.Constants.AppName;
+    
 
     //[ObservableProperty]
     //private bool _analyzerActive = false;

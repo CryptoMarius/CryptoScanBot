@@ -1,4 +1,8 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Styling;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -65,25 +69,26 @@ public class ScannerSession : IScannerSession
     }
 
 
-    public void AfterStarup()
+    public void AfterStartup()
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.AfterStarup");
+
         GlobalData.LoadSettings();
         ScannerLog.InitializeLogging();
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
-        ApplicationParams.InitApplicationOptions();
+
+        //ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
         GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
-
         GlobalData.LoadSymbols();
         GlobalData.LoadSignals();
 
         LoadAssets();
     }
 
-    public void ApplySettings()
+    public async Task ApplySettingsAsync()
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.ApplySettings");
         // Is done multiple times, but that is okay
@@ -105,9 +110,6 @@ public class ScannerSession : IScannerSession
             }
         }
 
-        //// Eventueel de nieuwe quotes zetten enz.
-        //dashBoardInformation1.InitializeBarometer();
-
         // ????? Do we need something like this, looks like a lot of work in Avalonia...
         //if ((GlobalData.Settings.General.FontSizeNew != Font.Size) || (GlobalData.Settings.General.FontNameNew.Equals(Font.Name)))
         //{
@@ -124,11 +126,52 @@ public class ScannerSession : IScannerSession
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
 
-        //// De timertjes goed zetten
         SetTimerDefaults();
 
-        //SetApplicationTitle();
-        //Refresh(); // Redraw
+
+        // Change theme if needed
+        ThemeVariant choosenTheme = ThemeVariant.Default;
+        if (GlobalData.Settings.General.Theme == "Light")
+            choosenTheme = ThemeVariant.Light;
+        else if (GlobalData.Settings.General.Theme == "Dark")
+            choosenTheme = ThemeVariant.Dark;
+
+        if (Application.Current != null)
+        {
+            var currentTheme = Application.Current?.ActualThemeVariant;
+            if (currentTheme != choosenTheme)
+                Application.Current!.RequestedThemeVariant = choosenTheme;
+        }
+
+        // Restart Telegram if token changed
+        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token)
+            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
+        ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
+
+        SetApplicationTitle();
+    }
+
+    private static void SetApplicationTitle()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var mainWindow = desktop.MainWindow;
+            if (mainWindow?.DataContext != null)
+            {
+                // Use dynamic to access properties without knowing the type
+                dynamic viewModel = mainWindow.DataContext;
+
+                try
+                {
+                    viewModel.Title = $"{Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+                }
+                catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+                {
+                    // Property doesn't exist
+                    System.Diagnostics.Debug.WriteLine("Property not found on ViewModel");
+                }
+            }
+        }
     }
 
     private void LoadAssets()

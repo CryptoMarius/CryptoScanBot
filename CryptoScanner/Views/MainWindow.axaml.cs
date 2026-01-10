@@ -6,7 +6,6 @@ using Avalonia.Markup.Xaml;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Commands;
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
@@ -65,6 +64,38 @@ public partial class MainWindow : Window
         Closing += OnWindowClosing; // Save state
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
+        //if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        //{
+        //    // macOS: Gebruik native title bar en menu bar
+        //    //ExtendClientAreaToDecorationsHint = false;
+        //    //ExtendClientAreaChromeHints = "NoChrome"; // Of "SystemChrome" als je native wilt houden
+        //    //ExtendClientAreaTitleBarHeightHint = -1; // Reset
+
+        //    var titleBarGrid = this.FindControl<Grid>("TitleBarGrid");
+        //    //?? throw new InvalidOperationException("TitleBarGrid not found");
+
+        //    // Verberg custom title bar (geen overlap met native buttons)
+        //    if (titleBarGrid != null)
+        //        titleBarGrid.IsVisible = false;
+
+        //    // Optioneel: Verberg app icon (niet nodig op Mac)
+        //    var appIcon = this.FindControl<Image>("AppIcon"); // Optioneel, voor verbergen op Mac
+        //    if (appIcon != null)
+        //        appIcon.IsVisible = false;
+
+        //    //// Creëer native menu bar
+        //    //var nativeMenu = new NativeMenu(); // Gebruik NativeMenu voor macOS integration
+        //    //var fileMenuItem = new NativeMenuItem { Header = "_Filex" };
+        //    //var helpMenuItem = new NativeMenuItem { Header = "_Helpx" };
+
+        //    //fileMenuItem.Menu = new NativeMenu();
+        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Play soundxx" });
+        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Create signalsxx" });
+        //    //fileMenuItem.Menu.Items.Add(new NativeMenuItem { Header = "Trading bot activexx" });
+        //}
+
+
+        //Type menuItem = NativeMenuItem;
 
         //MenuItem menuItem;
         var menuFile = this.FindControl<MenuItem>("MenuFile");
