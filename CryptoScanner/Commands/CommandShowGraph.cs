@@ -30,7 +30,7 @@ public class CommandShowGraph : CommandBase
                     vm.SymbolSelector.SelectedInterval = GlobalData.IntervalListPeriod[Core.Enums.CryptoIntervalPeriod.interval5m].Name;
 
 
-                if (VisualisationWindow == null)
+                if (VisualisationWindow == null || !VisualisationWindow.IsVisible)
                 {
                     VisualisationWindow = new VisualisationWindow
                     {
@@ -39,14 +39,18 @@ public class CommandShowGraph : CommandBase
                         Title = "Chart form",
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     };
-                    VisualisationWindow.Show(dto.parentWindow);
+                    VisualisationWindow.Show(); //dto.parentWindow
                 }
                 else
                 {
                     VisualisationWindow.DataContext = vm;
-                    // Breng naar voorgrond
+
+                    // Restore if minimized
+                    if (VisualisationWindow.WindowState == WindowState.Minimized)
+                        VisualisationWindow.WindowState = WindowState.Normal;
+
+                    // Bring window to the front
                     VisualisationWindow.Activate();
-                    VisualisationWindow.Focus(); VisualisationWindow.BringIntoView();
                 }
 
             }
