@@ -116,13 +116,14 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
     internal void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
+        string text = $"OnDataGridSorting {_gridName} {_currentSortColumn} {_currentSortDirection}";
         if (_onDataGridSortingSkipFirst)
         {
             _onDataGridSortingSkipFirst = false;
+            System.Diagnostics.Debug.WriteLine($"{text} direction is {_currentSortDirection} (skipped sorting)");
         }
         else
         {
-            string text = $"OnDataGridSorting {_gridName} {_currentSortColumn} {_currentSortDirection}";
             if (e.Column.SortMemberPath != null)
             {
                 var direction = (_currentSortColumn == e.Column.SortMemberPath &&
