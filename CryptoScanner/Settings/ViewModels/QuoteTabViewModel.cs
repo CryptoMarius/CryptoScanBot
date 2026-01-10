@@ -36,10 +36,10 @@ public partial class QuoteItem : ObservableObject
         QuoteData = quoteData;
         Symbol = quoteData.Name;
         IsEnabled = quoteData.FetchCandles;
-        MinVolume = quoteData.MinimalVolume + 100000m;
-        MinPrice = quoteData.MinimalPrice + 0.00001m;
-        Amount = quoteData.EntryAmount + 0.00145m;
-        Percentage = quoteData.EntryPercentage + 0.15m;
+        MinVolume = quoteData.MinimalVolume;
+        MinPrice = quoteData.MinimalPrice;
+        Amount = quoteData.EntryAmount;
+        Percentage = quoteData.EntryPercentage;
         BackgroundColor = quoteData.DisplayColor;
         SymbolCount = quoteData.SymbolList.Count;
     }
