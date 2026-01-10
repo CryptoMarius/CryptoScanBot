@@ -58,14 +58,14 @@ public partial class AnalyzerTabViewModel : ObservableObject
         // TODO: refactor two settings!
         AnalyzerCommonViewModel.LoadConfig(GlobalData.Settings.Signal);
 
-        AnalyzerIntervalLongViewModel.LoadConfig(settings.Long.Strategy);
-        AnalyzerStrategyLongViewModel.LoadConfig(settings.Long.Interval);
+        AnalyzerIntervalLongViewModel.LoadConfig(settings.Long.Interval);
+        AnalyzerStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
         AnalyzerMarketTrendFilterLongViewModel.LoadConfig(settings.Long.MarketTrend);
         AnalyzerTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
-        AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Strategy);
-        AnalyzerStrategyShortViewModel.LoadConfig(settings.Short.Interval);
+        AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Interval);
+        AnalyzerStrategyShortViewModel.LoadConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
         AnalyzerMarketTrendFilterShortViewModel.LoadConfig(settings.Short.MarketTrend);
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
@@ -75,14 +75,14 @@ public partial class AnalyzerTabViewModel : ObservableObject
     {
         AnalyzerCommonViewModel.SaveConfig(GlobalData.Settings.Signal);
 
-        AnalyzerIntervalLongViewModel.SaveConfig(settings.Long.Strategy);
-        AnalyzerStrategyLongViewModel.SaveConfig(settings.Long.Interval);
+        AnalyzerIntervalLongViewModel.SaveConfig(settings.Long.Interval);
+        AnalyzerStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
         AnalyzerMarketTrendFilterLongViewModel.SaveConfig(settings.Long.MarketTrend);
         AnalyzerTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
-        AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Strategy);
-        AnalyzerStrategyShortViewModel.SaveConfig(settings.Short.Interval);
+        AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Interval);
+        AnalyzerStrategyShortViewModel.SaveConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
         AnalyzerMarketTrendFilterShortViewModel.SaveConfig(settings.Short.MarketTrend);
         AnalyzerTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
