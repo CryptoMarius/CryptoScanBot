@@ -35,6 +35,16 @@ class Program
         GlobalData.AppDataFolder = platformService.GetDataDirectory();
         System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
 
+        // DEBUG OUTPUT
+        Console.WriteLine($"OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+        //Console.WriteLine($"ApplicationData: {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
+        //Console.WriteLine($"LocalApplicationData: {Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}");
+        //Console.WriteLine($"UserProfile: {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}");
+        //Console.WriteLine($"Personal: {Environment.GetFolderPath(Environment.SpecialFolder.Personal)}");
+        Console.WriteLine($"Scanner Version: {GlobalData.AppVersion}");
+        Console.WriteLine($"Scanner AppPath: {GlobalData.AppPath}");
+        Console.WriteLine($"Scanner AppDataFolder: {GlobalData.AppDataFolder}");
+
         // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging();
 
