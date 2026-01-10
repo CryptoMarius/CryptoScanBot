@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFramework>net8.0</TargetFramework>
+	  <TargetFramework>net10.0</TargetFramework>
 	  <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>CryptoScanner.Core</RootNamespace>
@@ -117,7 +117,7 @@
     <PackageReference Include="NLog" Version="6.0.7" />
     <PackageReference Include="NPOI" Version="2.7.5" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-    <PackageReference Include="Skender.Stock.Indicators" Version="2.6.1" />
+    <PackageReference Include="Skender.Stock.Indicators" Version="2.5.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.1" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>

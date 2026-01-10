@@ -3,7 +3,7 @@
 		<OutputType>WinExe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>FacIcon1.jpg</PackageIcon>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<RuntimeIdentifiers>osx-arm64;osx-x64;win-x64;linux-x64</RuntimeIdentifiers>
 		<Nullable>enable</Nullable>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -43,7 +43,7 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
-		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.1" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>
