@@ -56,7 +56,7 @@ public class CommandSettings : CommandBase
             //GlobalData.SaveUserSettings(); // custom colors (not sure?)
 
             // Don't save exchange immediately, lots of data still in memory etc
-            if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? newActiveExchange))
+            if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Core.Model.CryptoExchange? newActiveExchange))
                 return;
             if (newActiveExchange == null)
                 return;
@@ -89,7 +89,7 @@ public class CommandSettings : CommandBase
                 }
 
                 // Standaard timers e.d.
-                scannerSession.ApplySettings();
+                await scannerSession.ApplySettingsAsync();
 
 
                 // Clear candle data
@@ -110,26 +110,7 @@ public class CommandSettings : CommandBase
                 // Schedule een reload of data
                 scannerSession.ScheduleRefresh();
             }
-            else scannerSession.ApplySettings();
-
-
-
-            // Restart Telegram if token changed
-            if (GlobalData.Telegram.Token != ThreadTelegramBot.Token)
-                await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
-            ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
-
-
-            // Change theme if needed
-            ThemeVariant choosenTheme = ThemeVariant.Default;
-            if (GlobalData.Settings.General.Theme == "Light")
-                choosenTheme = ThemeVariant.Light;
-            else if (GlobalData.Settings.General.Theme == "Dark")
-                choosenTheme = ThemeVariant.Dark;
-
-            var currentTheme = Application.Current?.ActualThemeVariant;
-            if (currentTheme != choosenTheme)
-                Application.Current?.RequestedThemeVariant = choosenTheme;
+            else await scannerSession.ApplySettingsAsync();
 
         }
         catch (Exception error)
