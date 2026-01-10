@@ -12,7 +12,7 @@ public class ScannerLog
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {
         string logName = GlobalData.LogName == "" ? Constants.AppName : GlobalData.LogName;
-        string filename = Path.Combine(GlobalData.GetBaseDir(), "Log", logName);
+        string filename = Path.Combine(GlobalData.AppDataFolder, "Log", logName);
 
         return new NLog.Targets.FileTarget
         {
