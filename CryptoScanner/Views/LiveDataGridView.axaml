@@ -10,6 +10,8 @@
 
     <UserControl.Resources>
         <converter:BarometerColorConverter x:Key="BarometerColorConverter" />
+        <converter:BbLowerTextConverter x:Key="BbLowerTextConverter" />
+        <converter:BbUpperTextConverter x:Key="BbUpperTextConverter" />
         <converter:MarketTrendColorConverter x:Key="MarketTrendColorConverter" />
 		<converter:MinimumEntryTextConverter x:Key="MinimumEntryTextConverter" />
 		<converter:PriceTextConverter x:Key="PriceTextConverter" />
@@ -98,7 +100,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding BbLower, StringFormat='{}{0:#,##0}'}"/>
+                                       Text="{Binding ., Converter={StaticResource BbLowerTextConverter}}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -108,7 +110,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding BbUpper, StringFormat='{}{0:#,##0}'}"/>
+                                       Text="{Binding ., Converter={StaticResource BbUpperTextConverter}}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -119,7 +121,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding Rsi, StringFormat='{}{0:#,##0}'}"
+                                       Text="{Binding Rsi, StringFormat='{}{0:##0.#0}'}"
                                        Foreground="{Binding Rsi, Converter={StaticResource RsiColorConverter}}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
