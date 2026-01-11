@@ -81,33 +81,33 @@ public class CommandSettings : CommandBase
                 await scannerSession.StopAsync();
 
                 // Stop the current exchange
-                if (exchangeChanged && previousExchange != null)
+                if (previousExchange != null)
                 {
-                    previousExchange?.Clear();
-                    previousExchange?.Data.Clear();
-                    // TODO: Delete symbols, assets, orders, trades, positions, parts, steps from database!
+                    if (exchangeChanged)
+                    {
+                        previousExchange?.Clear();
+                        previousExchange?.Data.Clear();
+                        // TODO: Delete symbols, assets, orders, trades, positions, parts, steps from database!
+                    }
+
+                    // Clear candle data
+                    if (quoteChanged)
+                    {
+                        foreach (var symbol in previousExchange!.SymbolListId.Values)
+                        {
+                            if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
+                            {
+                                symbol.ClearCandles();
+                                //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
+                            }
+                        }
+                    }
                 }
 
                 // Standaard timers e.d.
                 await scannerSession.ApplySettingsAsync();
 
-
-                // Clear candle data
-                if (quoteChanged || exchangeChanged)
-                {
-                    foreach (var symbol in GlobalData.ActiveExchange!.SymbolListId.Values)
-                    {
-                        if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
-                        {
-                            symbol.ClearCandles();
-                            //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
-                        }
-                    }
-                }
-
-                GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
-
-                // Schedule een reload of data
+                // Schedule a reload of data
                 scannerSession.ScheduleRefresh();
             }
             else await scannerSession.ApplySettingsAsync();
