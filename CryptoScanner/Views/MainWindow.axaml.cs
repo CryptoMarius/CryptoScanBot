@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -13,6 +14,7 @@ using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace CryptoScanner.Views;
 
@@ -57,13 +59,77 @@ public partial class MainWindow : Window
         // Start TradingView service
         _tradingViewService.Start();
 
-        // TODO: place somewhere else..
-        // Set application title (we have multiple instances)
-        Title = $"{CryptoScanner.Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
 
         Closing += OnWindowClosing; // Save state
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
+        // macOS: Shift menu to the right to avoid collision with the system buttons
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            var menu = this.FindControl<Grid>("TitleBarGrid");
+            menu?.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
+        }
+
+        Title = $"{Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
+        CreateMenuItems();
+    }
+
+
+    /// <summary>
+    /// Handle title bar drag to move window
+    /// </summary>
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        BeginMoveDrag(e);
+    }
+
+    private void OnGridSplitterDragCompleted(object? sender, VectorEventArgs e)
+    {
+        // Save splitter position
+        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
+        _applicationStateService.SaveSplitterPosition("MainWindow", position);
+    }
+
+    private bool hasEnded = false;
+    private async void OnWindowClosing(object? sender, CancelEventArgs e)
+    {
+        if (hasEnded)
+            return;
+
+        // Twee possible calls, 1 via windows - close button or via menu->exit
+        hasEnded = true;
+        Closing -= OnWindowClosing; // observed multiple calls..
+        //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
+
+        // Save splitter position
+        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
+        _applicationStateService.SaveSplitterPosition("MainWindow", position);
+
+        // Save window state
+        _applicationStateService.SaveWindowState("MainWindow", this);
+
+        if (DataContext is MainWindowViewModel vm)
+        {
+            await vm.ExitApp();
+        }
+    }
+
+
+    private void OnFilterApply(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox && DataContext is MainWindowViewModel vm)
+        {
+            vm.SymbolFilterText = textBox.Text;
+        }
+    }
+
+    private static void PlaySound(string text, bool test)
+    {
+        ThreadSoundPlayer.AddToQueue(text, test);
+    }
+
+    private void CreateMenuItems()
+    {
         //if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         //{
         //    // macOS: Gebruik native title bar en menu bar
@@ -136,59 +202,5 @@ public partial class MainWindow : Window
             menuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this });
         }
     }
-
-    /// <summary>
-    /// Handle title bar drag to move window
-    /// </summary>
-    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        BeginMoveDrag(e);
-    }
-
-    private void OnGridSplitterDragCompleted(object? sender, VectorEventArgs e)
-    {
-        // Save splitter position
-        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        _applicationStateService.SaveSplitterPosition("MainWindow", position);
-    }
-
-    private bool hasEnded = false;
-    private async void OnWindowClosing(object? sender, CancelEventArgs e)
-    {
-        if (hasEnded)
-            return;
-
-        // Twee possible calls, 1 via windows - close button or via menu->exit
-        hasEnded = true;
-        Closing -= OnWindowClosing; // observed multiple calls..
-        //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
-
-        // Save splitter position
-        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
-        _applicationStateService.SaveSplitterPosition("MainWindow", position);
-
-        // Save window state
-        _applicationStateService.SaveWindowState("MainWindow", this);
-
-        if (DataContext is MainWindowViewModel vm)
-        {
-            await vm.ExitApp();
-        }
-    }
-
-
-    private void OnFilterApply(object? sender, RoutedEventArgs e)
-    {
-        if (sender is TextBox textBox && DataContext is MainWindowViewModel vm)
-        {
-            vm.SymbolFilterText = textBox.Text;
-        }
-    }
-
-    private static void PlaySound(string text, bool test)
-    {
-        ThreadSoundPlayer.AddToQueue(text, test);
-    }
-
 }
 

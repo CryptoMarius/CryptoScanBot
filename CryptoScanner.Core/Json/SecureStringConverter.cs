@@ -1,39 +1,23 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
+
 namespace CryptoScanner.Core.Json;
+
 
 public class SecureStringConverter : JsonConverter<string>
 {
     private const string prefix = "DPAPI:";
+    private readonly IStringProtectorService _stringProtectorService;
 
-    public static string Protect(string stringToEncrypt, string? optionalEntropy, DataProtectionScope scope)
+    public SecureStringConverter()
     {
-#if WINDOWS
-        return Convert.ToBase64String(
-            ProtectedData.Protect(
-                Encoding.UTF8.GetBytes(stringToEncrypt)
-                , optionalEntropy != null ? Encoding.UTF8.GetBytes(optionalEntropy) : null
-                , scope));
-#else
-        return stringToEncrypt;
-#endif
+        _stringProtectorService = GlobalData.GetService<IStringProtectorService>()
+            ?? throw new InvalidOperationException("IStringProtectorService not registered");
     }
 
-    public static string Unprotect(string encryptedString, string? optionalEntropy, DataProtectionScope scope)
-    {
-#if WINDOWS
-        return Encoding.UTF8.GetString(
-            ProtectedData.Unprotect(
-                Convert.FromBase64String(encryptedString)
-                , optionalEntropy != null ? Encoding.UTF8.GetBytes(optionalEntropy) : null
-                , scope));
-#else
-        return encryptedString;
-#endif
-    }
 
     public override bool HandleNull => true;
 
@@ -45,14 +29,14 @@ public class SecureStringConverter : JsonConverter<string>
             string? text = reader.GetString();
             if (!string.IsNullOrEmpty(text))
             {
-#if WINDOWS
-                if (text.StartsWith(prefix))
-                {
-                    return Unprotect(text[prefix.Length..], null, DataProtectionScope.LocalMachine);
-                }
-#else
+                if (text.StartsWith(prefix, StringComparison.Ordinal)) 
+                { 
+                    var payload = text[prefix.Length..]; 
+                    return _stringProtectorService.Unprotect(payload); 
+                } 
+                
+                // It was not encrypted
                 return text;
-#endif
             }
         }
 
@@ -73,11 +57,7 @@ public class SecureStringConverter : JsonConverter<string>
         }
         else
         {
-#if WINDOWS
-            output = prefix + Protect(value, null, DataProtectionScope.LocalMachine);
-#else
-            output = value;
-#endif
+            output = prefix + _stringProtectorService.Protect(value); 
         }
 
         writer.WriteStringValue(output);

@@ -24,7 +24,7 @@
 		<!-- Optional -->
 		<Authors>Marius</Authors>
 		<PackageProjectUrl>https://github.com/CryptoMarius/CryptoScanBot</PackageProjectUrl>
-		<Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
+		<Configurations>Debug;Release</Configurations>
 	</PropertyGroup>
 
 	
@@ -44,6 +44,7 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.1" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="Silk.NET.OpenAL" Version="2.22.0" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>

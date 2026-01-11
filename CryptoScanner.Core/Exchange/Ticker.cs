@@ -118,7 +118,16 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             return;
         }
 
-        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} starting {TickerType} tickers");
+        List<string> list = [];
+        foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
+        {
+            if (quoteData.FetchCandles && quoteData.SymbolList.Count > 0)
+            {
+                list.Add(quoteData.Name);
+            }
+        }
+        string textQuotes = String.Join(",", list);
+        GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} starting {TickerType} tickers for ({textQuotes})");
 
 
         // Splits de symbols (user ticker is much simpler)

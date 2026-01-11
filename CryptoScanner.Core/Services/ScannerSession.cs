@@ -73,44 +73,60 @@ public class ScannerSession : IScannerSession
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.AfterStarup");
 
-        GlobalData.LoadSettings();
-        ScannerLog.InitializeLogging();
+        // Database initialization + load some basic objects
+        Directory.CreateDirectory(GlobalData.AppDataFolder);
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
 
-        //ApplicationParams.InitApplicationOptions();
-        GlobalData.InitializeExchange();
-        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
-        GlobalData.LoadSymbols();
-        GlobalData.LoadSignals();
+        // Load settings and combine with the application parameters (-e ExchangeName)
+        GlobalData.LoadSettings();
+        PickupExchangeFromParameter();
+    }
 
-        LoadAssets();
+    private static void PickupExchangeFromParameter()
+    {
+        // Pick the exchange from the application parameters (-e exchangename) if present
+        // Initialize the exchange name, otherwise we take the exchange from the settings
+        string? exchangeName = ApplicationParams.Options!.ExchangeName;
+        if (exchangeName != null)
+        {
+            // People forget to use the right casing
+            exchangeName = exchangeName.Trim().ToLower();
+            string? found = GlobalData.ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
+            if (found != null)
+                exchangeName = found;
+            GlobalData.Settings.General.ExchangeName = exchangeName;
+        }
     }
 
     public async Task ApplySettingsAsync()
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.ApplySettings");
-        // Is done multiple times, but that is okay
+
+        // Initialize the active exchange
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? activeExchange))
             GlobalData.ActiveExchange = activeExchange;
-        if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ActivateExchangeName, out Model.CryptoExchange? activateExchange))
-            GlobalData.ActiveExchange = activateExchange;
+        else
+            throw new Exception($"Exchange {GlobalData.Settings.General.ExchangeName} does not exist");
+
+        // Initialize the exchange defaults
+        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
 
 
-        var api = GlobalData.ActiveExchange!.GetApiInstance();
-        string? defaultQuote = api.GetExchangeOptions().DefaultQuote;
-        if (defaultQuote != null)
+        // Add a default quote if needed
+        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        // strange default //if (string.IsNullOrEmpty(defaultQuote)) //    defaultQuote = "USDT";
+        if (!string.IsNullOrEmpty(defaultQuote) && !GlobalData.Settings.QuoteCoins.ContainsKey(defaultQuote))
         {
-            if (!GlobalData.Settings.QuoteCoins.TryGetValue(defaultQuote, out CryptoQuoteData? _))
-            {
-                CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
-                defaultQuoteData.FetchCandles = true;
-                //GlobalData.Settings.General.SelectedBarometerQuote = defaultQuote;
-            }
+            CryptoQuoteData defaultQuoteData = GlobalData.AddQuoteData(defaultQuote);
+            defaultQuoteData.FetchCandles = true;
+            defaultQuoteData.MinimalVolume = 4500000; // hmmm..
         }
+        //if (GlobalData.ActiveExchange!.SymbolListName.Count == 0)
+        //    GlobalData.LoadSymbols(); // need this for the information dashboard (needs refactoring, todo)
 
-        // ????? Do we need something like this, looks like a lot of work in Avalonia...
+        // ????? Do we need this, it looks like a lot of work in Avalonia...
         //if ((GlobalData.Settings.General.FontSizeNew != Font.Size) || (GlobalData.Settings.General.FontNameNew.Equals(Font.Name)))
         //{
         //    Font = new System.Drawing.Font(GlobalData.Settings.General.FontNameNew, GlobalData.Settings.General.FontSizeNew,
@@ -118,7 +134,6 @@ public class ScannerSession : IScannerSession
 
         //    dashBoardControl1.Font = Font;
         //}
-
 
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
@@ -128,31 +143,37 @@ public class ScannerSession : IScannerSession
 
         SetTimerDefaults();
 
+        // Restart Telegram if token changed
+        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
+            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
+        //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
 
         // Change theme if needed
-        ThemeVariant choosenTheme = ThemeVariant.Default;
-        if (GlobalData.Settings.General.Theme == "Light")
-            choosenTheme = ThemeVariant.Light;
-        else if (GlobalData.Settings.General.Theme == "Dark")
-            choosenTheme = ThemeVariant.Dark;
-
         if (Application.Current != null)
         {
             var currentTheme = Application.Current?.ActualThemeVariant;
+
+            ThemeVariant choosenTheme = ThemeVariant.Default;
+            if (GlobalData.Settings.General.Theme == "Light")
+                choosenTheme = ThemeVariant.Light;
+            else if (GlobalData.Settings.General.Theme == "Dark")
+                choosenTheme = ThemeVariant.Dark;
             if (currentTheme != choosenTheme)
                 Application.Current!.RequestedThemeVariant = choosenTheme;
         }
 
-        // Restart Telegram if token changed
-        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token)
-            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
-        ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
-
         SetApplicationTitle();
+
+        // Positions and assets will be loaded later?
+        LoadAssets(); // not sure if we need this (papertrading perhaps?)
+        GlobalData.LoadSymbols(); // nee to load these before the tickers are created
+        GlobalData.SymbolsHaveChanged("");
     }
+
 
     private static void SetApplicationTitle()
     {
+        // Could have used an event, but this works also more or less
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = desktop.MainWindow;
@@ -174,7 +195,7 @@ public class ScannerSession : IScannerSession
         }
     }
 
-    private void LoadAssets()
+    private static void LoadAssets()
     {
         //GlobalData.AddTextToLogTab("Reading asset information");
 

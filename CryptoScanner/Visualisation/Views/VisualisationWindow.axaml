@@ -134,9 +134,7 @@
         </ScrollViewer>
 
         <!-- Right Panel - Chart -->
-        <!-- BorderBrush="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" BorderThickness="1" -->
         <Border Grid.Column="1" Margin="8">
-            <!-- Background="{DynamicResource SystemControlBackgroundChromeMediumBrush2}" -->
             <oxy:PlotView x:Name="PlotViewControl" Model="{Binding PlotModel}" Background="Transparent"/>
         </Border>
     </Grid>

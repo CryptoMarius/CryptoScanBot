@@ -15,7 +15,7 @@ using CryptoScanner.Core.Trend;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Visualisation.Chart;
 using CryptoScanner.ZoneVisualisation;
-using OxyPlot.Series;
+using CryptoScanner.Helpers;
 
 namespace CryptoScanner.Visualisation.ViewModels;
 
@@ -46,11 +46,8 @@ public partial class VisualisationViewModel : ObservableObject
     private ZoneConfig? _data;
 
     // Crosshair annotations (public for View access)
-    public LineAnnotation? VerticalLine { get; private set; }
-    public LineAnnotation? HorizontalLine { get; private set; }
-    // Crosshair annotations
-    //private LineAnnotation? _verticalLine;
-    //private LineAnnotation? _horizontalLine;
+    private LineAnnotation? VerticalLine;
+    private LineAnnotation? HorizontalLine;
 
     [ObservableProperty]
     private string _windowTitle = "Crypto Visualisation";
@@ -71,8 +68,15 @@ public partial class VisualisationViewModel : ObservableObject
         _displayOptions = new DisplayOptionsViewModel();
         _playbackControls = new PlaybackControlsViewModel();
 
-        //Initialize plot
+        // Initialize plot
         _plotModel = new PlotModel { Title = "Chart 1.2.3." };
+
+
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        PlotModel.MouseMove += _plotModel_MouseMove; // Declared obsolete, but since there is no suggestion how to solve it (ridiculous)
+        PlotModel.MouseDown += PlotModel_MouseDown; // Declared obsolete, but since there is no suggestion how to solve it (ridiculous)
+#pragma warning restore CS0618 // Type or member is obsolete
 
         InitializePlot();
 
@@ -86,181 +90,9 @@ public partial class VisualisationViewModel : ObservableObject
         // Load session
         LoadSession();
 
-        //PlotModel  = CreateTestChart();
-        //PlotModel = CreatePlotModel();
         System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
     }
 
-    //private PlotModel CreatePlotModel()
-    //{
-    //    var model = new PlotModel
-    //    {
-    //        Title = "Voorbeeld Grafiek",
-    //        Subtitle = "Lijn- en puntgrafiek"
-    //    };
-
-    //    // X-as configureren
-    //    model.Axes.Add(new LinearAxis
-    //    {
-    //        Object = AxisPosition.Bottom,
-    //        Title = "X-waarde",
-    //        MajorGridlineStyle = LineStyle.Solid,
-    //        MinorGridlineStyle = LineStyle.Dot
-    //    });
-
-    //    // Y-as configureren
-    //    model.Axes.Add(new LinearAxis
-    //    {
-    //        Object = AxisPosition.Left,
-    //        Title = "Y-waarde",
-    //        MajorGridlineStyle = LineStyle.Solid,
-    //        MinorGridlineStyle = LineStyle.Dot
-    //    });
-
-    //    // Lijngrafiek toevoegen
-    //    var lineSeries = new LineSeries
-    //    {
-    //        Title = "Sinusgolf",
-    //        Color = OxyColors.Blue,
-    //        StrokeThickness = 2,
-    //        MarkerType = MarkerType.Circle,
-    //        MarkerSize = 4,
-    //        MarkerFill = OxyColors.Blue
-    //    };
-
-    //    // Data punten genereren voor sinusgolf
-    //    for (double x = 0; x <= 10; x += 0.5)
-    //    {
-    //        lineSeries.Points.Add(new DataPoint(x, Math.Sin(x)));
-    //    }
-
-    //    model.Series.Add(lineSeries);
-
-    //    // Scatter plot toevoegen
-    //    var scatterSeries = new ScatterSeries
-    //    {
-    //        Title = "Random Punten",
-    //        MarkerType = MarkerType.Diamond,
-    //        MarkerSize = 6,
-    //        MarkerFill = OxyColors.Red
-    //    };
-
-    //    // Random punten genereren
-    //    var random = new Random(42);
-    //    for (int i = 0; i < 15; i++)
-    //    {
-    //        double x = random.NextDouble() * 10;
-    //        double y = random.NextDouble() * 2 - 1;
-    //        scatterSeries.Points.Add(new ScatterPoint(x, y));
-    //    }
-
-    //    model.Series.Add(scatterSeries);
-
-    //    // Legenda configureren (OxyPlot 2.1.0+ gebruikt Legends collectie)
-    //    model.Legends.Add(new OxyPlot.Legends.Legend
-    //    {
-    //        LegendTitle = "Series",
-    //        LegendPosition = OxyPlot.Legends.LegendPosition.RightTop
-    //    });
-
-    //    System.Diagnostics.Debug.WriteLine($"VisualisationViewModel some graphics created");
-
-    //    return model;
-    //}
-
-    //// In CreateTestChart():
-    //public PlotModel CreateTestChart()
-    //{
-    //    var testModel = new PlotModel
-    //    {
-    //        Title = "TEST CHART",
-    //        // ✓ PROBEER VERSCHILLENDE BACKGROUNDS:
-    //        Background = OxyColors.DarkGray,  // Niet wit/zwart
-    //        PlotAreaBackground = OxyColors.LightGray,
-    //        PlotAreaBorderColor = OxyColors.Black,
-    //        PlotAreaBorderThickness = new OxyThickness(2),
-    //        TextColor = OxyColors.Black
-    //    };
-
-    //    var xAxis = new LinearAxis
-    //    {
-    //        Object = AxisPosition.Bottom,
-    //        Minimum = -1,
-    //        Maximum = 5,
-    //        MajorGridlineStyle = LineStyle.Solid,
-    //        MajorGridlineColor = OxyColors.Gray
-    //    };
-    //    var yAxis = new LinearAxis
-    //    {
-    //        Object = AxisPosition.Left,
-    //        Minimum = -1,
-    //        Maximum = 10,
-    //        MajorGridlineStyle = LineStyle.Solid,
-    //        MajorGridlineColor = OxyColors.Gray
-    //    };
-
-    //    testModel.Axes.Add(xAxis);
-    //    testModel.Axes.Add(yAxis);
-
-    //    var series = new LineSeries
-    //    {
-    //        Color = OxyColors.Yellow,
-    //        StrokeThickness = 5,  // ✓ DIKKER
-    //        LineStyle = LineStyle.Solid
-    //    };
-    //    series.Points.Add(new DataPoint(0, 0));
-    //    series.Points.Add(new DataPoint(1, 1));
-    //    series.Points.Add(new DataPoint(2, 4));
-    //    series.Points.Add(new DataPoint(3, 9));
-    //    testModel.Series.Add(series);
-
-
-
-    //    var series2 = new LineSeries
-    //    {
-    //        Color = OxyColors.White,
-    //        StrokeThickness = 5,  // ✓ DIKKER
-    //        LineStyle = LineStyle.Solid
-    //    };
-    //    series2.Points.Add(new DataPoint(5, 0));
-    //    series2.Points.Add(new DataPoint(4, 1));
-    //    series2.Points.Add(new DataPoint(3, 4));
-    //    series2.Points.Add(new DataPoint(2, 9));
-    //    testModel.Series.Add(series2);
-
-
-    //    return testModel;
-    //}
-
-    ////public void CreateTestChart2()
-    ////{
-    ////    var testModel = new PlotModel
-    ////    {
-    ////        Title = "TEST CHART",
-    ////        Background = OxyColors.White,
-    ////        TextColor = OxyColors.Black
-    ////    };
-
-    ////    testModel.Axes.Add(new LinearAxis { Object = AxisPosition.Bottom });
-    ////    testModel.Axes.Add(new LinearAxis { Object = AxisPosition.Left });
-
-    ////    var series = new LineSeries
-    ////    {
-    ////        Color = OxyColors.Red,
-    ////        StrokeThickness = 3
-    ////    };
-    ////    series.Points.Add(new DataPoint(0, 0));
-    ////    series.Points.Add(new DataPoint(1, 1));
-    ////    series.Points.Add(new DataPoint(2, 4));
-    ////    series.Points.Add(new DataPoint(3, 9));
-    ////    series.Points.Add(new DataPoint(100, 100));
-
-    ////    testModel.Series.Add(series);
-
-    ////    PlotModel = testModel;
-
-    ////    Debug.WriteLine($"Test chart - Series: {PlotModel.Series.Count}, Points: {series.Points.Count}");
-    ////}
 
     private void InitializePlot()
     {
@@ -340,22 +172,19 @@ public partial class VisualisationViewModel : ObservableObject
     private void OnTrendSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Trend settings changed - refresh display
-        if (_data != null)
-            _ = CreateChartAndOverlaysAsync();
+        _ = CreateChartAndOverlaysAsync();
     }
 
     private void OnFibSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // FIB settings changed - refresh display
-        if (_data != null)
-            _ = CreateChartAndOverlaysAsync();
+        _ = CreateChartAndOverlaysAsync();
     }
 
     private void OnDisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed - refresh plot
-        if (_data != null)
-            _ = CreateChartAndOverlaysAsync();
+        _ = CreateChartAndOverlaysAsync();
     }
 
     private void OnPlaybackRequested(int direction)
@@ -404,12 +233,9 @@ public partial class VisualisationViewModel : ObservableObject
         if (_data != null)
         {
             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
-            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView ||
-                GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
+            if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-
-            GlobalData.LoadLinkSettings();
-            //GlobalData.OpenTradingApp(_data.Symbol, _data.Interval, tradingAppInternExtern);
+            CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, _data.Symbol, _data.Interval, tradingAppInternExtern);
         }
     }
 
@@ -623,13 +449,12 @@ public partial class VisualisationViewModel : ObservableObject
             return;
 
         // Get main trend indicator
-        SettingsZigZag mainTrend = _session.TrendIndicator == 0 ?
-            GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+        SettingsZigZag mainTrend = _session.TrendIndicator == 0 ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = _data.IndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
         CryptoTrendIndicator trendIndicator = TrendInterval.InterpretZigZagPoints(mainIndicator, null);
 
         // Create the chart with crosshairs
-        var newPlotModel = Chart.Chart.Create(_data.Symbol, _data.Interval, out var horizontalLine, out var verticalLine);
+        var newPlotModel = Chart.Chart.Create(_data.Symbol, _data.Interval, out HorizontalLine, out VerticalLine);
         newPlotModel.Title = $"{_session.SymbolBase}{_session.SymbolQuote} {_data.Interval.Name} UTC " +
             $"{trendIndicator} candles={mainIndicator.CandleCount} points={mainIndicator.ZigZagList.Count}";
 
@@ -719,53 +544,99 @@ public partial class VisualisationViewModel : ObservableObject
         WindowTitle = text;
     }
 
-    // Helper method for View to update crosshair and subtitle
-    public void UpdateCrosshair(double x, double y)
+
+    private bool IsMeasuring = false;
+    private double? mouseDownPointX = null;
+    private double? mouseDownPointY = null;
+    private RectangleAnnotation? lastRectangle = null;
+
+    private void PlotModel_MouseDown(object? sender, OxyMouseDownEventArgs e)
     {
-        if (_data == null || VerticalLine == null || HorizontalLine == null)
-            return;
-
-        var symbolInterval = _data.Symbol.GetSymbolInterval(_session.ActiveInterval);
-        long unix = (long)x + symbolInterval.Interval.Duration / 2;
-        unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
-
-        if (unix < 0)
-            return;
-
-        try
+        // start a measurement
+        if (!IsMeasuring && e.ChangedButton == OxyMouseButton.Left && e.IsShiftDown)
         {
-            // Update crosshair coordinates
-            VerticalLine.X = unix;
-            HorizontalLine.Y = y;
-            VerticalLine.LineStyle = LineStyle.DashDot;
-            HorizontalLine.LineStyle = LineStyle.DashDot;
-
-            string subtitle;
-            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
-            {
-                subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
-                subtitle += $" (O: {candle.Open.ToString(_data.Symbol.PriceDisplayFormat)}";
-                subtitle += $" H: {candle.High.ToString(_data.Symbol.PriceDisplayFormat)}";
-                subtitle += $" L: {candle.Low.ToString(_data.Symbol.PriceDisplayFormat)}";
-                subtitle += $" C: {candle.Close.ToString(_data.Symbol.PriceDisplayFormat)}";
-                subtitle += $" V: {candle.Volume.ToString0()})";
-            }
-            else
-            {
-                DateTime date = CandleTools.GetUnixDate(unix);
-                subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
-            }
-
-            PlotModel.Subtitle = subtitle;
-            PlaybackControls.UpdateIntervalDisplay(_session.ActiveInterval.ToString());
-            PlotModel.InvalidatePlot(true);
+            mouseDownPointX = e.Position.X;
+            mouseDownPointY = e.Position.Y;
+            IsMeasuring = true;
+            e.Handled = true;
+            return;
         }
-        catch (Exception error)
+
+        // stop the measurement, the rectangle stay's until next mouse click
+        if (IsMeasuring && e.ChangedButton == OxyMouseButton.Left && !e.IsShiftDown)
         {
-            ScannerLog.Logger.Info("UpdateCrosshair.Error " + error.ToString());
+            IsMeasuring = false;
+            e.Handled = true;
+            return;
+        }
+
+        // remove the measurement rectangle if it existed
+        if (!IsMeasuring && e.ChangedButton == OxyMouseButton.Left && lastRectangle != null)
+        {
+            if (lastRectangle != null)
+            {
+                PlotModel?.Annotations.Remove(lastRectangle);
+                lastRectangle = null;
+                mouseDownPointX = null;
+                e.Handled = true;
+            }
+            return;
         }
     }
 
+    /// <summary>
+    /// Update the crosshair and show some information
+    /// </summary>
+    private void _plotModel_MouseMove(object? sender, OxyMouseEventArgs e)
+    {
+        // Helper method for View to update crosshair and subtitle
+        if (Data != null && HorizontalLine != null && VerticalLine != null) // exception on drawing annotations? whats wrong?
+        {
+            var model = PlotModel;
+            var screenPoint = new ScreenPoint(e.Position.X, e.Position.Y);
+            double x = model.Axes[0].InverseTransform(screenPoint.X);
+            double y = model.Axes[1].InverseTransform(screenPoint.Y);
+
+            var symbolInterval = Data.Symbol.GetSymbolInterval(_session.ActiveInterval);
+            long unix = (long)x + symbolInterval.Interval.Duration / 2;
+            unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
+            if (unix < 0)
+                return;
+
+            try
+            {
+                // Update crosshair coordinates
+                VerticalLine.X = unix;
+                HorizontalLine.Y = y;
+                VerticalLine.LineStyle = LineStyle.DashDot;
+                HorizontalLine.LineStyle = LineStyle.DashDot;
+
+                string subtitle;
+                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+                {
+                    subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
+                    subtitle += $" (O: {candle.Open.ToString(_data.Symbol.PriceDisplayFormat)}";
+                    subtitle += $" H: {candle.High.ToString(_data.Symbol.PriceDisplayFormat)}";
+                    subtitle += $" L: {candle.Low.ToString(_data.Symbol.PriceDisplayFormat)}";
+                    subtitle += $" C: {candle.Close.ToString(_data.Symbol.PriceDisplayFormat)}";
+                    subtitle += $" V: {candle.Volume.ToString0()})";
+                }
+                else
+                {
+                    DateTime date = CandleTools.GetUnixDate(unix);
+                    subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(_data.Symbol.PriceDisplayFormat)}";
+                }
+
+                PlotModel.Subtitle = subtitle;
+                PlaybackControls.UpdateIntervalDisplay(_session.ActiveInterval.ToString());
+                PlotModel.InvalidatePlot(true);
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Info("UpdateCrosshair.Error " + error.ToString());
+            }
+        }
+    }
     #endregion
 
     public void OnClosing()

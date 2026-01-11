@@ -367,7 +367,7 @@
                 </DataGridTemplateColumn>
             
                 <!-- BB.Lower -->
-                <DataGridTemplateColumn Header="BbLower" Width="60" SortMemberPath="BbLower" IsVisible="False">
+                <DataGridTemplateColumn Header="BbLower" Width="60" SortMemberPath="BbLower">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -377,7 +377,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- BB.Upper -->
-                <DataGridTemplateColumn Header="BbUpper" Width="60" SortMemberPath="BbUpper" IsVisible="False">
+                <DataGridTemplateColumn Header="BbUpper" Width="60" SortMemberPath="BbUpper">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -397,7 +397,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- RSI -->
-                <DataGridTemplateColumn Header="Rsi" Width="60" SortMemberPath="Rsi" IsVisible="False">
+                <DataGridTemplateColumn Header="Rsi" Width="60" SortMemberPath="Rsi">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"

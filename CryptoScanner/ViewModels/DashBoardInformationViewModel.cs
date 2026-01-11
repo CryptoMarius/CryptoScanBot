@@ -81,8 +81,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
     #region Crypto Symbols
 
     // De collection voor binding in de UI
-    public ObservableCollection<DashboardSymbolViewModel> TvSymbols { get; set; } = [];
-    public ObservableCollection<DashboardSymbolViewModel> TopSymbols { get; set; } = [];
+    [ObservableProperty]
+    private ObservableCollection<DashboardSymbolViewModel> _tvSymbols = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DashboardSymbolViewModel> _topSymbols = [];
 
 
     #endregion
@@ -126,7 +129,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _barometerTimer.Tick += OnBarometerTimer;
         _barometerTimer.Start();
 
-        RegisterExchangeSymbols();
+        RegisterExchangeSymbols(); // The symbols are probably not read at this point
         RegisterTradingViewSymbols();
         StatusesHaveChangedEvent(""); // -- event is not set properly?
     }
@@ -196,7 +199,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
         // If nothing changed we need to fill the symbols
         if (TopSymbols.Count == 0)
-            RegisterExchangeSymbols();
+            RegisterExchangeSymbols(); // The symbols are probably not read at this point
         UpdateSymbolPrices(); // try? Not sure if everything is initialized
     }
 
@@ -228,7 +231,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         var exchange = GlobalData.ActiveExchange;
         if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData) && exchange != null)
         {
-            // Might just sort de exchange symbols and take the top 5 volume wise...?
+            // Might just sort de exchange symbols and take the top 5 based on volume?
             foreach (string baseCoin in GlobalData.Settings.ShowSymbolInformation)
             {
                 if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol) 
@@ -237,11 +240,6 @@ public partial class DashBoardInformationViewModel : ObservableObject
                     topSymbols.Add(new(IndicatorType.Exchange, symbol.Name, symbol.Name));
                 }
             }
-        }
-
-        while (topSymbols.Count < 10)
-        {
-            topSymbols.Add(new(IndicatorType.Exchange, "", ""));
         }
         TopSymbols = new ObservableCollection<DashboardSymbolViewModel>(topSymbols);
     }
@@ -255,7 +253,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         TvSymbols.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500"));
         TvSymbols.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance"));
         TvSymbols.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index"));
-        _tradingViewService.TvSymbols = TvSymbols; // forward..
+        _tradingViewService.TvSymbols = TvSymbols; // forward symbols
     }
 
     private int BarometerLastMinute = -1;
@@ -263,6 +261,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
     {
         try
         {
+            if (TopSymbols.Count == 0)
+                RegisterExchangeSymbols(); // Becase symbols are probably read  later then expected
+
             // Update barometer chart
             if (((DateTime.Now.Second > 10) && (DateTime.Now.Minute != BarometerLastMinute)) || BarometerLastMinute == -1)
             {
@@ -616,7 +617,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
                 if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                     tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-                GlobalData.LoadLinkSettings(); // refresh links
+                GlobalData.LoadWebLinkSettings(); // refresh links
 
                 if (!string.IsNullOrEmpty(symbolViewModel.Symbol) &&
                     GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Symbol, out CryptoSymbol? symbol))

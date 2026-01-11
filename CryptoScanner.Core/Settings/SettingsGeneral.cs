@@ -86,8 +86,8 @@ public class SettingsGeneral
     //public string SelectedBarometerInterval { get; set; } = "1H";
 
     // Avalinia: will not be supported
-    public string FontNameNew { get; set; } = "Segoe UI";
-    public float FontSizeNew { get; set; } = 9f;
+    //public string FontNameNew { get; set; } = "Segoe UI";
+    //public float FontSizeNew { get; set; } = 9f;
 
     public int GetCandleInterval { get; set; } = 60;
 

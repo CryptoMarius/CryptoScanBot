@@ -23,7 +23,7 @@
             </StackPanel>
 
             <!-- Trading Rules List -->
-            <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer MinHeight="400" MinWidth="400" VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Rules}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>

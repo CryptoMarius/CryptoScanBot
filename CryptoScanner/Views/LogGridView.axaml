@@ -8,50 +8,38 @@
              xmlns:converter="using:CryptoScanner.Converters"
              x:DataType="vm:LogGridViewModel">
 
-    <Grid RowDefinitions="Auto,*"> 
-            <!-- Toolbar bovenaan -->
-        <StackPanel Grid.Row="0" DockPanel.Dock="Top" Orientation="Horizontal" Margin="4" Spacing="8">
-            <Button Content="Clear Log" Command="{Binding ClearLogCommand}"/>
-            
-            <Separator Width="1" Background="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-            
-            <TextBlock Text="Lines:" VerticalAlignment="Center"/>
-            <TextBlock Text="{Binding LogLines.Count}" VerticalAlignment="Center" FontWeight="Bold"/>
-        </StackPanel>
-
-        <DataGrid Grid.Row="1" x:Name="LogDataGrid"
-                  ItemsSource="{Binding LogLines}"
-                  IsReadOnly="True"
-                  AutoGenerateColumns="False"
-                  SelectionMode="Extended"
-                  CanUserReorderColumns="True"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="False"
-                  GridLinesVisibility="None"
-                  BorderThickness="1"
-                  BorderBrush="Transparent">
+    <DataGrid x:Name="LogDataGrid"
+                ItemsSource="{Binding LogLines}"
+                IsReadOnly="True"
+                AutoGenerateColumns="False"
+                SelectionMode="Extended"
+                CanUserReorderColumns="True"
+                CanUserResizeColumns="True"
+                CanUserSortColumns="False"
+                GridLinesVisibility="None"
+                BorderThickness="1"
+                BorderBrush="Transparent">
 
 
 	
-            <DataGrid.Columns >
-                <!-- Id -->
-                <!-- Id (Hidden by default) -->
-                <DataGridTemplateColumn Header="Date" Width="125" SortMemberPath="Date">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding Date}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+        <DataGrid.Columns >
+            <!-- Id -->
+            <!-- Id (Hidden by default) -->
+            <DataGridTemplateColumn Header="Date" Width="125" SortMemberPath="Date">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+                                    Text="{Binding Date}" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
 
-                <!-- Name -->
-                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="*" SortMemberPath="Text"/>
+            <!-- Name -->
+            <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="*" SortMemberPath="Text"/>
                 
-            </DataGrid.Columns>
+        </DataGrid.Columns>
 
 
 
-        </DataGrid>
-    </Grid>
+    </DataGrid>
 </UserControl>

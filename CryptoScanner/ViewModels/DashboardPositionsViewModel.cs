@@ -242,14 +242,17 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartPositionsPerDay()
     {
-        var model = new PlotModel { Title = "Aantal gesloten posities per dag" };
+        var model = new PlotModel { Title = "Aantal gesloten posities per dag", TextColor = OxyColors.White, Background=OxyColors.Black};
         
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
             StringFormat = "dd-MM",
             MajorGridlineStyle = LineStyle.Solid,
-            MinorGridlineStyle = LineStyle.Dot
+            MinorGridlineStyle = LineStyle.Dot,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
         
         model.Axes.Add(new LinearAxis
@@ -257,6 +260,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
             Position = AxisPosition.Left,
             Title = "Aantal",
             MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            TextColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
             StringFormat = "N0"
         });
 
@@ -286,13 +292,16 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartProfitPercentagePerDay()
     {
-        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag" };
-        
+        var model = new PlotModel { Title = "Min, max en gemiddelde winst per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
+
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
             StringFormat = "dd-MM",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
         
         model.Axes.Add(new LinearAxis
@@ -300,6 +309,9 @@ public partial class DashboardPositionsViewModel : ObservableObject
             Position = AxisPosition.Left,
             Title = "Percentage",
             MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
             StringFormat = "N2"
         });
 
@@ -329,20 +341,26 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartProfitsPerDay()
     {
-        var model = new PlotModel { Title = "Winst/verlies per dag" };
-        
+        var model = new PlotModel { Title = "Winst/verlies per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
+
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
             StringFormat = "dd-MM",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
         
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
             Title = QuoteData?.Name ?? "Value",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
 
         var series = new LineSeries
@@ -371,20 +389,26 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartInvestedReturnedPerDay()
     {
-        var model = new PlotModel { Title = "Geinvesteerd en geretourneerd per dag" };
-        
+        var model = new PlotModel { Title = "Geinvesteerd en geretourneerd per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
+
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
             StringFormat = "dd-MM",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
         
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
             Title = QuoteData?.Name ?? "Value",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.Gray,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
 
         var investedData = GetQueryInvestedData();
@@ -434,21 +458,26 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartDoorlooptijden()
     {
-        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren" };
-        
+        var model = new PlotModel { Title = "Minimale, maximale en gemiddelde doorlooptijden in uren", TextColor = OxyColors.White, Background = OxyColors.Black };
+
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
             StringFormat = "dd-MM",
-            MajorGridlineStyle = LineStyle.Solid
+            MajorGridlineStyle = LineStyle.Solid,
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
         });
         
-        model.Axes.Add(new LinearAxis
-        {
+        model.Axes.Add(new LinearAxis{
             Position = AxisPosition.Left,
             Title = "Uren",
             MajorGridlineStyle = LineStyle.Solid,
-            StringFormat = "N1"
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
+            StringFormat = "N1"            
         });
 
         var minSeries = new LineSeries { Title = "Minimaal", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };

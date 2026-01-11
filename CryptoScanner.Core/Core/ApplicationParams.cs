@@ -11,13 +11,17 @@ public class ApplicationParams
 {
 
     public string? _AppDataFolder;
-    [Option('f', "folder", Required = false, HelpText = "De te gebruiken folder in de APPDATA")]
+    [Option('f', "folder", Required = false, HelpText = "Use this folder a the datafolder for the scanner")]
     public string? AppDataFolder { get { return _AppDataFolder; } set { _AppDataFolder = value!.Trim(); } }
 
-    // Een idee? Dan hoeven we niet zo raar te switchen (soms midden in het ophalen van candles <met alle problemen van dien>)
     private string? _ExchangeName;
-    [Option('e', "exchange", Required = false, HelpText = "De te gebruiken exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot of Mexc Spot)")]
+    [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot or Mexc Spot)")]
     public string? ExchangeName { get { return _ExchangeName; } set { _ExchangeName = value!.Trim(); } }
+
+    public string? _AppLimitSymbols;
+    [Option('t', "test", Required = false, HelpText = "Limit the amount of symbols for testing")]
+    public string? AppLimitSymbols { get { return _AppLimitSymbols; } set { _AppLimitSymbols = value!.Trim(); } }
+
 
     public static ApplicationParams? Options { get; set; }
 

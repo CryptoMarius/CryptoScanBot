@@ -33,7 +33,7 @@ public partial class MainWindowViewModel : ObservableObject
     public BrowserView? BrowserView { get; set; }
 
     [ObservableProperty]
-    private string _title  = CryptoScanner.Core.Const.Constants.AppName;
+    private string _title  = Core.Const.Constants.AppName;
     
 
     //[ObservableProperty]

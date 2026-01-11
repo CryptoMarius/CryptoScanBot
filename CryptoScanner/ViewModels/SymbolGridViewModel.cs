@@ -15,6 +15,7 @@ public partial class SymbolGridViewModel : ObservableObject
     [ObservableProperty]
     private ObservableRangeCollection<SymbolViewModel> _symbols = [];
 
+    public static bool readSymbols = true;
 
     public SymbolGridViewModel()
     {
@@ -29,6 +30,11 @@ public partial class SymbolGridViewModel : ObservableObject
     private string _currentFilter = string.Empty;
     private void SymbolsHaveChangedEvent(string text)
     {
+        // Delayed load of the symbols
+        if (readSymbols)
+            GlobalData.LoadSymbols();
+        readSymbols = false;
+
         // Laad symbols direct in de observable collection
         List<SymbolViewModel> symbols = [];
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
@@ -49,6 +55,7 @@ public partial class SymbolGridViewModel : ObservableObject
             }
         }
         Symbols.Replace(symbols);
+        
         // Request sort na filtering
         RequestSort?.Invoke(this, EventArgs.Empty);
     }

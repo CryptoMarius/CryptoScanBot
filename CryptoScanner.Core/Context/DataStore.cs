@@ -142,7 +142,7 @@ public class DataStore
                     // Dont load candles for symbols below the minimal volume treshold
                     if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume())
                     {
-                        //GlobalData.AddTextToLogTab($"Cleared candles for {symbol.Name}");
+                        ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
                         symbol.ClearCandles();
                         continue;
                     }
@@ -201,6 +201,8 @@ public class DataStore
                         if (count > 0)
                         {
                             Directory.CreateDirectory(quoteFolder);
+                            ScannerLog.Logger.Trace($"Saving candle information for {symbol.Name} candle count={count}");
+                            
 
                             await symbol.Data.CandleLock.WaitAsync();
                             try

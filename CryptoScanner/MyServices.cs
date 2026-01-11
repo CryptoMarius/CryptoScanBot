@@ -26,13 +26,25 @@ internal class MyServices
         ConfigurePlatformServices(services);
 
         // Register Services as Singleton
+
+        if (OperatingSystem.IsWindows())
+            services.AddSingleton<IStringProtectorService, WindowsStringProtectorService>();
+        else if (OperatingSystem.IsMacOS())
+            services.AddSingleton<IStringProtectorService, MacStringProtectorService>();
+        else if (OperatingSystem.IsLinux())
+            services.AddSingleton<IStringProtectorService, LinuxStringProtectorService>();
+        else
+            throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
+
         services.AddSingleton<ApplicationStateService>();
         services.AddSingleton<ITradingViewService, TradingViewService>();
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
         services.AddSingleton<IScannerSession, ScannerSession>();
         services.AddSingleton<HiddenBrowserService>();
 
-        // Register ViewModels as Transient (nieuwe instantie bij elke aanvraag)
+
+        // Register ViewModels as Transient
+
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashBoardInformationViewModel>();
         services.AddTransient<DashboardPositionsViewModel>();
@@ -46,6 +58,7 @@ internal class MyServices
         services.AddTransient<BrowserViewModel>();
 
         // Register Views
+
         services.AddTransient<MainWindow>();
     }
 

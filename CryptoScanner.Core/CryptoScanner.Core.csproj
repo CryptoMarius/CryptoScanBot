@@ -8,9 +8,7 @@
     <Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);LIMITSYMBOLS</DefineConstants>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants)</DefineConstants>
@@ -120,6 +118,7 @@
     <PackageReference Include="Skender.Stock.Indicators" Version="2.5.1" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.1" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+    <PackageReference Include="Tmds.DBus" Version="0.23.0" />
   </ItemGroup>
 
   <ItemGroup>

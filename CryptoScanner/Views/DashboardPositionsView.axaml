@@ -10,9 +10,7 @@
 
     <DockPanel>
         <!-- Top panel met statistieken -->
-        <Border DockPanel.Dock="Top" 
-                BorderThickness="0,0,0,1"
-                Padding="10">
+        <Border DockPanel.Dock="Top" BorderThickness="0,0,0,1" Padding="10">
             
             <Grid>
                 <Grid.RowDefinitions>
@@ -101,27 +99,27 @@
                 
                 <!-- Chart 1: Posities per dag -->
                 <Border Grid.Row="0" Grid.Column="0" Width="600" Height="300"> 
-                    <oxy:PlotView Model="{Binding ChartPositionsPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+                    <oxy:PlotView x:Name="PlotViewControl1" Model="{Binding ChartPositionsPerDay}" Background="Transparent"/>
                 </Border>
 
                 <!-- Chart 2: Profit percentage per dag -->
                 <Border Grid.Row="0" Grid.Column="1" Width="600" Height="300"> 
-                    <oxy:PlotView Model="{Binding ChartProfitPercentagePerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+                    <oxy:PlotView Model="{Binding ChartProfitPercentagePerDay}" Background="Transparent"/>
                 </Border>
 
                 <!-- Chart 3: Profits per dag -->
                 <Border Grid.Row="1" Grid.Column="0" Width="600" Height="300"> 
-                    <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+                    <oxy:PlotView Model="{Binding ChartProfitsPerDay}" Background="Transparent"/>
                 </Border>
 
                 <!-- Chart 4: Invested/Returned per dag -->
                 <Border Grid.Row="1" Grid.Column="1" Width="600" Height="300"> 
-                    <oxy:PlotView Model="{Binding ChartInvestedReturnedPerDay}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+                    <oxy:PlotView Model="{Binding ChartInvestedReturnedPerDay}" Background="Transparent"/>
                 </Border>
 
                 <!-- Chart 5: Doorlooptijden -->
                 <Border Grid.Row="2" Grid.Column="0" Width="600" Height="300"> 
-                    <oxy:PlotView Model="{Binding ChartDoorlooptijden}" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+                    <oxy:PlotView Model="{Binding ChartDoorlooptijden}" Background="Transparent"/>
                 </Border>
 
             </Grid>

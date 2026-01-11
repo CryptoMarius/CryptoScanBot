@@ -171,36 +171,35 @@ public partial class App : Application
     {
         // Not a neat solution, replace with a global token??
         GlobalData.ApplicationIsClosing = true;
+        ScannerLog.Logger.Trace($"OnApplicationExit(start async operations)");
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(start async operations)");
-
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(powerMonitor?.Dispose)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(powerMonitor?.Dispose)");
         _powerMonitor?.Dispose();
         _powerMonitor = null!;
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(ThreadSoundPlayer.StopSoundThread)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(ThreadSoundPlayer.StopSoundThread)");
         ThreadSoundPlayer.StopSoundThread();
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(ScannerSession.StopAsync)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(ScannerSession.StopAsync)");
         var scannersession = GlobalData.GetService<IScannerSession>()
             ?? throw new InvalidOperationException("ScannerSession not registered");
         await scannersession.StopAsync(); // This will now complete!
 
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(DataStore.SaveCandlesAsync)");
-        await DataStore.SaveCandlesAsync();
+        //ScannerLog.Logger.Trace($"OnApplicationExit(DataStore.SaveCandlesAsync)");
+        //await DataStore.SaveCandlesAsync(); included in scannersession1.StopAsync()
 
         // Ensure all states are written to disk before exit
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(GlobalData.SaveSettings)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(GlobalData.SaveSettings)");
         GlobalData.SaveSettings();
 
         // TODO: Rethink this boolean storage
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(applicationStateService.FlushToDisk)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(applicationStateService.FlushToDisk)");
         ApplicationStateService applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
         applicationStateService.FlushToDisk();
 
         // Dispose hidden browser
-        System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser?.Dispose)");
+        ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser?.Dispose)");
         var hiddenBrowser = GlobalData.GetService<HiddenBrowserService>();
         if (hiddenBrowser != null)
         {
@@ -210,12 +209,12 @@ public partial class App : Application
                 try
                 {
                     hiddenBrowser.Dispose();
-                    System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser disposed successfully)");
+                    ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser disposed successfully)");
                 }
                 catch (Exception ex)
                 {
                     ScannerLog.Logger.Error(ex, "Error disposing hidden browser");
-                    System.Diagnostics.Debug.WriteLine($"OnApplicationExit(hiddenBrowser dispose error: {ex.Message})");
+                    ScannerLog.Logger.Trace($"OnApplicationExit(hiddenBrowser dispose error: {ex.Message})");
                 }
             });
         }
@@ -237,16 +236,18 @@ public partial class App : Application
             switch (mode)
             {
                 case PowerMode.Suspend:
+                    ScannerLog.Logger.Trace("System going to sleep - disconnecting...");
                     GlobalData.AddTextToLogTab("System going to sleep - disconnecting...");
                     var scannersession1 = GlobalData.GetService<IScannerSession>()
                         ?? throw new InvalidOperationException("ScannerSession not registered");
                     await scannersession1.StopAsync();
                     ThreadSoundPlayer.StopSoundThread();
-                    await DataStore.SaveCandlesAsync();
+                    //await DataStore.SaveCandlesAsync(); included in scannersession1.StopAsync()
                     GlobalData.AddTextToLogTab("Disconnected successfully");
                     break;
 
                 case PowerMode.Resume:
+                    ScannerLog.Logger.Trace("System resumed - reconnecting...");
                     GlobalData.AddTextToLogTab("System resumed - reconnecting...");
                     await Task.Delay(2000); // wait for network
                     var scannersession2 = GlobalData.GetService<IScannerSession>()
