@@ -15,7 +15,7 @@ public class CommandLaunchTradingViewInternal : CommandBase
             System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in internal tradingview browser");
             CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, dto.symbol, dto.interval, CryptoExternalUrlType.Internal);
 
-            //GlobalData.LoadLinkSettings(); // refresh links
+            //GlobalData.LoadWebLinkSettings(); // refresh links
             //(string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.TradingView, false, dto.symbol, dto.interval);
             //if (Url != "")
             //{
