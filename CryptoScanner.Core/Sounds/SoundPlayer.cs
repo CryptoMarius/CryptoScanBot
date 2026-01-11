@@ -3,8 +3,11 @@
 using NAudio.Wave;
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace CryptoScanner.Core.Sounds;
+
 
 public static class ThreadSoundPlayer
 {
@@ -103,25 +106,44 @@ public static class ThreadSoundPlayer
                 }
                 else 
                 {
-                    // Use NAudio for cross-platform audio playback
-                    using var reader = new AudioFileReader(fileName);
-                    using var output = new WaveOutEvent();
-
-                    output.Init(reader);
-                    output.Play();
-
-                    // Wait for playback to finish
-                    while (output.PlaybackState == PlaybackState.Playing && !soundCancelToken.IsCancellationRequested)
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     {
-                        await Task.Delay(100);
+                        // Windows: System.Media.SoundPlayer (built-in!)
+                        //var player = new System.Media.SoundPlayer(fileName);
+                        //player.Play();
+
+                        // Use NAudio for cross-platform audio playback
+                        using var reader = new AudioFileReader(fileName);
+                        using var output = new WaveOutEvent();
+
+                        output.Init(reader);
+                        output.Play();
+
+                        // Wait for playback to finish
+                        while (output.PlaybackState == PlaybackState.Playing && !soundCancelToken.IsCancellationRequested)
+                        {
+                            await Task.Delay(100);
+                        }
+
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        // macOS: afplay command
+                        Process.Start("afplay", fileName);
+                    }
+                    else // Linux
+                    {
+                        // Linux: aplay command
+                        Process.Start("aplay", fileName);
                     }
 
-                    //// http://msdn.microsoft.com/en-us/library/system.media.soundplayer.playsync.aspx
-                    //soundPlayer.SoundLocation = fileName;
-                    ////Here the outside thread waits for the following play to end before continuing.
-                    //soundPlayer.PlaySync();
                 }
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // niets..
+            GlobalData.AddTextToLogTab("Soundplayer exit");
         }
         catch (Exception error)
         {
