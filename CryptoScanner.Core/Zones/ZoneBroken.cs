@@ -103,9 +103,9 @@ public class ZoneBroken
         // Called at startup..
         if (GlobalData.ActiveExchange != null)
         {
-            foreach (var symbol in GlobalData.ActiveExchange.SymbolListName.Values)
+            for (var i = 0; i < GlobalData.ActiveExchange.SymbolListName.Count; i ++)
             {
-                var symbolData = symbol.Data;
+                var symbol = GlobalData.ActiveExchange.SymbolListName.Values[i];
                 foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
                 {
                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
