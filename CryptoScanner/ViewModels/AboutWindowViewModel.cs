@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 
 using System.Collections.ObjectModel;
@@ -9,7 +8,7 @@ using System.Reflection;
 
 namespace CryptoScanner.ViewModels;
 
-public partial class AboutViewModel : ObservableObject
+public partial class AboutWindowViewModel : ObservableObject
 {
     [ObservableProperty]
     private string _title= $"About {CryptoScanner.Core.Const.Constants.AppName}";
@@ -26,7 +25,7 @@ public partial class AboutViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<string> _exchanges = [];
 
-    public AboutViewModel()
+    public AboutWindowViewModel()
     {
         LoadCopyright();
         LoadExchanges();

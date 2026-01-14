@@ -12,7 +12,7 @@ public partial class AboutWindow : Window
         AvaloniaXamlLoader.Load(this);
         //InitializeComponent();
 
-        var viewModel = new AboutViewModel();
+        var viewModel = new AboutWindowViewModel();
         DataContext = viewModel;
 
         // Subscribe to close event

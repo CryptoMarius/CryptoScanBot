@@ -1,56 +1,62 @@
 ﻿using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Visualisation.ViewModels;
-using CryptoScanner.Visualisation.Views;
+using CryptoScanner.ViewModels;
+using CryptoScanner.Views;
 
 namespace CryptoScanner.Commands;
 
 public class CommandShowGraph : CommandBase
 {
-    private static VisualisationWindow? VisualisationWindow = null;
+    private static ChartWindow? ChartWindow = null;
 
     public override void Execute(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandShowGraph");
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null && dto.parentWindow != null)
+        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.parentWindow != null)
         {
             try
             {
                 // Implement your external program logic here
                 System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in internal program");
 
-
-                var vm = new VisualisationViewModel();
-                vm.SymbolSelector.SelectedBase = dto.symbol.Base;
-                vm.SymbolSelector.SelectedQuote = dto.symbol.Quote;
-                if (dto.interval != null)
-                    vm.SymbolSelector.SelectedInterval = dto.interval.Name;
-                else
-                    vm.SymbolSelector.SelectedInterval = GlobalData.IntervalListPeriod[Core.Enums.CryptoIntervalPeriod.interval5m].Name;
-
-
-                if (VisualisationWindow == null || !VisualisationWindow.IsVisible)
+                if (ChartWindow == null || !ChartWindow.IsVisible)
                 {
-                    VisualisationWindow = new VisualisationWindow
+                    ChartWindow = new ChartWindow
                     {
-                        DataContext = vm,
+                        //DataContext = vm1,
                         CanResize = true,
                         Title = "Chart form",
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     };
-                    VisualisationWindow.Show(); //dto.parentWindow
+
+                    if (ChartWindow.DataContext is ChartWindowViewModel vm2)
+                    {
+                        vm2.SymbolSelector.SelectedBase = dto.symbol.Base;
+                        vm2.SymbolSelector.SelectedQuote = dto.symbol.Quote;
+                        if (dto.interval != null)
+                            vm2.SymbolSelector.SelectedInterval = dto.interval.Name;
+                    }
+                    else throw new Exception("Problem chart viewmodel");
+
+                    ChartWindow.Show();
                 }
                 else
                 {
-                    VisualisationWindow.DataContext = vm;
+                    if (ChartWindow.DataContext is ChartWindowViewModel vm1)
+                    {
+                        vm1.SymbolSelector.SelectedBase = dto.symbol.Base;
+                        vm1.SymbolSelector.SelectedQuote = dto.symbol.Quote;
+                        if (dto.interval != null)
+                            vm1.SymbolSelector.SelectedInterval = dto.interval.Name;
+                    }
 
                     // Restore if minimized
-                    if (VisualisationWindow.WindowState == WindowState.Minimized)
-                        VisualisationWindow.WindowState = WindowState.Normal;
+                    if (ChartWindow.WindowState == WindowState.Minimized)
+                        ChartWindow.WindowState = WindowState.Normal;
 
                     // Bring window to the front
-                    VisualisationWindow.Activate();
+                    ChartWindow.Activate();
                 }
 
             }

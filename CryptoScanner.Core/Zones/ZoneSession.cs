@@ -33,61 +33,28 @@ public class ZoneSession
     public decimal Deviation { get; set; } = 1m;
 
     // trend
+    //public TrendType TrendIndicator { get; set; } = TrendType.Primary;
     public TrendType TrendType { get; set; } = TrendType.Primary;
     public bool TrendShowZigZag { get; set; } = false;
 
-    // dlz
-    public bool DlzShowBoxes { get; set; } = true;
-
     // fib
     public TrendType FibTrend { get; set; } = TrendType.Primary;
-    public bool FibShowRetracement { get; set; } = false;
-    public bool FibShowZigZag { get; set; } = false;
+    public bool ShowFibRetracement { get; set; } = false;
+    public bool ShowFibZigZag { get; set; } = false;
 
-    // misc
-    public bool ShowPoints { get; set; } = false;
-    public bool ForceCalculation { get; set; } = false;
-    public bool ShowSignals { get; set; } = false;
-    public bool ShowFvgZones { get; set; } = false;
-    public bool ShowDtb { get; set; } = false;
-    public bool ShowNadarayaWatsonEnvelope { get; set; } = true;
+    // options
+    public bool ShowPoints { get; set; } = false; // Pivot points
+    public bool ShowSignals { get; set; } = false; // Signals from the analyzer
+    public bool ShowDlzZones { get; set; } = false; // Dominant Liquidity Zones
+    public bool ShowFvgZones { get; set; } = false; // Fear Value Gaps
+    public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
+    public bool ShowNadarayaWatsonEnvelope { get; set; } = true; // NWE non repainting?
     public bool ShowNadarayaWatsonEnvelopeRepainting { get; set; } = true;
     public bool ShowBollingerBand { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = true;
-    public bool ShowTrendLines { get; set; } = false;
+    //public bool ShowTrendLines { get; set; } = false;
 
-    // Toegevoegd 
+    // misc
+    public bool ForceCalculation { get; set; } = false;
     public bool Transparent { get; set; } = false;
-    public bool ShowDlzZones { get; set; } = false;
-    public bool ShowPivots { get; set; } = false;
-    public int TrendIndicator { get; set; } = 0;
-    public bool ShowFib { get; set; } = false;
-
-
-
-    public static ZoneSession LoadSessionSettings()
-    {
-        // load previous Session settings
-        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-        string fileName = Path.Combine(folderName, $"session.json");
-        if (File.Exists(fileName))
-        {
-            string text = File.ReadAllText(fileName);
-            var session = JsonSerializer.Deserialize<ZoneSession>(text, JsonTools.DeSerializerOptions);
-            if (session != null)
-                return session;
-        }
-
-        return new();
-    }
-
-    public void SaveSessionSettings()
-    {
-        // save current Session settings
-        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-        Directory.CreateDirectory(folderName);
-        string fileName = Path.Combine(folderName, $"session.json");
-        string text = JsonSerializer.Serialize(this, JsonTools.JsonSerializerIndented);
-        File.WriteAllText(fileName, text);
-    }
 }

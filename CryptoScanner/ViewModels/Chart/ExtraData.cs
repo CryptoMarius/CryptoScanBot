@@ -5,7 +5,7 @@ using CryptoScanner.Core.Zones;
 
 using Dapper;
 
-namespace CryptoScanner.ZoneVisualisation;
+namespace CryptoScanner.ViewModels.Chart;
 
 public class ExtraData
 {

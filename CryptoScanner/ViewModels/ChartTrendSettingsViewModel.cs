@@ -1,26 +1,27 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Zones;
 
-namespace CryptoScanner.Visualisation.ViewModels;
+namespace CryptoScanner.ViewModels;
 
-public partial class TrendSettingsViewModel : ObservableObject
+public partial class ChartTrendSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
-    private int _trendType = 0; // 0=Primary, 1=Secondary
+    private TrendType _trendType = TrendType.Primary;
 
     [ObservableProperty]
     private bool _showZigZag = false;
 
     public void LoadFromSession(ZoneSession session)
     {
-        TrendType = session.TrendIndicator;
+        TrendType = session.TrendType;
         ShowZigZag = session.TrendShowZigZag;
     }
 
     public void SaveToSession(ZoneSession session)
     {
-        session.TrendIndicator = TrendType;
+        session.TrendType = TrendType;
         session.TrendShowZigZag = ShowZigZag;
     }
 }

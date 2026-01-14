@@ -2,12 +2,11 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 
-namespace CryptoScanner.Visualisation.ViewModels;
+namespace CryptoScanner.ViewModels;
 
-public partial class SymbolSelectorViewModel : ObservableObject
+public partial class ChartSymbolSelectorViewModel : ObservableObject
 {
     [ObservableProperty]
     private ObservableCollection<string> _baseSymbols = [];
@@ -30,7 +29,7 @@ public partial class SymbolSelectorViewModel : ObservableObject
     // Combined symbol (e.g., "BTCUSDT")
     public string SelectedSymbol => SelectedBase + SelectedQuote;
 
-    public SymbolSelectorViewModel()
+    public ChartSymbolSelectorViewModel()
     {
         InitializeSymbolLists();
         InitializeIntervals();
@@ -81,9 +80,9 @@ public partial class SymbolSelectorViewModel : ObservableObject
 
     public void LoadFromSession(ZoneSession session)
     {
-        SelectedBase = session.SymbolBase;
-        SelectedQuote = session.SymbolQuote;
-        SelectedInterval = session.IntervalName;
+        SelectedBase = session.SymbolBase.ToUpper().Trim();
+        SelectedQuote = session.SymbolQuote.ToUpper().Trim();
+        SelectedInterval = session.IntervalName.Trim();
     }
 
     public void SaveToSession(ZoneSession session)

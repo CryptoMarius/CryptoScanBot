@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace CryptoScanner.Visualisation.ViewModels;
+namespace CryptoScanner.ViewModels;
 
-public partial class PlaybackControlsViewModel : ObservableObject
+public partial class ChartPlaybackControlsViewModel : ObservableObject
 {
     public event Action<int>? PlaybackRequested;
 

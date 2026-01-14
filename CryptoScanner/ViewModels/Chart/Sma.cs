@@ -6,13 +6,19 @@ using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Visualisation.Chart;
+namespace CryptoScanner.ViewModels.Chart;
 
 public class Sma
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length, OxyColor color, long minDate, long maxDate)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length, 
+        OxyColor color, long minDate, long maxDate, string group)
     {
-        var seriesSma = new LineSeries { Title = $"sma{length}" , MarkerSize = 1, MarkerFill = color, Color = color };
+        var seriesSma = new LineSeries { Title = $"sma{length}", 
+            MarkerSize = 1, 
+            MarkerFill = color, 
+            Color = color,
+            Tag = group,
+        };
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.CandleList.Count == 0)

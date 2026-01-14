@@ -138,6 +138,9 @@
 	  <Compile Update="Views\ColumnWindow.axaml.cs">
 	    <DependentUpon>ColumnWindow.axaml</DependentUpon>
 	  </Compile>
+	  <Compile Update="Views\ChartWindow.axaml.cs">
+	    <DependentUpon>ChartWindow.axaml</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 

@@ -2,9 +2,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Zones;
 
-namespace CryptoScanner.Visualisation.ViewModels;
+namespace CryptoScanner.ViewModels;
 
-public partial class DisplayOptionsViewModel : ObservableObject
+public partial class ChartOptionsViewModel : ObservableObject
 {
     [ObservableProperty]
     private bool _showSmaLinesSbm = false;
@@ -31,13 +31,14 @@ public partial class DisplayOptionsViewModel : ObservableObject
     private bool _showSignals = false;
 
     [ObservableProperty]
-    private bool _showPivots = false;
+    private bool _showPoints = false;
 
     [ObservableProperty]
     private bool _transparent = false;
 
     public void LoadFromSession(ZoneSession session)
     {
+        // Options
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNadarayaWatsonEnvelope = session.ShowNadarayaWatsonEnvelope;
         ShowNadarayaWatsonEnvelopeRepainting = session.ShowNadarayaWatsonEnvelopeRepainting;
@@ -46,12 +47,15 @@ public partial class DisplayOptionsViewModel : ObservableObject
         ShowFvgZones = session.ShowFvgZones;
         ShowDtb = session.ShowDtb;
         ShowSignals = session.ShowSignals;
-        ShowPivots = session.ShowPivots;
+        ShowPoints = session.ShowPoints;
+
+        // misc
         Transparent = session.Transparent;
     }
 
     public void SaveToSession(ZoneSession session)
     {
+        // Options
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNadarayaWatsonEnvelope = ShowNadarayaWatsonEnvelope;
         session.ShowNadarayaWatsonEnvelopeRepainting = ShowNadarayaWatsonEnvelopeRepainting;
@@ -60,7 +64,10 @@ public partial class DisplayOptionsViewModel : ObservableObject
         session.ShowFvgZones = ShowFvgZones;
         session.ShowDtb = ShowDtb;
         session.ShowSignals = ShowSignals;
-        session.ShowPivots = ShowPivots;
+        session.ShowPoints = ShowPoints;
+
+        // misc
         session.Transparent = Transparent;
     }
+
 }

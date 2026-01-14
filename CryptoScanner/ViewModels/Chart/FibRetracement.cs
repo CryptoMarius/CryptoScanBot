@@ -6,7 +6,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
 
-namespace CryptoScanner.Visualisation.Chart;
+namespace CryptoScanner.ViewModels.Chart;
 
 public class FibRetracement
 {
@@ -35,7 +35,7 @@ public class FibRetracement
         return retracements;
     }
 
-    public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator)
+    public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator, string group)
     {
         //// Mhh, fib levels proberen te zetten
         //// !!! Dit lijkt alvast niet te werken!!!!
@@ -71,7 +71,13 @@ public class FibRetracement
 
             foreach (var (value, percent, color) in fibRetracement)
             {
-                var fibLevel = new LineSeries { Title = "fib", Color = color, LineStyle = LineStyle.Dot, Font = Const.OxyFontName };
+                var fibLevel = new LineSeries { 
+                    Title = "fib", 
+                    Color = color, 
+                    LineStyle = LineStyle.Dot, 
+                    Font = Const.OxyFontName,
+                    Tag = group,
+                };
                 fibLevel.Points.Add(new DataPoint(start, (double)value));
                 fibLevel.Points.Add(new DataPoint(stop, (double)value));
                 chart.Series.Add(fibLevel);
@@ -85,6 +91,7 @@ public class FibRetracement
                     Font = Const.OxyFontName,
                     //FontSize = OxyFontSize,
                     //FontWeight = FontWeights.Bold,
+                    Tag = group,
                 });
             }
         }

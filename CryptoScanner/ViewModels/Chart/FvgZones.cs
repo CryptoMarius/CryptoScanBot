@@ -5,13 +5,13 @@ using CryptoScanner.Core.Model;
 using OxyPlot;
 using OxyPlot.Annotations;
 
-namespace CryptoScanner.Visualisation.Chart;
+namespace CryptoScanner.ViewModels.Chart;
 
-public class DlzZones
+public class FvgZones
 {
-    // todo method also in DrawFvgZones..
+    // todo method also in DrawDlzZones..
     // Introduce a common class?
-    private static void DrawZone(PlotModel chart, CryptoZone zone, long minDate, long maxDate)
+    private static void DrawZone(PlotModel chart, CryptoZone zone, long minDate, long maxDate, string group)
     {
         // ?? why ??
         //if (zone.Kind == CryptoZoneKind.FairValueGap && !session.ShowFvgZones)
@@ -66,13 +66,31 @@ public class DlzZones
                 TextColor = textColor,
                 Text = zone.Description,
                 ToolTip = zone.Description, // does not work, weak..
+                Tag = group,
             };
             chart.Annotations.Add(rectangle);
         }
     }
 
 
-    public static void Draw(PlotModel chart, CryptoSymbol symbol, long minDate, long maxDate)
+    private static bool RecentlyClosed(CryptoZone zone, CryptoInterval interval)
+    {
+        if (zone.CloseTime != null)
+        {
+            long allowedTime = interval.Duration * 250; // 60 candles?
+            long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+
+            //DateTime currentDate = CandleTools.GetUnixDate(currentTime);
+            //DateTime closeDate = CandleTools.GetUnixDate(zone.CloseTime);
+
+            if (zone.CloseTime > currentTime - allowedTime)
+                return true;
+        }
+        return false;
+    }
+
+
+    public static void Draw(PlotModel chart, CryptoSymbol symbol, long minDate, long maxDate, string group)
     {
         var symbolData = symbol.Data;
         foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
@@ -80,18 +98,20 @@ public class DlzZones
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
             {
                 var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
-                foreach (var zone in symbolDataInterval.DlzZones.LongOpen)
-                    DrawZone(chart, zone, minDate, maxDate);
-                foreach (var zone in symbolDataInterval.DlzZones.ShortOpen)
-                    DrawZone(chart, zone, minDate, maxDate);
+                foreach (var zone in symbolDataInterval.FvgZones.LongOpen)
+                    DrawZone(chart, zone, minDate, maxDate, group);
+                foreach (var zone in symbolDataInterval.FvgZones.ShortOpen)
+                    DrawZone(chart, zone, minDate, maxDate, group);
 
-                foreach (var zone in symbolDataInterval.DlzZones.LongClosed)
+                foreach (var zone in symbolDataInterval.FvgZones.LongClosed)
                 {
-                    DrawZone(chart, zone, minDate, maxDate);
+                    if (RecentlyClosed(zone, interval))
+                        DrawZone(chart, zone, minDate, maxDate, group);
                 }
-                foreach (var zone in symbolDataInterval.DlzZones.ShortClosed)
+                foreach (var zone in symbolDataInterval.FvgZones.ShortClosed)
                 {
-                    DrawZone(chart, zone, minDate, maxDate);
+                    if (RecentlyClosed(zone, interval))
+                        DrawZone(chart, zone, minDate, maxDate, group);
                 }
             }
         }

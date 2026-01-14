@@ -33,6 +33,10 @@ public partial class SignalGridViewModel : ObservableObject
         //_timerUpdatePositions.Tick += async (s, e) => await TimerClearAndUpdateSignalsTick();
         _timerClearAndUpdateSignals.Tick += TimerClearAndUpdateSignalsTick;
         _timerClearAndUpdateSignals.Start();
+
+        // Should go via the filter event, but that is obviously not working..
+        //Signals.Clear();
+        GlobalData.LoadSignals(_currentFilter);
     }
 
     public void Dispose()

@@ -1,0 +1,145 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:oxy="http://oxyplot.org/avalonia"
+        xmlns:vm="using:CryptoScanner.ViewModels"
+        xmlns:views="using:CryptoScanner.Views"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="950"
+        Width="1300" Height="1000"
+        x:DataType="vm:ChartWindowViewModel"
+        x:Class="CryptoScanner.Views.ChartWindow"
+        Title="{Binding WindowTitle}">
+
+    <Grid ColumnDefinitions="220,*" RowDefinitions="*">
+        
+        <!-- Left Panel - Controls -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="220">
+            <StackPanel Margin="8,0,0,2" Spacing="2">
+                
+                <!-- Symbol Selector 
+                <views:SymbolSelectorView DataContext="{Binding SymbolSelector}"/>
+                -->
+
+                <HeaderedContentControl Classes="groupbox" Header="Symbol" Padding="4">
+                    <StackPanel >
+                        <Grid ColumnDefinitions="Auto,80" RowDefinitions="Auto,Auto,Auto" Margin="4" Grid.RowSpacing="2">
+                            <!-- Quote Base -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Base:" VerticalAlignment="Center" 
+                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" 
+                                        ItemsSource="{Binding SymbolSelector.BaseSymbols}"
+                                        SelectedItem="{Binding SymbolSelector.SelectedBase, Mode=TwoWay}"
+                                        FontSize="12" Width="80.0"/>
+
+                            <!-- Quote -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Quote:" VerticalAlignment="Center" 
+                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" 
+                                        ItemsSource="{Binding SymbolSelector.QuoteSymbols}"
+                                        SelectedItem="{Binding SymbolSelector.SelectedQuote, Mode=TwoWay}"
+                                        FontSize="12" Width="80.0"/>
+
+                            <!-- Interval -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Interval:" VerticalAlignment="Center" 
+                                        Margin="0,0,8,0" FontSize="12" Width="50"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" 
+                                        ItemsSource="{Binding SymbolSelector.Intervals}"
+                                        SelectedItem="{Binding SymbolSelector.SelectedInterval, Mode=TwoWay}"
+                                        FontSize="12" Width="80.0"/>
+                        </Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Trend Settings -->
+                <HeaderedContentControl Classes="groupbox" Header="Trend">
+                    <StackPanel Margin="4,8,0,2" >
+                        <ComboBox SelectedIndex="{Binding TrendSettings.TrendType, Mode=TwoWay}"
+                                  FontSize="12">
+                            <ComboBoxItem Content="Primary trend"/>
+                            <ComboBoxItem Content="Secondary trend"/>
+                        </ComboBox>
+                        <CheckBox IsChecked="{Binding TrendSettings.ShowZigZag, Mode=TwoWay}"
+                                  Content="Show zigzag"
+                                  FontSize="12"/>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- FIB Settings -->
+                <HeaderedContentControl Classes="groupbox" Header="FIB">
+                    <StackPanel Margin="4" >
+                        <ComboBox SelectedIndex="{Binding FibSettings.FibTrend, Mode=TwoWay}"
+                                  FontSize="12">
+                            <ComboBoxItem Content="Primary trend"/>
+                            <ComboBoxItem Content="Secondary trend"/>
+                        </ComboBox>
+                        <CheckBox IsChecked="{Binding FibSettings.ShowFibRetracement, Mode=TwoWay}"
+                                  Content="Show fib retracement"
+                                  FontSize="12"/>
+                        <CheckBox IsChecked="{Binding FibSettings.ShowZigZag, Mode=TwoWay}"
+                                  Content="Show zigzag"
+                                  FontSize="12"/>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Playback Controls --> 
+                <!-- not working, turned off -->
+                <StackPanel Spacing="4" IsVisible="false">
+                    <Panel Height="30">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Button Content="-" Width="30" Command="{Binding PlaybackControls.ZoomInCommand}"/>
+                            <Button Content="+" Width="30" Command="{Binding PlaybackControls.ZoomOutCommand}"/>
+                            <TextBlock Text="{Binding PlaybackControls.CurrentIntervalDisplay}" VerticalAlignment="Center" Margin="8,0"/>
+                        </StackPanel>
+                    </Panel>
+
+                    <Panel Height="30">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Button Content="&lt;" Width="30" Command="{Binding PlaybackControls.NavigateLeftCommand}"/>
+                            <Button Content="&gt;" Width="30" Command="{Binding PlaybackControls.NavigateRightCommand}"/>
+                            <TextBlock Text="{Binding PlaybackControls.MaxTimeDisplay}" VerticalAlignment="Center" Margin="8,0"/>
+                        </StackPanel>
+                    </Panel>
+                </StackPanel>
+
+                <!-- Action Buttons -->
+                <StackPanel Spacing="4">
+                    <Button Content="Refresh screen" Command="{Binding RefreshCommand}" HorizontalAlignment="Stretch"/>
+                    <Button Content="Calculate zones"  Command="{Binding CalculateCommand}" HorizontalAlignment="Stretch"/>
+                    <!-- not working, turned off -->
+                    <Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Stretch" IsEnabled="false" IsVisible="false"/>
+                </StackPanel>
+
+                <!-- Display Options -->
+                <HeaderedContentControl Classes="groupbox" Header="Display">
+                    <StackPanel Margin="4" Spacing="-7">
+                        <!-- not working, turned off -->
+                        <!--
+                        <CheckBox IsChecked="{Binding DisplayOptions.Transparent, Mode=TwoWay}" Content="Transparent" FontSize="12"/>
+                        -->
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowFvgZones, Mode=TwoWay}" Content="FVG Zones" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelopeRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelope, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/> 
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
+                    </StackPanel>
+                </HeaderedContentControl>
+
+                <!-- Open Trading App -->
+                <Button Content="Open trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Stretch"/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Right Panel - Chart -->
+        <Border Grid.Column="1" Margin="8">
+            <ContentControl Content="{Binding PlotView}" />
+        </Border>
+    </Grid>
+    
+
+</Window>

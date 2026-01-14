@@ -86,7 +86,7 @@ public abstract class CommandBase : ICommand
             dto.SymbolViewModel = symbolViewModel;
             dto.exchange = symbolViewModel.Object.Exchange;
             dto.symbol = symbolViewModel.Object;
-            dto.interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+            dto.interval = null; // reuse selected interval GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
             return true;
         }
         

@@ -242,7 +242,12 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartPositionsPerDay()
     {
-        var model = new PlotModel { Title = "Aantal gesloten posities per dag", TextColor = OxyColors.White, Background=OxyColors.Black};
+        var model = new PlotModel 
+        { 
+            Title = "Aantal gesloten posities per dag", 
+            TextColor = OxyColors.White, 
+            Background = OxyColors.Black
+        };
         
         model.Axes.Add(new DateTimeAxis
         {

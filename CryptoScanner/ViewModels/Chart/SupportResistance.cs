@@ -5,7 +5,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
 
-namespace CryptoScanner.Visualisation.Chart;
+namespace CryptoScanner.ViewModels.Chart;
 
 public class SupportResistanceLevel
 {

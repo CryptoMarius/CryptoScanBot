@@ -5,7 +5,7 @@ using CryptoScanner.Core.Model;
 using OxyPlot;
 using OxyPlot.Series;
 
-namespace CryptoScanner.Visualisation.Chart;
+namespace CryptoScanner.ViewModels.Chart;
 
 public class Candles
 {
