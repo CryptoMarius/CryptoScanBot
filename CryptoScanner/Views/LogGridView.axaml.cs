@@ -34,7 +34,7 @@ public partial class LogGridView : UserControlWithGrid<LogViewModel>
         _dataGrid = this.FindControl<DataGrid>("LogDataGrid")
             ?? throw new InvalidOperationException("LogDataGrid not found");
 
-        DataContextChanged += OnDataContextChanged;
+        //DataContextChanged += OnDataContextChanged;
 
         // Register a custom comparer for each column based on its SortMemberPath
         InitializeGrid<LogColumnEnum, LogColumnComparer>("Date", ListSortDirection.Ascending);
@@ -42,23 +42,23 @@ public partial class LogGridView : UserControlWithGrid<LogViewModel>
     }
 
 
-    //private LogGridViewModel? _currentViewModel;
-    private void OnDataContextChanged(object? sender, EventArgs e)
-    {
-        //// Unsubscribe old
-        //if (_currentViewModel != null)
-        //{
-        //    _currentViewModel.RequestSort -= OnRequestSort;
-        //    _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
-        //}
+    ////private LogGridViewModel? _currentViewModel;
+    //private void OnDataContextChanged(object? sender, EventArgs e)
+    //{
+    //    //// Unsubscribe old
+    //    //if (_currentViewModel != null)
+    //    //{
+    //    //    _currentViewModel.RequestSort -= OnRequestSort;
+    //    //    _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
+    //    //}
 
-        //// Subscribe new
-        //if (DataContext is LogGridViewModel vm)
-        //{
-        //    _currentViewModel = vm;
-        //    vm.RequestSort += OnRequestSort;
-        //    vm.RequestSortedInsert += OnRequestSortedInsert;
-        //}
-    }
+    //    //// Subscribe new
+    //    //if (DataContext is LogGridViewModel vm)
+    //    //{
+    //    //    _currentViewModel = vm;
+    //    //    vm.RequestSort += OnRequestSort;
+    //    //    vm.RequestSortedInsert += OnRequestSortedInsert;
+    //    //}
+    //}
 
 }
