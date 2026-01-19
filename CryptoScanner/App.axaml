@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="CryptoScanner.App"
+             xmlns:helper="using:CryptoScanner.Helpers"
              RequestedThemeVariant="Default">
     
     <Application.Resources>
@@ -186,8 +187,13 @@
         <Style Selector="DataGridRow">
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="1" />
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" />
         </Style>
         
+        <Style Selector="DataGridRow:pointerover"> 
+            <Setter Property="helper:HoverHelper.IsHover" Value="True" /> 
+        </Style>
+
         <!-- Verberg focus indicator -->
         <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
             <Setter Property="IsVisible" Value="False" />

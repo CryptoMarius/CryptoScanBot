@@ -3,7 +3,7 @@
 		<OutputType>WinExe</OutputType>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageIcon>FacIcon1.jpg</PackageIcon>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<RuntimeIdentifiers>osx-arm64;osx-x64;win-x64;linux-x64</RuntimeIdentifiers>
 		<Nullable>enable</Nullable>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>

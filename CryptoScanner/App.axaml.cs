@@ -24,7 +24,7 @@ public partial class App : Application
     private static PowerMonitorService _powerMonitor = new();
 
     // Forward url to our visible browser tabsheet
-    public static event EventHandler<string, bool>? EventOpenInInternalBrowser;
+    public static event Action<string, bool>? EventOpenInInternalBrowser;
     public static void OpenInInternalBrowser(string url, bool switchTab) => EventOpenInInternalBrowser?.Invoke(url, switchTab);
 
     // Forward url to our not visible browser tabsheet (to avoid an extra dialog)
