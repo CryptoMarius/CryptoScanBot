@@ -31,7 +31,7 @@ public partial class LogGridViewModel : ObservableObject
     public LogGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("LogGridViewModel constructor called");
-        LogQueue.EnsureCapacity(2500);
+        LogQueue.EnsureCapacity(25000);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         _updateTimer.Tick += TimerAddLogLinesTick;
