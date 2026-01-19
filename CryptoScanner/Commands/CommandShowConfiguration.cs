@@ -7,7 +7,7 @@ using CryptoScanner.Core.Services;
 
 namespace CryptoScanner.Commands;
 
-public class CommandSettings : CommandBase
+public class CommandConfiguration : CommandBase
 {
 
     private static void GetReloadRelatedSettings(out string activeQuoteData)
