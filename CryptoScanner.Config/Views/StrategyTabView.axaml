@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             xmlns:controls="using:Avalonia.Controls"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyTabViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyTabView">
+
+    <TabControl Grid.Row="2" Margin="0" >
+		<TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyStobbTabView DataContext="{Binding StrategyStobbTabViewModel}" />
+        </TabItem>
+		<TabItem Header="SBM" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategySbmTabView DataContext="{Binding StrategySbmTabViewModel}" />
+		</TabItem>
+		<TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyStorsiTabView DataContext="{Binding StrategyStorsiTabViewModel}" />
+		</TabItem>
+		<TabItem Header="NWE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyNweTabView DataContext="{Binding StrategyNweTabViewModel}" />
+		</TabItem>
+		<TabItem Header="JUMP" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyJumpTabView DataContext="{Binding StrategyJumpTabViewModel}" />
+		</TabItem>
+		<TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyDlzTabView DataContext="{Binding StrategyDlzTabViewModel}" />
+		</TabItem>
+		<TabItem Header="FVG" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:StrategyFvgTabView DataContext="{Binding StrategyFvgTabViewModel}" />
+		</TabItem>
+    </TabControl>				
+
+</UserControl>

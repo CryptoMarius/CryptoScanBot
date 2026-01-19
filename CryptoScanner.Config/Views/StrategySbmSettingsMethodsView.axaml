@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="540"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:StrategySbmSettingsMethodsViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategySbmSettingsMethodsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings for SBM methods">
+        <StackPanel Margin="8" Spacing="8">
+            
+            <!-- Filter on BB% -->
+            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1" Text="{Binding BbMinPercentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2" Text="{Binding BbMaxPercentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- MACD recovery candles -->
+            <Grid ColumnDefinitions="Auto,*,80" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="MACD recovery candles:" VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" Text="{Binding CandlesForMacdRecovery, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Separator -->
+            <Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                    Margin="0,8,0,8"/>
+
+            <!-- MA200 and MA50 Crossing -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding Ma200AndMa50Crossing, Mode=TwoWay}"
+                          Content="Check for a crossing of the ma200 and ma50 in the last x candles"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma200AndMa50Lookback, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding Ma200AndMa50Crossing}"/>
+            </Grid>
+
+            <!-- MA200 and MA20 Crossing -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding Ma200AndMa20Crossing, Mode=TwoWay}"
+                          Content="Check for a crossing of the ma200 and ma20 in the last x candles"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma200AndMa20Lookback, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding Ma200AndMa20Crossing}"/>
+            </Grid>
+
+            <!-- MA50 and MA20 Crossing -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding Ma50AndMa20Crossing, Mode=TwoWay}"
+                          Content="Check for a crossing of the ma50 and ma20 in the last x candles"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma50AndMa20Lookback, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding Ma50AndMa20Crossing}"/>
+            </Grid>
+
+            <!-- Separator -->
+            <Border Height="1" Background="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                    Margin="0,8,0,8"/>
+
+            <!-- Minimal percentage between ma200 and ma50 -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding CheckMa200AndMa50Percentage, Mode=TwoWay}"
+                          Content="Minimal percentage between ma200 and ma50"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma200AndMa50Percentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding CheckMa200AndMa50Percentage}"/>
+            </Grid>
+
+            <!-- Minimal percentage between ma200 and ma20 -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding CheckMa200AndMa20Percentage, Mode=TwoWay}"
+                          Content="Minimal percentage between ma200 and ma20"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma200AndMa20Percentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding CheckMa200AndMa20Percentage}"/>
+            </Grid>
+
+            <!-- Minimal percentage between ma50 and ma20 -->
+            <Grid ColumnDefinitions="*,80" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0" IsChecked="{Binding CheckMa50AndMa20Percentage, Mode=TwoWay}"
+                          Content="Minimal percentage between ma50 and ma20"
+                          FontSize="12" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding Ma50AndMa20Percentage, Mode=TwoWay, StringFormat=N2}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding CheckMa50AndMa20Percentage}"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

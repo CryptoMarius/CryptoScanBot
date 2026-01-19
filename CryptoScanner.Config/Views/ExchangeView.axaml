@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:ExchangeViewModel"
+             x:Class="CryptoScanner.Config.Views.ExchangeView">
+<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="5" RowSpacing="5">
+        
+        <!-- Extra application title -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Extra application caption:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding ExtraCaption, Mode=TwoWay}" 
+                 Width="150" Height="22" MinHeight="26" 
+                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
+
+        <!-- Active exchange -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Active exchange:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding ExchangeList}" 
+                  SelectedValue="{Binding ActiveExchange}" SelectedValueBinding="{Binding Key}"
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
+                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
+                <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
+            </ComboBox>
+
+        <!-- Activate exchange -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Activate exchange:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ExchangeList}" 
+                  SelectedValue="{Binding ActivateExchange}" SelectedValueBinding="{Binding Key}"
+                 Width="150" Height="22" MinHeight="26" IsDropDownOpen="False"
+                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
+                <ComboBox.ItemTemplate> <DataTemplate> <TextBlock Text="{Binding Value}"/> </DataTemplate> </ComboBox.ItemTemplate>
+            </ComboBox>
+
+        <!-- refresh symbols -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Refresh symbols every x minutes:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding RefreshSymbols, TargetNullValue='0', FallbackValue='0'}" 
+                 Width="150" Height="22" MinHeight="26" 
+                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left">
+            </TextBox>
+
+    </Grid>
+
+</UserControl>

@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:DebugTabViewModel"
+             x:Class="CryptoScanner.Config.Views.DebugTabView">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16" Spacing="10">
+            
+            <!-- Debug trend calculation -->
+            <CheckBox IsChecked="{Binding DebugTrendCalculation, Mode=TwoWay}"
+                      Content="Show more information during TrendCalculation (in file)"
+                      FontSize="12"/>
+
+            <!-- Debug signal strength -->
+            <CheckBox IsChecked="{Binding DebugSignalStrength, Mode=TwoWay}"
+                      Content="Calculate statistics (min and max price + perc for signal and position)"
+                      FontSize="12"/>
+
+            <!-- Debug symbol -->
+            <StackPanel Spacing="8" Margin="0,8,0,0">
+                <Grid ColumnDefinitions="120,*" RowDefinitions="Auto">
+                    <TextBox Grid.Column="0" Text="{Binding DebugSymbol, Mode=TwoWay}" 
+                             Height="28" FontSize="12" Padding="6,2" 
+                             CornerRadius="4" Watermark="SYMBOL"/>
+                    <TextBlock Grid.Column="1"  VerticalAlignment="Center"
+                               Text="Limit Debug stuff to this symbol (less information)" 
+                               Margin="12,0,0,0" FontSize="12"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Debug KLine receive -->
+            <CheckBox IsChecked="{Binding DebugKLineReceive, Mode=TwoWay}"
+                      Content="Debug KLineReceive (does kline ticker work)" FontSize="12" Margin="0,8,0,0"/>
+
+            <!-- Debug signal create -->
+            <CheckBox IsChecked="{Binding DebugSignalCreate, Mode=TwoWay}"
+                      Content="Debug SignalCreate (does coin go to analyzer)" FontSize="12"/>
+
+            <!-- Debug asset management -->
+            <CheckBox IsChecked="{Binding DebugAssetManagement, Mode=TwoWay}"
+                      Content="Debug asset management (papertrading/emulator)" FontSize="12"/>
+
+            <!-- Debug zone candles -->
+            <CheckBox IsChecked="{Binding DebugZoneCandles, Mode=TwoWay}"
+                      Content="Debug candle management zones" FontSize="12"/>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

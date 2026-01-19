@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             xmlns:controls="using:Avalonia.Controls"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:QuoteTabViewModel"
+             x:Class="CryptoScanner.Config.Views.QuoteTabView">
+
+    <UserControl.Styles>
+        <!-- Hide the spinner buttons on NumericUpDown -->
+        <Style Selector="NumericUpDown /template/ ButtonSpinner#PART_Spinner">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            
+            <!-- Header Row -->
+            <Grid ColumnDefinitions="30,70,100,100,100,100,100,100" Margin="0,0,0,8"
+                  Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                
+                <TextBlock Grid.Column="0" Text="" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Symbol" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="Min. volume" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="3" Text="Min. price" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="4" Text="Amount" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="5" Text="Percentage" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="6" Text="Color" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="7" Text="Symbols" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,4,0,4" HorizontalAlignment="Center"/>
+            </Grid>
+
+            <!-- Items -->
+            <ItemsControl ItemsSource="{Binding Quotes}">
+                
+                <!-- Stack items vertically -->
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical" Spacing="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <!-- Individual quote item template -->
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="30,70,100,100,100,100,100,100" RowDefinitions="Auto" Margin="0,0,0,8">
+                            
+                            <!-- Checkbox -->
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                            <!-- Symbol name -->
+                            <TextBlock Grid.Column="1" Text="{Binding Symbol}" FontSize="12" Margin="0,0,16,0"
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- Min. -->
+                            <TextBox Grid.Column="2" Text="{Binding MinVolume}" 
+                                           Height="26" FontSize="12" Padding="6,2" CornerRadius="4" BorderThickness="0"
+                                           HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- Min. price -->
+                            <TextBox Grid.Column="3" 
+                                           Text="{Binding MinPrice, Mode=TwoWay}"
+                                           Height="26" FontSize="12" Padding="6,2" CornerRadius="4" BorderThickness="0"
+                                           HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- Amount -->
+                            <TextBox Grid.Column="4" Text="{Binding Amount, Mode=TwoWay}"
+                                           Height="26" FontSize="12" Padding="6,2" CornerRadius="4" BorderThickness="0"
+                                           HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- Percentage -->
+                            <TextBox Grid.Column="5" Text="{Binding Percentage, Mode=TwoWay}" 
+                                           Height="26" FontSize="12" Padding="6,2" CornerRadius="4" BorderThickness="0"
+                                           HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+
+                            <!-- BackgroundColor -->
+                            <controls:ColorPicker Grid.Column="6" Color="{Binding BackgroundColor}" 
+                                         Height="24" Width="100" HorizontalAlignment="Stretch"/>
+
+                            <!-- Symbol count (right aligned) -->
+                            <TextBlock Grid.Column="7" Text="{Binding SymbolCount, StringFormat='{}{0} symbols'}"
+                                       FontWeight="SemiBold" FontSize="12" 
+                                       HorizontalAlignment="Stretch" TextAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                
+            </ItemsControl>
+            
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

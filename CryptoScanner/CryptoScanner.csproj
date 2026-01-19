@@ -35,7 +35,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.3.10" />
-		<PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
@@ -47,10 +46,6 @@
 		<PackageReference Include="Silk.NET.OpenAL" Version="2.22.0" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -146,6 +141,12 @@
 
 	<ItemGroup>
 		<AvaloniaResource Include="Assets\*.*" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
+	  <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup>

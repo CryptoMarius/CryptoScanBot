@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:IntervalViewModel"
+             x:Class="CryptoScanner.Config.Views.IntervalView">
+
+    <StackPanel Spacing="10">
+        <HeaderedContentControl Classes="groupbox" Header="Intervals" Padding="10">
+            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,*" >
+        
+                <!-- Column Headers -->
+                <TextBlock Grid.Column="0" Grid.Row="0" Text="Minutes" FontWeight="SemiBold" 
+                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+        
+                <TextBlock Grid.Column="1" Grid.Row="0" Text="Hours" FontWeight="SemiBold" 
+                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+        
+                <TextBlock Grid.Column="2" Grid.Row="0" Text="Days/Weeks" FontWeight="SemiBold" 
+                           Margin="0,4,24,10" HorizontalAlignment="Left"/>
+
+                <!-- Column 1: Minutes -->
+                <ItemsControl Grid.Column="0" Grid.Row="1" ItemsSource="{Binding MinuteIntervals}" Margin="0,0,24,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Column 2: Hours -->
+                <ItemsControl Grid.Column="1" Grid.Row="1" ItemsSource="{Binding HourIntervals}" Margin="0,0,24,0"> 
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Column 3: Days/Weeks -->
+                <ItemsControl Grid.Column="2" Grid.Row="1" ItemsSource="{Binding DayIntervals}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsEnabled, Mode=TwoWay}"
+                                      Content="{Binding Name}" Margin="0,2" FontSize="12"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </Grid>
+        </HeaderedContentControl>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             xmlns:controls="using:Avalonia.Controls"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:BlackAndWhiteListTabViewModel"
+             x:Class="CryptoScanner.Config.Views.BlackAndWhiteListTabView">
+
+    <TabControl Grid.Row="2" Margin="0" >
+		<TabItem Header="Whitelist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:BlackAndWhiteListView DataContext="{Binding WhiteListLong}" />
+		</TabItem>
+		<TabItem Header="Whitelist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+			<settings:BlackAndWhiteListView DataContext="{Binding WhiteListShort}" />
+		</TabItem>
+		<TabItem Header="Blacklist long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:BlackAndWhiteListView DataContext="{Binding BlackListLong}" />
+		</TabItem>
+		<TabItem Header="Blacklist short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <settings:BlackAndWhiteListView DataContext="{Binding BlackListShort}" />
+		</TabItem>
+    </TabControl>				
+
+</UserControl>

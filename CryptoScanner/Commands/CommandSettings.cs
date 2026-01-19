@@ -1,13 +1,9 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Styling;
+﻿using Avalonia.Controls;
 
+using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
-using CryptoScanner.Core.Telegram;
-using CryptoScanner.Settings.Views;
 
 namespace CryptoScanner.Commands;
 

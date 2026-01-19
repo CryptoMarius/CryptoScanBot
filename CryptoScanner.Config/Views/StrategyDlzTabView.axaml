@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1000"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyDlzTabViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyDlzTabView">
+
+    <StackPanel>
+        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" RowSpacing="5">
+           <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
+            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left">
+                <settings:IndicatorZigZagView DataContext="{Binding IndicatorZigZagViewModel}" />
+            </HeaderedContentControl>
+        </Grid>
+        <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto" Margin="5" RowSpacing="5">
+            <settings:StrategyDlzSettingsView Grid.Row="0" DataContext="{Binding StrategyDlzSettingsViewModel}" />
+            <settings:StrategyDlzSettingsZoneFilterView Grid.Row="0" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoneFilterViewModel}" />
+
+            <settings:StrategyDlzSettingsUnzoomedBoxView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyDlzSettingsUnzoomedBoxViewModel}" />
+            <settings:StrategyDlzSettingsZoomedBoxView Grid.Row="1" Grid.Column="1" DataContext="{Binding StrategyDlzSettingsZoomedBoxViewModel}" />
+
+            <settings:IntervalView Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" />
+        </Grid>
+    </StackPanel>
+
+</UserControl>

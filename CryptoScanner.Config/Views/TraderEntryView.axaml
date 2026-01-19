@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="180"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:TraderEntryViewModel"
+             x:Class="CryptoScanner.Config.Views.TraderEntryView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Entry">
+        <StackPanel Margin="8" Spacing="12">
+            
+            <!-- Order Type -->
+            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Order Type:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2" 
+                          ItemsSource="{Binding OrderTypeList}"
+                          SelectedValue="{Binding EntryOrderType, Mode=TwoWay}"
+                          DisplayMemberBinding="{Binding Key}"
+                          SelectedValueBinding="{Binding Value}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Strategy -->
+            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Strategy:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2" 
+                          ItemsSource="{Binding StrategyList}"
+                          SelectedValue="{Binding EntryStrategy, Mode=TwoWay}"
+                          DisplayMemberBinding="{Binding Key}"
+                          SelectedValueBinding="{Binding Value}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Pricing -->
+            <Grid ColumnDefinitions="Auto,*,250" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Pricing:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2" 
+                          ItemsSource="{Binding PricingList}"
+                          SelectedValue="{Binding EntryOrderPrice, Mode=TwoWay}"
+                          DisplayMemberBinding="{Binding Key}"
+                          SelectedValueBinding="{Binding Value}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Remove Time -->
+            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Remove time:" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2" 
+                         Text="{Binding EntryRemoveTime, Mode=TwoWay}" 
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="3" Text="minutes" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

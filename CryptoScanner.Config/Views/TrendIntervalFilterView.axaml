@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="180"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:TrendIntervalFilterViewModel"
+             x:Class="CryptoScanner.Config.Views.TrendIntervalFilterView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Trend interval filter">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Intervals}" Margin="8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:IntervalCheckboxViewModel">
+                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                  Content="{Binding DisplayText}"
+                                  FontSize="12"
+                                  Margin="0,2"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </HeaderedContentControl>
+
+</UserControl>

@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="160" d:DesignHeight="120"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:StrategyViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyView">
+
+    <StackPanel >
+        <HeaderedContentControl Classes="groupbox" Header="Strategies">
+            <ScrollViewer>
+                <UniformGrid Columns="2" Rows="0">
+                    <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </UniformGrid>
+            </ScrollViewer>
+        </HeaderedContentControl>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyNweTabViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyNweTabView">
+
+    <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+        <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
+        <settings:StrategyNweSettingsNweView Grid.Row="1" DataContext="{Binding StrategyNweSettingsNweViewModel}" />
+        <settings:StrategyNweSettingsView Grid.Row="2" DataContext="{Binding StrategyNweSettingsViewModel}" />
+    </Grid>
+
+</UserControl>
