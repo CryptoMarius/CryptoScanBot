@@ -15,13 +15,6 @@ using System.ComponentModel;
 namespace CryptoScanner.Model;
 
 
-//public interface IGridViewModel
-//{
-//    event EventHandler? RequestSort;
-//    event EventHandler<T>? RequestSortedInsert;
-//}
-
-//public abstract partial class UserControlWithGrid<T> : UserControl
 public abstract partial class UserControlWithGrid<T> : UserControl where T : class
 {
     protected enum TargetMenu

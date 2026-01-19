@@ -67,7 +67,8 @@ public partial class MainWindow : Window
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             var menu = this.FindControl<Grid>("TitleBarGrid");
-            menu?.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
+            if (menu != null) 
+                menu.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
         }
 
         Title = $"{Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();

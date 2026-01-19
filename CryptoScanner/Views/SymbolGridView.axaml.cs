@@ -59,4 +59,5 @@ public partial class SymbolGridView : UserControlWithGrid<SymbolViewModel>
         }
     }
 
+
 }

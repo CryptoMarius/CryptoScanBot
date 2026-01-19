@@ -4,11 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" 
              x:Class="CryptoScanner.Views.SymbolGridView"
+             xmlns:helper="using:CryptoScanner.Helpers"
              xmlns:vm="using:CryptoScanner.ViewModels"
              xmlns:converter="using:CryptoScanner.Converters"
              x:DataType="vm:SymbolGridViewModel">
 
     <UserControl.Resources>
+        <converter:SymbolColorConverter x:Key="SymbolColorConverter"/>
         <converter:VolumeColorConverter x:Key="VolumeColorConverter" />
     </UserControl.Resources>
 
@@ -37,9 +39,24 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Name -->
-                <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" Width="Auto" SortMemberPath="Symbol"/>
-                
+                <!-- Symbol -->
+                <DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Symbol}">
+                                <TextBlock.Background>
+                                    <MultiBinding Converter="{StaticResource SymbolColorConverter}">
+                                        <Binding Path="."/>
+                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=DataGridRow}"/>
+                                        <Binding Path="(helper:HoverHelper.IsHover)" RelativeSource="{RelativeSource AncestorType=DataGridRow}" />
+                                    </MultiBinding>
+                                </TextBlock.Background>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+
                 <!-- Volume -->
                 <DataGridTemplateColumn Width="Auto" SortMemberPath="Volume">
                     <DataGridTemplateColumn.Header>

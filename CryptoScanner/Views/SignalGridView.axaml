@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450" 
              x:Class="CryptoScanner.Views.SignalGridView"
+             xmlns:helper="using:CryptoScanner.Helpers"
              xmlns:vm="using:CryptoScanner.ViewModels"
              xmlns:converter="using:CryptoScanner.Converters"
              x:DataType="vm:SignalGridViewModel">
@@ -27,11 +28,16 @@
         <converter:Sma20TextConverter x:Key="Sma20TextConverter" />
         <converter:Sma50ColorConverter x:Key="Sma50ColorConverter" />
         <converter:Sma50TextConverter x:Key="Sma50TextConverter" />
+        <converter:StrategyColorConverter x:Key="StrategyColorConverter" />
         <converter:StochColorConverter x:Key="StochColorConverter" />
+        <converter:SymbolColorConverter x:Key="SymbolColorConverter"/>
 		<converter:TrendColorConverter x:Key="TrendColorConverter" />
         <converter:TrendTextConverter x:Key="TrendTextConverter" />
         <converter:VolumeColorConverter x:Key="VolumeColorConverter" />
 	</UserControl.Resources>
+
+
+
 
     <Grid>
         <DataGrid x:Name="SignalDataGrid"
@@ -68,10 +74,21 @@
                 <DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>
 
                 <!-- Symbol -->
-                <DataGridTextColumn Header="Symbol" 
-                                    Binding="{Binding Symbol}" 
-                                    Width="100" MinWidth="90" 
-                                    SortMemberPath="Symbol" />
+                <DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Symbol}">
+                                <TextBlock.Background>
+                                    <MultiBinding Converter="{StaticResource SymbolColorConverter}">
+                                        <Binding Path="."/>
+                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=DataGridRow}"/>
+                                        <Binding Path="(helper:HoverHelper.IsHover)" RelativeSource="{RelativeSource AncestorType=DataGridRow}" />
+                                    </MultiBinding>
+                                </TextBlock.Background>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Side -->
                 <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
@@ -88,7 +105,21 @@
                 <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="60" MinWidth="50" SortMemberPath="Interval" />
 
                 <!-- Strategy -->
-                <DataGridTextColumn Header="Strategy" Binding="{Binding Strategy}" Width="60" MinWidth="50" SortMemberPath="Strategy" />
+                <DataGridTemplateColumn Header="Strategy" Width="60" MinWidth="50" SortMemberPath="Strategy">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Strategy}">
+                                <TextBlock.Background>
+                                    <MultiBinding Converter="{StaticResource StrategyColorConverter}">
+                                        <Binding Path="."/>
+                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=DataGridRow}"/>
+                                        <Binding Path="(helper:HoverHelper.IsHover)" RelativeSource="{RelativeSource AncestorType=DataGridRow}" />
+                                    </MultiBinding>
+                                </TextBlock.Background>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Text -->
                 <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="150" MinWidth="90" 

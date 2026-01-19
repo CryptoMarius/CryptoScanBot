@@ -14,8 +14,8 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
 {
     public PositionClosedGridView()
     {
-        _targetMenu = TargetMenu.Position;
         _gridName = "PositionClosedGrid";
+        _targetMenu = TargetMenu.Position;
         InitializeComponent();
 
         if (Design.IsDesignMode)
