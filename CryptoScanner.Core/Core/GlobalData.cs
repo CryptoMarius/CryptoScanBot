@@ -154,11 +154,6 @@ public static class GlobalData
     // Indexed strategies for colors and soundfiles etc...
     public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy)> StrategiesSettings = [];
 
-    static GlobalData()
-    {
-        IndexStrategySettings();
-    }
-
 
     public static void LoadExchanges()
     {
@@ -722,7 +717,7 @@ public static class GlobalData
     //}
 
     // Index for the available strategies (available via ui)
-    private static void IndexStrategySettings()
+    public static void IndexStrategySettings()
     {
         StrategiesSettings = [];
         StrategiesSettings.Add(CryptoSignalStrategy.Jump, (Settings.Signal.Jump, 0));

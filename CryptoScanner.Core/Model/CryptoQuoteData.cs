@@ -24,7 +24,7 @@ public class CryptoQuoteData
     // Trading: The initial entry percentage of PF
     public decimal EntryPercentage { get; set; }
     // Color of the base coin in signal grid
-    public Color DisplayColor { get; set; } = Colors.White;
+    public Color DisplayColor { get; set; } = Color.Parse("#00FFFFFF");
 
     // List of symbols (for this quote)
     [Computed]

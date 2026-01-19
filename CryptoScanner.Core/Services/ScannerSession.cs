@@ -135,6 +135,7 @@ public class ScannerSession : IScannerSession
         //    dashBoardControl1.Font = Font;
         //}
 
+        GlobalData.IndexStrategySettings();
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
 
