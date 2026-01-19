@@ -170,9 +170,9 @@ public partial class MainWindow : Window
         {
             // There are already three items bound to the application states (sound, trading and analyzer)
             menuFile.Items.Add(new MenuItem { Header = "-" });
-            menuFile.Items.Add(new MenuItem { Header = "Configuration", Command = new CommandShowConfiguration(), CommandParameter = this });
+            menuFile.Items.Add(new MenuItem { Header = "Scanner configuration", Command = new CommandShowConfiguration(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "Clear log and ticker count", Command = new CommandClearLogAndTicker(), CommandParameter = this });
+            menuFile.Items.Add(new MenuItem { Header = "Clear log and tickers", Command = new CommandClearLogAndTicker(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "-" });
             menuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
         }
