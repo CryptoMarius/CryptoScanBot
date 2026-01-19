@@ -12,7 +12,7 @@ public class CommandShowTrendInformation : CommandBase
 {
     public override async void Execute(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.interval != null)
         {
             System.Diagnostics.Debug.WriteLine($"Show trend {dto.symbol.Name}");
 

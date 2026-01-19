@@ -12,7 +12,7 @@ public class CommandExcelSymbolInformation : CommandBase
 
     public async Task ExecuteAsync(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null)
         {
             _ = Task.Run(() => { new ExcelSymbolDump(dto.symbol).ExportToExcel(); });
         }

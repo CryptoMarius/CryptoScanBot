@@ -6,7 +6,7 @@ public class CommandDatagridHideSelection : CommandBase
     {
         System.Diagnostics.Debug.WriteLine($"Copying cells to clipboard");
 
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.datagrid != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.datagrid != null)
         {
             dto.datagrid.SelectedItems.Clear();
         }

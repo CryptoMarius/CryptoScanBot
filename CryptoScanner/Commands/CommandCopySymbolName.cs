@@ -16,7 +16,7 @@ public class CommandCopySymbolName : CommandBase
     {
         //System.Diagnostics.Debug.WriteLine($"Copyy symbing cells to clipboard");
 
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.parentWindow != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.parentWindow != null)
         {
             string text = dto.symbol.Name;
 

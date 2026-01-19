@@ -12,7 +12,7 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
 {
     public override bool CanExecute(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.position != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.position != null)
         {
             return dto.position.CloseTime == null;
         }
@@ -28,7 +28,7 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
     public async Task ExecuteAsync(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandShowGraph");
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.position != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.position != null)
         {
             try
             {

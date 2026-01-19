@@ -13,7 +13,7 @@ public class CommandShowGraph : CommandBase
     public override void Execute(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandShowGraph");
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.parentWindow != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.parentWindow != null)
         {
             try
             {

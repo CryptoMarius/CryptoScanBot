@@ -15,7 +15,7 @@ public class CommandPositionCalculate : CommandBase
     public async Task ExecuteAsync(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandPositionCalculate");
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.position != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.position != null)
         {
             try
             {

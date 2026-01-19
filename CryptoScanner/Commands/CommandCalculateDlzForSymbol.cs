@@ -15,7 +15,7 @@ public class CommandCalculateDlzForSymbol : CommandBase
 
     public async Task ExecuteAsync(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null)
         {
             System.Diagnostics.Debug.WriteLine($"Calculate dlz for {dto.symbol.Name}");
             foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)

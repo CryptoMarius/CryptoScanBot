@@ -16,7 +16,7 @@ public class CommandPositionDelete : CommandBase
     public async Task ExecuteAsync(object? parameter)
     {
         System.Diagnostics.Debug.WriteLine($"CommandShowGraph");
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.position != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.position != null)
         {
             // TODO: Confirm dialog
             //if (MessageBox.Show($"Delete position {dto.position.Symbol.Name}", "Delete position?", MessageBoxButtons.YesNo) != DialogResult.Yes)

@@ -47,7 +47,7 @@ public abstract class CommandBase : ICommand
     public abstract void Execute(object? parameter);
 
     // TODO: Fix the casing of the properties when all commands are finished
-    internal class parameterObjects
+    internal class ParameterObjects
     {
         public DataGrid? datagrid = null;
         public Window? parentWindow = null;
@@ -64,7 +64,7 @@ public abstract class CommandBase : ICommand
         public CryptoPosition? position = null;
     }
 
-    internal static bool GetObjectInformation(object? parameter, out parameterObjects dto)
+    internal static bool GetObjectInformation(object? parameter, out ParameterObjects dto)
     {
         dto = new();
         if (parameter is (DataGrid _datagrid1, SignalViewModel signalViewModel, Window parentWindow1))

@@ -12,7 +12,7 @@ public class CommandCopyDataCells : CommandBase
     {
         System.Diagnostics.Debug.WriteLine($"Copying cells to clipboard");
 
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.datagrid != null && dto.parentWindow != null)
+        if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.datagrid != null && dto.parentWindow != null)
         {
             string text = "Hello World";
 
