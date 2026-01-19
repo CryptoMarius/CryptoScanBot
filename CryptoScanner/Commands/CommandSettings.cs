@@ -36,10 +36,10 @@ public class CommandSettings : CommandBase
 
         try
         {
-            var dialog = new SettingsWindow
+            var dialog = new ConfigurationWindow
             {
                 CanResize = true,
-                Title = "Chart form",
+                Title = "Configuration form",
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
             };
 
@@ -48,7 +48,7 @@ public class CommandSettings : CommandBase
             if (result != true)
                 return;
 
-            GlobalData.SaveSettings();
+            GlobalData.SaveConfiguration();
             //GlobalData.SaveUserSettings(); // custom colors (not sure?)
 
             // Don't save exchange immediately, lots of data still in memory etc
@@ -101,12 +101,12 @@ public class CommandSettings : CommandBase
                 }
 
                 // Standaard timers e.d.
-                await scannerSession.ApplySettingsAsync();
+                await scannerSession.ApplyConfigurationAsync();
 
                 // Schedule a reload of data
                 scannerSession.ScheduleRefresh();
             }
-            else await scannerSession.ApplySettingsAsync();
+            else await scannerSession.ApplyConfigurationAsync();
 
         }
         catch (Exception error)

@@ -118,7 +118,7 @@ public partial class App : Application
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStartup();
-            _ = scannerSession.ApplySettingsAsync();
+            _ = scannerSession.ApplyConfigurationAsync();
             scannerSession.Start(0);
 
             // Initialize a hidden browser to avoid the Altrady start question in the browser
@@ -190,7 +190,7 @@ public partial class App : Application
 
         // Ensure all states are written to disk before exit
         ScannerLog.Logger.Trace($"OnApplicationExit(GlobalData.SaveSettings)");
-        GlobalData.SaveSettings();
+        GlobalData.SaveConfiguration();
 
         // TODO: Rethink this boolean storage
         ScannerLog.Logger.Trace($"OnApplicationExit(applicationStateService.FlushToDisk)");

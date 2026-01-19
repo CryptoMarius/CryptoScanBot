@@ -10,7 +10,7 @@ using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Config.ViewModels;
 
-public partial class SettingsViewModel : ObservableObject
+public partial class ConfigurationViewModel : ObservableObject
 {
 
     [ObservableProperty]
@@ -58,7 +58,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private DebugTabViewModel _debugTabViewModel;
 
-    public SettingsViewModel()
+    public ConfigurationViewModel()
     {
         // Exchange and common
         _exchangeViewModel = new();

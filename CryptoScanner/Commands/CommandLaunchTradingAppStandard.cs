@@ -19,7 +19,7 @@ public class CommandLaunchTradingAppStandard : CommandBase
             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-            GlobalData.LoadWebLinkSettings(); // refresh links
+            GlobalData.LoadWebLinkConfiguration(); // refresh links
             CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, tradingAppInternExtern);
         }
     }

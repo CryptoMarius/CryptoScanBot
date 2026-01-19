@@ -31,4 +31,10 @@
     <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\ConfigurationWindow.axaml.cs">
+      <DependentUpon>ConfigurationWindow.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

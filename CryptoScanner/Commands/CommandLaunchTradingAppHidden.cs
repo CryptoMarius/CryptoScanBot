@@ -17,7 +17,7 @@ public class CommandLaunchTradingAppHidden : CommandBase
 
             //this.ActivateTradingApp(GlobalData.Settings.General.TradingApp, dto.symbol, dto.interval, CryptoExternalUrlType.External);
 
-            GlobalData.LoadWebLinkSettings(); // refresh links
+            GlobalData.LoadWebLinkConfiguration(); // refresh links
             (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, false, dto.symbol, dto.interval);
             if (Url != "")
             {

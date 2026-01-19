@@ -24,7 +24,7 @@ public class TelegramBotSlots
             {
                 stringbuilder.AppendLine($"Slots long = {slots}");
                 GlobalData.Settings.Trading.SlotsMaximalLong = slots;
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -38,7 +38,7 @@ public class TelegramBotSlots
             {
                 stringbuilder.AppendLine($"Slots short = {slots}");
                 GlobalData.Settings.Trading.SlotsMaximalShort = slots;
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else

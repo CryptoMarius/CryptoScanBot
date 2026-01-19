@@ -4,7 +4,6 @@ using Avalonia.Threading;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -375,7 +374,7 @@ public static class GlobalData
 
 
 
-    public static void LoadScannerSettings()
+    public static void LoadScannerConfiguration()
     {
         try
         {
@@ -414,7 +413,7 @@ public static class GlobalData
     }
 
 
-    public static void LoadWebLinkSettings()
+    public static void LoadWebLinkConfiguration()
     {
         string filename = $"{Constants.AppName}-weblinks.json";
         try
@@ -447,7 +446,7 @@ public static class GlobalData
     }
 
 
-    public static void LoadTelegramSettings()
+    public static void LoadTelegramConfiguration()
     {
         string fileName = $"{Constants.AppName}-telegram.json";
         try
@@ -470,7 +469,7 @@ public static class GlobalData
         }
     }
 
-    public static void LoadExchangeSettings()
+    public static void LoadExchangeConfiguration()
     {
         string fileName = $"{Constants.AppName}-exchange.json";
         try
@@ -500,7 +499,7 @@ public static class GlobalData
         }
     }
 
-    public static void LoadAltradySettings()
+    public static void LoadAltradyConfiguration()
     {
         string fileName = $"{Constants.AppName}-altrady.json";
         try
@@ -525,17 +524,17 @@ public static class GlobalData
 
 
 
-    public static void LoadSettings()
+    public static void LoadConfiguration()
     {
-        LoadScannerSettings();
-        LoadExchangeSettings();
-        LoadTelegramSettings();
-        LoadAltradySettings();
-        LoadWebLinkSettings();
+        LoadScannerConfiguration();
+        LoadExchangeConfiguration();
+        LoadTelegramConfiguration();
+        LoadAltradyConfiguration();
+        LoadWebLinkConfiguration();
     }
 
 
-    public static void DefaultSettings()
+    public static void DefaultConfiguration()
     {
         // Apply some defaults
         if (Settings.QuoteCoins.Count == 0)
@@ -569,7 +568,7 @@ public static class GlobalData
         }
     }
 
-    public static void SaveSettings()
+    public static void SaveConfiguration()
     {
         string baseFolder = AppDataFolder;
         Directory.CreateDirectory(baseFolder);

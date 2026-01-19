@@ -29,7 +29,7 @@ public class TelegramBotStart
             {
                 GlobalData.Settings.Signal.SoundsActive = true;
                 stringbuilder.AppendLine("Sound started!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -41,7 +41,7 @@ public class TelegramBotStart
         //    {
         //        GlobalData.Settings.BalanceBot.Active = true;
         //        stringbuilder.AppendLine("Balance bot started!");
-        //        GlobalData.SaveSettings();
+        //        GlobalData.SaveConfiguration();
         //GlobalData.TelegramHasChanged("");
         //    }
         //    else
@@ -53,7 +53,7 @@ public class TelegramBotStart
         //    {
         //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = true;
         //        stringbuilder.AppendLine("Balance bot advice only started!");
-        //        GlobalData.SaveSettings();
+        //        GlobalData.SaveConfiguration();
         //GlobalData.TelegramHasChanged("");
         //    }
         //    else
@@ -65,7 +65,7 @@ public class TelegramBotStart
             {
                 GlobalData.Settings.Signal.Active = true;
                 stringbuilder.AppendLine("Signal bot started!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -77,7 +77,7 @@ public class TelegramBotStart
             {
                 GlobalData.Settings.Trading.Active = true;
                 stringbuilder.AppendLine("Trading bot started!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -89,7 +89,7 @@ public class TelegramBotStart
             {
                 GlobalData.Settings.Trading.Active = true;
                 stringbuilder.AppendLine("Bot started!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else

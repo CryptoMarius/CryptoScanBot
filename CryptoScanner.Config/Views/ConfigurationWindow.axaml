@@ -2,8 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:CryptoScanner.Config.ViewModels"
         xmlns:settings="using:CryptoScanner.Config.Views"
-        x:Class="CryptoScanner.Config.Views.SettingsWindow"
-        x:DataType="vm:SettingsViewModel"
+        x:Class="CryptoScanner.Config.Views.ConfigurationWindow"
+        x:DataType="vm:ConfigurationViewModel"
         Title="Scanner configuration"
         Width="1300" Height="800"
         WindowStartupLocation="CenterOwner">

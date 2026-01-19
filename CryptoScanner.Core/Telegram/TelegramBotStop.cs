@@ -27,7 +27,7 @@ public class TelegramBotStop
             {
                 GlobalData.Settings.Signal.SoundsActive = false;
                 stringbuilder.AppendLine("Sound stopped!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -39,7 +39,7 @@ public class TelegramBotStop
         //    {
         //        GlobalData.Settings.BalanceBot.Active = false;
         //        stringbuilder.AppendLine("Balance bot stopped!");
-        //        GlobalData.SaveSettings();
+        //        GlobalData.SaveConfiguration();
         //GlobalData.TelegramHasChanged("");
         //    }
         //    else
@@ -51,7 +51,7 @@ public class TelegramBotStop
         //    {
         //        GlobalData.Settings.BalanceBot.ShowAdviceOnly = false;
         //        stringbuilder.AppendLine("Balance bot advice only stopped!");
-        //        GlobalData.SaveSettings();
+        //        GlobalData.SaveConfiguration();
         //GlobalData.TelegramHasChanged("");
         //    }
         //    else
@@ -64,7 +64,7 @@ public class TelegramBotStop
                 // TODO: User interface ook updaten
                 GlobalData.Settings.Signal.Active = false;
                 stringbuilder.AppendLine("Signal bot stopped!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else
@@ -77,7 +77,7 @@ public class TelegramBotStop
                 // TODO: User interface ook updaten
                 GlobalData.Settings.Trading.Active = false;
                 stringbuilder.AppendLine("Bot stopped!");
-                GlobalData.SaveSettings();
+                GlobalData.SaveConfiguration();
                 GlobalData.TelegramHasChanged("");
             }
             else

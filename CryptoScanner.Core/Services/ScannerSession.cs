@@ -80,7 +80,7 @@ public class ScannerSession : IScannerSession
         GlobalData.LoadIntervals();
 
         // Load settings and combine with the application parameters (-e ExchangeName)
-        GlobalData.LoadSettings();
+        GlobalData.LoadConfiguration();
         PickupExchangeFromParameter();
     }
 
@@ -100,7 +100,7 @@ public class ScannerSession : IScannerSession
         }
     }
 
-    public async Task ApplySettingsAsync()
+    public async Task ApplyConfigurationAsync()
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.ApplySettings");
 

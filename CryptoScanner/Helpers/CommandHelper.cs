@@ -11,7 +11,7 @@ public static class CommandHelper
         CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {
         // Activate the trading application (and we use a dummy browser for Altrady)
-        GlobalData.LoadWebLinkSettings(); // refresh links
+        GlobalData.LoadWebLinkConfiguration(); // refresh links
         (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(tradingApp, false, symbol, interval);
         if (Url != "")
         {
