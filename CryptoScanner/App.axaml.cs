@@ -118,7 +118,7 @@ public partial class App : Application
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStartup();
-            _ = scannerSession.ApplyConfigurationAsync();
+            _ = scannerSession.ApplyConfigurationAsync(true);
             scannerSession.Start(0);
 
             // Initialize a hidden browser to avoid the Altrady start question in the browser

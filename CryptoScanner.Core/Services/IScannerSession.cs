@@ -3,7 +3,7 @@
 public interface IScannerSession
 {
     void AfterStartup();
-    Task ApplyConfigurationAsync();
+    Task ApplyConfigurationAsync(bool loadSymbols);
     void ConnectionWasLost(string text);
     void ConnectionWasRestored(string text);
     void ScheduleRefresh();

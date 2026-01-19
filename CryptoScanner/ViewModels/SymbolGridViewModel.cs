@@ -15,7 +15,7 @@ public partial class SymbolGridViewModel : ObservableObject
     [ObservableProperty]
     private ObservableRangeCollection<SymbolViewModel> _symbols = [];
 
-    public static bool readSymbols = true;
+    //public static bool readSymbols = true;
 
     public SymbolGridViewModel()
     {
@@ -31,9 +31,9 @@ public partial class SymbolGridViewModel : ObservableObject
     private void SymbolsHaveChangedEvent(string text)
     {
         // Delayed load of the symbols
-        if (readSymbols)
-            GlobalData.LoadSymbols();
-        readSymbols = false;
+        //if (readSymbols)
+        //    GlobalData.LoadSymbols();
+        //readSymbols = false;
 
         // Laad symbols direct in de observable collection
         List<SymbolViewModel> symbols = [];

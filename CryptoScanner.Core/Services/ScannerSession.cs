@@ -100,7 +100,7 @@ public class ScannerSession : IScannerSession
         }
     }
 
-    public async Task ApplyConfigurationAsync()
+    public async Task ApplyConfigurationAsync(bool loadSymbols)
     {
         System.Diagnostics.Debug.WriteLine($"ScannerSession.ApplySettings");
 
@@ -165,10 +165,13 @@ public class ScannerSession : IScannerSession
 
         SetApplicationTitle();
 
-        // Positions and assets will be loaded later?
-        LoadAssets(); // not sure if we need this (papertrading perhaps?)
-        GlobalData.LoadSymbols(); // nee to load these before the tickers are created
-        GlobalData.SymbolsHaveChanged("");
+        if (loadSymbols)
+        {
+            // Positions will be loaded later
+            LoadAssets(); // not sure if we need this (papertrading perhaps?)
+            GlobalData.LoadSymbols(); // need to load these before the tickers are created
+            GlobalData.SymbolsHaveChanged("");
+        }
     }
 
 
