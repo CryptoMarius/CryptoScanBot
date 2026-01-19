@@ -60,6 +60,7 @@ public class ScannerSession : IScannerSession
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
 
         TimerSaveCandleData.Elapsed += TimerSaveCandleData_Tick;
+        TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
 
         ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent_Tick);
         ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent_Tick);
@@ -396,6 +397,11 @@ public class ScannerSession : IScannerSession
         //TimerCheckDataStream.InitTimerInterval(5 * 60); // reset interval (back to 5m)
         //TimerRestartStreams.InitTimerInterval(4 * 60 * 60); // reset interval (back to 4h)
         //}
+    }
+
+    private void TimerSoundHeartBeat_Tick(object? sender, EventArgs? e)
+    {
+        GlobalData.PlaySomeMusic("sound-heartbeat.wav");
     }
 
 
