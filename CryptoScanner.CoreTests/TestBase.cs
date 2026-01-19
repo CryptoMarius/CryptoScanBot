@@ -44,7 +44,7 @@ public class TestBase
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent += AddTextToLogTab;
 
-            GlobalData.LoadSettings();
+            GlobalData.LoadConfiguration();
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
             GlobalData.LoadIntervals();
