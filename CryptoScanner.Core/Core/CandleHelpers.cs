@@ -259,7 +259,7 @@ public static class Helper
                         {
                             if (candle.Volume < symbol.QuoteData.MinimalVolume)
                             {
-                                text = $"{symbol.Name} volume in the last {GlobalData.Settings.Signal.CheckVolumeOverPeriod} days not above {symbol.QuoteData.MinimalVolume.ToString0()}";
+                                text = $"{symbol.Name} volume in the last {GlobalData.Settings.Signal.CheckVolumeOverDays} days not above {symbol.QuoteData.MinimalVolume.ToString0()}";
                                 return false;
                             }
 
