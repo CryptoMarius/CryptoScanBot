@@ -9,22 +9,12 @@ public class CommandLaunchTradingViewInternal : CommandBase
 {
     public override void Execute(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null)
+        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null)
         {
+            dto.interval ??= GlobalData.IntervalListPeriod[GlobalData.Settings.General.DefaultInterval];
             System.Diagnostics.Debug.WriteLine($"CommandLaunchTradingViewInternal {dto.symbol.Name}");
             System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in internal tradingview browser");
             CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, dto.symbol, dto.interval, CryptoExternalUrlType.Internal);
-
-            //GlobalData.LoadWebLinkSettings(); // refresh links
-            //(string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(CryptoTradingApp.TradingView, false, dto.symbol, dto.interval);
-            //if (Url != "")
-            //{
-            //    GlobalData.AddTextToLogTab($"Linktools activate {Url}");
-            //    App.OpenInInternalBrowser(dto.datagrid!, Url);
-
-            //    // Change tab?
-            //}
-
         }
     }
 }

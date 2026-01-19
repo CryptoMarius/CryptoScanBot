@@ -132,7 +132,7 @@ public partial class MainWindowViewModel : ObservableObject
             CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }
 
-    private void OnOpenInInternalBrowserRequested(object? sender, string url)
+    private void OnOpenInInternalBrowserRequested(string url, bool switchTab)
     {
         //BrowserViewModel.NavigateToTradingView(url);
         if (BrowserView != null)

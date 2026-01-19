@@ -26,7 +26,7 @@ public static class CommandHelper
                 //    TabControl.SelectedTab = TabPageBrowser;
                 // Usage anywhere:
                 //App.OpenInHiddenBrowser(Url);
-                App.OpenInInternalBrowser(null, Url);
+                App.OpenInInternalBrowser(Url, activateTab);
             }
             else
             {

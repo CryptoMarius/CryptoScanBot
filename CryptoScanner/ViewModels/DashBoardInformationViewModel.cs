@@ -628,7 +628,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 break;
             case IndicatorType.TradingView:
             case IndicatorType.FearAndGreed:
-                App.OpenInInternalBrowser(null!, symbolViewModel.GetUrl());
+                App.OpenInInternalBrowser(symbolViewModel.GetUrl(), true);
                 break;
         }
 

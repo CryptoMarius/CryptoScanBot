@@ -9,8 +9,9 @@ public class CommandLaunchTradingAppStandard : CommandBase
 {
     public override void Execute(object? parameter)
     {
-        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null && dto.interval != null)
+        if (GetObjectInformation(parameter, out parameterObjects dto) && dto.symbol != null)
         {
+            dto.interval ??= GlobalData.IntervalListPeriod[GlobalData.Settings.General.DefaultInterval];
             System.Diagnostics.Debug.WriteLine($"CommandLaunchTradingAppStandard {dto.symbol.Name}");
             System.Diagnostics.Debug.WriteLine($"Opening {dto.symbol.Name} in trading program via standard browser");
 
