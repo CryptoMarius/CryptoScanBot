@@ -7,7 +7,6 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Barometer;
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
@@ -326,12 +325,28 @@ public partial class DashBoardInformationViewModel : ObservableObject
             if (!string.IsNullOrEmpty(symbolViewModel.Name) && 
                 GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Name, out CryptoSymbol? symbol))
             {
+                decimal price = 0;
                 if (symbol.LastPrice.HasValue)
                 {
-                    symbolViewModel.Update(symbol.LastPrice.Value, symbol.Volume);
+                    price = symbol.LastPrice.Value;
                 }
-                else 
-                    symbolViewModel.Update(0, symbol.Volume);
+                else
+                {
+                    var symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                    try
+                    {
+                        if (symbolInterval.CandleList.Count > 0)
+                        {
+                            var candle = symbolInterval.CandleList.Last();
+                            price = candle.Value.Close;
+                        }
+                    }
+                    catch
+                    {
+                        // nothing
+                    }
+                }
+                symbolViewModel.Update(price, symbol.Volume);
             }
         }
     }
