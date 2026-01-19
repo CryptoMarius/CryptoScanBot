@@ -78,6 +78,7 @@ public class SettingsGeneral
     public CryptoTradingApp TradingApp { get; set; } = CryptoTradingApp.Altrady;
     public CryptoExternalUrlType TradingAppInternExtern { get; set; } = CryptoExternalUrlType.External;
     public CryptoDoubleClickAction DoubleClickAction { get; set; } = CryptoDoubleClickAction.ActivateTradingApp;
+    public CryptoIntervalPeriod DefaultInterval { get; set; } = CryptoIntervalPeriod.interval15m;
 
     // Barometer goes into ApplicationState
     // Need two other states for sound and signal
