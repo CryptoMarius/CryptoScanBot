@@ -102,11 +102,11 @@ public partial class LogGridViewModel : ObservableObject
             LogLines.RemoveAt(0);
 
         // Request sort na filtering
-        RequestSort?.Invoke(this, EventArgs.Empty);
+        //RequestSort?.Invoke(this, EventArgs.Empty);
     }
 
-    public event EventHandler<LogViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<LogViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
     [RelayCommand]
     public void ClearLog()
