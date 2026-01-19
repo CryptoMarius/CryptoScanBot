@@ -44,44 +44,30 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         AvaloniaXamlLoader.Load(this);
     }
 
-    //protected void OnDataContextChanged(object? sender, EventArgs e)
-    //{
-    //    // Unsubscribe old
-    //    if (_currentViewModel != null)
-    //    {
-    //        _currentViewModel.RequestSort -= OnRequestSort;
-    //        _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
-    //    }
 
-    //    // Subscribe new
-    //    if (DataContext is T vm)
-    //    {
-    //        _currentViewModel = vm;
-    //        vm.RequestSort += OnRequestSort;
-    //        vm.RequestSortedInsert += OnRequestSortedInsert;
-    //    }
-    //}
-
-    //protected abstract void OnRequestSort(object? sender, EventArgs e);
-    //protected abstract void OnRequestSortedInsert(object? sender, object e);
     internal void DataGrid_Loaded(object? sender, RoutedEventArgs e)
     {
         System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
         var column = _dataGrid.Columns.First(c => c.SortMemberPath == _currentSortColumn);
-        if (column != null)
-            column.Sort(_currentSortDirection);
+        column?.Sort(_currentSortDirection);
 
         _dataGrid.Sorting += OnDataGridSorting; // to early, sorting gets messed up.. --> introduced _onDataGridSortingSkipFirst
-        _dataGrid.ColumnReordered += OnColumnReordered;
+        //_dataGrid.ColumnReordered += OnColumnReordered;
         _dataGrid.DoubleTapped += OnDataGridDoubleTapped;
-        _dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
+        //_dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
+
+        // There is no event for registering the changed widths of the columns.
+        // Lets not overcomplicate things, save the columns when shutting down.
+        DetachedFromVisualTree += (_, __) =>
+        {
+            SaveGridState();
+        };
     }
 
     internal void SaveGridState()
     {
-        // Access the service via App.ApplicationStateService
         _applicationStateService.SaveGridState(_gridName, _dataGrid, _currentSortColumn, _currentSortDirection);
     }
 
@@ -94,18 +80,18 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     /// <summary>
     /// Handle column reordering
     /// </summary>
-    internal void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
-    {
-        SaveGridState();
-    }
+    //internal void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
+    //{
+    //    SaveGridState(); // see DetachedFromVisualTree
+    //}
 
     /// <summary>
     /// Handle column display index changes
     /// </summary>
-    internal void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
-    {
-        SaveGridState();
-    }
+    //internal void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
+    //{
+    //    SaveGridState(); // see DetachedFromVisualTree
+    //}
 
     internal void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
