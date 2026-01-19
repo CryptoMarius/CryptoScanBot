@@ -336,12 +336,7 @@ public static class GlobalData
         {
             symbol.Exchange = exchange;
 
-            if (symbol.Name == "" || exchange.SymbolListId.ContainsKey(symbol.Id))
-            {
-                //TODO: Delete the symbol? (first report all of them.......)
-                AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
-            }
-
+            symbol.QuoteData = AddQuoteData(symbol.Quote);
 
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
@@ -352,13 +347,10 @@ public static class GlobalData
             if (!exchange.SymbolListExchangeName.ContainsKey(symbol.ExchangeName))
                 exchange.SymbolListExchangeName.Add(symbol.ExchangeName, symbol);
 
-            // Een referentie naar de globale quote data opzoeken of aanmaken
-            symbol.QuoteData = AddQuoteData(symbol.Quote);
-
 
             string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
 
-            // Niet de ideale wereld
+
             int numberOfDecimalPlaces;
             string s = symbol.PriceTickSize.ToString0();
             int x = s.IndexOf(seperator);
@@ -369,9 +361,6 @@ public static class GlobalData
             }
             else numberOfDecimalPlaces = 0;
             symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
-            //if (symbol.PriceDisplayFormat == "N0")
-            //    symbol.PriceDisplayFormat = "N8";
-
 
 
             s = symbol.QuantityTickSize.ToString0();
@@ -383,12 +372,8 @@ public static class GlobalData
             }
             else numberOfDecimalPlaces = 0;
             symbol.QuantityDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
-            //if (symbol.QuantityTickSize == 1.0m)
-            //    symbol.QuantityDisplayFormat = "N8";
 
-            // reset last prices
-            //symbol.AskPrice = null;
-            //symbol.BidPrice = null;
+            // reset last price
             symbol.LastPrice = null;
         }
     }
