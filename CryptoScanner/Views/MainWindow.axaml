@@ -72,10 +72,8 @@
 							<TextBox Grid.Column="2" FontSize="12" x:Name="FilterTextBox" BorderThickness="0" HorizontalAlignment="Left" Margin="10" Width="100" Height="15"
 								Text="{Binding SymbolFilterText}">
 								<TextBox.KeyBindings>
-                    <KeyBinding Gesture="Enter" 
-                                Command="{Binding ApplyFilterCommand}" 
-                                CommandParameter="{Binding #FilterTextBox.Text}"/>
-                </TextBox.KeyBindings>
+									<KeyBinding Gesture="Enter" Command="{Binding ApplyFilterCommand}" CommandParameter="{Binding #FilterTextBox.Text}"/>
+								</TextBox.KeyBindings>
 							</TextBox>
 						</Grid>
 						<Grid Grid.Row="1">

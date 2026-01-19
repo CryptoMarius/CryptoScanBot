@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -47,6 +48,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.Active = value;
                 OnPropertyChanged(nameof(AnalyzerActive));
+                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
             }
         }
     }
@@ -62,6 +64,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.SoundsActive = value;
                 OnPropertyChanged(nameof(SoundsActive));
+                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
             }
         }
     }
@@ -77,6 +80,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Trading.Active = value;
                 OnPropertyChanged(nameof(TraderActive));
+                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
             }
         }
     }

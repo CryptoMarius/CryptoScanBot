@@ -38,6 +38,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private IBrush _rulezStatusBrush = Brushes.Gray;
 
+    [ObservableProperty]
+    private IBrush _soundStatusBrush = Brushes.Gray;
+
     #endregion
 
     #region Barometer
@@ -161,6 +164,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 RulezStatusBrush = App.GetBrushResource("PriceUpBrush");
         }
         else RulezStatusBrush = App.GetBrushResource("PriceNeutralBrush");
+
+        if (GlobalData.Settings.Signal.SoundsActive && GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+            SoundStatusBrush = App.GetBrushResource("PriceUpBrush");
+        else
+            SoundStatusBrush = App.GetBrushResource("PriceDownBrush");
     }
 
 
