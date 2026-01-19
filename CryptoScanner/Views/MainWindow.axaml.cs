@@ -173,29 +173,30 @@ public partial class MainWindow : Window
             menuFile.Items.Add(new MenuItem { Header = "Settings", Command = new CommandSettings(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
             menuFile.Items.Add(new MenuItem { Header = "Clear log and ticker count", Command = new CommandClearLogAndTicker(), CommandParameter = this });
-            //menuFile.Items.Add(new MenuItem { Header = "-" });
-
-
-
             menuFile.Items.Add(new MenuItem { Header = "-" });
-            //menuFile.Items.Add(new MenuItem { Header = "Export Tradingview import files", Command.TradingViewImportList);
-            menuFile.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
-
-            menuFile.Items.Add(new MenuItem { Header = "-" });
-#if DEBUG
-            //menuFile.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
-            //menuFile.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
-            //menuFile.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
-#endif
-            //menuFile.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
-            menuFile.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "-" });
-
             menuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
         }
 
+        var menuTools = this.FindControl<MenuItem>("MenuTools");
+        if (menuTools != null)
+        {
+            //menuTools.Items.Add(new MenuItem { Header = "Export Tradingview import files", Command.TradingViewImportList);
+            menuTools.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
+            menuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
+            menuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
+
+            menuTools.Items.Add(new MenuItem { Header = "-" });
+#if DEBUG
+            //menuTools.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
+            //menuTools.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
+            //menuTools.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
+#endif
+            //menuTools.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
+            menuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
+            menuTools.Items.Add(new MenuItem { Header = "-" });
+
+            menuTools.Items.Add(new MenuItem { Header = "Open data folder", Command = new CommandOpenDataFolder(), CommandParameter = this });
+        }
 
         var menuHelp = this.FindControl<MenuItem>("MenuHelp");
         if (menuHelp != null)

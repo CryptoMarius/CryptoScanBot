@@ -36,6 +36,8 @@
 						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
 						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
 					</MenuItem>
+					<MenuItem x:Name="MenuTools" Header="_Tools">
+					</MenuItem>
 					<MenuItem x:Name="MenuHelp" Header="_Help">
 					</MenuItem>
 				</Menu>
