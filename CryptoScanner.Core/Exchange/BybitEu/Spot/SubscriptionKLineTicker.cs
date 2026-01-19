@@ -54,7 +54,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, data =>
         {
-            // Er zit tot ongeveer 8 a 10 seconden vertraging is van de exchange tot hier, dat moet ansich genoeg zijn
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));
             foreach (BybitKlineUpdate kline in data.Data)
             {
