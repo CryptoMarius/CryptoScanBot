@@ -15,7 +15,7 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
     public PositionOpenGridView()
     {
         _gridName = "PositionOpenGrid";
-        _targetMenu = TargetMenu.Symbol;
+        _targetMenu = TargetMenu.Position;
         InitializeComponent();
 
         if (Design.IsDesignMode)
