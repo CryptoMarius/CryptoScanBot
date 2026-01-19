@@ -32,9 +32,9 @@
 				<!-- Menu Foreground="White" -->
 				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12">
 					<MenuItem x:Name="MenuFile" Header="_File">
-						<MenuItem Header="Create signals" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
-						<MenuItem Header="Trading bot active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
-						<MenuItem Header="Play sound" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
+						<MenuItem Header="Analyzer active" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
+						<MenuItem Header="Trader active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
+						<MenuItem Header="Play sounds" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
 					</MenuItem>
 					<MenuItem x:Name="MenuTools" Header="_Tools">
 					</MenuItem>
