@@ -15,7 +15,7 @@
                 SelectionMode="Extended"
                 CanUserReorderColumns="True"
                 CanUserResizeColumns="True"
-                CanUserSortColumns="False"
+                CanUserSortColumns="True"
                 GridLinesVisibility="None"
                 BorderThickness="1"
                 BorderBrush="Transparent">
