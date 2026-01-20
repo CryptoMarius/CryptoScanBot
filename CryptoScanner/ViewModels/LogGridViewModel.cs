@@ -70,34 +70,41 @@ public partial class LogGridViewModel : ObservableObject
 
     private void TimerAddLogLinesTick(object? sender, EventArgs? e)
     {
-        if (GlobalData.ApplicationIsClosing)
-            return;
-
-        // Speed up adding text
-        if (LogQueue.Count > 0)
+        try
         {
-            if (Monitor.TryEnter(LogQueue))
+            if (GlobalData.ApplicationIsClosing)
+                return;
+
+            // Speed up adding text
+            if (LogQueue.Count > 0)
             {
-                try
+                if (Monitor.TryEnter(LogQueue))
                 {
-                    List<LogViewModel> lines = [];
-                    while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
+                    try
                     {
-                        var x = LogQueue.Dequeue();
-                        lines.Add(x);
+                        List<LogViewModel> lines = [];
+                        while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
+                        {
+                            var x = LogQueue.Dequeue();
+                            lines.Add(x);
+                        }
+                        LogLines.AddRange(lines);
                     }
-                    LogLines.AddRange(lines);
-                }
-                finally
-                {
-                    Monitor.Exit(LogQueue);
+                    finally
+                    {
+                        Monitor.Exit(LogQueue);
+                    }
                 }
             }
+
+            // Keep only last MaxLogLines entries
+            if (LogLines.Count > MaxLogLines)
+                LogLines.RemoveAt(0);
         }
-        
-        // Keep only last MaxLogLines entries
-        if (LogLines.Count > MaxLogLines)
-            LogLines.RemoveAt(0);
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "logtick");
+        }
     }
 
 }
