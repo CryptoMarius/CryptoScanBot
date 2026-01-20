@@ -91,10 +91,10 @@
 
 
   <ItemGroup>
-	  <PackageReference Include="Avalonia" Version="11.3.10" />
-	  <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
-	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
-	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.10" />
+	  <PackageReference Include="Avalonia" Version="11.3.11" />
+	  <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
+	  <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+	  <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.11" />
 	  <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 	  <PackageReference Include="NAudio" Version="2.2.1" />
 	  <PackageReference Include="Binance.Net" Version="11.11.0" />
@@ -110,13 +110,13 @@
     <PackageReference Include="JKorf.Coinbase.Net" Version="2.11.3" />
     <PackageReference Include="KrakenExchange.Net" Version="6.11.0" />
     <PackageReference Include="Kucoin.Net" Version="7.11.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <PackageReference Include="NLog" Version="6.0.7" />
     <PackageReference Include="NPOI" Version="2.7.5" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-    <PackageReference Include="Skender.Stock.Indicators" Version="2.5.1" />
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.1" />
+    <PackageReference Include="Skender.Stock.Indicators" Version="2.7.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.2" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <PackageReference Include="Tmds.DBus" Version="0.23.0" />
   </ItemGroup>
