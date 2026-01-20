@@ -61,7 +61,7 @@ public static class TradingConfig
                     {
                         if (!exchange.SymbolListName.ContainsKey(symbol))
                         {
-                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
+                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && !string.IsNullOrEmpty(caption) )
                                 GlobalData.AddTextToLogTab($"Error {caption} {symbol} does not exist!");
                         }
                     }
@@ -72,17 +72,17 @@ public static class TradingConfig
 
     public static void InitWhiteAndBlackListSettings()
     {
-        // Nadat de symbol zijn ingelezen de black en whitelist initialiseren
+        // Initialize *signal* black en whitelist
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Signals[CryptoTradeSide.Long].BlackList, "BlackList.Long");
         InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Signals[CryptoTradeSide.Long].WhiteList, "WhiteList.Long");
         InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Signals[CryptoTradeSide.Short].BlackList, "BlackList.Short");
         InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Signals[CryptoTradeSide.Short].WhiteList, "WhiteList.Short");
 
-        // De trading black en whitelist worden ook geinitialiseerd, zijn dus gelijk (voila)
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Trading[CryptoTradeSide.Long].BlackList, "BlackList.Long");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Trading[CryptoTradeSide.Long].WhiteList, "WhiteList.Long");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Trading[CryptoTradeSide.Short].BlackList, "BlackList.Short");
-        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Trading[CryptoTradeSide.Short].WhiteList, "WhiteList.Short");
+        // Initialize *trading* black en whitelist (we already have the "symbols does not exist!")
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOversold, Trading[CryptoTradeSide.Long].BlackList, "");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOversold, Trading[CryptoTradeSide.Long].WhiteList, "");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.BlackListOverbought, Trading[CryptoTradeSide.Short].BlackList, "");
+        InitWhiteAndBlackListHelper(GlobalData.Settings.WhiteListOverbought, Trading[CryptoTradeSide.Short].WhiteList, "");
     }
 
 
