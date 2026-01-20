@@ -4,7 +4,6 @@ using CryptoScanner.Core.Core;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CryptoScanner.Model;
-using CommunityToolkit.Mvvm.Input;
 
 namespace CryptoScanner.ViewModels;
 
@@ -86,7 +85,6 @@ public partial class LogGridViewModel : ObservableObject
                     {
                         var x = LogQueue.Dequeue();
                         lines.Add(x);
-                        //LogLines.Add(logEntry);
                     }
                     LogLines.AddRange(lines);
                 }
@@ -100,17 +98,6 @@ public partial class LogGridViewModel : ObservableObject
         // Keep only last MaxLogLines entries
         if (LogLines.Count > MaxLogLines)
             LogLines.RemoveAt(0);
-
-        // Request sort na filtering
-        //RequestSort?.Invoke(this, EventArgs.Empty);
     }
 
-    //public event EventHandler<LogViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
-
-    [RelayCommand]
-    public void ClearLog()
-    {
-        LogLines.Clear();
-    }
 }
