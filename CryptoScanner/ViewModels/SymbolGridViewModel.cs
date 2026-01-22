@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Zones;
@@ -9,6 +11,8 @@ namespace CryptoScanner.ViewModels;
 
 public partial class SymbolGridViewModel : ObservableObject
 {
+    private DispatcherTimer? _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
+
     /// <summary>
     /// Collection of signals to display in the grid
     /// </summary>
@@ -20,9 +24,14 @@ public partial class SymbolGridViewModel : ObservableObject
     public SymbolGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
+
+        _timerRefreshZones.Tick += TimerRefreshZonesTick;
+        _timerRefreshZones.Start();
+
         GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
         SymbolsHaveChangedEvent("");
     }
+
 
     public event EventHandler<SymbolViewModel>? RequestSortedInsert;
     public event EventHandler? RequestSort;
@@ -66,4 +75,12 @@ public partial class SymbolGridViewModel : ObservableObject
         SymbolsHaveChangedEvent("");
     }
 
+
+    private void TimerRefreshZonesTick(object? sender, EventArgs e)
+    {
+        foreach (var symbol in Symbols)
+        {
+            symbol.Distance = ZoneTools.ZoneDistance(symbol.Object);
+        }
+    }
 }
