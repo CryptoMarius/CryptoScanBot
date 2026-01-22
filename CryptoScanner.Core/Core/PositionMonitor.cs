@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Exchange.Altrady;
@@ -554,8 +556,7 @@ public class PositionMonitor //: IDisposable
 
                             // Aanmelden van een nieuwe positie
                             if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                                GlobalData.PositionsHaveChanged("");
-
+                                Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
                             return;
                         }
                         else
@@ -1525,7 +1526,7 @@ public class PositionMonitor //: IDisposable
             {
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
                 if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                    GlobalData.PositionsHaveChanged("");
+                    Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
             }
         }
     }
