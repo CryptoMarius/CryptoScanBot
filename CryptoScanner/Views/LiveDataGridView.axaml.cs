@@ -30,8 +30,11 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
         _applicationStateService = GlobalData.GetService<ApplicationStateService>()
             ?? throw new InvalidOperationException("ApplicationStateService not registered");
 
-        _dataGrid = this.FindControl<DataGrid>("LiveDataDataGrid")
-            ?? throw new InvalidOperationException("LiveDataDataGrid not found");
+        _dataGrid = LiveDataDataGrid;
+        //_dataGrid = this.FindControl<DataGrid>("LiveDataDataGrid")
+        //    ?? throw new InvalidOperationException("LiveDataDataGrid not found");
+        if (_dataGrid == null)
+            throw new InvalidOperationException("LiveDataDataGrid not found");
 
         DataContextChanged += OnDataContextChanged;
 
