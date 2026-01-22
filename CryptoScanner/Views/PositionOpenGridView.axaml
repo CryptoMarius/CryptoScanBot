@@ -148,7 +148,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Returned -->
-                <DataGridTemplateColumn Header="Invested" Width="75" SortMemberPath="Returned" >
+                <DataGridTemplateColumn Header="Returned" Width="75" SortMemberPath="Returned" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -212,7 +212,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding CurrentProfitPercentage}" />
+                                       Text="{Binding CurrentProfitPercentage, StringFormat='{}{0:##0.#0}'}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -222,7 +222,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding BreakEvenPercent}" />
+                                       Text="{Binding BreakEvenPercent, StringFormat='{}{0:##0.#0}'}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
