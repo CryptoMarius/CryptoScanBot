@@ -259,8 +259,7 @@ public partial class ChartWindowViewModel : ObservableObject
     public static ZoneSession LoadSessionSettings()
     {
         // load previous Session settings
-        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-        string fileName = Path.Combine(folderName, $"session.json");
+        string fileName = Path.Combine(GlobalData.AppDataFolder, $"CryptoScanBot-chart.json");
         if (File.Exists(fileName))
         {
             string text = File.ReadAllText(fileName);
@@ -275,11 +274,10 @@ public partial class ChartWindowViewModel : ObservableObject
     public void SaveSessionSettings()
     {
         PickupUserInput();
-        
+
         // save current Session settings
-        string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-        Directory.CreateDirectory(folderName);
-        string fileName = Path.Combine(folderName, $"session.json");
+        Directory.CreateDirectory(GlobalData.AppDataFolder);
+        string fileName = Path.Combine(GlobalData.AppDataFolder, $"CryptoScanBot-chart.json");
         string text = JsonSerializer.Serialize(Session, JsonTools.JsonSerializerIndented);
         File.WriteAllText(fileName, text);
     }
@@ -944,10 +942,9 @@ public partial class ChartWindowViewModel : ObservableObject
 
         try
         {
-            PickupUserInput();
-            Session.ForceCalculation = forceCalculation;
             SaveSessionSettings();
 
+            Session.ForceCalculation = forceCalculation;
             if (!PrepareSessionData(out string reason))
             {
                 WindowTitle = $"{GlobalData.ActiveExchange!.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {reason}";
