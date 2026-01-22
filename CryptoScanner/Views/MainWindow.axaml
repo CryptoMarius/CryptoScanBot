@@ -1,14 +1,14 @@
 ﻿<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="{Binding Title}" Width="1500" Height="800" FontSize="10"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="PreferSystemChrome"
-        ExtendClientAreaTitleBarHeightHint="-1"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="{Binding Title}" Width="1500" Height="800" FontSize="10"
+		ExtendClientAreaToDecorationsHint="True"
+		ExtendClientAreaChromeHints="PreferSystemChrome"
+		ExtendClientAreaTitleBarHeightHint="-1"
 		xmlns:views="using:CryptoScanner.Views"
-        xmlns:vm="using:CryptoScanner.ViewModels"
+		xmlns:vm="using:CryptoScanner.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
-	    x:Class="CryptoScanner.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel">
+		x:Class="CryptoScanner.Views.MainWindow"
+		x:DataType="vm:MainWindowViewModel">
 
 	<Design.DataContext>
 		<vm:MainWindowViewModel />
@@ -23,114 +23,101 @@
 				<Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" IsHitTestVisible="False"/>
 
 				<!-- Titlebar content (on top of the background) -->
-			<Grid ColumnDefinitions="Auto,Auto,*,Auto">
-				<!-- Left: App Icon (MAC places the buttons on top of the icon) -->
-				<!-- 
-				<Image Grid.Column="0" Source="/Assets/AppIcon.ico" Width="32" Height="32" Margin="12,0,8,0" VerticalAlignment="Center"/>
-				-->
+				<Grid ColumnDefinitions="Auto,Auto,*,Auto">
 
-				<!-- Menu Foreground="White" -->
-				<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12">
-					<MenuItem x:Name="MenuFile" Header="_File">
-						<MenuItem Header="Analyzer active" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
-						<MenuItem Header="Trader active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
-						<MenuItem Header="Play sounds" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
-					</MenuItem>
-					<MenuItem x:Name="MenuTools" Header="_Tools">
-					</MenuItem>
-					<MenuItem x:Name="MenuHelp" Header="_Help">
-					</MenuItem>
-				</Menu>
+					<!-- Menu Foreground="White" -->
+					<Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" FontSize="12">
+						<MenuItem x:Name="MenuFile" Header="_File">
+							<MenuItem Header="Analyzer active" ToggleType="CheckBox" IsChecked="{Binding AnalyzerActive, Mode=TwoWay}"/>
+							<MenuItem Header="Trader active" ToggleType="CheckBox" IsChecked="{Binding TraderActive, Mode=TwoWay}"/>
+							<MenuItem Header="Play sounds" ToggleType="CheckBox" IsChecked="{Binding SoundsActive, Mode=TwoWay}"/>
+						</MenuItem>
+						<MenuItem x:Name="MenuTools" Header="_Tools">
+						</MenuItem>
+						<MenuItem x:Name="MenuHelp" Header="_Help">
+						</MenuItem>
+					</Menu>
 
 
-				<!-- Center: Title -->
-				<TextBlock Grid.Column="2" Text="{Binding $parent[Window].Title}"
-                           VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12" Margin="20,0,0,0"/>
+					<!-- Center: Title -->
+					<TextBlock Grid.Column="2" Text="{Binding $parent[Window].Title}"
+							   VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12" Margin="20,0,0,0"/>
 
-				<!-- Right: Reserved space for system window buttons -->
-				<Border Grid.Column="3" Width="138" Background="Transparent"/>
-			</Grid>
-		</Grid>
-
-		<!-- Main Content -->
-		<Grid RowDefinitions="125,1,*">
-
-			<!-- The top dashboard -->
-			<Grid Grid.Row="0">
-				<Panel Height="130">
-					<views:DashBoardInformationView DataContext="{Binding DashBoardInformationViewModel}" />
-				</Panel>
+					<!-- Right: Reserved space for system window buttons -->
+					<Border Grid.Column="3" Width="138" Background="Transparent"/>
+				</Grid>
 			</Grid>
 
-			<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
+			<!-- Main Content -->
+			<Grid RowDefinitions="125,1,*">
 
-			<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+				<!-- The top dashboard -->
+				<Grid Grid.Row="0">
+					<Panel Height="130">
+						<views:DashBoardInformationView DataContext="{Binding DashBoardInformationViewModel}" />
+					</Panel>
+				</Grid>
 
-				<!-- The symbols on the left -->
-				<Grid Grid.Column ="0" x:Name="SymbolSplitView">
-					<Grid RowDefinitions="48,*">
-						<Grid Grid.Row="0" ColumnDefinitions="20,Auto,Auto" Height="32">
-							<TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
-							<TextBox Grid.Column="2" FontSize="12" x:Name="FilterTextBox" BorderThickness="0" HorizontalAlignment="Left" Margin="10" Width="100" Height="15"
-								Text="{Binding SymbolFilterText}">
-								<TextBox.KeyBindings>
-									<KeyBinding Gesture="Enter" Command="{Binding ApplyFilterCommand}" CommandParameter="{Binding #FilterTextBox.Text}"/>
-								</TextBox.KeyBindings>
-							</TextBox>
-						</Grid>
-						<Grid Grid.Row="1">
-							<views:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
+				<!-- Separator line -->
+				<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
+
+				<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+
+					<!-- The symbols on the left -->
+					<Grid Grid.Column ="0" x:Name="SymbolSplitView">
+						<Grid RowDefinitions="48,*">
+							<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto" Height="32">
+								<TextBlock Grid.Column="0" Text="Symbols" FontSize="15" FontWeight="Bold" Margin="10,0,0,2"/>
+								<TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
+								<TextBox Grid.Column="2" FontSize="12" x:Name="FilterTextBox" BorderThickness="0" HorizontalAlignment="Left" Margin="10" Width="100" Height="15"
+										 Text="{Binding SymbolFilterText}">
+									<TextBox.KeyBindings>
+										<KeyBinding Gesture="Enter" Command="{Binding ApplyFilterCommand}" CommandParameter="{Binding #FilterTextBox.Text}"/>
+									</TextBox.KeyBindings>
+								</TextBox>
+							</Grid>
+							<Grid Grid.Row="1">
+								<views:SymbolGridView DataContext="{Binding SymbolGridViewModel}"/>
+							</Grid>
 						</Grid>
 					</Grid>
+
+					<!-- Splitter between symbols and the signals -->
+					<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
+					<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
+
+					<!-- Main screen -->
+					<Grid Grid.Column="3" RowDefinitions="Auto,1,*">
+
+						<!-- Tab headers -->
+						<TabControl x:Name="MainTabs" Grid.Row="0" TabStripPlacement="Top" SelectedIndex="{Binding SelectedTabIndex}">
+							<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Dashboard" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+							<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+						</TabControl>
+
+						<!-- Permanent browser 
+						<views:BrowserView x:Name="BrowserViewHost" Grid.Row="2" DataContext="{Binding BrowserViewModel}" IsVisible="True"/>
+						-->
+						<!-- Permanent browser (1×1 pixel, alway's visible) --> 
+						<views:BrowserView x:Name="BrowserViewHost" Grid.Row="2" DataContext="{Binding BrowserViewModel}" />
+
+						<!-- Content area -->
+						<ContentPresenter x:Name="MainContent" Grid.Row="2"/>
+
+					</Grid>
+
 				</Grid>
-
-				<!-- Splitter between symbols and the signals -->
-				<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
-
-				<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
-
-				<!-- Main screen -->
-				<Grid Grid.Column ="3" RowDefinitions="Auto,1,*">
-					<!-- The signals on the main screen -->
-					<TabControl Grid.Row="2" Margin="0" SelectedIndex="{Binding SelectedTabIndex}">
-						<TabItem Header="Signals" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<Panel >
-								<views:SignalGridView DataContext="{Binding SignalGridViewModel}" />
-							</Panel>
-						</TabItem>
-						<TabItem Header="Tradingview" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<Panel>
-								<Decorator x:Name="browserWrapper"/>
-								<views:BrowserView Name="BrowserView" DataContext="{Binding BrowserViewModel}"/>
-							</Panel>
-						</TabItem>
-						<TabItem Header="Live Data" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:LiveDataGridView DataContext="{Binding LiveDataGridViewModel}"/>
-						</TabItem>
-						<TabItem Header="Dashboard" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:DashboardPositionsView DataContext="{Binding DashboardPositionsViewModel}"/>
-						</TabItem>
-						<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:PositionOpenGridView DataContext="{Binding PositionOpenGridViewModel}"/>
-						</TabItem>
-						<TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:PositionClosedGridView DataContext="{Binding PositionClosedGridViewModel}"/>
-						</TabItem>
-						<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-							<views:LogGridView DataContext="{Binding LogGridViewModel}"/>
-						</TabItem>
-					</TabControl>
-				</Grid>
-
-			</Grid>
 			</Grid>
 		</DockPanel>
-		
+
 		<!-- Border Overlay (layer 2 - on top) -->
 		<!-- IsHitTestVisible="False" allows clicks to pass through to content below -->
-		<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
-		        BorderThickness="1"
-		        Background="Transparent"
-		        IsHitTestVisible="False"/>
+		<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"  BorderThickness="1"
+				Background="Transparent" IsHitTestVisible="False"/>
 	</Panel>
 </Window>

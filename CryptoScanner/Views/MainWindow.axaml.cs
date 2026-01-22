@@ -2,14 +2,16 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
+using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 
@@ -22,8 +24,13 @@ public partial class MainWindow : Window
 {
     private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
-    private readonly Grid _mainGrid = null!;
-    private readonly BrowserView? _browserView;
+
+    private readonly SignalGridView _signalView;
+    private readonly LiveDataGridView _liveDataView;
+    private readonly DashboardPositionsView _dashboardView;
+    private readonly PositionOpenGridView _openPositionsView;
+    private readonly PositionClosedGridView _closedPositionsView;
+    private readonly LogGridView _logView;
 
 
     public MainWindow(MainWindowViewModel viewModel,
@@ -32,47 +39,52 @@ public partial class MainWindow : Window
     {
         _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
-
-        AvaloniaXamlLoader.Load(this);
-
-        _mainGrid = this.FindControl<Grid>("MainGrid")
-            ?? throw new InvalidOperationException("MainGrid not found");
-        Closing += OnWindowClosing; // - save layout + splitter
-
-        _browserView = this.FindControl<BrowserView>("BrowserView")
-            ?? throw new InvalidOperationException("BrowserView not found");
+        InitializeComponent();
 
         DataContext = viewModel;
-
-        if (DataContext is MainWindowViewModel vm)
-        {
-            vm.BrowserView = _browserView;
-        }
 
         // Restore window position, size, state and splitter
         _applicationStateService.RestoreWindowState("MainWindow", this);
 
         // Restore splitter position
         var position = _applicationStateService.GetSplitterPosition("MainWindow", 300);
-        _mainGrid.ColumnDefinitions[0].Width = new GridLength(position);
+        MainGrid.ColumnDefinitions[0].Width = new GridLength(position);
 
         // Start TradingView service
         _tradingViewService.Start();
 
-
-        Closing += OnWindowClosing; // Save state
         GlobalData.PlaySound += new PlayMediaEvent(PlaySound);
 
         // macOS: Shift menu to the right to avoid collision with the system buttons
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            var menu = this.FindControl<Grid>("TitleBarGrid");
-            if (menu != null) 
-                menu.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
+            if (TitleBarGrid != null)
+                TitleBarGrid.Margin = new Thickness(80, 0, 0, 0);  // 80px rechts
         }
 
         Title = $"{Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
         CreateMenuItems();
+
+        _signalView = new SignalGridView { DataContext = viewModel.SignalGridViewModel };
+        _liveDataView = new LiveDataGridView { DataContext = viewModel.LiveDataGridViewModel };
+        _dashboardView = new DashboardPositionsView { DataContext = viewModel.DashboardPositionsViewModel };
+        _openPositionsView = new PositionOpenGridView { DataContext = viewModel.PositionOpenGridViewModel };
+        _closedPositionsView = new PositionClosedGridView { DataContext = viewModel.PositionClosedGridViewModel };
+        _logView = new LogGridView { DataContext = viewModel.LogGridViewModel };
+
+
+        //Force initial tab content 
+        OnTabChanged(MainTabs, null!);
+        MainTabs.SelectionChanged += OnTabChanged;
+
+        // Save layout + splitter
+        Closing += OnWindowClosing;
+
+        // Initialize the visible browser to the BTCUSDT (if it exists) (TODO: Other Quote perhaps)
+        string quote = applicationStateService.BarometerQuote;
+        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m];
+        if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue("BTC" + quote, out CryptoSymbol? symbol))
+            CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }
 
 
@@ -87,7 +99,7 @@ public partial class MainWindow : Window
     private void OnGridSplitterDragCompleted(object? sender, VectorEventArgs e)
     {
         // Save splitter position
-        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
+        var position = MainGrid.ColumnDefinitions[0].ActualWidth;
         _applicationStateService.SaveSplitterPosition("MainWindow", position);
     }
 
@@ -103,7 +115,7 @@ public partial class MainWindow : Window
         //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
 
         // Save splitter position
-        var position = _mainGrid.ColumnDefinitions[0].ActualWidth;
+        var position = MainGrid.ColumnDefinitions[0].ActualWidth;
         _applicationStateService.SaveSplitterPosition("MainWindow", position);
 
         // Save window state
@@ -115,14 +127,6 @@ public partial class MainWindow : Window
         }
     }
 
-
-    private void OnFilterApply(object? sender, RoutedEventArgs e)
-    {
-        if (sender is TextBox textBox && DataContext is MainWindowViewModel vm)
-        {
-            vm.SymbolFilterText = textBox.Text;
-        }
-    }
 
     private static void PlaySound(string text, bool test)
     {
@@ -165,44 +169,106 @@ public partial class MainWindow : Window
         //Type menuItem = NativeMenuItem;
 
         //MenuItem menuItem;
-        var menuFile = this.FindControl<MenuItem>("MenuFile");
-        if (menuFile != null)
-        {
-            // There are already three items bound to the application states (sound, trading and analyzer)
-            menuFile.Items.Add(new MenuItem { Header = "-" });
-            menuFile.Items.Add(new MenuItem { Header = "Scanner configuration", Command = new CommandShowConfiguration(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "Clear log and tickers", Command = new CommandClearLogAndTicker(), CommandParameter = this });
-            menuFile.Items.Add(new MenuItem { Header = "-" });
-            menuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
-        }
+        //var MenuFile = this.FindControl<MenuItem>("MenuFile");
+        //if (MenuFile != null)
+        // There are already three items bound to the application states (sound, trading and analyzer)
+        MenuFile.Items.Add(new MenuItem { Header = "-" });
+        MenuFile.Items.Add(new MenuItem { Header = "Scanner configuration", Command = new CommandShowConfiguration(), CommandParameter = this });
+        MenuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
+        MenuFile.Items.Add(new MenuItem { Header = "Clear log and tickers", Command = new CommandClearLogAndTicker(), CommandParameter = this });
+        MenuFile.Items.Add(new MenuItem { Header = "-" });
+        MenuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
 
-        var menuTools = this.FindControl<MenuItem>("MenuTools");
-        if (menuTools != null)
-        {
-            //menuTools.Items.Add(new MenuItem { Header = "Export Tradingview import files", Command.TradingViewImportList);
-            menuTools.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
-            menuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
-            menuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
 
-            menuTools.Items.Add(new MenuItem { Header = "-" });
+        //var MenuTools = this.FindControl<MenuItem>("MenuTools");
+        //if (MenuTools != null)
+        //MenuTools.Items.Add(new MenuItem { Header = "Export Tradingview import files", Command.TradingViewImportList);
+        MenuTools.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
+
+        MenuTools.Items.Add(new MenuItem { Header = "-" });
 #if DEBUG
-            //menuTools.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
-            //menuTools.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
-            //menuTools.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
+        //MenuTools.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
+        //MenuTools.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
+        //MenuTools.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
 #endif
-            //menuTools.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
-            menuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
-            menuTools.Items.Add(new MenuItem { Header = "-" });
+        //MenuTools.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
+        MenuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "-" });
 
-            menuTools.Items.Add(new MenuItem { Header = "Open data folder", Command = new CommandOpenDataFolder(), CommandParameter = this });
-        }
+        MenuTools.Items.Add(new MenuItem { Header = "Open data folder", Command = new CommandOpenDataFolder(), CommandParameter = this });
 
-        var menuHelp = this.FindControl<MenuItem>("MenuHelp");
-        if (menuHelp != null)
+
+        //var MenuHelp = this.FindControl<MenuItem>("MenuHelp");
+        //if (MenuHelp != null)
+        MenuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this });
+
+    }
+
+    private void ManipulateBrowser(bool show)
+    {
+        if (show)
         {
-            menuHelp.Items.Add(new MenuItem { Header = "About...", Command = new CommandShowAbout(), CommandParameter = this });
+            BrowserViewHost.Width = double.NaN;   // Auto
+            BrowserViewHost.Height = double.NaN;  // Auto
+            BrowserViewHost.Opacity = 1;
+            BrowserViewHost.IsHitTestVisible = true;
+            return;
+        }
+        else
+        {
+            BrowserViewHost.Width = 10;
+            BrowserViewHost.Height = 10;
+            BrowserViewHost.Opacity = 1;
+            BrowserViewHost.IsHitTestVisible = false;
         }
     }
-}
 
+    private void OnTabChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        // Workaround, because the browser needs to be visible to work properly
+
+        var selected = MainTabs.SelectedItem as TabItem;
+        var header = selected?.Header?.ToString();
+        switch (header)
+        {
+            case "Signals":
+                ManipulateBrowser(false);
+                MainContent.Content = _signalView;
+                break;
+
+            case "Tradingview":
+                ManipulateBrowser(true);
+                MainContent.Content = null;
+                break;
+
+            case "Live Data":
+                ManipulateBrowser(false);
+                MainContent.Content = _liveDataView;
+                break;
+
+            case "Dashboard":
+                ManipulateBrowser(false);
+                MainContent.Content = _dashboardView;
+                break;
+
+            case "Open positions":
+                ManipulateBrowser(false);
+                MainContent.Content = _openPositionsView;
+                break;
+
+            case "Closed positions":
+                ManipulateBrowser(false);
+                MainContent.Content = _closedPositionsView;
+                break;
+
+            case "Log":
+                ManipulateBrowser(false);
+                MainContent.Content = _logView;
+                break;
+        }
+
+    }
+
+}
