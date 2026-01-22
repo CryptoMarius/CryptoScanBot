@@ -47,15 +47,16 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
     internal void DataGrid_Loaded(object? sender, RoutedEventArgs e)
     {
+        // Call this method only once..
+        _dataGrid.Loaded -= DataGrid_Loaded;
+        
         System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
         var column = _dataGrid.Columns.First(c => c.SortMemberPath == _currentSortColumn);
         column?.Sort(_currentSortDirection);
 
         _dataGrid.Sorting += OnDataGridSorting; // to early, sorting gets messed up.. --> introduced _onDataGridSortingSkipFirst
-        //_dataGrid.ColumnReordered += OnColumnReordered;
         _dataGrid.DoubleTapped += OnDataGridDoubleTapped;
-        //_dataGrid.ColumnDisplayIndexChanged += OnColumnDisplayIndexChanged;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
 
         // There is no event for registering the changed widths of the columns.
@@ -76,22 +77,6 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         // Access the service via App.ApplicationStateService
         _applicationStateService.RestoreGridState(_gridName, _dataGrid, out _currentSortColumn, out _currentSortDirection);
     }
-
-    /// <summary>
-    /// Handle column reordering
-    /// </summary>
-    //internal void OnColumnReordered(object? sender, DataGridColumnEventArgs e)
-    //{
-    //    SaveGridState(); // see DetachedFromVisualTree
-    //}
-
-    /// <summary>
-    /// Handle column display index changes
-    /// </summary>
-    //internal void OnColumnDisplayIndexChanged(object? sender, DataGridColumnEventArgs e)
-    //{
-    //    SaveGridState(); // see DetachedFromVisualTree
-    //}
 
     internal void OnDataGridSorting(object? sender, DataGridColumnEventArgs e)
     {
@@ -163,7 +148,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         // Save selected item
         var selectedItem = _dataGrid.SelectedItem;
 
-        // Re-sort met huidige sort column/direction
+        // Re-sort using saved sort column/direction
         ApplySortToCollection(_currentSortColumn, _currentSortDirection);
 
         // Restore selected item
