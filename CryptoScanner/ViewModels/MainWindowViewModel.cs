@@ -11,7 +11,6 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
-using CryptoScanner.Views;
 
 namespace CryptoScanner.ViewModels;
 
@@ -30,13 +29,11 @@ public partial class MainWindowViewModel : ObservableObject
     public required PositionClosedGridViewModel PositionClosedGridViewModel { get; set; }
 
 
-    public BrowserView? BrowserView { get; set; }
-
     [ObservableProperty]
     private string _title  = Core.Const.Constants.AppName;
-    
 
-    //[ObservableProperty]
+
+    //[ObservableProperty] // needs extra notify
     //private bool _analyzerActive = false;
     public bool AnalyzerActive
     {
@@ -52,7 +49,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    //[ObservableProperty]
+    //[ObservableProperty] // needs extra notify
     //private bool _soundsActive = false;
     public bool SoundsActive
     {
@@ -68,7 +65,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    //[ObservableProperty]
+    //[ObservableProperty] // needs extra notify
     //private bool _traderActive = false;
     public bool TraderActive
     {
@@ -123,30 +120,26 @@ public partial class MainWindowViewModel : ObservableObject
         BrowserViewModel = browserViewModel;
         LogGridViewModel = logGridViewModel;
 
-        // Subscribe child ViewModels to filter event
+        // Subscribe the child ViewModels to filter the contents
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
         FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
-
-        // Initialize the visible browser to the BTCUSDT (if it exists) - TODO: Move code?
-        CryptoInterval interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
-        if (GlobalData.ActiveExchange!.SymbolListName.TryGetValue("BTCUSDT", out CryptoSymbol? symbol))
-            CommandHelper.ActivateTradingApp(CryptoTradingApp.TradingView, symbol, interval, CryptoExternalUrlType.Internal, false);
     }
 
     private void OnOpenInInternalBrowserRequested(string url, bool switchTab)
     {
         //BrowserViewModel.NavigateToTradingView(url);
-        if (BrowserView != null)
+        if (BrowserViewModel != null)
         {
             System.Diagnostics.Debug.WriteLine($"OpenInBrowser: {url}");
 
-            // switch to the browser tab
-            SelectedTabIndex = 1;
+            // switch to the Tradingview tab with the browser
+            if (switchTab)
+                SelectedTabIndex = 1;
 
             // Navigate triggers initialization + tab switch automatically
-            BrowserView.Navigate(url);
+            BrowserViewModel.NavigateCommand.Execute(url);
         }
     }
 
@@ -159,7 +152,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else
         {
-            // Fallback 
+            // Fallback
             Environment.Exit(0);
         }
     }
