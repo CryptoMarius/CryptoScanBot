@@ -80,14 +80,14 @@ public partial class TraderTabViewModel : ObservableObject
         TraderEntryViewModel.LoadConfig(settings);
         TraderDcaViewModel.LoadConfig(settings);
 
-        TraderIntervalLongViewModel.LoadConfig(settings.Long.Strategy);
-        TraderStrategyLongViewModel.LoadConfig(settings.Long.Interval);
+        TraderIntervalLongViewModel.LoadConfig(settings.Long.Interval);
+        TraderStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
         TraderBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
         TraderMarketTrendFilterLongViewModel.LoadConfig(settings.Long.MarketTrend);
         TraderTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
-        TraderIntervalShortViewModel.LoadConfig(settings.Short.Strategy);
-        TraderStrategyShortViewModel.LoadConfig(settings.Short.Interval);
+        TraderIntervalShortViewModel.LoadConfig(settings.Short.Interval);
+        TraderStrategyShortViewModel.LoadConfig(settings.Short.Strategy);
         TraderBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
         TraderMarketTrendFilterShortViewModel.LoadConfig(settings.Short.MarketTrend);
         TraderTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
@@ -103,14 +103,14 @@ public partial class TraderTabViewModel : ObservableObject
         TraderEntryViewModel.SaveConfig(settings);
         TraderDcaViewModel.SaveConfig(settings);
 
-        TraderIntervalLongViewModel.SaveConfig(settings.Long.Strategy);
-        TraderStrategyLongViewModel.SaveConfig(settings.Long.Interval);
+        TraderIntervalLongViewModel.SaveConfig(settings.Long.Interval);
+        TraderStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
         TraderBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
         TraderMarketTrendFilterLongViewModel.SaveConfig(settings.Long.MarketTrend);
         TraderTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
-        TraderIntervalShortViewModel.SaveConfig(settings.Short.Strategy);
-        TraderStrategyShortViewModel.SaveConfig(settings.Short.Interval);
+        TraderIntervalShortViewModel.SaveConfig(settings.Short.Interval);
+        TraderStrategyShortViewModel.SaveConfig(settings.Short.Strategy);
         TraderBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
         TraderMarketTrendFilterShortViewModel.SaveConfig(settings.Short.MarketTrend);
         TraderTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
