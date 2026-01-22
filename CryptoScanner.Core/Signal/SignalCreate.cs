@@ -19,7 +19,6 @@ public class SignalCreate
 
     public CryptoCandle? Candle { get; set; }
     public List<CryptoCandle>? History { get; set; }
-
     public List<CryptoSignal> SignalList { get; set; } = [];
 
     public SignalCreate(CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side)
@@ -29,7 +28,7 @@ public class SignalCreate
         Side = side;
     }
 
-    public static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
+    private static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
     {
         // dit zou ook bij het verzamelen van de History lijst kunnen (scheelt een iteratie)
         double AvgBB = 0;
@@ -400,7 +399,7 @@ public class SignalCreate
         signal.EventText = string.Join(", ", eventText);
         try
         {
-            // Bied het aan het monitorings systeem (indien aangevinkt) 
+            // Add it to the monitorings system (if active) 
             // (lagere intervallen hebben hogere prioriteit - via EventTime, klopt dat?)
             // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
             if (!signal.IsInvalid && GlobalData.Settings.Trading.Active)
