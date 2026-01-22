@@ -9,8 +9,7 @@ public partial class AboutWindow : Window
 {
     public AboutWindow()
     {
-        AvaloniaXamlLoader.Load(this);
-        //InitializeComponent();
+        InitializeComponent();
 
         var viewModel = new AboutWindowViewModel();
         DataContext = viewModel;
