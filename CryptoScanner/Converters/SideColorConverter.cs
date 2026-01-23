@@ -17,6 +17,10 @@ public class SideColorConverter : ColorConverter, IValueConverter
         {
             return GetBrushResource(signalInfo.Side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
         }
+        else if (value is PositionViewModel positionInfo)
+        {
+            return GetBrushResource(positionInfo.Side == CryptoTradeSide.Long ? "PriceUpBrush" : "PriceDownBrush");
+        }
         else
         {
             return GetBrushResource("PriceNeutralBrush");

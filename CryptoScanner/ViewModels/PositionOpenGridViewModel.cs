@@ -1,6 +1,4 @@
-﻿using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -14,7 +12,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class PositionOpenGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
+    //private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
     private ObservableRangeCollection<PositionViewModel> _positions = [];
@@ -24,10 +22,11 @@ public partial class PositionOpenGridViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("PositionOpenGridViewModel constructor called");
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
 
-        _timerUpdatePositions.Tick += TimerUpdatePositionsTick;
-        _timerUpdatePositions.Start();
+        //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
+        //_timerUpdatePositions.Start();
 
         LoadOpenPositions();
+        GlobalData.PositionsHaveChanged("");
     }
 
 
@@ -87,6 +86,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
             {
                 foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
                 {
+                    //if (position.Status < CryptoPositionStatus.Ready)
                     list.Add(new PositionViewModel { Object = position });
                 }
             }

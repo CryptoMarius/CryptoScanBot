@@ -10,7 +10,7 @@
 
     <UserControl.Resources>
         <converters:LargeNumberConverter x:Key="LargeNumberConverter" />
-        <converters:PriceTextConverter x:Key="PriceTextConverter" />
+        <converters:SymbolPriceValueConverter x:Key="SymbolPriceValueConverter" />        
         <converters:BarometerColorConverter x:Key="BarometerColorConverter" />
     </UserControl.Resources>
   
@@ -182,47 +182,77 @@
                 <!-- 0 -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="{Binding TopSymbols[0].Name}" 
                            Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
-                <TextBlock Grid.Row="0" Grid.Column="1" Classes="value" Foreground="{Binding TopSymbols[0].Color}" 
-                           Text="{Binding TopSymbols[0].Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Classes="value" MinWidth="50"
+                           Foreground="{Binding TopSymbols[0].Color}" Tapped="OnSymbolTapped" 
+                           Tag="{Binding TopSymbols[0]}">
+					<TextBlock.Text>
+						<MultiBinding Converter="{StaticResource SymbolPriceValueConverter}">
+							<Binding Path="TopSymbols[0].Price" /><Binding Path="TopSymbols[0]" />
+						</MultiBinding>
+					</TextBlock.Text>
+                </TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="2" Classes="value" Text="{Binding TopSymbols[0].Volume, Converter={StaticResource LargeNumberConverter}}" 
                            Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
 
                 <!-- 1 -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="{Binding TopSymbols[1].Name}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" Foreground="{Binding TopSymbols[1].Color}" 
-                           Text="{Binding TopSymbols[1].Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[1]}"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Classes="value" MinWidth="50"
+                           Foreground="{Binding TopSymbols[1].Color}" Tapped="OnSymbolTapped" 
+                           Tag="{Binding TopSymbols[1]}">
+					<TextBlock.Text>
+						<MultiBinding Converter="{StaticResource SymbolPriceValueConverter}">
+							<Binding Path="TopSymbols[1].Price" /><Binding Path="TopSymbols[1]" />
+						</MultiBinding>
+					</TextBlock.Text>
+                </TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="2" Classes="value" Text="{Binding TopSymbols[1].Volume, Converter={StaticResource LargeNumberConverter}}"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[1]}"/>
 
                 <!-- 2 -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="{Binding TopSymbols[2].Name}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
-                <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" Foreground="{Binding TopSymbols[2].Color}" 
-                           Text="{Binding TopSymbols[2].Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[2]}"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Classes="value" MinWidth="50"
+                           Foreground="{Binding TopSymbols[2].Color}" Tapped="OnSymbolTapped" 
+                           Tag="{Binding TopSymbols[2]}">
+					<TextBlock.Text>
+						<MultiBinding Converter="{StaticResource SymbolPriceValueConverter}">
+							<Binding Path="TopSymbols[2].Price" /><Binding Path="TopSymbols[2]" />
+						</MultiBinding>
+					</TextBlock.Text>
+                </TextBlock>
                 <TextBlock Grid.Row="2" Grid.Column="2" Classes="value" Text="{Binding TopSymbols[2].Volume, Converter={StaticResource LargeNumberConverter}}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[2]}"/>
 
                 <!-- 3 -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="label" Text="{Binding TopSymbols[3].Name}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" Foreground="{Binding TopSymbols[3].Color}" 
-                           Text="{Binding TopSymbols[3].Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[3]}"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Classes="value" MinWidth="50"
+                           Foreground="{Binding TopSymbols[3].Color}" Tapped="OnSymbolTapped" 
+                           Tag="{Binding TopSymbols[3]}">
+					<TextBlock.Text>
+						<MultiBinding Converter="{StaticResource SymbolPriceValueConverter}">
+							<Binding Path="TopSymbols[3].Price" /><Binding Path="TopSymbols[3]" />
+						</MultiBinding>
+					</TextBlock.Text>
+                </TextBlock>
                 <TextBlock Grid.Row="3" Grid.Column="2" Classes="value" Text="{Binding TopSymbols[3].Volume, Converter={StaticResource LargeNumberConverter}}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[3]}"/>
 
                 <!-- 4 -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Classes="label" Text="{Binding TopSymbols[4].Name}" 
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
-                <TextBlock Grid.Row="4" Grid.Column="1" Classes="value" Foreground="{Binding TopSymbols[4].Color}" 
-                           Text="{Binding TopSymbols[4].Price, Converter={StaticResource PriceTextConverter}}"  MinWidth="50"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[4]}"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" Classes="value" MinWidth="50"
+                           Foreground="{Binding TopSymbols[4].Color}" Tapped="OnSymbolTapped" 
+                           Tag="{Binding TopSymbols[4]}">
+					<TextBlock.Text>
+						<MultiBinding Converter="{StaticResource SymbolPriceValueConverter}">
+							<Binding Path="TopSymbols[4].Price" /><Binding Path="TopSymbols[4]" />
+						</MultiBinding>
+					</TextBlock.Text>
+                </TextBlock>
                 <TextBlock Grid.Row="4" Grid.Column="2" Classes="value" Text="{Binding TopSymbols[4].Volume, Converter={StaticResource LargeNumberConverter}}"
-                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[0]}"/>
+                           Tapped="OnSymbolTapped" Tag="{Binding TopSymbols[4]}"/>
 
             </Grid>
         </StackPanel>

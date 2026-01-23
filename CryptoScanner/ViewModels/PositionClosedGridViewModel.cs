@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Model;
 
@@ -14,7 +15,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class PositionClosedGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
+    //private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
     private ObservableRangeCollection<PositionViewModel> _positions = [];
@@ -24,10 +25,11 @@ public partial class PositionClosedGridViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("PositionClosedGridViewModel constructor called");
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
 
-        _timerUpdatePositions.Tick += TimerUpdatePositionsTick;
-        _timerUpdatePositions.Start();
+        //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
+        //_timerUpdatePositions.Start();
 
         LoadClosedPositions();
+        GlobalData.PositionsHaveChanged("");
     }
 
 
@@ -86,7 +88,7 @@ public partial class PositionClosedGridViewModel : ObservableObject
             List<PositionViewModel> list = [];
             if (GlobalData.ActiveExchange != null)
             {
-                foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
+                foreach (var position in GlobalData.PositionsClosed)
                 {
                     list.Add(new PositionViewModel { Object = position });
                 }
