@@ -13,7 +13,7 @@ public class PSar
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate, string group)
     {
         var seriesMiddle = new LineSeries { Title = "psar", MarkerSize = 1, 
-            MarkerFill = OxyColors.DarkBlue, Color = OxyColors.DarkBlue, Tag = group, };
+            MarkerFill = OxyColors.Yellow, Color = OxyColors.Yellow, Tag = group, };
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.CandleList.Count == 0)
