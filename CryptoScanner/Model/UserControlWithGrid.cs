@@ -49,7 +49,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     {
         // Call this method only once..
         _dataGrid.Loaded -= DataGrid_Loaded;
-        
+
         System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
         var column = _dataGrid.Columns.First(c => c.SortMemberPath == _currentSortColumn);
@@ -338,7 +338,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Column comparer for {_gridName} {column.SortMemberPath} not set");
+                throw new Exception($"Column comparer for {_gridName} {column.SortMemberPath} not set");
             }
         }
 
