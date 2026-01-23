@@ -147,8 +147,15 @@ public class ApplicationStateService
                         column.Width = new DataGridLength(colSetting.Width);
                     }
 
-                    // Restore display order
-                    column.DisplayIndex = colSetting.DisplayIndex;
+                    try
+                    {
+                        // Restore display order (must be in range of available columns)
+                        column.DisplayIndex = colSetting.DisplayIndex;
+                    }
+                    catch 
+                    { 
+                        // ignore (wil crash if we reduced the amount of columns)
+                    }
 
                     // Restore visibility
                     column.IsVisible = colSetting.IsVisible;
