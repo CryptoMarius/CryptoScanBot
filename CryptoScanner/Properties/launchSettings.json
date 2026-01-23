@@ -2,7 +2,7 @@
   "profiles": {
     "CryptoScanner": {
       "commandName": "Project",
-      "commandLineArgs": "-f \"E:\\CryptoScanBot\\Binance\\FuturesAvalonia\" -t x"
+      "commandLineArgs": "-f \"E:\\CryptoScanBot\\Binance\\FuturesAvalonia\""
     }
   }
 }

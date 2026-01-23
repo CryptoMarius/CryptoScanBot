@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
@@ -147,7 +149,7 @@ public class ThreadCheckFinishedPosition
             PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
             if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             {
-                GlobalData.PositionsHaveChanged("");
+                Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
                 GlobalData.AddTextToLogTab($"ThreadCheckFinishedPosition: Position {position.Symbol.Name} moved ({position.Status})");
             }
         }

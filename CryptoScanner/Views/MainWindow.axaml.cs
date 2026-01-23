@@ -218,9 +218,9 @@ public partial class MainWindow : Window
         }
         else
         {
-            BrowserViewHost.Width = 10;
-            BrowserViewHost.Height = 10;
-            BrowserViewHost.Opacity = 1;
+            BrowserViewHost.Width = 1;
+            BrowserViewHost.Height = 1;
+            BrowserViewHost.Opacity = 0.01;
             BrowserViewHost.IsHitTestVisible = false;
         }
     }

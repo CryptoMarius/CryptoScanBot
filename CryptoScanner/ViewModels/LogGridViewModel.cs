@@ -24,8 +24,8 @@ public partial class LogGridViewModel : ObservableObject
     [ObservableProperty]
     private ObservableRangeCollection<LogViewModel> _logLines = [];
 
-    [ObservableProperty]
-    private bool _autoScroll = false; // does not work properly
+    public LogViewModel? SelectedLogLine { get; set; }
+
 
     public LogGridViewModel()
     {
@@ -48,7 +48,7 @@ public partial class LogGridViewModel : ObservableObject
         // The queue can be overwhelmed (and there is a max array size)
         try
         {
-            // Via queue want afzonderlijk regels toevoegen kost relatief veel tijd
+            // Use a queue because adding lines cost a lot of time (notification/refresh)
             ScannerLog.Logger.Info(text);
             text = text.Trim();
 
@@ -60,7 +60,7 @@ public partial class LogGridViewModel : ObservableObject
                     text = DateTime.Now.ToLocalTime() + " " + text;
             }
             LogQueue.Enqueue(new LogViewModel() { Date = DateTime.Now, Text = text, });
-            
+
         }
         catch (Exception error)
         {
@@ -70,41 +70,42 @@ public partial class LogGridViewModel : ObservableObject
 
     private void TimerAddLogLinesTick(object? sender, EventArgs? e)
     {
-        try
-        {
-            if (GlobalData.ApplicationIsClosing)
-                return;
+        if (GlobalData.ApplicationIsClosing || LogQueue.Count == 0)
+            return;
 
-            // Speed up adding text
-            if (LogQueue.Count > 0)
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
             {
-                if (Monitor.TryEnter(LogQueue))
-                {
-                    try
-                    {
-                        List<LogViewModel> lines = [];
-                        while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
-                        {
-                            var x = LogQueue.Dequeue();
-                            lines.Add(x);
-                        }
-                        LogLines.AddRange(lines);
-                    }
-                    finally
-                    {
-                        Monitor.Exit(LogQueue);
-                    }
-                }
-            }
+                // Save current selection
+                var selected = SelectedLogLine;
 
-            // Keep only last MaxLogLines entries
-            if (LogLines.Count > MaxLogLines)
-                LogLines.RemoveAt(0);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "logtick");
-        }
+                // Add items one by one
+                while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
+                    LogLines.Add(LogQueue.Dequeue());
+
+                // Keep only last MaxLogLines entries
+                while (LogLines.Count > MaxLogLines)
+                    LogLines.RemoveAt(0);
+
+                // Restore selection
+                if (selected != null)
+                {
+                    if (LogLines.Contains(selected))
+                        SelectedLogLine = selected;
+                    else
+                        SelectedLogLine = LogLines.LastOrDefault();
+                }
+
+                // Auto-scroll to lastline to last line
+                if (SelectedLogLine == null || SelectedLogLine == LogLines.LastOrDefault())
+                    SelectedLogLine = LogLines.LastOrDefault();
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "logtick");
+            }
+        });
     }
 
 }

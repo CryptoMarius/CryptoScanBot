@@ -573,9 +573,8 @@ public partial class ChartWindowViewModel : ObservableObject
             PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
             PlaybackControls.UpdateMaxTimeDisplay(CandleTools.GetUnixDate(Session.MaxDate).ToLocalTime().ToString("dd MMM HH:mm"));
 
-            // Load signals and positions
+            // Load signals
             ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
-            ExtraData.LoadPositionsForSymbol(Data, Session.MinDate);
         }
 
         reason = "";

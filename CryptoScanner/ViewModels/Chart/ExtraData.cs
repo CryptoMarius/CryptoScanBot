@@ -44,18 +44,4 @@ public class ExtraData
 
     }
 
-    public static void LoadPositionsForSymbol(ZoneConfig data, long from)
-    {
-        //data.Positions.Clear();
-        //using var database = new CryptoDatabase();
-        //string sql = "select * from position where TradeAccountId=@TradeAccountId and SymbolId = @SymbolId order by id desc limit 50";
-        //foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { TradeAccountId = GlobalData.ActiveAccount!.Id }))
-        //{
-        //    if (!GlobalData.TradeAccountList.TryGetValue(position.TradeAccountId, out CryptoAccount? tradeAccount))
-        //        throw new Exception("No trading account found");
-
-        //    data.Positions.Add(position);
-        //}
-
-    }
 }

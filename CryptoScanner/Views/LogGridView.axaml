@@ -18,10 +18,9 @@
                 CanUserSortColumns="True"
                 GridLinesVisibility="None"
                 BorderThickness="1"
-                BorderBrush="Transparent">
+                BorderBrush="Transparent"
+                SelectedItem="{Binding SelectedLogLine, Mode=TwoWay}">
 
-
-	
         <DataGrid.Columns >
             <!-- Id -->
             <!-- Id (Hidden by default) -->

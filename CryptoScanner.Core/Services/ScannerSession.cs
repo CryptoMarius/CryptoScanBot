@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
+using Avalonia.Threading;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -171,7 +172,8 @@ public class ScannerSession : IScannerSession
             // Positions will be loaded later
             LoadAssets(); // not sure if we need this (papertrading perhaps?)
             GlobalData.LoadSymbols(); // need to load these before the tickers are created
-            GlobalData.SymbolsHaveChanged("");
+            //GlobalData.SymbolsHaveChanged("");
+            Dispatcher.UIThread.Post(() => { GlobalData.SymbolsHaveChanged(""); });
         }
     }
 
