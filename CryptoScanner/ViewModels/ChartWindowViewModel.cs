@@ -446,6 +446,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(PlotModel, group, Session.ShowBollingerBand))
             Bollingerbands.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, group);
 
+        // Draw PSar
+        group = "psar";
+        if (Toggle(PlotModel, group, Session.ShowBollingerBand))
+            PSar.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, group);
+
         // Draw SMA lines
         group = "sma";
         if (Toggle(PlotModel, group, Session.ShowSmaLinesSbm))

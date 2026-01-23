@@ -123,6 +123,7 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowFvgZones, Mode=TwoWay}" Content="FVG Zones" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowPSar, Mode=TwoWay}" Content="PSar" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelopeRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelope, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/> 
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
