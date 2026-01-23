@@ -63,7 +63,7 @@ public class CommandShowGraph : CommandBase
             catch (Exception error)
             {
                 ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab($"error showing chart {dto.symbol.Name} {dto.interval.Name} {error.Message}");
+                GlobalData.AddTextToLogTab($"error showing chart {dto.symbol.Name} {dto.interval?.Name} {error.Message}");
             }
         }
     }
