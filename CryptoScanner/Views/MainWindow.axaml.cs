@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 
 using CommunityToolkit.Mvvm.Input;
 
@@ -40,6 +39,16 @@ public partial class MainWindow : Window
         _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
         InitializeComponent();
+
+        // Does not add anything usefull i'm afraid (for monotoring performance)
+//#if DEBUG
+//        this.AttachDevTools(new DevToolsOptions
+//        {
+//            StartupScreenIndex = 1, // Start met Performance tab
+//            ShowAsChildWindow = true
+//        });
+//        Debug.WriteLine("DevTools attached");
+//#endif
 
         DataContext = viewModel;
 
