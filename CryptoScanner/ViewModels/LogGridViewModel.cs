@@ -4,6 +4,7 @@ using CryptoScanner.Core.Core;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CryptoScanner.Model;
+using System.Collections.ObjectModel;
 
 namespace CryptoScanner.ViewModels;
 
@@ -22,7 +23,7 @@ public partial class LogGridViewModel : ObservableObject
     /// Collection of lines to display in the grid
     /// </summary>
     [ObservableProperty]
-    private ObservableRangeCollection<LogViewModel> _logLines = [];
+    private ObservableCollection<LogViewModel> _logLines = [];
 
     public LogViewModel? SelectedLogLine { get; set; }
 
@@ -108,4 +109,8 @@ public partial class LogGridViewModel : ObservableObject
         });
     }
 
+    public void Clear()
+    {
+        LogLines.Clear();
+    }
 }

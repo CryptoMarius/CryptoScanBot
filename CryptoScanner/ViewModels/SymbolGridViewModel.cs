@@ -6,6 +6,8 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Model;
 
+using System.Collections.ObjectModel;
+
 
 namespace CryptoScanner.ViewModels;
 
@@ -17,7 +19,7 @@ public partial class SymbolGridViewModel : ObservableObject
     /// Collection of signals to display in the grid
     /// </summary>
     [ObservableProperty]
-    private ObservableRangeCollection<SymbolViewModel> _symbols = [];
+    private ObservableCollection<SymbolViewModel> _symbols = [];
 
     //public static bool readSymbols = true;
 
@@ -45,14 +47,14 @@ public partial class SymbolGridViewModel : ObservableObject
         //readSymbols = false;
 
         // Laad symbols direct in de observable collection
-        List<SymbolViewModel> symbols = [];
+        //List<SymbolViewModel> symbols = [];
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
             if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
             {
                 if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                 {
-                    symbols.Add(new SymbolViewModel
+                    Symbols.Add(new SymbolViewModel
                     {
                         Object = symbol,
                         Id = symbol.Id,
@@ -63,7 +65,7 @@ public partial class SymbolGridViewModel : ObservableObject
                 }
             }
         }
-        Symbols.Replace(symbols);
+        //Symbols.Replace(symbols);
         
         // Request sort na filtering
         //RequestSort?.Invoke(this, EventArgs.Empty);

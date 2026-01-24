@@ -8,6 +8,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Model;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Settings;
+using System.Collections.ObjectModel;
 
 
 namespace CryptoScanner.ViewModels;
@@ -18,7 +19,7 @@ public partial class LiveDataGridViewModel : ObservableObject
 
 
     [ObservableProperty]
-    private ObservableRangeCollection<LiveDataViewModel> _LiveDatas = [];
+    private ObservableCollection<LiveDataViewModel> _LiveDatas = [];
 
     public LiveDataGridViewModel()
     {

@@ -15,16 +15,42 @@ namespace CryptoScanner.Converters
             {
                 if (signal.Side == CryptoTradeSide.Long)
                 {
-                    if (signal.Sma20 > signal.Sma200)
+                    if (signal.Sma50 < signal.Sma200)
                         return GetBrushResource("PriceUpBrush");
-                    else if (signal.Sma20 < signal.Sma200)
+                    else if (signal.Sma50 > signal.Sma200)
                         return GetBrushResource("PriceDownBrush");
                 }
                 else if (signal.Side == CryptoTradeSide.Short)
                 {
-                    if (signal.Sma20 > signal.Sma200)
+                    if (signal.Sma50 > signal.Sma200)
                         return GetBrushResource("PriceUpBrush");
-                    else if (signal.Sma20 < signal.Sma200)
+                    else if (signal.Sma50 < signal.Sma200)
+                        return GetBrushResource("PriceDownBrush");
+                }
+            }
+            else if (value is LiveDataViewModel liveData)
+            {
+                // liveData does not have a side
+                if (liveData.Sma50 < liveData.Sma200)
+                    return GetBrushResource("PriceUpBrush");
+                else if (liveData.Sma50 > liveData.Sma200)
+                    return GetBrushResource("PriceDownBrush");
+
+            }
+            else if (value is PositionViewModel position)
+            {
+                if (position.Side == CryptoTradeSide.Long)
+                {
+                    if (position.Sma50 < position.Sma200)
+                        return GetBrushResource("PriceUpBrush");
+                    else if (position.Sma50 > position.Sma200)
+                        return GetBrushResource("PriceDownBrush");
+                }
+                else if (position.Side == CryptoTradeSide.Short)
+                {
+                    if (position.Sma50 > position.Sma200)
+                        return GetBrushResource("PriceUpBrush");
+                    else if (position.Sma50 < position.Sma200)
                         return GetBrushResource("PriceDownBrush");
                 }
             }

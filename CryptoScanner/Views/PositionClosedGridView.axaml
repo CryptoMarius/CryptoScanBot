@@ -11,7 +11,7 @@
 
 	<UserControl.Resources>
 		<converter:BarometerColorConverter x:Key="BarometerColorConverter" />
-		<converter:MarketTrendColorConverter x:Key="MarketTrendColorConverter" />
+		<converter:ValueSignColorConverter x:Key="ValueSignColorConverter" />
 		<converter:PositionStatusColorConverter x:Key="PositionStatusColorConverter" />
 		<converter:PSarColorConverter x:Key="PSarColorConverter" />
 		<converter:RsiColorConverter x:Key="RsiColorConverter" />
@@ -30,7 +30,6 @@
 		<converter:VolumeColorConverter x:Key="VolumeColorConverter" />
 	</UserControl.Resources>
 
-	<Grid>
 	<DataGrid x:Name="PositionClosedGrid"
 			  ItemsSource="{Binding Positions}"
 			  IsReadOnly="True"
@@ -40,9 +39,8 @@
 			  CanUserResizeColumns="True"
 			  CanUserSortColumns="True"
 			  GridLinesVisibility="None"
-			  BorderThickness="1"
-			  BorderBrush="Transparent"
-			  ColumnHeaderHeight="32" RowHeight="22">
+                  BorderThickness="0" BorderBrush="Transparent"
+				  ColumnHeaderHeight="32" RowHeight="22">
 
 		
 
@@ -110,13 +108,20 @@
 			</DataGridTemplateColumn>
 
 			<!-- Interval -->
-			<DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="60" MinWidth="50" SortMemberPath="Interval" />
+            <DataGridTemplateColumn Header="Side" Width="60" MinWidth="50" SortMemberPath="Interval" >
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Text="{Binding Interval}"/>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
 
 			<!-- Strategy -->
 			<DataGridTemplateColumn Header="Strategy" Width="60" MinWidth="50" SortMemberPath="Strategy">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock Text="{Binding Strategy}">
+						<TextBlock Text="{Binding Strategy}" VerticalAlignment="Center" HorizontalAlignment="Center">
 							<TextBlock.Background>
 								<MultiBinding Converter="{StaticResource StrategyColorConverter}">
 									<Binding Path="."/>
@@ -219,7 +224,8 @@
 			<DataGridTemplateColumn Header="Profit" Width="75" SortMemberPath="CurrentProfit" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Foreground="{Binding CurrentProfit, Converter={StaticResource ValueSignColorConverter}}">
 							<TextBlock.Text>
 								<MultiBinding Converter="{StaticResource SymbolQuoteValueConverter}">
 									<Binding Path="CurrentProfit" /><Binding Path="." />
@@ -235,7 +241,8 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-								   Text="{Binding CurrentProfitPercentage, StringFormat='{}{0:##0.#0}'}"/>
+								   Text="{Binding CurrentProfitPercentage, StringFormat='{}{0:##0.#0}'}"
+								   Foreground="{Binding CurrentProfitPercentage, Converter={StaticResource ValueSignColorConverter}}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -383,7 +390,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding TrendPercentagePrimary, StringFormat='{}{0:##0.#0}'}"
-								   Foreground="{Binding TrendPercentagePrimary, Converter={StaticResource MarketTrendColorConverter}}" />
+								   Foreground="{Binding TrendPercentagePrimary, Converter={StaticResource ValueSignColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -394,7 +401,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding TrendPercentageSecondary, StringFormat='{}{0:##0.#0}'}"
-								   Foreground="{Binding TrendPercentageSecondary, Converter={StaticResource MarketTrendColorConverter}}" />
+								   Foreground="{Binding TrendPercentageSecondary, Converter={StaticResource ValueSignColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -405,7 +412,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding Last24HoursChange, StringFormat='{}{0:##0.#0}'}"
-								   Foreground="{Binding Last24HoursChange, Converter={StaticResource MarketTrendColorConverter}}" />
+								   Foreground="{Binding Last24HoursChange, Converter={StaticResource ValueSignColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -416,7 +423,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding LastXDaysEffective, StringFormat='{}{0:##0.#0}'}"
-								   Foreground="{Binding LastXDaysEffective, Converter={StaticResource MarketTrendColorConverter}}" />
+								   Foreground="{Binding LastXDaysEffective, Converter={StaticResource ValueSignColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -489,7 +496,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 								   Text="{Binding LuxIndicator5m, StringFormat='{}{0:##0.#0}'}"
-								   Foreground="{Binding LuxIndicator5m, Converter={StaticResource MarketTrendColorConverter}}" />
+								   Foreground="{Binding LuxIndicator5m, Converter={StaticResource ValueSignColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -499,7 +506,8 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-								   Text="{Binding MacdValue, StringFormat='{}{0:##0.###0}'}" />
+								   Text="{Binding MacdValue, StringFormat='{}{0:##0.###0}'}"
+								   Foreground="{Binding MacdValue, Converter={StaticResource ValueSignColorConverter}}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -509,7 +517,8 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-								   Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" />
+								   Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" 
+								   Foreground="{Binding MacdSignal, Converter={StaticResource ValueSignColorConverter}}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -519,7 +528,8 @@
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-								   Text="{Binding MacdHistogram, StringFormat='{}{0:##0.#0}'}" />
+								   Text="{Binding MacdHistogram, StringFormat='{}{0:##0.#0}'}" 
+								   Foreground="{Binding MacdHistogram, Converter={StaticResource ValueSignColorConverter}}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -535,7 +545,7 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- Stoch hSignal -->
+			<!-- Stoch signal -->
 			<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
@@ -738,5 +748,4 @@
 
 		</DataGrid.Columns>
 	</DataGrid>
-	</Grid>
 </UserControl>

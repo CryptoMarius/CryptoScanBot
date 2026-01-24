@@ -685,7 +685,7 @@ public partial class ChartWindowViewModel : ObservableObject
         if (lastDisplay != newDisplay)
         {
             lastDisplay = newDisplay;
-            await ZoneCandleEngine.LoadCandleDataFromDiskAsync(Data.Symbol, Data.Interval);
+            await ZoneCandleEngine.ReadCandlesFromDiskAsync(Data.Symbol, Data.Interval);
 
             // Clear all series
             chart.Series.Clear();

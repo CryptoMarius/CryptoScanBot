@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.ViewModels;
+using CryptoScanner.Views;
 
 namespace CryptoScanner.Commands;
 
@@ -14,5 +16,10 @@ public class CommandClearLogAndTicker : CommandBase
         SignalExecute.ResetAnalyseCount();
         ExchangeBase.KLineTicker!.Reset();
         //ExchangeBase.PriceTicker!.Reset(); // gone..
+
+        if (parameter is MainWindow window && window.DataContext is MainWindowViewModel mainViewModel)
+        {
+            mainViewModel.LogGridViewModel.Clear();
+        }
     }
 }

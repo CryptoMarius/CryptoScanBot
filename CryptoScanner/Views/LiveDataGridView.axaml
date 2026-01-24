@@ -11,7 +11,7 @@
 
 	<UserControl.Resources>
 		<converter:BarometerColorConverter x:Key="BarometerColorConverter" />
-		<converter:MarketTrendColorConverter x:Key="MarketTrendColorConverter" />
+		<converter:ValueSignColorConverter x:Key="ValueSignColorConverter" />
 		<converter:PSarColorConverter x:Key="PSarColorConverter" />
 		<converter:RsiColorConverter x:Key="RsiColorConverter" />
 		<converter:SideTextConverter x:Key="SideTextConverter" />
@@ -29,7 +29,6 @@
 		<converter:VolumeColorConverter x:Key="VolumeColorConverter" />
 	</UserControl.Resources>
 
-	<Grid>
 		<DataGrid x:Name="LiveDataDataGrid"
 				  ItemsSource="{Binding LiveDatas}"
 				  IsReadOnly="True"
@@ -39,8 +38,7 @@
 				  CanUserResizeColumns="True"
 				  CanUserSortColumns="True"
 				  GridLinesVisibility="None"
-				  BorderThickness="1"
-				  BorderBrush="Transparent"
+                  BorderThickness="0" BorderBrush="Transparent"
 				  ColumnHeaderHeight="32" RowHeight="22">
 
 			<DataGrid.Columns>
@@ -71,7 +69,14 @@
 				</DataGridTemplateColumn>
 
 				<!-- Interval -->
-				<DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="60" MinWidth="50" SortMemberPath="Interval" />
+				<DataGridTemplateColumn Header="Side" Width="60" MinWidth="50" SortMemberPath="Interval" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+										Text="{Binding Interval}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
 
 				<!-- LiveData Price -->
 				<DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="Price" >
@@ -157,7 +162,7 @@
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
 									   Text="{Binding LuxIndicator5m, StringFormat='{}{0:##0.#0}'}"
-									   Foreground="{Binding LuxIndicator5m, Converter={StaticResource MarketTrendColorConverter}}" />
+									   Foreground="{Binding LuxIndicator5m, Converter={StaticResource ValueSignColorConverter}}" />
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
@@ -167,7 +172,8 @@
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text="{Binding MacdValue, StringFormat='{}{0:##0.###0}'}" />
+									   Text="{Binding MacdValue, StringFormat='{}{0:##0.###0}'}" 
+									   Foreground="{Binding MacdValue, Converter={StaticResource ValueSignColorConverter}}"/>
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
@@ -177,7 +183,8 @@
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" />
+									   Text="{Binding MacdSignal, StringFormat='{}{0:##0.###0}'}" 
+									   Foreground="{Binding MacdSignal, Converter={StaticResource ValueSignColorConverter}}"/>
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
@@ -187,7 +194,8 @@
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text="{Binding MacdHistogram, StringFormat='{}{0:##0.#0}'}" />
+									   Text="{Binding MacdHistogram, StringFormat='{}{0:##0.#0}'}" 
+									   Foreground="{Binding MacdHistogram, Converter={StaticResource ValueSignColorConverter}}"/>
 						</DataTemplate>
 					</DataGridTemplateColumn.CellTemplate>
 				</DataGridTemplateColumn>
@@ -279,5 +287,4 @@
 
 			</DataGrid.Columns>
 		</DataGrid>
-	</Grid>
 </UserControl>

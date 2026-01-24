@@ -9,6 +9,8 @@ using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Telegram;
 using CryptoScanner.Model;
 
+using System.Collections.ObjectModel;
+
 
 namespace CryptoScanner.ViewModels;
 
@@ -18,7 +20,7 @@ public partial class SignalGridViewModel : ObservableObject
     private DispatcherTimer? _timerClearAndUpdateSignals = new () { Interval = TimeSpan.FromMinutes(1) };
 
     [ObservableProperty]
-    private ObservableRangeCollection<SignalViewModel> _signals = [];
+    private ObservableCollection<SignalViewModel> _signals = [];
 
 
     public SignalGridViewModel()

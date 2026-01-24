@@ -17,9 +17,9 @@
                 CanUserResizeColumns="True"
                 CanUserSortColumns="True"
                 GridLinesVisibility="None"
-                BorderThickness="1"
-                BorderBrush="Transparent"
-                SelectedItem="{Binding SelectedLogLine, Mode=TwoWay}">
+                SelectedItem="{Binding SelectedLogLine, Mode=TwoWay}"
+                  BorderThickness="0" BorderBrush="Transparent"
+				  ColumnHeaderHeight="32" RowHeight="22">
 
         <DataGrid.Columns >
             <!-- Id -->

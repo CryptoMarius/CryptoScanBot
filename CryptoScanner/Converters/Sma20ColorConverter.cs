@@ -15,16 +15,42 @@ namespace CryptoScanner.Converters
             {
                 if (signal.Side == CryptoTradeSide.Long)
                 {
-                    if (signal.Sma20 > signal.Sma50)
+                    if (signal.Sma20 < signal.Sma50)
                         return GetBrushResource("PriceUpBrush");
                     else if (signal.Sma20 > signal.Sma50)
                         return GetBrushResource("PriceDownBrush");
                 }
                 else if (signal.Side == CryptoTradeSide.Short)
                 {
-                    if (signal.Sma20 < signal.Sma50)
+                    if (signal.Sma20 > signal.Sma50)
                         return GetBrushResource("PriceUpBrush");
-                    else if (signal.Sma20 > signal.Sma50)
+                    else if (signal.Sma20 < signal.Sma50)
+                        return GetBrushResource("PriceDownBrush");
+                }
+            }
+            else if (value is LiveDataViewModel liveData)
+            {
+                // liveData does not have a side
+                if (liveData.Sma20 < liveData.Sma50)
+                    return GetBrushResource("PriceUpBrush");
+                else if (liveData.Sma20 > liveData.Sma50)
+                    return GetBrushResource("PriceDownBrush");
+
+            }
+            else if (value is PositionViewModel position)
+            {
+                if (position.Side == CryptoTradeSide.Long)
+                {
+                    if (position.Sma20 < position.Sma50)
+                        return GetBrushResource("PriceUpBrush");
+                    else if (position.Sma20 < position.Sma50)
+                        return GetBrushResource("PriceDownBrush");
+                }
+                else if (position.Side == CryptoTradeSide.Short)
+                {
+                    if (position.Sma20 > position.Sma50)
+                        return GetBrushResource("PriceUpBrush");
+                    else if (position.Sma20 < position.Sma50)
                         return GetBrushResource("PriceDownBrush");
                 }
             }

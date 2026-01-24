@@ -12,7 +12,7 @@ namespace CryptoScanner.Converters
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             if (values[0] == null || values[1] == null)
-                return "";
+                return "null";
 
             // Display the first parameter formatted using the symbol's price format
             if (values[0] is decimal price)

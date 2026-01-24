@@ -7,6 +7,8 @@ using CryptoScanner.Model;
 
 using Dapper;
 
+using System.Collections.ObjectModel;
+
 
 namespace CryptoScanner.ViewModels;
 
@@ -15,7 +17,7 @@ public partial class PositionClosedGridViewModel : ObservableObject
     //private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
-    private ObservableRangeCollection<PositionViewModel> _positions = [];
+    private ObservableCollection<PositionViewModel> _positions = [];
 
     public PositionClosedGridViewModel()
     {
@@ -82,16 +84,18 @@ public partial class PositionClosedGridViewModel : ObservableObject
     {
         if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveExchange != null)
         {
+            Positions.Clear();
             List<PositionViewModel> list = [];
             if (GlobalData.ActiveExchange != null)
             {
                 foreach (var position in GlobalData.PositionsClosed)
                 {
-                    list.Add(new PositionViewModel { Object = position });
+                    //list.Add(new PositionViewModel { Object = position });
+                    Positions.Add(new PositionViewModel { Object = position });
                 }
             }
-            Positions.Clear();
-            Positions.AddRange(list);
+            //Positions.Clear();
+            //Positions.AddRange(list);
 
             //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
 
