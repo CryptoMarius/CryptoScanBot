@@ -14,7 +14,7 @@ namespace CryptoScanner.Converters
             {
                 if (rsiValue < GlobalData.Settings.General.SettingsRsi.Oversold)
                     return GetBrushResource("PriceUpBrush");
-                else if (rsiValue > GlobalData.Settings.General.SettingsRsi.Oversold)
+                else if (rsiValue > GlobalData.Settings.General.SettingsRsi.Overbought)
                     return GetBrushResource("PriceDownBrush");
                 else
                     return GetBrushResource("PriceNeutralBrush");
