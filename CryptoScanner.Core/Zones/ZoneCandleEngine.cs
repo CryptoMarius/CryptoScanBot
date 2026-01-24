@@ -4,20 +4,19 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
+using System.IO.Compression;
 using System.Text;
 
 namespace CryptoScanner.Core.Zones;
 
 public class ZoneCandleEngine
 {
-    private static async Task ReadFromBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
+    private static async Task ReadCandlesFromStreamAsync(BinaryReader binaryReader, CryptoSymbol symbol, CryptoInterval interval)
     {
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
-            using FileStream readStream = new(filename, FileMode.Open, FileAccess.Read, FileShare.None, 65536);
-            using BinaryReader binaryReader = new(readStream, Encoding.UTF8, false);
 
             int version = binaryReader.ReadInt32();
             int candleCount = binaryReader.ReadInt32();
@@ -41,44 +40,46 @@ public class ZoneCandleEngine
         }
     }
 
-
-
-    public static async Task LoadCandleDataFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
+    public static async Task ReadCandlesFromDiskAsync(CryptoSymbol symbol, CryptoInterval interval)
     {
-        // load candles (kind of quick and dirty)
-        string baseFolder = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-        string fileName = Path.Combine(baseFolder, $"{symbol.Name}-{interval.Name}.bin");
-        if (File.Exists(fileName))
+        string oldFileName = Path.Combine(GlobalData.AppDataFolder, "Pivots", $"{symbol.Name}-{interval.Name}.bin");
+        string newFileName = Path.Combine(GlobalData.AppDataFolder, symbol.Exchange.Name.ToLower(), symbol.Quote.ToLower(), $"{symbol.Base.ToLower()}-{interval.Name}.compressed");
+        string fileName = string.Empty;
+        try
         {
-            try
+            // an old uncompressed file
+            if (File.Exists(oldFileName))
             {
-                await ReadFromBin(symbol, interval, fileName);
+                fileName = oldFileName;
+                using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
+                using BinaryReader binaryReader = new(fileStream, Encoding.UTF8, false);
+                await ReadCandlesFromStreamAsync(binaryReader, symbol, interval);
             }
-            catch (Exception error)
+            // a new compressed file (preferred)
+            else if (File.Exists(newFileName))
             {
-                GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
-                File.Delete(fileName);
-                throw;
+                fileName = newFileName;
+                using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
+                using GZipStream zipStream = new(fileStream, CompressionMode.Decompress);
+                using BinaryReader binaryReader = new(zipStream, Encoding.UTF8, false);
+                await ReadCandlesFromStreamAsync(binaryReader, symbol, interval);
             }
         }
-        //else if (File.Exists(filenameTxt))
-        //    await ReadFromTxt(symbol, interval, filenameTxt);
-        //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Loading file {filename} {symbolInterval.CandleList.Count} candles");
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
+            File.Delete(fileName);
+            throw;
+        }
     }
 
 
-
-    public static async Task WriteToBin(CryptoSymbol symbol, CryptoInterval interval, string filename)
+    private static async Task WriteCandlesToStreamAsync(BinaryWriter binaryWriter, CryptoSymbol symbol, CryptoInterval interval)
     {
-        CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
-
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
-            //using ZipArchive zipStream = new(writeStream, ZipArchiveMode.Create, true);
-
-            using FileStream writeStream = new(filename, FileMode.Create, FileAccess.Write, FileShare.None, 65536);
-            using BinaryWriter binaryWriter = new(writeStream, Encoding.UTF8, false);
+            CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
             int version = 1;
             binaryWriter.Write(version);
@@ -105,6 +106,37 @@ public class ZoneCandleEngine
         }
     }
 
+    private static async Task WriteCandlesToFileAsync(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        string quoteFolder = Path.Combine(GlobalData.AppDataFolder, symbol.Exchange.Name.ToLower());
+        Directory.CreateDirectory(quoteFolder);
+
+        quoteFolder = Path.Combine(quoteFolder, symbol.Quote.ToLower());
+        Directory.CreateDirectory(quoteFolder);
+
+        string oldFileName = Path.Combine(GlobalData.AppDataFolder, "Pivots", $"{symbol.Name}-{interval.Name}.bin");
+        string newFileName = Path.Combine(quoteFolder, $"{symbol.Base.ToLower()}-{interval.Name}.compressed");
+        try
+        {
+            // delete the old uncompressed file
+            if (File.Exists(oldFileName))
+                File.Delete(oldFileName);
+
+            // a new compressed file (preferred)
+            using FileStream fileStream = new(newFileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
+            using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
+            using BinaryWriter binaryWriter = new(zipStream, Encoding.UTF8, false);
+            await WriteCandlesToStreamAsync(binaryWriter, symbol, interval);
+        }
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab($"ERROR writing {symbol.Name} {interval.Name} {error.Message}");
+            if (File.Exists(newFileName))
+                File.Delete(newFileName);
+            throw;
+        }
+
+    }
 
 
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
@@ -113,14 +145,7 @@ public class ZoneCandleEngine
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
             {
-                string folderName = Path.Combine(GlobalData.AppDataFolder, "Pivots");
-                Directory.CreateDirectory(folderName);
-
-                string fileName = Path.Combine(folderName, $"{symbol.Name}-{symbolInterval.Interval.Name}.bin");
-                await WriteToBin(symbol, symbolInterval.Interval, fileName);
-
-                //string filenameTxt = folderName + $"{symbol.Name}-{symbolInterval.Interval.Name}.json";
-                //await WriteToTxt(symbol, symbolInterval.Interval, filenameTxt);
+                await WriteCandlesToFileAsync(symbol, symbolInterval.Interval);
 
                 //log.AppendLine($"saving {filename}");
                 //ScannerLog.Logger.Info($"Saving {fileName}");
@@ -250,7 +275,7 @@ public class ZoneCandleEngine
         // Load candles from disk
         if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
         {
-            await LoadCandleDataFromDiskAsync(symbol, interval);
+            await ReadCandlesFromDiskAsync(symbol, interval);
             loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // for now (because of klines)
         }
 

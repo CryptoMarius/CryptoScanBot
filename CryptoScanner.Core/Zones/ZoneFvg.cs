@@ -357,7 +357,7 @@ public class ZoneFvg
                     
                     //// Load candles from disk
                     //if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
-                    //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, interval);
+                    //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
                     //loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
                     
                     //// Load candles from the exchange

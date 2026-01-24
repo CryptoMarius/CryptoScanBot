@@ -291,7 +291,7 @@ public class ZoneDlz
                 {
                     //// Load candles from disk if needed
                     //if (!loadedCandlesInMemory.TryGetValue(zoomInterval.IntervalPeriod, out bool _))
-                    //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(symbol, zoomInterval.Interval);
+                    //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, zoomInterval.Interval);
                     //loadedCandlesInMemory.TryAdd(zoomInterval.IntervalPeriod, true); // in memory, alway's save
 
                     //// Load candles from the exchange if needed
@@ -535,7 +535,7 @@ public class ZoneDlz
 
             //// Load candles from disk
             //if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
-            //    await ZoneCandleEngine.LoadCandleDataFromDiskAsync(data.Symbol, data.Interval);
+            //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(data.Symbol, data.Interval);
             //loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // save alway's because of new candles
 
             //// Load candles from exchange
