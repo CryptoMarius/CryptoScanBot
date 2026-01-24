@@ -207,8 +207,8 @@ public class DataStore
                             await symbol.Data.CandleLock.WaitAsync();
                             try
                             {
-                                using FileStream writeStream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
-                                using GZipStream zipStream = new(writeStream, CompressionLevel.Optimal);
+                                using FileStream fileStream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
+                                using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
                                 using BinaryWriter binaryWriter = new(zipStream, Encoding.UTF8, false);
 
                                 int version = 2; // Version 2 adds the weekly interval
