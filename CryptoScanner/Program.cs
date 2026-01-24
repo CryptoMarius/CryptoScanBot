@@ -21,11 +21,11 @@ class Program
         while (appVersion.EndsWith(".0.0"))
             appVersion = appVersion[0..^2];
         GlobalData.AppVersion = appVersion;
-        System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
+        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
 
         // We need a folder for accessing the Sounds
         GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
-        System.Diagnostics.Debug.WriteLine($"GlobalData.AppPath =  {GlobalData.AppPath}");
+        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppPath =  {GlobalData.AppPath}");
 
         // We need a data folder to store our data (temporary dependency injection to hide details)
         var services = new ServiceCollection();
@@ -33,7 +33,7 @@ class Program
         var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
             ?? throw new InvalidOperationException("IPlatformService not registered");
         GlobalData.AppDataFolder = platformService.GetDataDirectory();
-        System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
+        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
 
         // DEBUG OUTPUT
         Console.WriteLine($"OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
