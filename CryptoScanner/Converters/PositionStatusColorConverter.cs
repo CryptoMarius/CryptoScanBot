@@ -1,7 +1,6 @@
 ﻿using Avalonia.Data.Converters;
 
 using CryptoScanner.Core.Enums;
-using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Converters;
 
@@ -26,11 +25,7 @@ public class PositionStatusColorConverter : ColorConverter, IValueConverter
                 case CryptoPositionStatus.Altrady:
                     break;
             }
-            return GetBrushResource(status == CryptoPositionStatus.Timeout? "PriceUpBrush" : "PriceDownBrush");
         }
-        else
-        {
-            return GetBrushResource("PriceNeutralBrush");
-        }
+        return GetBrushResource("PriceNeutralBrush");
     }
 }

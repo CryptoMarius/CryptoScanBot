@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -12,7 +14,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class PositionOpenGridViewModel : ObservableObject
 {
-    //private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
+    private DispatcherTimer? _timerRefreshFields = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
     private ObservableRangeCollection<PositionViewModel> _positions = [];
@@ -22,60 +24,47 @@ public partial class PositionOpenGridViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("PositionOpenGridViewModel constructor called");
         GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
 
-        //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
-        //_timerUpdatePositions.Start();
+        _timerRefreshFields.Tick += TimerRefreshFieldsTick;
+        _timerRefreshFields.Start();
 
         LoadOpenPositions();
         GlobalData.PositionsHaveChanged("");
     }
 
 
-    //public event EventHandler<PositionViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
-
-    public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
-    {
-        if (GlobalData.ApplicationIsClosing)
-            return;
-
-        // ? Update Currentprofit and CUrrentBreakEven perhaps?
-
-        //if (WinFormTools.IsControlVisibleToUser(Grid))
-        //{
-        //    try
-        //    {
-        //        Grid.SuspendDrawing();
-        //        try
-        //        {
-        //??            SortFunction();
-        //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.DlzZoneDistance);
-        //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.Volume);
-        //        }
-        //        finally
-        //        {
-        //            Grid.ResumeDrawing();
-        //        }
-        //    }
-        //    catch (Exception error)
-        //    {
-        //        ScannerLog.Logger.Error(error, "");
-        //        GlobalData.AddTextToLogTab($"Error TimerUpdatePositionsTick {error}");
-        //    }
-        //}
-    }
-
-    //private void PositionsHaveChangedEvent(string text)
+    //private void StartMinutePlusFiveTimer()
     //{
-    //    List<PositionViewModel> list = [];
-    //    if (GlobalData.ActiveExchange != null)
+    //    var now = DateTime.Now;
+
+    //    // volgende minuut
+    //    var nextMinute = new DateTime(
+    //        now.Year, now.Month, now.Day,
+    //        now.Hour, now.Minute, 0
+    //    ).AddMinutes(1);
+
+    //    // doelmoment = xx:xx:05
+    //    var target = nextMinute.AddSeconds(5);
+
+    //    var initialDelay = target - now;
+
+    //    // eerste timer: eenmalige delay
+    //    var firstTimer = new DispatcherTimer
     //    {
-    //        foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
-    //        {
-    //            list.Add(new PositionViewModel { Object = position });
-    //        }
-    //    }
-    //    Positions.AddRange(list);
+    //        Interval = initialDelay
+    //    };
+
+    //    firstTimer.Tick += (s, e) =>
+    //    {
+    //        firstTimer.Stop();
+    //        DoWork(); // jouw actie
+
+    //        // daarna elke minuut exact op xx:05
+    //        StartRepeatingTimer();
+    //    };
+
+    //    firstTimer.Start();
     //}
+
 
     private void PositionsHaveChangedEvent(string text)
     {
@@ -111,4 +100,20 @@ public partial class PositionOpenGridViewModel : ObservableObject
             PositionTools.LoadPosition(database, position);
         }
     }
+
+    private void TimerRefreshFieldsTick(object? sender, EventArgs e)
+    {
+        foreach (var position in Positions)
+        {
+            // "Distance" from current price
+            position.NotifyColumnChanged("CurrentProfit");
+            position.NotifyColumnChanged("BreakEvenPercent");
+            position.NotifyColumnChanged("CurrentProfitPercentage");
+
+            // Statistics (not visible at this moment?)
+            position.NotifyColumnChanged("PriceMinPerc");
+            position.NotifyColumnChanged("PriceMaxPerc");
+        }
+    }
+
 }

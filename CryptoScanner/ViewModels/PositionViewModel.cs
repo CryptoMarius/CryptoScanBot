@@ -20,7 +20,7 @@ public partial class PositionViewModel : ObservableObject
     public string Interval => Object.Interval.Name;
     public string Strategy => Object.StrategyText;
     public CryptoTradeSide Side => Object.Side;
-    public CryptoPositionStatus? Status => Object.Status;
+    public CryptoPositionStatus Status => Object.Status;
 
     public decimal Invested => Object.Invested;
     public decimal Returned => Object.Returned;

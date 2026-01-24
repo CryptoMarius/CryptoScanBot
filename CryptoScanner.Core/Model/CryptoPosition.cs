@@ -33,7 +33,7 @@ public class CryptoPosition : CryptoData2
     public string DisplayText { get { return Symbol.Name + " " + Interval!.Name + " " + CreateTime.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
     // Globale status van de positie (new, closed, wellicht andere enum?)
-    public CryptoPositionStatus? Status { get; set; }
+    public CryptoPositionStatus Status { get; set; }
 
     public decimal Invested { get; set; }
     public decimal Returned { get; set; }

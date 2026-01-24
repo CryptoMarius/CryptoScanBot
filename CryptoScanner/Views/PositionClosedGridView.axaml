@@ -17,8 +17,6 @@
 		<converter:RsiColorConverter x:Key="RsiColorConverter" />
 		<converter:SideTextConverter x:Key="SideTextConverter" />
 		<converter:SideColorConverter x:Key="SideColorConverter" />
-		<converter:SignalStatusColorConverter x:Key="SignalStatusColorConverter" />
-		<converter:SignalStatusTextConverter x:Key="SignalStatusTextConverter" />
 		<converter:Sma20ColorConverter x:Key="Sma20ColorConverter" />
 		<converter:Sma50ColorConverter x:Key="Sma50ColorConverter" />
 		<converter:StrategyColorConverter x:Key="StrategyColorConverter" />
@@ -137,7 +135,7 @@
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
 								   Text="{Binding Status}"
-								   Foreground="{Binding ., Converter={StaticResource PositionStatusColorConverter}}" />
+								   Foreground="{Binding Status, Converter={StaticResource PositionStatusColorConverter}}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
