@@ -30,8 +30,8 @@ public partial class PositionOpenGridViewModel : ObservableObject
     }
 
 
-    public event EventHandler<PositionViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<PositionViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
     public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
     {

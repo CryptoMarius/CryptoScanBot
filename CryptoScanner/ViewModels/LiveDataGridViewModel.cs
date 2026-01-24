@@ -34,8 +34,8 @@ public partial class LiveDataGridViewModel : ObservableObject
         _updateTimer = null;
     }
 
-    public event EventHandler<LiveDataViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<LiveDataViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
 
     private void TimerAddLiveDataTick(object? sender, EventArgs e)
@@ -63,23 +63,27 @@ public partial class LiveDataGridViewModel : ObservableObject
                                 {
                                     Object = liveData,
                                 };
-                                liveDataList.Add(liveDataInfo);
+                                //liveDataList.Add(liveDataInfo);
+                                LiveDatas.Add(liveDataInfo);
                             }
                         }
                     }
 
+                    
 
-                    if (liveDataList.Count == 1)
-                    {
-                        RequestSortedInsert?.Invoke(this, liveDataList[0]);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveData via binsearch");
-                    }
-                    else
-                    {
-                        LiveDatas.AddRange(liveDataList);
-                        RequestSort?.Invoke(this, EventArgs.Empty);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveDatas via complete sort");
-                    }
+
+                    //if (liveDataList.Count == 1)
+                    //{
+                    //    LiveDatas.Add(liveDataList[0]);
+                    //    //RequestSortedInsert?.Invoke(this, liveDataList[0]);
+                    //    System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveData via binsearch");
+                    //}
+                    //else
+                    //{
+                    //    LiveDatas.AddRange(liveDataList);
+                    //    //RequestSort?.Invoke(this, EventArgs.Empty);
+                    //    System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveDatas via complete sort");
+                    //}
 
                 }
                 finally

@@ -44,10 +44,10 @@ public partial class PositionViewModel : ObservableObject
     public decimal FundingRate => Object.Symbol.FundingRate;
     public decimal QuantityTick => Object.Symbol.QuantityTickSize;
     public decimal RemainingDust => Object.RemainingDust;
-    public decimal? DustValue => Object.RemainingDust * Object.Symbol.LastPrice;
+    public decimal? RemainingDustValue => Object.RemainingDust * Object.Symbol.LastPrice;
 
     //public decimal Reserved => Object.Reserved;
-    //public decimal Profit => Object.Profit;
+    //public decimal CurrentProfit => Object.CurrentProfit;
     //public decimal? EntryAmount => Object.EntryAmount;
 
     public DateTime SignalDate => Object.SignalEventTime;
@@ -79,7 +79,7 @@ public partial class PositionViewModel : ObservableObject
     public double? Sma20 => Object.Sma20;
     public double? PSar => Object.PSar;
 
-    public CryptoTrendIndicator TfTrend => Object.TrendInterval;
+    public CryptoTrendIndicator TrendInterval => Object.TrendInterval;
     public CryptoTrendIndicator? Trend15m => Object.Trend15m;
     public CryptoTrendIndicator? Trend30m => Object.Trend30m;
     public CryptoTrendIndicator? Trend1h => Object.Trend1h;
@@ -92,7 +92,7 @@ public partial class PositionViewModel : ObservableObject
     public decimal? Barometer4h => Object.Barometer4h;
     public decimal? Barometer1d => Object.Barometer1d;
 
-    public decimal MinEntry => Object.MinEntry;
+    public decimal MinimumEntry => Object.MinEntry;
     public decimal PriceMin => Object.PriceMin;
     public decimal PriceMax => Object.PriceMax;
     public double PriceMinPerc => Object.PriceMinPerc;

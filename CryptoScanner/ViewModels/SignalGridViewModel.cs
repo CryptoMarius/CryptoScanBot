@@ -48,8 +48,8 @@ public partial class SignalGridViewModel : ObservableObject
         _timerClearAndUpdateSignals = null;
     }
 
-    public event EventHandler<SignalViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<SignalViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
 
     private void TimerAddSignalsFromQueueTick(object? sender, EventArgs e)
@@ -77,22 +77,24 @@ public partial class SignalGridViewModel : ObservableObject
                                 {
                                     Object = signal,
                                 };
-                                signalList.Add(s);
+                                //signalList.Add(s);
+                                Signals.Add(s);
                             }
                         }
                     }
 
-                    if (signalList.Count == 1)
-                    {
-                        RequestSortedInsert?.Invoke(this, signalList[0]);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signal via binsearch");
-                    }
-                    else
-                    {
-                        Signals.AddRange(signalList);
-                        RequestSort?.Invoke(this, EventArgs.Empty);
-                        System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signals via complete sort");
-                    }
+                    //if (signalList.Count == 1)
+                    //{
+                    //    Signals.Add(signalList[0]);
+                    //    //RequestSortedInsert?.Invoke(this, signalList[0]);
+                    //    System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signal via binsearch");
+                    //}
+                    //else
+                    //{
+                    //    Signals.AddRange(signalList);
+                    //    //RequestSort?.Invoke(this, EventArgs.Empty);
+                    //    System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signals via complete sort");
+                    //}
 
                 }
                 finally
@@ -197,7 +199,7 @@ public partial class SignalGridViewModel : ObservableObject
         GlobalData.LoadSignals(_currentFilter);
 
         // Request sort na filtering
-        RequestSort?.Invoke(this, EventArgs.Empty);
+        //RequestSort?.Invoke(this, EventArgs.Empty);
     }
 
 }

@@ -1,10 +1,7 @@
-﻿using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Model;
 
@@ -33,8 +30,8 @@ public partial class PositionClosedGridViewModel : ObservableObject
     }
 
 
-    public event EventHandler<PositionViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<PositionViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
     public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
     {

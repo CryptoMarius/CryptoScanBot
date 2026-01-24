@@ -21,7 +21,7 @@ public partial class SignalViewModel : ObservableObject
     public decimal SignalPrice => Object.SignalPrice;
     public decimal SignalVolume => Object.SignalVolume;
     public double PriceChange => Object.Last24HoursChange;
-    public string? Text => Object.EventText;
+    public string? EventText => Object.EventText;
 
     public float TrendPercentagePrimary => Object.TrendPercentagePrimary;
     public float TrendPercentageSecondary => Object.TrendPercentageSecondary;
@@ -47,7 +47,7 @@ public partial class SignalViewModel : ObservableObject
     public double? Sma20 => Object.Sma20;
     public double? PSar => Object.PSar;
 
-    public CryptoTrendIndicator TfTrend => Object.TrendInterval;
+    public CryptoTrendIndicator TrendInterval => Object.TrendInterval;
     public CryptoTrendIndicator? Trend15m => Object.Trend15m;
     public CryptoTrendIndicator? Trend30m => Object.Trend30m;
     public CryptoTrendIndicator? Trend1h => Object.Trend1h;
@@ -60,7 +60,7 @@ public partial class SignalViewModel : ObservableObject
     public decimal? Barometer4h => Object.Barometer4h;
     public decimal? Barometer1d => Object.Barometer1d;
 
-    public decimal MinEntry => Object.MinEntry;
+    public decimal MinimumEntry => Object.MinEntry;
 
     //public double PriceMinPerc => Object.PriceMinPerc;
     [ObservableProperty]

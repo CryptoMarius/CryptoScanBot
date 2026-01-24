@@ -1,7 +1,5 @@
 ﻿using Avalonia.Controls;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Services;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -26,38 +24,12 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
             return;
         }
 
-        // Runtime - get service from App
-        _applicationStateService = GlobalData.GetService<ApplicationStateService>()
-            ?? throw new InvalidOperationException("ApplicationStateService not registered");
-
-        _dataGrid = this.FindControl<DataGrid>("PositionClosedGrid")
-            ?? throw new InvalidOperationException("PositionClosedGrid not found");
-
-        DataContextChanged += OnDataContextChanged;
+        _dataGrid = PositionClosedGrid;
+        if (_dataGrid == null)
+            throw new InvalidOperationException("PositionClosedGrid not found");
 
         // Register a custom comparer for each column based on its SortMemberPath
-        InitializeGrid<PositionClosedColumnEnum, PositionClosedColumnComparer>("Created", ListSortDirection.Ascending);
+        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("Created", ListSortDirection.Ascending);
     }
-
-
-    private PositionClosedGridViewModel? _currentViewModel;
-    private void OnDataContextChanged(object? sender, EventArgs e)
-    {
-        // Unsubscribe old
-        if (_currentViewModel != null)
-        {
-            _currentViewModel.RequestSort -= OnRequestSort;
-            _currentViewModel.RequestSortedInsert -= OnRequestSortedInsert;
-        }
-
-        // Subscribe new
-        if (DataContext is PositionClosedGridViewModel vm)
-        {
-            _currentViewModel = vm;
-            vm.RequestSort += OnRequestSort;
-            vm.RequestSortedInsert += OnRequestSortedInsert;
-        }
-    }
-
 
 }

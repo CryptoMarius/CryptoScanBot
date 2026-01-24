@@ -33,8 +33,8 @@ public partial class SymbolGridViewModel : ObservableObject
     }
 
 
-    public event EventHandler<SymbolViewModel>? RequestSortedInsert;
-    public event EventHandler? RequestSort;
+    //public event EventHandler<SymbolViewModel>? RequestSortedInsert;
+    //public event EventHandler? RequestSort;
 
     private string _currentFilter = string.Empty;
     private void SymbolsHaveChangedEvent(string text)
@@ -66,7 +66,7 @@ public partial class SymbolGridViewModel : ObservableObject
         Symbols.Replace(symbols);
         
         // Request sort na filtering
-        RequestSort?.Invoke(this, EventArgs.Empty);
+        //RequestSort?.Invoke(this, EventArgs.Empty);
     }
 
     public void OnFilterTextChanged(object? sender, string filterText)

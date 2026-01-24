@@ -15,7 +15,7 @@ public class LiveDataViewModel : INotifyPropertyChanged
     {
         get
         {
-            var closeData = Object.Candle.Date.AddMilliseconds(Object.Interval.Duration);
+            var closeData = Object.Candle.Date.AddSeconds(Object.Interval.Duration);
             return Object.Candle.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + closeData.ToLocalTime().ToString("HH:mm");
         }
     }

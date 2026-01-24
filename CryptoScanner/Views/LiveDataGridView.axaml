@@ -41,7 +41,7 @@
 				  GridLinesVisibility="None"
 				  BorderThickness="1"
 				  BorderBrush="Transparent"
-				  ColumnHeaderHeight="32">
+				  ColumnHeaderHeight="32" RowHeight="22">
 
 			<DataGrid.Columns>
 				<!-- Date -->
@@ -152,7 +152,7 @@
 				</DataGridTemplateColumn>
 
 				<!-- LuxIndicator5m -->
-				<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="Lux5m">
+				<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="LuxIndicator5m">
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -193,7 +193,7 @@
 				</DataGridTemplateColumn>
 
 				<!-- Stoch Oscillator -->
-				<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="Stoch" >
+				<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="StochOscillator" >
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -204,7 +204,7 @@
 				</DataGridTemplateColumn>
 
 				<!-- Stoch signal -->
-				<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="Signal" >
+				<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal" >
 					<DataGridTemplateColumn.CellTemplate>
 						<DataTemplate>
 							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"

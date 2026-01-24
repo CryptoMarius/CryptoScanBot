@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
@@ -29,7 +30,6 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     protected TargetMenu _targetMenu;
     protected string _gridName = string.Empty;
 
-    //protected T? _currentViewModel;
     protected DataGrid _dataGrid { get; set; } = null!;
 
     internal bool _onDataGridSortingSkipFirst = true;
@@ -39,10 +39,10 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     internal ApplicationStateService _applicationStateService { get; set; } = null!;
 
 
-    internal void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
+    //internal void InitializeComponent()
+    //{
+    //    AvaloniaXamlLoader.Load(this);
+    //}
 
 
     internal void DataGrid_Loaded(object? sender, RoutedEventArgs e)
@@ -52,19 +52,13 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
         System.Diagnostics.Debug.WriteLine($"DataGrid_Loaded {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
+        // The grid needs to be fully loaded to have any effect
         var column = _dataGrid.Columns.First(c => c.SortMemberPath == _currentSortColumn);
         column?.Sort(_currentSortDirection);
 
         _dataGrid.Sorting += OnDataGridSorting; // to early, sorting gets messed up.. --> introduced _onDataGridSortingSkipFirst
         _dataGrid.DoubleTapped += OnDataGridDoubleTapped;
         _dataGrid.AddHandler(PointerPressedEvent, OnDataGridPointerPressed, RoutingStrategies.Tunnel);
-
-        // There is no event for registering the changed widths of the columns.
-        // Lets not overcomplicate things, save the columns when shutting down.
-        DetachedFromVisualTree += (_, __) =>
-        {
-            SaveGridState();
-        };
     }
 
     internal void SaveGridState()
@@ -112,7 +106,6 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
         var columnVisibilityWindow = new ColumnWindow
         {
-            CanResize = false,
             Title = "Select Visible Columns",
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             DataContext = new ColumnWindowViewModel(dataGrid.Columns)
@@ -323,12 +316,17 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
     }
 
-    internal void InitializeGrid<TEnum, TComparer>(string defaultSortColumn = "", ListSortDirection defaultsortDirection = ListSortDirection.Ascending
 
-        ) where TEnum : struct, Enum where TComparer : IComparer
+    internal void InitializeGrid<TEnum, TComparer>(string defaultSortColumn = "",
+        ListSortDirection defaultsortDirection = ListSortDirection.Ascending) where TEnum : struct, Enum where TComparer : IComparer
     {
+        // Runtime - get service from App
+        _applicationStateService = GlobalData.GetService<ApplicationStateService>()
+            ?? throw new InvalidOperationException("ApplicationStateService not registered");
+
         _dataGrid.Loaded += DataGrid_Loaded;
 
+        // Add a custom onCompare method to each column
         foreach (var column in _dataGrid.Columns)
         {
             if (Enum.TryParse<TEnum>(column.SortMemberPath, out TEnum columnEnum))
@@ -342,15 +340,22 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             }
         }
 
-        // Restore grid state from the service
+        // Restore grid state from the service (width, column index, sort order etc)
         RestoreGridState();
 
+        // Apply defaults if not saved from the previous session
         if (string.IsNullOrEmpty(_currentSortColumn))
         {
             _currentSortColumn = defaultSortColumn;
             _currentSortDirection = defaultsortDirection;
         }
 
+        // There is no event for registering the changed widths of the columns.
+        // Lets not overcomplicate things, save the columns when shutting down.
+        DetachedFromVisualTree += (_, __) =>
+        {
+            SaveGridState();
+        };
     }
 
 }

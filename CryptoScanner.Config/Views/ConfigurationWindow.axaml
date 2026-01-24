@@ -5,7 +5,7 @@
         x:Class="CryptoScanner.Config.Views.ConfigurationWindow"
         x:DataType="vm:ConfigurationViewModel"
         Title="Scanner configuration"
-        Width="1300" Height="800"
+        Width="1300" Height="800" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
 
     <!-- Border around entire content -->

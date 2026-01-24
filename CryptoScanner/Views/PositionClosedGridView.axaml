@@ -44,7 +44,9 @@
 			  GridLinesVisibility="None"
 			  BorderThickness="1"
 			  BorderBrush="Transparent"
-			  ColumnHeaderHeight="32">
+			  ColumnHeaderHeight="32" RowHeight="22">
+
+		
 
 		<DataGrid.Columns>
 			<!-- Id (Hidden by default) -->
@@ -65,7 +67,7 @@
 			<DataGridTextColumn Header="Created"
 								Binding="{Binding CreateTime}"
 								Width="100" MinWidth="80"
-								SortMemberPath="Created"/>
+								SortMemberPath="CreateTime"/>
 
 			<DataGridTextColumn Header="Closed"
 								Binding="{Binding CloseTime}"
@@ -216,7 +218,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- Profit -->
-			<DataGridTemplateColumn Header="Profit" Width="75" SortMemberPath="Profit" >
+			<DataGridTemplateColumn Header="Profit" Width="75" SortMemberPath="CurrentProfit" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right">
@@ -231,7 +233,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- Percentage -->
-			<DataGridTemplateColumn Header="Percentage" Width="75" SortMemberPath="Percentage" >
+			<DataGridTemplateColumn Header="Percentage" Width="75" SortMemberPath="CurrentProfitPercentage" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -316,13 +318,13 @@
 			</DataGridTemplateColumn>
 
 			<!-- DustValue -->
-			<DataGridTemplateColumn Header="DustValue" Width="75" SortMemberPath="DustValue" >
+			<DataGridTemplateColumn Header="DustValue" Width="75" SortMemberPath="RemainingDustValue" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding Converter="{StaticResource SymbolQuoteValueConverter}">
-									<Binding Path="DustValue" /><Binding Path="." />
+									<Binding Path="RemainingDustValue" /><Binding Path="." />
 								</MultiBinding>
 							</TextBlock.Text>
 						</TextBlock>
@@ -367,18 +369,18 @@
 			</DataGridTemplateColumn>
 
 			<!-- TfTrend -->
-			<DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TfTrend">
+			<DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TrendInterval">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-								   Text="{Binding TfTrend, Converter={StaticResource TrendTextConverter}}"
-								   Foreground="{Binding TfTrend, Converter={StaticResource TrendColorConverter}}"/>
+								   Text="{Binding TrendInterval, Converter={StaticResource TrendTextConverter}}"
+								   Foreground="{Binding TrendInterval, Converter={StaticResource TrendColorConverter}}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
 			<!-- primary market trend -->
-			<DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="MarketTrendPrimary" >
+			<DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="TrendPercentagePrimary" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -389,7 +391,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- secondary market trend -->
-			<DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="MarketTrendSecondary">
+			<DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="TrendPercentageSecondary">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -400,7 +402,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- Change24h -->
-			<DataGridTemplateColumn Header="24h Change" Width="75" SortMemberPath="Change24h">
+			<DataGridTemplateColumn Header="24h Change" Width="75" SortMemberPath="Last24HoursChange">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -411,7 +413,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- secondary market trend -->
-			<DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="MoveLastXDaysEffective">
+			<DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="LastXDaysEffective">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -484,7 +486,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- LuxIndicator5m -->
-			<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="Lux5m">
+			<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="LuxIndicator5m">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -525,7 +527,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- Stoch Oscillator -->
-			<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="Stoch" >
+			<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="StochOscillator" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -536,7 +538,7 @@
 			</DataGridTemplateColumn>
 
 			<!-- Stoch hSignal -->
-			<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="Signal" >
+			<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
@@ -728,7 +730,7 @@
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right">
 							<TextBlock.Text>
 								<MultiBinding Converter="{StaticResource SymbolQuoteValueConverter}">
-									<Binding Path="MinEntry" /><Binding Path="." />
+									<Binding Path="MinimumEntry" /><Binding Path="." />
 								</MultiBinding>
 							</TextBlock.Text>
 						</TextBlock>
