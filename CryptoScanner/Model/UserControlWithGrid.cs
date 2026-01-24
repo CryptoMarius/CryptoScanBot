@@ -11,6 +11,7 @@ using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace CryptoScanner.Model;
@@ -118,66 +119,66 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     }
 
 
-    protected void OnRequestSortedInsert(object? sender, T newItem)
-    {
-        if (!string.IsNullOrEmpty(_currentSortColumn))
-        {
-            System.Diagnostics.Debug.WriteLine($"OnRequestSortedInsert {_gridName} {_currentSortColumn} {_currentSortDirection}");
+    //protected void OnRequestSortedInsert(object? sender, T newItem)
+    //{
+    //    if (!string.IsNullOrEmpty(_currentSortColumn))
+    //    {
+    //        System.Diagnostics.Debug.WriteLine($"OnRequestSortedInsert {_gridName} {_currentSortColumn} {_currentSortDirection}");
 
-            if (_dataGrid.ItemsSource is ObservableRangeCollection<T> collection)
-            {
-                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == _currentSortColumn);
-                if (column != null)
-                {
-                    collection.AddItem(newItem, column.CustomSortComparer, _currentSortDirection);
-                }
-            }
-        }
-    }
-
-
-    protected void OnRequestSort(object? sender, EventArgs e)
-    {
-        // Save selected item
-        var selectedItem = _dataGrid.SelectedItem;
-
-        // Re-sort using saved sort column/direction
-        ApplySortToCollection(_currentSortColumn, _currentSortDirection);
-
-        // Restore selected item
-        if (selectedItem != null)
-        {
-            _dataGrid.SelectedItem = selectedItem;
-            _dataGrid.ScrollIntoView(selectedItem, null);
-        }
-    }
+    //        if (_dataGrid.ItemsSource is ObservableCollection<T> collection)
+    //        {
+    //            var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == _currentSortColumn);
+    //            if (column != null)
+    //            {
+    //                collection.AddItem(newItem, column.CustomSortComparer, _currentSortDirection);
+    //            }
+    //        }
+    //    }
+    //}
 
 
-    internal void ApplySortToCollection(string sortMemberPath, ListSortDirection sortDirection)
-    {
-        System.Diagnostics.Debug.WriteLine($"ApplySortToCollection {_gridName} {sortMemberPath} {sortDirection}");
+    //protected void OnRequestSort(object? sender, EventArgs e)
+    //{
+    //    // Save selected item
+    //    var selectedItem = _dataGrid.SelectedItem;
 
-        if (!string.IsNullOrEmpty(sortMemberPath))
-        {
-            _currentSortColumn = sortMemberPath;
-            _currentSortDirection = sortDirection;
+    //    // Re-sort using saved sort column/direction
+    //    ApplySortToCollection(_currentSortColumn, _currentSortDirection);
 
-            // Problem: GEEN indicator tot eerste click
-            if (_dataGrid.ItemsSource is ObservableRangeCollection<T> collection)
-            {
-                var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == sortMemberPath);
-                if (column != null)
-                {
-                    var sorted = collection.ToArray();
-                    Array.Sort(sorted, column.CustomSortComparer);
-                    if (_currentSortDirection == ListSortDirection.Descending)
-                        Array.Reverse(sorted);
-                    collection.Replace(sorted);
+    //    // Restore selected item
+    //    if (selectedItem != null)
+    //    {
+    //        _dataGrid.SelectedItem = selectedItem;
+    //        _dataGrid.ScrollIntoView(selectedItem, null);
+    //    }
+    //}
 
-                }
-            }
-        }
-    }
+
+    //internal void ApplySortToCollection(string sortMemberPath, ListSortDirection sortDirection)
+    //{
+    //    System.Diagnostics.Debug.WriteLine($"ApplySortToCollection {_gridName} {sortMemberPath} {sortDirection}");
+
+    //    if (!string.IsNullOrEmpty(sortMemberPath))
+    //    {
+    //        _currentSortColumn = sortMemberPath;
+    //        _currentSortDirection = sortDirection;
+
+    //        // Problem: GEEN indicator tot eerste click
+    //        if (_dataGrid.ItemsSource is ObservableCollection<T> collection)
+    //        {
+    //            var column = _dataGrid.Columns.FirstOrDefault(c => c.SortMemberPath == sortMemberPath);
+    //            if (column != null)
+    //            {
+    //                var sorted = collection.ToArray();
+    //                Array.Sort(sorted, column.CustomSortComparer);
+    //                if (_currentSortDirection == ListSortDirection.Descending)
+    //                    Array.Reverse(sorted);
+    //                collection.Replace(sorted);
+
+    //            }
+    //        }
+    //    }
+    //}
 
     private void OnDataGridDoubleTapped(object? sender, TappedEventArgs e)
     {
