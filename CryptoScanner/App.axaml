@@ -17,8 +17,12 @@
                     <SolidColorBrush x:Key="NormalVolumeBrush">#202020</SolidColorBrush>
                     
                     <!-- Price change colors -->
+                    <!--
                     <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
+                    -->
+                    <SolidColorBrush x:Key="PriceUpBrush">#439982</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#c95b5c</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
@@ -46,9 +50,13 @@
                     <SolidColorBrush x:Key="NormalVolumeBrush">#E0E0E0</SolidColorBrush>
                     
                     <!-- Price change colors (aangepast voor dark mode) -->
+                    <!--
                     <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
+                    -->
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceUpBrush">#45c173</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#cd4040</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
 
@@ -94,28 +102,18 @@
     </FluentTheme>
 
         <!-- ============================================ -->
-        <!-- WINDOW TITLE BAR THEMING -->
+        <!-- Common theming -->
         <!-- ============================================ -->
         
+        <Style Selector="ScrollBar">
+            <Setter Property="AllowAutoHide" Value="False" />
+        </Style>
+
         <!-- Title bar theme-aware styling -->
         <Style Selector="Window">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
         </Style>
 
-        <!-- ============================================ -->
-        <!-- GLOBALE TEXTBLOCK/CONTROL STYLES -->
-        <!-- ============================================ -->
-        <!--        
-        <Style Selector="Grid">
-            <Setter Property="RowSpacing" Value="2" />
-        </Style>-->
-        
-       
-        <!--
-        <Style Selector="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
-        </Style>
-        -->
 
         <!-- Globale style voor TextBlock -->
         <Style Selector="TextBlock">
@@ -139,7 +137,7 @@
         </Style>
 
         <!-- ============================================ -->
-        <!-- DASHBOARD SPECIFIC STYLES -->
+        <!-- Dashboard theming -->
         <!-- ============================================ -->
         
         <!-- Alle TextBlocks in dashboard krijgen margin en vertical alignment -->
@@ -165,11 +163,15 @@
         </Style>
 
         <!-- ============================================ -->
-        <!-- DATAGRID STYLES (for all DataGrids in app)   -->
+        <!-- DataGrid theming -->
         <!-- ============================================ -->
         
+       	<Style Selector="DataGrid ScrollBar">
+		    <Setter Property="AllowAutoHide" Value="False"/>
+	    </Style>
+
         <Style Selector="DataGridColumnHeader">
-            <Setter Property="Margin" Value="1" />
+            <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
@@ -181,12 +183,12 @@
         <!-- Kleinere row height -->
         <Style Selector="DataGridCell">
             <Setter Property="MinHeight" Value="18" />
-            <Setter Property="Margin" Value="1" />
+            <Setter Property="Margin" Value="0" />
         </Style>
         
         <Style Selector="DataGridRow">
             <Setter Property="MinHeight" Value="18" />
-            <Setter Property="Margin" Value="1" />
+            <Setter Property="Margin" Value="0" />
             <Setter Property="helper:HoverHelper.IsHover" Value="False" />
         </Style>
         
