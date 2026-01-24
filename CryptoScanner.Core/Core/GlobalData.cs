@@ -573,13 +573,6 @@ public static class GlobalData
         string baseFolder = AppDataFolder;
         Directory.CreateDirectory(baseFolder);
 
-        //using (FileStream writeStream = new FileStream(fileName, FileMode.Create))
-        //{
-        //    BinaryFormatter formatter = new BinaryFormatter();
-        //    formatter.Serialize(writeStream, GlobalData.Settings);
-        //    writeStream.Close();
-        //}
-
         string filename = Path.Combine(baseFolder, $"{Constants.AppName}-settings.json");
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
