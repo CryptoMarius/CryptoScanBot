@@ -9,9 +9,6 @@ public partial class PositionViewModel : ObservableObject
 {
     public required CryptoPosition Object { get; set; }
 
-    [ObservableProperty]
-    private double _priceDiff;
-
     public int Id => Object.Id;
     public string? AltradyPositionId => Object.AltradyPositionId;
     public string CreateTime => Object.CreateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
@@ -36,7 +33,7 @@ public partial class PositionViewModel : ObservableObject
     public decimal BreakEvenPrice => Object.BreakEvenPrice;
     public decimal BreakEvenPercent => Object.CurrentBreakEvenPercentage();
 
-    public int Parts => Object.PartCount - Convert.ToInt32(Object.ActiveDca);
+    public string Parts => Object.PartCountText();
     public decimal? EntryPrice => Object.EntryPrice;
     public decimal? ProfitPrice => Object.ProfitPrice;
     public decimal CurrentProfitPercentage => Object.CurrentProfitPercentage();
@@ -97,4 +94,9 @@ public partial class PositionViewModel : ObservableObject
     public decimal PriceMax => Object.PriceMax;
     public double PriceMinPerc => Object.PriceMinPerc;
     public double PriceMaxPerc => Object.PriceMaxPerc;
+
+    public void NotifyColumnChanged(string column)
+    {
+        OnPropertyChanged(column); 
+    }
 }

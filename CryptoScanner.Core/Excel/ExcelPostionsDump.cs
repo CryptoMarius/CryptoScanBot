@@ -121,7 +121,7 @@ public class ExcelPostionsDump() : ExcelBase("Positions")
             WriteCell(sheet, column++, row, position.Commission, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.Profit, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.Percentage, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, position.PartCountText(position.CloseTime != null));
+            WriteCell(sheet, column++, row, position.PartCountText());
 
             WriteCell(sheet, column++, row, position.Symbol?.QuantityTickSize, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, position.RemainingDust, CellStyleDecimalNormal);
