@@ -1,3 +1,9 @@
+// list box vc data grid
+// (maar vooral: vermijd converters zoveel mogelijk, meh..)
+//https://chatgpt.com/share/6974f916-e54c-8012-aeae-4e9528d9705a
+//https://chatgpt.com/share/6974f916-e54c-8012-aeae-4e9528d9705a
+//https://chatgpt.com/share/6974f916-e54c-8012-aeae-4e9528d9705a
+
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -10,6 +16,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
+using CryptoScanner.Experiment;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
@@ -30,6 +37,7 @@ public partial class MainWindow : Window
     private readonly PositionOpenGridView _openPositionsView;
     private readonly PositionClosedGridView _closedPositionsView;
     private readonly LogGridView _logView;
+    private readonly ItemsRepeaterGridView _itemsControlGridView;
 
 
     public MainWindow(MainWindowViewModel viewModel,
@@ -80,6 +88,8 @@ public partial class MainWindow : Window
         _openPositionsView = new PositionOpenGridView { DataContext = viewModel.PositionOpenGridViewModel };
         _closedPositionsView = new PositionClosedGridView { DataContext = viewModel.PositionClosedGridViewModel };
         _logView = new LogGridView { DataContext = viewModel.LogGridViewModel };
+        _itemsControlGridView = new ItemsRepeaterGridView { DataContext = viewModel.GridViewModel };
+        
 
 
         //Force initial tab content 
@@ -186,7 +196,7 @@ public partial class MainWindow : Window
         MenuFile.Items.Add(new MenuItem { Header = "Refresh information", Command = new CommandRefreshInformation(), CommandParameter = this });
         MenuFile.Items.Add(new MenuItem { Header = "Clear log and tickers", Command = new CommandClearLogAndTicker(), CommandParameter = this });
         MenuFile.Items.Add(new MenuItem { Header = "-" });
-        MenuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
+        MenuFile.Items.Add(new MenuItem { Header = "E_xit", Command = new CommunityToolkit.Mvvm.Input.RelayCommand<Window>(w => w?.Close()), CommandParameter = this });
 
 
         //var MenuTools = this.FindControl<MenuItem>("MenuTools");
@@ -275,6 +285,11 @@ public partial class MainWindow : Window
             case "Log":
                 ManipulateBrowser(false);
                 MainContent.Content = _logView;
+                break;
+
+            case "Experiment":
+                ManipulateBrowser(false);
+                MainContent.Content = _itemsControlGridView;
                 break;
         }
 

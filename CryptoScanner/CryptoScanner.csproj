@@ -35,9 +35,11 @@
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.3.11" />
+		<PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.11" />
+		<PackageReference Include="Avalonia.Controls.TreeDataGrid" Version="11.1.0" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
@@ -49,6 +51,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Experiment\ItemsRepeaterGridView.axaml.cs">
+	    <DependentUpon>ItemsRepeaterGridView.axaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="Views\DashBoardInformationView.axaml.cs">
 	    <DependentUpon>DashBoardInformationView.axaml</DependentUpon>
 	  </Compile>

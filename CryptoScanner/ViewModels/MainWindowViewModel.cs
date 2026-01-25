@@ -9,6 +9,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
+using CryptoScanner.Experiment;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 
@@ -17,6 +18,7 @@ namespace CryptoScanner.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     public required ITradingViewService TradingViewService { get; set; }
+    public required GridViewModel GridViewModel { get; set; }
     public required LogGridViewModel LogGridViewModel { get; set; }
     public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardInformationViewModel DashBoardInformationViewModel { get; set; }
@@ -106,7 +108,8 @@ public partial class MainWindowViewModel : ObservableObject
         PositionOpenGridViewModel positionOpenGridViewModel,
         PositionClosedGridViewModel positionClosedGridViewModel,
         BrowserViewModel browserViewModel,
-        LogGridViewModel logGridViewModel)
+        LogGridViewModel logGridViewModel,
+        GridViewModel gridViewModel)
     {
         TradingViewService = tradingViewService;
         ApplicationStateService = applicationStateService;
@@ -119,6 +122,7 @@ public partial class MainWindowViewModel : ObservableObject
         PositionClosedGridViewModel = positionClosedGridViewModel;
         BrowserViewModel = browserViewModel;
         LogGridViewModel = logGridViewModel;
+        GridViewModel = gridViewModel;
 
         // Subscribe the child ViewModels to filter the contents
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;

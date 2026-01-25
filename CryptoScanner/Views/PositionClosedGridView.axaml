@@ -39,6 +39,7 @@
 			  CanUserResizeColumns="True"
 			  CanUserSortColumns="True"
 			  GridLinesVisibility="None"
+			  VerticalAlignment="Stretch"
                   BorderThickness="0" BorderBrush="Transparent"
 				  ColumnHeaderHeight="32" RowHeight="22">
 
