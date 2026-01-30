@@ -1,8 +1,11 @@
 ﻿using Avalonia.Threading;
 
+using CommunityToolkit.Mvvm.Messaging;
+
 using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Trader;
@@ -98,7 +101,7 @@ public static class TradingRules
             CalculateTradingRules(pause, candleDate, candleDuration);
 
 
-            Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
+            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
             if (pause.Text != "")
                 return false;
         }
