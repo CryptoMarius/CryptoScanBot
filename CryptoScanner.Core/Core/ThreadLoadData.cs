@@ -1,10 +1,13 @@
 ﻿using Avalonia.Threading;
 
+using CommunityToolkit.Mvvm.Messaging;
+
 using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Telegram;
@@ -193,7 +196,7 @@ public class ThreadLoadData
 
         }
 
-        Dispatcher.UIThread.Post(() => { GlobalData.SymbolsHaveChanged(""); });
+        Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
     }
 
 
@@ -363,8 +366,6 @@ public class ThreadLoadData
                 IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
                     ?? throw new InvalidOperationException("IScannerSession not registered in services");
                 _scannerSession.SetTimerDefaults();
-
-                GlobalData.ApplicationHasStarted?.Invoke("");
             }
         }
         catch (Exception error)

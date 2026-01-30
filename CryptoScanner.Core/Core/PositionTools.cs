@@ -1,6 +1,11 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.Messaging;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -208,23 +213,6 @@ public static class PositionTools
     }
 
 
-    public static void AddPositionClosed(CryptoPosition position)
-    {
-        if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
-        {
-            position.Exchange = exchange;
-            if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
-            {
-                position.Symbol = symbol;
-                if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
-                    position.Interval = interval!;
-
-                GlobalData.PositionsClosed.Add(position);
-            }
-        }
-    }
-
-
     public static void RemovePosition(Model.CryptoExchange activeExchange, CryptoPosition position, bool addToClosed)
     {
         if (activeExchange.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
@@ -233,10 +221,8 @@ public static class PositionTools
 
             if (addToClosed)
             {
-                if (GlobalData.PositionsClosed.Count != 0)
-                    GlobalData.PositionsClosed.Add(position);
-                else
-                    GlobalData.PositionsClosed.Insert(0, position);
+                // Send the position to the closed positions ViewModel 
+                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsClosedMessage(position)); });
             }
         }
     }

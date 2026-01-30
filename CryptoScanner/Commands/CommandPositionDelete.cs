@@ -1,5 +1,10 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.Messaging;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 
 using Dapper;
 
@@ -33,11 +38,10 @@ public class CommandPositionDelete : CommandBase
                 databaseThread.Connection.Execute($"delete from position where id={dto.position.Id}", transaction);
                 transaction.Commit();
 
-                // TODO: remove from observable collection
-                //List.Remove((T)dto.position);
+                // Remove the position from open or closed positions
+                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsDeletedMessage(dto.position)); });
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, dto.position, false);
-                GlobalData.AddTextToLogTab($"{dto.position.Symbol.Name} handmatig positie {dto.position.Id} uit de database verwijderd");
-                GlobalData.PositionsHaveChanged("");
+                GlobalData.AddTextToLogTab($"{dto.position.Symbol.Name} manually deleted position {dto.position.Id} from the database");
             }
             catch (Exception error)
             {

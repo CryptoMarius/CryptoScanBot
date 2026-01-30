@@ -1,10 +1,13 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
+using CommunityToolkit.Mvvm.Messaging;
+
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
@@ -20,7 +23,6 @@ using System.Globalization;
 using System.Text.Json;
 
 namespace CryptoScanner.Core.Core;
-
 
 /// <summary>
 /// Om vanuit de threads tekst in het main scherm te zetten
@@ -47,7 +49,6 @@ public static class GlobalData
     public static string AppVersion { get; set; } = "";
     public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
 
-    //public static bool ApplicationIsShowed { get; set; } = false;
     public static bool ApplicationIsClosing { get; set; } = false;
 
 
@@ -71,9 +72,10 @@ public static class GlobalData
     public static CryptoApplicationStatus ApplicationStatus
     {
         get { return _applicationStatus; }
-        set { _applicationStatus = value;
-            Dispatcher.UIThread.Post(() => { StatusesHaveChangedEvent?.Invoke(""); });
-       }
+        set { 
+            _applicationStatus = value;
+            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
+        }
     }
 
     // Amount of signals created
@@ -114,25 +116,25 @@ public static class GlobalData
     public static readonly SortedList<string, Model.CryptoExchange> ExchangeListName = [];
 
     public static readonly Queue<CryptoSignal> SignalQueue = new();
-    public static readonly List<CryptoPosition> PositionsClosed = [];
+    //public static readonly List<CryptoPosition> PositionsClosed = [];
     public static readonly Queue<CryptoLiveData> LiveDataQueue = [];
     public static readonly Dictionary<(string, CryptoIntervalPeriod), CryptoLiveData> LiveDataQueueAdded = [];
 
     public static event PlayMediaEvent? PlaySound;
     public static event PlayMediaEvent? PlaySpeech;
     public static event AddTextEvent? LogToTelegram;
-    public static event AddTextEvent? LogToLogTabEvent;
 
-    // Events for refresing data
-    public static event AddTextEvent? SymbolsHaveChangedEvent;
+    public static event AddTextEvent? LogToLogTabEvent;
+    public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
     public static event AddTextEvent? TelegramHasChangedEvent;
-    public static event AddTextEvent? AssetsHaveChangedEvent;
-    public static event AddTextEvent? PositionsHaveChangedEvent;
-    public static AddTextEvent? ApplicationHasStarted { get; set; }
-    public static AddTextEvent? StatusesHaveChangedEvent { get; set; }
+    public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
+    //public static event AddTextEvent? AssetsHaveChangedEvent;
+    //public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
+
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
+        public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
@@ -214,8 +216,9 @@ public static class GlobalData
             AddSymbol(symbol);
     }
 
-    public static void LoadSignals(string filterText = "")
+    public static List<CryptoSignal> LoadSignals(string filterText = "")
     {
+        List<CryptoSignal> list = [];
         //GlobalData.AddTextToLogTab("Reading some signals");
 
         if (BackTest)
@@ -236,7 +239,8 @@ public static class GlobalData
                         if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
-                        SignalQueue.Enqueue(signal);
+                        //SignalQueue.Enqueue(signal);
+                        list.Add(signal);
                     }
                 }
             }
@@ -256,7 +260,7 @@ public static class GlobalData
                     "order by signal.OpenDate ";
             }
 
-            SignalQueue.Clear();
+            //SignalQueue.Clear();
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
@@ -270,11 +274,13 @@ public static class GlobalData
                         if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
                             signal.Interval = interval;
 
-                        SignalQueue.Enqueue(signal);
+                        //SignalQueue.Enqueue(signal);
+                        list.Add(signal);
                     }
                 }
             }
         }
+        return list;
     }
 
 
@@ -577,15 +583,15 @@ public static class GlobalData
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        filename = baseFolder + $"{Constants.AppName}-telegram.json";
+        filename = Path.Combine(baseFolder, $"{Constants.AppName}-telegram.json");
         text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        //fileName = baseFolder + $"{AppName}-exchange.json";
+        //fileName = Path.Combine(baseFolder, $"{AppName}-exchange.json");
         //text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
         //File.WriteAllText(fileName, text);
 
-        filename = baseFolder + $"{Constants.AppName}-altrady.json";
+        filename = Path.Combine(baseFolder, $"{Constants.AppName}-altrady.json");
         text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
@@ -593,13 +599,13 @@ public static class GlobalData
         ////// Ter debug om te zien of alles okay is
         //fileName = GlobalData.AppDataFolder;
         //Directory.CreateDirectory(fileName);
-        //fileName += "settingsSignalsCompiled.json";
+        //fileName += Path.Combine("settingsSignalsCompiled.json";
         //text = JsonSerializer.Serialize(TradingConfig.Signals, options);
         //File.WriteAllText(fileName, text);
 
         //fileName = GlobalData.AppDataFolder;
         //Directory.CreateDirectory(fileName);
-        //fileName += "settingsTradingCompiled.json";
+        //fileName += Path.Combine("settingsTradingCompiled.json";
         //text = JsonSerializer.Serialize(TradingConfig.Trading, options);
         //File.WriteAllText(fileName, text);
         //#endif
@@ -675,17 +681,6 @@ public static class GlobalData
             }
         }
     }
-
-
-    public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
-    //public static void StatusesHaveChanged(string text) => StatusesHaveChangedEvent?.Invoke(text);
-    public static void SymbolsHaveChanged(string text) => SymbolsHaveChangedEvent?.Invoke(text);
-
-    public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
-    public static void PositionsHaveChanged(string text) => PositionsHaveChangedEvent?.Invoke(text);
-
-    public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
-    public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
 
     //public static void DumpSessionInformation()

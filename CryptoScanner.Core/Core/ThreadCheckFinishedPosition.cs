@@ -145,13 +145,8 @@ public class ThreadCheckFinishedPosition
 
         if (removePosition)
         {
-            // Positie is afgerond (wellicht dubbel op met de code in de PositionTools)
+            // Send the position to the closed positions ViewModel 
             PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
-            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-            {
-                Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
-                GlobalData.AddTextToLogTab($"ThreadCheckFinishedPosition: Position {position.Symbol.Name} moved ({position.Status})");
-            }
         }
     }
 

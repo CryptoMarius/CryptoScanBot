@@ -69,7 +69,7 @@ public class CommandPositionCreateAdditionalDca : CommandBase
                     //var resultCheckAssets = await CheckApiAndAssetsAsync(position.TradeAccount);
                     //if (!resultCheckAssets.success)
                     //{
-                    //    string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
+                    //    string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceFormat)}";
                     //    GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
                     //    Symbol.ClearSignals();
                     //    return;
@@ -95,6 +95,8 @@ public class CommandPositionCreateAdditionalDca : CommandBase
 
                     // i'm afraid the view wil not be updated ...
                     // We need a reference to the view model to update the binding (still there, but need to parse the damned parameter again)
+                    if (dto.PositionViewModel != null)
+                        dto.PositionViewModel.Refresh();
                 }
 
             }

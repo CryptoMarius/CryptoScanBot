@@ -1,9 +1,12 @@
 ﻿using Avalonia.Threading;
 
+using CommunityToolkit.Mvvm.Messaging;
+
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Exchange.Altrady;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
@@ -554,9 +557,8 @@ public class PositionMonitor //: IDisposable
                                 Semaphore.Release();
                             }
 
-                            // Aanmelden van een nieuwe positie
-                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                                Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
+                            // Send the created position to the ViewModel
+                            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsCreatedMessage(position)); });
                             return;
                         }
                         else
@@ -1081,6 +1083,7 @@ public class PositionMonitor //: IDisposable
                 position.Reposition = false;
                 position.EntryPrice = price;
                 position.EntryAmount = entryQuantity;
+                position.UpdateTime = LastCandle1mCloseTimeDate;
                 position.CloseTime = LastCandle1mCloseTimeDate;
                 position.Status = CryptoPositionStatus.Altrady;
                 Database.Connection.Update(position);
@@ -1478,6 +1481,7 @@ public class PositionMonitor //: IDisposable
                                     if (part.Purpose == CryptoPartPurpose.Entry && position.Status == CryptoPositionStatus.Waiting)
                                     {
                                         position.Status = CryptoPositionStatus.Timeout;
+                                        position.UpdateTime = LastCandle1mCloseTimeDate;
                                         position.CloseTime = LastCandle1mCloseTimeDate;
                                         Database.Connection.Update<CryptoPosition>(position);
                                     }
@@ -1521,12 +1525,10 @@ public class PositionMonitor //: IDisposable
                 }
             }
 
-            // Pas verplaatsen als ALLE DCA orders zijn geannuleerd (een poging daartoe tenminste)
+            // Move if all the DCA orders are properly cancelled
             if (!hasOpenOrder)
             {
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
-                if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
-                    Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
             }
         }
     }
@@ -1855,12 +1857,8 @@ public class PositionMonitor //: IDisposable
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
-            // Create signals per interval
-            //GlobalData.Logger.Info($"analyze.CreateSignals({Symbol.Name})");
-            //List<CryptoSignal> signalList = await CreateSignalsAsync();
-
             // Calculate indicators, zones etc
-            var lastCandleList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> lastCandleList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
 
             // Calculate signals and break of zones
             List<CryptoSignal> signalList = await SignalExecute.ExecuteAsync(Symbol, lastCandleList, LastCandle1mCloseTime);
