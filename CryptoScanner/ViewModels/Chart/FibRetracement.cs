@@ -71,10 +71,11 @@ public class FibRetracement
 
             foreach (var (value, percent, color) in fibRetracement)
             {
-                var fibLevel = new LineSeries { 
-                    Title = "fib", 
-                    Color = color, 
-                    LineStyle = LineStyle.Dot, 
+                var fibLevel = new LineSeries
+                {
+                    Title = "fib",
+                    Color = color,
+                    LineStyle = LineStyle.Dot,
                     Font = Const.OxyFontName,
                     Tag = group,
                 };

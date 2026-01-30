@@ -3,7 +3,6 @@ using CryptoScanner.Core.Trend;
 
 using OxyPlot;
 using OxyPlot.Annotations;
-using OxyPlot.Series;
 
 namespace CryptoScanner.ViewModels.Chart;
 
@@ -79,7 +78,7 @@ public class SupportResistance
 
         foreach (var bb in candles)
         {
-            
+
             //if (bb.openTime >= minDate && openTime <= maxDate)
             {
                 double value = (double)bb.Value;
@@ -87,9 +86,10 @@ public class SupportResistance
                 //OxyColor color = bb.Type == "Support" ? OxyColors.Green : OxyColors.Red;
                 OxyColor color = bb.PointType == 'L' ? OxyColors.Green : OxyColors.Red;
 
-                LineAnnotation annotation = new() { 
-                    Type = LineAnnotationType.Horizontal, 
-                    Y = value, 
+                LineAnnotation annotation = new()
+                {
+                    Type = LineAnnotationType.Horizontal,
+                    Y = value,
                     MinimumX = bb.Candle.OpenTime,
                     MaximumX = bb.Candle.OpenTime + 25 * interval.Duration,
                     Color = color,

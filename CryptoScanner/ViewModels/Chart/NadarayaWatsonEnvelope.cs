@@ -9,30 +9,54 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class NadarayaWatsonEnvelope
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         long minDate, long maxDate, bool smoothRepainting, string group)
     {
         //TODO: Honour Min & Max Date!
 
-        var seriesHigh = new LineSeries { Title = "n high", MarkerSize = 1, 
-            MarkerFill = OxyColors.DarkGray, Color = OxyColors.DarkGray, 
-            Tag = group, };
-
-        var seriesMiddle = new LineSeries { Title = "n middle", MarkerSize = 1, 
-            MarkerFill = OxyColors.Gray, Color = OxyColors.Gray,
+        var seriesHigh = new LineSeries
+        {
+            Title = "n high",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.DarkGray,
+            Color = OxyColors.DarkGray,
             Tag = group,
         };
-        var seriesLow = new LineSeries { Title = "n low", MarkerSize = 1, 
-            MarkerFill = OxyColors.DarkGray, Color = OxyColors.DarkGray, 
-            Tag = group, };
 
-        var seriesBuy = new ScatterSeries { Title = "n buy", MarkerSize = 3, 
-            MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5,
+        var seriesMiddle = new LineSeries
+        {
+            Title = "n middle",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.Gray,
+            Color = OxyColors.Gray,
             Tag = group,
         };
-        
-        var seriesSell = new ScatterSeries { Title = "n sell", MarkerSize = 3, 
-            MarkerFill = OxyColors.White, MarkerType = MarkerType.Square, MarkerStrokeThickness = 1.5,
+        var seriesLow = new LineSeries
+        {
+            Title = "n low",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.DarkGray,
+            Color = OxyColors.DarkGray,
+            Tag = group,
+        };
+
+        var seriesBuy = new ScatterSeries
+        {
+            Title = "n buy",
+            MarkerSize = 3,
+            MarkerFill = OxyColors.White,
+            MarkerType = MarkerType.Square,
+            MarkerStrokeThickness = 1.5,
+            Tag = group,
+        };
+
+        var seriesSell = new ScatterSeries
+        {
+            Title = "n sell",
+            MarkerSize = 3,
+            MarkerFill = OxyColors.White,
+            MarkerType = MarkerType.Square,
+            MarkerStrokeThickness = 1.5,
             Tag = group,
         };
 

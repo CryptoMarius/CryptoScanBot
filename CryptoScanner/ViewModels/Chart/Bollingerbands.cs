@@ -12,12 +12,30 @@ public class Bollingerbands
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate, string group)
     {
-        var seriesHigh = new LineSeries { Title = "bb.upper", MarkerSize = 1, 
-            MarkerFill = OxyColors.Blue, Color = OxyColors.Blue, Tag = group,};
-        var seriesMiddle = new LineSeries { Title = "bb.middle", MarkerSize = 1, 
-            MarkerFill = OxyColors.DarkBlue, Color = OxyColors.DarkBlue, Tag = group, };
-        var seriesLow = new LineSeries { Title = "bb.lower", MarkerSize = 1, 
-            MarkerFill = OxyColors.Blue, Color = OxyColors.Blue, Tag = group, };
+        var seriesHigh = new LineSeries
+        {
+            Title = "bb.upper",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.Blue,
+            Color = OxyColors.Blue,
+            Tag = group,
+        };
+        var seriesMiddle = new LineSeries
+        {
+            Title = "bb.middle",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.DarkBlue,
+            Color = OxyColors.DarkBlue,
+            Tag = group,
+        };
+        var seriesLow = new LineSeries
+        {
+            Title = "bb.lower",
+            MarkerSize = 1,
+            MarkerFill = OxyColors.Blue,
+            Color = OxyColors.Blue,
+            Tag = group,
+        };
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.CandleList.Count == 0)

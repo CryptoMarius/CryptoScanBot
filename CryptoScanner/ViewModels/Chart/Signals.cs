@@ -10,15 +10,24 @@ public class Signals
 {
     internal static void Draw(PlotModel chart, List<CryptoSignal> signalList, long minDate, long maxDate, string group)
     {
-        var seriesShort = new ScatterSeries { Title = "s high", MarkerSize = 2, 
-            MarkerFill = OxyColors.Red, MarkerType = MarkerType.Diamond, 
-            Tag = group};
-        
-        var seriesLong = new ScatterSeries { Title = "s low", MarkerSize = 2, 
-            MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Diamond,
+        var seriesShort = new ScatterSeries
+        {
+            Title = "s high",
+            MarkerSize = 2,
+            MarkerFill = OxyColors.Red,
+            MarkerType = MarkerType.Diamond,
             Tag = group
         };
-        
+
+        var seriesLong = new ScatterSeries
+        {
+            Title = "s low",
+            MarkerSize = 2,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Diamond,
+            Tag = group
+        };
+
         foreach (var signal in signalList)
         {
             if (signal.EventTime >= minDate && signal.EventTime <= maxDate)

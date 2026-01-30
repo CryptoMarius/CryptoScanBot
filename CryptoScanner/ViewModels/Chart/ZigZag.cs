@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Trend;
 
-using DryIoc.ImTools;
+//using DryIoc.ImTools;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -46,7 +46,7 @@ public class ZigZag
         chart.Series.Add(seriesDummyLow);
         chart.Series.Add(seriesDummyHigh);
 
-        //string format = symbol.PriceDisplayFormat[1..];
+        //string format = symbol.PriceFormat[1..];
         //string text = "Time: {yyyy-MM-dd HH:mm}\nPrice: {$:0.00}";
         //text = text.Replace("$", format);
         //seriesLong.TrackerFormatString = text;

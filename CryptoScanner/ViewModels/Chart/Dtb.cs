@@ -34,7 +34,7 @@ public class Dtb
                 Stroke = OxyColor.FromAColor(75, color),
                 Tag = group
             };
-        
+
             rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
             rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
             rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));

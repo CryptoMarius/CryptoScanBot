@@ -10,12 +10,14 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Sma
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length, 
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length,
         OxyColor color, long minDate, long maxDate, string group)
     {
-        var seriesSma = new LineSeries { Title = $"sma{length}", 
-            MarkerSize = 1, 
-            MarkerFill = color, 
+        var seriesSma = new LineSeries
+        {
+            Title = $"sma{length}",
+            MarkerSize = 1,
+            MarkerFill = color,
             Color = color,
             Tag = group,
         };

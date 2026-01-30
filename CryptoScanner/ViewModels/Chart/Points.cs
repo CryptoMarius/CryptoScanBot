@@ -9,10 +9,22 @@ public class Points
 {
     internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, long minDate, long maxDate, string tag)
     {
-        var seriesHigh = new ScatterSeries { Title = "p high", MarkerSize = 2, 
-            MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, Tag = tag };
-        var seriesLow = new ScatterSeries { Title = "p low", MarkerSize = 2, 
-            MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, Tag = tag };
+        var seriesHigh = new ScatterSeries
+        {
+            Title = "p high",
+            MarkerSize = 2,
+            MarkerFill = OxyColors.Red,
+            MarkerType = MarkerType.Square,
+            Tag = tag
+        };
+        var seriesLow = new ScatterSeries
+        {
+            Title = "p low",
+            MarkerSize = 2,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Square,
+            Tag = tag
+        };
 
         foreach (var zigzag in pivotList)
         {
