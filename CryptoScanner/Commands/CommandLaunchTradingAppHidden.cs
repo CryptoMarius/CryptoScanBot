@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
-using CryptoScanner.Helpers;
-
 namespace CryptoScanner.Commands;
 
 public class CommandLaunchTradingAppHidden : CommandBase
