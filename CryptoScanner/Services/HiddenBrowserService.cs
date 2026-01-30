@@ -91,9 +91,9 @@ public class HiddenBrowserService : IDisposable
                     // Update UI op UI thread (in Avalonia gebruik Dispatcher)
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
-                        _webView.Url = uri; 
+                        _webView.Url = uri;
                     });
-                    
+
                 }
                 else
                 {

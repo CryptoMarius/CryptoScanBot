@@ -1,7 +1,5 @@
 ﻿using Avalonia.Controls;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.ViewModels;
 
@@ -78,7 +76,7 @@ public abstract class CommandBase : ICommand
             dto.signal = signalViewModel.Object;
             return true;
         }
-        
+
         if (parameter is (DataGrid _datagrid2, SymbolViewModel symbolViewModel, Window parentWindow2))
         {
             dto.datagrid = _datagrid2;
@@ -89,7 +87,7 @@ public abstract class CommandBase : ICommand
             dto.interval = null; // reuse selected interval GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
             return true;
         }
-        
+
         if (parameter is (DataGrid _datagrid3, LiveDataViewModel liveDataViewModel, Window parentWindow3))
         {
             dto.datagrid = _datagrid3;
@@ -100,7 +98,7 @@ public abstract class CommandBase : ICommand
             dto.interval = liveDataViewModel.Object.Interval;
             return true;
         }
-        
+
         if (parameter is (DataGrid _datagrid4, PositionViewModel positionViewModel, Window parentWindow4))
         {
             dto.datagrid = _datagrid4;
@@ -114,5 +112,5 @@ public abstract class CommandBase : ICommand
         }
 
         return false;
-    }     
+    }
 }

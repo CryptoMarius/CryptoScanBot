@@ -1,8 +1,4 @@
-﻿using Avalonia.Controls;
-
-using CryptoScanner.Core.Model;
-
-namespace CryptoScanner.Commands;
+﻿namespace CryptoScanner.Commands;
 
 public class CommandCopySymbolName : CommandBase
 {

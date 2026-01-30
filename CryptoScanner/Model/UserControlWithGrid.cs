@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
@@ -11,7 +10,6 @@ using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
 
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace CryptoScanner.Model;
