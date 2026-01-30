@@ -29,7 +29,7 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
             throw new InvalidOperationException("PositionClosedGrid not found");
 
         // Register a custom comparer for each column based on its SortMemberPath
-        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("Created", ListSortDirection.Ascending);
+        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("CloseTime", ListSortDirection.Descending);
     }
 
 }

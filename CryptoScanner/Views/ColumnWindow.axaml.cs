@@ -6,7 +6,7 @@ namespace CryptoScanner.Views;
 /// <summary>
 /// Window for managing column visibility in the Object Grid
 /// </summary>
-public partial class ColumnWindow: Window
+public partial class ColumnWindow : Window
 {
     public ColumnWindow()
     {

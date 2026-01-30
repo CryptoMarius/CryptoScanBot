@@ -29,6 +29,6 @@ public partial class PositionOpenGridView : UserControlWithGrid<PositionViewMode
             throw new InvalidOperationException("PositionOpenGrid not found");
 
         // Register a custom comparer for each column based on its SortMemberPath
-        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("Created", ListSortDirection.Ascending);
+        InitializeGrid<PositionColumnEnum, PositionColumnComparer>("UpdateTime", ListSortDirection.Descending);
     }
 }

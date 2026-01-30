@@ -28,7 +28,7 @@ public partial class LiveDataGridView : UserControlWithGrid<LiveDataViewModel>
         if (_dataGrid == null)
             throw new InvalidOperationException("LiveDataDataGrid not found");
 
-        InitializeGrid<LiveDataColumnEnum, LiveDataColumnComparer>("Date", ListSortDirection.Ascending);
+        InitializeGrid<LiveDataColumnEnum, LiveDataColumnComparer>("Date", ListSortDirection.Descending);
     }
 
 }

@@ -1,15 +1,18 @@
 ﻿using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Signal;
@@ -24,7 +27,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class DashBoardInformationViewModel : ObservableObject
 {
-    private readonly DispatcherTimer? _barometerTimer;
+    private readonly DispatcherTimer _barometerTimer;
 
     #region Traffic Light Status
 
@@ -84,10 +87,10 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     // De collection voor binding in de UI
     [ObservableProperty]
-    private ObservableCollection<DashboardSymbolViewModel> _tvSymbols = [];
+    private AvaloniaList<DashboardSymbolViewModel> _tvSymbols = [];
 
     [ObservableProperty]
-    private ObservableCollection<DashboardSymbolViewModel> _topSymbols = [];
+    private AvaloniaList<DashboardSymbolViewModel> _topSymbols = [];
 
 
     #endregion
@@ -102,7 +105,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private string _scannerPositionCount = "";
 
-    
+
 
     private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
@@ -124,7 +127,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
         System.Diagnostics.Debug.WriteLine("DashBoardInformationViewModel constructor called");
 
-        GlobalData.StatusesHaveChangedEvent += new AddTextEvent(StatusesHaveChangedEvent);
+        WeakReferenceMessenger.Default.Register<StatusesHaveChangedMessage>(this, OnStatusesHaveChanged);
+
         InitializeBarometer();
 
         _barometerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
@@ -133,11 +137,16 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
         RegisterExchangeSymbols(); // The symbols are probably not read at this point
         RegisterTradingViewSymbols();
-        StatusesHaveChangedEvent(""); // -- event is not set properly?
+        StatusesHaveChanged(); // -- event is not set properly?
     }
 
 
-    private void StatusesHaveChangedEvent(string text)
+    private void OnStatusesHaveChanged(object recipient, StatusesHaveChangedMessage message)
+    {
+        StatusesHaveChanged();
+    }
+
+    private void StatusesHaveChanged()
     {
         if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running)
             ApplicationStatus = DateTime.Now.ToString("HH:mm");
@@ -232,7 +241,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     private void RegisterExchangeSymbols()
     {
-        List<DashboardSymbolViewModel> topSymbols = [];
+        List<DashboardSymbolViewModel> list = [];
 
         string quote = SelectedQuote;
         var exchange = GlobalData.ActiveExchange;
@@ -241,25 +250,27 @@ public partial class DashBoardInformationViewModel : ObservableObject
             // Might just sort de exchange symbols and take the top 5 based on volume?
             foreach (string baseCoin in GlobalData.Settings.ShowSymbolInformation)
             {
-                if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol) 
+                if (exchange.SymbolListName.TryGetValue(baseCoin + quoteData.Name, out CryptoSymbol? symbol)
                     || exchange.SymbolListName.TryGetValue(baseCoin + "USDT", out symbol))
                 {
-                    topSymbols.Add(new(IndicatorType.Exchange, symbol.Name, symbol.Name));
+                    list.Add(new(IndicatorType.Exchange, symbol.Name, symbol.Name, symbol.PriceDisplayFormat));
                 }
             }
         }
-        TopSymbols = new ObservableCollection<DashboardSymbolViewModel>(topSymbols);
+        TopSymbols = [.. list];
     }
 
 
     private void RegisterTradingViewSymbols()
     {
-        TvSymbols.Clear();
-        TvSymbols.Add(new(IndicatorType.TradingView, "CRYPTOCAP:TOTAL3", "Market Cap Total"));
-        TvSymbols.Add(new(IndicatorType.TradingView, "TVC:DXY", "US Dollar Index"));
-        TvSymbols.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500"));
-        TvSymbols.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance"));
-        TvSymbols.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index"));
+        List<DashboardSymbolViewModel> list = [];
+        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:TOTAL3", "Market Cap Total"));
+        list.Add(new(IndicatorType.TradingView, "TVC:DXY", "US Dollar Index"));
+        list.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500"));
+        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance"));
+        list.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index"));
+        TvSymbols = [.. list];
+
         _tradingViewService.TvSymbols = TvSymbols; // forward symbols
     }
 
@@ -317,12 +328,12 @@ public partial class DashBoardInformationViewModel : ObservableObject
     }
 
 
-    
+
     public void UpdateSymbolPrices()
     {
         foreach (var symbolViewModel in TopSymbols)
         {
-            if (!string.IsNullOrEmpty(symbolViewModel.Name) && 
+            if (!string.IsNullOrEmpty(symbolViewModel.Name) &&
                 GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Name, out CryptoSymbol? symbol))
             {
                 decimal price = 0;
@@ -346,7 +357,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
                         // nothing
                     }
                 }
-                symbolViewModel.Update(price, symbol.Volume);
+                symbolViewModel.Price = price;
+                symbolViewModel.Volume = symbol.Volume;
             }
         }
     }

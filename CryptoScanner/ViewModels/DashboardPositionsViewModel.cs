@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
 using Dapper;
 
 using OxyPlot;
@@ -103,7 +105,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
     public DashboardPositionsViewModel()
     {
         RefreshCommand = new AsyncRelayCommand(RefreshInformationAsync);
-        
+
         // Add the active quotes (default=usdt)
         List<string> quotes = [];
         foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -134,7 +136,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             await Task.Run(() =>
             {
                 GetQueryQuoteData();
-                
+
                 if (!GlobalData.Settings.QuoteCoins.TryGetValue(SelectedQuote, out var quoteData))
                     return;
 
@@ -203,8 +205,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
         databaseThread.Open();
 
         QueryPositionDataList.Clear();
-        OpenData = new QueryPositionData();
-        ClosedData = new QueryPositionData();
+        var openData = new QueryPositionData();
+        var closedData = new QueryPositionData();
 
         foreach (QueryPositionData data in databaseThread.Connection.Query<QueryPositionData>(builder.ToString()))
         {
@@ -212,23 +214,26 @@ public partial class DashboardPositionsViewModel : ObservableObject
             {
                 QueryPositionDataList.Add(data);
 
-                ClosedData.Positions += data.Positions;
-                ClosedData.Invested += data.Invested;
-                ClosedData.Returned += data.Returned;
-                ClosedData.Commission += data.Commission;
-                ClosedData.TotalProfit += data.TotalProfit;
+                closedData.Positions += data.Positions;
+                closedData.Invested += data.Invested;
+                closedData.Returned += data.Returned;
+                closedData.Commission += data.Commission;
+                closedData.TotalProfit += data.TotalProfit;
                 // enzovoort..
             }
             else
             {
-                OpenData = data; // het restant
+                openData = data; // het restant
                 // verschil vanwege meerdere quotes
-                //OpenData.Positions += data.Positions;
-                //OpenData.Invested += data.Invested;
-                //OpenData.Returned += data.Returned;
-                //OpenData.Commission += data.Commission;
+                //openData.Positions += data.Positions;
+                //openData.Invested += data.Invested;
+                //openData.Returned += data.Returned;
+                //openData.Commission += data.Commission;
             }
         }
+
+        OpenData = openData;
+        ClosedData = closedData;
     }
 
     private void DoAllCharts()
@@ -242,13 +247,13 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
     private PlotModel CreateChartPositionsPerDay()
     {
-        var model = new PlotModel 
-        { 
-            Title = "Aantal gesloten posities per dag", 
-            TextColor = OxyColors.White, 
+        var model = new PlotModel
+        {
+            Title = "Aantal gesloten posities per dag",
+            TextColor = OxyColors.White,
             Background = OxyColors.Black
         };
-        
+
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
@@ -259,7 +264,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
         });
-        
+
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -286,7 +291,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         }
 
         model.Series.Add(series);
-        
+
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.RightTop
@@ -308,7 +313,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
         });
-        
+
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -335,7 +340,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Series.Add(minSeries);
         model.Series.Add(avgSeries);
         model.Series.Add(maxSeries);
-        
+
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.RightTop
@@ -357,7 +362,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
         });
-        
+
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -383,7 +388,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         }
 
         model.Series.Add(series);
-        
+
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.RightTop
@@ -405,7 +410,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
         });
-        
+
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -429,7 +434,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         {
             if (!combinedData.ContainsKey(data.CloseTime.Date))
                 combinedData[data.CloseTime.Date] = (0, 0);
-            
+
             var current = combinedData[data.CloseTime.Date];
             combinedData[data.CloseTime.Date] = (current.Invested + data.Invested, current.Returned);
         }
@@ -438,7 +443,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         {
             if (!combinedData.ContainsKey(data.CloseTime.Date))
                 combinedData[data.CloseTime.Date] = (0, 0);
-            
+
             var current = combinedData[data.CloseTime.Date];
             combinedData[data.CloseTime.Date] = (current.Invested, current.Returned + data.Returned);
         }
@@ -452,7 +457,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         model.Series.Add(investedSeries);
         model.Series.Add(returnedSeries);
-        
+
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.RightTop
@@ -474,15 +479,16 @@ public partial class DashboardPositionsViewModel : ObservableObject
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
         });
-        
-        model.Axes.Add(new LinearAxis{
+
+        model.Axes.Add(new LinearAxis
+        {
             Position = AxisPosition.Left,
             Title = "Uren",
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
-            StringFormat = "N1"            
+            StringFormat = "N1"
         });
 
         var minSeries = new LineSeries { Title = "Minimaal", Color = OxyColors.Green, MarkerType = MarkerType.Circle, MarkerSize = 3 };
@@ -500,7 +506,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Series.Add(minSeries);
         model.Series.Add(avgSeries);
         model.Series.Add(maxSeries);
-        
+
         model.Legends.Add(new Legend
         {
             LegendPosition = LegendPosition.RightTop
@@ -579,10 +585,10 @@ public partial class DashboardPositionsViewModel : ObservableObject
                     currentValue += position.CurrentValue();
             }
         }
-        
+
         CurrentValue = currentValue.ToString(quoteDataDisplayString);
         VirtualProfit = (currentValue - investedInTrades).ToString(quoteDataDisplayString);
-        
+
         if (investedInTrades > 0)
             VirtualProfitPercentage = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2");
         else

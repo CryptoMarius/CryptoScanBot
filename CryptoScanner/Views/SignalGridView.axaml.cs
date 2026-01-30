@@ -1,4 +1,6 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
@@ -30,6 +32,12 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
 
         // Register a custom comparer for each column based on its SortMemberPath
         InitializeGrid<SignalColumnEnum, SignalColumnComparer>("Date", ListSortDirection.Descending);
+
+        // Disable hover?
+        _dataGrid.AddHandler(
+            InputElement.PointerMovedEvent,
+            (_, e) => e.Handled = true,
+            RoutingStrategies.Tunnel);
     }
 
 }

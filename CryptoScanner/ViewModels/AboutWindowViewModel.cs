@@ -11,7 +11,7 @@ namespace CryptoScanner.ViewModels;
 public partial class AboutWindowViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _title= $"About {CryptoScanner.Core.Const.Constants.AppName}";
+    private string _title = $"About {CryptoScanner.Core.Const.Constants.AppName}";
 
     [ObservableProperty]
     private string _version = $"Version {GlobalData.AppVersion}";

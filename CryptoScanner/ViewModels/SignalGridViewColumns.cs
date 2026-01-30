@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Model;
-
-using System.Collections;
+﻿using System.Collections;
 
 namespace CryptoScanner.ViewModels;
 

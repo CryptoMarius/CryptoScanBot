@@ -7,7 +7,6 @@ using Avalonia.Threading;
 
 using AvaloniaWebView;
 
-using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
@@ -37,8 +36,6 @@ public partial class App : Application
         System.Diagnostics.Debug.WriteLine($"App.Initialize");
 
         InitializeComponent();
-
-        GlobalData.ApplicationHasStarted += new AddTextEvent(DoWhenApplicationHasStarted);
     }
 
     private void InitializeComponent()
@@ -262,18 +259,6 @@ public partial class App : Application
             ScannerLog.Logger.Error(ex, $"Error handling power mode change: {mode}");
             GlobalData.AddTextToLogTab($"Power mode {mode} error: {ex.Message}");
         }
-    }
-
-    private void DoWhenApplicationHasStarted(string text)
-    {
-        // Show the symbols
-        Dispatcher.UIThread.Post(() => { GlobalData.SymbolsHaveChanged(""); });
-
-        // Show barometer and that it is running
-        //Invoke((System.Windows.Forms.MethodInvoker)(() => dashBoardInformation1.ShowBarometerStuff(null, null)));
-
-        // Show the positions
-        Dispatcher.UIThread.Post(() => { GlobalData.PositionsHaveChanged(""); });
     }
 
     public static IBrush GetBrushResource(string resourceKey)

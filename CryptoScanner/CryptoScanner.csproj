@@ -35,17 +35,17 @@
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.3.11" />
-		<PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.11" />
-		<PackageReference Include="Avalonia.Controls.TreeDataGrid" Version="11.1.0" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.2" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<!--
 		<PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
+		-->
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>

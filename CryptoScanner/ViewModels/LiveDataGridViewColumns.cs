@@ -55,7 +55,7 @@ public class LiveDataColumnComparer : IComparer
                 int compareResult = SortColumn switch
                 {
                     //LiveDataColumnEnum.Id => ObjectCompare.Compare(a.Object.Symbol.Id, b.Object.Symbol.Id),
-                    LiveDataColumnEnum.Date => ObjectCompare.Compare(a.Object.Candle.OpenTime + a.Object.Interval.Duration, 
+                    LiveDataColumnEnum.Date => ObjectCompare.Compare(a.Object.Candle.OpenTime + a.Object.Interval.Duration,
                     b.Object.Candle.OpenTime + b.Object.Interval.Duration),
                     LiveDataColumnEnum.Exchange => ObjectCompare.Compare(a.Object.Symbol.Exchange.Name, b.Object.Symbol.Exchange.Name),
                     LiveDataColumnEnum.Symbol => ObjectCompare.Compare(a.Object.Symbol.Name, b.Object.Symbol.Name),

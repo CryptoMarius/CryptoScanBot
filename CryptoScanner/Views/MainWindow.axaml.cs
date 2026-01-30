@@ -8,15 +8,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
-using CommunityToolkit.Mvvm.Input;
-
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
-using CryptoScanner.Experiment;
 using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
@@ -37,7 +34,6 @@ public partial class MainWindow : Window
     private readonly PositionOpenGridView _openPositionsView;
     private readonly PositionClosedGridView _closedPositionsView;
     private readonly LogGridView _logView;
-    private readonly ItemsRepeaterGridView _itemsControlGridView;
 
 
     public MainWindow(MainWindowViewModel viewModel,
@@ -49,14 +45,14 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         // Does not add anything usefull i'm afraid (for monotoring performance)
-//#if DEBUG
-//        this.AttachDevTools(new DevToolsOptions
-//        {
-//            StartupScreenIndex = 1, // Start met Performance tab
-//            ShowAsChildWindow = true
-//        });
-//        Debug.WriteLine("DevTools attached");
-//#endif
+        //#if DEBUG
+        //        this.AttachDevTools(new DevToolsOptions
+        //        {
+        //            StartupScreenIndex = 1, // Start met Performance tab
+        //            ShowAsChildWindow = true
+        //        });
+        //        Debug.WriteLine("DevTools attached");
+        //#endif
 
         DataContext = viewModel;
 
@@ -88,8 +84,7 @@ public partial class MainWindow : Window
         _openPositionsView = new PositionOpenGridView { DataContext = viewModel.PositionOpenGridViewModel };
         _closedPositionsView = new PositionClosedGridView { DataContext = viewModel.PositionClosedGridViewModel };
         _logView = new LogGridView { DataContext = viewModel.LogGridViewModel };
-        _itemsControlGridView = new ItemsRepeaterGridView { DataContext = viewModel.GridViewModel };
-        
+
 
 
         //Force initial tab content 
@@ -287,10 +282,6 @@ public partial class MainWindow : Window
                 MainContent.Content = _logView;
                 break;
 
-            case "Experiment":
-                ManipulateBrowser(false);
-                MainContent.Content = _itemsControlGridView;
-                break;
         }
 
     }

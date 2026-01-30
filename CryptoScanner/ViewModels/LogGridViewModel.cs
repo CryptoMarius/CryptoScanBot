@@ -1,17 +1,16 @@
+using Avalonia.Collections;
 using Avalonia.Threading;
 
-using CryptoScanner.Core.Core;
-
 using CommunityToolkit.Mvvm.ComponentModel;
-using CryptoScanner.Model;
-using System.Collections.ObjectModel;
+
+using CryptoScanner.Core.Core;
 
 namespace CryptoScanner.ViewModels;
 
 public partial class LogGridViewModel : ObservableObject
 {
     private const int MaxLogLines = 5000;
-    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(2000) };
+    private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(2000) };
 
     /// <summary>
     /// Queued text for the Log tab
@@ -23,7 +22,7 @@ public partial class LogGridViewModel : ObservableObject
     /// Collection of lines to display in the grid
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<LogViewModel> _logLines = [];
+    private AvaloniaList<LogViewModel> _logLines = [];
 
     public LogViewModel? SelectedLogLine { get; set; }
 
@@ -40,8 +39,8 @@ public partial class LogGridViewModel : ObservableObject
 
     public void Dispose()
     {
-        _updateTimer?.Stop();
-        _updateTimer = null;
+        _updateTimer.Stop();
+        _updateTimer.Tick -= TimerAddLogLinesTick;
     }
 
     private void AddTextToLogTab(string text)
@@ -74,39 +73,53 @@ public partial class LogGridViewModel : ObservableObject
         if (GlobalData.ApplicationIsClosing || LogQueue.Count == 0)
             return;
 
-        Dispatcher.UIThread.Post(() =>
+        try
         {
-            try
+            Dispatcher.UIThread.Post(() =>
             {
-                // Save current selection
-                var selected = SelectedLogLine;
-
-                // Add items one by one
-                while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
-                    LogLines.Add(LogQueue.Dequeue());
-
-                // Keep only last MaxLogLines entries
-                while (LogLines.Count > MaxLogLines)
-                    LogLines.RemoveAt(0);
-
-                // Restore selection
-                if (selected != null)
+                try
                 {
-                    if (LogLines.Contains(selected))
-                        SelectedLogLine = selected;
-                    else
-                        SelectedLogLine = LogLines.LastOrDefault();
-                }
+                    // Save current selection
+                    var selected = SelectedLogLine;
 
-                // Auto-scroll to lastline to last line
-                if (SelectedLogLine == null || SelectedLogLine == LogLines.LastOrDefault())
-                    SelectedLogLine = LogLines.LastOrDefault();
-            }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Error(error, "logtick");
-            }
-        });
+                    // Way to much for us to follow..
+                    while (LogQueue.Count > MaxLogLines)
+                        LogQueue.Clear();
+
+                    // Add items one by one
+                    List<LogViewModel> list = [];
+                    while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
+                        list.Add(LogQueue.Dequeue());
+                    LogLines.AddRange(list);
+
+                    // Keep only last MaxLogLines entries
+                    while (LogLines.Count > MaxLogLines)
+                        LogLines.RemoveAt(0);
+
+
+                    //// Restore selection
+                    //if (selected != null)
+                    //{
+                    //    if (LogLines.Contains(selected))
+                    //        SelectedLogLine = selected;
+                    //    else
+                    //        SelectedLogLine = LogLines.LastOrDefault();
+                    //}
+
+                    //// Auto-scroll to lastline to last line
+                    //if (SelectedLogLine == null || SelectedLogLine == LogLines.LastOrDefault())
+                    //    SelectedLogLine = LogLines.LastOrDefault();
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error, "logtick");
+                }
+            });
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "logtick");
+        }
     }
 
     public void Clear()

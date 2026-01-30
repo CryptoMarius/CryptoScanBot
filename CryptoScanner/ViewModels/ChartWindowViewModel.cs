@@ -1,22 +1,23 @@
-using System.Diagnostics;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using OxyPlot;
-using OxyPlot.Axes;
-using OxyPlot.Annotations;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Zones;
-using CryptoScanner.Core.Trend;
-using CryptoScanner.Core.Settings;
-using CryptoScanner.Helpers;
-using System.Globalization;
-using CryptoScanner.ViewModels.Chart;
 using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Trend;
+using CryptoScanner.Core.Zones;
+using CryptoScanner.Helpers;
+using CryptoScanner.ViewModels.Chart;
+
+using OxyPlot;
+using OxyPlot.Annotations;
+using OxyPlot.Axes;
+
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanner.ViewModels;
@@ -230,21 +231,23 @@ public partial class ChartWindowViewModel : ObservableObject
             //MinorGridlineStyle = LineStyle.Dot
         });
 
-        CrossHairX = new LineAnnotation { 
-            Type = LineAnnotationType.Vertical, 
-            Color = OxyColors.White, 
-            LineStyle = LineStyle.Dash, 
+        CrossHairX = new LineAnnotation
+        {
+            Type = LineAnnotationType.Vertical,
+            Color = OxyColors.White,
+            LineStyle = LineStyle.Dash,
             StrokeThickness = 0.5,
-            Tag = "crosshair", 
+            Tag = "crosshair",
         };
         chart.Annotations.Add(CrossHairX);
 
-        CrossHairY = new LineAnnotation { 
-            Type = LineAnnotationType.Horizontal, 
-            Color = OxyColors.White, 
-            LineStyle = LineStyle.Dash, 
+        CrossHairY = new LineAnnotation
+        {
+            Type = LineAnnotationType.Horizontal,
+            Color = OxyColors.White,
+            LineStyle = LineStyle.Dash,
             StrokeThickness = 0.5,
-            Tag = "crosshair", 
+            Tag = "crosshair",
         };
         chart.Annotations.Add(CrossHairY);
 
@@ -395,7 +398,7 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-    
+
     private void OnDisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
@@ -545,7 +548,7 @@ public partial class ChartWindowViewModel : ObservableObject
             ScannerLog.Logger.Info($"{reason}");
             return false;
         }
-        
+
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         Data = new()
@@ -689,7 +692,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
             // Clear all series
             chart.Series.Clear();
-            
+
             // And all annotations except the crosshairs
             foreach (var annotation in chart.Annotations.ToList())
             {

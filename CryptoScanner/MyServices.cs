@@ -1,5 +1,4 @@
 ﻿using CryptoScanner.Core.Services;
-using CryptoScanner.Experiment;
 using CryptoScanner.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
@@ -55,8 +54,7 @@ internal class MyServices
         services.AddTransient<PositionOpenGridViewModel>();
         services.AddTransient<PositionClosedGridViewModel>();
         services.AddTransient<LogGridViewModel>();
-        services.AddTransient<GridViewModel>();
-       
+
 
         services.AddTransient<BrowserViewModel>();
 

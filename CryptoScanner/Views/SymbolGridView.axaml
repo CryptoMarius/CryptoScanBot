@@ -10,77 +10,68 @@
 			 x:DataType="vm:SymbolGridViewModel">
 
 	<UserControl.Resources>
-		<converter:SymbolColorConverter x:Key="SymbolColorConverter"/>
 		<converter:VolumeColorConverter x:Key="VolumeColorConverter" />
 	</UserControl.Resources>
 
-		<DataGrid x:Name="SymbolDataGrid"
-				  ItemsSource="{Binding Symbols}"
-				  IsReadOnly="True"
-				  AutoGenerateColumns="False"
-				  SelectionMode="Extended"
-				  CanUserReorderColumns="True"
-				  CanUserResizeColumns="True"
-				  CanUserSortColumns="True"
-				  GridLinesVisibility="None"
-                  BorderThickness="0" BorderBrush="Transparent"
-				  ColumnHeaderHeight="32" RowHeight="22">
+	<DataGrid x:Name="SymbolDataGrid"
+			  ItemsSource="{Binding Symbols}"
+			  IsReadOnly="True"
+			  AutoGenerateColumns="False"
+			  SelectionMode="Extended"
+			  CanUserReorderColumns="True"
+			  CanUserResizeColumns="True"
+			  CanUserSortColumns="True"
+			  GridLinesVisibility="None"
+			  BorderThickness="0" BorderBrush="Transparent"
+			  ColumnHeaderHeight="32" RowHeight="22">
 
-			<DataGrid.Columns >
-				<!-- Id (Hidden by default) -->
-				<DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False">
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text="{Binding Id, StringFormat='{}{0:#,##0}'}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+		<DataGrid.Columns >
+			<!-- Id (Hidden by default) -->
+			<DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id, StringFormat='{}{0:#,##0}'}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- Symbol -->
-				<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock Text="{Binding Symbol}">
-								<TextBlock.Background>
-									<MultiBinding Converter="{StaticResource SymbolColorConverter}">
-										<Binding Path="."/>
-										<Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=DataGridRow}"/>
-										<Binding Path="(helper:HoverHelper.IsHover)" RelativeSource="{RelativeSource AncestorType=DataGridRow}" />
-									</MultiBinding>
-								</TextBlock.Background>
-							</TextBlock>
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- Symbol -->
+			<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<Border Background="{Binding SymbolBackground}">
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}"  />
+						</Border >
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
 
-				<!-- Volume -->
-				<DataGridTemplateColumn Width="Auto" SortMemberPath="Volume">
-					<DataGridTemplateColumn.Header>
-						<TextBlock Text="Volume" HorizontalAlignment="Right" />
-					</DataGridTemplateColumn.Header>
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text="{Binding Volume, StringFormat='{}{0:N0}'}"
-									   Foreground="{Binding ., Converter={StaticResource VolumeColorConverter}}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- Volume -->
+			<DataGridTemplateColumn Width="Auto" SortMemberPath="Volume">
+				<DataGridTemplateColumn.Header>
+					<TextBlock Text="Volume" HorizontalAlignment="Right" />
+				</DataGridTemplateColumn.Header>
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+								   Text="{Binding Volume}" Foreground="{Binding VolumeForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- Distance -->
-				<DataGridTemplateColumn Header="Distance" Width="Auto" SortMemberPath="Distance">
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-									   Text ="{Binding Distance, StringFormat='{}{0:N2}'}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
-			</DataGrid.Columns>
+			<!-- Distance -->
+			<DataGridTemplateColumn Header="Distance" Width="Auto" SortMemberPath="Distance">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+								Text ="{Binding Distance}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+		</DataGrid.Columns>
 
 
 
-		</DataGrid>
+	</DataGrid>
 </UserControl>

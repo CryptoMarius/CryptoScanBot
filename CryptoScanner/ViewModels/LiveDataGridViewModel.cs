@@ -1,25 +1,24 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Collections;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Model;
-using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Settings;
-using System.Collections.ObjectModel;
+using CryptoScanner.Core.Trader;
 
 
 namespace CryptoScanner.ViewModels;
 
 public partial class LiveDataGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(3000) };
+    private DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(3000) };
 
 
     [ObservableProperty]
-    private ObservableCollection<LiveDataViewModel> _LiveDatas = [];
+    private AvaloniaList<LiveDataViewModel> _LiveDatas = [];
 
     public LiveDataGridViewModel()
     {
@@ -31,12 +30,9 @@ public partial class LiveDataGridViewModel : ObservableObject
 
     public void Dispose()
     {
-        _updateTimer?.Stop();
-        _updateTimer = null;
+        _updateTimer.Stop();
+        _updateTimer.Tick -= TimerAddLiveDataTick;
     }
-
-    //public event EventHandler<LiveDataViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
 
 
     private void TimerAddLiveDataTick(object? sender, EventArgs e)
@@ -60,32 +56,12 @@ public partial class LiveDataGridViewModel : ObservableObject
                             if (!(TradingConfig.Signals[CryptoTradeSide.Long].InBlackList(liveData.Symbol.Name) == MatchBlackAndWhiteList.Present ||
                                 TradingConfig.Signals[CryptoTradeSide.Short].InBlackList(liveData.Symbol.Name) == MatchBlackAndWhiteList.Present))
                             {
-                                var liveDataInfo = new LiveDataViewModel()
-                                {
-                                    Object = liveData,
-                                };
-                                //liveDataList.Add(liveDataInfo);
-                                LiveDatas.Add(liveDataInfo);
+                                var liveDataInfo = new LiveDataViewModel() { Object = liveData, };
+                                liveDataList.Add(liveDataInfo);
                             }
                         }
                     }
-
-                    
-
-
-                    //if (liveDataList.Count == 1)
-                    //{
-                    //    LiveDatas.Add(liveDataList[0]);
-                    //    //RequestSortedInsert?.Invoke(this, liveDataList[0]);
-                    //    System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveData via binsearch");
-                    //}
-                    //else
-                    //{
-                    //    LiveDatas.AddRange(liveDataList);
-                    //    //RequestSort?.Invoke(this, EventArgs.Empty);
-                    //    System.Diagnostics.Debug.WriteLine($"TimerAddLiveDatasTick added {liveDataList.Count} LiveDatas via complete sort");
-                    //}
-
+                    LiveDatas.AddRange(liveDataList);
                 }
                 finally
                 {

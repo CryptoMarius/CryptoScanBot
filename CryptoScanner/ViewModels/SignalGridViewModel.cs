@@ -1,4 +1,5 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Collections;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -7,20 +8,16 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Telegram;
-using CryptoScanner.Model;
-
-using System.Collections.ObjectModel;
-
 
 namespace CryptoScanner.ViewModels;
 
 public partial class SignalGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _timerAddSignalsFromQueue = new() { Interval = TimeSpan.FromMilliseconds(1000) };
-    private DispatcherTimer? _timerClearAndUpdateSignals = new () { Interval = TimeSpan.FromMinutes(1) };
+    private DispatcherTimer _timerAddSignalsFromQueue = new() { Interval = TimeSpan.FromMilliseconds(1000) };
+    private DispatcherTimer _timerClearAndUpdateSignals = new() { Interval = TimeSpan.FromMinutes(1) };
 
     [ObservableProperty]
-    private ObservableCollection<SignalViewModel> _signals = [];
+    private AvaloniaList<SignalViewModel> _signals = [];
 
 
     public SignalGridViewModel()
@@ -36,22 +33,19 @@ public partial class SignalGridViewModel : ObservableObject
         _timerClearAndUpdateSignals.Tick += TimerClearAndUpdateSignalsTick;
         _timerClearAndUpdateSignals.Start();
 
-        // Should go via the filter event, but that is obviously not working..
-        //Signals.Clear();
-        GlobalData.LoadSignals(_currentFilter);
+        // Load signals
+        var viewModels = GlobalData.LoadSignals(_currentFilter).Select(signal => new SignalViewModel { Object = signal });
+        Signals = [.. viewModels];
     }
 
     public void Dispose()
     {
-        _timerAddSignalsFromQueue?.Stop();
-        _timerAddSignalsFromQueue = null;
+        _timerAddSignalsFromQueue.Stop();
+        _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
 
-        _timerClearAndUpdateSignals?.Stop();
-        _timerClearAndUpdateSignals = null;
+        _timerClearAndUpdateSignals.Stop();
+        _timerClearAndUpdateSignals.Tick -= TimerClearAndUpdateSignalsTick;
     }
-
-    //public event EventHandler<SignalViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
 
 
     private void TimerAddSignalsFromQueueTick(object? sender, EventArgs e)
@@ -79,25 +73,12 @@ public partial class SignalGridViewModel : ObservableObject
                                 {
                                     Object = signal,
                                 };
-                                //signalList.Add(s);
-                                Signals.Add(s);
+                                signalList.Add(s);
+                                //Signals.Add(s);
                             }
                         }
                     }
-
-                    //if (signalList.Count == 1)
-                    //{
-                    //    Signals.Add(signalList[0]);
-                    //    //RequestSortedInsert?.Invoke(this, signalList[0]);
-                    //    System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signal via binsearch");
-                    //}
-                    //else
-                    //{
-                    //    Signals.AddRange(signalList);
-                    //    //RequestSort?.Invoke(this, EventArgs.Empty);
-                    //    System.Diagnostics.Debug.WriteLine($"TimerAddSignalsTick added {signalList.Count} signals via complete sort");
-                    //}
-
+                    Signals.AddRange(signalList);
                 }
                 finally
                 {
@@ -198,10 +179,15 @@ public partial class SignalGridViewModel : ObservableObject
         _currentFilter = filterText;
 
         Signals.Clear();
-        GlobalData.LoadSignals(_currentFilter);
-
-        // Request sort na filtering
-        //RequestSort?.Invoke(this, EventArgs.Empty);
+        var list = GlobalData.LoadSignals(_currentFilter);
+        foreach (var signal in list)
+        {
+            var s = new SignalViewModel
+            {
+                Object = signal,
+            };
+            Signals.Add(s);
+        }
     }
 
 }

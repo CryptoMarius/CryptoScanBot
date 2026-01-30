@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using CryptoScanner.ViewModels;
 
 using OxyPlot;
 

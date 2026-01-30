@@ -7,7 +7,6 @@
 		xmlns:views="using:CryptoScanner.Views"
 		xmlns:vm="using:CryptoScanner.ViewModels"
 		xmlns:controls="using:CryptoScanner.Controls"
-		xmlns:local="clr-namespace:CryptoScanner.Experiment"
 		x:Class="CryptoScanner.Views.MainWindow"
 		x:DataType="vm:MainWindowViewModel">
 
@@ -95,7 +94,6 @@
 							<TabItem Header="Open positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
 							<TabItem Header="Closed positions" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
 							<TabItem Header="Log" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
-							<TabItem Header="Experiment" FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
 						</TabControl>
 
 						<!-- Permanent browser (1×1 pixel, alway's visible) --> 

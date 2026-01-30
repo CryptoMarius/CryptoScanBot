@@ -1,25 +1,23 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Collections;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Zones;
-using CryptoScanner.Model;
-
-using System.Collections.ObjectModel;
-
+using CryptoScanner.Core.Messages;
 
 namespace CryptoScanner.ViewModels;
 
 public partial class SymbolGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
+    private DispatcherTimer _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
 
     /// <summary>
     /// Collection of signals to display in the grid
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<SymbolViewModel> _symbols = [];
+    private AvaloniaList<SymbolViewModel> _symbols = [];
 
     //public static bool readSymbols = true;
 
@@ -27,54 +25,48 @@ public partial class SymbolGridViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
 
+        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
+
         _timerRefreshZones.Tick += TimerRefreshZonesTick;
         _timerRefreshZones.Start();
 
-        GlobalData.SymbolsHaveChangedEvent += new AddTextEvent(SymbolsHaveChangedEvent);
-        SymbolsHaveChangedEvent("");
+        ReloadSymbolsWithFilter();
     }
 
-
-    //public event EventHandler<SymbolViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
+    public void Dispose()
+    {
+        _timerRefreshZones.Stop();
+        _timerRefreshZones.Tick -= TimerRefreshZonesTick;
+    }
 
     private string _currentFilter = string.Empty;
-    private void SymbolsHaveChangedEvent(string text)
+    private void ReloadSymbolsWithFilter()
     {
-        // Delayed load of the symbols
-        //if (readSymbols)
-        //    GlobalData.LoadSymbols();
-        //readSymbols = false;
-
-        // Laad symbols direct in de observable collection
-        //List<SymbolViewModel> symbols = [];
+        // Laad symbols
+        List<SymbolViewModel> viewModels = [];
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
             if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
             {
                 if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                 {
-                    Symbols.Add(new SymbolViewModel
-                    {
-                        Object = symbol,
-                        Id = symbol.Id,
-                        Symbol = symbol.Name,
-                        Volume = symbol.Volume,
-                        Distance = ZoneTools.ZoneDistance(symbol),
-                    });
+                    viewModels.Add(new SymbolViewModel { Object = symbol, });
                 }
             }
         }
-        //Symbols.Replace(symbols);
-        
-        // Request sort na filtering
-        //RequestSort?.Invoke(this, EventArgs.Empty);
+        Symbols.Clear();
+        Symbols.AddRange([.. viewModels]);
+    }
+
+    private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
+    {
+        ReloadSymbolsWithFilter(); // for now..
     }
 
     public void OnFilterTextChanged(object? sender, string filterText)
     {
         _currentFilter = filterText;
-        SymbolsHaveChangedEvent("");
+        ReloadSymbolsWithFilter();
     }
 
 
@@ -82,7 +74,7 @@ public partial class SymbolGridViewModel : ObservableObject
     {
         foreach (var symbol in Symbols)
         {
-            symbol.Distance = ZoneTools.ZoneDistance(symbol.Object);
+            symbol.Distance = string.Empty; // Just reset it
         }
     }
 }

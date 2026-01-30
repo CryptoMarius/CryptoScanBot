@@ -118,6 +118,7 @@
         <!-- Globale style voor TextBlock -->
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="5,0,5,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         
@@ -185,6 +186,13 @@
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="0" />
         </Style>
+
+        <!--
+        <Style Selector="DataGridCell:pointerover">
+            <Setter Property="Background" Value="{x:Null}"/>
+            <Setter Property="BorderBrush" Value="{x:Null}"/>
+        </Style>
+        -->
         
         <Style Selector="DataGridRow">
             <Setter Property="MinHeight" Value="18" />
@@ -192,19 +200,49 @@
             <Setter Property="helper:HoverHelper.IsHover" Value="False" />
         </Style>
         
+        <!--
         <Style Selector="DataGridRow:pointerover"> 
-            <Setter Property="helper:HoverHelper.IsHover" Value="True" /> 
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
         </Style>
+        -->
 
-        <!-- Verberg focus indicator -->
+        <!-- Hide focus indicator -->
         <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
             <Setter Property="IsVisible" Value="False" />
         </Style>
         
-        <!-- Verberg currency visual (selected cell border) -->
+
+        <!-- Hide hover indicator 
+        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+		    <Setter Property="IsVisible" Value="False"/>
+	    </Style>
+        -->
+        
+        <!-- Hide selected cell border -->
         <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
             <Setter Property="IsVisible" Value="False" />
         </Style>
+
+	    <Style Selector="DataGridRow">
+		    <Setter Property="Background" Value="Transparent"/>
+	    </Style>
+        
+        <Style Selector="DataGridRow:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{x:Null}"/>
+        </Style>
+
+        <!--
+	    <Style Selector="DataGridRow:pointerover">
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
+		    <Setter Property="Background" Value="{DynamicResource DataGridRowPointerOverBackground}"/>
+	    </Style>
+        -->
+        
+	    <Style Selector="DataGridRow:selected">
+		    <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackground}"/>
+	    </Style>
+
 
         <!-- ============================================ -->
         <!-- WINFORMS-STYLE GROUPBOX (HeaderedContentControl) -->

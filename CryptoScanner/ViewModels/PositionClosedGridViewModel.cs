@@ -1,14 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Collections;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Model;
 
 using Dapper;
-
-using System.Collections.ObjectModel;
-
 
 namespace CryptoScanner.ViewModels;
 
@@ -17,140 +17,96 @@ public partial class PositionClosedGridViewModel : ObservableObject
     //private DispatcherTimer? _timerUpdatePositions = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
-    private ObservableCollection<PositionViewModel> _positions = [];
+    private AvaloniaList<PositionViewModel> _positions = [];
 
     public PositionClosedGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("PositionClosedGridViewModel constructor called");
-        GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
 
         //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
         //_timerUpdatePositions.Start();
+        WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
+        WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
+
 
         LoadClosedPositions();
-        GlobalData.PositionsHaveChanged("");
     }
 
 
-    //public event EventHandler<PositionViewModel>? RequestSortedInsert;
-    //public event EventHandler? RequestSort;
-
-    public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
-    {
-        if (GlobalData.ApplicationIsClosing)
-            return;
-
-        // ? Update Currentprofit and CUrrentBreakEven perhaps?
-
-        //if (WinFormTools.IsControlVisibleToUser(Grid))
-        //{
-        //    try
-        //    {
-        //        Grid.SuspendDrawing();
-        //        try
-        //        {
-        //??            SortFunction();
-        //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.DlzZoneDistance);
-        //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.Volume);
-        //        }
-        //        finally
-        //        {
-        //            Grid.ResumeDrawing();
-        //        }
-        //    }
-        //    catch (Exception error)
-        //    {
-        //        ScannerLog.Logger.Error(error, "");
-        //        GlobalData.AddTextToLogTab($"Error TimerUpdatePositionsTick {error}");
-        //    }
-        //}
-    }
-
-    //private void PositionsHaveChangedEvent(string text)
+    //public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
     //{
-    //    List<PositionViewModel> list = [];
-    //    if (GlobalData.ActiveExchange != null)
+    //    if (GlobalData.ApplicationIsClosing)
+    //        return;
+
+    //    // ? Update Currentprofit and CUrrentBreakEven perhaps?
+    //    foreach (var position in Positions)
     //    {
-    //        foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
-    //        {
-    //            list.Add(new PositionViewModel { Object = position });
-    //        }
+    //        position.CurrentProfit = string.Empty;
+    //        position.CurrentProfit = string.Empty;
     //    }
-    //    Positions.AddRange(list);
+    //    //if (WinFormTools.IsControlVisibleToUser(Grid))
+    //    //{
+    //    //    try
+    //    //    {
+    //    //        Grid.SuspendDrawing();
+    //    //        try
+    //    //        {
+    //    //??          SortFunction();
+    //    //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.DlzZoneDistance);
+    //    //            //Grid.InvalidateColumn((int)LiveDataColumnEnum.Volume);
+    //    //        }
+    //    //        finally
+    //    //        {
+    //    //            Grid.ResumeDrawing();
+    //    //        }
+    //    //    }
+    //    //    catch (Exception error)
+    //    //    {
+    //    //        ScannerLog.Logger.Error(error, "");
+    //    //        GlobalData.AddTextToLogTab($"Error TimerUpdatePositionsTick {error}");
+    //    //    }
+    //    //}
     //}
 
 
-    private void PositionsHaveChangedEvent(string text)
+    private void LoadClosedPositions()
     {
-        if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveExchange != null)
-        {
-            Positions.Clear();
-            List<PositionViewModel> list = [];
-            if (GlobalData.ActiveExchange != null)
-            {
-                foreach (var position in GlobalData.PositionsClosed)
-                {
-                    //list.Add(new PositionViewModel { Object = position });
-                    Positions.Add(new PositionViewModel { Object = position });
-                }
-            }
-            //Positions.Clear();
-            //Positions.AddRange(list);
-
-            //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
-
-            // Alle positie gerelateerde zaken verversen
-            //Task.Run(() =>
-            //{
-            //    Invoke(new Action(() =>
-            //    {
-            //        dataGridViewPositionClosed.SuspendDrawing();
-            //        try
-            //        {
-            //            PositionClosedListView.Clear();
-            //            GridPositionClosedView.AddRange(list);
-            //            //GridPositionClosedView.AdjustObjectCount();
-            //            //GridPositionClosedView.ApplySorting();
-            //        }
-            //        finally
-            //        {
-            //            dataGridViewPositionClosed.ResumeDrawing();
-            //        }
-
-            //        dataGridViewPositionClosed.SuspendDrawing();
-            //        try
-            //        {
-            //            PositionClosedListView.Clear();
-            //            GridPositionClosedView.AddRange(GlobalData.PositionsClosed);
-            //            //GridPositionClosedView.AdjustObjectCount();
-            //            //GridPositionClosedView.ApplySorting();
-
-            //            dashBoardControl1.TimerUpdatePositionsTick(null, null);
-            //            //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#einde");
-            //        }
-            //        finally
-            //        {
-            //            dataGridViewPositionClosed.ResumeDrawing();
-            //        }
-            //    }));
-            //});
-        }
-    }
-
-
-    private static void LoadClosedPositions()
-    {
-        // Alle gesloten posities lezen 
-        // TODO - beperken tot de laatste 2 dagen? (en wat handigheden toevoegen wellicht)
+        // TODO - limit to the last 2 days?
         //GlobalData.AddTextToLogTab("Reading closed positions");
         string sql = "select * from position where exchangeid=@exchangeid and not closetime is null order by id desc";
         if (!GlobalData.BackTest)
             sql += " limit 500";
         using var database = new CryptoDatabase();
 
-        GlobalData.PositionsClosed.Clear();
+        List<PositionViewModel> viewModels = [];
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
-            PositionTools.AddPositionClosed(position);
+        {
+            if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Core.Model.CryptoExchange? exchange))
+            {
+                position.Exchange = exchange;
+                if (exchange.SymbolListId.TryGetValue(position.SymbolId, out CryptoSymbol? symbol))
+                {
+                    position.Symbol = symbol;
+                    if (GlobalData.IntervalListId.TryGetValue((int)position.IntervalId!, out CryptoInterval? interval))
+                        position.Interval = interval!;
+
+                    viewModels.Add(new PositionViewModel { Object = position });
+                }
+            }
+        }
+        Positions.Clear();
+        Positions.AddRange([.. viewModels]);
     }
 
+    private void OnPositionIsClosed(object recipient, PositionIsClosedMessage message)
+    {
+        Positions.Add(new PositionViewModel { Object = message.Position });
+    }
+
+    private void OnPositionIsDeleted(object recipient, PositionIsDeletedMessage message)
+    {
+        var viewModel = Positions.FirstOrDefault(p => p.Object.Id == message.Position.Id);
+        if (viewModel != null)
+            Positions.Remove(viewModel);
+    }
 }

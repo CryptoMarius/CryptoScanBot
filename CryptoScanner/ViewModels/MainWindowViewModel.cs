@@ -4,13 +4,11 @@ using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Services;
-using CryptoScanner.Experiment;
-using CryptoScanner.Helpers;
 using CryptoScanner.Services;
 
 namespace CryptoScanner.ViewModels;
@@ -18,7 +16,6 @@ namespace CryptoScanner.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     public required ITradingViewService TradingViewService { get; set; }
-    public required GridViewModel GridViewModel { get; set; }
     public required LogGridViewModel LogGridViewModel { get; set; }
     public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardInformationViewModel DashBoardInformationViewModel { get; set; }
@@ -32,7 +29,7 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     [ObservableProperty]
-    private string _title  = Core.Const.Constants.AppName;
+    private string _title = Core.Const.Constants.AppName;
 
 
     //[ObservableProperty] // needs extra notify
@@ -46,7 +43,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.Active = value;
                 OnPropertyChanged(nameof(AnalyzerActive));
-                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
+                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
             }
         }
     }
@@ -62,7 +59,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.SoundsActive = value;
                 OnPropertyChanged(nameof(SoundsActive));
-                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
+                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
             }
         }
     }
@@ -78,7 +75,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Trading.Active = value;
                 OnPropertyChanged(nameof(TraderActive));
-                Dispatcher.UIThread.Post(() => { GlobalData.StatusesHaveChangedEvent?.Invoke(""); });
+                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
             }
         }
     }
@@ -108,8 +105,7 @@ public partial class MainWindowViewModel : ObservableObject
         PositionOpenGridViewModel positionOpenGridViewModel,
         PositionClosedGridViewModel positionClosedGridViewModel,
         BrowserViewModel browserViewModel,
-        LogGridViewModel logGridViewModel,
-        GridViewModel gridViewModel)
+        LogGridViewModel logGridViewModel)
     {
         TradingViewService = tradingViewService;
         ApplicationStateService = applicationStateService;
@@ -122,7 +118,6 @@ public partial class MainWindowViewModel : ObservableObject
         PositionClosedGridViewModel = positionClosedGridViewModel;
         BrowserViewModel = browserViewModel;
         LogGridViewModel = logGridViewModel;
-        GridViewModel = gridViewModel;
 
         // Subscribe the child ViewModels to filter the contents
         FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;

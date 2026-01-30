@@ -1,38 +1,45 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Collections;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Model;
 
 using Dapper;
-
-using System.Collections.ObjectModel;
 
 
 namespace CryptoScanner.ViewModels;
 
 public partial class PositionOpenGridViewModel : ObservableObject
 {
-    private DispatcherTimer? _timerRefreshFields = new() { Interval = TimeSpan.FromSeconds(15) };
+    private DispatcherTimer _timerRefreshFields = new() { Interval = TimeSpan.FromSeconds(15) };
 
     [ObservableProperty]
-    private ObservableCollection<PositionViewModel> _positions = [];
+    private AvaloniaList<PositionViewModel> _positions = [];
 
     public PositionOpenGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("PositionOpenGridViewModel constructor called");
-        GlobalData.PositionsHaveChangedEvent += new AddTextEvent(PositionsHaveChangedEvent);
+
+        WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
+        WeakReferenceMessenger.Default.Register<PositionIsCreatedMessage>(this, OnPositionIsCreated);
+        WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
 
         _timerRefreshFields.Tick += TimerRefreshFieldsTick;
         _timerRefreshFields.Start();
 
         LoadOpenPositions();
-        GlobalData.PositionsHaveChanged("");
     }
 
+    public void Dispose()
+    {
+        _timerRefreshFields.Stop();
+        _timerRefreshFields.Tick -= TimerRefreshFieldsTick;
+    }
 
     //private void StartMinutePlusFiveTimer()
     //{
@@ -68,41 +75,39 @@ public partial class PositionOpenGridViewModel : ObservableObject
     //}
 
 
-    private void PositionsHaveChangedEvent(string text)
+    private void LoadOpenPositions()
     {
-        if (!GlobalData.ApplicationIsClosing && GlobalData.ActiveExchange != null)
-        {
-            Positions.Clear();
-            //List<PositionViewModel> list = [];
-            if (GlobalData.ActiveExchange != null)
-            {
-                foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
-                {
-                    //if (position.Status < CryptoPositionStatus.Ready)
-                    //list.Add(new PositionViewModel { Object = position });
-                    Positions.Add(new PositionViewModel { Object = position });
-                }
-            }
-            //Positions.Clear();
-            //Positions.AddRange(list);
-
-            //GlobalData.AddTextToLogTab("PositionsHaveChangedEvent#start");
-        }
-    }
-
-    // Move perhaps to the PositionOpenGridViewModel?
-    private static void LoadOpenPositions()
-    {
-        // Alle openstaande posities lezen 
-        //GlobalData.AddTextToLogTab("Reading open positions");
-
+        // GlobalData.AddTextToLogTab("Reading open positions");
+        List<PositionViewModel> viewModels = [];
         using var database = new CryptoDatabase();
         string sql = "select * from position where exchangeid=@exchangeid and closetime is null and status < 2";
         foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             PositionTools.AddPosition(position);
             PositionTools.LoadPosition(database, position);
+            viewModels.Add(new PositionViewModel { Object = position });
         }
+        Positions.Clear();
+        Positions.AddRange([.. viewModels]);
+    }
+
+    private void OnPositionIsCreated(object recipient, PositionIsCreatedMessage message)
+    {
+        Positions.Add(new PositionViewModel { Object = message.Position });
+    }
+
+    private void OnPositionIsClosed(object recipient, PositionIsClosedMessage message)
+    {
+        var viewModel = Positions.FirstOrDefault(p => p.Object.Id == message.Position.Id);
+        if (viewModel != null)
+            Positions.Remove(viewModel);
+    }
+
+    private void OnPositionIsDeleted(object recipient, PositionIsDeletedMessage message)
+    {
+        var viewModel = Positions.FirstOrDefault(p => p.Object.Id == message.Position.Id);
+        if (viewModel != null)
+            Positions.Remove(viewModel);
     }
 
     private void TimerRefreshFieldsTick(object? sender, EventArgs e)
@@ -110,13 +115,21 @@ public partial class PositionOpenGridViewModel : ObservableObject
         foreach (var position in Positions)
         {
             // "Distance" from current price
-            position.NotifyColumnChanged("CurrentProfit");
-            position.NotifyColumnChanged("BreakEvenPercent");
-            position.NotifyColumnChanged("CurrentProfitPercentage");
+            position.Status = string.Empty;
+            position.Invested = string.Empty;
+            position.Returned = string.Empty;
+            position.Commission = string.Empty;
+            position.Open = string.Empty;
+
+            position.Duration = string.Empty;
+
+            position.CurrentProfit = string.Empty;
+            position.BreakEvenPercent = string.Empty;
+            position.CurrentProfitPercentage = string.Empty;
 
             // Statistics (not visible at this moment?)
-            position.NotifyColumnChanged("PriceMinPerc");
-            position.NotifyColumnChanged("PriceMaxPerc");
+            //position.PriceMinPerc = string.Empty;
+            //position.PriceMaxPerc = string.Empty;
         }
     }
 

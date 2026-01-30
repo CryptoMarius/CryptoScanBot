@@ -1,8 +1,9 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Zones;
+
+using System.Collections.ObjectModel;
 
 namespace CryptoScanner.ViewModels;
 
