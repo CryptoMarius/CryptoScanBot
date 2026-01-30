@@ -20,24 +20,34 @@ namespace CryptoScanner.Core.Model;
 // save ~20 bytes per candle * 4.000.000 candles = 80 Mb (+more because of dictionary key's)
 // but its a lot of work..
 
+//public struct CryptoCandle
+//{
+//    public uint OpenTime;   // minutes since Epoch (2010)
+//    public int Open;
+//    public int High;
+//    public int Low;
+//    public int Close;
+//    public int Volume;
+//}
+
 [Serializable]
 public class CryptoCandle : IQuote
 {
-    public long OpenTime { get; set; } // een long is 128 bit, het zou in een uint kunnen (delen door 60)
-    public decimal Open { get; set; }
-    public decimal High { get; set; }
+    public long OpenTime { get; set; } // a long is 64 bit / 8 bytes, we can reduce this (uint, count only the minutes, seconds not needed)
+    public decimal Open { get; set; } // a decimal is an amazing 16 bytes
+    public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
     public decimal Low { get; set; }
     public decimal Close { get; set; }
-    public decimal Volume { get; set; }
+    public decimal Volume { get; set; } // float or double will suffice (but with rounding errors)
 
-    // Idea, we store it as uint together with the factor, saves some memory
+    // Idea, we store it as uint together with the factor, this saves 50% memory
     //public uint OpenStorage { get; set; }
     //public uint HighStorage { get; set; }
     //public uint LowStorage { get; set; }
     //public uint CloseStorage { get; set; }
 
     //// decimal = 16 bytes, long = 8, uint = 4
-    //// 4*16 - 3*4 = 64 - 12 = 52 bytes per candle, not wurth the effort?
+    //// 4*16 - 3*4 = 64 - 12 = 52 bytes per candle, is that wurth the effort??
     //[Computed]
     //public uint PriceFactor { get; set; }
     //[Computed]
@@ -61,10 +71,6 @@ public class CryptoCandle : IQuote
     [Computed]
     [JsonIgnore]
     public CandleIndicatorData? CandleData { get; set; }
-}
-
-public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
-{
 }
 
 //
