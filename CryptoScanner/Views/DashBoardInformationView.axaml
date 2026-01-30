@@ -9,7 +9,6 @@
              x:DataType="vm:DashBoardInformationViewModel">
 
     <UserControl.Resources>
-        <converters:SymbolPriceValueConverter x:Key="SymbolPriceValueConverter" />        
         <converters:BarometerColorConverter x:Key="BarometerColorConverter" />
     </UserControl.Resources>
   

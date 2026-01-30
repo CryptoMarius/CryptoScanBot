@@ -9,10 +9,6 @@
 			 xmlns:converter="using:CryptoScanner.Converters"
 			 x:DataType="vm:SymbolGridViewModel">
 
-	<UserControl.Resources>
-		<converter:VolumeColorConverter x:Key="VolumeColorConverter" />
-	</UserControl.Resources>
-
 	<DataGrid x:Name="SymbolDataGrid"
 			  ItemsSource="{Binding Symbols}"
 			  IsReadOnly="True"
