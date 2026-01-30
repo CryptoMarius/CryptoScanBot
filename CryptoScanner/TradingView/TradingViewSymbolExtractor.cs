@@ -107,7 +107,7 @@ public class TradingViewSymbolExtractor
         // Cleanup
         socket.DataFetched -= OnValueFetched;
     }
-    
+
 
     private void OnValueFetched(object? sender, List<string> values)
     {
@@ -149,11 +149,11 @@ public class TradingViewSymbolExtractor
 
         //if (flag > 0)
         //{
-            //_tickerData.LastCheck = DateTime.UtcNow;
-            //if (lastValue != value.Lp)
-            //    ValueFetched?.Invoke(this, value);
-            //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
-            //GlobalData.AddTextToLogTab(value.Name + " value=" + value.Lp);
+        //_tickerData.LastCheck = DateTime.UtcNow;
+        //if (lastValue != value.Lp)
+        //    ValueFetched?.Invoke(this, value);
+        //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
+        //GlobalData.AddTextToLogTab(value.Name + " value=" + value.Lp);
         //}
     }
 

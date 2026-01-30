@@ -34,10 +34,10 @@ public class TradingViewService : ITradingViewService, IDisposable
                 switch (x.Type)
                 {
                     case IndicatorType.TradingView:
-                        RegisterTradingViewSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; x.Volume = volume; x.Update(price, volume); }, token);
+                        RegisterTradingViewSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; x.Volume = volume; }, token);
                         break;
                     case IndicatorType.FearAndGreed:
-                        RegisterFearAndGreedSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; x.Update(price, null); }, token);
+                        RegisterFearAndGreedSymbol(x.Symbol, x.Name, (price, volume) => { x.Price = price; }, token);
                         break;
                 }
             }
