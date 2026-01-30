@@ -175,10 +175,9 @@ public class SignalCreate
     {
         //Dit moet via de standaard 1m candles omdat de lijst niet alle candles bevat
         //(om de berekeningen allemaal wat sneller te maken)
+        // CandleList contains normally about 1 day of candles
 
-        // Vanwege backtest altijd redeneren vanaf het signaal (en niet de laatste candle)
-        //CryptoCandle candle = signal.Candle; // Symbol.CandleList.Values.Last();
-        long openTime = Candle!.OpenTime;
+        long openTime = Candle!.OpenTime; // Note: backtest, alway's take the signal candle 
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (!symbolInterval.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
             candlePrev = symbolInterval.CandleList.Values.First(); // better than zero of null (approx)

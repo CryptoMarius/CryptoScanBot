@@ -86,8 +86,7 @@ public class SignalExecute
 
 
     public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol,
-        Dictionary<CryptoIntervalPeriod,
-        List<CryptoCandle>> preparedHistoryCandles,
+        Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles,
         long lastCandle1mCloseTime)
     {
         List<CryptoSignal> signalList = [];
@@ -178,7 +177,7 @@ public class SignalExecute
                             }
                             else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
                         }
-                        else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm");
+                        else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm {entry.Key.strategy}");
                     }
                     catch (Exception error)
                     {

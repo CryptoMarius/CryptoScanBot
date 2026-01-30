@@ -86,9 +86,7 @@ public class SignalPrepare
 
 
     public static Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> Execute(
-        CryptoSymbol symbol, 
-        CryptoCandle lastCandle1m, 
-        long lastCandle1mCloseTime)
+        CryptoSymbol symbol, CryptoCandle lastCandle1m, long lastCandle1mCloseTime)
     {
         Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles = [];
 
@@ -143,6 +141,7 @@ public class SignalPrepare
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
+                    // Remark: GlobalData.ThreadZoneCalculate also calculates the FVG?
                     ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
                 }
             }
