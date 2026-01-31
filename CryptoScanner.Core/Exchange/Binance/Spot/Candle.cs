@@ -3,8 +3,6 @@ using Binance.Net.Enums;
 using Binance.Net.ExtensionMethods;
 using Binance.Net.Objects.Models.Spot;
 
-using CryptoExchange.Net.SharedApis;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;

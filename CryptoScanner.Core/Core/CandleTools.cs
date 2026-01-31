@@ -247,10 +247,10 @@ public static class CandleTools
                 // Open
                 if (firstCandle)
                 {
-                    open = candle.Open;
+                    open = candle!.Open;
                     firstCandle = false;
                 }
-                if (candle.High > high)
+                if (candle!.High > high)
                     high = candle.High;
                 if (candle.Low < low)
                     low = candle.Low;

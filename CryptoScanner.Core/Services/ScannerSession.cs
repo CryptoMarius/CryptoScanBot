@@ -19,6 +19,9 @@ using CryptoScanner.Core.Zones;
 
 using Dapper.Contrib.Extensions;
 
+using System.Text.RegularExpressions;
+using System.Timers;
+
 namespace CryptoScanner.Core.Services;
 
 
@@ -31,13 +34,14 @@ public class ScannerSession : IScannerSession
     // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
 
     // Timertje voor het doorgeven van de signalen en de log teksten in de memo
-    public readonly System.Timers.Timer TimerAddSignal = new() { Enabled = false };
+    //public readonly System.Timers.Timer TimerAddSignal = new() { Enabled = false };
     // Timertje voor de barometer grafiek
-    public readonly System.Timers.Timer TimerShowInformation = new() { Enabled = false };
-    // Timertje voor afspelen van heartbeat signaal (zodat bluetooth speaker wakker blijft)
+    //public readonly System.Timers.Timer TimerShowInformation = new() { Enabled = false };
+    // Timer for heartbeat sound (for keeping bluetooth speakers awake)
     public readonly System.Timers.Timer TimerSoundHeartBeat = new() { Enabled = false };
     // Iedere zoveel uren de memo clearen (anders wordt het te traag)
-    public readonly System.Timers.Timer TimerClearMemo = new() { Enabled = false };
+    //public readonly System.Timers.Timer TimerClearMemo = new() { Enabled = false };
+    public readonly System.Timers.Timer TimerClearData = new() { Enabled = false };
 
 
     // Timer voor het verversen van de exchange symbols (en bijbehorende volume enzovoort)
@@ -59,6 +63,7 @@ public class ScannerSession : IScannerSession
 
     public ScannerSession()
     {
+        TimerClearData.Elapsed += TimerClearData_Tick;
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
@@ -72,7 +77,6 @@ public class ScannerSession : IScannerSession
         TimerGetExchangeInfoAndCandles.Elapsed += TimerGetExchangeInfoAndCandles_Tick;
         GlobalData.SetCandleTimerEnableEvent += new SetCandleTimerEnable(SetCandleTimerEnableHandler);
     }
-
 
     public void AfterStartup()
     {
@@ -275,7 +279,7 @@ public class ScannerSession : IScannerSession
                 TimerRestartStreams.Enabled = false;
                 TimerSoundHeartBeat.Enabled = false;
                 TimerGetExchangeInfoAndCandles.Enabled = false;
-                TimerShowInformation.Enabled = false;
+                //TimerShowInformation.Enabled = false;
                 TimerSaveCandleData.Enabled = false;
 
                 ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
@@ -349,8 +353,8 @@ public class ScannerSession : IScannerSession
 
     public void SetTimerDefaults()
     {
-        TimerAddSignal.InitTimerInterval(2.5); // 2.5 seconds
-        TimerShowInformation.InitTimerInterval(5); // 5 seconds
+        //TimerAddSignal.InitTimerInterval(2.5); // 2.5 seconds
+        //TimerShowInformation.InitTimerInterval(5); // 5 seconds
 
         TimerSoundHeartBeat.InitTimerInterval(60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
 
@@ -365,7 +369,8 @@ public class ScannerSession : IScannerSession
         TimerSaveCandleData.InitTimerInterval(1 * 60 * 60); // 1 hour
 
         // Maak de log leeg iedere 24 uur
-        TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
+        //TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
+        TimerClearData.InitTimerInterval(24 * 60 * 60); // 24 hours
 
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
@@ -504,5 +509,69 @@ public class ScannerSession : IScannerSession
         //_ = ExchangeHelper.KLineTicker.CheckKlineTickers(); // herstarten van ticker indien errors
         //_ = ExchangeHelper.FetchCandlesAsync(); // niet wachten tot deze klaar is
     }
- 
+
+
+
+    static void ProcessFile(string fileName, Model.CryptoExchange exchange, CryptoQuoteData quoteData)
+    {
+        string extension = Path.GetExtension(fileName);
+        if (extension.Equals(".compressed") || extension.Equals(".bin"))
+        {
+            string baseName = Path.GetFileNameWithoutExtension(fileName);
+            var match = Regex.Match(baseName, @"^(?<name>.+)-(?<interval>\d+[a-zA-Z]+)$");
+            if (match.Success)
+            {
+                string symbolName = match.Groups["name"].Value;
+                string intervalName = match.Groups["interval"].Value;
+                if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                {
+                    if (exchange.SymbolListName.TryGetValue(symbolName + quoteData.Name, out CryptoSymbol? symbol))
+                    {
+                        if (symbol.IsBarometerSymbol())
+                            return;
+
+                        if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
+                        {
+                            File.Delete(fileName);
+                            GlobalData.AddTextToLogTab($"{baseName}{quoteData.Name}.{extension} deleted");
+                        }
+                    }
+                }
+            }
+            else if (exchange.SymbolListName.TryGetValue(baseName + quoteData.Name, out CryptoSymbol? symbol))
+            {
+                if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
+                {
+                    File.Delete(fileName);
+                    GlobalData.AddTextToLogTab($"{baseName}{quoteData.Name}.{extension} deleted");
+                }
+            }
+        }
+    }
+
+    // clean the exchange folder (this will not clear the old pivots folder!)
+    private void TimerClearData_Tick(object? sender, ElapsedEventArgs e)
+    {
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange != null)
+        {
+            string exchangeStoragePath = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
+
+            foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
+            {
+                string storagePath = Path.Combine(exchangeStoragePath, quoteData.Name.ToLower());
+
+                if (Directory.Exists(storagePath))
+                {
+                    string[] files = Directory.GetFiles(storagePath);
+                    foreach (string file in files)
+                    {
+                        ProcessFile(file, exchange, quoteData);
+                    }
+                }
+            }
+
+        }
+    }
+
 }
