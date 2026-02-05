@@ -61,6 +61,7 @@ public partial class LiveDataGridViewModel : ObservableObject
                             }
                         }
                     }
+                    
                     LiveDatas.AddRange(liveDataList);
                 }
                 finally

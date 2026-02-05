@@ -318,12 +318,13 @@ public class CandleIndicatorData : CryptoData
                 candleData.MacdHistogram = macdList[index].Histogram;
                 //candleData.SlopeMacd = slopeMacdList[index].Slope;
 
+#if DEBUG
                 // Test
                 candleData.Ema9 = emaList9[index].Ema;
                 candleData.Tema = temaList[index].Tema;
                 //candleData.Wma30 = wmaList30[index].Wma;
-
                 //candleData.Vwap = vwapList[index].Vwap;
+#endif
 
 #if EXTRASTRATEGIES
                 //candleData.MacdLtValue = macdLtList[index].Macd;

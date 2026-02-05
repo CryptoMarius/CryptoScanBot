@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia.Collections;
+using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.Messaging;
@@ -19,6 +20,7 @@ using Dapper.Contrib.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json;
 

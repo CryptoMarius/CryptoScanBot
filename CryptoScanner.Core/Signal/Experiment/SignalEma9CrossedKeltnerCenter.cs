@@ -1,3 +1,4 @@
+#if DEBUG
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -60,3 +61,5 @@ public class SignalEma9CrossedKeltnerCenter : SignalCreateBase
     }
 
 }
+
+#endif
