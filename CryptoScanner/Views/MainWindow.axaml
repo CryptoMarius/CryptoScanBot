@@ -100,7 +100,8 @@
 						<views:BrowserView x:Name="BrowserViewHost" Grid.Row="2" DataContext="{Binding BrowserViewModel}" />
 
 						<!-- Content area -->
-						<ContentPresenter x:Name="MainContent" Grid.Row="2"/>
+						<ContentPresenter x:Name="MainContent" Grid.Row="2"
+							HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
 
 					</Grid>
 
