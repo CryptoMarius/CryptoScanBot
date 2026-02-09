@@ -51,6 +51,9 @@ public class ApplicationState : IApplicationState
     public Dictionary<string, WindowState> WindowStates { get; set; } = [];
 
     public Dictionary<string, GridState> GridStates { get; set; } = [];
+
+    // Column widths for ListBox grids
+    public Dictionary<string, string> ColumnWidths { get; set; } = [];
 }
 
 public class ApplicationStateService
@@ -371,6 +374,25 @@ public class ApplicationStateService
         {
             // Op sommige Linux window managers kan dit falen
             return false;
+        }
+    }
+
+
+    // Voeg toe aan ApplicationStateService class (onderaan):
+    public void SaveColumnWidths(string gridName, string widths)
+    {
+        lock (_lock)
+        {
+            _states.ColumnWidths[gridName] = widths;
+            FlushToDisk();
+        }
+    }
+
+    public string? GetColumnWidths(string gridName)
+    {
+        lock (_lock)
+        {
+            return _states.ColumnWidths.TryGetValue(gridName, out var widths) ? widths : null;
         }
     }
 }

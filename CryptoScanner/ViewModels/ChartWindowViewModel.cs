@@ -857,7 +857,7 @@ public partial class ChartWindowViewModel : ObservableObject
                 double xend = xAxis.InverseTransform(mouseUpPoint.X);
                 double yend = yAxis.InverseTransform(mouseUpPoint.Y);
                 double perc = 100 * (yend - ystart) / Math.Min(yend, ystart);
-                //Text = $"{Session.SymbolBase}{Session.SymbolQuote} {perc:N2}%";
+                //Line = $"{Session.SymbolBase}{Session.SymbolQuote} {perc:N2}%";
 
                 if (lastRectangle != null)
                     PlotModel.Annotations.Remove(lastRectangle);

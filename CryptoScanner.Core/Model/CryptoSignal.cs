@@ -2,9 +2,8 @@
 
 namespace CryptoScanner.Core.Model;
 
-
 [Table("Signal")]
-public class CryptoSignal : CryptoData2
+public partial class CryptoSignal : CryptoData2
 {
     [Key]
     public int Id { get; set; }

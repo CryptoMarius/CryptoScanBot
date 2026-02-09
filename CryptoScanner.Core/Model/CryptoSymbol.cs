@@ -5,7 +5,7 @@ using Dapper.Contrib.Extensions;
 namespace CryptoScanner.Core.Model;
 
 [Table("Symbol")]
-public class CryptoSymbol
+public partial class CryptoSymbol
 {
     [Key]
     public int Id { get; set; }

@@ -28,12 +28,12 @@ public partial class MainWindow : Window
     private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
 
-    private readonly SignalGridView _signalView;
-    private readonly LiveDataGridView _liveDataView;
+    private readonly SignalView _signalView;
+    private readonly LiveDataView _liveDataView;
     private readonly DashboardPositionsView _dashboardView;
-    private readonly PositionOpenGridView _openPositionsView;
-    private readonly PositionClosedGridView _closedPositionsView;
-    private readonly LogGridView _logView;
+    private readonly PositionOpenView _openPositionsView;
+    private readonly PositionClosedView _closedPositionsView;
+    private readonly LogView _logView;
 
 
     public MainWindow(MainWindowViewModel viewModel,
@@ -78,12 +78,12 @@ public partial class MainWindow : Window
         Title = $"{Core.Const.Constants.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
         CreateMenuItems();
 
-        _signalView = new SignalGridView { DataContext = viewModel.SignalGridViewModel };
-        _liveDataView = new LiveDataGridView { DataContext = viewModel.LiveDataGridViewModel };
+        _signalView = new SignalView { DataContext = viewModel.SignalViewModel };
+        _liveDataView = new LiveDataView { DataContext = viewModel.LiveDataViewModel };
         _dashboardView = new DashboardPositionsView { DataContext = viewModel.DashboardPositionsViewModel };
-        _openPositionsView = new PositionOpenGridView { DataContext = viewModel.PositionOpenGridViewModel };
-        _closedPositionsView = new PositionClosedGridView { DataContext = viewModel.PositionClosedGridViewModel };
-        _logView = new LogGridView { DataContext = viewModel.LogGridViewModel };
+        _openPositionsView = new PositionOpenView { DataContext = viewModel.PositionOpenViewModel };
+        _closedPositionsView = new PositionClosedView { DataContext = viewModel.PositionClosedViewModel };
+        _logView = new LogView { DataContext = viewModel.LogGridViewModel };
 
 
 
@@ -200,6 +200,7 @@ public partial class MainWindow : Window
         MenuTools.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Dump memory info", Command = new CommandShowMemoryObjects(), CommandParameter = this });
 
         MenuTools.Items.Add(new MenuItem { Header = "-" });
 #if DEBUG

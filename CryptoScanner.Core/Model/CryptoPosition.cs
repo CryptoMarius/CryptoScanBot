@@ -9,7 +9,7 @@ namespace CryptoScanner.Core.Model;
 /// Een position is een samenvatting van 1 of meerdere orders
 /// </summary>
 [Table("Position")]
-public class CryptoPosition : CryptoData2
+public partial class CryptoPosition : CryptoData2
 {
     [Key]
     public int Id { get; set; }

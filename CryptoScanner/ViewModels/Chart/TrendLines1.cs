@@ -15,7 +15,7 @@
 ////using System.ComponentModel;
 ////using System.ComponentModel.DataAnnotations;
 ////using System.Linq;
-////using System.Text;
+////using System.Line;
 ////using System.Threading.Tasks;
 ////using System.Windows;
 ////using System.Windows.Input;
@@ -44,7 +44,7 @@
 //using System.ComponentModel;
 //using System.ComponentModel.DataAnnotations;
 //using System.Linq;
-//using System.Text;
+//using System.Line;
 //using System.Threading.Tasks;
 //using System.Windows;
 //using System.Windows.Input;
@@ -160,7 +160,7 @@
 //                        l1ResistancePrice = (p - ((ZoneTickSize * TickSize) / 2));
 
 //                    str = (p == p1) ? str + " L" + level : "L" + level;
-//                    Draw.Text(this, "resTag" + level, false, "\t    " + str, -5, p, 0, ColorAbove, boldFont, TextAlignment.Right, Brushes.Transparent, Brushes.Transparent, 0);
+//                    Draw.Line(this, "resTag" + level, false, "\t    " + str, -5, p, 0, ColorAbove, boldFont, TextAlignment.Right, Brushes.Transparent, Brushes.Transparent, 0);
 //                    p1 = p; p += (PivotTickDiff * TickSize);
 //                }
 
@@ -173,7 +173,7 @@
 //                    str = (p == p1) ? str + " L" + level : "L" + level;
 //                    if (level == 1)
 //                        l1SupportPrice = (p - ((ZoneTickSize * TickSize) / 2));
-//                    Draw.Text(this, "supTag" + level, false, "\t    " + str, -5, p, 0, ColorBelow, boldFont, TextAlignment.Right, Brushes.Transparent, Brushes.Transparent, 0);
+//                    Draw.Line(this, "supTag" + level, false, "\t    " + str, -5, p, 0, ColorBelow, boldFont, TextAlignment.Right, Brushes.Transparent, Brushes.Transparent, 0);
 //                    p1 = p; p -= (PivotTickDiff * TickSize);
 //                }
 //            }

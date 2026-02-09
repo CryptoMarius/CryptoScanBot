@@ -17,6 +17,7 @@
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
+		<AssemblyName>CryptoScanner</AssemblyName>
 		<Company>Marius</Company>
 		<Copyright>Copyright © 2026 Marius</Copyright>
 		<Description>Cryptoscanner and trading bot</Description>
@@ -35,125 +36,54 @@
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia" Version="11.3.11" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.11" />
+		<PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-Avalonia11" />
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.2" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-		<!--
-		<PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
-		-->
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Experiment\ItemsRepeaterGridView.axaml.cs">
-	    <DependentUpon>ItemsRepeaterGridView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\DashBoardInformationView.axaml.cs">
-	    <DependentUpon>DashBoardInformationView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="MainForm\Views\MainWindow.axaml.cs">
-	    <DependentUpon>MainWindow.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\DashboardPositionsView.axaml.cs">
-	    <DependentUpon>DashboardPositionsView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\LogGridView.axaml.cs">
-	    <DependentUpon>LogGridView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\PositionOpenGridView.axaml.cs">
-	    <DependentUpon>PositionOpenGridView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\TrendIntervalFilterView.axaml.cs">
-	    <DependentUpon>TrendIntervalFilterView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\BarometerFilterRangeView.axaml.cs">
-	    <DependentUpon>BarometerFilterRangeView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\IndicatorBollingerBandView.axaml.cs">
-	    <DependentUpon>IndicatorBollingerBandView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\IndicatorRsiView.axaml.cs">
-	    <DependentUpon>IndicatorRsiView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\IntervalView.axaml.cs">
-	    <DependentUpon>IntervalView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\AnalyzerCommonView.axaml.cs">
-	    <DependentUpon>AnalyzerCommonView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\ExchangeView.axaml.cs">
-	    <DependentUpon>ExchangeView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\QuoteTabView.axaml.cs">
-	    <DependentUpon>QuoteTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\IndicatorStochView.axaml.cs">
-	    <DependentUpon>IndicatorStochView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyDlzSettingsView.axaml.cs">
-	    <DependentUpon>StrategyDlzSettingsView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyDlzTabView.axaml.cs">
-	    <DependentUpon>StrategyDlzTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyFvgTabView.axaml.cs">
-	    <DependentUpon>StrategyFvgTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyJumpTabView.axaml.cs">
-	    <DependentUpon>StrategyJumpTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyNweTabView.axaml.cs">
-	    <DependentUpon>StrategyNweTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategySbmTabView.axaml.cs">
-	    <DependentUpon>StrategySbmTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyStobbTabView.axaml.cs">
-	    <DependentUpon>StrategyStobbTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyStorsiTabView.axaml.cs">
-	    <DependentUpon>StrategyStorsiTabView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\StrategyView.axaml.cs">
-	    <DependentUpon>StrategyView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\SettingsWindow.axaml.cs">
-	    <DependentUpon>SettingsWindow.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Settings\Views\IndicatorZigZagView.axaml.cs">
-	    <DependentUpon>IndicatorZigZagView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\SignalGridView.axaml.cs">
-	    <DependentUpon>SignalGridView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\SymbolGridView.axaml.cs">
-	    <DependentUpon>SymbolGridView.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\ColumnWindow.axaml.cs">
-	    <DependentUpon>ColumnWindow.axaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\ChartWindow.axaml.cs">
-	    <DependentUpon>ChartWindow.axaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-
-	<ItemGroup>
 		<AvaloniaResource Include="Assets\*.*" />
 	</ItemGroup>
-
 
 	<ItemGroup>
 	  <ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 	  <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Compile Update="Views\LiveDataView.axaml.cs">
+	    <DependentUpon>LiveDataView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\LogView.axaml.cs">
+	    <DependentUpon>LogView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\PositionClosedView.axaml.cs">
+	    <DependentUpon>PositionClosedView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\PositionOpenView.axaml.cs">
+	    <DependentUpon>PositionOpenView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\SignalView.axaml.cs">
+	    <DependentUpon>SignalView.axaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Views\SymbolView.axaml.cs">
+	    <DependentUpon>SymbolView.axaml</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<PropertyGroup>
+		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+	</PropertyGroup>
+	
 	<PropertyGroup>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>

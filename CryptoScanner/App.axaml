@@ -2,13 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="CryptoScanner.App"
              xmlns:helper="using:CryptoScanner.Helpers"
+             xmlns:converter="using:CryptoScanner.Converters"
              RequestedThemeVariant="Default">
     
     <Application.Resources>
 
         <ResourceDictionary>
-            <!-- Suppress the datagrid sort indicator (takes up to much space) -->
-            <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
 
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light theme resources -->
@@ -17,31 +16,11 @@
                     <SolidColorBrush x:Key="NormalVolumeBrush">#202020</SolidColorBrush>
                     
                     <!-- Price change colors -->
-                    <!--
-                    <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
-                    -->
                     <SolidColorBrush x:Key="PriceUpBrush">#439982</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#c95b5c</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
-
-                    <!--  Background color + grid oneven color 
-                    <Color x:Key="MyBackground1">#f0f0f0</Color>
-                    <Color x:Key="MyBackground2">#e8e8e8</Color>
-                    <Color x:Key="MyBackground3">#b8b8b8</Color>
-
-                    Override Avalonia fluent colors (perhaps a bit too much?)
-                    <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
-                    -->
                 </ResourceDictionary>
                 
                 <!-- Dark theme resources -->
@@ -50,56 +29,31 @@
                     <SolidColorBrush x:Key="NormalVolumeBrush">#E0E0E0</SolidColorBrush>
                     
                     <!-- Price change colors (aangepast voor dark mode) -->
-                    <!--
-                    <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
-                    <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
-                    -->
                     <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceUpBrush">#45c173</SolidColorBrush>
                     <SolidColorBrush x:Key="PriceDownBrush">#cd4040</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
-
-                    <!-- Background color + grid oneven color
-                    <Color x:Key="MyBackground1">#202020</Color>
-                    <Color x:Key="MyBackground2">#282828</Color>
-                    <Color x:Key="MyBackground3">#585858</Color>
-
-                    Override Avalonia fluent colors (perhaps a bit too much?)
-                    <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush" Color="{StaticResource MyBackground1}"/>
-                    <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
-                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
-                    -->
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
         </ResourceDictionary>
-
     </Application.Resources>
     
 
     <Application.Styles>
-        <FluentTheme />
-        <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
 
         <FluentTheme>
+            <FluentTheme.Palettes>
+                <!-- Light mode: kies een lichtere accentkleur -->
+                <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
 
-        <FluentTheme.Palettes>
-            <!-- Light mode: kies een lichtere accentkleur -->
-            <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
-
-            <!-- Dark mode: behoud standaard of pas aan -->
-            <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
-        </FluentTheme.Palettes>
-    </FluentTheme>
+                <!-- Dark mode: behoud standaard of pas aan -->
+                <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
+            </FluentTheme.Palettes>
+        </FluentTheme>
 
         <!-- ============================================ -->
         <!-- Common theming -->
@@ -164,87 +118,6 @@
         </Style>
 
         <!-- ============================================ -->
-        <!-- DataGrid theming -->
-        <!-- ============================================ -->
-        
-       	<Style Selector="DataGrid ScrollBar">
-		    <Setter Property="AllowAutoHide" Value="False"/>
-	    </Style>
-
-        <Style Selector="DataGridColumnHeader">
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-
-        <!-- Alternating row colors -->
-        <Style Selector="DataGridRow:nth-child(even)">
-            <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
-        </Style>
-        
-        <!-- Kleinere row height -->
-        <Style Selector="DataGridCell">
-            <Setter Property="MinHeight" Value="18" />
-            <Setter Property="Margin" Value="0" />
-        </Style>
-
-        <!--
-        <Style Selector="DataGridCell:pointerover">
-            <Setter Property="Background" Value="{x:Null}"/>
-            <Setter Property="BorderBrush" Value="{x:Null}"/>
-        </Style>
-        -->
-        
-        <Style Selector="DataGridRow">
-            <Setter Property="MinHeight" Value="18" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="helper:HoverHelper.IsHover" Value="False" />
-        </Style>
-        
-        <!--
-        <Style Selector="DataGridRow:pointerover"> 
-            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
-        </Style>
-        -->
-
-        <!-- Hide focus indicator -->
-        <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-        
-
-        <!-- Hide hover indicator 
-        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
-		    <Setter Property="IsVisible" Value="False"/>
-	    </Style>
-        -->
-        
-        <!-- Hide selected cell border -->
-        <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-
-	    <Style Selector="DataGridRow">
-		    <Setter Property="Background" Value="Transparent"/>
-	    </Style>
-        
-        <Style Selector="DataGridRow:pointerover">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="{x:Null}"/>
-        </Style>
-
-        <!--
-	    <Style Selector="DataGridRow:pointerover">
-            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
-		    <Setter Property="Background" Value="{DynamicResource DataGridRowPointerOverBackground}"/>
-	    </Style>
-        -->
-        
-	    <Style Selector="DataGridRow:selected">
-		    <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackground}"/>
-	    </Style>
-
-
-        <!-- ============================================ -->
         <!-- WINFORMS-STYLE GROUPBOX (HeaderedContentControl) -->
         <!-- ============================================ -->
         
@@ -273,7 +146,6 @@
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top">
                             <TextBlock Text="{TemplateBinding Header}" FontSize="12"/>
-                            <!-- Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"-->
                         </Border>
                     </Grid>
                 </ControlTemplate>

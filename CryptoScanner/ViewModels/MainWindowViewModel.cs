@@ -16,16 +16,16 @@ namespace CryptoScanner.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     public required ITradingViewService TradingViewService { get; set; }
-    public required LogGridViewModel LogGridViewModel { get; set; }
+    public required LogViewModel LogGridViewModel { get; set; }
     public required ApplicationStateService ApplicationStateService { get; set; }
     public required DashBoardInformationViewModel DashBoardInformationViewModel { get; set; }
     public required DashboardPositionsViewModel DashboardPositionsViewModel { get; set; }
-    public required SymbolGridViewModel SymbolGridViewModel { get; set; }
+    public required SymbolViewModel SymbolViewModel { get; set; }
     public required BrowserViewModel BrowserViewModel { get; set; }
-    public required SignalGridViewModel SignalGridViewModel { get; set; }
-    public required LiveDataGridViewModel LiveDataGridViewModel { get; set; }
-    public required PositionOpenGridViewModel PositionOpenGridViewModel { get; set; }
-    public required PositionClosedGridViewModel PositionClosedGridViewModel { get; set; }
+    public required SignalViewModel SignalViewModel { get; set; }
+    public required LiveDataViewModel LiveDataViewModel { get; set; }
+    public required PositionOpenViewModel PositionOpenViewModel { get; set; }
+    public required PositionClosedViewModel PositionClosedViewModel { get; set; }
 
 
     [ObservableProperty]
@@ -99,29 +99,29 @@ public partial class MainWindowViewModel : ObservableObject
         ApplicationStateService applicationStateService,
         DashBoardInformationViewModel dashBoardInformationViewModel,
         DashboardPositionsViewModel dashBoardPositionsViewModel,
-        SymbolGridViewModel symbolGridViewModel,
-        SignalGridViewModel signalGridViewModel,
-        LiveDataGridViewModel liveDataGridViewModel,
-        PositionOpenGridViewModel positionOpenGridViewModel,
-        PositionClosedGridViewModel positionClosedGridViewModel,
+        SymbolViewModel symbolGridViewModel,
+        SignalViewModel signalGridViewModel,
+        LiveDataViewModel liveDataGridViewModel,
+        PositionOpenViewModel positionOpenGridViewModel,
+        PositionClosedViewModel positionClosedGridViewModel,
         BrowserViewModel browserViewModel,
-        LogGridViewModel logGridViewModel)
+        LogViewModel logGridViewModel)
     {
         TradingViewService = tradingViewService;
         ApplicationStateService = applicationStateService;
         DashBoardInformationViewModel = dashBoardInformationViewModel;
         DashboardPositionsViewModel = dashBoardPositionsViewModel;
-        SymbolGridViewModel = symbolGridViewModel;
-        SignalGridViewModel = signalGridViewModel;
-        LiveDataGridViewModel = liveDataGridViewModel;
-        PositionOpenGridViewModel = positionOpenGridViewModel;
-        PositionClosedGridViewModel = positionClosedGridViewModel;
+        SymbolViewModel = symbolGridViewModel;
+        SignalViewModel = signalGridViewModel;
+        LiveDataViewModel = liveDataGridViewModel;
+        PositionOpenViewModel = positionOpenGridViewModel;
+        PositionClosedViewModel = positionClosedGridViewModel;
         BrowserViewModel = browserViewModel;
         LogGridViewModel = logGridViewModel;
 
         // Subscribe the child ViewModels to filter the contents
-        FilterTextChanged += SymbolGridViewModel.OnFilterTextChanged;
-        FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
+        FilterTextChanged += SymbolViewModel.OnFilterTextChanged;
+        FilterTextChanged += SignalViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
     }

@@ -47,13 +47,14 @@ public abstract class CommandBase : ICommand
     // TODO: Fix the casing of the properties when all commands are finished
     internal class ParameterObjects
     {
-        public DataGrid? datagrid = null;
+        public ListBox? listBox = null;
         public Window? parentWindow = null;
 
         public SymbolViewModel? SymbolViewModel = null;
         public SignalViewModel? SignalViewModel = null;
         public LiveDataViewModel? LiveDataViewModel = null;
-        public PositionViewModel? PositionViewModel = null;
+        public PositionOpenViewModel? PositionOpenViewModel = null;
+        public PositionClosedViewModel? PositionClosedViewModel = null;
 
         public Core.Model.CryptoExchange? exchange;
         public CryptoSymbol? symbol = null;
@@ -65,49 +66,67 @@ public abstract class CommandBase : ICommand
     internal static bool GetObjectInformation(object? parameter, out ParameterObjects dto)
     {
         dto = new();
-        if (parameter is (DataGrid _datagrid1, SignalViewModel signalViewModel, Window parentWindow1))
+        if (parameter is (ListBox _listbox1, CryptoSignal signal1, SignalViewModel viewModel1, Window parentWindow1))
         {
-            dto.datagrid = _datagrid1;
+            dto.listBox = _listbox1;
             dto.parentWindow = parentWindow1;
-            dto.SignalViewModel = signalViewModel;
-            dto.exchange = signalViewModel.Object.Symbol.Exchange;
-            dto.symbol = signalViewModel.Object.Symbol;
-            dto.interval = signalViewModel.Object.Interval;
-            dto.signal = signalViewModel.Object;
+            dto.SignalViewModel = viewModel1;
+
+            dto.signal = signal1;
+            dto.exchange = signal1?.Exchange;
+            dto.symbol = signal1?.Symbol;
+            dto.interval = signal1?.Interval;
             return true;
         }
 
-        if (parameter is (DataGrid _datagrid2, SymbolViewModel symbolViewModel, Window parentWindow2))
+
+        if (parameter is (ListBox _listbox2, CryptoSymbol symbol1, SymbolViewModel viewModel2, Window parentWindow2))
         {
-            dto.datagrid = _datagrid2;
+            dto.listBox = _listbox2;
             dto.parentWindow = parentWindow2;
-            dto.SymbolViewModel = symbolViewModel;
-            dto.exchange = symbolViewModel.Object.Exchange;
-            dto.symbol = symbolViewModel.Object;
+            dto.SymbolViewModel = viewModel2;
+
+            dto.symbol = symbol1;
+            dto.exchange = symbol1.Exchange;
             dto.interval = null; // reuse selected interval GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
             return true;
         }
 
-        if (parameter is (DataGrid _datagrid3, LiveDataViewModel liveDataViewModel, Window parentWindow3))
+        if (parameter is (ListBox _listbox3, CryptoLiveData livedata3, LiveDataViewModel viewModel3, Window parentWindow3))
         {
-            dto.datagrid = _datagrid3;
+            dto.listBox = _listbox3;
             dto.parentWindow = parentWindow3;
-            dto.LiveDataViewModel = liveDataViewModel;
-            dto.exchange = liveDataViewModel.Object.Symbol.Exchange;
-            dto.symbol = liveDataViewModel.Object.Symbol;
-            dto.interval = liveDataViewModel.Object.Interval;
+            dto.LiveDataViewModel = viewModel3;
+
+            dto.exchange = livedata3.Symbol.Exchange;
+            dto.symbol = livedata3.Symbol;
+            dto.interval = livedata3.Interval;
             return true;
         }
 
-        if (parameter is (DataGrid _datagrid4, PositionViewModel positionViewModel, Window parentWindow4))
+        if (parameter is (ListBox _listbox4, CryptoPosition position4, PositionOpenViewModel viewModel4, Window parentWindow4))
         {
-            dto.datagrid = _datagrid4;
+            dto.listBox = _listbox4;
             dto.parentWindow = parentWindow4;
-            dto.PositionViewModel = positionViewModel;
-            dto.exchange = positionViewModel.Object.Symbol.Exchange;
-            dto.symbol = positionViewModel.Object.Symbol;
-            dto.interval = positionViewModel.Object.Interval;
-            dto.position = positionViewModel.Object;
+            dto.PositionOpenViewModel= viewModel4;
+
+            dto.position = position4;
+            dto.exchange = position4.Symbol.Exchange;
+            dto.symbol = position4.Symbol;
+            dto.interval = position4.Interval;
+            return true;
+        }
+
+        if (parameter is (ListBox _listbox5, CryptoPosition position5, PositionClosedViewModel viewModel5, Window parentWindow5))
+        {
+            dto.listBox = _listbox5;
+            dto.parentWindow = parentWindow5;
+            dto.PositionClosedViewModel = viewModel5;
+
+            dto.position = position5;
+            dto.exchange = position5.Symbol.Exchange;
+            dto.symbol = position5.Symbol;
+            dto.interval = position5.Interval;
             return true;
         }
 

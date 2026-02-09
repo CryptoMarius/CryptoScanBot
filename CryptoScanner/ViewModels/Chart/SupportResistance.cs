@@ -93,7 +93,7 @@ public class SupportResistance
                     MinimumX = bb.Candle.OpenTime,
                     MaximumX = bb.Candle.OpenTime + 25 * interval.Duration,
                     Color = color,
-                    //Text = "Horizontal" 
+                    //Line = "Horizontal" 
                 };
 
                 chart.Annotations.Add(annotation);

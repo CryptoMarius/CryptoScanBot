@@ -166,10 +166,10 @@ public class ThreadLoadData
 
     public static void IndexQuoteDataSymbols(Model.CryptoExchange exchange)
     {
-        // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
+        // Index the symbols
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            // Lock (zie onder andere de BarometerTools)
+            // Lock
             Monitor.Enter(quoteData.SymbolList);
             try
             {
@@ -188,7 +188,7 @@ public class ThreadLoadData
             }
         }
 
-        // Verwijder de quotes die geen symbols bevatten
+        // Remove quotes without any sumbols
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.SymbolList.Count == 0 && !quoteData.FetchCandles)

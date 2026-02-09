@@ -75,7 +75,7 @@
 									</TextBox.KeyBindings>
 								</TextBox>
 							</Grid>
-						<views:SymbolGridView Grid.Row="1" DataContext="{Binding SymbolGridViewModel}"/>
+						<views:SymbolView Grid.Row="1" DataContext="{Binding SymbolViewModel}"/>
 					</Grid>
 
 					<!-- Splitter between symbols and the signals -->

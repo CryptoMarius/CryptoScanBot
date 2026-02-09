@@ -80,11 +80,11 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
                         }
                     }
 
-                    // i'm afraid the view wil not be updated ...
+                    // TODO: i'm afraid the view wil not be updated ...
                     // We need a reference to the view model to update the binding (still there, but need to parse the damned parameter again)
                     //Grid.InvalidateRow(rowIndex);
-                    if (dto.PositionViewModel != null)
-                        dto.PositionViewModel.Refresh();
+                    //if (dto.PositionViewModel != null)
+                    //    dto.PositionViewModel.Refresh();
                 }
             }
             catch (Exception error)

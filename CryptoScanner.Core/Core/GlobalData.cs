@@ -136,7 +136,7 @@ public static class GlobalData
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
-        public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
+    public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
@@ -217,6 +217,18 @@ public static class GlobalData
         foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id}))
             AddSymbol(symbol);
     }
+    //// Laad symbols
+    //List<CryptoSymbol> list = [];
+    //    foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
+    //    {
+    //        if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+    //        {
+    //            if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
+    //            {
+    //                list.Add(symbol);
+    //            }
+    //        }
+    //    }
 
     public static List<CryptoSignal> LoadSignals(string filterText = "")
     {

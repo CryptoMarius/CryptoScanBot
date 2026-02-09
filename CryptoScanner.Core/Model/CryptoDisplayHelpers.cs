@@ -1,27 +1,90 @@
-﻿using Avalonia.Media;
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Styling;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings.Strategy;
 
-namespace CryptoScanner.ViewModels;
+namespace CryptoScanner.Core.Model;
 
-public partial class BaseConvertersViewModel : ObservableObject
+public static class CryptoDisplayHelpers
 {
-    internal readonly IBrush BrushGreen;
-    internal readonly IBrush BrushRed;
-    internal readonly IBrush BrushNeutral;
+    // Shared brushes for performance
+    // Lazy initialization brushes
+    private static IBrush? _brushGreen;
+    private static IBrush? _brushRed;
+    private static IBrush? _brushNeutral;
 
-    public BaseConvertersViewModel()
+    private static IBrush BrushGreen
     {
-        BrushGreen = App.GetBrushResource("PriceUpBrush");
-        BrushRed = App.GetBrushResource("PriceDownBrush");
-        BrushNeutral = App.GetBrushResource("PriceNeutralBrush");
+        get
+        {
+            if (_brushGreen == null)
+            {
+                if (Application.Current?.TryGetResource("PriceUpBrush", null, out var brush) == true && brush is IBrush b)
+                    _brushGreen = b;
+                else
+                    _brushGreen = Brushes.Green; // Fallback
+            }
+            return _brushGreen;
+        }
     }
 
-    internal IBrush GetBrushColorViaSign(double value)
+    private static IBrush BrushRed
+    {
+        get
+        {
+            if (_brushRed == null)
+            {
+                if (Application.Current?.TryGetResource("PriceDownBrush", null, out var brush) == true && brush is IBrush b)
+                    _brushRed = b;
+                else
+                    _brushRed = Brushes.Red; // Fallback
+            }
+            return _brushRed;
+        }
+    }
+
+    private static IBrush BrushNeutral // foreground
+    {
+        //Avalonia theme resources:
+        //-SystemControlForegroundBaseHighBrush - Primary text (hoogste contrast)
+        //-SystemControlForegroundBaseMediumBrush - Secondary text
+        //-SystemControlForegroundBaseLowBrush - Disabled text
+        //-TextControlForeground - Text in controls
+        get
+        {
+            if (_brushNeutral == null)
+            {
+                //// Try theme-aware foreground first (wrong color)
+                //if (Application.Current?.TryFindResource("SystemControlForegroundBaseHighBrush",
+                //    ThemeVariant.Default, out var brush) == true && brush is ISolidColorBrush b)
+                //{
+                //    _brushNeutral = b;
+                //}
+                //// Fallback to actual white for dark themes
+                //else 
+
+                // if everything fails and is unreadable..
+
+                if (Application.Current?.ActualThemeVariant == ThemeVariant.Dark)
+                {
+                    _brushNeutral = Brushes.White;
+                }
+                else
+                {
+                    _brushNeutral = Brushes.Black;
+                }
+            }
+            return _brushNeutral;
+        }
+    }
+
+
+
+    internal static IBrush GetBrushColorViaSign(double value)
     {
         if (value < 0)
             return BrushRed;
@@ -30,7 +93,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorViaSign(double? value)
+    internal static IBrush GetBrushColorViaSign(double? value)
     {
         if (value == null)
             return BrushNeutral;
@@ -41,7 +104,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorViaSign(decimal? value)
+    internal static IBrush GetBrushColorViaSign(decimal? value)
     {
         if (value == null)
             return BrushNeutral;
@@ -53,7 +116,7 @@ public partial class BaseConvertersViewModel : ObservableObject
     }
 
 
-    internal IBrush GetBrushColorSide(CryptoTradeSide value)
+    internal static IBrush GetBrushColorSide(CryptoTradeSide value)
     {
         if (value == CryptoTradeSide.Short)
             return BrushRed;
@@ -63,7 +126,7 @@ public partial class BaseConvertersViewModel : ObservableObject
 
 
     // TODO: 3 equal methods, but name is a thing..
-    internal IBrush GetBrushColorPSar(CryptoTradeSide side, double? psar, double? sma20)
+    internal static IBrush GetBrushColorPSar(CryptoTradeSide side, double? psar, double? sma20)
     {
         if (side == CryptoTradeSide.Long)
         {
@@ -82,7 +145,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorSma50(CryptoTradeSide side, double? sma50, double? sma200)
+    internal static IBrush GetBrushColorSma50(CryptoTradeSide side, double? sma50, double? sma200)
     {
         if (side == CryptoTradeSide.Long)
         {
@@ -101,7 +164,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorSma20(CryptoTradeSide side, double? sma20, double? sma50)
+    internal static IBrush GetBrushColorSma20(CryptoTradeSide side, double? sma20, double? sma50)
     {
         if (side == CryptoTradeSide.Long)
         {
@@ -120,7 +183,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorRsi(double? rsi)
+    internal static IBrush GetBrushColorRsi(double? rsi)
     {
         if (rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
             return BrushGreen;
@@ -130,7 +193,7 @@ public partial class BaseConvertersViewModel : ObservableObject
             return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorStoch(double? stochValue)
+    internal static IBrush GetBrushColorStoch(double? stochValue)
     {
         if (stochValue < GlobalData.Settings.General.SettingsStoch.Oversold)
             return BrushGreen;
@@ -140,7 +203,7 @@ public partial class BaseConvertersViewModel : ObservableObject
             return BrushNeutral;
     }
 
-    internal IBrush GetBrushColorTrend(CryptoTrendIndicator? trend)
+    internal static IBrush GetBrushColorTrend(CryptoTrendIndicator? trend)
     {
         if (trend != null)
         {
@@ -171,7 +234,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return "";
     }
 
-    internal IBrush GetSignalStatusColor(CryptoSignalStatus status)
+    internal static IBrush GetSignalStatusColor(CryptoSignalStatus status)
     {
         switch (status)
         {
@@ -187,7 +250,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal IBrush GetPositionStatusColor(CryptoPositionStatus status)
+    internal static IBrush GetPositionStatusColor(CryptoPositionStatus status)
     {
         switch (status)
         {
@@ -221,7 +284,7 @@ public partial class BaseConvertersViewModel : ObservableObject
         return $"{number:N2}";
     }
 
-    internal IBrush GetVolumeColor(CryptoSymbol symbol, decimal volume)
+    internal static IBrush GetVolumeColor(CryptoSymbol symbol, decimal volume)
     {
         if (volume <= 0)
             return BrushNeutral;
@@ -229,6 +292,19 @@ public partial class BaseConvertersViewModel : ObservableObject
             return BrushRed;
         else
             return BrushGreen;
+    }
+
+
+    internal static IBrush GetStrategyBackground(CryptoTradeSide side, CryptoSignalStrategy strategy)
+    {
+        if (GlobalData.StrategiesSettings.TryGetValue(strategy, out (SettingsSignalStrategyBase strategySettings, long _) x))
+        {
+            if (side == CryptoTradeSide.Long)
+                return new SolidColorBrush(x.strategySettings.ColorLong);
+            else
+                return new SolidColorBrush(x.strategySettings.ColorShort);
+        }
+        return Brushes.Transparent;
     }
 
 }

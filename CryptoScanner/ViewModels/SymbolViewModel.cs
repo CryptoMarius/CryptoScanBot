@@ -1,96 +1,117 @@
-﻿using Avalonia.Media;
+﻿using Avalonia.Collections;
+using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Zones;
 
-namespace CryptoScanner.ViewModels
+using System.Collections.ObjectModel;
+
+namespace CryptoScanner.ViewModels;
+
+public partial class SymbolViewModel : BaseGridViewModel<CryptoSymbol, SymbolColumnEnum, SymbolColumnComparer>
 {
-    public class SymbolViewModel : BaseConvertersViewModel
+    private DispatcherTimer _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
+
+    private string _currentFilter = string.Empty;
+
+
+    public SymbolViewModel()
     {
-        public required CryptoSymbol Object { get; set; }
+        System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
+        SortColumn = SymbolColumnEnum.Symbol;
+        _columns = SymbolColumns.GetColumns();
+        _columnWidths = GetWidths(_columns);
+        System.Diagnostics.Debug.WriteLine($"SymbolGridViewModel: {_columns.Count} columns, {_columnWidths.Count} widths");
 
-        //public int Id { get => Object.Id; set { } }
-        private string? _IdText;
-        public string Id
+        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
+
+        //_timerRefreshZones.Tick += TimerRefreshZonesTick;
+        //_timerRefreshZones.Start();
+
+        ReloadSymbolsWithFilter();
+    }
+
+    public void Dispose()
+    {
+        _timerRefreshZones.Stop();
+        //_timerRefreshZones.Tick -= TimerRefreshZonesTick;
+    }
+
+    private void ReloadSymbolsWithFilter()
+    {
+        // Laad symbols
+        List<CryptoSymbol> list = [];
+        foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
-            get
+            if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
             {
-                _IdText ??= Object.Id.ToString();
-                return _IdText!;
+                if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    list.Add(symbol);
+                }
             }
         }
 
-        //public string Symbol { get => Object.Name; set { } }
-        private string? _SymbolText;
-        public string Symbol
+        lock (_lock)
         {
-            get
-            {
-                _SymbolText ??= Object.Name;
-                return _SymbolText!;
-            }
-        }
-        private IBrush? _SymbolBackground;
-        public IBrush SymbolBackground
-        {
-            get
-            {
-                _SymbolBackground ??= new SolidColorBrush(Object.QuoteData.DisplayColor);
-                return _SymbolBackground!;
-            }
+            _allObjects = list;
+            ApplySort(SortColumn);
         }
 
+        RefreshVisibleItems();
+    }
 
-        //public decimal Volume { get => Object.Volume; set { } }
-        private string? _VolumeText;
-        public string Volume
+    public void OnFilterTextChanged(object? sender, string filterText)
+    {
+        _currentFilter = filterText;
+        ReloadSymbolsWithFilter();
+    }
+
+    protected override void RefreshVisibleItems()
+    {
+        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+
+        if (Dispatcher.UIThread.CheckAccess())
         {
-            get
+            lock (_lock)
             {
-                _VolumeText ??= Object.Volume.ToString("N0");
-                return _VolumeText!;
-            }
-            set
-            {
-                _VolumeText = null;
-                _VolumeForeground = null;
-                OnPropertyChanged(nameof(Volume));
-                OnPropertyChanged(nameof(VolumeForeground));
+                var selectedId = SelectedObject?.Id;
+                VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
+                if (selectedId.HasValue)
+                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
             }
         }
-        private IBrush? _VolumeForeground;
-        public IBrush VolumeForeground
+        else
         {
-            get
+            Dispatcher.UIThread.Post(() =>
             {
-                _VolumeForeground ??= GetVolumeColor(Object, Object.Volume);
-                return _VolumeForeground!;
-            }
-        }
-
-        //private decimal? _distance = 100.0m;
-        //public decimal? Distance
-        //{
-        //    get => _distance;
-        //    set { 
-        //        _distance = value; 
-        //        OnPropertyChanged();
-        //    }
-        //}
-        private string? _DistanceText = "100";
-        public string Distance
-        {
-            get
-            {
-                _DistanceText ??= ZoneTools.ZoneDistance(Object).ToString0("N2");
-                return _DistanceText!;
-            }
-            set
-            {
-                _DistanceText = null;
-                OnPropertyChanged(nameof(Distance));
-            }
+                lock (_lock)
+                {
+                    var selectedId = SelectedObject?.Id;
+                    VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
+                    if (selectedId.HasValue)
+                        SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+                }
+            });
         }
     }
+
+    private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
+    {
+        ReloadSymbolsWithFilter(); // for now..
+    }
+
+
+
+    //private void TimerRefreshZonesTick(object? sender, EventArgs e)
+    //{
+    //    foreach (var symbol in Symbols)
+    //    {
+    //        symbol.Distance = string.Empty; // Just reset it
+    //    }
+    //}
 }

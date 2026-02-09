@@ -48,12 +48,12 @@ internal class MyServices
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DashBoardInformationViewModel>();
         services.AddTransient<DashboardPositionsViewModel>();
-        services.AddTransient<SymbolGridViewModel>();
-        services.AddTransient<SignalGridViewModel>();
-        services.AddTransient<LiveDataGridViewModel>();
-        services.AddTransient<PositionOpenGridViewModel>();
-        services.AddTransient<PositionClosedGridViewModel>();
-        services.AddTransient<LogGridViewModel>();
+        services.AddTransient<SymbolViewModel>();
+        services.AddTransient<SignalViewModel>();
+        services.AddTransient<LiveDataViewModel>();
+        services.AddTransient<PositionOpenViewModel>();
+        services.AddTransient<PositionClosedViewModel>();
+        services.AddTransient<LogViewModel>();
 
 
         services.AddTransient<BrowserViewModel>();

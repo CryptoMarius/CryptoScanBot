@@ -5,6 +5,7 @@ using Dapper.Contrib.Extensions;
 
 using Skender.Stock.Indicators;
 
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Model;
@@ -30,8 +31,9 @@ namespace CryptoScanner.Core.Model;
 //    public int Volume;
 //}
 
-[Serializable]
 public class CryptoCandle : IQuote
+//[StructLayout(LayoutKind.Sequential, Pack = 1)]
+//public struct CryptoCandle : IQuote
 {
     public long OpenTime { get; set; } // a long is 64 bit / 8 bytes, we can reduce this (uint, count only the minutes, seconds not needed)
     public decimal Open { get; set; } // a decimal is an amazing 16 bytes
@@ -60,16 +62,8 @@ public class CryptoCandle : IQuote
     //public decimal CloseDecimal { get { return (long)CloseStorage / PriceFactor; } set { CloseStorage = (uint)(value * PriceFactor); } }
 
 
-    [Computed]
-    [JsonIgnore]
     public DateTime Date { get { return CandleTools.GetUnixDate(OpenTime); } }
-
-    [Computed]
-    [JsonIgnore]
     public DateTime DateLocal { get { return CandleTools.GetUnixDate(OpenTime).ToLocalTime(); } }
-
-    [Computed]
-    [JsonIgnore]
     public CandleIndicatorData? CandleData { get; set; }
 }
 
@@ -111,3 +105,115 @@ public class CryptoCandle : IQuote
 //    System.IO.Directory.CreateDirectory(filename);
 //    System.IO.File.WriteAllText(filename + Symbol.Name + "-" + Interval.Name + ".csv", csv.ToString());
 //}
+
+
+// https://grok.com/share/c2hhcmQtNA_68613833-89da-4e6b-8489-2f903eb55ab4
+
+public struct CryptoCandleIdea : IQuote
+{
+    // Shared per array/asset (niet per candle)
+    public static long PriceScale { get; set; } = 100_000_000; // Bijv. voor 8 decimals
+    public static long VolumeScale { get; set; } = 1_000_000; // Afhankelijk van volume precisie
+
+    // Interne opslag (deltas, scaled)
+    public uint OpenTimeOffset { get; set; } // Uint offset in minutes vanaf base time
+    public long OpenStorage { get; set; } // Absoluut voor eerste, anders delta scaled
+    public int HighDelta { get; set; } // Scaled delta from Open
+    public int LowDelta { get; set; } // Scaled delta from Open (positief)
+    public int CloseDelta { get; set; } // Scaled delta from Open
+    public double VolumeStorage { get; set; } // Scaled, uint want positief
+
+    // Constructor/logic om te encoden (in een manager class)
+    // Bijv. bij vullen: if (index == 0) OpenStorage = (long)(open * PriceScale); else OpenStorage = (long)((open - prev.Close) * PriceScale);
+
+    // Getters (vereist decoding met prev, dus beter in een array-manager)
+    // Voor simplicity: assume een ArrayCandleManager die absolutes cached of computed
+    public decimal Open => OpenStorage / (decimal)PriceScale;
+    public decimal High => Open + HighDelta / (decimal)PriceScale;
+    public decimal Low => Open - LowDelta / (decimal)PriceScale;
+    public decimal Close => Open + CloseDelta / (decimal)PriceScale;
+    public decimal Volume { readonly get => (decimal)VolumeStorage; set { VolumeStorage = (double)value; } }
+
+    public DateTime Date {get; set;} //=> BaseDate.AddMinutes(OpenTimeOffset); // BaseDate static
+    // ... andere properties
+}
+
+//public class CandleArray
+//{
+//    private CryptoCandle[] _candles;
+//    private DateTime _baseDate;
+//    private long _baseTime;
+
+//    public void AddCandle(decimal open, decimal high, /*...*/, long openTime)
+//    {
+//        // Bereken deltas t.o.v. laatste, scale, store
+//        // Voor time: OpenTimeOffset = (uint)((openTime - _baseTime) / 60_000); // Minutes
+//    }
+
+//    public decimal GetOpen(int index)
+//    {
+//        // Cumuleer deltas vanaf 0 tot index (of gebruik checkpoints elke 100)
+//        decimal current = _candles[0].Open;
+//        for (int i = 1; i <= index; i++)
+//        {
+//            current += _candles[i].OpenStorage / (decimal)CryptoCandle.PriceScale; // Delta
+//        }
+//        return current;
+//    }
+//    // Soortgelijk voor anderen; cache voor speed
+//}
+
+public static class TimeConverter
+{
+    public static readonly DateTime Epoch =
+        new(2010, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    private static readonly long EpochUnixMs =
+        new DateTimeOffset(Epoch).ToUnixTimeMilliseconds();
+
+    private static readonly long EpochUnixSec =
+        new DateTimeOffset(Epoch).ToUnixTimeSeconds();
+
+    private const int SecondsPerMinute = 60;
+    private const int MillisPerMinute = 60_000;
+
+    // ----------------------------
+    // unix milliseconds -> uint minutes
+    // ----------------------------
+    public static uint FromUnixMilliseconds(long unixMs)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(unixMs, EpochUnixMs);
+
+        long minutes = (unixMs - EpochUnixMs) / MillisPerMinute;
+        return (uint)minutes;
+    }
+
+    // ----------------------------
+    // unix seconds -> uint minutes
+    // ----------------------------
+    public static uint FromUnixSeconds(long unixSec)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(unixSec, EpochUnixSec);
+
+        long minutes = (unixSec - EpochUnixSec) / SecondsPerMinute;
+        return (uint)minutes;
+    }
+
+    // ----------------------------
+    // uint minutes -> DateTime UTC
+    // ----------------------------
+    public static DateTime ToDateTime(uint minutes)
+        => Epoch.AddMinutes(minutes);
+
+    // ----------------------------
+    // uint minutes -> unix milliseconds
+    // ----------------------------
+    public static long ToUnixMilliseconds(uint minutes)
+        => EpochUnixMs + ((long)minutes * MillisPerMinute);
+
+    // ----------------------------
+    // uint minutes -> unix seconds
+    // ----------------------------
+    public static long ToUnixSeconds(uint minutes)
+        => EpochUnixSec + ((long)minutes * SecondsPerMinute);
+}
