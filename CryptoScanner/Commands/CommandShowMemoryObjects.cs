@@ -109,6 +109,12 @@ public class CommandShowMemoryObjects : CommandBase
 
         log.AppendLine($"GC.GetTotalMemory: {GC.GetTotalMemory(true)}");
 
+        //----------------------------------------------------------------------------------------------------------
+        string filename = Path.Combine(GlobalData.AppDataFolder, "Memory information1.txt");
+        File.WriteAllText(filename, log.ToString());
+        log.Clear();
+
+        // does not work..
         var app = Application.Current;
         if (app?.Styles == null)
             return;
@@ -251,7 +257,7 @@ public class CommandShowMemoryObjects : CommandBase
 
 
         //----------------------------------------------------------------------------------------------------------
-        string filename = Path.Combine(GlobalData.AppDataFolder, "Memory information.txt");
+        filename = Path.Combine(GlobalData.AppDataFolder, "Memory information2.txt");
         File.WriteAllText(filename, log.ToString());
 
         
