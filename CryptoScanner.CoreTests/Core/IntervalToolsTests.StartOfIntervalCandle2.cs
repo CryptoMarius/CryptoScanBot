@@ -15,15 +15,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval10m];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 19, 20, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -35,16 +35,16 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
 
         // should fall back on ..
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval30m];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 19, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -56,16 +56,16 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
 
         // should fall back on ..
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1h];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 18, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
 
     }
@@ -78,16 +78,16 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
 
         // should fall back on ..
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 16, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -100,16 +100,16 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
 
         // should fall back on ..
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval2h];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 16, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -121,15 +121,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 19, 38, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 05, 00, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -142,15 +142,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 00, 0, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 05, 00, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -162,15 +162,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 06, 23, 59, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 00, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -183,15 +183,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 07, 00, 00, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 00, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 
@@ -203,15 +203,15 @@ public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 
         DateTime sourceDate = new(2025, 10, 07, 00, 01, 0, 0, DateTimeKind.Utc);
         CryptoInterval sourceInterval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1m];
-        long sourceUnix = CandleTools.GetUnixTime(sourceDate, sourceInterval.Duration);
+        CandleTime sourceUnix = CandleTime.AlignFromDateTime(sourceDate, sourceInterval.Duration);
 
         // should fall back on the previous day because the day candle aint finished
         CryptoInterval intervalTarget = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval1d];
-        long targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
-        DateTime targetDate = CandleTools.GetUnixDate(targetUnix);
+        CandleTime targetUnix = IntervalTools.StartOfIntervalCandle2(sourceUnix, sourceInterval.Duration, intervalTarget.Duration);
+        DateTime targetDate = targetUnix.ToDateTime();
 
         DateTime expectedDate = new(2025, 10, 06, 00, 00, 0, 0, DateTimeKind.Utc);
-        long expectedUnix = CandleTools.GetUnixTime(expectedDate, intervalTarget.Duration);
+        CandleTime expectedUnix = CandleTime.AlignFromDateTime(expectedDate, intervalTarget.Duration);
         Assert.AreEqual(expectedUnix, targetUnix, "Target date");
     }
 }

@@ -103,12 +103,12 @@ public partial class SignalGridViewModel : ObservableObject
 
         if (!signal.IsInvalid)
         {
-            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, long lastSignalTime) x))
+            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
             {
-                if (signal.EventTime > x.lastSignalTime)
+                if (signal.CloseDate > x.lastSignalTime)
                 {
                     // Stay silent for the next 20 seconds (for his strategy)
-                    x.lastSignalTime = signal.EventTime + 20;
+                    x.lastSignalTime = signal.CloseDate.AddSeconds(20);
                     GlobalData.StrategiesSettings[signal.Strategy] = x;
 
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
@@ -124,7 +124,7 @@ public partial class SignalGridViewModel : ObservableObject
         }
     }
 
-    static long LastStatisticUpdate = 0;
+    static CandleTime LastStatisticUpdate = CandleTime.MinValue;
 
     private void TimerClearAndUpdateSignalsTick(object? sender, EventArgs e)
     {
@@ -140,7 +140,7 @@ public partial class SignalGridViewModel : ObservableObject
                 if (Signals.Count > 0)
                 {
                     // Avoid frequent updates
-                    long x = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
                     bool updateStats = x != LastStatisticUpdate;
                     LastStatisticUpdate = x;
 

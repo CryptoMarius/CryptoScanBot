@@ -10,7 +10,8 @@ namespace CryptoScanner.Core.Trend;
 
 public class TrendInterval
 {
-    private static bool ResolveStartAndEndDate(CryptoInterval interval, CryptoCandleList candleList, ref long minDate, ref long maxDate)
+    private static bool ResolveStartAndEndDate(CryptoInterval interval, 
+        CryptoCandleList candleList, ref CandleTime minDate, ref CandleTime maxDate)
     {
         // We cache the Primary indicator, this way we do not have to add all the candles again and again.
         // (We hope this makes the scanner a more less cpu hungry)
@@ -177,8 +178,8 @@ public class TrendInterval
 #if DEBUG
             if (intervalTrend.Time != null)
             {
-                log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
-                ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (no candles)");
+                log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
+                ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
             }
 #endif
             return;
@@ -186,12 +187,12 @@ public class TrendInterval
 
 
         // Determine the period (but limited <not 10000+ candles back>)
-        long minDate = 0;
-        long maxDate = 0;
+        CandleTime minDate = CandleTime.MinValue;
+        CandleTime maxDate = CandleTime.MinValue;
         if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
         {
-            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (date period problem)");
-            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time.ToDateTime()} {intervalTrend.Trend} (date period problem)");
+            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
+            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
             return;
         }
         //#if DEBUG
@@ -219,7 +220,7 @@ public class TrendInterval
         {
             //string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {intervalTrend.TrendInfoDate} " +
             //$"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {intervalTrend.TrendInterval} "
-            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {intervalTrend.Time.ToDateTime()} " +
+            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {intervalTrend.Time?.ToDateTime()} " +
             $"zigzagcount={bestIndicator.ZigZagList.Count} {intervalTrend.Trend} "
             //#if DEBUG
             //             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"

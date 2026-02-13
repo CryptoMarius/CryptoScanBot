@@ -83,13 +83,14 @@ public class LuxIndicator
     //    luxOverBought = 10 * overbuy;
     //}
 
-    public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
+    public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, 
+        CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
-        long candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
+        CandleTime candleIntervalOpenTimeEnd = IntervalTools.StartOfIntervalCandle(candleCloseTime, symbolInterval.Interval.Duration);
         if (!symbolInterval.CandleList.ContainsKey(candleIntervalOpenTimeEnd))
             candleIntervalOpenTimeEnd -= symbolInterval.Interval.Duration;
-        long candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
+        CandleTime candleIntervalOpenTimeStart = candleIntervalOpenTimeEnd - 29 * symbolInterval.Interval.Duration;
 
 
 
@@ -104,7 +105,7 @@ public class LuxIndicator
         CryptoCandle? candlePrev;
         CryptoCandle? candleLast = null;
 
-        long loop = candleIntervalOpenTimeStart;
+        CandleTime loop = candleIntervalOpenTimeStart;
         while (loop <= candleIntervalOpenTimeEnd)
         {
             candlePrev = candleLast;
@@ -144,7 +145,8 @@ public class LuxIndicator
         luxOverBought = (int)(100m * overbuy / N); 
     }
 
-    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod cryptoIntervalPeriod, long candleCloseTime)
+    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, 
+        CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
         CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, candleCloseTime);
 

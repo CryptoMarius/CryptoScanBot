@@ -133,12 +133,12 @@ public class CryptoData
         //SlopeRsi = source.SlopeRsi;
         //RsiSurface = source.RsiSurface;
 
+#if DEBUG
         // EMA indicator values
         Ema9 = source.Ema9;
         //public double? Ema8 { get; set; }
         //public double? Ema20 { get; set; }
         //public double? SlopeEma20 { get; set; }
-#if DEBUG
         Ema50 = source.Ema50;
         Tema = source.Tema;
 #endif

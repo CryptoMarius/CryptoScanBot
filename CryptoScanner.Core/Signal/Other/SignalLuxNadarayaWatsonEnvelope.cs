@@ -185,7 +185,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         //In Pine Script, wanneer je src[x] gebruikt en src = input.source(close) is:
         // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) candle in de chart context(dus de meest recente die op dat moment verwerkt wordt).
         // en x = 1 verwijst naar de vorige candle.
-        long offsett = CandleLast.OpenTime; // - max * Interval.Duration;
+        CandleTime offsett = CandleLast.OpenTime; // - max * Interval.Duration;
 
         decimal sae = 0;
         List<decimal> nwe = [];
@@ -206,7 +206,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             }
             decimal y2 = sum / sumw;
 
-            long openTime = offsett - i * Interval.Duration;
+            CandleTime openTime = offsett - i * Interval.Duration;
             if (SymbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle? candlei))
             {
                 sae += Math.Abs(candlei.Close - y2);

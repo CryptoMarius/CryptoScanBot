@@ -237,7 +237,7 @@ public class ThreadLoadData
                 DataStore.LoadCandles();
 
                 //************************************************************************************
-                // Vanaf dit moment worden de candles (en candleperiod) bewaard 
+                // Vanaf dit moment worden de candles (en candleperiod) bewaard
                 // (het herberekenen kan definitieve candles produceren)
                 //************************************************************************************
 
@@ -296,8 +296,8 @@ public class ThreadLoadData
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
 
-                long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
-                TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, currentTime, 60);
+                CandleTime currentTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+                TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, currentTime, 1);
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
@@ -331,7 +331,7 @@ public class ThreadLoadData
                     //_ = ExchangeBase.UserTicker!.StartAsync();
 
 
-                    //************************************************************************************              
+                    //************************************************************************************
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************

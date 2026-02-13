@@ -8,7 +8,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Signals
 {
-    internal static void Draw(PlotModel chart, List<CryptoSignal> signalList, long minDate, long maxDate, string group)
+    internal static void Draw(PlotModel chart, List<CryptoSignal> signalList, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesShort = new ScatterSeries
         {
@@ -30,7 +30,8 @@ public class Signals
 
         foreach (var signal in signalList)
         {
-            if (signal.EventTime >= minDate && signal.EventTime <= maxDate)
+            CandleTime closeDate = CandleTime.FromDateTime(signal.CloseDate);
+            if (closeDate >= minDate && closeDate <= maxDate)
             {
                 decimal y;
                 ScatterSeries? series;
@@ -45,7 +46,7 @@ public class Signals
                     y = 1.01m * signal.SignalPrice;
                 }
 
-                series?.Points.Add(new ScatterPoint(signal.EventTime, (double)y));
+                series?.Points.Add(new ScatterPoint(closeDate.Minutes, (double)y));
             }
         }
 

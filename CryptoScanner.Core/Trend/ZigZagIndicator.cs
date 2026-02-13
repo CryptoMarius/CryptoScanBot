@@ -9,7 +9,7 @@ public class ZigZagIndicator
     private TrendType TrendType { get; set; } = TrendType.Primary; // see more than primary trend
 
     public bool UseOptimizing { get; set; } = true; // Debug
-    public long MaxTime { get; set; } = -1; // Debug
+    //public CandleTime MaxTime { get; set; } = CandleTime.MinValue; // Debug
     public int CandleCount { get; set; } = 0; // Debug, count of candles added
 
     //public int Depth { get; set; } = 12; // from previous approach, but does not work
@@ -47,7 +47,7 @@ public class ZigZagIndicator
         for (int i = minIndex; i <= maxIndex; i++)
         {
             var zigZag = PivotList[i];
-            if (MaxTime == -1 || (MaxTime > 0 && zigZag.Candle.OpenTime < MaxTime))
+            //if (MaxTime == CandleTime.MinValue || (MaxTime > CandleTime.MinValue && zigZag.Candle.OpenTime < MaxTime))
             {
                 if (swing == null || GetLowValue(zigZag.Candle) < GetLowValue(swing.Candle))
                     swing = zigZag;
@@ -65,7 +65,7 @@ public class ZigZagIndicator
         for (int i = minIndex; i <= maxIndex; i++)
         {
             var zigZag = PivotList[i];
-            if (MaxTime == -1 || (MaxTime > 0 && zigZag.Candle.OpenTime < MaxTime))
+            //if (MaxTime == CandleTime.MinValue || (MaxTime > CandleTime.MinValue && zigZag.Candle.OpenTime < MaxTime))
             {
                 if (swing == null || GetHighValue(zigZag.Candle) > GetHighValue(swing.Candle))
                     swing = zigZag;

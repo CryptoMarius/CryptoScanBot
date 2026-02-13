@@ -64,7 +64,7 @@ public class SymbolTools
 
 
 
-    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, long candleStart, int candleDuration, out string reaction)
+    public static bool CheckValidMinimalVolume(CryptoSymbol symbol, CandleTime candleStart, uint candleDuration, out string reaction)
     {
         //Indien volume regels : Voldoende volume -> nee = signaal negeren
         //In principe is dit bij de CC signals al gedaan, maar een tweede keer kan geen kwaad
@@ -170,7 +170,7 @@ public class SymbolTools
 
     //public static bool CheckAvailableSlotsBase(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
     //{
-    //    // Zijn er slots beschikbaar op de base? 
+    //    // Zijn er slots beschikbaar op de base?
 
     //    int slotsOccupied = 0;
     //    if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
@@ -323,7 +323,7 @@ public class SymbolTools
     }
 
 
-    public bool BarometerIndicators(CryptoInterval interval, long candleOpenTime, out string response)
+    public bool BarometerIndicators(CryptoInterval interval, CandleTime candleOpenTime, out string response)
     {
         // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
         // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)

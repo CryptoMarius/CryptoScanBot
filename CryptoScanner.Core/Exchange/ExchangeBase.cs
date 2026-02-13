@@ -34,13 +34,13 @@ public interface ICandle
     /// <summary>
     /// retrieve candles for 1 interval for 1 symbol from the exchange
     /// </summary>
-    public Task GetCandlesForIntervalAsync(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long fetchMax);
+    public Task GetCandlesForIntervalAsync(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchMax);
 
     /// <summary>
     /// retrieve candles for all intervals for 1 symbol from the exchange 
     /// uses GetCandlesForIntervalAsync
     /// </summary>
-    public Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix);
+    public Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, CandleTime fetchEndUnix);
 
     /// <summary>
     /// retrieve candles for all symbols and all intervals from the exchange
@@ -53,14 +53,14 @@ public interface ICandle
     /// retrieve candles of this interval in daterange (fetch and map from exchange to local)
     /// This method is for the virualisation of the zones and emulator
     /// </summary>
-    public Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long minFetch, long maxFetch);
+    public Task<CandleTime> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch);
 
     /// <summary>
     /// retrieve candles of this interval in daterange
     /// (uses GetCandlesForInterval)
     /// This method is for the virualisation of the zones and emulator
     /// </summary>
-    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long unixLoop, long unixMax);
+    public Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax);
 }
 
 public interface IApi

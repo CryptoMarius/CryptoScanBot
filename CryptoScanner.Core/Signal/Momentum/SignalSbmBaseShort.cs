@@ -180,7 +180,8 @@ public class SignalSbmBaseShort(CryptoSymbol symbol, CryptoInterval interval, Cr
 
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
-        if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
+        //if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
+        if (CandleLast?.OpenTime.Minutes - CandleTime.FromDateTime(signal.CloseDate).Minutes > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;

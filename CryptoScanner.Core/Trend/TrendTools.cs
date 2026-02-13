@@ -38,16 +38,17 @@ public class TrendTools
     //}
 
 
-    public static async Task<long?> AddCandlesToIndicatorsAsync(ZigZagIndicator indicator, CryptoSymbol symbol, CryptoInterval interval, long min, long max)
+    public static async Task<CandleTime?> AddCandlesToIndicatorsAsync(ZigZagIndicator indicator, 
+        CryptoSymbol symbol, CryptoInterval interval, CandleTime min, CandleTime max)
     {
-        long? zigZagLastCandleAdded = null;
+        CandleTime? zigZagLastCandleAdded = null;
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
             // Add candles to all the Primary indicators
-            long loop = min;
+            CandleTime loop = min;
             while (loop <= max)
             {
                 if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))

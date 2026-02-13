@@ -36,7 +36,7 @@ public class CandleIndicatorData : CryptoData
     /// Make a list of candles up to firstCandleOpenTime with at least 260 candles.
     /// (target: ma200 for the last 60 minutes, but also the other indicators)
     /// </summary>
-    public static List<CryptoCandle>? CollectCandles(CryptoSymbol symbol, CryptoInterval interval, long firstCandleOpenTime, out string errorstr)
+    public static List<CryptoCandle>? CollectCandles(CryptoSymbol symbol, CryptoInterval interval, CandleTime firstCandleOpenTime, out string errorstr)
     {
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList intervalCandles = symbolPeriod.CandleList;
@@ -59,7 +59,7 @@ public class CandleIndicatorData : CryptoData
 
 
         // A fix for calculating indicators for the barometer symbol..
-        int duration = interval.Duration;
+        uint duration = interval.Duration;
         if (symbol.IsBarometerSymbol())
             duration = 60; // alway's 1m!
 
@@ -68,19 +68,19 @@ public class CandleIndicatorData : CryptoData
         //try
         //{
         // No change (is already handles)
-        long periodEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
-        long periodStartTime = periodEndTime - (maxCandles - 1) * duration;
+        CandleTime periodEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
+        CandleTime periodStartTime = periodEndTime - (maxCandles - 1) * duration;
 
         CryptoCandle? candleLast = null;
-        long candleLoop = periodStartTime;
+        CandleTime candleLoop = periodStartTime;
         while (candleLoop <= periodEndTime)
         {
 #if DEBUG
-            DateTime candleLoopDate = CandleTools.GetUnixDate(candleLoop);
+            DateTime candleLoopDate = candleLoop.ToDateTime();
 #endif
             if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle? candle))
             {
-                candlesForHistory.Add(candle);
+                candlesForHistory.Add(candle!);
             }
             else
             {
@@ -318,12 +318,13 @@ public class CandleIndicatorData : CryptoData
                 candleData.MacdHistogram = macdList[index].Histogram;
                 //candleData.SlopeMacd = slopeMacdList[index].Slope;
 
+#if DEBUG
                 // Test
                 candleData.Ema9 = emaList9[index].Ema;
                 candleData.Tema = temaList[index].Tema;
                 //candleData.Wma30 = wmaList30[index].Wma;
-
                 //candleData.Vwap = vwapList[index].Vwap;
+#endif
 
 #if EXTRASTRATEGIES
                 //candleData.MacdLtValue = macdLtList[index].Macd;
@@ -385,21 +386,21 @@ public class CandleIndicatorData : CryptoData
     }
 
 
-    public static long GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime utcNow)
+    public static CandleTime GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime utcNow)
     {
-        long startFetchUnix;
+        CandleTime startFetchUnix;
         // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
         if (symbol.IsBarometerSymbol())
-            startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - Constants.BarometerGraphHours * 60 * GlobalData.IntervalList[0].Duration;
+            startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - Constants.BarometerGraphHours * 60; // 60 minutes
         else
         {
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
                 // For the 1m we need *initially* ~1 day plus the data needed for the barometer graph
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - InitialCandleCountFetch * interval.Duration;
+                startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - InitialCandleCountFetch * interval.Duration;
             else
                 // 260 would be enough for calculating the standard indicator data.
                 // But we extended that amount because of the markettrend calculation.
-                startFetchUnix = CandleTools.GetUnixTime(utcNow, 60) - 500 * interval.Duration;
+                startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - 500 * interval.Duration;
             startFetchUnix -= startFetchUnix % interval.Duration;
         }
         return startFetchUnix;

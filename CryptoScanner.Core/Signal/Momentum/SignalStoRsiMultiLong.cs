@@ -45,7 +45,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        long unixDate = CandleLast.OpenTime;
+        CandleTime unixDate = CandleLast.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -54,11 +54,11 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
         for (int count = 6; count > 0; count--)
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
-            long candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
+            CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
             if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
                 return false;
 
-            if (candle.CandleData == null)
+            if (candle!.CandleData == null)
             {
                 List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
                 if (history == null)

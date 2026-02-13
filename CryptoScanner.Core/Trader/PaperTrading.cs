@@ -137,8 +137,8 @@ public class PaperTrading
                 // (maar zoveel posities staan niet open. dus voorlopig is dit prima)
                 foreach (var (part, step) in indexList.Values)
                 {
-                    long from = CandleTools.GetUnixTime(step.CreateTime, 60) + 60;
-                    long limit = CandleTools.GetUnixTime(GlobalData.GetCurrentDateTime(), 60);
+                    CandleTime from = CandleTime.AlignFromDateTime(step.CreateTime, 1) + 1;
+                    CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.GetCurrentDateTime(), 1);
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact

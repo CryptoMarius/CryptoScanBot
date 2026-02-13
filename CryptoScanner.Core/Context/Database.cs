@@ -26,7 +26,7 @@ public class CryptoDatabase : IDisposable
     public CryptoDatabase()
     {
         string dbFile = Path.Combine(GlobalData.AppDataFolder, Constants.AppName + ".db");
-        Connection = new($"Filename={dbFile};Mode=ReadWriteCreate;"); 
+        Connection = new($"Filename={dbFile};Mode=ReadWriteCreate;");
     }
 
     public SqliteTransaction BeginTransaction()
@@ -124,22 +124,22 @@ public class CryptoDatabase : IDisposable
 
             // All the required and supported intervals
             List<CryptoInterval> IntervalList = [];
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1 * 60, null)); // 0
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2 * 60, IntervalList[0])); // 1
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3 * 60, IntervalList[0])); // 2
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5 * 60, IntervalList[0])); // 3
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval10m, "10m", 10 * 60, IntervalList[3])); // 4
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval15m, "15m", 15 * 60, IntervalList[3]));  // 5
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval30m, "30m", 30 * 60, IntervalList[5])); // 6
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1h, "1h", 01 * 60 * 60, IntervalList[6])); // 7
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2h, "2h", 02 * 60 * 60, IntervalList[7])); // 8
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3h, "3h", 03 * 60 * 60, IntervalList[7])); // 9
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60 * 60, IntervalList[8])); // 10
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60 * 60, IntervalList[9])); // 11
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60 * 60, IntervalList[10])); // 12
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60 * 60, IntervalList[11])); // 13
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 24 * 60 * 60, IntervalList[13])); // 14
-            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1w, "1w", 7 * 24 * 60 * 60, IntervalList[14])); // 15
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1m, "1m", 1, null)); // 0
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2m, "2m", 2, IntervalList[0])); // 1
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3m, "3m", 3, IntervalList[0])); // 2
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval5m, "5m", 5, IntervalList[0])); // 3
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval10m, "10m", 10, IntervalList[3])); // 4
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval15m, "15m", 15, IntervalList[3]));  // 5
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval30m, "30m", 30, IntervalList[5])); // 6
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1h, "1h", 01 * 60, IntervalList[6])); // 7
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval2h, "2h", 02 * 60, IntervalList[7])); // 8
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval3h, "3h", 03 * 60, IntervalList[7])); // 9
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval4h, "4h", 04 * 60, IntervalList[8])); // 10
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval6h, "6h", 06 * 60, IntervalList[9])); // 11
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval8h, "8h", 08 * 60, IntervalList[10])); // 12
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval12h, "12h", 12 * 60, IntervalList[11])); // 13
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1d, "1d", 24 * 60, IntervalList[13])); // 14
+            IntervalList.Add(CryptoInterval.CreateInterval(CryptoIntervalPeriod.interval1w, "1w", 7 * 24 * 60, IntervalList[14])); // 15
 
             foreach (CryptoInterval interval in IntervalList)
             {
@@ -824,7 +824,7 @@ public class CryptoDatabase : IDisposable
                 {
                     // we use the same candlecount for both the fvg and dlz zones
                     databaseThread.Connection.Execute("delete from zone where createTime < @createTime",
-                        new { createTime = DateTime.UtcNow.AddSeconds(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration) });
+                        new { createTime = DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration) });
                 }
                 transaction.Commit();
             }

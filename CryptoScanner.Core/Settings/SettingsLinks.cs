@@ -135,7 +135,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
             urlTemplate = urlTemplate.Replace("{QUOTE}", symbol.Quote.ToUpper());
 
             // Interval: amount of minutes
-            string intervalCode = ((int)(interval.Duration / 60)).ToString();
+            string intervalCode = ((int)interval.Duration).ToString();
             urlTemplate = urlTemplate.Replace("{interval}", intervalCode.ToLower());
             urlTemplate = urlTemplate.Replace("{INTERVAL}", intervalCode.ToUpper());
 

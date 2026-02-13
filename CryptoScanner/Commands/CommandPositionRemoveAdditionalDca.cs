@@ -46,8 +46,8 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
                 if (symbolPeriod.CandleList.Count > 0)
                 {
                     var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                    long lastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
-                    DateTime lastCandle1mCloseTimeDate = CandleTools.GetUnixDate(lastCandle1mCloseTime);
+                    CandleTime lastCandle1mCloseTime = lastCandle1m.OpenTime + 1;
+                    DateTime lastCandle1mCloseTimeDate = lastCandle1mCloseTime.ToDateTime();
 
                     PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                     await positionMonitor.HandlePosition(position);

@@ -1,21 +1,32 @@
-﻿namespace CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Model;
+
+namespace CryptoScanner.Core.Core;
 
 public class IntervalTools
 {
-    public static long StartOfIntervalCandle(long sourceStart, int sourceDuration)
+    public static CandleTime StartOfIntervalCandle(CandleTime sourceStart, uint sourceDuration)
     {
-        long diff = sourceStart % sourceDuration;
-        long targetStart = sourceStart - diff;
-        return targetStart;
+        //if (sourceDuration % 60 != 0)
+        //    throw new ArgumentException("Duration must be minute-aligned.");
+        //uint durationMinutes = (uint)(sourceDuration);
+        //uint remainder = sourceStart.Minutes % durationMinutes;
+        //return new CandleTime(sourceStart.Minutes - remainder);
+        //return sourceStart.AlignToInterval(durationMinutes);
+
+        //CandleTime diff = sourceStart % sourceDuration;
+        //CandleTime targetStart = sourceStart - diff;
+        //return targetStart;
+
+        //return sourceStart - sourceStart.Minutes % sourceDuration;
+        return sourceStart.AlignToIntervalMinutes(sourceDuration);
     }
 
 
     // TODO: Delete method, replace with 3
-    public static long StartOfIntervalCandle2(long sourceStart, int sourceDuration, int targetDuration)
+    public static CandleTime StartOfIntervalCandle2(CandleTime sourceStart, uint sourceDuration, uint targetDuration)
     {
         // SourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
         // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
-
         if (targetDuration == sourceDuration)
             return sourceStart;
 
@@ -23,28 +34,28 @@ public class IntervalTools
         if (targetDuration < sourceDuration)
             throw new Exception("Target interval should be higher than source interval");
 
-        long diff = sourceStart % targetDuration;
-        long targetStart = sourceStart - diff;
+        CandleTime targetStart = sourceStart.AlignToIntervalMinutes(targetDuration);
 
         // The target candle cannot be final/complete if is above the end of the start candle
         // (it would be a next candle or an in progress candle)
-        long sourceDateEnd = sourceStart + sourceDuration;
-        long targetDateEnd = targetStart + targetDuration;
+        CandleTime sourceDateEnd = sourceStart + sourceDuration;
+        CandleTime targetDateEnd = targetStart + targetDuration;
         if (targetDateEnd > sourceDateEnd)
             targetStart -= targetDuration;
 
-#if DEBUG
-        DateTime sourceStartDate = CandleTools.GetUnixDate(sourceStart);
-        DateTime sourceEndDate = CandleTools.GetUnixDate(sourceStart + sourceDuration);
+//#if DEBUG
+//        DateTime sourceStartDate = sourceStart.ToDateTime();
+//        DateTime sourceEndDate = (sourceStart + sourceDuration).ToDateTime();
 
-        DateTime targetStartDate = CandleTools.GetUnixDate(targetStart);
-        DateTime targetEndDate = CandleTools.GetUnixDate(targetStart + targetDuration);
-#endif
+//        DateTime targetStartDate = targetStart.ToDateTime();
+//        DateTime targetEndDate = (targetStart + targetDuration).ToDateTime();
+//#endif
         return targetStart;
     }
 
 
-    public static (bool targetComplete, long targetStart) StartOfIntervalCandle3(long sourceStart, int sourceDuration, int targetDuration)
+    public static (bool targetComplete, CandleTime targetStart) StartOfIntervalCandle3(
+        CandleTime sourceStart, uint sourceDuration, uint targetDuration)
     {
         // SourceDate should be the candle.OpenTime and sourceDuration the duration of the candle.
         // It is the same result as the StartOfIntervalCandle() but corrected if the higher candle can't be calculated
@@ -58,16 +69,15 @@ public class IntervalTools
             throw new Exception("Target interval should be higher than source interval");
 
         // Calculate the start and end of source
-        sourceStart -= sourceStart % sourceDuration;
-        long sourceDateEnd = sourceStart + sourceDuration;
+        sourceStart = sourceStart.AlignToIntervalMinutes(sourceDuration);
+        CandleTime sourceDateEnd = sourceStart + sourceDuration;
 
         // Calculate the start and end of target
-        long targetStart = sourceStart - sourceStart % targetDuration;
-        long targetDateEnd = targetStart + targetDuration;
+        CandleTime targetStart = sourceStart.AlignToIntervalMinutes(targetDuration);
+        CandleTime targetDateEnd = targetStart + targetDuration;
 
         // Test if the target candle is final/complete (but not an in progress candle)
         bool targetComplete = targetDateEnd == sourceDateEnd;
-
         return (targetComplete, targetStart);
     }
 

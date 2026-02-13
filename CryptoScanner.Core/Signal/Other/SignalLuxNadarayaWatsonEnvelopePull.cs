@@ -177,7 +177,7 @@ public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
         // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) candle in
         // de chart context (=de meest recente die op dat moment verwerkt wordt).
         // en x = 1 verwijst naar de vorige candle.
-        long offsett = CandleLast.OpenTime; // - max * Interval.Duration;
+        CandleTime offsett = CandleLast.OpenTime; // - max * Interval.Duration;
 
         decimal sae = 0;
         List<decimal> nwe = [];
@@ -193,15 +193,15 @@ public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
                 // Gaussian window
                 decimal w = (decimal)Math.Exp(-(Math.Pow(i - j, 2)) / (double)(bandWidth * bandWidth * 2));
                 if (SymbolInterval.CandleList.TryGetValue(offsett - j * Interval.Duration, out CryptoCandle? candlej))
-                    sumWeighted += candlej.Close * w;
+                    sumWeighted += candlej!.Close * w;
                 sumSimple += w;
             }
             decimal y2 = sumWeighted / sumSimple;
 
-            long openTime = offsett - i * Interval.Duration;
+            CandleTime openTime = offsett - i * Interval.Duration;
             if (SymbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle? candlei))
             {
-                sae += Math.Abs(candlei.Close - y2);
+                sae += Math.Abs(candlei!.Close - y2);
             }
             nwe.Add(y2);
         }

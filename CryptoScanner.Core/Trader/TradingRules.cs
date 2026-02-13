@@ -12,7 +12,7 @@ namespace CryptoScanner.Core.Trader;
 
 public static class TradingRules
 {
-    private static void CalculateTradingRules(PauseTradingRule pause, long candleUnixDate, int candleDuration)
+    private static void CalculateTradingRules(PauseTradingRule pause, CandleTime candleUnixDate, uint candleDuration)
     {
         // Als een munt (met name BTC) snel gedaald is dan stoppen
         var exchange = GlobalData.ActiveExchange;
@@ -30,7 +30,7 @@ public static class TradingRules
                         bool missingCandles = false;
                         decimal low = decimal.MaxValue;
                         decimal high = decimal.MinValue;
-                        long loop = IntervalTools.StartOfIntervalCandle2(candleUnixDate, candleDuration, symbolInterval.Interval.Duration);
+                        CandleTime loop = IntervalTools.StartOfIntervalCandle2(candleUnixDate, candleDuration, symbolInterval.Interval.Duration);
                         //DateTime loopDate = CandleTools.GetUnixDate(loop);
                         if (!symbolInterval.CandleList.ContainsKey(loop))
                         {
@@ -53,7 +53,7 @@ public static class TradingRules
                             else
                             {
                                 missingCandles = true;
-                                GlobalData.AddTextToLogTab($"Missing candles for tradingrules? {symbol.Name} {CandleTools.GetUnixDate(candleUnixDate)} {symbolInterval.Interval.Name} {CandleTools.GetUnixDate(loop)}  (debug2)");
+                                GlobalData.AddTextToLogTab($"Missing candles for tradingrules? {symbol.Name} {candleUnixDate.ToDateTime()} {symbolInterval.Interval.Name} {loop.ToDateTime()}  (debug2)");
                             }
                             loop -= symbolInterval.Interval.Duration;
                             //loopDate = CandleTools.GetUnixDate(loop);
@@ -65,8 +65,8 @@ public static class TradingRules
                             double percentage = (double)(100m * (high / low - 1m));
                             if (percentage >= rule.Percentage || percentage <= -rule.Percentage)
                             {
-                                long pauseUntil = candleUnixDate + candleDuration * rule.CoolDown; // * 60;
-                                DateTime pauseUntilDate = CandleTools.GetUnixDate(pauseUntil);
+                                CandleTime pauseUntil = candleUnixDate + candleDuration * rule.CoolDown; // * 60;
+                                DateTime pauseUntilDate = pauseUntil.ToDateTime();
 
                                 if (!pause.Until.HasValue || pauseUntilDate > pause.Until)
                                 {
@@ -85,13 +85,13 @@ public static class TradingRules
     }
 
 
-    public static bool CheckTradingRules(PauseTradingRule pause, long candleDate, int candleDuration)
+    public static bool CheckTradingRules(PauseTradingRule pause, CandleTime candleDate, uint candleDuration)
     {
         // Controleer de trading pauseer regels
 
 
         // Ongeveer iedere minuut c.q. candle berekenen
-        DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(candleDate + candleDuration);
+        DateTime lastCandle1mCloseTime = (candleDate + candleDuration).ToDateTime();
         if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1mCloseTime)
         {
             pause.Text = "";
@@ -114,13 +114,14 @@ public static class TradingRules
 
 
     /// Check barometer(s) and cache that value
-    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, string quoteName, CryptoTradeSide side, long candleUnixDate, uint candleDuration, out string reaction)
+    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, 
+        string quoteName, CryptoTradeSide side, CandleTime candleUnixDate, uint candleDuration, out string reaction)
     {
         reaction = "";
         CryptoPauseBarometer? pause = activeExchange.Data.GetPauseRule(quoteName, side);
 
         // Ongeveer iedere minuut c.q. candle berekenen
-        DateTime lastCandle1mCloseTime = CandleTools.GetUnixDate(candleUnixDate + candleDuration);
+        DateTime lastCandle1mCloseTime = (candleUnixDate + candleDuration).ToDateTime();
         if (!pause.Calculated.HasValue || pause.Calculated < lastCandle1mCloseTime)
         {
             //GlobalData.AddTextToLogTab($"{symbol.QuoteData.Name} CheckBarometerValues()");

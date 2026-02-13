@@ -1,7 +1,7 @@
 ﻿namespace CryptoScanner.Core.Model;
 
 // More or less thread safe (no need for the expensive ToList())
-public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
+public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
 {
     private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.SupportsRecursion);
 
@@ -10,7 +10,7 @@ public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experime
     //    var readCount = _lock.RecursiveReadCount;
     //    var writeCount = _lock.RecursiveWriteCount;
     //    var upgradeCount = _lock.RecursiveUpgradeCount;
-			
+
     //			if (readCount > 0 || writeCount > 0 || upgradeCount > 0)
     //			{
     //				System.Diagnostics.Debug.WriteLine($"⚠️ Recursive lock detected:");
@@ -22,7 +22,7 @@ public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experime
     //#endif
 
     // Thread-safe Add
-    public new void Add(long key, CryptoCandle value)
+    public new void Add(CandleTime key, CryptoCandle value)
     {
         _lock.EnterWriteLock();
         try
@@ -36,7 +36,7 @@ public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experime
     }
 
     // Thread-safe Remove
-    public new bool Remove(long key)
+    public new bool Remove(CandleTime key)
     {
         _lock.EnterWriteLock();
         try
@@ -50,7 +50,7 @@ public class CryptoCandleList : SortedDictionary<long, CryptoCandle> // experime
     }
 
     // Thread-safe TryGetValue
-    public new bool TryGetValue(long key, out CryptoCandle? value)
+    public new bool TryGetValue(CandleTime key, out CryptoCandle? value)
     {
         _lock.EnterReadLock();
         try

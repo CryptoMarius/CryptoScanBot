@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Candles
 {
 
-    public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate)
+    public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate)
     {
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -40,7 +40,7 @@ public class Candles
                     try
                     {
                         //var curHighLow = new MyHighLowItem(c.Time.ToString(), c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
-                        var curHighLow = new HighLowItem(c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
+                        var curHighLow = new HighLowItem(c.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         candleSerie.Items.Add(curHighLow);
                         last = c;
                     }
@@ -58,12 +58,12 @@ public class Candles
             // Build the last candle(s) from scratch using the 1m candles
             if (last != null)
             {
-                long loopHighInterval = last.OpenTime + symbolInterval.Interval.Duration;
+                CandleTime loopHighInterval = last.OpenTime + symbolInterval.Interval.Duration;
                 CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
                 while (symbolInterval1m.CandleList.TryGetValue(loopHighInterval, out CryptoCandle? _))
                 {
-                    long loop1m = loopHighInterval;
-                    long loop1mMax = loopHighInterval + symbolInterval.Interval.Duration;
+                    CandleTime loop1m = loopHighInterval;
+                    CandleTime loop1mMax = loopHighInterval + symbolInterval.Interval.Duration;
                     CryptoCandle newCandle = new()
                     {
                         Low = decimal.MaxValue,
@@ -73,7 +73,7 @@ public class Candles
                     {
                         if (newCandle.OpenTime == 0)
                         {
-                            newCandle.OpenTime = c.OpenTime;
+                            newCandle.OpenTime = c!.OpenTime;
                             newCandle.Open = c.Open;
                         }
                         if (c.Low < newCandle.Low)
@@ -86,7 +86,7 @@ public class Candles
                     if (newCandle.OpenTime > 0 && newCandle.OpenTime >= minDate && newCandle.OpenTime <= maxDate)
                     {
                         var c = newCandle;
-                        var curHighLow = new HighLowItem(newCandle.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
+                        var curHighLow = new HighLowItem(newCandle.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
                         candleSerie.Items.Add(curHighLow);
                     }
 

@@ -114,7 +114,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
         {
             if (_StrategyBackground == null)
             {
-                if (GlobalData.StrategiesSettings.TryGetValue(Object.Strategy, out (SettingsSignalStrategyBase strategySettings, long _) x))
+                if (GlobalData.StrategiesSettings.TryGetValue(Object.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime _) x))
                 {
                     if (Object.Side == CryptoTradeSide.Long)
                         _StrategyBackground = new SolidColorBrush(x.strategySettings.ColorLong);

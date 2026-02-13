@@ -28,8 +28,11 @@ public class SignalCreate
         Side = side;
     }
 
-    private static void CalculateAdditionalSignalProperties(CryptoSignal signal, List<CryptoCandle> history, int candleCount, long unixFrom = 0)
+    private static void CalculateAdditionalSignalProperties(CryptoSignal signal, 
+        List<CryptoCandle> history, int candleCount)
     {
+        CandleTime unixFrom = CandleTime.MinValue;
+
         // dit zou ook bij het verzamelen van de History lijst kunnen (scheelt een iteratie)
         double AvgBB = 0;
         int AvgBBCount = 0;
@@ -177,7 +180,7 @@ public class SignalCreate
         //(om de berekeningen allemaal wat sneller te maken)
         // CandleList contains normally about 1 day of candles
 
-        long openTime = Candle!.OpenTime; // Note: backtest, alway's take the signal candle 
+        CandleTime openTime = Candle!.OpenTime; // Note: backtest, alway's take the signal candle 
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (!symbolInterval.CandleList.TryGetValue(openTime - interval, out CryptoCandle? candlePrev))
             candlePrev = symbolInterval.CandleList.Values.First(); // better than zero of null (approx)
@@ -192,7 +195,8 @@ public class SignalCreate
     }
 
 
-    private double CalculateMaxMovementInInterval(decimal? lastPrice, long startTime, CryptoIntervalPeriod intervalPeriod, long candleCount)
+    private double CalculateMaxMovementInInterval(decimal? lastPrice, CandleTime startTime, 
+        CryptoIntervalPeriod intervalPeriod, long candleCount)
     {
         if (lastPrice == null)
             return 0;
@@ -201,7 +205,7 @@ public class SignalCreate
         decimal max = lastPrice.Value;
 
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(intervalPeriod);
-        long unix = CandleTools.GetUnixTime(startTime, symbolInterval.Interval.Duration);
+        CandleTime unix = startTime.AlignToIntervalMinutes(symbolInterval.Interval.Duration);
 
         while (candleCount-- > 0)
         {
@@ -302,7 +306,7 @@ public class SignalCreate
 
 
         // de 24 change moet in een bepaald interval zitten
-        signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60 * 60);
+        signal.Last24HoursChange = CalculateLastPeriodsInInterval(24 * 60);
         if (!signal.Last24HoursChange.IsBetween(GlobalData.Settings.Signal.AnalysisMinChangePercentage, GlobalData.Settings.Signal.AnalysisMaxChangePercentage))
         {
             if (GlobalData.Settings.Signal.LogAnalysisMinMaxChangePercentage)
@@ -317,7 +321,7 @@ public class SignalCreate
 
         // Check the % effective over multiple day's
         int countInInterval4H = GlobalData.Settings.Signal.AnalysisEffectiveDays * 6;
-        signal.LastXDaysEffective = CalculateMaxMovementInInterval(Symbol.LastPrice, signal.EventTime, CryptoIntervalPeriod.interval4h, countInInterval4H);
+        signal.LastXDaysEffective = CalculateMaxMovementInInterval(Symbol.LastPrice, CandleTime.AlignFromDateTime(signal.CloseDate, 1), CryptoIntervalPeriod.interval4h, countInInterval4H);
         if (!signal.LastXDaysEffective.IsBetween(0, GlobalData.Settings.Signal.AnalysisEffectivePercentage))
         {
             if (GlobalData.Settings.Signal.AnalysisMaxEffectiveLog)
@@ -454,13 +458,14 @@ public class SignalCreate
             PriceMaxPerc = 0, // statistics
             SignalStatus = CryptoSignalStatus.Run,
             SignalVolume = Symbol.Volume,
-            EventTime = candle.OpenTime + Interval.Duration, // close of the candle
-            OpenDate = CandleTools.GetUnixDate(candle.OpenTime),
             Side = CryptoTradeSide.Long,  // gets modified later
             Strategy = CryptoSignalStrategy.Jump,  // gets modified later
+            OpenDate = candle.OpenTime.ToDateTime(),
+            CloseDate = candle.OpenTime.ToDateTime().AddMinutes(Interval.Duration),
+            EventTime = 12345, //(candle.OpenTime + Interval.Duration).ToUnixSeconds(), // close of the candle
         };
 
-        signal.CloseDate = signal.OpenDate.AddSeconds(Interval.Duration);
+        //signal.CloseDate = signal.OpenDate.AddMinutes(Interval.Duration);
         signal.ExpirationDate = signal.GetExpirationDate(Interval);
 
         // Copy common indicator values

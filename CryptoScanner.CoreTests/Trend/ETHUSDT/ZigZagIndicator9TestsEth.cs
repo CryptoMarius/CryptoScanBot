@@ -61,13 +61,13 @@ public class ZigZagIndicator9TestsEth : TestBase
         // act
 
 
-        long key = symbolInterval.CandleList.Keys.First();
+        CandleTime key = symbolInterval.CandleList.Keys.First();
         foreach (var data in list)
         {
             while (indicator.PivotList.Count <= data.I)
             {
                 if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
-                    indicator.Calculate(candle, true);
+                    indicator.Calculate(candle!, true);
                 key += interval.Duration;
             }
 

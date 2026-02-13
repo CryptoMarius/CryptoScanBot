@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 public class NadarayaWatsonEnvelope
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
-        long minDate, long maxDate, bool smoothRepainting, string group)
+        CandleTime minDate, CandleTime maxDate, bool smoothRepainting, string group)
     {
         //TODO: Honour Min & Max Date!
 
@@ -81,7 +81,7 @@ public class NadarayaWatsonEnvelope
            );
         var result = nwe.Calculate(candles);
 
-        long offsett = candles.Values.Last().OpenTime; // - max * interval.Duration;
+        CandleTime offsett = candles.Values.Last().OpenTime; // - max * interval.Duration;
 
 
         for (int i = 0; i < candles.Count; i++)
@@ -89,7 +89,7 @@ public class NadarayaWatsonEnvelope
             if (candles.TryGetValue(offsett - (i + 0) * interval.Duration, out CryptoCandle? candleLast) &&
                 candles.TryGetValue(offsett - (i + 1) * interval.Duration, out CryptoCandle? candlePrev))
             {
-                long openTime = CandleTools.GetUnixTime(candleLast.Date, interval.Duration);
+                CandleTime openTime = CandleTime.AlignFromDateTime(candleLast!.Date, interval.Duration);
                 if (openTime >= minDate && openTime <= maxDate)
                 {
                     var res = result[i];
@@ -99,9 +99,9 @@ public class NadarayaWatsonEnvelope
                     decimal nwevalue = res.Center.Value;
                     decimal upperband = res.Upper.Value;
 
-                    seriesLow.Points.Add(new DataPoint(candleLast.OpenTime, (double)lowerband));
-                    seriesMiddle.Points.Add(new DataPoint(candleLast.OpenTime, (double)nwevalue));
-                    seriesHigh.Points.Add(new DataPoint(candleLast.OpenTime, (double)upperband));
+                    seriesLow.Points.Add(new DataPoint(candleLast.OpenTime.Minutes, (double)lowerband));
+                    seriesMiddle.Points.Add(new DataPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
+                    seriesHigh.Points.Add(new DataPoint(candleLast.OpenTime.Minutes, (double)upperband));
 
                     // buy alert
                     // Candle outside the band
@@ -114,7 +114,7 @@ public class NadarayaWatsonEnvelope
                     if (candlePrev!.Close > lowerband && candleLast.Close <= lowerband)
                     {
                         nwevalue = candleLast.Low * 0.995m;
-                        seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
+                        seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
                     }
 
                     // sell alert
@@ -128,7 +128,7 @@ public class NadarayaWatsonEnvelope
                     if (candlePrev!.Close < upperband && candleLast.Close >= upperband)
                     {
                         nwevalue = candleLast.High * 1.005m;
-                        seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
+                        seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
                     }
 
 

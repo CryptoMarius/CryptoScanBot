@@ -5,10 +5,10 @@ namespace CryptoScanner.Core.Barometer;
 
 internal class CryptoBarometerPrice
 {
-    public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc)
+    public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
     {
         // Wat is de candle in het vorige interval
-        long unixCandlePrev = unixCandleLast - interval.Duration;
+        CandleTime unixCandlePrev = unixCandleLast - interval.Duration;
 
         // debug
         //DateTime dateCandlePrev = CandleTools.GetUnixDate(unixCandlePrev);

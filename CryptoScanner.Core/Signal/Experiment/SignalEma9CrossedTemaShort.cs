@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Model;
+﻿#if DEBUG
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Experiment;
 
@@ -87,3 +88,4 @@ public class SignalEma9CrossedTemaShort : SignalCreateBase
     }
 
 }
+#endif

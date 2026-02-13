@@ -19,23 +19,20 @@ public class CandleToolsTests : TestBase
         CryptoSymbol symbol = CreateTestSymbol(database);
 
         // act
-
         decimal value = 19000;
-        DateTime startTime = new(2023, 08, 27, 00, 00, 00, DateTimeKind.Utc);
-        long startTimeUnix = CandleTools.GetUnixTime(startTime, 60);
-        for (int count = 60; count <= 24 * 60 * 60; count += 60) // 1 single day
+        DateTime startDateTime = new(2023, 08, 27, 00, 00, 00, DateTimeKind.Utc);
+        CandleTime startTime = CandleTime.AlignFromDateTime(startDateTime, 1);
+        for (int count = 1; count <= 24 * 60; count += 1) // 1 single day
         {
-            startTime = CandleTools.GetUnixDate(startTimeUnix);
+            startDateTime = startTime.ToDateTime();
 
-            // Use Process1mCandle?
-
-            CryptoCandle candle = await CandleTools.Process1mCandleAsync(symbol, startTime, value, value, value, value, 1);
+            CryptoCandle candle = await CandleTools.Process1mCandleAsync(symbol, startDateTime, value, value, value, value, 1);
             CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
             string text = $"ticker(1m):" + candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true);
             Console.WriteLine(text);
 
             //// Calculate higher timeframes
-            //long candle1mCloseTime = candle.OpenTime + 60;
+            //long candle1mCloseTime = candle.OpenTime + 1;
             //foreach (CryptoInterval interval in GlobalData.IntervalList)
             //{
             //    if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
@@ -51,7 +48,7 @@ public class CandleToolsTests : TestBase
             //    }
             //}
 
-            startTimeUnix += 60;
+            startTime += 1; // 1m
 
 
             // Assert
@@ -62,8 +59,8 @@ public class CandleToolsTests : TestBase
 
                 foreach (var c in symbolPeriod.CandleList.Values)
                 {
-                    long unix = c.OpenTime;
-                    long diff = unix % interval.Duration;
+                    CandleTime minutes = c.OpenTime;
+                    long diff = minutes % interval.Duration;
                     Assert.AreEqual(0, diff, $"Candle.OpenTime");
 
                     Assert.AreEqual(value, c.Open, $"Candle.Open");
@@ -71,7 +68,7 @@ public class CandleToolsTests : TestBase
                     Assert.AreEqual(value, c.Low, $"Candle.Low");
                     Assert.AreEqual(value, c.Close, $"Candle.Close");
 
-                    Assert.AreEqual(interval.Duration / 60, c.Volume, $"Candle.Volume");
+                    Assert.AreEqual(interval.Duration, c.Volume, $"Candle.Volume");
                 }
             }
         }

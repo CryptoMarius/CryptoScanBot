@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Trend;
+﻿using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trend;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -7,7 +8,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Points
 {
-    internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, long minDate, long maxDate, string tag)
+    internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, CandleTime minDate, CandleTime maxDate, string tag)
     {
         var seriesHigh = new ScatterSeries
         {
@@ -42,7 +43,7 @@ public class Points
                     value = zigzag.Value * 1.005m;
                     series = seriesHigh;
                 }
-                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)value));
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, (double)value));
             }
         }
 
