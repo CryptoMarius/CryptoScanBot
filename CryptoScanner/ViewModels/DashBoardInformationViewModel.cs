@@ -390,7 +390,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
     {
         int blocks = CryptoScanner.Core.Const.Constants.BarometerGraphHours;
 
-        // Dimensions 
+        // Dimensions
         int intWidth = 400;
         int intHeight = 100;
 
@@ -411,13 +411,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
         CandleTime hiX = CandleTime.MinValue;
         float loY = float.MaxValue;
         float hiY = float.MinValue;
-        int candleCount = blocks * 60;
-        CandleTime unix = candleList.Values.Last().OpenTime;
+        int candleCount = blocks * 60; // minutes
+        CandleTime candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(unix, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
             {
-                if (loX > candle.OpenTime)
+                if (loX > candle!.OpenTime)
                     loX = candle.OpenTime;
                 if (hiX < candle.OpenTime)
                     hiX = candle.OpenTime;
@@ -431,14 +431,14 @@ public partial class DashBoardInformationViewModel : ObservableObject
                         hiY = (float)candle.Close;
                 }
             }
-            unix -= 60; // interval.Duration; The barometer has each 1 minute a barometer value
+            candleTime -= 1; // The barometer has each 1 minute a barometer value
         }
         if (loX == CandleTime.MaxValue)
             return;
 
 
         // ranges symbolViewModel and y
-        float screenX = hiX.Minutes - loX.Minutes; // unix time
+        float screenX = hiX - loX; // candleTime time
         float screenY = hiY - loY; // barometer, something like -5 .. +5
         if (screenY < 5)
             screenY = 5f; // from -2 to +2
@@ -497,22 +497,16 @@ public partial class DashBoardInformationViewModel : ObservableObject
             }
         }
 
-        // vertical lines (show hours)
+        // Vertical lines (show the hours)
         //Pen pen = new Pen(Color.Gray, 0.5F);
-        long intervalTime = 60;
+        int intervalTime = 60;
         CandleTime lastX = hiX - (hiX.Minutes % intervalTime);
         while (lastX > loX)
         {
             //DateTime ehh = CandleTools.GetUnixDate(lastX);
             //GlobalData.AddTextToLogTab(ehh.ToLocalTime() + " " + lastX.ToString() + " intervaltime=" + intervalTime.ToString());
-            SKPoint p1 = new(0, 0)
-            {
-                X = offsetX + scaleX * (float)(lastX.Minutes - loX.Minutes)
-            };
-            SKPoint p2 = new(0, intHeight)
-            {
-                X = offsetX + scaleX * (float)(lastX.Minutes - loX.Minutes)
-            };
+            SKPoint p1 = new(0, 0) { X = offsetX + scaleX * (float)(lastX - loX) };
+            SKPoint p2 = new(0, intHeight) { X = offsetX + scaleX * (float)(lastX - loX) };
             paint.Color = SKColors.Gray;
             paint.StrokeWidth = 1;
             paint.Style = SKPaintStyle.Stroke;
@@ -524,13 +518,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
         bool init = false;
         SKPoint point1 = new(0, 0);
         SKPoint point2 = new(0, 0);
-        candleCount = blocks;
-        unix = candleList.Values.Last().OpenTime;
+        candleCount = blocks * 60;
+        candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(unix, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
             {
-                point2.X = offsetX + scaleX * (float)(candle!.OpenTime.Minutes - loX.Minutes);
+                point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
                 point2.Y = offsetY + scaleY * ((float)candle.Close);
                 //GlobalData.AddTextToLogTab(candle.OhlcText(symbol.DisplayFormat) + " " + point2.X.ToString("N8") + " " + point2.Y.ToString("N8"));
 
@@ -556,7 +550,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 point1 = point2;
                 init = true;
             }
-            unix -= 1; // interval.Duration; The barometer has each 1 minute a barometer value
+            candleTime -= 1; // The barometer has each 1 minute a barometer value
         }
         //??????? dead code..
         //}
