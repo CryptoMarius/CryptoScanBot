@@ -216,7 +216,10 @@ public static class SignalColumns
         int index = 0;
         foreach (var column in columns)
         {
-            column.ActualWidth = new GridLength(column.Width);
+            if (column.IsVisible)
+                column.ActualWidth = new GridLength(column.Width);
+            else
+                column.ActualWidth = new GridLength(0);
             column.DisplayIndex = index;
             index++;
         }

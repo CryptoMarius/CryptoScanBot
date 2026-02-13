@@ -46,7 +46,7 @@ public abstract partial class BaseGridViewModel<TItem, TColumnEnum, TComparer> :
     protected ObservableCollection<GridLength> _columnWidths = [];
 
     [ObservableProperty]
-    protected ObservableCollection<GridColumnDefinition<TColumnEnum>> _columns = [];
+    public ObservableCollection<GridColumnDefinition<TColumnEnum>> _columns = [];
     internal IEnumerable<GridColumnDefinition<TColumnEnum>>? _columnsVisible;
 
     protected void InitializeRefreshTimer()

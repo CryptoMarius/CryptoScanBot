@@ -13,6 +13,7 @@ using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
@@ -277,8 +278,8 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
             int colIndex = 0;
             foreach (var column in _viewModel.Columns.OrderBy(c => c.DisplayIndex))
             {
-                if (!column.IsVisible)
-                    continue;
+                //if (!column.IsVisible)
+                //    continue;
 
                 // Bind the columdef to the actualwidth (and do the same for the cell)
                 var columnDefinition = new ColumnDefinition();
@@ -305,6 +306,12 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
                 }
             }
         }
+
+        // back to axaml because code below vialates virtualisation and causes performance issues, we only 
+        // need to do this once for the header, the rows will be done via datatemplate and virtualization
+        if (_targetMenu == TargetMenu.Signal)
+            return;
+
 
         // DataTemplate
         var listBox = this.FindControl<ListBox>("DataListBox");

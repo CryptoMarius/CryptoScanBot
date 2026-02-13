@@ -92,6 +92,505 @@
 			<ListBox.ItemTemplate>
 				<DataTemplate x:DataType="model:CryptoSignal">
 					<Grid Height="22" Background="Transparent">
+						<Grid.ColumnDefinitions>
+							<!-- boring column definitions, should match with the amount of columns in the code  -->
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[0].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[1].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[2].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[3].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[4].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[5].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[6].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[7].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[8].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[9].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[10].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[11].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[12].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[13].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[14].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[15].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[16].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[17].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[18].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[19].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[20].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[21].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[22].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[23].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[24].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[25].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[26].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[27].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[28].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[29].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[30].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[31].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[32].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[33].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[34].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[35].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[36].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[37].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[38].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[39].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[40].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[41].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[42].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[43].ActualWidth}"/>
+							<ColumnDefinition Width="1"/>
+							<ColumnDefinition Width="{Binding ElementName=Root, Path=DataContext.Columns[44].ActualWidth}"/>
+						</Grid.ColumnDefinitions>
+
+						<!-- IdText -->
+						<Border Grid.Column="0" 
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[0].IsVisible}">
+							<TextBlock Text="{Binding IdText}" VerticalAlignment="Center" HorizontalAlignment="Center" 
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="1" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[0].IsVisible}"/>
+
+						
+						<!-- DateText -->
+						<Border Grid.Column="2" 
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[1].IsVisible}">
+							<TextBlock Text="{Binding DateText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="3" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[1].IsVisible}"/>
+
+						<!-- ExchangeText -->
+						<Border Grid.Column="4"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[2].IsVisible}">
+							<TextBlock Text="{Binding ExchangeText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="5" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[2].IsVisible}}"/>
+
+						<!-- SymbolText -->
+						<Border Grid.Column="6" Background="{Binding SymbolBackground}"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[3].IsVisible}">
+							<TextBlock Text="{Binding SymbolText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="7" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[3].IsVisible}}"/>
+
+						<!-- SideText -->
+						<Border Grid.Column="8"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[4].IsVisible}">
+							<TextBlock Text="{Binding SideText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding SideForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="9" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[4].IsVisible}}"/>
+						
+						<!-- IntervalText -->
+						<Border Grid.Column="10"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[5].IsVisible}">
+							<TextBlock Text="{Binding IntervalText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="11" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[5].IsVisible}}"/>
+
+						<!-- StrategyText -->
+						<Border Grid.Column="12" Background="{Binding StrategyBackground}"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[6].IsVisible}}">
+							<TextBlock Text="{Binding StrategyText}" VerticalAlignment="Center" HorizontalAlignment="Center"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="13" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[6].IsVisible}}"/>
+
+						<!-- EventText -->
+						<Border Grid.Column="14" 
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[7].IsVisible}}">
+							<TextBlock Text="{Binding EventText}" VerticalAlignment="Center" HorizontalAlignment="Left"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="15" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[7].IsVisible}}"/>
+
+						<!-- SignalPriceText -->
+						<Border Grid.Column="16" 
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[8].IsVisible}}">
+							<TextBlock Text="{Binding SignalPriceText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="17" Width="1" Background="Transparent"
+								IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[8].IsVisible}}"/>
+
+						<!-- Last24HoursChangeText -->
+						<Border Grid.Column="18" 
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[9].IsVisible}}">
+							<TextBlock Text="{Binding Last24HoursChangeText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Last24HoursChangeForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="19" Width="1" Background="Transparent" 
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[9].IsVisible}}"/>
+						
+						<!-- SignalVolumeText -->
+						<Border Grid.Column="20"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[10].IsVisible}}">
+							<TextBlock Text="{Binding SignalVolumeText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding SignalVolumeForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="21" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[10].IsVisible}}"/>
+
+						<!-- TrendIntervalText -->
+						<Border Grid.Column="22"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[11].IsVisible}}">
+							<TextBlock Text="{Binding TrendIntervalText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="23" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[11].IsVisible}}"/>
+
+						<!-- TrendPercentagePrimaryText -->
+						<Border Grid.Column="24"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[12].IsVisible}}">
+							<TextBlock Text="{Binding TrendPercentagePrimaryText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding TrendPercentagePrimaryForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="25" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[12].IsVisible}}"/>
+
+						<!-- TrendPercentageSecondaryText -->
+						<Border Grid.Column="26"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[13].IsVisible}}">
+							<TextBlock Text="{Binding TrendPercentageSecondaryText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding TrendPercentageSecondaryForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="27" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[13].IsVisible}}"/>
+
+						<!-- Last24HoursChangeText -->
+						<Border Grid.Column="28"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[14].IsVisible}}">
+							<TextBlock Text="{Binding Last24HoursChangeText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Last24HoursChangeForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="29" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[14].IsVisible}}"/>
+
+						<!-- LastXDaysEffectiveText -->
+						<Border Grid.Column="30"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[15].IsVisible}}">
+							<TextBlock Text="{Binding LastXDaysEffectiveText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="31" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[15].IsVisible}}"/>
+
+						<!-- BbText -->
+						<Border Grid.Column="32"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[16].IsVisible}}">
+							<TextBlock Text="{Binding BbText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="33" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[16].IsVisible}}"/>
+
+						<!-- BbUpperText -->
+						<Border Grid.Column="34"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[17].IsVisible}}">
+							<TextBlock Text="{Binding BbUpperText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="35" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[17].IsVisible}}"/>
+
+						<!-- BbLowerText -->
+						<Border Grid.Column="36"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[18].IsVisible}}">
+							<TextBlock Text="{Binding BbLowerText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="37" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[18].IsVisible}}"/>
+
+						<!-- AvgBBText -->
+						<Border Grid.Column="38"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[19].IsVisible}}">
+							<TextBlock Text="{Binding AvgBBText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="39" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[19].IsVisible}}"/>
+
+						<!-- RsiText -->
+						<Border Grid.Column="40"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[20].IsVisible}}">
+							<TextBlock Text="{Binding RsiText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding RsiForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="41" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[20].IsVisible}}"/>
+
+						<!-- LuxIndicator5mText -->
+						<Border Grid.Column="42"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[21].IsVisible}}">
+							<TextBlock Text="{Binding LuxIndicator5mText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding LuxIndicator5mForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="43" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[21].IsVisible}}"/>
+
+						<!-- MacdValueText -->
+						<Border Grid.Column="44"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[22].IsVisible}}">
+							<TextBlock Text="{Binding MacdValueText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding MacdValueForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="45" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[22].IsVisible}}"/>
+						
+						<!-- MacdSignalText -->
+						<Border Grid.Column="46"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[23].IsVisible}}">
+							<TextBlock Text="{Binding MacdSignalText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding MacdSignalForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="47" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[23].IsVisible}}"/>
+
+						<!-- MacdHistogramText -->
+						<Border Grid.Column="48"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[24].IsVisible}}">
+							<TextBlock Text="{Binding MacdHistogramText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding MacdHistogramForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="49" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[24].IsVisible}}"/>
+
+						<!-- StochOscillatorText -->
+						<Border Grid.Column="50"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[25].IsVisible}}">
+							<TextBlock Text="{Binding StochOscillatorText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding StochOscillatorForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="51" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[25].IsVisible}}"/>
+
+						<!-- StochSignalText -->
+						<Border Grid.Column="52"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[26].IsVisible}}">
+							<TextBlock Text="{Binding StochSignalText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding StochSignalForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="53" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[26].IsVisible}}"/>
+
+						<!-- Sma200Text -->
+						<Border Grid.Column="54"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[27].IsVisible}}">
+							<TextBlock Text="{Binding Sma200Text}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="55" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[27].IsVisible}}"/>
+
+						<!-- Sma50Text -->
+						<Border Grid.Column="56"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[28].IsVisible}}">
+							<TextBlock Text="{Binding Sma50Text}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Sma50Foreground}"/>
+						</Border>
+						<GridSplitter Grid.Column="57" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[28].IsVisible}}"/>
+
+						<!-- Sma20Text -->
+						<Border Grid.Column="58"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[29].IsVisible}}">
+							<TextBlock Text="{Binding Sma20Text}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Sma20Foreground}"/>
+						</Border>
+						<GridSplitter Grid.Column="59" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[29].IsVisible}}"/>
+
+						<!-- PSarText -->
+						<Border Grid.Column="60"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[30].IsVisible}}">
+							<TextBlock Text="{Binding PSarText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding PSarForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="61" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[30].IsVisible}}"/>
+
+						<!-- Trend15mText -->
+						<Border Grid.Column="62"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[31].IsVisible}}">
+							<TextBlock Text="{Binding Trend15mText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Trend15mForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="63" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[31].IsVisible}}"/>
+
+						<!-- Trend30mText -->
+						<Border Grid.Column="64"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[32].IsVisible}}">
+							<TextBlock Text="{Binding Trend30mText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Trend30mForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="65" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[32].IsVisible}}"/>
+
+						<!-- Trend1hText -->
+						<Border Grid.Column="66"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[33].IsVisible}}">
+							<TextBlock Text="{Binding Trend1hText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Trend1hForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="67" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[33].IsVisible}}"/>
+
+						<!-- Trend4hText -->
+						<Border Grid.Column="68"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[34].IsVisible}}">
+							<TextBlock Text="{Binding Trend4hText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Trend4hForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="69" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[34].IsVisible}}"/>
+
+						<!-- Trend1dText -->
+						<Border Grid.Column="70"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[35].IsVisible}}">
+							<TextBlock Text="{Binding Trend1dText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Trend1dForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="71" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[35].IsVisible}}"/>
+
+						<!-- Barometer15mText -->
+						<Border Grid.Column="72"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[36].IsVisible}}">
+							<TextBlock Text="{Binding Barometer15mText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Barometer15mForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="73" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[36].IsVisible}}"/>
+
+						<!-- Barometer30mText -->
+						<Border Grid.Column="74"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[37].IsVisible}}">
+							<TextBlock Text="{Binding Barometer30mText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Barometer30mForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="75" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[37].IsVisible}}"/>
+
+						<!-- Barometer1hText -->
+						<Border Grid.Column="76"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[38].IsVisible}}">
+							<TextBlock Text="{Binding Barometer1hText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Barometer1hForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="77" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[38].IsVisible}}"/>
+
+						<!-- Barometer4hText -->
+						<Border Grid.Column="78"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[39].IsVisible}}">
+							<TextBlock Text="{Binding Barometer4hText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Barometer4hForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="79" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[39].IsVisible}}"/>
+
+						<!-- Barometer1dText -->
+						<Border Grid.Column="80"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[40].IsVisible}}">
+							<TextBlock Text="{Binding Barometer1dText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding Barometer1dForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="81" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[40].IsVisible}}"/>
+
+						<!-- MinimumEntryText -->
+						<Border Grid.Column="82"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[41].IsVisible}}">
+							<TextBlock Text="{Binding MinimumEntryText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="83" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[41].IsVisible}}"/>
+						
+						<!-- PriceMinPercText -->
+						<Border Grid.Column="84"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[42].IsVisible}}">
+							<TextBlock Text="{Binding PriceMinPercText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="85" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[42].IsVisible}}"/>
+
+						<!-- PriceMaxPercText -->
+						<Border Grid.Column="86"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[43].IsVisible}}">
+							<TextBlock Text="{Binding PriceMaxPercText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0"/>
+						</Border>
+						<GridSplitter Grid.Column="87" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[43].IsVisible}}"/>
+
+						<!-- SignalStatusText -->
+						<Border Grid.Column="88"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[44].IsVisible}}">
+							<TextBlock Text="{Binding SignalStatusText}" VerticalAlignment="Center" HorizontalAlignment="Center"
+									   TextTrimming="CharacterEllipsis" Padding="4,0,0,0" Foreground="{Binding SignalStatusForeground}"/>
+						</Border>
+						<GridSplitter Grid.Column="89" Width="1" Background="Transparent"
+							IsVisible="{Binding ElementName=Root, Path=DataContext.Columns[44].IsVisible}}"/>
+
 					</Grid>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
