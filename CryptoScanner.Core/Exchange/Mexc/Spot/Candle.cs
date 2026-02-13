@@ -15,7 +15,8 @@ namespace CryptoScanner.Core.Exchange.Mexc.Spot;
 /// </summary>
 public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
-    public async Task<long> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, long minFetch, long maxFetch)
+    public async Task<CandleTime> GetCandlesForInterval(IDisposable clientBase, 
+        CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch)
     {
         // Remarks:
         // The maximum is 1000 candles per GetKlinesAsync call.
@@ -32,17 +33,15 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
-        if (exchangeInterval == null)
-            throw new Exception($"Not supported interval");
-
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod) 
+            ?? throw new Exception($"Not supported interval");
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        long minTime = minFetch;
-        DateTime minDate = CandleTools.GetUnixDate(minTime);
-        long maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
-        DateTime maxDate = CandleTools.GetUnixDate(maxTime);
+        CandleTime minTime = minFetch;
+        DateTime minDate = minTime.ToDateTime();
+        CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
+        DateTime maxDate = maxTime.ToDateTime();
 
     Again:
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
@@ -71,7 +70,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         // Might have problems with no internet etc.
         if (result.Data == null)
         {
-            GlobalData.AddTextToLogTab($"{prefix} fetch from {CandleTools.GetUnixDate(minFetch)} no candles received");
+            GlobalData.AddTextToLogTab($"{prefix} fetch from {minFetch.ToDateTime()} no candles received");
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no data.json");
 #endif
@@ -79,7 +78,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         }
 
 
-        long fetchedUpTo = long.MinValue;
+        CandleTime fetchedUpTo = CandleTime.MinValue;
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
@@ -87,7 +86,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             {
                 if (symbolInterval.IntervalPeriod != CryptoIntervalPeriod.interval1m)
                 {
-                    long unix = CandleTools.GetUnixTime(kline.OpenTime, 60);
+                    CandleTime unix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
                     if (unix + symbolInterval.Interval.Duration > maxFetch) // future candle?
                         continue;
                 }
@@ -103,7 +102,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             }
 
             // For the next session
-            if (fetchedUpTo > long.MinValue)
+            if (fetchedUpTo > CandleTime.MinValue)
             {
                 fetchedUpTo += interval.Duration;
             }
@@ -125,7 +124,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int count = result.Data.Count();
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolPeriod.CandleList;
-        string s = symbol.Exchange.Name + " " + symbol.Name + " " + interval.Name + " fetch from " + minDate.ToLocalTime() + " .. " + CandleTools.GetUnixDate(fetchedUpTo).ToLocalTime();
+        string s = $"{symbol.Exchange.Name} {symbol.Name} {interval.Name} fetch from {minDate.ToLocalTime()} .. {fetchedUpTo.ToDateTime().ToLocalTime()}";
         GlobalData.AddTextToLogTab($"{s} received: {count} total: {candles.Count}");
         return fetchedUpTo;
     }

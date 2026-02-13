@@ -10,15 +10,16 @@ namespace CryptoScanner.ViewModels.Chart;
 public class ExtraData
 {
 
-    public static void LoadSignalsForSymbol(ZoneConfig data, long from)
+    public static void LoadSignalsForSymbol(ZoneConfig data, CandleTime from)
     {
         data.Signals.Clear();
-        string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId and EventTime > @eventTime";
+        string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId and CloseDate > @CloseDate";
 
         using var database = new CryptoDatabase();
         try
         {
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { SymbolId = data.Symbol.Id, eventTime = from }))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, 
+                new { SymbolId = data.Symbol.Id, CloseDate = from.ToDateTime() }))
             {
                 if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Core.Model.CryptoExchange? exchange2))
                 {

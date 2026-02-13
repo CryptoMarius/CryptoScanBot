@@ -60,7 +60,7 @@
 
 		<!-- Rows -->
 		<ListBox Grid.Row="1"
-			x:Name="DataListBox" Background="Transparent" BorderThickness="0" SelectionMode="Single"
+			x:Name="DataListBox" Background="Transparent" BorderThickness="0" SelectionMode="Single" 
 		        ItemsSource="{Binding VisibleObjects}" SelectedItem="{Binding SelectedObject}"
    	            ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
 

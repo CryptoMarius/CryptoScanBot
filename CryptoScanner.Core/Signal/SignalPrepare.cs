@@ -86,7 +86,7 @@ public class SignalPrepare
 
 
     public static Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> Execute(
-        CryptoSymbol symbol, CryptoCandle lastCandle1m, long lastCandle1mCloseTime)
+        CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
         Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles = [];
 
@@ -97,7 +97,7 @@ public class SignalPrepare
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    long candleOpenTime = lastCandle1mCloseTime - interval.Duration;
+                    CandleTime candleOpenTime = lastCandle1mCloseTime - interval.Duration;
                     List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(symbol, interval, candleOpenTime, out string _);
 
                     if (history != null)

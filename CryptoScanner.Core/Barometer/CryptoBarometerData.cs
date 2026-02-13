@@ -1,13 +1,15 @@
-﻿namespace CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Model;
+
+namespace CryptoScanner.Core.Barometer;
 
 /// The last calculated price or volume barometer values
 public class CryptoBarometerData
 {
-    public long? PriceDateTime { get; set; } = null;
+    public CandleTime? PriceDateTime { get; set; } = null;
     public decimal? PriceBarometer { get; set; } = null;
 
     // Experimental, needs another attemp in the future!
-    public long? VolumeDateTime { get; set; } = null;
+    public CandleTime? VolumeDateTime { get; set; } = null;
     public decimal? VolumeBarometer { get; set; } = null;
 
 

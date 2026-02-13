@@ -29,6 +29,9 @@ public abstract partial class BaseGridViewModel<TItem, TColumnEnum, TComparer> :
     internal TColumnEnum SortColumn;
     internal ListSortDirection SortDirection = ListSortDirection.Descending;
 
+    private bool _refreshPending = false;
+    private DispatcherTimer? _refreshTimer;
+
     // All loaded objects (not necessarily all visible)
     protected List<TItem> _allObjects = [];
 
@@ -45,6 +48,66 @@ public abstract partial class BaseGridViewModel<TItem, TColumnEnum, TComparer> :
     [ObservableProperty]
     protected ObservableCollection<GridColumnDefinition<TColumnEnum>> _columns = [];
     internal IEnumerable<GridColumnDefinition<TColumnEnum>>? _columnsVisible;
+
+    protected void InitializeRefreshTimer()
+    {
+        // Debounce timer: Group updates and refresh once per x ms
+        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
+
+        _refreshTimer.Tick += (s, e) =>
+        {
+            if (_refreshPending)
+            {
+                _refreshPending = false;
+                PerformRefresh();
+            }
+        };
+        _refreshTimer.Start();
+    }
+
+    public virtual void Dispose()
+    {
+        _refreshTimer?.Stop();
+        _refreshTimer = null;
+    }
+
+
+    protected void RefreshVisibleItems()
+    {
+        //Markeer dat er een refresh nodig is, timer doet de rest
+        _refreshPending = true;
+    }
+
+    private void PerformRefresh()
+    {
+        System.Diagnostics.Debug.WriteLine($"{GetType().Name}.RefreshVisibleItems<{typeof(TItem).Name}> called (count={_allObjects.Count})");
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            UpdateVisibleObjectsList();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(UpdateVisibleObjectsList);
+        }
+    }
+
+    //protected abstract void UpdateVisibleObjectsList();
+    protected void UpdateVisibleObjectsList()
+    {
+        lock (_lock)
+        {
+            var selected = SelectedObject;
+
+            // Hergebruik de lijst - geen nieuwe allocatie!
+            VisibleObjects.Clear();
+            VisibleObjects.AddRange(_allObjects);
+
+            // Herstel selectie
+            if (selected != null)
+                SelectedObject = VisibleObjects.FirstOrDefault(p => p == selected);
+        }
+    }
 
     // Common properties
     public IEnumerable<GridColumnDefinition<TColumnEnum>> VisibleColumns
@@ -105,12 +168,12 @@ public abstract partial class BaseGridViewModel<TItem, TColumnEnum, TComparer> :
             SortColumn = sortColumn,
             SortDirection = this.SortDirection,
         };
-        System.Diagnostics.Debug.WriteLine($"ApplySort({nameof(TColumnEnum)} {SortColumn}, {SortDirection})");
+        System.Diagnostics.Debug.WriteLine($"{GetType().Name}.ApplySort<{typeof(TItem).Name}>({SortColumn}, {SortDirection}) (count={_allObjects.Count})");
         _allObjects.Sort(comparer);
         //System.Diagnostics.Debug.WriteLine($"First 3: {string.Join(", ", _allObjects.Take(3).Select(x => x.Name))}");
     }
 
-    protected abstract void RefreshVisibleItems();
+    //protected abstract void RefreshVisibleItems();
 
     // Common column width methods
     public void UpdateColumnWidths(string widthsString)

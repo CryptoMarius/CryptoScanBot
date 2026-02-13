@@ -35,45 +35,58 @@ public partial class PositionClosedViewModel : BaseGridViewModel<CryptoPosition,
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
 
         LoadClosedPositions();
+        InitializeRefreshTimer();
     }
 
-    protected override void RefreshVisibleItems()
+
+    public override void Dispose()
     {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
-
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                // Bewaar huidige selectie
-                var selectedId = SelectedObject?.Id;
-
-                // Vervang collectie
-                VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
-
-                // Herstel selectie
-                if (selectedId.HasValue)
-                {
-                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                }
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    var selectedId = SelectedObject?.Id;
-                    VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
-                    if (selectedId.HasValue)
-                    {
-                        SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                    }
-                }
-            });
-        }
+        base.Dispose(); 
+        //_timerRefreshZones.Stop();
+        //_timerRefreshZones.Tick -= TimerRefreshZonesTick;
+        WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
     }
+
+
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            // Bewaar huidige selectie
+    //            var selectedId = SelectedObject?.Id;
+
+    //            // Vervang collectie
+    //            VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
+
+    //            // Herstel selectie
+    //            if (selectedId.HasValue)
+    //            {
+    //                SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                var selectedId = SelectedObject?.Id;
+    //                VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
+    //                if (selectedId.HasValue)
+    //                {
+    //                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //                }
+    //            }
+    //        });
+    //    }
+    //}
+
 
 
     //public void TimerUpdatePositionsTick(object? sender, EventArgs? e)

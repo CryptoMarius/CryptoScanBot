@@ -45,7 +45,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        long unixDate = CandleLast.OpenTime;
+        CandleTime unixDate = CandleLast.OpenTime;
 
         //if (!CandleLast.StochOversold(0))
         //{
@@ -67,7 +67,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         for (int count = 6; count > 0; count--)
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
-            long candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
+            CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
             if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
                 return false;
 

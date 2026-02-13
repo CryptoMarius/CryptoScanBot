@@ -16,7 +16,7 @@ public class DatabaseStatistics
 
 public class ZoneTools
 {
-    public static void CreateZoneIndex(SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase, 
+    public static void CreateZoneIndex(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase, 
         IList<CryptoZone> zones, DatabaseStatistics dbStats)
     {
         foreach (var zone in zones)
@@ -49,7 +49,7 @@ public class ZoneTools
 
 
     public static void AddZonesToInternalLists(CryptoSymbolIntervalZones zoneData,
-        SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase,
+        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
         IList<CryptoZone> newCalculatedZones, DatabaseStatistics dbStats)
     {
         foreach (var zone in newCalculatedZones)
@@ -100,7 +100,7 @@ public class ZoneTools
 
 
 
-    public static void DeleteRemainingZones(SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase, DatabaseStatistics dbStats)
+    public static void DeleteRemainingZones(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase, DatabaseStatistics dbStats)
     {
         // delete the remaining zones
         foreach (var zone in zonesFromDatabase.Values)

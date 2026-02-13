@@ -32,7 +32,7 @@ public class CandleBase(ExchangeBase api)
 
     }
 
-    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, long fetchEndUnix)
+    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, CandleTime fetchEndUnix)
     {
         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0 || symbol.IsBarometerSymbol())
             return;
@@ -91,7 +91,7 @@ public class CandleBase(ExchangeBase api)
                     // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
                     // De datum en tijd tot na het activeren van beide streams (overlap)
                     DateTime fetchEndUnixDate = DateTimeOffset.UtcNow.UtcDateTime;
-                    long fetchEndUnix = CandleTools.GetUnixTime(fetchEndUnixDate, 60);
+                    CandleTime fetchEndUnix = CandleTime.AlignFromDateTime(fetchEndUnixDate, 1);
 
 
                     // En dan door x tasks de queue leeg laten trekken
@@ -157,7 +157,7 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval, long fetchMax)
+    public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchMax)
     {
         if (symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
             return;
@@ -173,7 +173,7 @@ public class CandleBase(ExchangeBase api)
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchMax)
                     break;
 
-                long lastTime = (long)symbolInterval.LastCandleSynchronized!;
+                CandleTime lastTime = (CandleTime)symbolInterval.LastCandleSynchronized!;
                 symbolInterval.LastCandleSynchronized = await Api.Candle.GetCandlesForInterval(client, symbol, interval, lastTime, fetchMax);
                 CandleTools.UpdateCandleFetched(symbol, interval);
                 if (symbolInterval.LastCandleSynchronized == lastTime) // not moving forward
@@ -211,7 +211,7 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    public async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, long unixLoop, long unixMax)
+    public async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax)
     {
         // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
         // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because 
@@ -233,13 +233,13 @@ public class CandleBase(ExchangeBase api)
                 if (unixLoop + interval.Duration > unixMax)
                     break;
 
-                long minTime = unixLoop;
-                DateTime minDate = CandleTools.GetUnixDate(minTime);
-                long maxTime = unixLoop + (ExchangeBase.ExchangeOptions.CandleLimit - 1) * interval.Duration;
-                DateTime maxDate = CandleTools.GetUnixDate(maxTime);
+                CandleTime minTime = unixLoop;
+                DateTime minDate = minTime.ToDateTime();
+                CandleTime maxTime = unixLoop + (ExchangeBase.ExchangeOptions.CandleLimit - 1) * interval.Duration;
+                DateTime maxDate = maxTime.ToDateTime();
                 //string text = $"Fetch historical klines {symbol.Name} {interval!.Name} from {minDate.ToLocalTime()} up to {maxDate.ToLocalTime()}";
 
-                long lastDate = minTime;
+                CandleTime lastDate = minTime;
                 int countBefore = symbolInterval.CandleList.Count;
                 unixLoop = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, minTime, maxTime);
 
@@ -249,12 +249,12 @@ public class CandleBase(ExchangeBase api)
                 bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
                 if (debug)
                     GlobalData.AddTextToLogTab($"Core.Exchange.FetchFrom({symbol.Name}, {interval!.Name}, " +
-                        $"{CandleTools.GetUnixDate(minTime)} .. {CandleTools.GetUnixDate(maxTime)} limit={ExchangeBase.ExchangeOptions.CandleLimit} added={added}");
+                        $"{minTime.ToDateTime()} .. {maxTime.ToDateTime()} limit={ExchangeBase.ExchangeOptions.CandleLimit} added={added}");
 
 
                 //string text3 = $"{text} retrieved={added} total={candleList.Count}";
                 //ScannerLog.Logger.Info(text3);
-                //GlobalData.AddTextToLogTab(text3);
+                //GlobalData.AddTextToLogTab(text3);CandleTime
 
                 while (symbolInterval.CandleList!.ContainsKey(unixLoop))
                     unixLoop += interval.Duration;

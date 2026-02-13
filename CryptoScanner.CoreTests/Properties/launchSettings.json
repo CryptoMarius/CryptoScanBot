@@ -1,7 +1,8 @@
 {
   "profiles": {
     "CryptoScanner.CoreTests": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-f \"E:\\CryptoScanBot\\Test\"",
     }
   }
 }

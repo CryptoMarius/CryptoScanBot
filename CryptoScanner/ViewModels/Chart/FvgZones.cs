@@ -11,7 +11,7 @@ public class FvgZones
 {
     // todo method also in DrawDlzZones..
     // Introduce a common class?
-    private static void DrawZone(PlotModel chart, CryptoZone zone, long minDate, long maxDate, string group)
+    private static void DrawZone(PlotModel chart, CryptoZone zone, CandleTime minDate, CandleTime maxDate, string group)
     {
         // ?? why ??
         //if (zone.Kind == CryptoZoneKind.FairValueGap && !session.ShowFvgZones)
@@ -24,17 +24,17 @@ public class FvgZones
             OxyColor textColor = colors.textColor;
 
 
-            long dateOpen;
+            CandleTime dateOpen;
             if (zone.OpenTime != null)
-                dateOpen = (long)zone.OpenTime;
+                dateOpen = (CandleTime)zone.OpenTime;
             else
                 dateOpen = minDate;
             if (zone.Kind == CryptoZoneKind.FairValueGap)
                 dateOpen -= 3 * zone.Interval.Duration; // this looks better
 
-            long dateLast;
+            CandleTime dateLast;
             if (zone.CloseTime != null)
-                dateLast = (long)zone.CloseTime;
+                dateLast = (CandleTime)zone.CloseTime;
             else
                 dateLast = maxDate + 10000;
 
@@ -56,9 +56,9 @@ public class FvgZones
             // Create a rectangle annotation
             var rectangle = new RectangleAnnotation
             {
-                MinimumX = dateOpen,  // X-coordinate of the lower-left corner
+                MinimumX = dateOpen.Minutes,  // X-coordinate of the lower-left corner
                 MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
-                MaximumX = dateLast,  // X-coordinate of the upper-right corner
+                MaximumX = dateLast.Minutes,  // X-coordinate of the upper-right corner
                 MaximumY = (double)zone.Top,  // Y-coordinate of the upper-right corner
                 Fill = col, //OxyColor.FromArgb(128, boxColor.R, boxColor.G, boxColor.B),
                 Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, boxColor.R, boxColor.G, boxColor.B), // rectangle
@@ -77,8 +77,8 @@ public class FvgZones
     {
         if (zone.CloseTime != null)
         {
-            long allowedTime = interval.Duration * 250; // 60 candles?
-            long currentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            uint allowedTime = interval.Duration * 250; // 60 candles?
+            CandleTime currentTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
 
             //DateTime currentDate = CandleTools.GetUnixDate(currentTime);
             //DateTime closeDate = CandleTools.GetUnixDate(zone.CloseTime);
@@ -90,7 +90,7 @@ public class FvgZones
     }
 
 
-    public static void Draw(PlotModel chart, CryptoSymbol symbol, long minDate, long maxDate, string group)
+    public static void Draw(PlotModel chart, CryptoSymbol symbol, CandleTime minDate, CandleTime maxDate, string group)
     {
         var symbolData = symbol.Data;
         foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)

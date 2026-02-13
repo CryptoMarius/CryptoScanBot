@@ -297,7 +297,7 @@ public static class CryptoDisplayHelpers
 
     internal static IBrush GetStrategyBackground(CryptoTradeSide side, CryptoSignalStrategy strategy)
     {
-        if (GlobalData.StrategiesSettings.TryGetValue(strategy, out (SettingsSignalStrategyBase strategySettings, long _) x))
+        if (GlobalData.StrategiesSettings.TryGetValue(strategy, out (SettingsSignalStrategyBase strategySettings, DateTime _) x))
         {
             if (side == CryptoTradeSide.Long)
                 return new SolidColorBrush(x.strategySettings.ColorLong);

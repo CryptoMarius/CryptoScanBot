@@ -22,13 +22,13 @@ public static class Helper
 #if DEBUG
         // Keep these longer
         if (signal.Strategy == CryptoSignalStrategy.Trend)
-            return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
+            return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
 #endif
         // Keep these longer (fvg, dlz. dlz.near)
         if (signal.Strategy >= CryptoSignalStrategy.DominantLevel)
-            return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
+            return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration * 5);
         
-        return signal.CloseDate.AddSeconds(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);
+        return signal.CloseDate.AddMinutes(GlobalData.Settings.General.RemoveSignalAfterxCandles * interval.Duration);
     }
 
     public static decimal ConvertRadiansToDegrees(this decimal radians)
@@ -59,8 +59,8 @@ public static class Helper
         string fmt, bool includeSymbol = false, bool includeInterval = false, bool includeVolume = false)
     {
         // Include the next time so it is clear what candle has focus (it saves a lot of questions)
-        DateTime date = CandleTools.GetUnixDate(candle.OpenTime);
-        string s = date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + "-" + date.AddSeconds(interval.Duration).ToLocalTime().ToString("HH:mm");
+        DateTime date = candle.OpenTime.ToDateTime();
+        string s = date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + "-" + date.AddMinutes(interval.Duration).ToLocalTime().ToString("HH:mm");
 
         if (includeSymbol)
             s += " " + symbol.Name;
@@ -224,7 +224,7 @@ public static class Helper
     }
 
 
-    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, long candleStart, int candleDuration, out string text)
+    public static bool CheckValidMinimalVolume(this CryptoSymbol symbol, CandleTime candleStart, uint candleDuration, out string text)
     {
         if (symbol.QuoteData!.MinimalVolume > 0)
         {
@@ -248,9 +248,9 @@ public static class Helper
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
                 if (symbolInterval.CandleList.Count > 0)
                 {
-                    long unixDate = IntervalTools.StartOfIntervalCandle2(candleStart, candleDuration, symbolInterval.Interval.Duration);
+                    CandleTime unixDate = IntervalTools.StartOfIntervalCandle2(candleStart, candleDuration, symbolInterval.Interval.Duration);
                     //DateTime candleStartCheck = CandleTools.GetUnixDate(candleStart);
-                    long loop = unixDate;
+                    CandleTime loop = unixDate;
                     int count = GlobalData.Settings.Signal.CheckVolumeOverDays;
                     while (count > 0)
                     {

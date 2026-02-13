@@ -6,12 +6,12 @@ namespace CryptoScanner.Core.Model;
 // (needs to be calculated each time a candle is finished on a interval)
 public class CryptoTrendData
 {
-    public long? Time { get; set; }
+    public CandleTime? Time { get; set; }
     public float? Percentage { get; set; } // only for symbol level
     public CryptoTrendIndicator Trend { get; set; }
 
     // 1 candle back
-    public long? PrevTime { get; set; }
+    public CandleTime? PrevTime { get; set; }
     public float? PrevPercentage { get; set; } // only for symbol level
     public bool ReversalSignaled { get; set; } = true;
     public CryptoTrendIndicator PrevTrend { get; set; }

@@ -36,35 +36,38 @@ public partial class LogViewModel : BaseGridViewModel<CryptoLog, LogColumnEnum, 
 
         _updateTimer.Tick += TimerAddLogLinesTick;
         _updateTimer.Start();
+        InitializeRefreshTimer();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
         _updateTimer.Stop();
         _updateTimer.Tick -= TimerAddLogLinesTick;
     }
 
-    protected override void RefreshVisibleItems()
-    {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleLogs called");
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                VisibleObjects = new AvaloniaList<CryptoLog>(_allObjects);
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    VisibleObjects = new AvaloniaList<CryptoLog>(_allObjects);
-                }
-            });
-        }
-    }
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleLogs called");
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            VisibleObjects = new AvaloniaList<CryptoLog>(_allObjects);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                VisibleObjects = new AvaloniaList<CryptoLog>(_allObjects);
+    //            }
+    //        });
+    //    }
+    //}
+
 
     private void AddTextToLogTab(string text)
     {

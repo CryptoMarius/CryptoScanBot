@@ -49,6 +49,7 @@ public partial class CryptoPosition
     [Computed] public string CurrentPriceText => Symbol.LastPrice?.ToString0(Symbol.PriceDisplayFormat) ?? "";
     [Computed] public string SignalPriceText => SignalPrice.ToString0(Symbol.PriceDisplayFormat);
 
+    [Computed] public string PartsText => this.PartCountText();
     [Computed] public string SignalVolumeText => SignalVolume.ToString("N0");
     [Computed] public IBrush SignalVolumeForeground => GetVolumeColor(Symbol, SignalVolume);
     [Computed] public string PriceChangeText => Last24HoursChange.ToString("N2");

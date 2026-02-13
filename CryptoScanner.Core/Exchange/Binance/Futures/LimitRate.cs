@@ -36,7 +36,7 @@ public static class LimitRate
                 long unix = dateTimeOffset.ToUnixTimeSeconds();
 
                 // Een tijdstip 60 seconden geleden
-                long removeBeforeDate = unix - 60;
+                long removeBeforeDate = unix - 1;
 
                 while (List.Count > 0)
                 {

@@ -12,7 +12,8 @@ namespace CryptoScanner.Core.Barometer;
 public class BarometerTools
 {
     private static readonly object LockObject = new();
-    private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, long unixCandleLast, out decimal barometerPerc);
+    private delegate bool CalcBarometerMethod(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, 
+        CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc);
 
 
     public static void InitBarometerSymbols()
@@ -78,7 +79,8 @@ public class BarometerTools
     }
 
 
-    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
+    private static void CalculateBarometerInternal(CryptoSymbol bmSymbol, CryptoInterval interval, 
+        CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool priceBarometer)
     {
         //if (priceBarometer)
         //    GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name} {interval.Name}");
@@ -91,7 +93,7 @@ public class BarometerTools
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles)
         if (!GlobalData.BackTest)
         {
-            long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+            CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
             while (candles.Values.Count > 0)
             {
                 CryptoCandle c = candles.Values.First();
@@ -102,7 +104,7 @@ public class BarometerTools
         }
 
 
-        long periodStart, periodStop;
+        CandleTime periodStart, periodStop;
 
         CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
 
@@ -119,21 +121,21 @@ public class BarometerTools
         {
             // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
             if (symbolInterval.LastCandleSynchronized.HasValue)
-                periodStart = (long)symbolInterval.LastCandleSynchronized;
+                periodStart = symbolInterval.LastCandleSynchronized.Value;
             else
             {
                 // Geef deze alvast een waarde
                 if (candles.Count > 0)
                     periodStart = candles.Keys.First();
                 else
-                    periodStart = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(-2), 60); // GlobalData.GetCurrentDateTime() oeps
+                    periodStart = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddDays(-2), 1);
 
                 symbolInterval.LastCandleSynchronized = periodStart;
             }
 
             // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
             // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
-            periodStop = CandleTools.GetUnixTime(DateTime.UtcNow, 60); // GlobalData.GetCurrentDateTime() oeps
+            periodStop = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
         }
         //DateTime periodStartDebug = CandleTools.GetUnixDate(periodStart);
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
@@ -186,7 +188,7 @@ public class BarometerTools
             }
 
             // Naar de volgende 1m candle
-            periodStart += 60;
+            periodStart += 1;
         }
     }
 

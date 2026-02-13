@@ -35,9 +35,9 @@ public class Dtb
                 Tag = group
             };
 
-            rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-            rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
-            rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime, (double)zigzag.Item3.Value));
+            rectangle.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime.Minutes, (double)zigzag.Item1.Value));
+            rectangle.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime.Minutes, (double)zigzag.Item2.Value));
+            rectangle.Points.Add(new DataPoint(zigzag.Item3.Candle.OpenTime.Minutes, (double)zigzag.Item3.Value));
             chart.Annotations.Add(rectangle);
 
             //var series = new LineSeries { Title = "1", Color = boxColor, Tag = group };
@@ -46,13 +46,13 @@ public class Dtb
             //plotModel.Series.Add(series);
 
             var series = new LineSeries { Title = "1", Color = color, Tag = group };
-            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime, (double)zigzag.Item1.Value));
-            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime + interval.Duration * 5, (double)zigzag.Item1.Value));
+            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime.Minutes, (double)zigzag.Item1.Value));
+            series.Points.Add(new DataPoint(zigzag.Item1.Candle.OpenTime.Minutes + interval.Duration * 5, (double)zigzag.Item1.Value));
             chart.Series.Add(series);
 
             series = new LineSeries { Title = "2", Color = color, Tag = group };
-            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime, (double)zigzag.Item2.Value));
-            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime + interval.Duration * 5, (double)zigzag.Item2.Value));
+            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime.Minutes, (double)zigzag.Item2.Value));
+            series.Points.Add(new DataPoint(zigzag.Item2.Candle.OpenTime.Minutes + interval.Duration * 5, (double)zigzag.Item2.Value));
             chart.Series.Add(series);
         }
     }

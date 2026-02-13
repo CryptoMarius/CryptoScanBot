@@ -76,7 +76,7 @@ public class SignalBbMaLong : SignalCreateBase
     private bool PrepareHigherInterval(CryptoIntervalPeriod higher, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle)
     {
         higherInterval = Symbol.GetSymbolInterval(higher);
-        long candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
+        CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
         if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out candle))
         {
             ExtraText += $"nocandle:{candleOpenTime}";
@@ -88,7 +88,7 @@ public class SignalBbMaLong : SignalCreateBase
             List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
             if (history == null)
             {
-                DateTime x = CandleTools.GetUnixDate(candleOpenTime);
+                DateTime x = candleOpenTime.ToDateTime();
                 ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
                 return false;
             }

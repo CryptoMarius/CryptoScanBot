@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class PSar
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesMiddle = new LineSeries
         {
@@ -29,13 +29,13 @@ public class PSar
 
         foreach (var psar in psarList)
         {
-            long openTime = CandleTools.GetUnixTime(psar.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(psar.Date, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? psarValue = psar.Sar;
 
                 if (psarValue.HasValue)
-                    seriesMiddle.Points.Add(new DataPoint(openTime, psarValue.Value));
+                    seriesMiddle.Points.Add(new DataPoint(openTime.Minutes, psarValue.Value));
             }
         }
 

@@ -185,7 +185,7 @@ public class BbmaStrategyGrok2
     {
         return dict?.OrderBy(x => x.Key).Select(x => new Quote
         {
-            Date = DateTimeOffset.FromUnixTimeMilliseconds(x.Key).UtcDateTime,
+            Date = DateTimeOffset.FromUnixTimeSeconds(x.Key.ToUnixSeconds()).UtcDateTime,
             Open = x.Value.Open,
             High = x.Value.High,
             Low = x.Value.Low,

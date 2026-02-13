@@ -37,12 +37,15 @@ public partial class PositionOpenViewModel : BaseGridViewModel<CryptoPosition, P
         _timerRefreshFields.Start();
 
         LoadOpenPositions();
+        InitializeRefreshTimer();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _timerRefreshFields.Stop();
-        _timerRefreshFields.Tick -= TimerRefreshFieldsTick;
+        base.Dispose();
+        WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
     }
 
     //private void StartMinutePlusFiveTimer()
@@ -78,43 +81,44 @@ public partial class PositionOpenViewModel : BaseGridViewModel<CryptoPosition, P
     //    firstTimer.Start();
     //}
 
-    protected override void RefreshVisibleItems()
-    {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
 
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                // Bewaar huidige selectie
-                var selectedId = SelectedObject?.Id;
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            // Bewaar huidige selectie
+    //            var selectedId = SelectedObject?.Id;
 
-                // Vervang collectie
-                VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
+    //            // Vervang collectie
+    //            VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
 
-                // Herstel selectie
-                if (selectedId.HasValue)
-                {
-                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                }
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    var selectedId = SelectedObject?.Id;
-                    VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
-                    if (selectedId.HasValue)
-                    {
-                        SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                    }
-                }
-            });
-        }
-    }
+    //            // Herstel selectie
+    //            if (selectedId.HasValue)
+    //            {
+    //                SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                var selectedId = SelectedObject?.Id;
+    //                VisibleObjects = new AvaloniaList<CryptoPosition>(_allObjects);
+    //                if (selectedId.HasValue)
+    //                {
+    //                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //                }
+    //            }
+    //        });
+    //    }
+    //}
+
 
     private void LoadOpenPositions()
     {

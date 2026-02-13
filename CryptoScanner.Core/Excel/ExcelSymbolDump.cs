@@ -22,8 +22,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, 0, row, "Trend primary");
         if (trend.Time.HasValue)
         {
-            DateTime x = CandleTools.GetUnixDate(trend.Time);
-            WriteCell(sheet, 1, row, x.ToLocalTime(), CellStyleDate);
+            DateTime? x = trend.Time?.ToDateTime();
+            WriteCell(sheet, 1, row, x?.ToLocalTime(), CellStyleDate);
         }
         else WriteCell(sheet, 1, row, "");
         WriteCell(sheet, 2, row, trend.Trend.ToString());
@@ -34,8 +34,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, 0, row, "Trend secondary");
         if (trend.Time.HasValue)
         {
-            DateTime x = CandleTools.GetUnixDate(trend.Time);
-            WriteCell(sheet, 1, row, x.ToLocalTime(), CellStyleDate);
+            DateTime? x = trend.Time?.ToDateTime();
+            WriteCell(sheet, 1, row, x?.ToLocalTime(), CellStyleDate);
         }
         else WriteCell(sheet, 1, row, "");
         WriteCell(sheet, 2, row, trend.Trend.ToString());
@@ -75,7 +75,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             // last candle synchronised with the exchange (or locally fully calculated)
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
-                DateTime x = CandleTools.GetUnixDate(symbolInterval.LastCandleSynchronized);
+                DateTime x = symbolInterval.LastCandleSynchronized.Value.ToDateTime();
                 WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
             }
             else WriteCell(sheet, column++, row, "");
@@ -87,8 +87,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             trend = symbolInterval.TrendPrimary;
             if (trend.Time.HasValue)
             {
-                DateTime x = CandleTools.GetUnixDate(trend.Time);
-                WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
+                DateTime? x = trend.Time?.ToDateTime();
+                WriteCell(sheet, column++, row, x?.ToLocalTime(), CellStyleDate);
             }
             else WriteCell(sheet, column++, row, "");
             WriteCell(sheet, column++, row, trend.Trend.ToString());
@@ -97,8 +97,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             trend = symbolInterval.TrendSecondary;
             if (trend.Time.HasValue)
             {
-                DateTime x = CandleTools.GetUnixDate(trend.Time);
-                WriteCell(sheet, column++, row, x.ToLocalTime(), CellStyleDate);
+                DateTime? x = trend.Time?.ToDateTime();
+                WriteCell(sheet, column++, row, x?.ToLocalTime(), CellStyleDate);
             }
             else WriteCell(sheet, column++, row, "");
             WriteCell(sheet, column++, row, trend.Trend.ToString());
@@ -143,16 +143,16 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             int column = 0;
             bool attention = false;
             if (Symbol.IsBarometerSymbol())
-                attention = last != null && last.OpenTime + 60 != candle.OpenTime;
+                attention = last != null && last.OpenTime + 1 != candle.OpenTime;
             else
                 attention = last != null && last.OpenTime + symbolInterval.Interval!.Duration != candle.OpenTime;
 
-            WriteCell(sheet, column++, row, candle.OpenTime);
+            WriteCell(sheet, column++, row, candle.OpenTime.ToDateTime());
             if (attention)
                 WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDateRed);
             else
                 WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
-            WriteCell(sheet, column++, row, candle.DateLocal.AddSeconds(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
+            WriteCell(sheet, column++, row, candle.DateLocal.AddMinutes(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
             WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);

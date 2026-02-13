@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Model;
 
 using System.Text.Json;
 
@@ -24,8 +25,8 @@ public class ZoneSession
     public string IntervalName { get; set; } = "1h";
 
     // Period = UtcNow - X candles
-    public long MinDate { get; set; }
-    public long MaxDate { get; set; }
+    public CandleTime MinDate { get; set; }
+    public CandleTime MaxDate { get; set; }
     public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // hidden

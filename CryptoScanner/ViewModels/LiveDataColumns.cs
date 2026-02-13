@@ -58,8 +58,8 @@ public class LiveDataColumnComparer : IGridComparer<CryptoLiveData, LiveDataColu
             int compareResult = SortColumn switch
             {
                 //LiveDataColumnEnum.Id => ObjectCompare.Compare(a.Symbol.Id, b.Symbol.Id),
-                LiveDataColumnEnum.Date => ObjectCompare.Compare(a.Candle.OpenTime + a.Interval.Duration,
-                b.Candle.OpenTime + b.Interval.Duration),
+                LiveDataColumnEnum.Date => ObjectCompare.Compare(a.Candle.OpenTime.Minutes + a.Interval.Duration,
+                b.Candle.OpenTime.Minutes + b.Interval.Duration),
                 LiveDataColumnEnum.Exchange => ObjectCompare.Compare(a.Symbol.Exchange.Name, b.Symbol.Exchange.Name),
                 LiveDataColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol.Name, b.Symbol.Name),
                 LiveDataColumnEnum.Interval => ObjectCompare.Compare(a.Interval.IntervalPeriod, b.Interval.IntervalPeriod),
@@ -96,7 +96,7 @@ public class LiveDataColumnComparer : IGridComparer<CryptoLiveData, LiveDataColu
             if (compareResult == 0)
                 compareResult = -ObjectCompare.Compare(a.Interval.Duration, b.Interval.Duration);
             if (compareResult == 0)
-                compareResult = ObjectCompare.Compare(a.Candle.OpenTime + a.Interval.Duration,
+                compareResult = ObjectCompare.Compare(a.Candle.OpenTime.Minutes + a.Interval.Duration,
                     b.Candle.OpenTime + b.Interval.Duration);
 
             return compareResult;

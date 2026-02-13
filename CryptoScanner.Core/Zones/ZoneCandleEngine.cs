@@ -24,7 +24,7 @@ public class ZoneCandleEngine
             {
                 CryptoCandle candle = new()
                 {
-                    OpenTime = binaryReader.ReadInt64(),
+                    OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
                     Open = binaryReader.ReadDecimal(),
                     High = binaryReader.ReadDecimal(),
                     Low = binaryReader.ReadDecimal(),
@@ -91,7 +91,7 @@ public class ZoneCandleEngine
                 CryptoCandle? candle = pair.Value;
                 if (candle != null)
                 {
-                    binaryWriter.Write(candle.OpenTime);
+                    binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
                     binaryWriter.Write(candle.Open);
                     binaryWriter.Write(candle.High);
                     binaryWriter.Write(candle.Low);
@@ -173,10 +173,10 @@ public class ZoneCandleEngine
                 if (symbolInterval.CandleList.Count > 0)
                 {
                     // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
-                    long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                    CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
                     // investigate the first, does it need removal?
-                    long openTime = symbolInterval.CandleList.Keys.First();
+                    CandleTime openTime = symbolInterval.CandleList.Keys.First();
                     if (openTime < startFetchUnix)
                     {
                         // It takes forever to delete 100.000 of candles!!
@@ -185,7 +185,7 @@ public class ZoneCandleEngine
                         // TODO: Use TakeLast() does not work with sortedlist (investigate)
                         CryptoCandleList newList = [];
 
-                        long unix = symbolInterval.CandleList.Keys.Last();
+                        CandleTime unix = symbolInterval.CandleList.Keys.Last();
                         while (unix >= startFetchUnix)
                         {
                             if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? c))
@@ -220,12 +220,12 @@ public class ZoneCandleEngine
     /// <summary>
     /// Check if all candles in a date range are present
     /// </summary>
-    private static (long unixStartTime, bool dataAllLocal) IsDataLocal(long minTime, long maxTime, CryptoSymbol symbol, CryptoInterval interval)
+    private static (CandleTime unixStartTime, bool dataAllLocal) IsDataLocal(CandleTime minTime, CandleTime maxTime, CryptoSymbol symbol, CryptoInterval interval)
     {
         bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
         if (debug)
             GlobalData.AddTextToLogTab($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
-                $"{CandleTools.GetUnixDate(minTime)}, {CandleTools.GetUnixDate(maxTime)} (call)");
+                $"{minTime.ToDateTime()}, {maxTime.ToDateTime()} (call)");
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         while (symbolInterval.CandleList!.ContainsKey(minTime))
@@ -243,7 +243,7 @@ public class ZoneCandleEngine
 
         if (debug)
             GlobalData.AddTextToLogTab($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
-                $"{CandleTools.GetUnixDate(minTime)} not present ");
+                $"{minTime.ToDateTime()} not present ");
 
         return (minTime, false);
     }
@@ -252,12 +252,13 @@ public class ZoneCandleEngine
     /// <summary>
     /// Calculate the date range needed to get x candles from a certain date
     /// </summary>
-    private static (long unixMin, long unixMax) CalculateDates(CryptoInterval interval, long startTime, int candleCount)
+    private static (CandleTime unixMin, CandleTime unixMax) CalculateDates(
+        CryptoInterval interval, CandleTime startTime, int candleCount)
     {
-        long unixMinTime = IntervalTools.StartOfIntervalCandle(startTime, interval.Duration);
-        long unixMaxTime = unixMinTime + candleCount * interval.Duration;
+        CandleTime unixMinTime = IntervalTools.StartOfIntervalCandle(startTime, interval.Duration);
+        CandleTime unixMaxTime = unixMinTime + candleCount * interval.Duration;
 
-        long unixNowTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo, emulator date?
+        CandleTime unixNowTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo, emulator date?
         unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, interval.Duration);
 
         if (unixMaxTime >= unixNowTime)
@@ -270,7 +271,7 @@ public class ZoneCandleEngine
     // TODO: Limit the load from disk (we now load everything we have which can be too much)
     // TODO: CalculateDates: Can now be less candles than fetchCount if some candles where present (is this bad?)?
     public static async Task FetchFrom(SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory,
-        CryptoSymbol symbol, CryptoInterval interval, long fetchFrom, int fetchCount)
+        CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchFrom, int fetchCount)
     {
         // Load candles from disk
         if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
@@ -279,8 +280,8 @@ public class ZoneCandleEngine
             loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // for now (because of klines)
         }
 
-        (long unixMin, long unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
-        (long unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
+        (CandleTime unixMin, CandleTime unixMax) = CalculateDates(interval, fetchFrom, fetchCount);
+        (CandleTime unixLoop, bool dataAllLocal) = IsDataLocal(unixMin, unixMax, symbol, interval);
         try
         {
             if (!dataAllLocal)
@@ -291,7 +292,7 @@ public class ZoneCandleEngine
                     bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
                     if (debug)
                         GlobalData.AddTextToLogTab($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +
-                            $"{CandleTools.GetUnixDate(unixLoop)} .. {CandleTools.GetUnixDate(unixMax)}");
+                            $"{unixLoop.ToDateTime()} .. {unixMax.ToDateTime()}");
 
                     bool result = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);
                     if (result)
@@ -302,11 +303,11 @@ public class ZoneCandleEngine
                     // Do we need to calculate them from a lower interval?
                     var lowerInterval = interval.ConstructFrom ?? throw new Exception("Unable to construct candles from lower interval");
                     fetchFrom -= fetchFrom % lowerInterval.Duration;
-                    fetchCount *= interval.Duration / lowerInterval.Duration;
+                    fetchCount *= (int)interval.Duration / (int)lowerInterval.Duration;
                     await FetchFrom(loadedCandlesInMemory, symbol, lowerInterval!, fetchFrom, fetchCount);
 
                     // TODO: Calculate the needed candles in the interval from the lowerInterval...
-                    long unixNowTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo, emulator date?
+                    CandleTime unixNowTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo, emulator date?
                     unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, lowerInterval.Duration);
                     CandleTools.BulkCalculateCandles(symbol, lowerInterval, interval, unixNowTime);
                     loadedCandlesInMemory[interval.IntervalPeriod] = true;

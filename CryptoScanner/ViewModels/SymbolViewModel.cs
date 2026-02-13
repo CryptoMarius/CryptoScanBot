@@ -14,8 +14,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class SymbolViewModel : BaseGridViewModel<CryptoSymbol, SymbolColumnEnum, SymbolColumnComparer>
 {
-    private DispatcherTimer _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
-
+    //private DispatcherTimer _timerRefreshZones = new() { Interval = TimeSpan.FromSeconds(15) };
     private string _currentFilter = string.Empty;
 
 
@@ -31,15 +30,18 @@ public partial class SymbolViewModel : BaseGridViewModel<CryptoSymbol, SymbolCol
 
         //_timerRefreshZones.Tick += TimerRefreshZonesTick;
         //_timerRefreshZones.Start();
-
         ReloadSymbolsWithFilter();
+        InitializeRefreshTimer();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _timerRefreshZones.Stop();
+        base.Dispose();
+        //_timerRefreshZones.Stop();
         //_timerRefreshZones.Tick -= TimerRefreshZonesTick;
+        WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
     }
+
 
     private void ReloadSymbolsWithFilter()
     {
@@ -71,34 +73,35 @@ public partial class SymbolViewModel : BaseGridViewModel<CryptoSymbol, SymbolCol
         ReloadSymbolsWithFilter();
     }
 
-    protected override void RefreshVisibleItems()
-    {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
 
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                var selectedId = SelectedObject?.Id;
-                VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
-                if (selectedId.HasValue)
-                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    var selectedId = SelectedObject?.Id;
-                    VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
-                    if (selectedId.HasValue)
-                        SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                }
-            });
-        }
-    }
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            var selectedId = SelectedObject?.Id;
+    //            VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
+    //            if (selectedId.HasValue)
+    //                SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                var selectedId = SelectedObject?.Id;
+    //                VisibleObjects = new AvaloniaList<CryptoSymbol>(_allObjects);
+    //                if (selectedId.HasValue)
+    //                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //            }
+    //        });
+    //    }
+    //}
 
     private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
     {

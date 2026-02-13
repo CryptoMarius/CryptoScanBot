@@ -16,10 +16,10 @@ internal class CryptoBarometerVolume
 
     //    // Bestaat het voorgaande volume? Dan gebruiken we die
     //    // (volume van eerste candle eraf en volume van laatste candle erbij)
-    //    if (symbolPeriod.BarometerVolumeList.TryGetValue(unixDate - 60, out volume))
+    //    if (symbolPeriod.BarometerVolumeList.TryGetValue(unixDate - 1, out volume))
     //    {
     //        CryptoCandle candleLast, candleFirst;
-    //        if ((symbol.CandleList.TryGetValue(unixDate, out candleLast)) && (symbol.CandleList.TryGetValue(unixDate - interval.Duration + 60, out candleFirst)))
+    //        if ((symbol.CandleList.TryGetValue(unixDate, out candleLast)) && (symbol.CandleList.TryGetValue(unixDate - interval.Duration + 1, out candleFirst)))
     //        {
     //            volume = volume - candleFirst.Volume + candleLast.Volume;
     //            symbolPeriod.BarometerVolumeList.Add(unixDate, volume);
@@ -32,7 +32,7 @@ internal class CryptoBarometerVolume
     //    // het gevaar bestaat dat we een niet correcte volume retourneren als de exchange een storing of onderhoud
     //    // heeft gehad waardoor er een onderbreking in candles is geweest (dan gaat per ongeluk goed denk ik..)
     //    volume = 0;            
-    //    for (long intervalLoop = 0; intervalLoop < interval.Duration; intervalLoop += 60)
+    //    for (long intervalLoop = 0; intervalLoop < interval.Duration; intervalLoop += 1)
     //    {
     //        CryptoCandle candle;
     //        if (symbol.CandleList.TryGetValue(unixDate - intervalLoop, out candle))

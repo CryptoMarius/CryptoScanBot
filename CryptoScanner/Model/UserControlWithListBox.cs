@@ -48,7 +48,6 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
 
     protected ApplicationStateService _applicationStateService { get; set; } = null!;
 
-
     internal void ListBox_Loaded(object? sender, RoutedEventArgs e)
     {
         // Only once
@@ -263,6 +262,7 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
         }
     }
 
+    private static int _gridsBuildCount = 0;
 
     internal void BuildAxamlColumnsAtRuntime()
     {
@@ -312,6 +312,11 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
         {
             var template = new FuncDataTemplate<TItem>((item, scope) =>
             {
+                // Count how many times this gets called
+                int count = Interlocked.Increment(ref _gridsBuildCount);
+                System.Diagnostics.Debug.WriteLine($"{_gridName}: Grid build count = {count}");
+
+
                 var grid = new Grid { Height = 22, Background = Brushes.Transparent };
 
                 int colIndex = 0;

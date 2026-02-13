@@ -235,7 +235,7 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        long time = CandleLast.OpenTime;
+        CandleTime time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle? prevCandle = null;
         while (candleCount >= 0)
@@ -245,15 +245,15 @@ public class SignalCreateBase
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
                 {
-                    if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
+                    if (IndicatorsOkay(lastCandle!) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
                         if (prevCandle.CandleData!.Sma50 < prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData!.Sma50 >= lastCandle.CandleData.Sma200)
+                                lastCandle!.CandleData!.Sma50 >= lastCandle.CandleData.Sma200)
                             return true;
                         // de 50 kruist de 200 naar beneden
                         if (prevCandle.CandleData!.Sma50 > prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma200)
+                                lastCandle!.CandleData!.Sma50 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
                 }
@@ -276,7 +276,7 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        long time = CandleLast.OpenTime;
+        CandleTime time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle? prevCandle = null;
         while (candleCount >= 0)
@@ -316,7 +316,7 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        long time = CandleLast.OpenTime;
+        CandleTime time = CandleLast.OpenTime;
         //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
         CryptoCandle? prevCandle = null;
         while (candleCount >= 0)

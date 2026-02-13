@@ -24,7 +24,7 @@ public class NweIndicator
 
     public class NweResult
     {
-        public long OpenTime { get; set; }
+        public CandleTime OpenTime { get; set; }
         public decimal? Center { get; set; }
         public decimal? Upper { get; set; }
         public decimal? Lower { get; set; }
@@ -38,7 +38,7 @@ public class NweIndicator
         SmoothRepainting = smoothRepainting;
     }
 
-    public List<NweResult> Calculate(SortedDictionary<long, CryptoCandle> candles)
+    public List<NweResult> Calculate(SortedDictionary<CandleTime, CryptoCandle> candles)
     {
         var openTimes = candles.Keys.ToList(); // sorted oldest to newest (ascending)
         var closes = openTimes.Select(t => candles[t].Close).ToList();

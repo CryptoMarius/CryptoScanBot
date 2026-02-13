@@ -33,17 +33,21 @@ public class DataStore
                 CryptoIntervalPeriod intervalPeriod = (CryptoIntervalPeriod)binaryReader.ReadInt32();
                 if (intervalPeriod != symbolInterval.IntervalPeriod)
                     throw new Exception($"file {symbol.Name} is corrupted (interval {intervalPeriod} does not match)");
-                symbolInterval.LastCandleSynchronized = binaryReader.ReadInt64();
-                if (symbolInterval.LastCandleSynchronized == 0)
+                long unix = binaryReader.ReadInt64();
+                if (unix == 0)
+                    symbolInterval.LastCandleSynchronized = null;
+                else 
+                    symbolInterval.LastCandleSynchronized = CandleTime.FromUnixSeconds(unix);
+                if (symbolInterval.LastCandleSynchronized == CandleTime.MinValue)
                     symbolInterval.LastCandleSynchronized = null;
 
                 // max candle date
                 // For some reason we can have corrupted candles in the system.
                 // This killed the scanner because it had a loop until maxLong!
-                long futureCandles = CandleTools.GetUnixTime(DateTime.UtcNow.AddDays(1), 60);
+                CandleTime futureCandles = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddHours(1), 1);
 
                 // min candle date
-                long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
                 // Load interval from stream
                 int candleCount = binaryReader.ReadInt32();
@@ -51,7 +55,7 @@ public class DataStore
                 {
                     CryptoCandle candle = new()
                     {
-                        OpenTime = binaryReader.ReadInt64(),
+                        OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
                         Open = binaryReader.ReadDecimal(),
                         High = binaryReader.ReadDecimal(),
                         Low = binaryReader.ReadDecimal(),
@@ -211,7 +215,7 @@ public class DataStore
                                 using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
                                 using BinaryWriter binaryWriter = new(zipStream, Encoding.UTF8, false);
 
-                                int version = 2; // Version 2 adds the weekly interval
+                                int version = 2; // Version 2 supports the 1w interval
                                 binaryWriter.Write(version);
                                 binaryWriter.Write(symbol.Name);
 
@@ -219,7 +223,7 @@ public class DataStore
                                 {
                                     binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
                                     if (symbolInterval.LastCandleSynchronized.HasValue)
-                                        binaryWriter.Write((long)symbolInterval.LastCandleSynchronized);
+                                        binaryWriter.Write(symbolInterval.LastCandleSynchronized.Value.ToUnixSeconds());
                                     else
                                         binaryWriter.Write((long)0);
 
@@ -230,7 +234,7 @@ public class DataStore
                                         CryptoCandle? candle = pair.Value;
                                         if (candle != null)
                                         {
-                                            binaryWriter.Write(candle.OpenTime);
+                                            binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
                                             binaryWriter.Write(candle.Open);
                                             binaryWriter.Write(candle.High);
                                             binaryWriter.Write(candle.Low);

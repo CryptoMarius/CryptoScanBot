@@ -155,7 +155,7 @@ public static class GlobalData
 
 
     // Indexed strategies for colors and soundfiles etc...
-    public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, long lastSignalStrategy)> StrategiesSettings = [];
+    public static Dictionary<CryptoSignalStrategy, (SettingsSignalStrategyBase strategySettings, DateTime lastSignalStrategy)> StrategiesSettings = [];
 
 
     public static void LoadExchanges()
@@ -189,6 +189,60 @@ public static class GlobalData
         using var database = new CryptoDatabase();
         foreach (CryptoInterval interval in database.Connection.GetAll<CryptoInterval>())
         {
+            // Correct interval to minutes instead of seconds..
+            switch (interval.IntervalPeriod)
+            {
+                case CryptoIntervalPeriod.interval1m:
+                    interval.Duration = 1;
+                    break;
+                case CryptoIntervalPeriod.interval2m:
+                    interval.Duration = 2;
+                    break;
+                case CryptoIntervalPeriod.interval3m:
+                    interval.Duration = 3;
+                    break;
+                case CryptoIntervalPeriod.interval5m:
+                    interval.Duration = 5;
+                    break;
+                case CryptoIntervalPeriod.interval10m:
+                    interval.Duration = 10;
+                    break;
+                case CryptoIntervalPeriod.interval15m:
+                    interval.Duration = 15;
+                    break;
+                case CryptoIntervalPeriod.interval30m:
+                    interval.Duration = 30;
+                    break;
+                case CryptoIntervalPeriod.interval1h:
+                    interval.Duration = 1 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval2h:
+                    interval.Duration = 2 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval3h:
+                    interval.Duration = 3 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval4h:
+                    interval.Duration = 4 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval6h:
+                    interval.Duration = 6 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval8h:
+                    interval.Duration = 8 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval12h:
+                    interval.Duration = 12 * 60;
+                    break;
+
+                case CryptoIntervalPeriod.interval1d:
+                    interval.Duration = 24 * 60;
+                    break;
+                case CryptoIntervalPeriod.interval1w:
+                    interval.Duration = 7 * 24 * 60;
+                    break;
+            }
+
             IntervalList.Add(interval);
             IntervalListId.Add(interval.Id, interval);
             IntervalListPeriodName.Add(interval.Name, interval);
@@ -240,7 +294,8 @@ public static class GlobalData
             string sql = "select * from signal where exchangeid=@exchangeid and BackTest=1 order by OpenDate";
 
             using var database = new CryptoDatabase();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, 
+                new { exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
@@ -721,17 +776,17 @@ public static class GlobalData
     public static void IndexStrategySettings()
     {
         StrategiesSettings = [];
-        StrategiesSettings.Add(CryptoSignalStrategy.Jump, (Settings.Signal.Jump, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.Stobb, (Settings.Signal.Stobb, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.StobbMulti, (Settings.Signal.Stobb, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, 0));
-        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, 0));
+        StrategiesSettings.Add(CryptoSignalStrategy.Jump, (Settings.Signal.Jump, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Stobb, (Settings.Signal.Stobb, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StobbMulti, (Settings.Signal.Stobb, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Now));
     }
 }

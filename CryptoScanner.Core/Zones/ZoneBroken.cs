@@ -8,7 +8,7 @@ public class ZoneBroken
 {
 
     private static void CalculateBrokenZones(CryptoSymbolInterval symbolInterval,
-        ref long key, long checkUpTo, long delay,
+        ref CandleTime key, CandleTime checkUpTo, long delay,
         List<CryptoZone> zonesLong, List<CryptoZone> zonesShort)
     {
         while (key <= checkUpTo)
@@ -64,12 +64,12 @@ public class ZoneBroken
             List<CryptoZone> zonesLong = [];
             List<CryptoZone> zonesShort = [];
             long delay = 4 * interval.Duration; // TODO, this is not right
-            long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            CandleTime maxTime = CandleTime.FromDateTime(DateTime.UtcNow);
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
             // Kind of brute force (on 1h candles so its not that bad)..
             int last = zones.Count - 1;
-            long key = zones.First().OpenTime!.Value;
+            CandleTime key = zones.First().OpenTime!.Value;
             key = IntervalTools.StartOfIntervalCandle(key, interval.Duration);
 
             zones.Sort((zoneA, zoneB) => zoneA.OpenTime!.Value.CompareTo(zoneB.OpenTime!.Value));
@@ -85,7 +85,7 @@ public class ZoneBroken
                 else
                     zonesShort.Add(zone);
 
-                long checkUpTo;
+                CandleTime checkUpTo;
                 if (i < last)
                     checkUpTo = zone.OpenTime!.Value;
                 else

@@ -9,7 +9,7 @@ public class CryptoSymbolInterval
     public required CryptoIntervalPeriod IntervalPeriod { get; set; }
 
     // The last synchronized candle with the exchange (without gaps)
-    public long? LastCandleSynchronized { get; set; }
+    public CandleTime? LastCandleSynchronized { get; set; }
 
     // The candles for this interval
     public CryptoCandleList CandleList { get; set; } = [];

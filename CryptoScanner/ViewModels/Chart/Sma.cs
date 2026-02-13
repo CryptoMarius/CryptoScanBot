@@ -11,7 +11,7 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Sma
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length,
-        OxyColor color, long minDate, long maxDate, string group)
+        OxyColor color, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesSma = new LineSeries
         {
@@ -31,12 +31,12 @@ public class Sma
 
         foreach (var bb in smaList)
         {
-            long openTime = CandleTools.GetUnixTime(bb.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Date, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? value = bb.Sma;
                 if (value.HasValue)
-                    seriesSma.Points.Add(new DataPoint(openTime, value.Value));
+                    seriesSma.Points.Add(new DataPoint(openTime.Minutes, value.Value));
             }
         }
 

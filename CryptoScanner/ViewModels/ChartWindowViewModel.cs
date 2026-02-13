@@ -130,8 +130,8 @@ public partial class ChartWindowViewModel : ObservableObject
     private string LabelFormatterX(double x)
     {
         string s;
-        long unix = CandleTools.GetUnixTime((long)x, 0);
-        DateTime date = CandleTools.GetUnixDate(unix); //.ToLocalTime();
+        CandleTime unix = new CandleTime((uint)x);
+        DateTime date = unix.ToDateTime(); //.ToLocalTime(); problem..?
         if (Data?.Interval?.IntervalPeriod <= CryptoIntervalPeriod.interval1h && date.Hour == 0)
             s = date.Day.ToString();
         else if (Data?.Interval?.IntervalPeriod <= CryptoIntervalPeriod.interval1d)
@@ -500,7 +500,7 @@ public partial class ChartWindowViewModel : ObservableObject
         // Zoom to last candles
         if (Data != null)
         {
-            Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
             Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
 
@@ -574,12 +574,12 @@ public partial class ChartWindowViewModel : ObservableObject
 
             Session.IntervalName = Data.Interval.Name;
             Session.ActiveInterval = Data.Interval.IntervalPeriod;
-            Session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
             Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
             Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
 
             PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
-            PlaybackControls.UpdateMaxTimeDisplay(CandleTools.GetUnixDate(Session.MaxDate).ToLocalTime().ToString("dd MMM HH:mm"));
+            PlaybackControls.UpdateMaxTimeDisplay(Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm"));
 
             // Load signals
             ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
@@ -708,8 +708,8 @@ public partial class ChartWindowViewModel : ObservableObject
                 $"{trendIndicator} candles={mainIndicator.CandleCount} points={mainIndicator.ZigZagList.Count}";
 
             // Akward... 
-            chart.Axes[0].MajorStep = (24 * 60 * 60 / Data.Interval.Duration) * Data.Interval.Duration;
-            chart.Axes[0].MinorStep = (24 * 60 * 60 / Data.Interval.Duration) * Data.Interval.Duration / 6;
+            chart.Axes[0].MajorStep = (24 * 60 / Data.Interval.Duration) * Data.Interval.Duration;
+            chart.Axes[0].MinorStep = (24 * 60 / Data.Interval.Duration) * Data.Interval.Duration / 6;
 
             // Draw candles (should do this just once, it will not change unless interval changes)
             Candles.Draw(chart, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
@@ -801,7 +801,7 @@ public partial class ChartWindowViewModel : ObservableObject
             double y = model.Axes[1].InverseTransform(screenPoint.Y);
 
             var symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
-            long unix = (long)x + symbolInterval.Interval.Duration / 2;
+            CandleTime unix = new CandleTime((uint)x) + symbolInterval.Interval.Duration / 2;
             unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
             if (unix < 0)
                 return;
@@ -809,7 +809,7 @@ public partial class ChartWindowViewModel : ObservableObject
             try
             {
                 // Update crosshair coordinates
-                CrossHairX.X = unix;
+                CrossHairX.X = unix.Minutes;
                 CrossHairX.LineStyle = LineStyle.DashDot;
 
                 CrossHairY.Y = y;
@@ -827,7 +827,7 @@ public partial class ChartWindowViewModel : ObservableObject
                 }
                 else
                 {
-                    DateTime date = CandleTools.GetUnixDate(unix);
+                    DateTime date = unix.ToDateTime();
                     subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(Data.Symbol.PriceDisplayFormat)}";
                 }
 
@@ -891,7 +891,7 @@ public partial class ChartWindowViewModel : ObservableObject
             decimal l = decimal.MaxValue;
             decimal h = decimal.MinValue;
             CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
-            long unix = candleLast.OpenTime;
+            CandleTime unix = candleLast.OpenTime;
             int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
             CryptoCandle xlast = candleLast;
             CryptoCandle xfirst = candleLast;
@@ -918,8 +918,8 @@ public partial class ChartWindowViewModel : ObservableObject
 
             // X axis
             PlotView.ActualModel.Axes[0].Reset();
-            PlotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime - 5 * Data.Interval.Duration;
-            PlotView.ActualModel.Axes[0].Maximum = xlast.OpenTime + extra * Data.Interval.Duration;
+            PlotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime.Minutes - 5 * Data.Interval.Duration;
+            PlotView.ActualModel.Axes[0].Maximum = xlast.OpenTime.Minutes + extra * Data.Interval.Duration;
 
             // Y axis
             l -= 0.02m * l;

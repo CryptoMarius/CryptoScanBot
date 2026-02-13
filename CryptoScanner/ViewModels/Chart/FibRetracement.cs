@@ -65,9 +65,9 @@ public class FibRetracement
             fibRetracement = RetracementX(side, indicator.LastSwingLow.Value, indicator.LastSwingHigh.Value);
 
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            long start = last.Candle.OpenTime + interval.Duration;
+            CandleTime start = last.Candle.OpenTime + interval.Duration;
             var lastCandle = symbolInterval.CandleList.Values.Last();
-            long stop = lastCandle.OpenTime + 10 * interval.Duration;
+            CandleTime stop = lastCandle.OpenTime + 10 * interval.Duration;
 
             foreach (var (value, percent, color) in fibRetracement)
             {
@@ -79,14 +79,14 @@ public class FibRetracement
                     Font = Const.OxyFontName,
                     Tag = group,
                 };
-                fibLevel.Points.Add(new DataPoint(start, (double)value));
-                fibLevel.Points.Add(new DataPoint(stop, (double)value));
+                fibLevel.Points.Add(new DataPoint(start.Minutes, (double)value));
+                fibLevel.Points.Add(new DataPoint(stop.Minutes, (double)value));
                 chart.Series.Add(fibLevel);
 
                 chart.Annotations.Add(new TextAnnotation
                 {
                     TextColor = OxyColors.White,
-                    TextPosition = new DataPoint(stop + interval.Duration * 4, (double)value),
+                    TextPosition = new DataPoint((stop + interval.Duration * 4).Minutes, (double)value),
                     TextVerticalAlignment = VerticalAlignment.Middle,
                     Text = $"{percent:N3}%",
                     Font = Const.OxyFontName,

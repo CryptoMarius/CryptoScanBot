@@ -71,7 +71,7 @@ public static class SymbolColumns
         var columns = new ObservableCollection<GridColumnDefinition<SymbolColumnEnum>>
         {
             new() { ColumnEnum = SymbolColumnEnum.Id, Header = "Id", Width = 50, Alignment = HorizontalAlignment.Right, IsVisible=false},
-            new() { ColumnEnum = SymbolColumnEnum.Symbol, Header = "Symbol", Width = 80, Alignment = HorizontalAlignment.Left},
+            new() { ColumnEnum = SymbolColumnEnum.Symbol, Header = "Symbol", Width = 120, Alignment = HorizontalAlignment.Left},
             new() { ColumnEnum = SymbolColumnEnum.Volume, Header = "Volume", Width = 100, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = SymbolColumnEnum.Distance, Header = "Distance", Width = 70, Alignment = HorizontalAlignment.Left},
         };

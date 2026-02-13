@@ -67,20 +67,22 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         foreach (KrakenKlineUpdate kline in data.Data)
                         {
                             // Add or update the local cache
-                            long candleOpenUnix = CandleTools.GetUnixTime(kline.OpenTime, 60);
+                            bool addCandle = false;
+                            CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
                             CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
                             if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
                             {
-                                candle = new();
-                                candleCache.TryAdd(candleOpenUnix, candle);
-                                candle.OpenTime = candleOpenUnix;
+                                addCandle = true;
+                                candle = new() { OpenTime = candleOpenUnix };
                             }
-                            candle.Open = kline.OpenPrice;
+                            candle!.Open = kline.OpenPrice;
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
                             //candle.Volume = kline.Volume;
                             candle.Volume = kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice);
+                            if (addCandle)
+                                candleCache.TryAdd(candleOpenUnix, candle);
                             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)} count={candleCache.Count}");
                         }
                     }
@@ -116,7 +118,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                         {
                             CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
                             CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                            long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
+                            CandleTime expectedCandlesUpto = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1) - interval.Duration;
 
                             // Problem this = symbolPeriod.CandleList.Values.Last()
                             // TODO, this one gives me lots of problems, collection has been modified (fair, but how to solve this)

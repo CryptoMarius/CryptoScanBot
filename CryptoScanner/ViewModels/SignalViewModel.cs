@@ -44,10 +44,12 @@ public partial class SignalViewModel : BaseGridViewModel<CryptoSignal, SignalCol
         _timerClearAndUpdateSignals.Start();
 
         LoadSignals();
+        InitializeRefreshTimer();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
         _timerAddSignalsFromQueue.Stop();
         _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
 
@@ -72,34 +74,34 @@ public partial class SignalViewModel : BaseGridViewModel<CryptoSignal, SignalCol
         LoadSignals();
     }
 
-    protected override void RefreshVisibleItems()
-    {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
 
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                var selectedId = SelectedObject?.Id;
-                VisibleObjects = new AvaloniaList<CryptoSignal>(_allObjects);
-                if (selectedId.HasValue)
-                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    var selectedId = SelectedObject?.Id;
-                    VisibleObjects = new AvaloniaList<CryptoSignal>(_allObjects);
-                    if (selectedId.HasValue)
-                        SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
-                }
-            });
-        }
-    }
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            var selectedId = SelectedObject?.Id;
+    //            VisibleObjects = new AvaloniaList<CryptoSignal>(_allObjects);
+    //            if (selectedId.HasValue)
+    //                SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                var selectedId = SelectedObject?.Id;
+    //                VisibleObjects = new AvaloniaList<CryptoSignal>(_allObjects);
+    //                if (selectedId.HasValue)
+    //                    SelectedObject = VisibleObjects.FirstOrDefault(p => p.Id == selectedId.Value);
+    //            }
+    //        });
+    //    }
+    //}
 
 
     private void TimerAddSignalsFromQueueTick(object? sender, EventArgs e)
@@ -168,11 +170,11 @@ public partial class SignalViewModel : BaseGridViewModel<CryptoSignal, SignalCol
 
         if (!signal.IsInvalid)
         {
-            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, long lastSignalTime) x))
+            if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
             {
-                if (signal.EventTime > x.lastSignalTime)
+                if (signal.CloseDate > x.lastSignalTime)
                 {
-                    x.lastSignalTime = signal.EventTime + 20;
+                    x.lastSignalTime = signal.CloseDate.AddSeconds(20);
                     GlobalData.StrategiesSettings[signal.Strategy] = x;
 
                     string soundFile = signal.Side == CryptoTradeSide.Long ?
@@ -275,7 +277,7 @@ public partial class SignalViewModel : BaseGridViewModel<CryptoSignal, SignalCol
         return false;
     }
 
-    static long LastStatisticUpdate = 0;
+    static CandleTime LastStatisticUpdate = CandleTime.MinValue;
 
     private void TimerClearAndUpdateSignalsTick(object? sender, EventArgs e)
     {
@@ -290,7 +292,7 @@ public partial class SignalViewModel : BaseGridViewModel<CryptoSignal, SignalCol
             {
                 if (_allObjects.Count > 0)
                 {
-                    long x = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
                     bool updateStats = x != LastStatisticUpdate;
                     LastStatisticUpdate = x;
 

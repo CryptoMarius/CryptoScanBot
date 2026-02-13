@@ -5,113 +5,41 @@ using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Core;
 
-//public static class TimeConverter
-//{
-//    private static readonly DateTime Epoch = new(2010, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-//    private static readonly long EpochUnixMilliseconds = new DateTimeOffset(Epoch).ToUnixTimeMilliseconds();
-//    private static readonly long EpochUnixSeconds = new DateTimeOffset(Epoch).ToUnixTimeSeconds();
-
-//    private const int SecondsPerMinute = 60;
-//    private const int MillisPerMinute = 60000;
-
-//    // ----------------------------
-//    // unix milliseconds -> uint minutes
-//    // ----------------------------
-//    public static uint FromUnixMilliseconds(long unixMilliseconds)
-//    {
-//        ArgumentOutOfRangeException.ThrowIfLessThan(unixMilliseconds, EpochUnixMilliseconds);
-//        long minutes = (unixMilliseconds - EpochUnixMilliseconds) / MillisPerMinute;
-//        return (uint)minutes;
-//    }
-
-//    // ----------------------------
-//    // unix seconds -> uint minutes
-//    // ----------------------------
-//    public static uint FromUnixSeconds(long unixSeconds)
-//    {
-//        ArgumentOutOfRangeException.ThrowIfLessThan(unixSeconds, EpochUnixSeconds);
-
-//        long minutes = (unixSeconds - EpochUnixSeconds) / SecondsPerMinute;
-//        return (uint)minutes;
-//    }
-
-//    // ----------------------------
-//    // uint minutes -> DateTime UTC
-//    // ----------------------------
-//    public static DateTime ToDateTime(uint minutes)
-//    { 
-//        return Epoch.AddMinutes(minutes); 
-//    }
-
-//    // ----------------------------
-//    // uint minutes -> unix milliseconds
-//    // ----------------------------
-//    public static long ToUnixMilliseconds(uint minutes)
-//    {
-//        return EpochUnixMilliseconds + ((long)minutes * MillisPerMinute);
-//    }
-
-//    // ----------------------------
-//    // uint minutes -> unix seconds
-//    // ----------------------------
-//    public static long ToUnixSeconds(uint minutes)
-//    {
-//        return EpochUnixSeconds + ((long)minutes * SecondsPerMinute);
-//    }
-//}
-
 public static class CandleTools
 {
-
-    //public static uint ToUnixTimeMinutes(DateTime dateTime)
+    ///// <summary>
+    ///// Datum's kunnen afrondings problemen veroorzaken (op dit moment niet meer duidelijk waarom dat zo was?)
+    ///// Het resultaat valt in het opgegeven interval (60, 120, etc)
+    ///// NB: De candles bevatten altijd een datumtijd in UTC
+    ///// </summary>
+    //public static long GetUnixTime(DateTime datetime, long intervalDuration)
     //{
-    //    long minutes = dateTime.Ticks / TimeSpan.TicksPerMinute;
-    //    return (uint)(minutes - UnixEpochSeconds);
+    //    DateTimeOffset dateTimeOffset = datetime.ToUniversalTime();
+    //    long unix = dateTimeOffset.ToUnixTimeSeconds();
+    //    if (intervalDuration != 0)
+    //        unix -= unix % intervalDuration;
+    //    return unix;
     //}
 
-    //public static DateTimeOffset FromUnixTimeMinutes(uint minutes)
+    //public static long GetUnixTime(long unixTime, long intervalDuration)
     //{
-    //    if (minutes > UnixMaxMinutes)
-    //        throw new ArgumentOutOfRangeException(nameof(minutes));
-
-    //    long ticks = minutes * TicksPerMinute + UnixEpochTicks;
-    //    return new DateTimeOffset(ticks, TimeSpan.Zero);
+    //    long unix = unixTime;
+    //    if (intervalDuration != 0)
+    //        unix -= unix % intervalDuration;
+    //    return unix;
     //}
 
-
-    /// <summary>
-    /// Datum's kunnen afrondings problemen veroorzaken (op dit moment niet meer duidelijk waarom dat zo was?)
-    /// Het resultaat valt in het opgegeven interval (60, 120, etc)
-    /// NB: De candles bevatten altijd een datumtijd in UTC
-    /// </summary>
-    public static long GetUnixTime(DateTime datetime, long intervalDuration)
-    {
-        DateTimeOffset dateTimeOffset = datetime.ToUniversalTime();
-        long unix = dateTimeOffset.ToUnixTimeSeconds();
-        if (intervalDuration != 0)
-            unix -= unix % intervalDuration;
-        return unix;
-    }
-
-    public static long GetUnixTime(long unixTime, long intervalDuration)
-    {
-        long unix = unixTime;
-        if (intervalDuration != 0)
-            unix -= unix % intervalDuration;
-        return unix;
-    }
-
-    /// <summary>
-    /// De reverse van de GetUnixTime
-    /// Oppassen: De candles bevatten altijd een datumtijd in UTC, deze moet dus ook
-    /// </summary>
-    public static DateTime GetUnixDate(long? unixDate)
-    {
-        if (unixDate == null)
-            throw new Exception("GetUnixDate null argument");
-        DateTime datetime = DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
-        return datetime;
-    }
+    ///// <summary>
+    ///// De reverse van de GetUnixTime
+    ///// Oppassen: De candles bevatten altijd een datumtijd in UTC, deze moet dus ook
+    ///// </summary>
+    //public static DateTime GetUnixDate(long? unixDate)
+    //{
+    //    if (unixDate == null)
+    //        throw new Exception("GetUnixDate null argument");
+    //    DateTime datetime = DateTimeOffset.FromUnixTimeSeconds((long)unixDate).UtcDateTime;
+    //    return datetime;
+    //}
 
     public static decimal GetHighValue(this CryptoCandle candle, bool useHighLow)
     {
@@ -129,21 +57,6 @@ public static class CandleTools
             return Math.Min(candle.Open, candle.Close);
     }
 
-    //public static decimal GetLowest(this CryptoCandle candle, bool useWicks)
-    //{
-    //    if (useWicks)
-    //        return candle.Low;
-    //    else
-    //        return Math.Min(candle.Open, candle.Close);
-    //}
-
-    //public static decimal GetHighest(this CryptoCandle candle, bool useWicks)
-    //{
-    //    if (useWicks)
-    //        return candle.High;
-    //    else
-    //        return Math.Max(candle.Open, candle.Close);
-    //}
 
     /// <summary>
     /// Add the final candle in the right interval
@@ -155,7 +68,7 @@ public static class CandleTools
         CryptoCandleList candles = symbolInterval.CandleList;
 
         // Add the candle if it does not exist
-        long candleOpenUnix = GetUnixTime(openTime, 60);
+        CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(openTime, 1);
         if (!candles.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
         {
             // Create the candle
@@ -173,7 +86,7 @@ public static class CandleTools
         else
         {
             // Update the candle
-            candle.Open = open;
+            candle!.Open = open;
             candle.High = high;
             candle.Low = low;
             candle.Close = close;
@@ -197,7 +110,7 @@ public static class CandleTools
     /// Calculate the candle using the candles from the lower timeframes
     /// </summary>
     public static void CalculateCandleForInterval(CryptoSymbol symbol, 
-        CryptoInterval lowerTimeFrame, CryptoInterval higherInterval, long higherIntervalOpenTime)
+        CryptoInterval lowerTimeFrame, CryptoInterval higherInterval, CandleTime higherIntervalOpenTime)
     {
         if (higherIntervalOpenTime % higherInterval.Duration != 0)
             throw new Exception("CalculateCandleForInterval time not correct..");
@@ -209,7 +122,7 @@ public static class CandleTools
         //CryptoSymbolInterval higherSymbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         //CryptoCandleList higherIntervalCandles = higherSymbolInterval.CandleList;
         //var (_, higherIntervalOpenTime) = IntervalTools.StartOfIntervalCandle3(targetOpenTime, lowerTimeFrame.Duration, interval.Duration);
-        long higherIntervalCloseTime = higherIntervalOpenTime + higherInterval.Duration;
+        CandleTime higherIntervalCloseTime = higherIntervalOpenTime + higherInterval.Duration;
         //#if DEBUG
         //        DateTime higherIntervalOpenTimeDebug = GetUnixDate(higherIntervalOpenTime);
         //        DateTime higherIntervalCloseTimeDebug = GetUnixDate(higherIntervalCloseTime);
@@ -218,8 +131,8 @@ public static class CandleTools
         // The lower timeframe and starttime + closetime
         CryptoSymbolInterval lowerSymbolInterval = symbol.GetSymbolInterval(lowerTimeFrame.IntervalPeriod);
         CryptoCandleList lowerIntervalCandles = lowerSymbolInterval.CandleList;
-        int expectedLowerIntervalCandleCount = higherInterval.Duration / lowerTimeFrame.Duration;
-        long lowerIntervalOpenTime = higherIntervalCloseTime - expectedLowerIntervalCandleCount * lowerTimeFrame.Duration;
+        uint expectedLowerIntervalCandleCount = higherInterval.Duration / lowerTimeFrame.Duration;
+        CandleTime lowerIntervalOpenTime = higherIntervalCloseTime - expectedLowerIntervalCandleCount * lowerTimeFrame.Duration;
         //long lowerIntervalCloseTime = lowerIntervalOpenTime + lowerTimeFrame.Duration; dont need it
         //#if DEBUG
         //        DateTime candleSourceStartDebug = GetUnixDate(lowerIntervalOpenTime);
@@ -236,7 +149,7 @@ public static class CandleTools
         // The candle  in the higher timeframe contains x candles from the lower timeframe
         int candleCount = 0;
         bool firstCandle = true;
-        long loop = lowerIntervalOpenTime;
+        CandleTime loop = lowerIntervalOpenTime;
         while (loop < higherIntervalCloseTime)
         {
             //#if DEBUG
@@ -270,7 +183,7 @@ public static class CandleTools
         if (candleCount == expectedLowerIntervalCandleCount)
         {
             // Create the higher timeframe candle (it will be added later when its data is fully calculated)
-            var higherIntervalCandle = CreateCandle(symbol, higherInterval, GetUnixDate(higherIntervalOpenTime), open, high, low, close, volume);
+            var higherIntervalCandle = CreateCandle(symbol, higherInterval, higherIntervalOpenTime.ToDateTime(), open, high, low, close, volume);
             UpdateCandleFetched(symbol, higherInterval);
             //GlobalData.Logger.Info(higherIntervalCandle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true));
         }
@@ -301,7 +214,7 @@ public static class CandleTools
             UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
 
             // Calculate the higher timeframes
-            long candle1mCloseTime = candle!.OpenTime + 60;
+            CandleTime candle1mCloseTime = candle!.OpenTime + 1;
             foreach (CryptoInterval interval in GlobalData.IntervalList)
             {
                 if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
@@ -334,7 +247,7 @@ public static class CandleTools
         {
             CryptoCandle stickOld = candleList.Values.First();
             //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Debug missing candle " + CandleTools.GetUnixDate(stickOld.OpenTime).ToLocalTime());
-            long unixTime = stickOld.OpenTime;
+            CandleTime unixTime = stickOld.OpenTime;
             while (unixTime < symbolInterval.LastCandleSynchronized)
             {
                 // TODO: Replace with CandleTools.CreateCandle? (or optimize)
@@ -362,7 +275,7 @@ public static class CandleTools
     }
 
 
-    public static void BulkCalculateCandles(CryptoSymbol symbol, CryptoInterval sourceInterval, CryptoInterval targetInterval, long fetchEndUnix)
+    public static void BulkCalculateCandles(CryptoSymbol symbol, CryptoInterval sourceInterval, CryptoInterval targetInterval, CandleTime fetchEndUnix)
     {
         //GlobalData.AddTextToLogTab($"{symbol.Name} BulkCalculateCandles {lowerTimeFrame.Name} {interval.Name}");
         CryptoSymbolInterval symbolSourceInterval = symbol.GetSymbolInterval(sourceInterval.IntervalPeriod);
@@ -373,7 +286,7 @@ public static class CandleTools
             //DateTime lastCandleDateDebug;
             //DateTime fetchEndUnixDate = CandleTools.GetUnixDate(fetchEndUnix);
 
-            long firstCandle = candleSourceInterval.Keys.First();
+            CandleTime firstCandle = candleSourceInterval.Keys.First();
             var (firstComplete, firstCandleDate) = IntervalTools.StartOfIntervalCandle3(firstCandle, sourceInterval.Duration, targetInterval.Duration);
             //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             if (!firstComplete || firstCandleDate < firstCandle) // Has candles targetComplete and will not be complete and will be flagged as error
@@ -382,7 +295,7 @@ public static class CandleTools
                 //firstCandleDateDebug = GetUnixDate(firstCandleDate);
             }
 
-            long lastCandle = candleSourceInterval.Keys.Last();
+            CandleTime lastCandle = candleSourceInterval.Keys.Last();
             var (lastComplete, lastCandleDate) = IntervalTools.StartOfIntervalCandle3(lastCandle, sourceInterval.Duration, targetInterval.Duration);
             //lastCandleDateDebug = GetUnixDate(lastCandleDate);
             if (!lastComplete || lastCandleDate + targetInterval.Duration > fetchEndUnix) // Has candles targetComplete and will not be complete and will be flagged as error (also future candle)
@@ -392,7 +305,7 @@ public static class CandleTools
             }
 
             // Bulk calculate all higher interval candles (ranging from the firstLowerCandle to the last candle)
-            long loop = firstCandleDate;
+            CandleTime loop = firstCandleDate;
             while (loop <= lastCandleDate)
             {
                 CalculateCandleForInterval(symbol, sourceInterval, targetInterval, loop);
@@ -412,14 +325,14 @@ public static class CandleTools
             var candles = symbolInterval.CandleList;
             if (candles.Count != 0)
             {
-                while (candles.TryGetValue((long)symbolInterval.LastCandleSynchronized, out CryptoCandle? _))
+                while (candles.TryGetValue((CandleTime)symbolInterval.LastCandleSynchronized, out CryptoCandle? _))
                     symbolInterval.LastCandleSynchronized += interval.Duration;
             }
         }
     }
 
 
-    public static async Task CleanCandleDataAsync(CryptoSymbol symbol, long? lastCandle1mCloseTime)
+    public static async Task CleanCandleDataAsync(CryptoSymbol symbol, CandleTime? lastCandle1mCloseTime)
     {
         // We nemen aardig wat geheugen in beslag door alles in het geheugen te berekenen, probeer in
         // ieder geval de CandleData te clearen. Vanaf x candles terug tot de eerste de beste die null is.
@@ -435,9 +348,9 @@ public static class CandleTools
                     CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
                     if (candles.Count > 0)
                     {
-                        long firstOpenTime = candles.Keys.First();
+                        CandleTime firstOpenTime = candles.Keys.First();
                         lastCandle1mCloseTime ??= candles.Keys.Last();
-                        long unix = lastCandle1mCloseTime.Value - 62 * interval.Duration;
+                        CandleTime unix = lastCandle1mCloseTime.Value - 62 * interval.Duration;
 
                         // Remove old indicator data
                         while (unix >= firstOpenTime)
@@ -466,7 +379,7 @@ public static class CandleTools
 
 
                         // Remove old candles
-                        long startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
+                        CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
                         //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
                         while (candles.Count > 0)
                         {
@@ -494,17 +407,17 @@ public static class CandleTools
     /// <summary>
     /// Determine the (worst case) fetch date per interval
     /// </summary>
-    public static long[] DetermineFetchStartDate(CryptoSymbol symbol, long fetchEndUnix)
+    public static CandleTime[] DetermineFetchStartDate(CryptoSymbol symbol, CandleTime fetchEndUnix)
     {
         // TODO: Find a better place, problem is the method "Interval.GetExchangeInterval" which is exchange specific
-        DateTime fetchEndDate = CandleTools.GetUnixDate(fetchEndUnix);
+        DateTime fetchEndDate = fetchEndUnix.ToDateTime();
 
         // Determine the maximum startdate per interval
         // Calculate what we need for the (full) calculation of the indicators (and markettrend)
-        long[] fetchFrom = new long[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
+        CandleTime[] fetchFrom = new CandleTime[Enum.GetNames(typeof(CryptoIntervalPeriod)).Length];
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            long startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
+            CandleTime startFromUnixTime = CandleIndicatorData.GetCandleFetchStart(symbol, interval, fetchEndDate);
             fetchFrom[(int)interval.IntervalPeriod] = startFromUnixTime;
         }
 
@@ -517,7 +430,7 @@ public static class CandleTools
             while (!symbol.Exchange.IsIntervalSupported(lowerInterval.IntervalPeriod))
             {
                 lowerInterval = lowerInterval.ConstructFrom;
-                long startFromUnixTime = fetchFrom[(int)interval!.IntervalPeriod];
+                CandleTime startFromUnixTime = fetchFrom[(int)interval!.IntervalPeriod];
                 if (startFromUnixTime < fetchFrom[(int)lowerInterval!.IntervalPeriod])
                     fetchFrom[(int)lowerInterval!.IntervalPeriod] = startFromUnixTime;
             }
@@ -530,7 +443,7 @@ public static class CandleTools
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
-                long alreadyFetched = (long)symbolInterval.LastCandleSynchronized;
+                CandleTime alreadyFetched = symbolInterval.LastCandleSynchronized.Value;
                 // Huray, retrieve less candles, less work, more free time
                 if (alreadyFetched > fetchFrom[(int)interval.IntervalPeriod])
                     fetchFrom[(int)interval.IntervalPeriod] = alreadyFetched;

@@ -23,7 +23,7 @@ public class PositionMonitor //: IDisposable
     // De laatste gesloten 1m candle
     public CryptoCandle LastCandle1m { get; set; }
     // De sluittijd van deze candle (als unixtime) - De CurrentTime bij backtesting
-    public long LastCandle1mCloseTime { get; set; }
+    public CandleTime LastCandle1mCloseTime { get; set; }
     // De sluittijd van deze candle (als DateTime) - De CurrentTime bij backtesting
     public DateTime LastCandle1mCloseTimeDate { get; set; }
     public CryptoDatabase Database { get; set; } = new();
@@ -35,9 +35,9 @@ public class PositionMonitor //: IDisposable
         Symbol = symbol;
         LastCandle1m = lastCandle1m;
 
-        // De laatste 1m candle die definitief is
-        LastCandle1mCloseTime = lastCandle1m.OpenTime + 60;
-        LastCandle1mCloseTimeDate = CandleTools.GetUnixDate(LastCandle1mCloseTime);
+        // The last final 1m candle
+        LastCandle1mCloseTime = lastCandle1m.OpenTime + 1;
+        LastCandle1mCloseTimeDate = LastCandle1mCloseTime.ToDateTime();
 
         Database.Open();
     }
@@ -276,7 +276,7 @@ public class PositionMonitor //: IDisposable
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
-        if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60))
+        if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1))
         {
             reaction = $"the bot is paused because {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
@@ -329,7 +329,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // De candle van het signaal terugzoeken (niet zomaar de laatste candle nemen, dit vanwege backtest!)
-                    long unix = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
+                    CandleTime unix = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
                     //long unix = CandleTools.GetUnixTime(lastCandle1m.OpenTime, symbolInterval.Interval.Duration);
                     //long unix = CandleTools.GetUnixTime(candleCloseTime - symbolInterval.Interval.Duration, symbolInterval.Interval.Duration);
                     if (!symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candleInterval))
@@ -416,7 +416,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Heeft de munt genoeg 24h volume
-                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 60, out reaction))
+                            if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 1, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -625,7 +625,7 @@ public class PositionMonitor //: IDisposable
         CryptoCandle? candleInterval = null;
         if (LastCandle1mCloseTime % interval.Duration != 0)
             return (false, candleInterval);
-        long candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
+        CandleTime candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
 
 
         // Die indicator berekening had ik niet verwacht (cooldown?)
@@ -1381,7 +1381,7 @@ public class PositionMonitor //: IDisposable
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
                             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval!.IntervalPeriod);
-                            if (step.CreateTime.AddSeconds(GlobalData.Settings.Trading.EntryRemoveTime * symbolInterval.Interval?.Duration ?? 0) < LastCandle1mCloseTimeDate)
+                            if (step.CreateTime.AddMinutes(GlobalData.Settings.Trading.EntryRemoveTime * symbolInterval.Interval?.Duration ?? 0) < LastCandle1mCloseTimeDate)
                             {
                                 // Trades worden niet altijd op het juiste tijdstip opgemerkt (de user ticker ligt er vaak uit)
                                 // Controleer daarom eerst of de order gevallen is, synchroniseer de trades en herberekenen het geheel..
@@ -1809,7 +1809,7 @@ public class PositionMonitor //: IDisposable
     public async Task CheckThePosition(CryptoPosition position)
     {
         // Pauzeren vanwege de trading regels of te lage barometer
-        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60);
+        PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
 
         //Monitor.Enter(position);
         try
@@ -1872,7 +1872,7 @@ public class PositionMonitor //: IDisposable
                 await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, Symbol, LastCandle1m);
 
             // Pause becuase of trading rules or low barometer
-            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 60);
+            PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
 
             // Open or extend a position
             if (signalList.Count > 0)

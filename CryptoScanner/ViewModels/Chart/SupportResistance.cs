@@ -10,7 +10,7 @@ public class SupportResistanceLevel
 {
     public decimal Price { get; set; }
     public long FirstTime { get; set; }
-    public string Type { get; set; } // "Support" of "Resistance"
+    public string Type { get; set; } = string.Empty; // "Support" of "Resistance"
     public int HitCount { get; set; } = 1;
 }
 
@@ -29,10 +29,10 @@ public class SupportResistance
             bool isSwingHigh = current.PointType == 'H';
 
             if (isSwingHigh)
-                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime, "Resistance", mergeTolerancePercent);
+                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime.Minutes, "Resistance", mergeTolerancePercent);
 
             if (isSwingLow)
-                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime, "Support", mergeTolerancePercent);
+                AddOrMergeLevel(rawLevels, current.Value, current.Candle.OpenTime.Minutes, "Support", mergeTolerancePercent);
         }
 
         // Filter op minimale hits
@@ -90,8 +90,8 @@ public class SupportResistance
                 {
                     Type = LineAnnotationType.Horizontal,
                     Y = value,
-                    MinimumX = bb.Candle.OpenTime,
-                    MaximumX = bb.Candle.OpenTime + 25 * interval.Duration,
+                    MinimumX = bb.Candle.OpenTime.Minutes,
+                    MaximumX = bb.Candle.OpenTime.Minutes + 25 * interval.Duration,
                     Color = color,
                     //Line = "Horizontal" 
                 };

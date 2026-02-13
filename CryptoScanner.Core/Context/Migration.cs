@@ -1010,7 +1010,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            try { database.Connection.Execute("insert into interval(intervalperiod, name, duration, constructfromid) values(15, '1w', 604800, 15)", transaction); } catch { } // ignore
+            try { database.Connection.Execute("insert into interval(intervalperiod, name, duration, constructfromid) values(15, '1w', 10080, 15)", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1172,6 +1172,17 @@ public class Migration
         // Apply the exchange defaults with each update
         if (updateExchanges)
             UpdateExchanges(database);
+
+
+        //***********************************************************
+        // todo:
+
+        // drop signal.EventTime no longer needed
+
+        // position.SignalEventTime = signal.CloseDate; 
+        // rename SignalEventTime to SignalCloseDate
+        // ??? not sure.. what is a better name
+        // SignalTime? okay..
 
     }
 }

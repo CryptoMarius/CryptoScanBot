@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Bollingerbands
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, long minDate, long maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesHigh = new LineSeries
         {
@@ -48,7 +48,7 @@ public class Bollingerbands
 
         foreach (var bb in bollingerBandsList)
         {
-            long openTime = CandleTools.GetUnixTime(bb.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Date, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? upperBand = bb.UpperBand;
@@ -56,11 +56,11 @@ public class Bollingerbands
                 double? lowerBand = bb.LowerBand;
 
                 if (lowerBand.HasValue)
-                    seriesLow.Points.Add(new DataPoint(openTime, lowerBand.Value));
+                    seriesLow.Points.Add(new DataPoint(openTime.Minutes, lowerBand.Value));
                 if (upperBand.HasValue)
-                    seriesHigh.Points.Add(new DataPoint(openTime, upperBand.Value));
+                    seriesHigh.Points.Add(new DataPoint(openTime.Minutes, upperBand.Value));
                 if (middleBand.HasValue)
-                    seriesMiddle.Points.Add(new DataPoint(openTime, middleBand.Value));
+                    seriesMiddle.Points.Add(new DataPoint(openTime.Minutes, middleBand.Value));
             }
         }
 

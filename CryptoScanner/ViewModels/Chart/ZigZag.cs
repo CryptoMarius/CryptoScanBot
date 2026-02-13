@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Trend;
+﻿using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trend;
 
 //using DryIoc.ImTools;
 
@@ -9,7 +10,8 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class ZigZag
 {
-    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption, OxyColor color, long minDate, long maxDate, string tag)
+    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption, 
+        OxyColor color, CandleTime minDate, CandleTime maxDate, string tag)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color, Tag = tag };
         var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, Tag = tag };
@@ -35,8 +37,8 @@ public class ZigZag
                     else
                         series = seriesHigh;
                 }
-                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
-                seriesZigZag.Points.Add(new DataPoint(zigzag.Candle.OpenTime, (double)zigzag.Value));
+                series?.Points.Add(new ScatterPoint(zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
+                seriesZigZag.Points.Add(new DataPoint(zigzag.Candle.OpenTime.Minutes, (double)zigzag.Value));
             }
         }
 

@@ -18,7 +18,7 @@ public partial class CryptoLiveData
     {
         get
         {
-            var closeData = Candle.Date.AddSeconds(Interval.Duration);
+            var closeData = Candle.Date.AddMinutes(Interval.Duration);
             return Candle.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm") + " - " + closeData.ToLocalTime().ToString("HH:mm");
         }
     }
@@ -33,7 +33,7 @@ public partial class CryptoLiveData
     [Computed] public string VolumeText => Symbol.Volume.ToString("N0");
     [Computed] public IBrush VolumeForeground => GetVolumeColor(Symbol, Symbol.Volume);
 
-    [Computed] public string BbText => Candle.CandleData?.BollingerBandsPercentage?.ToString("N2") ?? "";
+    [Computed] public string BBText => Candle.CandleData?.BollingerBandsPercentage?.ToString("N2") ?? "";
     [Computed] public string BbLowerText => Candle.CandleData?.BollingerBandsLowerBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
     [Computed] public string BbUpperText => Candle.CandleData?.BollingerBandsUpperBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
 
@@ -68,4 +68,7 @@ public partial class CryptoLiveData
 
     [Computed] public string PSarText => Candle.CandleData?.PSar?.ToString0(Symbol.PriceDisplayFormat) ?? "";
     [Computed] public IBrush PSarForeground => GetBrushColorPSar(CryptoTradeSide.Long, Candle.CandleData?.PSar, Candle.CandleData?.Sma20);
+
+    [Computed] public string FundingRateText => Symbol.FundingRate.ToString("N2") ?? "";
+
 }

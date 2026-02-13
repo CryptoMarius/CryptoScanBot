@@ -73,7 +73,7 @@ public class ZoneDlz
 
                         // Creation date is the date of the last swing point (SH/SL)
                         // TODO: The last swing low and high are now extracted from the boundaries of the zone, that is not 100% correct
-                        long timeLastSwingPoint = CandleTools.GetUnixTime(zone.CreateTime, 0);
+                        CandleTime timeLastSwingPoint = CandleTime.AlignFromDateTime(zone.CreateTime, 0);
                         if (symbolInterval.DlzAdmin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.DlzAdmin.TimeLastSwingPoint)
                         {
                             symbolInterval.DlzAdmin.TimeLastSwingPoint = timeLastSwingPoint;
@@ -127,7 +127,7 @@ public class ZoneDlz
         var symbolIntervalData = symbolData.Get(data.Interval.IntervalPeriod);
 
         // Collect old zones
-        SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
+        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongOpen, dbStats);
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortOpen, dbStats);
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongClosed, dbStats);
@@ -275,8 +275,8 @@ public class ZoneDlz
         if (GlobalData.Settings.Signal.ZonesDlz.ZoomLowerTimeFrames && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
         {
             CryptoIntervalPeriod zoom = interval!.IntervalPeriod;
-            long unixStart = zigZag.Candle.OpenTime;
-            long unixEinde = zigZag.Candle.OpenTime + interval.Duration;
+            CandleTime unixStart = zigZag.Candle.OpenTime;
+            CandleTime unixEinde = zigZag.Candle.OpenTime + interval.Duration;
             //DateTime unixStartDebug = CandleTools.GetUnixDate(unixStart);
             //DateTime unixEindeDebug = CandleTools.GetUnixDate(unixEinde);
 
@@ -299,10 +299,10 @@ public class ZoneDlz
                     //if (await ZoneCandleEngine.FetchFrom(symbol, zoomInterval.Interval, unixStart, count))
                     //    loadedCandlesInMemory[zoomInterval.Interval.IntervalPeriod] = true; // in memory, alway's save
 
-                    int count = interval.Duration / zoomInterval.Interval.Duration;
+                    int count = (int)interval.Duration / (int)zoomInterval.Interval.Duration;
                     await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, zoomInterval.Interval, unixStart, count);
 
-                    long loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
+                    CandleTime loop = IntervalTools.StartOfIntervalCandle(unixStart, zoomInterval.Interval.Duration);
                     while (loop < unixEinde && zigZag.Percentage >= GlobalData.Settings.Signal.ZonesDlz.MaximumZoomedPercentage)
                     {
                         //DateTime loopDebug = CandleTools.GetUnixDate(loop);
@@ -386,7 +386,7 @@ public class ZoneDlz
     }
 
 
-    public static void CheckZones(ZoneConfig data, ref long key, long checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
+    public static void CheckZones(ZoneConfig data, ref CandleTime key, CandleTime checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
     {
         while (key <= checkUpTo)
         {
@@ -424,13 +424,13 @@ public class ZoneDlz
         List<ZigZagResult> zonesShort = [];
 
         long delay = 4 * data.SymbolInterval.Interval.Duration; // TODO, not correct!
-        long maxTime = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+        CandleTime maxTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
 
         if (indicator.ZigZagList.Count > 0)
         {
             // brute force, this is going to take a lot of iterations..
             int last = indicator.ZigZagList.Count - 1;
-            long key = indicator.ZigZagList.First().Candle.OpenTime + delay;
+            CandleTime key = indicator.ZigZagList.First().Candle.OpenTime + delay;
 
             for (int i = 0; i <= last; i++)
             {
@@ -444,7 +444,7 @@ public class ZoneDlz
                     else
                         zonesShort.Add(zigZag);
 
-                    long checkUpTo;
+                    CandleTime checkUpTo;
                     if (i < last)
                         checkUpTo = zigZag.Candle.OpenTime;
                     else
@@ -483,8 +483,8 @@ public class ZoneDlz
                             boxLimit = zigZag.Top;
                         decimal price = boxLimit;
 
-                        long max = zigZag.Candle.OpenTime;
-                        long min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * data.Interval.Duration;
+                        CandleTime max = zigZag.Candle.OpenTime;
+                        CandleTime min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * data.Interval.Duration;
                         // Is it on the right of the last zigzag point?
                         if (min < previous.Candle.OpenTime)
                             min = previous.Candle.OpenTime;
@@ -529,8 +529,8 @@ public class ZoneDlz
         try
         {
             // Determine the period
-            long unixCurrentTime = CandleTools.GetUnixTime(DateTime.UtcNow, 0); // todo Emulator date?
-            long fetchFrom = IntervalTools.StartOfIntervalCandle(unixCurrentTime, data.SymbolInterval.Interval.Duration);
+            CandleTime unixCurrentTime = CandleTime.FromDateTime(DateTime.UtcNow);  // todo Emulator date?
+            CandleTime fetchFrom = IntervalTools.StartOfIntervalCandle(unixCurrentTime, data.SymbolInterval.Interval.Duration);
             fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * data.SymbolInterval.Interval.Duration;
 
             //// Load candles from disk

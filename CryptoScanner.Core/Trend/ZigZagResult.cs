@@ -27,7 +27,7 @@ public class ZigZagResult
     public decimal Top { get; set; }
     public decimal Bottom { get; set; }
     public double Percentage { get; set; }
-    public long? CloseDate { get; set; }
+    public CandleTime? CloseDate { get; set; }
 
     public int PivotIndex { get; set; }
 

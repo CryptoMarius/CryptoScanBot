@@ -22,7 +22,7 @@ public class MarketTrend
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
                 if (symbolInterval.LastCandle == null)
                     return symbolTrend; // should never happen
-                long candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
+                CandleTime candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
 
                 // the log parameter is only present when called from the CommandShowTrendInfo()
                 if (symbolTrend.Time == null || candleIntervalEnd > symbolTrend.Time || log != null)
@@ -51,7 +51,7 @@ public class MarketTrend
                         }
                         else isCached = true;
 
-                        int intervalWeight = interval.Duration;
+                        int intervalWeight = (int)interval.Duration;
                         if (intervalTrend.Trend == CryptoTrendIndicator.Bullish)
                             weightSum += intervalWeight;
                         else if (intervalTrend.Trend == CryptoTrendIndicator.Bearish)

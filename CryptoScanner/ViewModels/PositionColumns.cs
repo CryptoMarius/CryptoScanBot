@@ -232,6 +232,7 @@ public static class PositionColumns
             new() { ColumnEnum = PositionColumnEnum.Open, Header = "Open", Width = 75, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = PositionColumnEnum.CurrentProfit, Header = "Profit", Width = 75, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = PositionColumnEnum.CurrentProfitPercentage, Header = "Percentage", Width = 75, Alignment = HorizontalAlignment.Right},
+            new() { ColumnEnum = PositionColumnEnum.Parts, Header = "Parts", Width = 60, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = PositionColumnEnum.EntryPrice, Header = "Entry", Width = 75, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = PositionColumnEnum.BreakEvenPrice, Header = "Break Even", Width = 75, Alignment = HorizontalAlignment.Right},
             new() { ColumnEnum = PositionColumnEnum.BreakEvenPercent, Header = "Break Even%", Width = 75, Alignment = HorizontalAlignment.Right},

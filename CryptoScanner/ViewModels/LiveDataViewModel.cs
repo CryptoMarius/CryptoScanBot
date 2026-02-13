@@ -26,54 +26,56 @@ public partial class LiveDataViewModel : BaseGridViewModel<CryptoLiveData, LiveD
 
         _updateTimer.Tick += TimerAddLiveDataTick;
         _updateTimer.Start();
+        InitializeRefreshTimer();
+
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
         _updateTimer.Stop();
         _updateTimer.Tick -= TimerAddLiveDataTick;
     }
 
 
 
-    protected override void RefreshVisibleItems()
-    {
-        System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
+    //protected override void RefreshVisibleItems()
+    //{
+    //    System.Diagnostics.Debug.WriteLine("RefreshVisibleItems called");
 
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            lock (_lock)
-            {
-                // Bewaar huidige selectie
-                var selected = SelectedObject;
+    //    if (Dispatcher.UIThread.CheckAccess())
+    //    {
+    //        lock (_lock)
+    //        {
+    //            // Bewaar huidige selectie
+    //            var selected = SelectedObject;
 
-                // Vervang collectie
-                VisibleObjects = new AvaloniaList<CryptoLiveData>(_allObjects);
+    //            // Vervang collectie
+    //            VisibleObjects = new AvaloniaList<CryptoLiveData>(_allObjects);
 
-                // Herstel selectie
-                if (selected != null)
-                {
-                    SelectedObject = VisibleObjects.FirstOrDefault(p => p == selected);
-                }
-            }
-        }
-        else
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                lock (_lock)
-                {
-                    var selected = SelectedObject;
-                    VisibleObjects = new AvaloniaList<CryptoLiveData>(_allObjects);
-                    if (selected != null)
-                    {
-                        SelectedObject = VisibleObjects.FirstOrDefault(p => p == selected);
-                    }
-                }
-            });
-        }
-    }
-
+    //            // Herstel selectie
+    //            if (selected != null)
+    //            {
+    //                SelectedObject = VisibleObjects.FirstOrDefault(p => p == selected);
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Dispatcher.UIThread.Post(() =>
+    //        {
+    //            lock (_lock)
+    //            {
+    //                var selected = SelectedObject;
+    //                VisibleObjects = new AvaloniaList<CryptoLiveData>(_allObjects);
+    //                if (selected != null)
+    //                {
+    //                    SelectedObject = VisibleObjects.FirstOrDefault(p => p == selected);
+    //                }
+    //            }
+    //        });
+    //    }
+    //}
 
     private void TimerAddLiveDataTick(object? sender, EventArgs e)
     {

@@ -87,7 +87,7 @@ public class SignalExecute
 
     public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol,
         Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles,
-        long lastCandle1mCloseTime)
+        CandleTime lastCandle1mCloseTime)
     {
         List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));

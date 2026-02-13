@@ -77,7 +77,7 @@ public class ZoneThreadCalculate
                 symbol.Data.CalculatingZones = true;
                 try
                 {
-                    session.MaxDate = CandleTools.GetUnixTime(DateTime.UtcNow, 60);
+                    session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
                     session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
                     session.MinDate = session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
                     await ZoneDlz.CalculateDlzBoxesAsync(null, session, data, loadedCandlesInMemory);
