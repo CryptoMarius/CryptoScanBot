@@ -86,7 +86,7 @@ public class SettingsGeneral
     //public string SelectedBarometerQuote { get; set; } = "USDT";
     //public string SelectedBarometerInterval { get; set; } = "1H";
 
-    // Avalinia: will not be supported
+    // Avalonia: will not be supported
     //public string FontNameNew { get; set; } = "Segoe UI";
     //public float FontSizeNew { get; set; } = 9f;
 
@@ -104,7 +104,7 @@ public class SettingsGeneral
     public SettingsGeneralBB SettingsBb { get; set; } = new();
     public SettingsGeneralRsi SettingsRsi { get; set; } = new();
     public SettingsGeneralStoch SettingsStoch { get; set; } = new();
-    
+
     public string DebugSymbol { get; set; } = "";
     public bool DebugZoneCandles { get; set; } = false;
     public bool DebugKLineReceive { get; set; } = false;

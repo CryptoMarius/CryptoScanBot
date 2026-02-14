@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
 
-//using DryIoc.ImTools;
-
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -10,7 +8,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class ZigZag
 {
-    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption, 
+    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption,
         OxyColor color, CandleTime minDate, CandleTime maxDate, string tag)
     {
         var seriesZigZag = new LineSeries { Title = caption, Color = color, Tag = tag };
