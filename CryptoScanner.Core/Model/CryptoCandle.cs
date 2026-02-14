@@ -59,7 +59,8 @@ public class CryptoCandle : IQuote
     public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
     public decimal Low { get; set; }
     public decimal Close { get; set; }
-    public decimal Volume { get; set; } // float or double will suffice (but with rounding errors)
+    private double _volume;
+    public decimal Volume { get { return (decimal)_volume; } set { _volume = (double)value; } } // float or double will suffice (but with rounding errors)
 
     // Idea, we store it as uint together with the factor, this saves 50% memory
     //public uint OpenStorage { get; set; }
