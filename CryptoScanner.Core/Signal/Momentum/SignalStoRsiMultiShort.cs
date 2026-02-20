@@ -17,21 +17,22 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
     }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Rsi == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Rsi == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
         return true;
     }
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         // disable sbm conditions
         response = "";
@@ -45,7 +46,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        CandleTime unixDate = CandleLast.OpenTime;
+        CandleTime unixDate = CandleLast.Candle.OpenTime;
 
         //if (!CandleLast.StochOversold(0))
         //{
@@ -68,18 +69,16 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
             CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle _))
                 return false;
 
-            if (candle.CandleData == null)
-            {
-                List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
-                if (history == null)
-                    return false;
-                CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-            }
+            // Calculate indicators if needed
+            IndicatorDataList.PrepareIndicators(Symbol, higherInterval.Interval, candleOpenTime, out _);
+            if (!IndicatorDataList.TryGetCandle(higherInterval.Interval, candleOpenTime, out MyData? candle))
+                return false;
 
-            if (IndicatorsOkay(candle!) && candle.StochOversold() && candle.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+
+            if (IndicatorsOkay(candle!) && candle!.StochOversold() && candle!.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';

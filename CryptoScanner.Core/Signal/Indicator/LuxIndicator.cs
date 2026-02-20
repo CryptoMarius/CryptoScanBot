@@ -83,7 +83,7 @@ public class LuxIndicator
     //    luxOverBought = 10 * overbuy;
     //}
 
-    public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, 
+    public static void CalculateNew(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought,
         CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
@@ -102,19 +102,19 @@ public class LuxIndicator
         decimal[] num = new decimal[N];
         decimal[] den = new decimal[N];
 
-        CryptoCandle? candlePrev;
-        CryptoCandle? candleLast = null;
+        CryptoCandle candlePrev = default;
+        CryptoCandle candleLast = default;
 
         CandleTime loop = candleIntervalOpenTimeStart;
         while (loop <= candleIntervalOpenTimeEnd)
         {
             candlePrev = candleLast;
-            if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev != null)
+            if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev.OpenTime != 0)
             {
                 int k = 0;
                 overbuy = 0;
                 oversell = 0;
-                decimal diff = candleLast.Close - candlePrev.Close;
+                decimal diff = candleLast!.Close - candlePrev.Close;
 
                 for (int i = min; i <= max; i++)
                 {
@@ -142,10 +142,10 @@ public class LuxIndicator
         }
 
         luxOverSold = (int)(100m * oversell / N);
-        luxOverBought = (int)(100m * overbuy / N); 
+        luxOverBought = (int)(100m * overbuy / N);
     }
 
-    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought, 
+    public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought,
         CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
         CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, candleCloseTime);

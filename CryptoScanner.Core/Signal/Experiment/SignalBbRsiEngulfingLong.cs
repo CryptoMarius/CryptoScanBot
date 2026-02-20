@@ -10,12 +10,13 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
     {
     }
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if ((candle == null)
-           || (candle.CandleData == null)
-            || (candle.CandleData.Rsi == null)
-            || (candle.CandleData.BollingerBandsLowerBand == null)
+        if ((data == null)
+           || data.Candle.OpenTime == 0
+           || (data.CandleData == null)
+            || (data.CandleData.Rsi == null)
+            || (data.CandleData.BollingerBandsLowerBand == null)
             )
             return false;
 
@@ -35,12 +36,12 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
         }
 
 
-        if (!GetPrevCandle(CandleLast!, out CryptoCandle? prev))
+        if (!GetPrevCandle(CandleLast!, out MyData? prev))
             return false;
 
 
         // Prev below BB
-        if (prev!.Close >= (decimal)prev!.CandleData!.BollingerBandsLowerBand!)
+        if (prev!.Candle.Close >= (decimal)prev!.CandleData!.BollingerBandsLowerBand!)
         {
             ExtraText = "not below bb.lower";
             return false;
@@ -54,7 +55,7 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
         }
 
         // Candle last closes above the high of the previous
-        if (CandleLast.Close <= prev!.High)
+        if (CandleLast.Candle.Close <= prev!.Candle.High)
         {
             ExtraText = "not engulfing";
             return false;

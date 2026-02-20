@@ -15,15 +15,14 @@ namespace CryptoScanner.Core.Exchange.Binance.Futures;
 /// </summary>
 public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
-    public async Task<CandleTime> GetCandlesForInterval(IDisposable clientBase, 
-        CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch)
+    public async Task<(bool, int, CandleTime)> GetCandlesForInterval(IDisposable clientBase, 
+        CryptoSymbol symbol, CryptoInterval interval, CandleTime minTime, CandleTime maxFetch)
     {
         // Remarks:
-        // The maximum is 1000 candles per GetKlinesAsync call.
-        // The results can be from new to old (wrong order).
-        // The results can contain in progress candles.
+        // The maximum is 1000 candles per GetKlinesAsync call
+        // The results can be from new to old (wrong order)
+        // The results can also contain in progress candles
 
-        // Weird piece of code, unable todo: (!clientBase is BinanceRestClient client1)
         BinanceRestClient client;
         if (clientBase is BinanceRestClient client1)
             client = client1;
@@ -33,26 +32,26 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
-        if (exchangeInterval == null)
-            throw new Exception($"Not supported interval");
-
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod) 
+            ?? throw new Exception($"Not supported interval");
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
-        CandleTime minTime = minFetch;
-        DateTime minDate = minTime.ToDateTime();
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
-        DateTime maxDate = maxTime.ToDateTime();
-
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
-            startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
+            startTime: minTime.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
-            GlobalData.AddTextToLogTab($"{prefix} error getting klines {result.Error}");
-            return minFetch;
+            GlobalData.AddTextToLogTab($"{prefix} fetch from {minTime.ToLocalTime()} error getting klines {result.Error}");
+            return (false, 0, minTime);
         }
 
+        // Might have problems with no internet etc.
+        if (result.Data == null)
+        {
+            GlobalData.AddTextToLogTab($"{prefix} fetch from {minTime.ToLocalTime()} error getting klines, nothing received");
+            return (false, 0, minTime);
+        }
         // Be carefull not going over boundaries (we stop early at 700..800 while the limit is actually 1200)
         int? weight = result.ResponseHeaders.UsedWeight();
         if (weight > 700)
@@ -68,30 +67,19 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 await Task.Delay(15000);
         }
 
-        // Might have problems with no internet etc.
-        if (result.Data == null)
-        {
-            GlobalData.AddTextToLogTab($"{prefix} fetch from {minFetch.ToDateTime()} no candles received");
-            return minFetch;
-        }
-
         bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
         if (debug)
-            GlobalData.AddTextToLogTab($"Binance.Futures.GetCandlesForInterval({symbol.Name}, {interval!.Name}, {result.RequestUrl} result={result.Data.Count()}");
+            ScannerLog.Logger.Info($"Binance.Futures.GetCandlesForInterval({symbol.Name}, {interval!.Name}, {result.RequestUrl} result={result.Data.Count()}");
 
 
-        CandleTime fetchedUpTo = CandleTime.MinValue;
+        CandleTime fetchedUpTo = minTime;
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
             foreach (var kline in result.Data)
             {
-                if (symbolInterval.IntervalPeriod != CryptoIntervalPeriod.interval1m)
-                {
-                    CandleTime unix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
-                    if (unix + symbolInterval.Interval.Duration > maxFetch) // future candle?
-                        continue;
-                }
+                if (CheckFutureCandleReceived(kline.OpenTime, symbol, interval, maxFetch))
+                    continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, kline.QuoteVolume);
@@ -109,7 +97,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             }
             else
             {
-                // New coins dont have History, we appearently asking for a period with no activity, skip that period
+                // We did not receive any candles (and no errors). New coins dont have History 
+                // and we are appearently asking for a period with no activity, skip that period
                 if (maxTime > maxFetch)
                     fetchedUpTo = maxFetch;
                 else
@@ -125,9 +114,9 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         int count = result.Data.Count();
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolPeriod.CandleList;
-        string s = $"{symbol.Exchange.Name} {symbol.Name} {interval.Name} fetch from {minDate.ToLocalTime()} .. {fetchedUpTo.ToDateTime().ToLocalTime()}";
+        string s = $"{symbol.Exchange.Name} {symbol.Name} {interval.Name} fetch from {minTime.ToLocalTime()} .. {fetchedUpTo.ToLocalTime()}";
         GlobalData.AddTextToLogTab($"{s} received: {count} total: {candles.Count}");
-        return fetchedUpTo;
+        return (true, count, fetchedUpTo);
     }
 
 }

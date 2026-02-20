@@ -53,7 +53,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
             if (symbolInterval.CandleList.Count > 0)
             {
                 CryptoCandle candleLast = symbolInterval.CandleList.Values.Last();
-                if (CandleIndicatorData.PrepareIndicators(Signal.Symbol, symbolInterval, candleLast, out _))
+                //if (CandleIndicatorData.PrepareIndicators(Signal.Symbol, symbolInterval, candleLast, out _))
                 {
                     int row = 0;
 
@@ -89,7 +89,7 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
 
                     foreach (CryptoCandle candle in symbolInterval.CandleList.Values.ToList())
                     {
-                        if (candle.CandleData != null)
+                        //if (candle.CandleData != null)
                         {
                             int column = 0;
                             try
@@ -103,26 +103,26 @@ public class ExcelSignalDump(CryptoSignal Signal) : ExcelBase(Signal.Symbol.Name
                                 WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
                                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsLowerBand, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsUpperBand, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.BollingerBandsPercentage, CellStylePercentageNormal);
+                                WriteCell(sheet, column++, row, Signal.BollingerBandsLowerBand, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.Sma20, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.BollingerBandsUpperBand, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.BollingerBandsPercentage, CellStylePercentageNormal);
 
 
-                                WriteCell(sheet, column++, row, candle.CandleData.Sma20, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.Sma50, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.Sma200, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.PSar, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.MacdValue, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.MacdSignal, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.MacdHistogram, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.Rsi, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.StochSignal, CellStyleDecimalNormal);
-                                WriteCell(sheet, column++, row, candle.CandleData.StochOscillator, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.Sma20, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.Sma50, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.Sma200, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.PSar, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.MacdValue, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.MacdSignal, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.MacdHistogram, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.Rsi, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.StochSignal, CellStyleDecimalNormal);
+                                WriteCell(sheet, column++, row, Signal.StochOscillator, CellStyleDecimalNormal);
 
-                                if (bmCandles.TryGetValue(candle.OpenTime, out CryptoCandle? bmCandle))
+                                if (bmCandles.TryGetValue(candle.OpenTime, out CryptoCandle bmCandle))
                                 {
-                                    WriteCell(sheet, column++, row, bmCandle.Close, bmCandle.Close < 0 ? CellStylePercentageRed : bmCandle.Close > 0 ? CellStylePercentageGreen : CellStylePercentageNormal);
+                                    WriteCell(sheet, column++, row, bmCandle!.Close, bmCandle.Close < 0 ? CellStylePercentageRed : bmCandle.Close > 0 ? CellStylePercentageGreen : CellStylePercentageNormal);
                                 }
 
                             }

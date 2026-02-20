@@ -12,14 +12,15 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
     {
     }
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Sma20 == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
@@ -54,7 +55,7 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
     }
 
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m && SignalSide == CryptoTradeSide.Long)
         {
@@ -103,13 +104,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             if (SignalSide == CryptoTradeSide.Long)
             {
                 if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                    !candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    !data.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                     return false;
                 if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                    !candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    !data.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                     return false;
                 if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                    !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    !data.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                     return false;
 
                 if (!CheckMaCrossings(out response))
@@ -118,13 +119,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             else if (SignalSide == CryptoTradeSide.Short)
             {
                 if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                    !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    !data.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                     return false;
                 if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                    !candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    !data.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                     return false;
                 if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                    !candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    !data.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                     return false;
 
                 if (!CheckMaCrossings(out response))
@@ -183,9 +184,9 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         int maxlen = 500;
         int max = Math.Min(maxlen, SymbolInterval.CandleList.Count - 1);
         //In Pine Script, wanneer je src[x] gebruikt en src = input.source(close) is:
-        // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) candle in de chart context(dus de meest recente die op dat moment verwerkt wordt).
-        // en x = 1 verwijst naar de vorige candle.
-        CandleTime offsett = CandleLast.OpenTime; // - max * Interval.Duration;
+        // dan verwijst x = 0 altijd naar de huidige(laatste beschikbare) data in de chart context(dus de meest recente die op dat moment verwerkt wordt).
+        // en x = 1 verwijst naar de vorige data.
+        CandleTime offsett = CandleLast.Candle.OpenTime; // - max * Interval.Duration;
 
         decimal sae = 0;
         List<decimal> nwe = [];
@@ -200,16 +201,16 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             {
                 // Gaussian window
                 decimal w = (decimal)Math.Exp(-(Math.Pow(i - j, 2)) / (double)(bandWidth * bandWidth * 2));
-                if (SymbolInterval.CandleList.TryGetValue(offsett - j * Interval.Duration, out CryptoCandle? candlej))
-                    sum += candlej.Close * w;
+                if (SymbolInterval.CandleList.TryGetValue(offsett - j * Interval.Duration, out CryptoCandle candlej))
+                    sum += candlej!.Close * w;
                 sumw += w;
             }
             decimal y2 = sum / sumw;
 
             CandleTime openTime = offsett - i * Interval.Duration;
-            if (SymbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle? candlei))
+            if (SymbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle candlei))
             {
-                sae += Math.Abs(candlei.Close - y2);
+                sae += Math.Abs(candlei!.Close - y2);
             }
             nwe.Add(y2);
         }
@@ -226,13 +227,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         {
             decimal lowerband = nweValue - sae;
             // Candle outside the band
-            if (CandleLast!.Open <= lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
+            if (CandleLast!.Candle.Open <= lowerband && CandleLast.Candle.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
                 //ExtraText = $"{angle_degrees2:N2}°, {perc1:N2}%";
                 return true;
             }
             // Candle sticking pearsing trough the band
-            if (candlePrev! > lowerband && CandleLast.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
+            if (candlePrev! > lowerband && CandleLast.Candle.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
                //ExtraText = $"{angle_degrees2:N2}°, {perc2:N2}%";
                 return true;
@@ -244,13 +245,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
         {
             decimal upperband = nweValue + sae;
             // Candle outside the band
-            if (CandleLast!.Open >= upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
+            if (CandleLast!.Candle.Open >= upperband && CandleLast.Candle.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
                 //ExtraText = $"{angle_degrees2:N2}°, {perc3:N2}%";
                 return true;
             }
             // Candle sticking pearsing trough the band
-            if (candlePrev! < upperband && CandleLast.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
+            if (candlePrev! < upperband && CandleLast.Candle.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
                 //ExtraText = $"{angle_degrees2:N2}°, {perc4:N2}%";
                 return true;

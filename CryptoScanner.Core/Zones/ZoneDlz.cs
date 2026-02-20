@@ -8,7 +8,7 @@ using Dapper;
 
 namespace CryptoScanner.Core.Zones;
 
-// DLZ - Dominant Liquidity ZonesDlz 
+// DLZ - Dominant Liquidity ZonesDlz
 
 public class ZoneDlz
 {
@@ -23,7 +23,7 @@ public class ZoneDlz
         }
 
         using var database = new CryptoDatabase();
-        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null order by CreateTime";
+        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null order by OpenTime";
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             PutZoneInMemory(zone);
@@ -40,7 +40,7 @@ public class ZoneDlz
 
         using var database = new CryptoDatabase();
 
-        string sql = "select * from zone where SymbolId = @SymbolId order by CreateTime"; //and Kind=1 
+        string sql = "select * from zone where SymbolId = @SymbolId order by OpenTime"; //and Kind=1
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbol.Id }))
         {
             PutZoneInMemory(zone);
@@ -73,7 +73,7 @@ public class ZoneDlz
 
                         // Creation date is the date of the last swing point (SH/SL)
                         // TODO: The last swing low and high are now extracted from the boundaries of the zone, that is not 100% correct
-                        CandleTime timeLastSwingPoint = CandleTime.AlignFromDateTime(zone.CreateTime, 0);
+                        CandleTime timeLastSwingPoint = zone.OpenTime;
                         if (symbolInterval.DlzAdmin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.DlzAdmin.TimeLastSwingPoint)
                         {
                             symbolInterval.DlzAdmin.TimeLastSwingPoint = timeLastSwingPoint;
@@ -99,7 +99,6 @@ public class ZoneDlz
                 {
                     Kind = CryptoZoneKind.DominantLevel,
                     Strength = zigZag.Strength, // depending on the percentage of the zone "intro"
-                    CreateTime = zigZag.Candle.Date,
                     ExchangeId = data.Symbol.Exchange.Id,
                     Exchange = data.Symbol.Exchange,
                     SymbolId = data.Symbol.Id,
@@ -202,7 +201,7 @@ public class ZoneDlz
 
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagResult zigZag, decimal top, decimal bottom, 
+        ZigZagResult zigZag, decimal top, decimal bottom,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         zigZag.Top = top;
@@ -216,7 +215,7 @@ public class ZoneDlz
         if (zigZag.PointType == 'L')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
                 if (candle.Low < zigZag.Bottom)
                 {
@@ -236,7 +235,7 @@ public class ZoneDlz
         else if (zigZag.PointType == 'H')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
                 if (candle.High > zigZag.Top)
                 {
@@ -259,7 +258,7 @@ public class ZoneDlz
             //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot corrected {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
         }
 
-        // Is the (unzoomed) percentage between the configured limits? 
+        // Is the (unzoomed) percentage between the configured limits?
         // Or is the percentage alread below the zoom-limit? (saves time)
         if (UnzoomedPercentageBelowMinimum(zigZag)
             || UnzoomedPercentageAboveMaximum(zigZag)
@@ -308,7 +307,7 @@ public class ZoneDlz
                         //DateTime loopDebug = CandleTools.GetUnixDate(loop);
                         if (loop >= zigZag.Candle.OpenTime) // really?
                         {
-                            if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                            if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                             {
                                 if (zigZag.PointType == 'L')
                                 {
@@ -357,7 +356,7 @@ public class ZoneDlz
         }
     }
 
-    public static async Task CalculateDlzZonesAsync(AddTextEvent? sender, ZoneConfig data, ZigZagIndicator indicator, 
+    public static async Task CalculateDlzZonesAsync(AddTextEvent? sender, ZoneConfig data, ZigZagIndicator indicator,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newCreatedZones");
@@ -390,7 +389,7 @@ public class ZoneDlz
     {
         while (key <= checkUpTo)
         {
-            if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
+            if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle candle))
             {
                 // Note: A candle can break multiple long or short boxes
 
@@ -417,7 +416,7 @@ public class ZoneDlz
         }
     }
 
-    
+
     public static void CalculateBrokenBoxes(ZoneConfig data, ZigZagIndicator indicator)
     {
         List<ZigZagResult> zonesLong = [];
@@ -490,7 +489,7 @@ public class ZoneDlz
                             min = previous.Candle.OpenTime;
                         while (min < max)
                         {
-                            if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle? candle))
+                            if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle candle))
                             {
                                 if (zigZag.PointType == 'L')
                                 {
@@ -514,7 +513,7 @@ public class ZoneDlz
                         if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
                             zigZag.Strength = CryptoZoneStrength.Weak;
                         else
-                            zigZag.Strength = CryptoZoneStrength.Strong; 
+                            zigZag.Strength = CryptoZoneStrength.Strong;
                     }
                 }
                 previous = zigZag;

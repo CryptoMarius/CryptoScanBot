@@ -52,7 +52,7 @@ public partial class Form1 : Form
         }
 
 
-        GlobalData.LoadSettings();
+        GlobalData.LoadConfiguration();
         ApplicationParams.InitApplicationOptions();
         GlobalData.InitializeExchange();
         TradingConfig.IndexStrategyInternally();
@@ -283,7 +283,7 @@ public partial class Form1 : Form
 
         //    //stopLossTrigger: TriggerType.LastPrice,
         //    //stopLossOrderType: OrderType.Market,
-        //    //stopLossTakeProfitMode:, 
+        //    //stopLossTakeProfitMode:,
         //    //StopLossTakeProfitMode.Full,
         //    //stopLoss: stop,
         //    //stopPrice: stop,
@@ -302,22 +302,22 @@ public partial class Form1 : Form
 
 
 
-        ////client.V5Api.Trading.PlaceOrderAsync(Category.Spot, "BTCUSDT", OrderSide.Sell, NewOrderType.Limit, quantity: quantity, 
-        ////    timeInForce: TimeInForce.GoodTillCanceled, 
-        ////    stopLossOrderType: OrderType.Limit, 
-        ////    stopLoss: price, stopLossLimitPrice: stopPrice, 
-        ////    stopLossTakeProfitMode: StopLossTakeProfitMode.Full, 
-        ////    stopLossTriggerBy: TriggerType.LastPrice, 
+        ////client.V5Api.Trading.PlaceOrderAsync(Category.Spot, "BTCUSDT", OrderSide.Sell, NewOrderType.Limit, quantity: quantity,
+        ////    timeInForce: TimeInForce.GoodTillCanceled,
+        ////    stopLossOrderType: OrderType.Limit,
+        ////    stopLoss: price, stopLossLimitPrice: stopPrice,
+        ////    stopLossTakeProfitMode: StopLossTakeProfitMode.Full,
+        ////    stopLossTriggerBy: TriggerType.LastPrice,
         ////    clientOrderId: newClientOrderId
         //// );
 
 
-        //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
-        //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null, 
-        //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null, 
-        //////    OrderType? takeProfitOrderType = null, decimal? takeProfit = null, decimal? takeProfitLimitPrice = null, OrderType? stopLossOrderType = null, 
-        //////    decimal? stopLoss = null, decimal? stopLossLimitPrice = null, TriggerType? takeProfitTriggerBy = null, TriggerType? stopLossTriggerBy = null, 
-        //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null, 
+        //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null,
+        //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null,
+        //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null,
+        //////    OrderType? takeProfitOrderType = null, decimal? takeProfit = null, decimal? takeProfitLimitPrice = null, OrderType? stopLossOrderType = null,
+        //////    decimal? stopLoss = null, decimal? stopLossLimitPrice = null, TriggerType? takeProfitTriggerBy = null, TriggerType? stopLossTriggerBy = null,
+        //////    bool? reduceOnly = null, bool? closeOnTrigger = null, bool? marketMakerProtection = null, StopLossTakeProfitMode? stopLossTakeProfitMode = null,
         //////    SelfMatchPreventionType? selfMatchPreventionType = null, MarketUnit? marketUnit = null, CancellationToken ct = default(CancellationToken));
 
 

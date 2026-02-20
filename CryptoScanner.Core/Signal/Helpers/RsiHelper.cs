@@ -5,7 +5,7 @@ namespace CryptoScanner.Core.Signal.Helpers;
 
 public static class RsiHelper
 {
-    public static bool RsiOversold(this CryptoCandle candle, int correction = 0)
+    public static bool RsiOversold(this MyData candle, int correction = 0)
     {
         if (candle.CandleData?.Rsi > GlobalData.Settings.General.SettingsRsi.Oversold - correction)
             return false;
@@ -13,7 +13,7 @@ public static class RsiHelper
     }
 
 
-    public static bool RsiOverbought(this CryptoCandle candle, int correction = 0)
+    public static bool RsiOverbought(this MyData candle, int correction = 0)
     {
         if (candle.CandleData?.Rsi < GlobalData.Settings.General.SettingsRsi.Overbought + correction)
             return false;
@@ -24,7 +24,7 @@ public static class RsiHelper
     /// <summary>
     /// Calculate the Rsi surface area of the overbought part from limit to rsi
     /// </summary>
-    public static double RsiOverboughtSurface(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, double limit)
+    public static double RsiOverboughtSurface(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;
         while (candleCount > 0)
@@ -40,7 +40,7 @@ public static class RsiHelper
             if (candle.CandleData.Rsi.Value < 60)
                 break;
 
-            if (!symbolInterval.GetPrevCandle(candle, out candle))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
                 return 0;
             candleCount--;
         }
@@ -53,7 +53,7 @@ public static class RsiHelper
     /// <summary>
     /// Calculate the Rsi surface area of the oversold part from limit to rsi
     /// </summary>
-    public static double RsiOversoldSurface(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, double limit)
+    public static double RsiOversoldSurface(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;
         while (candleCount > 0)
@@ -69,7 +69,7 @@ public static class RsiHelper
             if (candle.CandleData.Rsi.Value > 40)
                 break;
 
-            if (!symbolInterval.GetPrevCandle(candle, out candle))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
                 return 0;
             candleCount--;
         }
@@ -121,7 +121,7 @@ public static class RsiHelper
     /// Is de RSI oplopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public static bool RsiIncreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
+    public static bool RsiIncreasingInTheLast(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, int allowedDown)
     {
         // from right to left
         int down = 0;
@@ -129,7 +129,7 @@ public static class RsiHelper
         // En van de candles daarvoor mag er een (of meer) afwijken
         while (candleCount > 0)
         {
-            if (!symbolInterval.GetPrevCandle(candle!, out CryptoCandle? prev))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle!, out MyData? prev))
                 return false;
             if (prev!.CandleData == null || prev.CandleData.Rsi == null)
                 return false;
@@ -154,14 +154,14 @@ public static class RsiHelper
     /// Is de RSI aflopend in de laatste x candles
     /// 2e parameter geeft aan hoeveel afwijkend mogen zijn
     /// </summary>
-    public static bool RsiDecreasingInTheLast(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int allowedDown)
+    public static bool RsiDecreasingInTheLast(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, int allowedDown)
     {
         // We gaan van rechts naar links (van de nieuwste candle richting verleden)
         int down = 0;
         bool first = true;
         while (candleCount > 0)
         {
-            if (!symbolInterval.GetPrevCandle(candle!, out CryptoCandle? prev))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle!, out MyData? prev))
                 return false;
             if (prev!.CandleData == null || prev.CandleData.Rsi == null)
                 return false;

@@ -9,12 +9,13 @@ public class SignalEma9CrossedTemaShort : SignalCreateBase
     {
     }
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Ema9 == null
-           || candle.CandleData.Tema == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Ema9 == null
+           || data.CandleData.Tema == null
            )
             return false;
 
@@ -24,8 +25,8 @@ public class SignalEma9CrossedTemaShort : SignalCreateBase
 
     private bool HasCrossedProjection()
     {
-        CryptoCandle? lastCandle = CandleLast;
-        if (GetPrevCandle(lastCandle, out CryptoCandle? prevCandle) &&
+        MyData? lastCandle = CandleLast;
+        if (GetPrevCandle(lastCandle, out MyData? prevCandle) &&
             prevCandle!.CandleData!.Ema9 < prevCandle.CandleData.Tema &&
             lastCandle.CandleData!.Ema9 < lastCandle.CandleData.Tema)
         {
@@ -61,8 +62,8 @@ public class SignalEma9CrossedTemaShort : SignalCreateBase
 
     private bool HasCrossedNow()
     {
-        CryptoCandle? lastCandle = CandleLast;
-        if (GetPrevCandle(lastCandle, out CryptoCandle? prevCandle) &&
+        MyData? lastCandle = CandleLast;
+        if (GetPrevCandle(lastCandle, out MyData? prevCandle) &&
             prevCandle!.CandleData!.Ema9 < prevCandle.CandleData.Tema &&
             lastCandle.CandleData!.Ema9 > lastCandle.CandleData.Tema)
         {

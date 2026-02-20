@@ -10,17 +10,17 @@ public partial class AnalyzerCommonViewModel : ObservableObject
 {
     // Check relative change% 24 hours (groupBox9)
     [ObservableProperty]
-    private double _analysisMinChangePercentage = 0;
+    private float _analysisMinChangePercentage = 0;
 
     [ObservableProperty]
-    private double _analysisMaxChangePercentage = 25;
+    private float _analysisMaxChangePercentage = 25;
 
     [ObservableProperty]
     private bool _logAnalysisMinMaxChangePercentage = false;
 
     // Check effective change% over multiple days (GroupBoxXDaysEffective)
     [ObservableProperty]
-    private double _analysisEffectivePercentage = 25;
+    private float _analysisEffectivePercentage = 25;
 
     [ObservableProperty]
     private int _analysisEffectiveDays = 1;

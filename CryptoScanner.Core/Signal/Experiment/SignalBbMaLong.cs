@@ -59,13 +59,13 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           //|| candle.CandleData.Ema50 == null
-           //|| candle.CandleData.Wma05Low == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.CandleData == null
+           //|| data.CandleData.Ema50 == null
+           //|| data.CandleData.Wma05Low == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
@@ -73,79 +73,81 @@ public class SignalBbMaLong : SignalCreateBase
     }
 
 
-    private bool PrepareHigherInterval(CryptoIntervalPeriod higher, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle)
-    {
-        higherInterval = Symbol.GetSymbolInterval(higher);
-        CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
-        if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out candle))
-        {
-            ExtraText += $"nocandle:{candleOpenTime}";
-            return false;
-        }
-
-        if (candle.CandleData == null)
-        {
-            List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
-            if (history == null)
-            {
-                DateTime x = candleOpenTime.ToDateTime();
-                ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
-                return false;
-            }
-            CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-        }
-
-        return true;
-    }
-
-
-    //private bool IsExtreme(CryptoCandle candle, int backward)
+    //private bool PrepareHigherInterval(CryptoIntervalPeriod higher, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle)
     //{
-    //    // go back x extra candle(s)?
+    //    higherInterval = Symbol.GetSymbolInterval(higher);
+    //    CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.Candle.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
+    //    if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out candle))
+    //    {
+    //        ExtraText += $"nocandle:{candleOpenTime}";
+    //        return false;
+    //    }
+
+    //    // Calculate indicators if needed
+    //    AddIndicatorDataIfNeeded(higherInterval, candleOpenTime);
+    //    //if (candle.CandleData == null)
+    //    //{
+    //    //    List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
+    //    //    if (history == null)
+    //    //    {
+    //    //        DateTime x = candleOpenTime.ToDateTime();
+    //    //        ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
+    //    //        return false;
+    //    //    }
+    //    //    CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
+    //    //}
+
+    //    return true;
+    //}
+
+
+    //private bool IsExtreme(CryptoCandle data, int backward)
+    //{
+    //    // go back x extra data(s)?
     //    while (backward-- > 0)
     //    {
-    //        decimal wma05Low = (decimal)candle.CandleData!.Wma05Low!;
-    //        decimal wma10Low = (decimal)candle.CandleData!.Wma10Low!;
-    //        decimal bbLower = (decimal)candle.CandleData!.BollingerBandsLowerBand!.Value;
+    //        decimal wma05Low = (decimal)data.CandleData!.Wma05Low!;
+    //        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!;
+    //        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
 
     //        // Extreme Type A: LWMA 5 high/low closes above/below BB
     //        bool extremeTypeA = wma05Low < bbLower;
 
-    //        // Extreme Type B: Bullish/bearish candle rejects BB
-    //        bool extremeTypeB = candle.Low < bbLower && candle.Close > bbLower && candle.Open > bbLower;
+    //        // Extreme Type B: Bullish/bearish data rejects BB
+    //        bool extremeTypeB = data.Low < bbLower && data.Close > bbLower && data.Open > bbLower;
 
     //        // Magic Extreme: LWMA 5 + LWMA 10 outside BB
     //        bool magicExtreme = extremeTypeA && wma10Low < bbLower;
 
     //        // Advance Extreme: Price rejects EMA 50 (wick rejection)
-    //        decimal ema50 = (decimal)candle.CandleData!.Ema50!;
-    //        bool advanceExtreme = candle.Low < ema50 && candle.Open > ema50 && candle.Close > ema50;
+    //        decimal ema50 = (decimal)data.CandleData!.Ema50!;
+    //        bool advanceExtreme = data.Low < ema50 && data.Open > ema50 && data.Close > ema50;
 
     //        if (extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme)
     //            return true;
 
-    //        if (!GetPrevCandle(candle, out CryptoCandle? prev))
+    //        if (!GetPrevCandle(data, out CryptoCandle? prev))
     //            return false;
-    //        candle = prev!;
+    //        data = prev!;
     //    }
 
     //    return false;
     //}
 
 
-    //internal bool IsReentry(CryptoCandle candle, int backward)
+    //internal bool IsReentry(CryptoCandle data, int backward)
     //{
-    //    // go back x extra candle(s)?
+    //    // go back x extra data(s)?
     //    while (backward-- > 0)
     //    {
-    //        if (!GetPrevCandle(candle, out CryptoCandle? prev))
+    //        if (!GetPrevCandle(data, out CryptoCandle? prev))
     //            return false;
 
-    //        decimal wma05Low = (decimal)candle.CandleData!.Wma05Low!;
-    //        decimal wma10Low = (decimal)candle.CandleData!.Wma10Low!;
+    //        decimal wma05Low = (decimal)data.CandleData!.Wma05Low!;
+    //        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!;
 
-    //        //decimal wma05LowPrev = (decimal)candle.CandleData!.Wma05Low!;
-    //        //decimal wma10LowPrev = (decimal)candle.CandleData!.Wma10Low!;
+    //        //decimal wma05LowPrev = (decimal)data.CandleData!.Wma05Low!;
+    //        //decimal wma10LowPrev = (decimal)data.CandleData!.Wma10Low!;
 
     //        // CSD (CSAK): LWMA5/WMA10 crossover (use lows for buy, highs for sell)
     //        //bool csd = wma05Low > wma10Low && wma05LowPrev <= wma10LowPrev;
@@ -153,7 +155,7 @@ public class SignalBbMaLong : SignalCreateBase
     //        //// Early CSD: CSD zonder volledige MLV (hoog risico)
     //        //bool earlyCsdBull = csd && (!signals[tf].ContainsKey("MLV") || !signals[tf]["MLV"].Active);
 
-    //        //// CSM: Strong candle after CSD
+    //        //// CSM: Strong data after CSD
     //        //double bodySize = Math.Abs(candles[i].Close - candles[i].Open);
     //        //bool strongCandle = bodySize > 0.01 * candles[i].Close;
     //        //bool csmBull = csd && strongCandle && candles[i].Close > candles[i].Open;
@@ -165,11 +167,11 @@ public class SignalBbMaLong : SignalCreateBase
     //        //bool reentryBuyZone = (csd || csmBull || earlyCsdBull || earlyCsmBull) && candles[i].Close >= wma05Low && candles[i].Close <= wma10Low;
     //        //return reentryBuyZone;
 
-    //        bool possibleReentry = candle.Close >= wma05Low && candle.Close <= wma10Low;
+    //        bool possibleReentry = data.Close >= wma05Low && data.Close <= wma10Low;
     //        if (possibleReentry)
     //            return true;
 
-    //        candle = prev!;
+    //        data = prev!;
     //    }
     //    return false;
     //}

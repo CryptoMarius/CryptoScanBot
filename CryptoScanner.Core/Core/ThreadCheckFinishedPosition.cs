@@ -92,14 +92,14 @@ public class ThreadCheckFinishedPosition
                     if (candle.Low < position.PriceMin || position.PriceMin == 0)
                     {
                         position.PriceMin = candle.Low;
-                        position.PriceMinPerc = (double)(100 * (position.PriceMin / position.SignalPrice - 1));
+                        position.PriceMinPerc = (float)(100 * (position.PriceMin / position.SignalPrice - 1));
                         return true;
                     }
 
                     if (candle.High > position.PriceMax || position.PriceMax == 0)
                     {
                         position.PriceMax = candle.High;
-                        position.PriceMaxPerc = (double)(100 * (position.PriceMax / position.SignalPrice - 1));
+                        position.PriceMaxPerc = (float)(100 * (position.PriceMax / position.SignalPrice - 1));
                         return true;
                     }
                 }
@@ -145,7 +145,7 @@ public class ThreadCheckFinishedPosition
 
         if (removePosition)
         {
-            // Send the position to the closed positions ViewModel 
+            // Send the position to the closed positions ViewModel
             PositionTools.RemovePosition(GlobalData.ActiveExchange!, position, true);
         }
     }
@@ -158,7 +158,7 @@ public class ThreadCheckFinishedPosition
         var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (symbolPeriod.CandleList.Count > 0)
         {
-            CryptoCandle? lastCandle1m;
+            CryptoCandle lastCandle1m;
 
             // Deze routine is vanwege de Last() niet geschikt voor de emulator
             // Hoe lossen we dat nu weer op, want wordt strakt een echt probleem.
@@ -168,7 +168,7 @@ public class ThreadCheckFinishedPosition
                 if (GlobalData.BackTest)
                 {
                     lastCandle1m = GlobalData.BackTestCandle;
-                    if (lastCandle1m == null)
+                    if (lastCandle1m.OpenTime == 0)
                         return;
                 }
                 else
@@ -184,7 +184,7 @@ public class ThreadCheckFinishedPosition
             await positionMonitor.CheckThePosition(position); // CancelOrdersIfClosedOrTimeoutOrReposition?
 
             // Bij nader inzien kan die status hier nooit ready zijn...
-            //if (position.Status == CryptoPositionStatus.Ready) 
+            //if (position.Status == CryptoPositionStatus.Ready)
             //{
             //    ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {position.Symbol.Name} ready, nog een keer!");
             //    position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);

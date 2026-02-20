@@ -7,6 +7,8 @@ using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
+using System.Text;
+
 namespace CryptoScanner.Core.Barometer;
 
 public class BarometerTools
@@ -71,6 +73,7 @@ public class BarometerTools
 
             // Apply some defaults
             symbol.Status = 1;
+            symbol.PriceDecimals = 2;
             symbol.PriceDisplayFormat = "N2"; // percentage
             symbol.QuantityDisplayFormat = "N2"; // percentage
             return symbol;
@@ -110,7 +113,7 @@ public class BarometerTools
 
         if (GlobalData.BackTest)
         {
-            if (GlobalData.BackTestCandle == null)
+            if (GlobalData.BackTestCandle.OpenTime == 0)
                 return;
 
             // Just 1 is okay
@@ -150,7 +153,7 @@ public class BarometerTools
             if (calcBarometerMethod(quoteData, bmSymbol.Exchange.SymbolListName, interval, periodStart, out decimal BarometerPerc))
             {
                 // De candle aanmaken of bijwerken
-                if (!candles.TryGetValue(periodStart, out CryptoCandle? candle))
+                if (!candles.TryGetValue(periodStart, out CryptoCandle candle))
                 {
                     candle = new CryptoCandle
                     {
@@ -160,11 +163,13 @@ public class BarometerTools
                 }
 
                 // Just fill all the ohlc + v
+                candle.TickDecimals = bmSymbol.PriceDecimals;
                 candle.Open = BarometerPerc;
                 candle.High = BarometerPerc;
                 candle.Low = BarometerPerc;
                 candle.Close = BarometerPerc;
                 candle.Volume = BarometerPerc;
+                candles[periodStart] = candle;
 
 
                 // Administratie bijwerken
@@ -184,11 +189,43 @@ public class BarometerTools
                     symbolInterval.LastCandleSynchronized = periodStart;
 
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == bmSymbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    GlobalData.AddTextToLogTab($"Debug candle {candle.OhlcText(bmSymbol, GlobalData.IntervalList[0], bmSymbol.PriceDisplayFormat, true, true, true)}");
+                    ScannerLog.Logger.Trace($"Debug candle {candle.OhlcText(bmSymbol, GlobalData.IntervalList[0], bmSymbol.PriceDisplayFormat, true, true, true)}");
             }
 
             // Naar de volgende 1m candle
             periodStart += 1;
+        }
+    }
+
+    // first 20 should be enough..
+    static int dumpCount = 0;
+    static DateTime startTime;
+    private static void TimerDebugCandles_Tick(CryptoQuoteData quoteData)
+    {
+        if (dumpCount < 20)
+        {
+            // Dump X times the candles off BTCUSDT because of the problem Roy reported
+            DateTime now = DateTime.UtcNow;
+            if (dumpCount == 0)
+                startTime = now;
+
+            var exchange = GlobalData.ActiveExchange!;
+            if (exchange.SymbolListName.TryGetValue("BTC" + quoteData.Name, out CryptoSymbol? symbol))
+            {
+
+                StringBuilder writer = new();
+                var symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+                foreach (var candle in symbolInterval.CandleList.Values.ToList())
+                {
+                    writer.AppendLine(candle.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, false, false, true));
+                }
+
+                var baseFolder = Path.Combine(GlobalData.GetBaseDir(), "$Debug", "Missing Candles", symbol.Quote, symbol.Base, startTime.ToString("yyyy-MM-dd HHmm"));
+                Directory.CreateDirectory(baseFolder);
+                var filename = Path.Combine(baseFolder, $"{symbol.Name} candles 1m {now:yyyy-MM-dd HHmm}.txt");
+                File.WriteAllText(filename, writer.ToString());
+            }
+            dumpCount++;
         }
     }
 
@@ -197,6 +234,7 @@ public class BarometerTools
     /// </summary>
     private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
     {
+        TimerDebugCandles_Tick(quoteData);
 
         // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)

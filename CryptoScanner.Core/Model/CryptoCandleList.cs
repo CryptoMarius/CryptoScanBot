@@ -50,7 +50,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     }
 
     // Thread-safe TryGetValue
-    public new bool TryGetValue(CandleTime key, out CryptoCandle? value)
+    public new bool TryGetValue(CandleTime key, out CryptoCandle value)
     {
         _lock.EnterReadLock();
         try

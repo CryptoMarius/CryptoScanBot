@@ -18,7 +18,6 @@ namespace Testjes2
             // Vroeger dan alle andere..
             ApplicationConfiguration.Initialize();
             InitializeApplicationVariables();
-            GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
             ScannerLog.InitializeLogging();
 
             // Add the event handler for handling UI thread exceptions to the event.
@@ -27,7 +26,7 @@ namespace Testjes2
             // Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
-            // Add the event handler for handling non-UI thread exceptions to the event. 
+            // Add the event handler for handling non-UI thread exceptions to the event.
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(UnhandledException);
 
             Application.EnableVisualStyles();
@@ -39,7 +38,6 @@ namespace Testjes2
 
         public static void InitializeApplicationVariables()
         {
-            GlobalData.AppName = Assembly.GetExecutingAssembly().GetName().Name!;
             GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
             var assembly = Assembly.GetExecutingAssembly().GetName();

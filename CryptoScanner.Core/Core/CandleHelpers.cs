@@ -231,14 +231,14 @@ public static class Helper
             // Controleer of de munt actief is (beetje raar)
             if (!symbol.QuoteData.FetchCandles)
             {
-                text = string.Format("{0} Er worden geen candles opgehaald", symbol.Name);
+                text = string.Format("{0} not fetching candles for this quote", symbol.Name);
                 return false;
             }
 
             // Controleer of er genoeg volume is (van de afgelopen 24 uur)
             if (symbol.Volume < symbol.QuoteData.MinimalVolume)
             {
-                text = $"{symbol.Name} 24 uur volume {symbol.Volume.ToString0()} onder het minimum {symbol.QuoteData.MinimalVolume.ToString0()}";
+                text = $"{symbol.Name} 24 hour volume {symbol.Volume.ToString0()} below minimum {symbol.QuoteData.MinimalVolume.ToString0()}";
                 return false;
             }
 
@@ -255,9 +255,9 @@ public static class Helper
                     while (count > 0)
                     {
                         //DateTime loopCheck = CandleTools.GetUnixDate(loop);
-                        if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                        if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                         {
-                            if (candle.Volume < symbol.QuoteData.MinimalVolume)
+                            if (candle.Volume < (decimal)symbol.QuoteData.MinimalVolume)
                             {
                                 text = $"{symbol.Name} volume in the last {GlobalData.Settings.Signal.CheckVolumeOverDays} days not above {symbol.QuoteData.MinimalVolume.ToString0()}";
                                 return false;

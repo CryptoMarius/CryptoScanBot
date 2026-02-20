@@ -319,7 +319,6 @@ public class CryptoDatabase : IDisposable
                 "BackTest INTEGER NOT NULL," +
                 "IsInvalid INTEGER NOT NULL," +
 
-                "EventTime bigint NOT NULL," +
                 "OpenDate TEXT NULL," +
                 "CloseDate TEXT NULL," +
                 "ExpirationDate TEXT NULL," +
@@ -735,7 +734,6 @@ public class CryptoDatabase : IDisposable
         {
             connection.Connection.Execute("CREATE TABLE [Zone] (" +
                 "Id INTEGER primary key autoincrement not null," +
-                "CreateTime TEXT not NULL," +
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
                 "IntervalId INTEGER NOT NULL," +
@@ -822,9 +820,11 @@ public class CryptoDatabase : IDisposable
                 // Database cleanup (there is no need for old zones older than the configured value)
                 foreach (var interval in GlobalData.IntervalList)
                 {
+                    CandleTime openTime = CandleTime.FromDateTime(DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration));
+
                     // we use the same candlecount for both the fvg and dlz zones
-                    databaseThread.Connection.Execute("delete from zone where createTime < @createTime",
-                        new { createTime = DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration) });
+                    databaseThread.Connection.Execute("delete from zone where OpenTime < @OpenTime",
+                        new { OpenTime = openTime });
                 }
                 transaction.Commit();
             }
@@ -866,10 +866,10 @@ public class CryptoDatabase : IDisposable
 
         SqlMapper.RemoveTypeMap(typeof(DateTimeHandler));
         SqlMapper.AddTypeHandler(new DateTimeHandler());
-
         SqlMapper.AddTypeHandler(new DateTimeOffsetHandler());
         SqlMapper.AddTypeHandler(new GuidHandler());
         SqlMapper.AddTypeHandler(new TimeSpanHandler());
+        SqlMapper.AddTypeHandler(new CandleTimeTypeHandler());
 
         using var connection = new CryptoDatabase();
         connection.Open();

@@ -16,13 +16,13 @@ public class DatabaseStatistics
 
 public class ZoneTools
 {
-    public static void CreateZoneIndex(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase, 
+    public static void CreateZoneIndex(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
         IList<CryptoZone> zones, DatabaseStatistics dbStats)
     {
         foreach (var zone in zones)
         {
             // Warning, there can be duplicate zones, remove them!
-            if (zonesFromDatabase.ContainsKey((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top)))
+            if (zonesFromDatabase.ContainsKey((zone.Side, zone.OpenTime, zone.Bottom, zone.Top)))
             {
                 if (zone.Id > 0)
                 {
@@ -31,7 +31,7 @@ public class ZoneTools
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
-            else zonesFromDatabase.Add((zone.Side, zone.OpenTime!.Value, zone.Bottom, zone.Top), zone);
+            else zonesFromDatabase.Add((zone.Side, zone.OpenTime, zone.Bottom, zone.Top), zone);
         }
     }
 
@@ -62,7 +62,7 @@ public class ZoneTools
                 zoneExistsInDatabase = zoneInDb.Id > 0; // might still be zero
 
                 // nothing important has changed, do not change the zone, skip..
-                if (zoneInDb.CloseTime == zone.CloseTime && zoneInDb.Description == zone.Description && 
+                if (zoneInDb.CloseTime == zone.CloseTime && zoneInDb.Description == zone.Description &&
                     zoneInDb.IsValid == zone.IsValid && zoneInDb.Strength == zone.Strength)
                 {
                     zonesFromDatabase.Remove((zone.Side, zone.OpenTime, zone.Bottom, zone.Top));

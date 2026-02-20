@@ -58,7 +58,7 @@ public static class GlobalData
     // And for the emulator we need to introduce a datetime service + candleservice or something like that
     public static bool BackTest { get; set; }
     public static DateTime BackTestDateTime { get; set; }
-    public static CryptoCandle? BackTestCandle { get; set; }
+    public static CryptoCandle BackTestCandle { get; set; } = default;
 
 
     // Replace with a proper DateTimeService
@@ -318,7 +318,8 @@ public static class GlobalData
             }
 
             //SignalQueue.Clear();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
+                new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
@@ -422,6 +423,7 @@ public static class GlobalData
                 numberOfDecimalPlaces = s.Length;
             }
             else numberOfDecimalPlaces = 0;
+            symbol.PriceDecimals = (byte)numberOfDecimalPlaces;
             symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
 
 
@@ -742,6 +744,43 @@ public static class GlobalData
                 AddTextToLogTab(" error telegram thread(1)" + error.ToString());
             }
         }
+    }
+
+
+    public static string GetBaseDir()
+    {
+        if (string.IsNullOrEmpty(AppDataFolder))
+        {
+            ApplicationParams.InitApplicationOptions();
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                ApplicationParams.Options?.AppDataFolder ?? Constants.AppName);
+            Directory.CreateDirectory(AppDataFolder);
+            AppDataFolder += @"\";
+        }
+        return AppDataFolder;
+    }
+
+
+    public static void InitializeExchange()
+    {
+        // If application params contain an exchange this is leading
+        // Otherwise we take the one from the settings
+        string? exchangeName = ApplicationParams.Options!.ExchangeName;
+        if (exchangeName != null)
+        {
+            // People forget to use the right casing
+            exchangeName = exchangeName.Trim().ToLower();
+            string? found = ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
+            if (found != null)
+                exchangeName = found;
+            Settings.General.ExchangeName = exchangeName;
+        }
+
+
+        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out var exchange))
+            GlobalData.ActiveExchange = exchange;
+        else
+            throw new Exception($"Exchange {Settings.General.ExchangeName} does not exist");
     }
 
 

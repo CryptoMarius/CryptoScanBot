@@ -323,41 +323,41 @@ public class SymbolTools
     }
 
 
-    public bool BarometerIndicators(CryptoInterval interval, CandleTime candleOpenTime, out string response)
-    {
-        // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
-        // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
+//    public bool BarometerIndicators(CryptoInterval interval, CandleTime candleOpenTime, out string response)
+//    {
+//        // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
+//        // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
 
-        var exchange = GlobalData.ActiveExchange;
-        if (exchange != null)
-        {
-            if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))
-            {
-                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-                {
-                    if (candle.CandleData == null)
-                    {
-                        List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, Interval, candleOpenTime, out response);
+//        var exchange = GlobalData.ActiveExchange;
+//        if (exchange != null)
+//        {
+//            if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))
+//            {
+//                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+//                if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+//                {
+//                    if (candle.CandleData == null)
+//                    {
+//                        List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, Interval, candleOpenTime, out response);
 
-                        if (history == null)
-                        {
-#if DEBUG
-                            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
-                            GlobalData.AddTextToLogTab("Analyse " + response);
-#endif
-                            return false;
-                        }
+//                        if (history == null)
+//                        {
+//#if DEBUG
+//                            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
+//                            GlobalData.AddTextToLogTab("Analyse " + response);
+//#endif
+//                            return false;
+//                        }
 
-                        // Eenmalig de indicators klaarzetten
-                        CandleIndicatorData.CalculateIndicators(Symbol, Interval, history);
+//                        // Eenmalig de indicators klaarzetten
+//                        CandleIndicatorData.CalculateIndicators(Symbol, Interval, history);
 
-                    }
-                }
-            }
-        }
+//                    }
+//                }
+//            }
+//        }
 
-        response = "";
-        return true;
-    }
+//        response = "";
+//        return true;
+//    }
 }

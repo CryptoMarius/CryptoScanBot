@@ -29,6 +29,7 @@ public class PositionMonitor //: IDisposable
     public CryptoDatabase Database { get; set; } = new();
     public bool PauseBecauseOfTradingRules { get; set; } = false;
 
+    public CryptoIndicatorDataList IndicatorDataList { get; set; } = [];
 
     public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m)
     {
@@ -236,7 +237,7 @@ public class PositionMonitor //: IDisposable
 
 
 
-    public async Task CreateOrExtendPositionAsync()
+    private async Task CreateOrExtendPositionAsync(CryptoIndicatorDataList IndicatorDataList)
     {
         string? lastPrice = Symbol.LastPrice?.ToString(Symbol.PriceDisplayFormat);
         string text = "Monitor " + Symbol.Name + " price=" + lastPrice;
@@ -296,9 +297,6 @@ public class PositionMonitor //: IDisposable
             // (0 % 180 = 0, 60 % 180 = 60, 120 % 180 = 120, 180 % 180 = 0)
             if (LastCandle1mCloseTime % symbolInterval.Interval?.Duration == 0)
             {
-                //CryptoSignal? signal = symbolInterval.Signal;
-                //if (signal is null)
-                //    continue;
                 foreach (CryptoSignal signal in symbolInterval.SignalList.ToList())
                 {
                     text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
@@ -329,18 +327,18 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // De candle van het signaal terugzoeken (niet zomaar de laatste candle nemen, dit vanwege backtest!)
-                    CandleTime unix = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
-                    //long unix = CandleTools.GetUnixTime(lastCandle1m.OpenTime, symbolInterval.Interval.Duration);
-                    //long unix = CandleTools.GetUnixTime(candleCloseTime - symbolInterval.Interval.Duration, symbolInterval.Interval.Duration);
-                    if (!symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candleInterval))
+                    CandleTime openTime = LastCandle1mCloseTime - symbolInterval.Interval!.Duration;
+                    //long openTime = CandleTools.GetUnixTime(lastCandle1m.OpenTime, symbolInterval.Interval.Duration);
+                    //long openTime = CandleTools.GetUnixTime(candleCloseTime - symbolInterval.Interval.Duration, symbolInterval.Interval.Duration);
+                    if (!symbolInterval.CandleList.TryGetValue(openTime, out CryptoCandle candleInterval))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
 
-                    // Indicators uitrekenen (indien noodzakelijk)
-                    if (!CandleIndicatorData.PrepareIndicators(Symbol, symbolInterval, candleInterval, out reaction))
+                    // Calculate the indicators (if needed)
+                    if (!IndicatorDataList.PrepareIndicators(Symbol, symbolInterval.Interval, openTime, out reaction))
                     {
                         GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
                         symbolInterval.SignalList.Remove(signal);
@@ -355,6 +353,32 @@ public class PositionMonitor //: IDisposable
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
+
+                    if (!IndicatorDataList.PrepareIndicators(signal.Symbol, signal.Interval, openTime, out string reason))
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + reason + " unable to prepare indicators (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        continue;
+                    }
+                    if (!IndicatorDataList.TryGetValue(signal.Interval.IntervalPeriod, out CryptoIndicatorData? indicatorData) || indicatorData == null)
+                    {
+                        GlobalData.AddTextToLogTab("Monitor unable to find indicatordata (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        continue;
+                    }
+
+                    if (!IndicatorDataList.TryGetCandle(signal.Interval, openTime, out MyData? signalCandle))
+                    {
+                        GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown candle (removed)");
+                        symbolInterval.SignalList.Remove(signal);
+                        continue;
+                    }
+                    // Fill the missing properties
+                    algorithm.CandleLast = signalCandle!;
+                    algorithm.IndicatorData = indicatorData;
+                    algorithm.IndicatorDataList = IndicatorDataList;
+
+
 
                     if (algorithm.GiveUp(signal))
                     {
@@ -610,7 +634,7 @@ public class PositionMonitor //: IDisposable
     }
 
 
-    private async Task<(bool success, CryptoCandle? candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
+    private async Task<(bool success, CryptoCandle candleInterval)> PrepareAsync(CryptoPosition position, CryptoPositionPart part)
     {
         // Stukje migratie, het interval van de part kan null zijn
         CryptoInterval interval = position.Interval!;
@@ -622,7 +646,7 @@ public class PositionMonitor //: IDisposable
 
         // Maak beslissingen als de candle van het interval afgesloten is (dus NIET die van de 1m candle!)
         // Dus ook niet zomaar een laatste candle nemen in verband met Backtesting (echt even berekenen)
-        CryptoCandle? candleInterval = null;
+        CryptoCandle candleInterval = default;
         if (LastCandle1mCloseTime % interval.Duration != 0)
             return (false, candleInterval);
         CandleTime candleOpenTimeInterval = LastCandle1mCloseTime - interval.Duration;
@@ -643,20 +667,9 @@ public class PositionMonitor //: IDisposable
                 return (false, candleInterval);
             }
 
-            if (candleInterval.CandleData == null)
-            {
-                List<CryptoCandle>? history = null;
-                history = CandleIndicatorData.CollectCandles(Symbol, interval, candleInterval.OpenTime, out string response);
-                if (history == null)
-                {
-                    GlobalData.AddTextToLogTab("Analyse " + response + $"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
-                    //throw new Exception($"{position.Symbol.Name} Candle {interval.Name} {candleInterval.DateLocal} niet berekend? {response}");
-                    return (false, candleInterval);
-                }
 
-                // Eenmalig de indicators klaarzetten
-                CandleIndicatorData.CalculateIndicators(Symbol, interval, history);
-            }
+            // Calculate indicators if needed
+            IndicatorDataList.PrepareIndicators(Symbol, interval, candleInterval!.OpenTime, out _);
         }
         finally
         {
@@ -1580,7 +1593,7 @@ public class PositionMonitor //: IDisposable
                 var (success, candleInterval) = await PrepareAsync(position, part);
                 if (success)
                 {
-                    if (!PauseBecauseOfTradingRules && candleInterval is not null)
+                    if (!PauseBecauseOfTradingRules && candleInterval.OpenTime != 0)
                     {
                         // Check entry
                         if (part.Purpose == CryptoPartPurpose.Entry)
@@ -1835,8 +1848,7 @@ public class PositionMonitor //: IDisposable
 
 
     /// <summary>
-    /// De afhandeling van een nieuwe 1m candle.
-    /// (de andere intervallen zijn ook berekend)
+    /// We have a new 1m candle, calculate the signals
     /// </summary>
     public async Task NewCandleArrivedAsync()
     {
@@ -1848,20 +1860,48 @@ public class PositionMonitor //: IDisposable
                 !Symbol.LastPrice.HasValue)
                 return;
 
-            //AccountSymbolData accountSymbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(Symbol.Name);
-            //int offset = accountSymbolData.ZoneListLong.Keys.BinarySearchIndexOf(LastCandle1m.Close);
-
-
             //GlobalData.Logger.Trace($"SignalCreate.PrepareIndicators.Start {Symbol.Name} {Interval.Name} {Side}");
-
             //string traceText = LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true);
             //ScannerLog.Logger.Trace($"NewCandleArrivedAsync.Signals " + traceText);
 
-            // Calculate indicators, zones etc
-            Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> lastCandleList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            if (!Symbol.IsTrading())
+            {
+                // Is the Symbol a new one?
+                if (!SymbolTools.CheckNewCoin(Symbol, out string response))
+                {
+                    if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
+                    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                        ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    return;
+                }
 
-            // Calculate signals and break of zones
-            List<CryptoSignal> signalList = await SignalExecute.ExecuteAsync(Symbol, lastCandleList, LastCandle1mCloseTime);
+                // Is the volume valid within a certain minimal limit
+                if (!Symbol.CheckValidMinimalVolume(LastCandle1mCloseTime, 1, out response))
+                {
+                    if (GlobalData.Settings.Signal.LogMinimalVolume)
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
+                    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                        ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    return;
+                }
+
+                // Is the price valid within a certain minimal limit
+                if (!Symbol.CheckValidMinimalPrice(out response))
+                {
+                    if (GlobalData.Settings.Signal.LogMinimalPrice)
+                        GlobalData.AddTextToLogTab($"{Symbol.Name} {response}");
+                    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                        ScannerLog.Logger.Info($"{Symbol.Name} {response}");
+                    return;
+                }
+            }
+
+            // Calculate all the indicators, queue the fvg and dlz zones etc
+            var preparedIndicatorDataList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+
+            // Calculate signals and touch of the dlz and fvg zones
+            var signalList = await SignalExecute.ExecuteAsync(Symbol, preparedIndicatorDataList, LastCandle1mCloseTime);
 
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
@@ -1869,14 +1909,15 @@ public class PositionMonitor //: IDisposable
             // Simulate Trade indien openstaande orders gevuld zijn
             //GlobalData.Logger.Info($"analyze.PaperTradingCheckOrders({Symbol.Name})");
             if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
-                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, Symbol, LastCandle1m);
+                await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m);
 
             // Pause becuase of trading rules or low barometer
             PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
 
+            //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
             // Open or extend a position
             if (signalList.Count > 0)
-                await CreateOrExtendPositionAsync(); // todo: introduce parameter signalList (if possible) and remove Signal reference?
+                await CreateOrExtendPositionAsync(IndicatorDataList);
 
             // Check the positions
             if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))

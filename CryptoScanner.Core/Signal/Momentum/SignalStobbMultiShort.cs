@@ -12,14 +12,15 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
     }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Sma20 == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
@@ -36,7 +37,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
     }
 
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
@@ -53,13 +54,13 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
             if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                !data.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
             if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                !candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                !data.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
             if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                !candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                !data.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -95,7 +96,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
             return false;
         }
 
-        //// Er een candle onder de bb opent of sluit
+        //// Er een data onder de bb opent of sluit
         //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
         //{
         //    ExtraText = "niet beneden de bb.lower";
@@ -109,7 +110,7 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         //    return false;
         //}
 
-        CandleTime unixDate = CandleLast.OpenTime;
+        CandleTime unixDate = CandleLast.Candle.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -119,18 +120,16 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
             CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle _))
                 return false;
 
-            if (candle!.CandleData == null)
-            {
-                List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
-                if (history == null)
-                    return false;
-                CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-            }
+            // Calculate indicators if needed
+            IndicatorDataList.PrepareIndicators(Symbol, higherInterval.Interval, candleOpenTime, out _);
+            if (!IndicatorDataList.TryGetCandle(higherInterval.Interval, candleOpenTime, out MyData? candle))
+                return false;
 
-            if (IndicatorsOkay(candle!) && candle.StochOverbought() && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+
+            if (IndicatorsOkay(candle!) && candle!.StochOverbought() && candle!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';

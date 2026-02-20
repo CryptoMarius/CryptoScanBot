@@ -72,7 +72,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (symbolData.ContractType != ContractTypeV5.LinearPerpetual)
                                 {
 #if DEBUG
-                                    GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
+                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractTypeV5.LinearPerpetual}");
 #endif
                                     continue;
                                 }
@@ -137,7 +137,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (float)volume;
                                 else
                                     symbol.Volume = 0;
 

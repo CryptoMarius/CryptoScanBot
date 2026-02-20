@@ -110,12 +110,79 @@ public partial class ChartWindowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
     }
 
+
+    //// A weird option to position the form over Altrady graph
+    //private void TransparentClick(object? sender, EventArgs e)
+    //{
+    //    if (EditTransparant.Checked)
+    //    {
+    //        BackColor = Color.Lime;
+    //        TransparencyKey = Color.Lime;
+    //        plotView.BackColor = Color.Lime;
+    //    }
+    //    else
+    //    {
+    //        BackColor = SystemColors.Control;
+    //        TransparencyKey = Color.Lime;
+    //        plotView.BackColor = Color.Black;
+    //    }
+    //    flowLayoutPanel1.BackColor = SystemColors.Control;
+    //}
+
+
+
+
+    //private void ButtonGoLeftOrRight(int direction)
+    //{
+    //    if (Data != null && plotModel != null)
+    //    {
+    //        PickupUserInput();
+    //        Session.MaxDate += direction * Data.Interval.Duration;
+    //        _ = CalculateAsync();
+    //    }
+    //}
+
+
+    //private async void ButtonIntervalPlusOrMin(int direction)
+    //{
+    //    if (Data != null && plotModel != null &&
+    //        Session.ActiveInterval + direction >= CryptoIntervalPeriod.interval1m &&
+    //        Session.ActiveInterval + direction <= CryptoIntervalPeriod.interval1w)
+    //    {
+    //        Session.ActiveInterval += direction;
+    //        foreach (var serie in plotModel.Series)
+    //        {
+    //            if (serie.Title == "Candles")
+    //            {
+    //                plotModel.Series.Remove(serie);
+    //                break;
+    //            }
+    //        }
+
+    //        Data.Symbol.Data.CalculatingZones = true;
+    //        try
+    //        {
+    //            CryptoSymbolInterval symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
+    //            await ZoneCandleEngine.ReadCandlesFromDiskAsync(Data.Symbol, symbolInterval.Interval);
+    //            Chart.Candles.Draw(plotModel, Data.Symbol, symbolInterval.Interval, Session.MinDate, Session.MaxDate);
+    //        }
+    //        finally
+    //        {
+    //            await ZoneCandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
+    //            Data.Symbol.Data.CalculatingZones = false;
+    //        }
+
+    //        labelInterval.Text = Session.ActiveInterval.ToString();
+    //        plotModel?.InvalidatePlot(true);
+    //    }
+    //}
+
+
     private static PlotController CreateController()
     {
         var controller = new PlotController();
-        //controller.UnbindAll();
-        //controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
-        //controller.UnbindAll(); // leave the original intact, we just need to tweak it a bit
+
+        // Change the default behaviour
         controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
         controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
         controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
@@ -126,6 +193,7 @@ public partial class ChartWindowViewModel : ObservableObject
         controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Shift, PlotCommands.SnapTrack);
         return controller;
     }
+
 
     private string LabelFormatterX(double x)
     {
@@ -190,7 +258,7 @@ public partial class ChartWindowViewModel : ObservableObject
             MajorTickSize = 15,
             MinorTickSize = 5,
             TicklineColor = OxyColors.Gray,
-            TickStyle = TickStyle.Inside,
+            TickStyle = OxyPlot.Axes.TickStyle.Inside,
 
             AxislineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.Gray,
@@ -221,7 +289,7 @@ public partial class ChartWindowViewModel : ObservableObject
             MajorTickSize = 15,
             MinorTickSize = 5,
             TicklineColor = OxyColors.Gray,
-            TickStyle = TickStyle.Inside,
+            TickStyle = OxyPlot.Axes.TickStyle.Inside,
 
             AxislineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.Gray,
@@ -524,71 +592,6 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-    private bool PrepareSessionData(out string reason)
-    {
-        var exchange = GlobalData.ActiveExchange;
-        if (exchange == null)
-        {
-            reason = "Exchange not found";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
-        {
-            reason = "Symbol not found";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
-        if (interval == null)
-        {
-            reason = "Interval not supported";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-        Data = new()
-        {
-            Exchange = exchange,
-            Symbol = symbol,
-            Interval = interval,
-            SymbolInterval = symbolInterval,
-        };
-
-        Data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, Session.Deviation));
-
-        // Reset dates if symbol/interval changed
-        if (_oldSymbolBase != Session.SymbolBase || _oldSymbolQuote != Session.SymbolQuote || _oldIntervalName != Session.IntervalName)
-        {
-            optionsInChart.Clear();
-            _oldSymbolBase = Session.SymbolBase;
-            _oldSymbolQuote = Session.SymbolQuote;
-            _oldIntervalName = Session.IntervalName;
-
-            Session.IntervalName = Data.Interval.Name;
-            Session.ActiveInterval = Data.Interval.IntervalPeriod;
-            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-            Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
-            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
-
-            PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
-            PlaybackControls.UpdateMaxTimeDisplay(Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm"));
-
-            // Load signals
-            ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
-        }
-
-        reason = "";
-        return true;
-    }
-
     private async Task CalculateZonesAndPlotZigZagAsync()
     {
         if (Data == null)
@@ -816,7 +819,7 @@ public partial class ChartWindowViewModel : ObservableObject
                 CrossHairY.LineStyle = LineStyle.DashDot;
 
                 string subtitle;
-                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
                     subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(Data.Symbol.PriceDisplayFormat)}";
                     subtitle += $" (O: {candle.Open.ToString(Data.Symbol.PriceDisplayFormat)}";
@@ -897,7 +900,7 @@ public partial class ChartWindowViewModel : ObservableObject
             CryptoCandle xfirst = candleLast;
             while (count > 0)
             {
-                if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+                if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
                     if (candle.High > h)
                         h = candle.High;
@@ -940,6 +943,71 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
+    private bool PrepareSessionData(out string reason)
+    {
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null)
+        {
+            reason = "Exchange not found";
+            ScannerLog.Logger.Info($"{reason}");
+            return false;
+        }
+
+        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
+        {
+            reason = "Symbol not found";
+            ScannerLog.Logger.Info($"{reason}");
+            return false;
+        }
+
+        var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
+        if (interval == null)
+        {
+            reason = "Interval not supported";
+            ScannerLog.Logger.Info($"{reason}");
+            return false;
+        }
+
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
+        Data = new()
+        {
+            Exchange = exchange,
+            Symbol = symbol,
+            Interval = interval,
+            SymbolInterval = symbolInterval,
+        };
+
+        Data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, Session.Deviation));
+        Data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, Session.Deviation));
+        Data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, Session.Deviation));
+        Data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, Session.Deviation));
+
+        // Reset dates if symbol/interval changed
+        if (_oldSymbolBase != Session.SymbolBase || _oldSymbolQuote != Session.SymbolQuote || _oldIntervalName != Session.IntervalName)
+        {
+            optionsInChart.Clear();
+            _oldSymbolBase = Session.SymbolBase;
+            _oldSymbolQuote = Session.SymbolQuote;
+            _oldIntervalName = Session.IntervalName;
+
+            Session.IntervalName = Data.Interval.Name;
+            Session.ActiveInterval = Data.Interval.IntervalPeriod;
+            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+            Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
+            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
+
+            PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
+            PlaybackControls.UpdateMaxTimeDisplay(Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm"));
+
+            // Load signals
+            ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
+        }
+
+        reason = "";
+        return true;
+    }
+
     private async Task SymbolOrIntervalChanged(bool forceCalculation)
     {
         if (IsCalculating)
@@ -975,6 +1043,5 @@ public partial class ChartWindowViewModel : ObservableObject
             IsCalculating = false;
         }
     }
-
 
 }

@@ -17,12 +17,12 @@ public class CryptoQuoteData
 
     // Basecoin data
     public bool FetchCandles { get; set; }
-    public decimal MinimalVolume { get; set; }
+    public double MinimalVolume { get; set; }
     public decimal MinimalPrice { get; set; }
     // Trading: The initial entry amount
     public decimal EntryAmount { get; set; }
     // Trading: The initial entry percentage of PF
-    public decimal EntryPercentage { get; set; }
+    public float EntryPercentage { get; set; }
     // Color of the base coin in signal grid
     public Color DisplayColor { get; set; } = Color.Parse("#00FFFFFF");
 

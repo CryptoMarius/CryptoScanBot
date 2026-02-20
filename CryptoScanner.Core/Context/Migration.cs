@@ -8,7 +8,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 56;
+    public readonly static int CurrentDatabaseVersion = 57;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1169,10 +1169,31 @@ public class Migration
         }
 
 
+        //***********************************************************
+        // 18-02-2026 Changed Zone.OpenTime and CloseTime to CandleTime
+        if (CurrentVersion > version.Version && version.Version == 56)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table signal drop column [EventTime]", transaction);
+            database.Connection.Execute("drop table [zone]", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         // Apply the exchange defaults with each update
         if (updateExchanges)
             UpdateExchanges(database);
 
+        //***********************************************************
+        //
+        //
+
+        //
     }
 }
 

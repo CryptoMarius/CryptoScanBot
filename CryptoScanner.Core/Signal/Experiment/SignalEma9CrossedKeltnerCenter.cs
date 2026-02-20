@@ -12,12 +12,13 @@ public class SignalEma9CrossedKeltnerCenter : SignalCreateBase
     {
     }
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Ema9 == null
-           || candle.CandleData.KeltnerCenterLine == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Ema9 == null
+           || data.CandleData.KeltnerCenterLine == null
            )
             return false;
 
@@ -38,7 +39,7 @@ public class SignalEma9CrossedKeltnerCenter : SignalCreateBase
         }
 
         // It looks powerfull, but is it a valuable?
-        if (GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
+        if (GetPrevCandle(CandleLast, out MyData? candlePrev))
         {
             if (SignalSide == CryptoTradeSide.Short)
             {

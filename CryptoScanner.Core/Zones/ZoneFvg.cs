@@ -24,7 +24,6 @@ public class ZoneFvg
                     {
                         Kind = CryptoZoneKind.FairValueGap,
                         Strength = CryptoZoneStrength.None,
-                        CreateTime = candle.Date.AddMinutes(interval.Duration),
                         ExchangeId = symbol.Exchange.Id,
                         Exchange = symbol.Exchange,
                         SymbolId = symbol.Id,
@@ -60,7 +59,6 @@ public class ZoneFvg
                     {
                         Kind = CryptoZoneKind.FairValueGap,
                         Strength = CryptoZoneStrength.None,
-                        CreateTime = candle.Date.AddMinutes(interval.Duration),
                         ExchangeId = symbol.Exchange.Id,
                         Exchange = symbol.Exchange,
                         SymbolId = symbol.Id,
@@ -89,11 +87,11 @@ public class ZoneFvg
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
 
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 1 * interval.Duration, out CryptoCandle? candle))
+        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 1 * interval.Duration, out CryptoCandle candle))
             return;
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 2 * interval.Duration, out CryptoCandle? prev))
+        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 2 * interval.Duration, out CryptoCandle prev))
             return;
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 3 * interval.Duration, out CryptoCandle? prev2))
+        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 3 * interval.Duration, out CryptoCandle prev2))
             return;
 
         // scan voor long FVG
@@ -113,7 +111,7 @@ public class ZoneFvg
         // scan voor short FVG
         //if (side == CryptoTradeSide.Short)
         {
-            var zone = ScanForShortFvg(symbol, interval, prev2, prev, candle);
+            var zone = ScanForShortFvg(symbol, interval, prev2, prev!, candle);
             if (zone != null)
             {
                 //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
@@ -125,7 +123,7 @@ public class ZoneFvg
     }
 
 
-    private static void InvalidateLongZones(CryptoSymbolInterval symbolIntervalData, 
+    private static void InvalidateLongZones(CryptoSymbolInterval symbolIntervalData,
         OrderedList<CryptoZone> zoneList, CryptoCandle candle)
     {
         int count = zoneList.Count;
@@ -198,7 +196,7 @@ public class ZoneFvg
     }
 
 
-    private static void InvalidateShortZones(CryptoSymbolInterval symbolIntervalData, 
+    private static void InvalidateShortZones(CryptoSymbolInterval symbolIntervalData,
         OrderedList<CryptoZone> zoneList, CryptoCandle candle)
     {
         int count = zoneList.Count;
@@ -278,12 +276,12 @@ public class ZoneFvg
     {
 
         // Scan for long and short fvg (in memory)
-        CryptoCandle? prev = null;
-        CryptoCandle? prev2 = null;
+        CryptoCandle prev = default;
+        CryptoCandle prev2 = default;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         foreach (var candle in symbolInterval.CandleList.Values)
         {
-            if (prev2 != null && prev != null && candle.OpenTime > minDate) // Need the last 3 candles
+            if (prev2.OpenTime != 0 && prev.OpenTime != 0 && candle.OpenTime > minDate) // Need the last 3 candles
             {
                 if (SignalPrepare.ZoneFvgActive())
                 {
@@ -326,7 +324,7 @@ public class ZoneFvg
         ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.FvgZones.ShortClosed, dbStats);
         symbolIntervalData.FvgZones.Reset();
 
-        // Create new zones 
+        // Create new zones
         OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
         OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
         CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
@@ -354,12 +352,12 @@ public class ZoneFvg
                     CandleTime unixStartUp = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo Emulator date?
                     CandleTime fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, interval.Duration);
                     fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
-                    
+
                     //// Load candles from disk
                     //if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
                     //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
                     //loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
-                    
+
                     //// Load candles from the exchange
                     //if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
                     //    loadedCandlesInMemory[interval.IntervalPeriod] = true; // in memory, alway's save

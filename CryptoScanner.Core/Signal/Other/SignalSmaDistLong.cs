@@ -13,11 +13,12 @@ public class SignalSmaDistLong : SignalCreateBase
     }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Sma20 == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
            )
             return false;
 
@@ -33,14 +34,14 @@ public class SignalSmaDistLong : SignalCreateBase
             return false;
         }
 
-        if (CandleLast!.Close > (decimal)CandleLast.CandleData!.Sma20!)
+        if (CandleLast!.Candle.Close > (decimal)CandleLast.CandleData!.Sma20!)
             return false;
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle? candlePrev))
+        if (!GetPrevCandle(CandleLast, out MyData? candlePrev))
             return false;
 
-        decimal dist1 = Math.Abs(100 * (CandleLast!.Close - (decimal)CandleLast.CandleData!.Sma20!) / (decimal)CandleLast.CandleData!.Sma20!);
-        decimal dist2 = Math.Abs(100 * (candlePrev!.Close - (decimal)candlePrev.CandleData!.Sma20!) / (decimal)candlePrev.CandleData!.Sma20!);
+        decimal dist1 = Math.Abs(100 * (CandleLast!.Candle.Close - (decimal)CandleLast.CandleData!.Sma20!) / (decimal)CandleLast.CandleData!.Sma20!);
+        decimal dist2 = Math.Abs(100 * (candlePrev!.Candle.Close - (decimal)candlePrev.CandleData!.Sma20!) / (decimal)candlePrev.CandleData!.Sma20!);
 
         if (dist1 < dist2 || dist1 < 2.50m)
         {

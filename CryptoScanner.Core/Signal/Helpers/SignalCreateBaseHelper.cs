@@ -5,13 +5,13 @@ namespace CryptoScanner.Core.Signal.Helpers;
 
 public static class SignalCreateBaseHelper
 {
-    public static bool IsMacdRecoveryOversold(this SignalCreateBase strategy, int candleCount)
+    public static bool IsMacdRecoveryOversold(this SignalCreateBase myBase, int candleCount)
     {
         // Is there "recovery" (a lighter macd bar)
-        CryptoCandle last = strategy.CandleLast!;
+        MyData last = myBase.CandleLast!;
         while (candleCount-- > 0)
         {
-            if (!strategy.GetPrevCandle(last, out CryptoCandle? prev))
+            if (!myBase.GetPrevCandle(last, out MyData? prev))
                 return false;
 
             if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
@@ -24,14 +24,14 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool IsMacdRecoveryOverbought(this SignalCreateBase strategy, int candleCount)
+    public static bool IsMacdRecoveryOverbought(this SignalCreateBase myBase, int candleCount)
     {
         // Is there "recovery" (a lighter macd bar)
-        CryptoCandle? last = strategy.CandleLast;
+        MyData? last = myBase.CandleLast;
 
         while (candleCount-- > 0)
         {
-            if (!strategy.GetPrevCandle(last, out CryptoCandle? prev))
+            if (!myBase.GetPrevCandle(last, out MyData? prev))
                 return false;
 
             if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)
@@ -44,16 +44,16 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool HadStobbInThelastXCandlesOversold(this SignalCreateBase strategy, int candleCount)
+    public static bool HadStobbInThelastXCandlesOversold(this SignalCreateBase myBase, int candleCount)
     {
-        CryptoCandle? last = strategy.CandleLast;
+        MyData? last = myBase.CandleLast;
         while (candleCount > 0)
         {
             // Closes or opens below the bb & stochastic oversold situation 
             if (last!.IsBelowBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last!.StochOversold())
                 return true;
 
-            if (!strategy.GetPrevCandle(last, out last))
+            if (!myBase.GetPrevCandle(last, out last))
                 return false;
             candleCount--;
         }
@@ -62,9 +62,9 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool IsStobbInThelastXCandlesOverbought(this SignalCreateBase strategy, int candleCount)
+    public static bool IsStobbInThelastXCandlesOverbought(this SignalCreateBase myBase, int candleCount)
     {
-        CryptoCandle? last = strategy.CandleLast;
+        MyData? last = myBase.CandleLast;
         while (candleCount > 0)
         {
             if (last == null)
@@ -73,7 +73,7 @@ public static class SignalCreateBaseHelper
             if (last!.IsAboveBollingerBands(GlobalData.Settings.Signal.Sbm.UseLowHigh) && last.StochOverbought())
                 return true;
 
-            if (!strategy.GetPrevCandle(last, out last))
+            if (!myBase.GetPrevCandle(last, out last))
                 return false;
             candleCount--;
         }
@@ -82,7 +82,7 @@ public static class SignalCreateBaseHelper
     }
 
 
-    public static bool IsBollingerBandsIncreased(this SignalCreateBase strategy, int candleCount = 5, decimal percentage = 1.5m)
+    public static bool IsBollingerBandsIncreased(this SignalCreateBase myBase, int candleCount = 5, decimal percentage = 1.5m)
     {
         // Een waarde die plotseling ~2% hoger of lager ligt dan de vorige candle kan interressant 
         // zijn, ook als dat binnen de bollinger bands plaats vindt (dit is dus aanvullend 
@@ -93,7 +93,7 @@ public static class SignalCreateBaseHelper
         if (candleCount <= 0)
             return false;
 
-        CryptoCandle? last = strategy.CandleLast;
+        MyData? last = myBase.CandleLast;
         decimal minValue = (decimal)last.CandleData!.BollingerBandsPercentage!;
         while (candleCount > 0)
         {
@@ -102,7 +102,7 @@ public static class SignalCreateBaseHelper
             if (value < minValue)
                 minValue = value;
 
-            if (!strategy.GetPrevCandle(last, out last))
+            if (!myBase.GetPrevCandle(last, out last))
                 return false;
             candleCount--;
         }
@@ -112,16 +112,16 @@ public static class SignalCreateBaseHelper
         // NB: Ik denk dat we alleen de laatste value willen hebben (zodat het niet van max naar min gaat)
         // Daar komt waarschijnlijk ook de verwarring weg met de voorgaande oplossing
 
-        decimal maxValue = (decimal)strategy.CandleLast.CandleData!.BollingerBandsPercentage!;
+        decimal maxValue = (decimal)myBase.CandleLast.CandleData!.BollingerBandsPercentage!;
         decimal bbDiffPerc = 100 * maxValue / minValue;
 
         if (bbDiffPerc < percentage)
         {
-            strategy.ExtraText = string.Format("Niet genoeg gestegen {0:N8} {1:N8}", bbDiffPerc, percentage);
+            myBase.ExtraText = string.Format("Niet genoeg gestegen {0:N8} {1:N8}", bbDiffPerc, percentage);
             return false;
         }
 
-        strategy.ExtraText = bbDiffPerc.ToString("N2") + "%";
+        myBase.ExtraText = bbDiffPerc.ToString("N2") + "%";
         return true;
     }
 }

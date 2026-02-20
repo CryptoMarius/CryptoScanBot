@@ -127,12 +127,12 @@ public class TestBase
 
     public static CryptoCandle GenerateCandles(CryptoSymbol symbol, ref DateTime startTime, int count, decimal price)
     {
-        CryptoCandle? candle = null;
+        CryptoCandle candle = default;
 
-        long startTimeUnix = CandleTools.GetUnixTime(startTime, 60);
+        CandleTime startTimeUnix = CandleTime.AlignFromDateTime(startTime, 1);
         while (count > 0)
         {
-            startTime = CandleTools.GetUnixDate(startTimeUnix);
+            startTime = startTimeUnix.ToDateTime();
             candle = CandleTools.CreateCandle(symbol, GlobalData.IntervalList[0], startTime, price, price, price, price, 1);
             symbol.LastPrice = price;
             //CandleTools.UpdateCandleFetched(symbol, GlobalData.IntervalList[0]);
@@ -157,7 +157,7 @@ public class TestBase
             count--;
         }
 
-        if (candle == null)
+        if (candle.OpenTime == 0)
             throw new Exception("Geen count opgegeven");
         return candle;
     }

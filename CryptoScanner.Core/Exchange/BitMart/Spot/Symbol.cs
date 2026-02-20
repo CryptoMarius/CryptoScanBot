@@ -113,7 +113,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbolData.Symbol, out decimal volume))
-                                    symbol!.Volume = volume;
+                                    symbol!.Volume = (double)volume;
                                 else
                                     symbol!.Volume = 0;
 

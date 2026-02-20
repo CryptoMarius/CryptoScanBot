@@ -8,36 +8,84 @@ using Skender.Stock.Indicators;
 
 namespace CryptoScanner.Core.Signal;
 
+public class CryptoIndicatorData
+{
+    public required CryptoCandle LastCandle;
+    public required CandleIndicatorData LastCandleData;
+
+    public required CryptoCandleList CandleList;
+    public Dictionary<CandleTime, CandleIndicatorData> Data = [];
+
+    public bool TryGetCandle(CandleTime time, out MyData? myData)
+    {
+        if (CandleList.TryGetValue(time, out CryptoCandle candle) &&
+            Data.TryGetValue(time, out CandleIndicatorData? indicator))
+        {
+            myData = new()
+            {
+                Candle = candle!,
+                CandleData = indicator!
+            };
+            return true;
+        }
+        else
+        {
+            myData = null;
+            return false;
+        }
+    }
+
+}
+
+public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIndicatorData?>
+{
+    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval, CandleTime candleOpenTime, out string reaction, int fillMax = 61)
+    {
+        if (!TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? _))
+        {
+            List<CryptoCandle>? History = CandleIndicatorData.CollectCandles(symbol, interval, candleOpenTime, out string response);
+            if (History == null)
+            {
+                GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
+                TryAdd(interval.IntervalPeriod, null);
+                reaction = "";
+                return false;
+            }
+
+            CryptoIndicatorData? indicatorData = CandleIndicatorData.CalculateIndicators(symbol, interval, History, fillMax);
+            TryAdd(interval.IntervalPeriod, indicatorData);
+        }
+
+        reaction = "";
+        return true;
+    }
+
+    // Get the candle and indicator data from a DIFFERENT interval
+    internal bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
+    {
+        if (TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData))
+        {
+            return indicatorData!.TryGetCandle(time, out myData);
+        }
+        myData = null;
+        return false;
+    }
+
+}
+
+
 public class CandleIndicatorData : CryptoData
 {
-    private const int SlopeCount = 2;
-
-    // Test
-    //public double? Ema9 { get; set; }
-    //public double? Wma30 { get; set; }
-    //public double? Tema { get; set; }
-
-//#if EXTRASTRATEGIES
-//    public double? MacdHistogram2 { get { return MacdSignal - MacdValue; } }
-
-//    //public double? MacdLtValue { get; set; }
-//    //public double? MacdLtSignal { get; set; }
-//    public double? MacdTestHistogram { get; set; } // kan ook calculated worden (signal - value of andersom)
-//    //public double? MacdLtHistogram2 { get { return MacdLtSignal - MacdLtValue; } }
-//#endif
-
-
-    // Voor de SMA lookback willen we 60 sma200's erin, dus 200 + 60
+    // For the SMA 200 we want at least 200 + 60 (we calculate the last 60 entries)
     private const int maxCandles = 260;
-    //private const int maxCandles = 310 * 2; // extended to 620 because of markettrend calculation
-
 
     /// <summary>
-    /// Make a list of candles up to firstCandleOpenTime with at least 260 candles.
-    /// (target: ma200 for the last 60 minutes, but also the other indicators)
+    /// Make a list of candles up to firstCandleOpenTime with at least 260 candles
     /// </summary>
-    public static List<CryptoCandle>? CollectCandles(CryptoSymbol symbol, CryptoInterval interval, CandleTime firstCandleOpenTime, out string errorstr)
+    public static List<CryptoCandle>? CollectCandles(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime firstCandleOpenTime, out string errorstr)
     {
+        // Retrieve the last candle in the requested interval
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList intervalCandles = symbolPeriod.CandleList;
         if (intervalCandles.Count < maxCandles)
@@ -46,49 +94,43 @@ public class CandleIndicatorData : CryptoData
             return null;
         }
 
-        // https://trendspider.com/learning-center/linear-regression-slope-a-comprehensive-guide-for-traders/
-        //Calculation and Interpretation of the LRS
-        //The Linear Regression Slope is calculated using the following formula:
-        //Slope = (N * Σ(xy) - Σx * Σy) / (N * Σ(x ^ 2) - (Σx) ^ 2)
-        //Where x represents the periods, y represents the asset’s closing prices, and N is the number of periods in the linear regression analysis.
-
-
-        // Een kleine selectie van candles overnemen voor het uitrekenen van de indicators
-        // De firstCandleOpenTime is de eerste candle die we in de selectie moeten zetten.
-        List<CryptoCandle> candlesForHistory = [];
-
+        // this would normally be enough, but we need to fill in the missing candles (afaics)
+        //var x = intervalCandles.Values.TakeLast(maxCandles);
 
         // A fix for calculating indicators for the barometer symbol..
         uint duration = interval.Duration;
         if (symbol.IsBarometerSymbol())
-            duration = 60; // alway's 1m!
+            duration = 1; // alway's 1m!
 
+        List<CryptoCandle> candlesForHistory = [];
 
-        //Monitor.Enter(symbol.CandleList);await symbol.CandleLock.WaitAsync();
-        //try
-        //{
-        // No change (is already handles)
+        // Its already aligned (but it wont hurt to do it again)
         CandleTime periodEndTime = firstCandleOpenTime - firstCandleOpenTime % duration;
         CandleTime periodStartTime = periodEndTime - (maxCandles - 1) * duration;
 
-        CryptoCandle? candleLast = null;
+        //????
+        //if (!intervalCandles.TryGetValue(periodStartTime, out CryptoCandle? lastCandle))
+        //{
+        //    errorstr = "Unable to find the last created candle";
+        //    return [];
+        //}
+
+        CryptoCandle candleLast = default;
         CandleTime candleLoop = periodStartTime;
         while (candleLoop <= periodEndTime)
         {
-#if DEBUG
-            DateTime candleLoopDate = candleLoop.ToDateTime();
-#endif
-            if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle? candle))
+            if (intervalCandles.TryGetValue(candleLoop, out CryptoCandle candle))
             {
-                candlesForHistory.Add(candle!);
+                candlesForHistory.Add(candle);
             }
             else
             {
                 // Generate a dummy for the calculation
-                if (candleLast != null)
+                if (candleLast.OpenTime != 0)
                 {
                     candle = new()
                     {
+                        TickDecimals = symbol.PriceDecimals,
                         OpenTime = candleLoop,
                         Open = candleLast.Close,
                         Low = candleLast.Close,
@@ -96,10 +138,9 @@ public class CandleIndicatorData : CryptoData
                         Close = candleLast.Close,
                         Volume = 0,
                     };
-
                     candlesForHistory.Add(candle);
                 }
-                //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information (recreated) " + CandleTools.GetUnixDate(candleLoop).ToLocalTime());
+                //GlobalData.AddTextToLogTab(symbol.Name + " " + interval.Name + " Missing candle information (recreated) " + CandleTools.GetUnixDate(candleLoop.ToDateTime()).ToLocalTime());
             }
 
             candleLoop += duration;
@@ -107,11 +148,7 @@ public class CandleIndicatorData : CryptoData
         }
 
 
-        // Mhh, blijkbaar waren er gewoon niet goed candles
-        // Kan ook omdat de exchange geen volume had voor die candle
-        // (nu wellicht overbodig doordat we hieboven dummy candles in de History erbij zetten)
-
-
+        // Its still possible we dont have enough candles
         if (candlesForHistory.Count < maxCandles)
         {
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={candlesForHistory.Count} requested={maxCandles}";
@@ -123,35 +160,35 @@ public class CandleIndicatorData : CryptoData
                 x = intervalCandles.Values.Last();
                 errorstr += " last in candlelist = " + x.DateLocal.ToString();
             }
-
             return null;
         }
 
-        // Fill in missing candles (repeating the last candle.close) up to nextCandleOpenTime
-        // We assume nothing has happened in that period (flat candles with no orders)
-        //CandleTools.AddMissingSticks(candlesForHistory, firstCandleOpenTime, interval);
-        //}
-        //finally
-        //{
-        //    Monitor.Exit(symbol.CandleList);
-        //}
-
-        // Convert the list to a input kind the stupid indicators are using
         errorstr = "";
-        //List<CryptoCandle> History = candlesForHistory.Values.ToList();
         return candlesForHistory;
     }
+
+
+
+    // some documentation (not sure its relevant these day's)
+    // https://trendspider.com/learning-center/linear-regression-slope-a-comprehensive-guide-for-traders/
+    //Calculation and Interpretation of the LRS
+    //The Linear Regression Slope is calculated using the following formula:
+    //Slope = (N * Σ(xy) - Σx * Σy) / (N * Σ(x ^ 2) - (Σx) ^ 2)
+    //Where x represents the periods, y represents the asset’s closing prices, and N is the number of periods in the linear regression analysis.
 
 
     /// <summary>
     /// Calculate all the indicators we want to have an fill in the last 60 candles
     /// </summary>
-    public static void CalculateIndicators(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> history, int fillMax = 61)
+    public static CryptoIndicatorData? CalculateIndicators(CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> history, int fillMax = 61)
     {
+        CryptoIndicatorData? indicatorData = null;
+
         // Overslaan indien het gevuld is (meerdere aanroepen)
-        CryptoCandle candle = history.Last();
-        if (candle.CandleData != null)
-            return;
+        CryptoCandle candle = history[^1];
+        //if (candle.CandleData != null)
+        //    return indicatorData;
+
 
         List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
         List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
@@ -259,7 +296,7 @@ public class CandleIndicatorData : CryptoData
             candle = history[index];
 
             CandleIndicatorData candleData = new();
-            candle.CandleData = candleData;
+            //candle.CandleData = candleData;
             try
             {
                 // EMA's
@@ -344,6 +381,14 @@ public class CandleIndicatorData : CryptoData
 
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
+
+                indicatorData ??= new() {
+                    LastCandle = candle,
+                    LastCandleData = candleData,
+                    CandleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList,
+                };
+                indicatorData.Data.Add(candle.OpenTime, candleData);
+                //candle.CandleData = candleData; // deprecated, but for now..
             }
             catch (Exception error)
             {
@@ -360,16 +405,17 @@ public class CandleIndicatorData : CryptoData
         }
 
 
-        // I use the lux indicator frequently and combine its results in a single value
-        CryptoCandle? lastCandle = history[^1];
-        LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
+        //// I use the lux indicator frequently and combine its results in a single value
+        //CryptoCandle? lastCandle = history[^1];
+        //LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
 
-        int luxValue = 0;
-        if (luxOverBought > 0)
-            luxValue += luxOverBought;
-        if (luxOverSold > 0)
-            luxValue -= luxOverSold;
-        lastCandle!.CandleData!.Lux5mValue = luxValue;
+        //int luxValue = 0;
+        //if (luxOverBought > 0)
+        //    luxValue += luxOverBought;
+        //if (luxOverSold > 0)
+        //    luxValue -= luxOverSold;
+        //lastCandle!.CandleData!.Lux5mValue = luxValue;
+        return indicatorData;
     }
 
     // We need 1 day + X hours because of the barometer calculation (we show ~5 hours in the display)
@@ -386,56 +432,57 @@ public class CandleIndicatorData : CryptoData
     }
 
 
-    public static CandleTime GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime utcNow)
+    public static CandleTime GetCandleFetchStart(CryptoSymbol symbol, CryptoInterval interval, DateTime currentTime)
     {
-        CandleTime startFetchUnix;
-        // Since the market climate is also a coin we must make an exception, it needs more candles because of the 24h bm calculation
+        CandleTime startTime = CandleTime.AlignFromDateTime(currentTime, 1);
+        // The market barometer/climate is also a symbol so we must make an exception
+        // This symbol needs a different amount of candles because of the length of the graph
         if (symbol.IsBarometerSymbol())
-            startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - Constants.BarometerGraphHours * 60; // 60 minutes
+            startTime -= Constants.BarometerGraphHours * 60; // 60 minutes
         else
         {
+            // For the 1m we need *initially* ~1 day plus some 6 or 7 hours of candles for the barometer graph
             if (interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-                // For the 1m we need *initially* ~1 day plus the data needed for the barometer graph
-                startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - InitialCandleCountFetch * interval.Duration;
+                startTime -= InitialCandleCountFetch * interval.Duration;
             else
                 // 260 would be enough for calculating the standard indicator data.
                 // But we extended that amount because of the markettrend calculation.
-                startFetchUnix = CandleTime.AlignFromDateTime(utcNow, 1) - 500 * interval.Duration;
-            startFetchUnix -= startFetchUnix % interval.Duration;
+                //startTime = CandleTime.AlignFromDateTime(currentTime, 1) - 500 * interval.Duration;
+                startTime -= 500 * interval.Duration;
         }
-        return startFetchUnix;
+        return startTime;
     }
 
 
-    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval,
-        CryptoCandle candle, out string reaction, int fillMax = 61)
-    {
-        if (candle.CandleData == null)
-        {
-            // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
-            List<CryptoCandle>? History = CollectCandles(symbol, symbolInterval.Interval, candle.OpenTime, out reaction);
-            if (History == null)
-            {
-                //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
-                //symbolInterval.Signal = null;
-                return false;
-            }
+    //public static bool PrepareIndicators(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval,
+    //    CryptoCandle candle, out string reaction, int fillMax = 61)
+    //{
+    //    if (candle.CandleData == null)
+    //    {
+    //        // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
+    //        List<CryptoCandle>? History = CollectCandles(symbol, symbolInterval.Interval, candle.OpenTime, out reaction);
+    //        if (History == null)
+    //        {
+    //            //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
+    //            //symbolInterval.Signal = null;
+    //            return false;
+    //        }
 
-            if (History.Count == 0)
-            {
-                reaction = "Geen candles";
-                //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
-                //symbolInterval.Signal = null;
-                //reaction = 
-                return false;
-            }
+    //        if (History.Count == 0)
+    //        {
+    //            reaction = "Geen candles";
+    //            //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
+    //            //symbolInterval.Signal = null;
+    //            //reaction =
+    //            return false;
+    //        }
 
-            CalculateIndicators(symbol, symbolInterval.Interval, History, fillMax);
-        }
+    //        CalculateIndicators(symbol, symbolInterval.Interval, History, fillMax);
+    //    }
 
-        reaction = "";
-        return true;
-    }
+    //    reaction = "";
+    //    return true;
+    //}
 }
 
 

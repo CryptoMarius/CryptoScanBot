@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Model;
 
@@ -12,8 +13,8 @@ public class CryptoSymbolInterval
     public CandleTime? LastCandleSynchronized { get; set; }
 
     // The candles for this interval
+    public CryptoCandle LastCandle { get; set; } = default;
     public CryptoCandleList CandleList { get; set; } = [];
-    public CryptoCandle? LastCandle { get; set; } = null;
 
     // The signals generated for this interval
     public List<CryptoSignal> SignalList { get; set; } = [];

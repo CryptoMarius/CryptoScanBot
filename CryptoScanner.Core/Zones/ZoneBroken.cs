@@ -13,13 +13,13 @@ public class ZoneBroken
     {
         while (key <= checkUpTo)
         {
-            if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle candle))
             {
                 // Note: A candle could break multiple long or short boxes, that might be an unforseen problem..
 
                 foreach (var zone in zonesLong)
                 {
-                    if (key >= zone.OpenTime!.Value + delay && candle.Low < zone.Top)
+                    if (key >= zone.OpenTime + delay && candle.Low < zone.Top)
                     {
                         zone.CloseTime = candle.OpenTime + symbolInterval.Interval.Duration;
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -29,7 +29,7 @@ public class ZoneBroken
                 }
                 foreach (var zone in zonesShort)
                 {
-                    if (key >= zone.OpenTime!.Value + delay && candle.High > zone.Bottom)
+                    if (key >= zone.OpenTime + delay && candle.High > zone.Bottom)
                     {
                         zone.CloseTime = candle.OpenTime + symbolInterval.Interval.Duration;
                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -69,10 +69,10 @@ public class ZoneBroken
 
             // Kind of brute force (on 1h candles so its not that bad)..
             int last = zones.Count - 1;
-            CandleTime key = zones.First().OpenTime!.Value;
+            CandleTime key = zones.First().OpenTime;
             key = IntervalTools.StartOfIntervalCandle(key, interval.Duration);
 
-            zones.Sort((zoneA, zoneB) => zoneA.OpenTime!.Value.CompareTo(zoneB.OpenTime!.Value));
+            zones.Sort((zoneA, zoneB) => zoneA.OpenTime.CompareTo(zoneB.OpenTime));
             for (int i = 0; i <= last; i++)
             {
                 // Might have a problem with equal times?
@@ -87,7 +87,7 @@ public class ZoneBroken
 
                 CandleTime checkUpTo;
                 if (i < last)
-                    checkUpTo = zone.OpenTime!.Value;
+                    checkUpTo = zone.OpenTime;
                 else
                     checkUpTo = maxTime;
 

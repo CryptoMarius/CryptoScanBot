@@ -12,8 +12,11 @@ public class SignalExecute
     private static int analyseCount;
     public static int AnalyseCount { get { return analyseCount; } }
     public static void ResetAnalyseCount() => analyseCount = 0;
-    
-    private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool checkBarometer), 
+
+
+    // Quick index on what to execute (with some specials for detecting fvg and dlz on the 1m)
+    // (the zones for the fvg and dlz are prepared via other code and are stored in the database)
+    private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool checkBarometer),
         SortedList<string, CryptoInterval>> Executing { get; set; } = [];
 
 
@@ -86,48 +89,13 @@ public class SignalExecute
 
 
     public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol,
-        Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles,
+        CryptoIndicatorDataList preparedIndicatorDataList,
         CandleTime lastCandle1mCloseTime)
     {
-        List<CryptoSignal> signalList = [];
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
 
-        // TODO: CHECK: This is something different than before (parameter false/true combined with zones!)
-        // I'm not sure if this is really such a bad thing, you do not want to trade an inconsistent volume
-        // But lets keep the parameter for now..
-
-        // Is the symbol a new one?
-        if (!SymbolTools.CheckNewCoin(symbol, out string response))
-        {
-            if (GlobalData.Settings.Signal.LogSymbolMustExistsDays)
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            return [];
-        }
-
-        // Is the volume valid within a certain minimal limit
-        if (!symbol.CheckValidMinimalVolume(lastCandle1mCloseTime, 60, out response))
-        {
-            if (GlobalData.Settings.Signal.LogMinimalVolume)
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            return [];
-        }
-
-        // Is the price valid within a certain minimal limit
-        if (!symbol.CheckValidMinimalPrice(out response))
-        {
-            if (GlobalData.Settings.Signal.LogMinimalPrice)
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                GlobalData.AddTextToLogTab($"{symbol.Name} {response}");
-            return [];
-        }
-
-
-        foreach (var entry in Executing)
+        List<CryptoSignal> signalList = [];
+        foreach (var entry in Executing.ToList())
         {
             foreach (var interval in entry.Value.Values)
             {
@@ -136,7 +104,7 @@ public class SignalExecute
                     try
                     {
                         var side = entry.Key.side;
-                        if (entry.Key.checkBarometer) // true for the standard strategies bug false for dlz and fvg zones
+                        if (entry.Key.checkBarometer) // Skip for the dlz and fvg zones
                         {
                             // Barometer check
                             if (!BarometerHelper.ValidBarometerConditions(GlobalData.ActiveExchange!, symbol.Quote, TradingConfig.Signals[side].Barometer, out string reaction))
@@ -151,15 +119,19 @@ public class SignalExecute
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
                         {
-                            SignalCreate createSignal = new(symbol, interval, side);
-
-                            // The candle list can be missing in action, too little candles for example
-                            if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
+                            if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
                             {
-                                createSignal.History = history;
-                                createSignal.Candle = history[^1];
+                                SignalCreate createSignal = new()
+                                {
+                                    Symbol = symbol,
+                                    Interval = interval,
+                                    Side = side,
+                                    Candle = indicatorData.LastCandle,
+                                    CandleData = indicatorData.LastCandleData,
+                                    IndicatorData = indicatorData,
+                                    IndicatorDataList = preparedIndicatorDataList,
+                                };
 
-                                // TODO: Set the right Candle!!!!!
                                 string text = "";
                                 if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
                                 {
@@ -168,7 +140,7 @@ public class SignalExecute
                                 }
 
                                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                                    GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} {text}");
+                                    ScannerLog.Logger.Info($"Debug Signal create {symbol.Name} {interval.Name} {side} {text}");
                                 //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
                                 //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
 
@@ -176,6 +148,31 @@ public class SignalExecute
                                 Interlocked.Increment(ref analyseCount);
                             }
                             else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
+
+                            //// OLD SETUP...
+                            //// The candle list can be missing in action, too little candles for example
+                            //if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
+                            //{
+                            //    //createSignal.History = history;
+                            //    createSignal.Candle = history[^1];
+
+                            //    // TODO: Set the right Candle!!!!!
+                            //    string text = "";
+                            //    if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
+                            //    {
+                            //        text = "*";
+                            //        signalList.AddRange(createSignal.SignalList);
+                            //    }
+
+                            //    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+                            //        GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} {text}");
+                            //    //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
+                            //    //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
+
+                            //    // Counter for mainscreen so you can see symbols analyzing etc..
+                            //    Interlocked.Increment(ref analyseCount);
+                            //}
+                            //else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
                         }
                         else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm {entry.Key.strategy}");
                     }

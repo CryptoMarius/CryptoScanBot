@@ -44,7 +44,7 @@ public static class TradingRules
                         int candleCount = rule.Candles;
                         while (candleCount-- > 0)
                         {
-                            if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                            if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                             {
                                 low = Math.Min(low, candle.Low);
                                 high = Math.Max(high, candle.High);
@@ -114,7 +114,7 @@ public static class TradingRules
 
 
     /// Check barometer(s) and cache that value
-    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, 
+    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange,
         string quoteName, CryptoTradeSide side, CandleTime candleUnixDate, uint candleDuration, out string reaction)
     {
         reaction = "";

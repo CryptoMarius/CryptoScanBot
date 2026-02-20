@@ -70,11 +70,12 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             bool addCandle = false;
                             CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
                             CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
+                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
                             {
                                 addCandle = true;
                                 candle = new() { OpenTime = candleOpenUnix };
                             }
+                            candle.TickDecimals = symbol.PriceDecimals;
                             candle!.Open = kline.OpenPrice;
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
@@ -83,6 +84,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle.Volume = kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice);
                             if (addCandle)
                                 candleCache.TryAdd(candleOpenUnix, candle);
+                            else
+                                candleCache[candleOpenUnix] = candle;
                             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)} count={candleCache.Count}");
                         }
                     }
@@ -173,7 +176,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
 
                             // Finally do something with the cached data
-                            CryptoCandle? candleLast = null;
+                            CryptoCandle candleLast = default;
                             foreach (CryptoCandle candle in candleCache.Values.ToList())
                             {
                                 // Only the ready candles (might change the flow?)
@@ -197,7 +200,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 else break;
                             }
                             // Add the last candle in the analysis queue
-                            if (candleLast != null && candleLast.OpenTime == expectedCandlesUpto)
+                            if (candleLast.OpenTime == expectedCandlesUpto)
                             {
                                 // Last known price(s) (this is what the priceticker should do)
                                 if (!GlobalData.BackTest)

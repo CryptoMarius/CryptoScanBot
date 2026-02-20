@@ -111,7 +111,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                     //symbol.IsSpotTradingAllowed = true; // binanceSymbol.IsSpotTradingAllowed;
                                     //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
-                                    symbol.Volume = symbolData.Volume24H;
+                                    symbol.Volume = (double)symbolData.Volume24H;
                                     //// volume from the tickers
                                     //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                     //    symbol.Volume = volume;

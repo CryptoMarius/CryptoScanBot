@@ -128,7 +128,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (double)volume;
                                 else
                                     symbol.Volume = 0;
 

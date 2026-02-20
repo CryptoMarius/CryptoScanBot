@@ -24,6 +24,7 @@ public class ZoneCandleEngine
             {
                 CryptoCandle candle = new()
                 {
+                    TickDecimals = symbol.PriceDecimals,
                     OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
                     Open = binaryReader.ReadDecimal(),
                     High = binaryReader.ReadDecimal(),
@@ -88,16 +89,14 @@ public class ZoneCandleEngine
 
             foreach (var pair in symbolInterval.CandleList)
             {
-                CryptoCandle? candle = pair.Value;
-                if (candle != null)
-                {
-                    binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
-                    binaryWriter.Write(candle.Open);
-                    binaryWriter.Write(candle.High);
-                    binaryWriter.Write(candle.Low);
-                    binaryWriter.Write(candle.Close);
-                    binaryWriter.Write(candle.Volume);
-                }
+                // TODO: Change storage to support the smaller types
+                CryptoCandle candle = pair.Value;
+                binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
+                binaryWriter.Write(candle.Open);
+                binaryWriter.Write(candle.High);
+                binaryWriter.Write(candle.Low);
+                binaryWriter.Write(candle.Close);
+                binaryWriter.Write(candle.Volume);
             }
         }
         finally
@@ -188,7 +187,7 @@ public class ZoneCandleEngine
                         CandleTime unix = symbolInterval.CandleList.Keys.Last();
                         while (unix >= startFetchUnix)
                         {
-                            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? c))
+                            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle c))
                                 newList.Add(c.OpenTime, c);
                             unix -= symbolInterval.Interval.Duration;
                         }
@@ -224,7 +223,7 @@ public class ZoneCandleEngine
     {
         bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
         if (debug)
-            GlobalData.AddTextToLogTab($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
+            ScannerLog.Logger.Info($"CandleEngine.IsDataLocal({symbol.Name}, {interval!.Name}, " +
                 $"{minTime.ToDateTime()}, {maxTime.ToDateTime()} (call)");
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -291,7 +290,7 @@ public class ZoneCandleEngine
                     // Load the candles from the exchange
                     bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
                     if (debug)
-                        GlobalData.AddTextToLogTab($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +
+                        ScannerLog.Logger.Info($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +
                             $"{unixLoop.ToDateTime()} .. {unixMax.ToDateTime()}");
 
                     bool result = await symbol.Exchange.GetApiInstance().Candle.FetchFrom(symbol, interval, unixLoop, unixMax);

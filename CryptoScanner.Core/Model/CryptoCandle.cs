@@ -51,40 +51,69 @@ namespace CryptoScanner.Core.Model;
 
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class CryptoCandle : IQuote
-//public struct CryptoCandle : IQuote
+public struct CryptoCandle : IQuote
 {
-    public CandleTime OpenTime { get; set; } // a long is 64 bit / 8 bytes, we can reduce this (uint, count only the minutes, value not needed)
-    public decimal Open { get; set; } // a decimal is an amazing 16 bytes
-    public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
-    public decimal Low { get; set; }
-    public decimal Close { get; set; }
+    public CandleTime OpenTime { get; set; } // uint
+    //public decimal Open { get; set; } // a decimal is an amazing 16 bytes
+    //public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
+    //public decimal Low { get; set; }
+    //public decimal Close { get; set; }
+
+    // works fine...
+    // Storage fields (internal, in satoshi's)
+    //private const decimal SatoshiMultiplier = 100_000_000m;
+    //private long _openSatoshi;
+    //public decimal Open { get => _openSatoshi / SatoshiMultiplier; set => _openSatoshi = (long)(value * SatoshiMultiplier);}
+    //private long _highSatoshi;
+    //public decimal High { get => _highSatoshi / SatoshiMultiplier; set => _highSatoshi = (long)(value * SatoshiMultiplier);}
+    //private long _lowSatoshi;
+    //public decimal Low { get => _lowSatoshi / SatoshiMultiplier; set => _lowSatoshi = (long)(value * SatoshiMultiplier); }
+    //private long _closeSatoshi;
+    //public decimal Close { get => _closeSatoshi / SatoshiMultiplier; set => _closeSatoshi = (long)(value * SatoshiMultiplier); }
+
+    // Properties
+    public byte TickDecimals;                 // 1 byte (aantal decimalen in tickSize)
+    // Pre-calculated tick sizes (0-8 decimals), less costly then Math.Pow()
+    private static readonly decimal[] TickSizeLookup =
+    {
+        1.0m,           // 0 decimals
+        0.1m,           // 1 decimal
+        0.01m,          // 2 decimals
+        0.001m,         // 3 decimals
+        0.0001m,        // 4 decimals
+        0.00001m,       // 5 decimals
+        0.000001m,      // 6 decimals
+        0.0000001m,     // 7 decimals
+        0.00000001m     // 8 decimals
+    };
+    //private decimal TickSize => 1m / (decimal)Math.Pow(10, TickDecimals);
+    private decimal TickSize => TickSizeLookup[TickDecimals];
+    private int _openTicks;                    // 4 bytes
+    public decimal Open { get => _openTicks * TickSize; set => _openTicks = (int)Math.Round(value / TickSize); }
+    private int _highTicks;                    // 4 bytes
+    public decimal High { get => _highTicks * TickSize; set => _highTicks = (int)Math.Round(value / TickSize); }
+    private int _lowTicks;                     // 4 bytes
+    public decimal Low { get => _lowTicks * TickSize; set => _lowTicks = (int)Math.Round(value / TickSize); }
+    private int _closeTicks;                   // 4 bytes
+    public decimal Close { get => _closeTicks * TickSize; set => _closeTicks = (int)Math.Round(value / TickSize); }
+
     private double _volume;
     public decimal Volume { get { return (decimal)_volume; } set { _volume = (double)value; } } // float or double will suffice (but with rounding errors)
 
-    // Idea, we store it as uint together with the factor, this saves 50% memory
-    //public uint OpenStorage { get; set; }
-    //public uint HighStorage { get; set; }
-    //public uint LowStorage { get; set; }
-    //public uint CloseStorage { get; set; }
-
-    //// decimal = 16 bytes, long = 8, uint = 4
-    //// 4*16 - 3*4 = 64 - 12 = 52 bytes per candle, is that wurth the effort??
-    //[Computed]
-    //public uint PriceFactor { get; set; }
-    //[Computed]
-    //public decimal OpenDecimal { get { return (long)OpenStorage / PriceFactor; } set { OpenStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal HighDecimal { get { return (long)HighStorage / PriceFactor; } set { HighStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal LowDecimal { get { return (long)LowStorage / PriceFactor; } set { LowStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal CloseDecimal { get { return (long)CloseStorage / PriceFactor; } set { CloseStorage = (uint)(value * PriceFactor); } }
-
-
     public DateTime Date { get { return OpenTime.ToDateTime(); } }
     public DateTime DateLocal { get { return OpenTime.ToDateTime().ToLocalTime(); } }
-    public CandleIndicatorData? CandleData { get; set; }
+
+    // Better: Direct calculation
+    public static byte CalculateDecimalsFromTickSize2(decimal tickSize)
+    {
+        // tickSize = 1 / (10^decimals)
+        // decimals = -log10(tickSize)
+
+        if (tickSize <= 0)
+            throw new ArgumentException("TickSize must be positive");
+        byte decimals = (byte)Math.Round(-Math.Log10((double)tickSize));
+        return decimals;
+    }
 }
 
 //
@@ -293,6 +322,7 @@ public readonly struct CandleTime : IEquatable<CandleTime>, IComparable<CandleTi
     }
 
     public DateTime ToDateTime() => Epoch.AddMinutes(_minutes); //CandleTime.ToDateTimeInternal(_minutes);
+    public DateTime ToLocalTime() => Epoch.AddMinutes(_minutes).ToLocalTime(); //CandleTime.ToDateTimeInternal(_minutes);
     public long ToUnixSeconds() => EpochUnixSec + ((long)_minutes * SecondsPerMinute); //CandleTime.ToUnixSecondsInternal(_minutes);
 
     // Align the DateTime parameter to minutes

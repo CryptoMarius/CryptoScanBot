@@ -32,18 +32,16 @@ public class CandleBase(ExchangeBase api)
 
     }
 
-    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, CandleTime fetchEndUnix)
+    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, CandleTime fetchMax)
     {
         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0 || symbol.IsBarometerSymbol())
             return;
 
         using IDisposable client = Api.GetClient();
-        for (int i = 0; i < GlobalData.IntervalList.Count; i++)
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            CryptoInterval interval = GlobalData.IntervalList[i];
-            await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval, fetchEndUnix);
+            await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval, fetchMax);
         }
-
 
         // Remove the candles we needed because of the not supported intervals & bulk calculation
         await CandleTools.CleanCandleDataAsync(symbol, null);
@@ -80,18 +78,12 @@ public class CandleBase(ExchangeBase api)
                             continue;
 
                         // The not so interesting coins (saves a lot of memory)
-                        if (!symbol.EnoughVolume())
+                        if (!symbol.EnoughVolume() && !symbol.IsTrading())
                             continue;
 
                         //if (symbol.Name.Equals("BTCUSDT") || symbol.Name.Equals("ETHUSDT") || symbol.Name.Equals("ADABTC") || symbol.Name.Equals("LEVERBTC"))
                         queue.Enqueue(symbol);
                     }
-
-
-                    // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
-                    // De datum en tijd tot na het activeren van beide streams (overlap)
-                    DateTime fetchEndUnixDate = DateTimeOffset.UtcNow.UtcDateTime;
-                    CandleTime fetchEndUnix = CandleTime.AlignFromDateTime(fetchEndUnixDate, 1);
 
 
                     // En dan door x tasks de queue leeg laten trekken
@@ -100,7 +92,6 @@ public class CandleBase(ExchangeBase api)
                     {
                         Task task = Task.Run(async () =>
                         {
-                            //await GetCandlesForAllSymbolsFetchCandlesAsync(fetchEndUnix, queue); }
                             try
                             {
                                 while (true)
@@ -123,8 +114,11 @@ public class CandleBase(ExchangeBase api)
                                     // Er is niet geswitched van exchange (omdat het ophalen zo lang duurt)
                                     if (symbol.ExchangeId == GlobalData.ActiveExchange!.Id)
                                     {
-                                        CandleTools.DetermineFetchStartDate(symbol, fetchEndUnix);
-                                        await GetCandlesForAllIntervalsAsync(symbol, fetchEndUnix);
+                                        // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
+                                        // De datum en tijd tot na het activeren van beide streams (overlap)
+                                        CandleTime fetchMax = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
+                                        CandleTools.DetermineFetchStartDate(symbol, fetchMax);
+                                        await GetCandlesForAllIntervalsAsync(symbol, fetchMax);
                                     }
                                 }
                             }
@@ -173,10 +167,21 @@ public class CandleBase(ExchangeBase api)
                 if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchMax)
                     break;
 
-                CandleTime lastTime = (CandleTime)symbolInterval.LastCandleSynchronized!;
-                symbolInterval.LastCandleSynchronized = await Api.Candle.GetCandlesForInterval(client, symbol, interval, lastTime, fetchMax);
+                // LastCandleSynchronized alway's has a value (minimum period start or last synched)
+                CandleTime lastFetched = (CandleTime)symbolInterval.LastCandleSynchronized!;
+                var (succes, _, fetchedUpTo) = await Api.Candle.GetCandlesForInterval(client, symbol, interval, lastFetched, fetchMax);
+
+                if (succes)
+                {
+                    symbolInterval.LastCandleSynchronized = fetchedUpTo;
+                }
+                else
+                {
+                    symbolInterval.LastCandleSynchronized = fetchedUpTo;
+                }
+
                 CandleTools.UpdateCandleFetched(symbol, interval);
-                if (symbolInterval.LastCandleSynchronized == lastTime) // not moving forward
+                if (symbolInterval.LastCandleSynchronized == lastFetched) // not moving forward
                     break;
             }
         }
@@ -241,14 +246,15 @@ public class CandleBase(ExchangeBase api)
 
                 CandleTime lastDate = minTime;
                 int countBefore = symbolInterval.CandleList.Count;
-                unixLoop = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, minTime, maxTime);
+                var result = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, minTime, maxTime);
+                unixLoop = result.fetchedUpTo;
 
                 int added = symbolInterval.CandleList.Count - countBefore;
                 totalFetched += added;
 
                 bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
                 if (debug)
-                    GlobalData.AddTextToLogTab($"Core.Exchange.FetchFrom({symbol.Name}, {interval!.Name}, " +
+                    ScannerLog.Logger.Info($"Core.Exchange.FetchFrom({symbol.Name}, {interval!.Name}, " +
                         $"{minTime.ToDateTime()} .. {maxTime.ToDateTime()} limit={ExchangeBase.ExchangeOptions.CandleLimit} added={added}");
 
 
@@ -272,4 +278,19 @@ public class CandleBase(ExchangeBase api)
         return totalFetched > 0;
     }
 
+
+    internal bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval, CandleTime maxFetch)
+    {
+
+        //if (symbolInterval.IntervalPeriod != CryptoIntervalPeriod.interval1m)
+        {
+            CandleTime time = CandleTime.AlignFromDateTime(openTime, interval.Duration);
+            if (time + interval.Duration > maxFetch) // future candle?
+            {
+                ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {time.ToLocalTime()}");
+                return true;
+            }
+        }
+        return false;
+    }
 }

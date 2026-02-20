@@ -26,16 +26,13 @@ public class CryptoZone
     public required CryptoTradeSide Side { get; set; }
     public required CryptoZoneStrength Strength { get; set; }
 
-    // Created on..
-    public required DateTime CreateTime { get; set; }
-
-    public CandleTime? OpenTime { get; set; } // Zone starts on this date, for limited types of zones
+    public required CandleTime OpenTime { get; set; } // Zone starts on this date, for limited types of zones
     public required decimal Top { get; set; }
     public required decimal Bottom { get; set; }
     public CandleTime? CloseTime { get; set; } // Zone ends on this date
 
     // Create a signal when this price triggers (once)
-    public DateTime? AlarmDate { get; set; }
+    public CandleTime? AlarmDate { get; set; }
 
     // Percentage of the zone or other text
     public string Description { get; set; } = "";

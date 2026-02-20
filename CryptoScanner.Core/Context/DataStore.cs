@@ -53,8 +53,11 @@ public class DataStore
                 int candleCount = binaryReader.ReadInt32();
                 while (candleCount > 0)
                 {
+                    // TODO: Change storage to support the smaller types
+
                     CryptoCandle candle = new()
                     {
+                        TickDecimals = symbol.PriceDecimals,
                         OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
                         Open = binaryReader.ReadDecimal(),
                         High = binaryReader.ReadDecimal(),
@@ -70,7 +73,7 @@ public class DataStore
                         if (candle.OpenTime < futureCandles)
                         {
                             symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                            if (symbolInterval.LastCandle == null || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                            if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
                                 symbolInterval.LastCandle = candle;
                         }
                         else
@@ -144,10 +147,10 @@ public class DataStore
                 if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
                 {
                     // Dont load candles for symbols below the minimal volume treshold
-                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume())
+                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                     {
-                        ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
-                        symbol.ClearCandles();
+                        if (symbol.ClearCandles())
+                            ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
                         continue;
                     }
 
@@ -185,7 +188,7 @@ public class DataStore
                         string fileName = Path.ChangeExtension(oldfileName, ".compressed");
 
                         // Dont save candles for symbols below the minimal volume treshold
-                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume())
+                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                         {
                             symbol.ClearCandles();
                         }
@@ -231,16 +234,14 @@ public class DataStore
 
                                     foreach (var pair in symbolInterval.CandleList)
                                     {
-                                        CryptoCandle? candle = pair.Value;
-                                        if (candle != null)
-                                        {
-                                            binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
-                                            binaryWriter.Write(candle.Open);
-                                            binaryWriter.Write(candle.High);
-                                            binaryWriter.Write(candle.Low);
-                                            binaryWriter.Write(candle.Close);
-                                            binaryWriter.Write(candle.Volume);
-                                        }
+                                        // TODO: Change storage to support the smaller types
+                                        CryptoCandle candle = pair.Value;
+                                        binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
+                                        binaryWriter.Write(candle.Open);
+                                        binaryWriter.Write(candle.High);
+                                        binaryWriter.Write(candle.Low);
+                                        binaryWriter.Write(candle.Close);
+                                        binaryWriter.Write(candle.Volume);
                                     }
                                 }
                             }

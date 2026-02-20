@@ -903,8 +903,8 @@ public class TradeTools
         // Opmerking: Er is geen percentage bij papertrading mogelijk (of we moeten een werkende papertrade asset management implementeren)
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
-        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && symbol.QuoteData!.EntryPercentage > 0m)
-            return symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100;
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && symbol.QuoteData!.EntryPercentage > 0)
+            return (decimal)symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100m;
         else
             return symbol.QuoteData!.EntryAmount;
     }

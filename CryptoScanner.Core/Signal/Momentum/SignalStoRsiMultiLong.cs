@@ -17,21 +17,22 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
     }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Rsi == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Rsi == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
         return true;
     }
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         // disable sbm conditions
         response = "";
@@ -45,7 +46,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        CandleTime unixDate = CandleLast.OpenTime;
+        CandleTime unixDate = CandleLast.Candle.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -55,7 +56,7 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
         {
             CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
             CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+            if (!IndicatorDataList.TryGetCandle(higherInterval.Interval, candleOpenTime, out MyData? candle))
                 return false;
 
             if (candle!.CandleData == null)
@@ -124,12 +125,12 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
     //            long candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
     //            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? lastCandle))
     //            {
-    //                ExtraText = $"no curr candle {higherInterval.Interval.Name}";
+    //                ExtraText = $"no curr data {higherInterval.Interval.Name}";
     //                return false;
     //            }
     //            if (!higherInterval.CandleList.TryGetValue(candleOpenTime - Interval.Duration, out CryptoCandle? prevCandle))
     //            {
-    //                ExtraText = $"no prev candle {higherInterval.Interval.Name}";
+    //                ExtraText = $"no prev data {higherInterval.Interval.Name}";
     //                return false;
     //            }
 
@@ -161,9 +162,9 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
     //                //ExtraText = $"macd already positive {higherInterval.Interval.Name}";
     //                //return false;
     //            }
-    //            else if (lastCandle.CandleData!.MacdHistogram <= prevCandle.CandleData!.MacdHistogram) // need pink macd candle
+    //            else if (lastCandle.CandleData!.MacdHistogram <= prevCandle.CandleData!.MacdHistogram) // need pink macd data
     //            {
-    //                ExtraText = $"no pink macd-candle on {higherInterval.Interval.Name}";
+    //                ExtraText = $"no pink macd-data on {higherInterval.Interval.Name}";
     //                isOkay = false;
     //            }
 

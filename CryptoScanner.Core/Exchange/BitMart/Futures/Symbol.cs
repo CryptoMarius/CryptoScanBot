@@ -112,7 +112,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                 //    symbol.Volume = volume;
                                 //else
-                                    symbol.Volume = symbolData.Volume24h;
+                                    symbol.Volume = (double)symbolData.Volume24h;
 
                                 if (symbolData.Status == ContractStatus.Trading)
                                     symbol.Status = 1;

@@ -100,7 +100,7 @@ public partial class CryptoVisualisation : Window
             // Voor Altrady en Hypertrader werkt dit kunstje natuurlijk niet
             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-            GlobalData.LoadLinkSettings(); // refresh links
+            GlobalData.LoadWebLinkConfiguration(); // refresh links
             if (Data.Symbol != null && Data.Interval != null)
             {
                 (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(GlobalData.Settings.General.TradingApp, false, Data.Symbol, Data.Interval);
@@ -177,7 +177,7 @@ public partial class CryptoVisualisation : Window
     public void InitializeStandAloneStuff()
     {
         StandAlone = true;
-        GlobalData.LoadSettings();
+        GlobalData.LoadConfiguration();
         CryptoDatabase.SetDatabaseDefaults();
         GlobalData.LoadExchanges();
         GlobalData.LoadIntervals();
@@ -238,7 +238,7 @@ public partial class CryptoVisualisation : Window
             double y = model.Axes[1].InverseTransform(screenPoint.Y);
 
             var symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
-            long unix = (long)x + symbolInterval.Interval.Duration / 2;
+            CandleTime unix = new CandleTime((uint)x) + symbolInterval.Interval.Duration / 2;
             unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration); //+ Data.Interval.Duration;
             if (unix < 0)
                 return;
@@ -247,13 +247,13 @@ public partial class CryptoVisualisation : Window
             {
 
                 // Update croshair coordinates
-                verticalLine.X = unix;
+                verticalLine.X = unix.Minutes;
                 horizontalLine.Y = y;
                 verticalLine.LineStyle = LineStyle.DashDot;
                 horizontalLine.LineStyle = LineStyle.DashDot;
 
                 string s;
-                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
                     s = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
                     s += " (O: " + candle.Open.ToString(Data.Symbol.PriceDisplayFormat);
@@ -264,7 +264,7 @@ public partial class CryptoVisualisation : Window
                 }
                 else
                 {
-                    DateTime date = CandleTools.GetUnixDate(unix);
+                    DateTime date = unix.ToDateTime();
                     s = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: " + y.ToString(Data.Symbol.PriceDisplayFormat);
                 }
                 //long u = (long)x % Data.Interval.Duration;
@@ -666,7 +666,7 @@ public partial class CryptoVisualisation : Window
         Session.ShowSmaLinesSbm = EditShowSmaLinesSbm.Checked;
         Session.ShowNadarayaWatsonEnvelope = EditShowNadarayaWatsonEnvelope.Checked;
         Session.ShowNadarayaWatsonEnvelopeRepainting = EditShowNadarayaWatsonEnvelopeRepaining.Checked;
-        //Session.ShowTrendLines = EditShowTrendLines.Checked;       
+        //Session.ShowTrendLines = EditShowTrendLines.Checked;
     }
 
 
@@ -743,7 +743,7 @@ public partial class CryptoVisualisation : Window
         if (Session.ShowTrendLines)
             Chart.SupportResistance.Draw(plotModel, Data.Interval, mainIndicator.ZigZagList);
 
-        // Change default 
+        // Change default
         plotView.Controller = new PlotController();
         plotView.Controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
         //plotView.Controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift, PlotCommands.ZoomRectangle);
