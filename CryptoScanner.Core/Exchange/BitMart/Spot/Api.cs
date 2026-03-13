@@ -1,13 +1,13 @@
-﻿using CryptoExchange.Net.Authentication;
+﻿using BitMart.Net;
+using BitMart.Net.Clients;
+
+using CryptoExchange.Net.Authentication;
+using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-
-using BitMart.Net.Clients;
-using BitMart.Net;
-using CryptoExchange.Net.Objects;
 
 
 namespace CryptoScanner.Core.Exchange.BitMart.Spot;

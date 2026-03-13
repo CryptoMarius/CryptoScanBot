@@ -9,7 +9,6 @@ using CryptoScanner.Core.Model;
 using Kucoin.Net;
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
-using Kucoin.Net.Objects;
 using Kucoin.Net.Objects.Models.Spot;
 
 namespace CryptoScanner.Core.Exchange.Kucoin.Futures;

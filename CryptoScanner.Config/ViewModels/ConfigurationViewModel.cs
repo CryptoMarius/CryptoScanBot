@@ -24,7 +24,7 @@ public partial class ConfigurationViewModel : ObservableObject
     // Indicators
     [ObservableProperty]
     private IndicatorsTabViewModel _indicatorsTabViewModel;
-    
+
     // Base coins
     [ObservableProperty]
     private QuoteTabViewModel _quoteTabViewModel;

@@ -25,8 +25,8 @@ public class DlzZones
 
 
             CandleTime dateOpen;
-            if (zone.OpenTime != null)
-                dateOpen = (CandleTime)zone.OpenTime;
+            if (zone.OpenTime != 0)
+                dateOpen = zone.OpenTime;
             else
                 dateOpen = minDate;
             if (zone.Kind == CryptoZoneKind.FairValueGap)
@@ -34,9 +34,9 @@ public class DlzZones
 
             CandleTime dateLast;
             if (zone.CloseTime != null)
-                dateLast = (CandleTime)zone.CloseTime;
+                dateLast = zone.CloseTime.Value;
             else
-                dateLast = maxDate + 10000;
+                dateLast = maxDate + 25;
 
             OxyColor col;
             if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
@@ -56,6 +56,7 @@ public class DlzZones
             // Create a rectangle annotation
             var rectangle = new RectangleAnnotation
             {
+                Layer = AnnotationLayer.BelowSeries,
                 MinimumX = dateOpen.Minutes,  // X-coordinate of the lower-left corner
                 MinimumY = (double)zone.Bottom,  // Y-coordinate of the lower-left corner
                 MaximumX = dateLast.Minutes,  // X-coordinate of the upper-right corner
@@ -65,6 +66,7 @@ public class DlzZones
                 StrokeThickness = stroke, // Border thickness
                 TextColor = textColor,
                 Text = zone.Description,
+                //Text = zone.Id.ToString() + " " + zone.Description,
                 ToolTip = zone.Description, // does not work, weak..
                 Tag = group
             };

@@ -282,7 +282,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             return;
         }
 
-        flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowGraph(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowChart(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open trading app", Command = new CommandLaunchTradingAppStandard(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });

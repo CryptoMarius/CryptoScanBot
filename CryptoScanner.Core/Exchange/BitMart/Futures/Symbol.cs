@@ -1,13 +1,13 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using BitMart.Net.Clients;
+using BitMart.Net.Enums;
+
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using BitMart.Net.Clients;
-using BitMart.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.BitMart.Futures;
 
@@ -112,7 +112,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //if (volumeTicker.TryGetValue(symbol.ExchangeSymbol, out decimal volume))
                                 //    symbol.Volume = volume;
                                 //else
-                                    symbol.Volume = (double)symbolData.Volume24h;
+                                symbol.Volume = (double)symbolData.Volume24h;
 
                                 if (symbolData.Status == ContractStatus.Trading)
                                     symbol.Status = 1;

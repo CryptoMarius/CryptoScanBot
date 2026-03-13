@@ -51,7 +51,7 @@ public class ExchangeOptions // : IExchangeOptions
     public int CandleLimit { get; set; } = 1000;
 
 
-    public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols, 
+    public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols,
         int symbolLimitPerSubscription, int subscriptionLimitPerClient = 10)
     {
         ExchangeName = exchangeName;

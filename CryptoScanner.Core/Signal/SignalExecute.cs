@@ -17,7 +17,8 @@ public class SignalExecute
     // Quick index on what to execute (with some specials for detecting fvg and dlz on the 1m)
     // (the zones for the fvg and dlz are prepared via other code and are stored in the database)
     private static Dictionary<(CryptoSignalStrategy strategy, CryptoTradeSide side, bool checkBarometer),
-        SortedList<string, CryptoInterval>> Executing { get; set; } = [];
+        SortedList<string, CryptoInterval>> Executing
+    { get; set; } = [];
 
 
     private static void Add(AlgorithmDefinition strategyDef, CryptoTradeSide side, bool checkBarometer, string intervalName)
@@ -88,13 +89,13 @@ public class SignalExecute
     }
 
 
-    public static async Task<List<CryptoSignal>> ExecuteAsync(CryptoSymbol symbol,
+    public static async Task ExecuteAsync(CryptoSymbol symbol,
         CryptoIndicatorDataList preparedIndicatorDataList,
         CandleTime lastCandle1mCloseTime)
     {
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
 
-        List<CryptoSignal> signalList = [];
+        //List<CryptoSignal> signalList = [];
         foreach (var entry in Executing.ToList())
         {
             foreach (var interval in entry.Value.Values)
@@ -136,7 +137,7 @@ public class SignalExecute
                                 if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
                                 {
                                     text = "*";
-                                    signalList.AddRange(createSignal.SignalList);
+                                    //signalList.AddRange(createSignal.SignalList);
                                 }
 
                                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
@@ -186,7 +187,7 @@ public class SignalExecute
             }
         }
 
-        return signalList;
+        //return signalList;
     }
 
 }

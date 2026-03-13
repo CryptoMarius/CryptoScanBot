@@ -10,6 +10,27 @@ using System.Reflection;
 
 namespace CryptoScanner;
 
+//.claude\settings.json
+//{
+//  "permissions": {
+//    "allow": [
+//      "Bash(dotnet *)",
+//      "Bash(find *)",
+//      "Bash(grep *)",
+//      "Bash(powershell *)",
+//      "WebFetch(domain:github.com)",
+//      "WebFetch(domain:raw.githubusercontent.com)",
+//      "WebSearch"
+//    ]
+//  }
+//}
+//or:
+//{
+//    "permissions": {
+//        "defaultMode": "bypassPermissions"
+//    }
+//}
+
 class Program
 {
     [STAThread]

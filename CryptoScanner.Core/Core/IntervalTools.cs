@@ -43,13 +43,13 @@ public class IntervalTools
         if (targetDateEnd > sourceDateEnd)
             targetStart -= targetDuration;
 
-//#if DEBUG
-//        DateTime sourceStartDate = sourceStart.ToDateTime();
-//        DateTime sourceEndDate = (sourceStart + sourceDuration).ToDateTime();
+        //#if DEBUG
+        //        DateTime sourceStartDate = sourceStart.ToDateTime();
+        //        DateTime sourceEndDate = (sourceStart + sourceDuration).ToDateTime();
 
-//        DateTime targetStartDate = targetStart.ToDateTime();
-//        DateTime targetEndDate = (targetStart + targetDuration).ToDateTime();
-//#endif
+        //        DateTime targetStartDate = targetStart.ToDateTime();
+        //        DateTime targetEndDate = (targetStart + targetDuration).ToDateTime();
+        //#endif
         return targetStart;
     }
 

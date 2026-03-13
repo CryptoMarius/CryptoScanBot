@@ -7,7 +7,7 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class StrategyDlzSettingsZoneFilterViewModel : ObservableObject
 {
     // EXACT SAME TYPES as SettingsSignalStrategyZones
-    
+
     [ObservableProperty]
     private bool _zoneStartApply = false; // bool
 

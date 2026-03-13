@@ -50,7 +50,7 @@ public class SettingsSignal
     public SettingsSignalStrategyFvg ZonesFvg = new();
 
     // Nadaraya Watson Envelope
-    public SettingsSignalStrategyNwe Nwe = new ();
+    public SettingsSignalStrategyNwe Nwe = new();
 
 
     // Logging

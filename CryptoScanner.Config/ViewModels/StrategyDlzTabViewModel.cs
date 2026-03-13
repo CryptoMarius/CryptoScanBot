@@ -22,7 +22,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyDlzSettingsZoneFilterViewModel _strategyDlzSettingsZoneFilterViewModel;
 
-    
+
     [ObservableProperty]
     IndicatorZigZagViewModel _indicatorZigZagViewModel;
 
@@ -51,7 +51,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         IntervalViewModel.LoadConfig(settings.IntervalList, true);
         IndicatorZigZagViewModel.LoadConfig(settings.ZigZag);
     }
-    
+
 
     internal void SaveConfig(SettingsSignalStrategyZones settings)
     {

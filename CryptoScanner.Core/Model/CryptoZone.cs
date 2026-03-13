@@ -38,4 +38,12 @@ public class CryptoZone
     public string Description { get; set; } = "";
 
     public bool IsValid { get; set; }
+
+    public string ZoneText(string action)
+    {
+        return $"{Symbol.Name} {action} zone #{Id} {Kind} {Side} " +
+            $"({OpenTime.ToLocalTime():yyyy-MM-dd HH:mm}, {Top:N8}, " +
+            $"{CloseTime?.ToLocalTime():yyyy-MM-dd HH:mm}, {Bottom:N8}) " +
+            $"{Description}";
+    }
 }

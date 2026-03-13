@@ -1,6 +1,6 @@
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
 using Skender.Stock.Indicators;
 
 namespace CryptoScanner.Core.Signal.Experiment;
@@ -16,7 +16,7 @@ public class BbmaStrategyGrok2
     // Dashboard Inputs
     public int DashWinHTF { get; set; } = 20;
 
-    public enum BbmaEvent 
+    public enum BbmaEvent
     {
         Extreme,
         ExtremeCombo,
@@ -36,7 +36,7 @@ public class BbmaStrategyGrok2
 
         // CSD (Candle Stick Direction)
         public bool CsakBuyBaseCurrent = false;
-        public bool CsakSellBaseCurrent = false; 
+        public bool CsakSellBaseCurrent = false;
 
         public bool MomemtumBuyRawCurrent = false;
         public bool MomemtumSellRawCurrent = false;
@@ -183,7 +183,10 @@ public class BbmaStrategyGrok2
 
     private List<Quote> ToQuotes(CryptoCandleList dict)
     {
-        return dict?.OrderBy(x => x.Key).Select(x => new Quote
+        // Use GetSnapshot() to enumerate under the read lock; avoids ArgumentException /
+        // InvalidOperationException when another thread calls Add() concurrently.
+        // SortedDictionary is already ordered ascending by key, so OrderBy is not needed.
+        return dict?.GetSnapshot().Select(x => new Quote
         {
             Date = DateTimeOffset.FromUnixTimeSeconds(x.Key.ToUnixSeconds()).UtcDateTime,
             Open = x.Value.Open,
@@ -502,30 +505,34 @@ public class BbmaStrategyGrok2
     // Extreme
     public bool ExtremeBuy { get; private set; }
     public bool ExtremeSell { get; private set; }
+
     // Loss of Momentum
     public bool MhvBuy { get; private set; }
     public bool MhvSell { get; private set; }
+
     // Break of MA20
     public bool CsakBuy { get; private set; }
     public bool CsakSell { get; private set; }
+
     // CSM Candle Stick Momentum
     public bool MomemtumBuy { get; private set; }
     public bool MomemtumSell { get; private set; }
+
     // Reentry
     public bool ReEntryBuy { get; private set; }
     public bool ReEntrySell { get; private set; }
-    //? ehh? Extreme Combo? 
+
+    //? ehh? Extreme Combo?
     public bool ExtComboBuy { get; private set; }
     public bool ExtComboSell { get; private set; }
-    
+
     public void Compute(CryptoCandleList candleList1, CryptoCandleList candleList2, CryptoCandleList? candleList3)
     {
         if (candleList1.Count == 0)
             return;
 
+        // timeframe 1
         var candles1 = ToQuotes(candleList1);
-
-        // Results of lower timeframe Part1
         tf1 = new AdminTimeFrame1(candles1);
         Part1(candles1, tf1);
 
@@ -544,13 +551,17 @@ public class BbmaStrategyGrok2
         int candles1LastIndex = tf1.candles1.Count - 1;
         ExtremeBuy = tf1.ExtremeBuyBase[candles1LastIndex];
         ExtremeSell = tf1.ExtremeSellBase[candles1LastIndex];
-        if (ExtremeBuy) TriggerAlert(CryptoTradeSide.Long, BbmaEvent.Extreme, "Extreme BUY detected");
-        if (ExtremeSell) TriggerAlert(CryptoTradeSide.Short, BbmaEvent.Extreme, "Extreme SELL detected");
+        if (ExtremeBuy)
+            TriggerAlert(CryptoTradeSide.Long, BbmaEvent.Extreme, "Extreme BUY detected");
+        if (ExtremeSell)
+            TriggerAlert(CryptoTradeSide.Short, BbmaEvent.Extreme, "Extreme SELL detected");
 
         MhvBuy = tf1.MhvBuyBaseCurrent;
         MhvSell = tf1.MhvSellBaseCurrent;
-        if (MhvBuy) TriggerAlert(CryptoTradeSide.Long, BbmaEvent.MHV, "MHV BUY detected");
-        if (MhvSell) TriggerAlert(CryptoTradeSide.Short, BbmaEvent.MHV, "MHV SELL detected");
+        if (MhvBuy)
+            TriggerAlert(CryptoTradeSide.Long, BbmaEvent.MHV, "MHV BUY detected");
+        if (MhvSell)
+            TriggerAlert(CryptoTradeSide.Short, BbmaEvent.MHV, "MHV SELL detected");
 
         CsakBuy = tf1.CsakBuyBaseCurrent;
         CsakSell = tf1.CsakSellBaseCurrent;
@@ -564,13 +575,17 @@ public class BbmaStrategyGrok2
 
         ReEntryBuy = tf1.ReEntryBuyRawCurrent && tf3.DirBuyOK;
         ReEntrySell = tf1.ReEntrySellRawCurrent && tf3.DirSellOK;
-        if (ReEntryBuy) TriggerAlert(CryptoTradeSide.Long, BbmaEvent.ReEntry, "Re-entry BUY detected");
-        if (ReEntrySell) TriggerAlert(CryptoTradeSide.Short, BbmaEvent.ReEntry, "Re-entry SELL detected");
+        if (ReEntryBuy)
+            TriggerAlert(CryptoTradeSide.Long, BbmaEvent.ReEntry, "Re-entry BUY detected");
+        if (ReEntrySell)
+            TriggerAlert(CryptoTradeSide.Short, BbmaEvent.ReEntry, "Re-entry SELL detected");
 
         ExtComboBuy = ReEntryBuy && (tf3.htf2ExtremeBuyBS < LookbackSig || tf3.htf2MhvBuyBS < LookbackSig);
         ExtComboSell = ReEntrySell && (tf3.htf2ExtremeSellBS < LookbackSig || tf3.htf2MhvSellBS < LookbackSig);
-        if (ExtComboBuy) TriggerAlert(CryptoTradeSide.Long, BbmaEvent.ExtremeCombo, "Extreme Combo BUY detected");
-        if (ExtComboSell) TriggerAlert(CryptoTradeSide.Short, BbmaEvent.ExtremeCombo, "Extreme Combo SELL detected");
+        if (ExtComboBuy)
+            TriggerAlert(CryptoTradeSide.Long, BbmaEvent.ExtremeCombo, "Extreme Combo BUY detected");
+        if (ExtComboSell)
+            TriggerAlert(CryptoTradeSide.Short, BbmaEvent.ExtremeCombo, "Extreme Combo SELL detected");
 
 
         //// TP/SL Inputs

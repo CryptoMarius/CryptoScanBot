@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Experiment;
 
 public class SignalBbRsiEngulfingShort : SignalCreateBase
 {
-    public SignalBbRsiEngulfingShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IndicatorsOkay(MyData data)

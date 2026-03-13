@@ -1,8 +1,6 @@
 ﻿using CryptoExchange.Net.Objects.Errors;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using Mexc.Net.Clients;
@@ -33,7 +31,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod) 
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
@@ -43,7 +41,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         DateTime maxDate = maxTime.ToDateTime();
 
     Again:
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
@@ -88,7 +86,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-					kline.QuoteVolume);
+                    kline.QuoteVolume);
 
                 // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)

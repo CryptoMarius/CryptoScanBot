@@ -18,7 +18,7 @@ public class TickerData
 
     // Close value?
     public decimal Lp { get; set; }
-    public decimal Volume { get; set; }
+    public double Volume { get; set; }
 
     // Onderstaand is in deze tool niet nodig, wellicht willen we er in de toekomt nog wat mee?
 
@@ -41,7 +41,7 @@ public class TradingViewSymbolExtractor
     private readonly TickerData _tickerData = new();
 
     public async void StartAsync(string tickerName, string displayName,
-        Action<decimal, decimal> onDataReceived,
+        Action<decimal, double> onDataReceived,
         int startDelayMs = 250, int loopDelayMs = 1000,
         CancellationToken cancellationToken = default)
     {
@@ -218,7 +218,7 @@ public class TradingViewSymbolExtractor
             _tickerData.Lp = lp;
 
         if (jDocument.RootElement.TryGetProperty("volume", out JsonElement volumeValue) && volumeValue.TryGetDecimal(out decimal volume))
-            _tickerData.Volume = volume;
+            _tickerData.Volume = (double)volume;
         //if (jDocument.RootElement.TryGetProperty("v", out JsonElement volumeValue2) && volumeValue2.TryGetDecimal(out decimal volume2))
         //    _tickerData.Volume = volume2;
 

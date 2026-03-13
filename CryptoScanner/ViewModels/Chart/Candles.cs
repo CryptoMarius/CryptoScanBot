@@ -32,7 +32,7 @@ public class Candles
 
         if (symbolInterval.CandleList.Count > 0)
         {
-            CryptoCandle? last = null;
+            CryptoCandle last = default;
             foreach (var c in symbolInterval.CandleList.Values)
             {
                 if (c.OpenTime >= minDate && c.OpenTime <= maxDate)
@@ -56,40 +56,50 @@ public class Candles
 
 
             // Build the last candle(s) from scratch using the 1m candles
-            if (last != null)
+            if (last.OpenTime != 0)
             {
                 CandleTime loopHighInterval = last.OpenTime + symbolInterval.Interval.Duration;
                 CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                while (symbolInterval1m.CandleList.TryGetValue(loopHighInterval, out CryptoCandle? _))
+                while (symbolInterval1m.CandleList.TryGetValue(loopHighInterval, out CryptoCandle _))
                 {
                     CandleTime loop1m = loopHighInterval;
                     CandleTime loop1mMax = loopHighInterval + symbolInterval.Interval.Duration;
-                    CryptoCandle newCandle = new()
+
+                    CandleTime openTime = new(0);
+                    decimal open = 0, high = 0, low = 0, close = 0;
+                    while (loop1m < loop1mMax && symbolInterval1m.CandleList.TryGetValue(loop1m, out CryptoCandle c))
                     {
-                        Low = decimal.MaxValue,
-                        High = decimal.MinValue
-                    };
-                    while (loop1m < loop1mMax && symbolInterval1m.CandleList.TryGetValue(loop1m, out CryptoCandle? c))
-                    {
-                        if (newCandle.OpenTime == 0)
+                        if (openTime == 0)
                         {
-                            newCandle.OpenTime = c!.OpenTime;
-                            newCandle.Open = c.Open;
+                            openTime = c!.OpenTime;
+                            open = c.Open;
+                            low = c.Open;
+                            high = c.Open;
                         }
-                        if (c.Low < newCandle.Low)
-                            newCandle.Low = c.Low;
-                        if (c.High > newCandle.High)
-                            newCandle.High = c.High;
-                        newCandle.Close = c.Close;
+                        if (c.Low < low)
+                            low = c.Low;
+                        if (c.High > high)
+                            high = c.High;
+                        close = c.Close;
                         loop1m += symbolInterval1m.Interval.Duration;
                     }
-                    if (newCandle.OpenTime > 0 && newCandle.OpenTime >= minDate && newCandle.OpenTime <= maxDate)
+                    if (openTime > 0 && openTime >= minDate && openTime <= maxDate)
                     {
+                        CryptoCandle newCandle = new()
+                        {
+                            TickDecimals = symbol.PriceDecimals,
+                            OpenTime = openTime,
+                            Open = open,
+                            High = high,
+                            Low = low,
+                            Close = close,
+                            Volume = 0,
+                        };
+
                         var c = newCandle;
                         var curHighLow = new HighLowItem(newCandle.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close);
                         candleSerie.Items.Add(curHighLow);
                     }
-
                     loopHighInterval += symbolInterval.Interval.Duration;
                 }
             }

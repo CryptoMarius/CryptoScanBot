@@ -44,7 +44,7 @@ public partial class MarketTrendFilterViewModel : ObservableObject
     public void SaveConfig(SettingsTextualMarketTrend settings)
     {
         settings.List.Clear();
-        
+
         if (TrendRange.IsActive)
         {
             // Ensure min < max

@@ -81,7 +81,7 @@ public static class Helper
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     throw new Exception("BloFin Spot not supported");
                 else
-                    return BloFin.Futures.Interval. GetExchangeInterval(intervalPeriod) != null;
+                    return BloFin.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
             case CryptoExchangeType.Bybit:
                 if (exchange.TradingType == CryptoTradingType.Spot)
                     return BybitApi.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;

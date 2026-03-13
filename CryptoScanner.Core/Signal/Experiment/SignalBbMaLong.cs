@@ -1,67 +1,17 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Experiment;
 
 #if DEBUG
-public class SignalBbMaLong : SignalCreateBase
+public class SignalBbMaLong : SignalBbmaBase
 {
-    public SignalBbMaLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
-
-    private bool GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3)
-    {
-        // For BBMA codes
-        switch (Interval.IntervalPeriod)
-        {
-            case CryptoIntervalPeriod.interval5m:
-                interval2 = CryptoIntervalPeriod.interval15m;
-                interval3 = CryptoIntervalPeriod.interval1h;
-                break;
-            case CryptoIntervalPeriod.interval10m:
-                interval2 = CryptoIntervalPeriod.interval30m;
-                interval3 = CryptoIntervalPeriod.interval2h;
-                break;
-            case CryptoIntervalPeriod.interval15m:
-                interval2 = CryptoIntervalPeriod.interval1h;
-                interval3 = CryptoIntervalPeriod.interval4h;
-                break;
-            case CryptoIntervalPeriod.interval30m:
-                interval2 = CryptoIntervalPeriod.interval2h;
-                interval3 = CryptoIntervalPeriod.interval8h;
-                break;
-            case CryptoIntervalPeriod.interval1h:
-                interval2 = CryptoIntervalPeriod.interval4h;
-                interval3 = CryptoIntervalPeriod.interval1d;
-                break;
-            case CryptoIntervalPeriod.interval2h:
-                interval2 = CryptoIntervalPeriod.interval6h;
-                interval3 = CryptoIntervalPeriod.interval1d;
-                break;
-            case CryptoIntervalPeriod.interval3h:
-                interval2 = CryptoIntervalPeriod.interval8h;
-                interval3 = CryptoIntervalPeriod.interval1d;
-                break;
-            case CryptoIntervalPeriod.interval4h:
-                interval2 = CryptoIntervalPeriod.interval1d;
-                interval3 = CryptoIntervalPeriod.interval1w;
-                break;
-            default:
-                ExtraText = $"not accepted interval {Interval.Name}";
-                //GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.IntervalPeriod} {CryptoTradeSide.Long} failed PrepareHigherInterval (1)");
-                interval2 = Interval.IntervalPeriod;
-                interval3 = Interval.IntervalPeriod;
-                return false;
-        }
-        return true;
-    }
-
-
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null
+           || data.Candle.OpenTime == 0
            || data.CandleData == null
            //|| data.CandleData.Ema50 == null
            //|| data.CandleData.Wma05Low == null
@@ -83,10 +33,8 @@ public class SignalBbMaLong : SignalCreateBase
     //        return false;
     //    }
 
-    //    // Calculate indicators if needed
-    //    AddIndicatorDataIfNeeded(higherInterval, candleOpenTime);
-    //    //if (candle.CandleData == null)
-    //    //{
+    //    if (data.CandleData == null)
+    //    {
     //    //    List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
     //    //    if (history == null)
     //    //    {
@@ -133,7 +81,6 @@ public class SignalBbMaLong : SignalCreateBase
 
     //    return false;
     //}
-
 
     //internal bool IsReentry(CryptoCandle data, int backward)
     //{
@@ -219,16 +166,11 @@ public class SignalBbMaLong : SignalCreateBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 
-        //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
-        //{
-        //    ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
-        //    return false;
-        //}
-
-        //if (!IsExtreme(CandleLast, 2))
-        //    return false;
-
-
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
 
         if (!GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3))
             return false;

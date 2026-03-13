@@ -44,7 +44,7 @@ public class SymbolBase()
 
     internal static void SaveExchangeInfo(string? text, string name = "symbols.json")
     {
-        if (text == null) 
+        if (text == null)
             return;
 
         // Reformat (all on 1 line)
@@ -95,7 +95,7 @@ public class SymbolBase()
                 Status = 1,
             };
         }
-        
+
         // Fill the new storage ExchangeName field
         symbol.ExchangeName = info.ExchangeName;
         return true;

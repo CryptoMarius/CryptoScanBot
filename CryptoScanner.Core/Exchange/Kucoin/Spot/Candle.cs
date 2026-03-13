@@ -1,8 +1,6 @@
 ﻿using CryptoExchange.Net.Objects.Errors;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Clients;
@@ -88,7 +86,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.QuoteVolume);
 
                 // remember the newest candle

@@ -1,11 +1,9 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-using OKX.Net;
 using OKX.Net.Clients;
 using OKX.Net.Enums;
 using OKX.Net.Objects.Market;
@@ -40,7 +38,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Time, 
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Time,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.VolumeCurrencyQuote);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);

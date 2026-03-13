@@ -44,7 +44,7 @@ public partial class BarometerFilterViewModel : ObservableObject
         LoadInterval("1d", Interval1d, settings.List);
     }
 
-    private static void LoadInterval(string key, BarometerFilterRangeViewModel interval, 
+    private static void LoadInterval(string key, BarometerFilterRangeViewModel interval,
         Dictionary<string, (decimal minValue, decimal maxValue)> list)
     {
         if (list.TryGetValue(key, out var value))
@@ -74,7 +74,7 @@ public partial class BarometerFilterViewModel : ObservableObject
         settings.Log = Log;
     }
 
-    private static void SaveInterval(string key, BarometerFilterRangeViewModel interval, 
+    private static void SaveInterval(string key, BarometerFilterRangeViewModel interval,
         Dictionary<string, (decimal minValue, decimal maxValue)> list)
     {
         if (interval.IsActive)

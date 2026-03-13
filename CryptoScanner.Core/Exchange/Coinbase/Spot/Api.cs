@@ -1,16 +1,11 @@
-﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
+﻿using Coinbase.Net.Clients;
+
+using CryptoExchange.Net.Authentication;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
-
-using Coinbase.Net;
-using Coinbase.Net.Clients;
-using Coinbase.Net.Enums;
-using Coinbase.Net.Objects;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
@@ -76,8 +71,8 @@ public class Api : ExchangeBase
         // not implemented
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
- 
-    
+
+
     public override Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         // not implemented

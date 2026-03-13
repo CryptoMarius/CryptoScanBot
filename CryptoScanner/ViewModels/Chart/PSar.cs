@@ -1,5 +1,4 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Model;
 
 using OxyPlot;
 using OxyPlot.Series;

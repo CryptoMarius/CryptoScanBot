@@ -5,21 +5,21 @@ using CryptoScanner.Core.Settings;
 namespace CryptoScanner.Config.ViewModels;
 
 public partial class DebugTabViewModel : ObservableObject
-{   
+{
     [ObservableProperty]
     private bool _debugTrendCalculation = false;
 
     [ObservableProperty]
-    private bool _debugSignalStrength = false; 
+    private bool _debugSignalStrength = false;
 
     [ObservableProperty]
-    private string _debugSymbol = ""; 
+    private string _debugSymbol = "";
 
     [ObservableProperty]
-    private bool _debugKLineReceive = false; 
+    private bool _debugKLineReceive = false;
 
     [ObservableProperty]
-    private bool _debugSignalCreate = false; 
+    private bool _debugSignalCreate = false;
 
     [ObservableProperty]
     private bool _debugAssetManagement = false;

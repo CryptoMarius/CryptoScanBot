@@ -16,7 +16,7 @@ public class Bollingerbands
         {
             Title = "bb.upper",
             MarkerSize = 1,
-            MarkerFill = OxyColors.Blue,
+            MarkerFill = OxyColors.DarkBlue,
             Color = OxyColors.Blue,
             Tag = group,
         };
@@ -32,7 +32,7 @@ public class Bollingerbands
         {
             Title = "bb.lower",
             MarkerSize = 1,
-            MarkerFill = OxyColors.Blue,
+            MarkerFill = OxyColors.DarkBlue,
             Color = OxyColors.Blue,
             Tag = group,
         };

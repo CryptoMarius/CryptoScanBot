@@ -1,6 +1,6 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using BloFin.Net.Enums;
 
-using BloFin.Net.Enums;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Exchange.BloFin.Futures;
 

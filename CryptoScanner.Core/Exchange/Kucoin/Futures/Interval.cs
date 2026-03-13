@@ -1,5 +1,4 @@
 ﻿using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Enums;
 

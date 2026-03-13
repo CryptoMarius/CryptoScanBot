@@ -1,14 +1,12 @@
-﻿using CryptoExchange.Net.Clients;
+﻿using BloFin.Net.Clients;
+using BloFin.Net.Enums;
+using BloFin.Net.Objects.Models;
+
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
-
-using BloFin.Net.Clients;
-using BloFin.Net.Enums;
-using BloFin.Net.Objects.Models;
 
 namespace CryptoScanner.Core.Exchange.BloFin.Futures;
 
@@ -33,8 +31,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.QuoteVolume);
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }

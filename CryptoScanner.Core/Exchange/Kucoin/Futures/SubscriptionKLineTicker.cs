@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -8,7 +7,6 @@ using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
-using Kucoin.Net.Objects.Models.Spot;
 
 namespace CryptoScanner.Core.Exchange.Kucoin.Futures;
 

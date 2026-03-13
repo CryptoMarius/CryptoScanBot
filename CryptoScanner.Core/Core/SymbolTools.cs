@@ -1,8 +1,6 @@
-﻿using CryptoScanner.Core.Const;
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
-using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
 
 namespace CryptoScanner.Core.Core;
@@ -26,42 +24,6 @@ public class SymbolTools
         SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
         Candles = SymbolInterval.CandleList;
     }
-
-
-    //public static bool CheckValidApikey(out string reaction)
-
-    //{
-    //    reaction = "";
-    //    //TODO: Configuratie en security
-
-    //    //1-Controleer of er wel een API key aanwezig is
-    //    //2-Controleer of we met deze API key kunnen handelen
-    //    //Maar hoe? (geeft uiteindelijk wel een foutmelding)
-
-    //    //BinanceSocketClient.
-    //    //BinanceClient.SetDefaultOptions(new BinanceClientOptions()
-    //    //{
-    //    //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
-    //    //    LogVerbosity = LogVerbosity.Debug,
-    //    //    LogWriters = new List<TextWriter> { Console.Out }
-    //    //});
-
-    //    //BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
-    //    //{
-    //    //    ApiCredentials = new ApiCredentials(APIKEY, APISECRET),
-    //    //    LogVerbosity = LogVerbosity.Debug,
-    //    //    LogWriters = new List<TextWriter> { Console.Out }
-    //    //});
-
-    //    if (GlobalData.TradingApi.Key == "" || GlobalData.TradingApi.Secret == "")
-    //    {
-    //        reaction = "No API credentials available";
-    //        return false;
-    //    }
-
-    //    return true;
-    //}
-
 
 
     public static bool CheckValidMinimalVolume(CryptoSymbol symbol, CandleTime candleStart, uint candleDuration, out string reaction)
@@ -147,76 +109,6 @@ public class SymbolTools
     }
 
 
-    //public static bool CheckAvailableSlotsExchange(CryptoTradeAccount tradeAccount, int slotLimit, out string reaction)
-    //{
-    //    // Zijn er slots beschikbaar op de exchange?
-
-    //    int slotsOccupied = 0;
-    //    foreach (var positionList in tradeAccount.PositionList.Values)
-    //    {
-    //        slotsOccupied += positionList.Count;
-    //    }
-
-    //    if (slotsOccupied >= slotLimit)
-    //    {
-    //        reaction = string.Format("No more global-slots available {0}", slotLimit);
-    //        return false;
-    //    }
-
-    //    reaction = "";
-    //    return true;
-    //}
-
-
-    //public static bool CheckAvailableSlotsBase(CryptoTradeAccount tradeAccount, CryptoSymbol symbol, int slotLimit, out string reaction)
-    //{
-    //    // Zijn er slots beschikbaar op de base?
-
-    //    int slotsOccupied = 0;
-    //    if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
-    //    {
-    //        foreach (CryptoPosition position in positionList.Values)
-    //        {
-    //            if (position.Symbol.Base.Equals(symbol.Base))
-    //                slotsOccupied++;
-    //        }
-    //    }
-
-    //    if (slotsOccupied >= slotLimit)
-    //    {
-    //        reaction = string.Format("No more base-slots available {0}", slotLimit);
-    //        return false;
-    //    }
-
-    //    reaction = "";
-    //    return true;
-    //}
-
-
-    //public static bool CheckAvailableSlotsQuote(CryptoTradeAccount activeExchange, CryptoSymbol symbol, int slotLimit, out string reaction)
-    //{
-    //    // Zijn er slots beschikbaar?
-
-    //    int slotsOccupied = 0;
-    //    if (tradeAccount.PositionList.TryGetValue(symbol.Name, out var positionList))
-    //    {
-    //        foreach (CryptoPosition position in positionList.Values)
-    //        {
-    //            if (position.Symbol.Quote.Equals(symbol.Quote))
-    //                slotsOccupied++;
-    //        }
-    //    }
-
-    //    if (slotsOccupied >= slotLimit)
-    //    {
-    //        reaction = string.Format("No more quote-slots available {0}", slotLimit);
-    //        return false;
-    //    }
-
-    //    reaction = "";
-    //    return true;
-    //}
-
 
     /// <summary>
     /// Is er nog een slot beschikbaar (het aantal openstaande posities in 1 munt)
@@ -296,21 +188,7 @@ public class SymbolTools
     /// </summary>
     public static bool CheckNewCoin(CryptoSymbol symbol, out string reaction)
     {
-        //// Zijn er candles aanwezig in het gekozen interval?
-        //if (intervalCandles.Count == 0)
-        //{
-        //    Reaction = string.Format("No {0} candles available", Interval.Name);
-        //    return false;
-        //}
-
-        //// 250 candles van het gekozen interval lijkt me een mooie hoeveelheid voor berekeningen
-        //if (intervalCandles.Count < 250)
-        //{
-        //    Reaction = string.Format("No 250 {0} candles available", Interval.Name);
-        //    return false;
-        //}
-
-        // Zijn er 30 dagen aan candles aanwezig in het dag interval?
+        // Zijn er X days aan candles aanwezig in het dag interval?
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1d);
         if (symbolPeriod.CandleList.Count < GlobalData.Settings.Signal.SymbolMustExistsDays)
         {
@@ -321,43 +199,4 @@ public class SymbolTools
         reaction = "";
         return true;
     }
-
-
-//    public bool BarometerIndicators(CryptoInterval interval, CandleTime candleOpenTime, out string response)
-//    {
-//        // TODO: Probleem: De barometer is afhankelijk van alle symbols en wordt x seconden NA het minuut berekend
-//        // dat betekend dat de laatste candle (nog) niet aanwezig hoeft te zijn (en de candleOpenTime impliceert)
-
-//        var exchange = GlobalData.ActiveExchange;
-//        if (exchange != null)
-//        {
-//            if (exchange.SymbolListName.TryGetValue(Constants.SymbolNameBarometerPrice, out CryptoSymbol? symbol))
-//            {
-//                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-//                if (symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
-//                {
-//                    if (candle.CandleData == null)
-//                    {
-//                        List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, Interval, candleOpenTime, out response);
-
-//                        if (history == null)
-//                        {
-//#if DEBUG
-//                            //if (GlobalData.Settings.Signal.LogNotEnoughCandles)
-//                            GlobalData.AddTextToLogTab("Analyse " + response);
-//#endif
-//                            return false;
-//                        }
-
-//                        // Eenmalig de indicators klaarzetten
-//                        CandleIndicatorData.CalculateIndicators(Symbol, Interval, history);
-
-//                    }
-//                }
-//            }
-//        }
-
-//        response = "";
-//        return true;
-//    }
 }

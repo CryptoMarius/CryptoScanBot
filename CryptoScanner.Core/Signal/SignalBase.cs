@@ -16,17 +16,15 @@ namespace CryptoScanner.Core.Signal;
 public class MyData
 {
     public required CryptoCandle Candle { get; set; }
-    public required CandleIndicatorData CandleData { get; set; }
+    public required CryptoData CandleData { get; set; }
 }
 
 public class SignalCreateBase
 {
-    protected Model.CryptoExchange Exchange;
-    protected CryptoSymbol Symbol;
-    protected CryptoSymbolInterval SymbolInterval;
-    protected CryptoInterval Interval;
-    protected CryptoQuoteData QuoteData;
-    //protected CryptoCandleList Candles;
+    // RegisterAlgorithms.GetAlgorithm
+    public required CryptoSymbol Symbol { get; set; }
+    public required CryptoInterval Interval { get; set; }
+    public required CryptoSymbolInterval SymbolInterval { get; set; }
 
     // The requested strategy and side
     public required CryptoTradeSide SignalSide { get; set; }
@@ -40,18 +38,6 @@ public class SignalCreateBase
     public required CryptoIndicatorDataList IndicatorDataList { get; set; }
 
     public string ExtraText = "";
-
-    public SignalCreateBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    {
-        Symbol = symbol;
-        Exchange = symbol.Exchange!;
-        Interval = interval;
-        QuoteData = symbol.QuoteData!;
-        //CandleLast = candle;
-
-        SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-        //Candles = SymbolInterval.CandleList;
-    }
 
     /// <summary>
     /// Zijn de indicatoren aanwezig

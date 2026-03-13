@@ -106,7 +106,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _BbText ??= Object.Candle.CandleData?.BollingerBandsPercentage?.ToString("N2");
+            _BbText ??= Object.CandleData?.BollingerBandsPercentage?.ToString("N2");
             return _BbText!;
         }
     }
@@ -117,7 +117,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _BbLowerText ??= Object.Candle.CandleData?.BollingerBandsLowerBand?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _BbLowerText ??= Object.CandleData?.BollingerBandsLowerBand?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _BbLowerText!;
         }
     }
@@ -128,7 +128,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _BbUpperText ??= Object.Candle.CandleData?.BollingerBandsUpperBand.ToString0(Object.Symbol.PriceDisplayFormat);
+            _BbUpperText ??= Object.CandleData?.BollingerBandsUpperBand.ToString0(Object.Symbol.PriceDisplayFormat);
             return _BbUpperText!;
         }
     }
@@ -139,7 +139,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _RsiText ??= Object.Candle.CandleData?.Rsi.ToString0("N2");
+            _RsiText ??= Object.CandleData?.Rsi.ToString0("N2");
             return _RsiText!;
         }
     }
@@ -149,7 +149,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _rsiForeground ??= GetBrushColorRsi(Object.Candle.CandleData?.Rsi);
+            _rsiForeground ??= GetBrushColorRsi(Object.CandleData?.Rsi);
             return _rsiForeground!;
         }
     }
@@ -160,7 +160,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mText ??= Object.Candle.CandleData?.Lux5mValue.ToString("N0");
+            _LuxIndicator5mText ??= Object.CandleData?.Lux5mValue.ToString("N0");
             return _LuxIndicator5mText!;
         }
     }
@@ -169,7 +169,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)Object.Candle.CandleData?.Lux5mValue!);
+            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)Object.CandleData?.Lux5mValue!);
             return _LuxIndicator5mForeground!;
         }
     }
@@ -180,7 +180,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdValueText ??= Object.Candle.CandleData?.MacdValue?.ToString("N5");
+            _MacdValueText ??= Object.CandleData?.MacdValue?.ToString("N5");
             return _MacdValueText!;
         }
     }
@@ -189,7 +189,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdValueForeground ??= GetBrushColorViaSign(Object.Candle.CandleData?.MacdValue);
+            _MacdValueForeground ??= GetBrushColorViaSign(Object.CandleData?.MacdValue);
             return _MacdValueForeground!;
         }
     }
@@ -201,7 +201,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdSignalText ??= Object.Candle.CandleData?.MacdSignal?.ToString("N5");
+            _MacdSignalText ??= Object.CandleData?.MacdSignal?.ToString("N5");
             return _MacdSignalText!;
         }
     }
@@ -210,7 +210,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdSignalForeground ??= GetBrushColorViaSign(Object.Candle.CandleData?.MacdSignal);
+            _MacdSignalForeground ??= GetBrushColorViaSign(Object.CandleData?.MacdSignal);
             return _MacdSignalForeground!;
         }
     }
@@ -221,7 +221,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdHistogramText ??= Object.Candle.CandleData?.MacdHistogram?.ToString("N2");
+            _MacdHistogramText ??= Object.CandleData?.MacdHistogram?.ToString("N2");
             return _MacdHistogramText!;
         }
     }
@@ -230,7 +230,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _MacdHistogramForeground ??= GetBrushColorViaSign(Object.Candle.CandleData?.MacdHistogram);
+            _MacdHistogramForeground ??= GetBrushColorViaSign(Object.CandleData?.MacdHistogram);
             return _MacdHistogramForeground!;
         }
     }
@@ -241,7 +241,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochOscillatorText ??= Object.Candle.CandleData?.StochOscillator?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochOscillatorText ??= Object.CandleData?.StochOscillator?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _StochOscillatorText!;
         }
     }
@@ -250,7 +250,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochOscillatorForeground ??= GetBrushColorStoch(Object.Candle.CandleData?.StochOscillator);
+            _StochOscillatorForeground ??= GetBrushColorStoch(Object.CandleData?.StochOscillator);
             return _StochOscillatorForeground!;
         }
     }
@@ -262,7 +262,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochSignalText ??= Object.Candle.CandleData?.StochSignal?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochSignalText ??= Object.CandleData?.StochSignal?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _StochSignalText!;
         }
     }
@@ -271,7 +271,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochSignalForeground ??= GetBrushColorStoch(Object.Candle.CandleData?.StochSignal);
+            _StochSignalForeground ??= GetBrushColorStoch(Object.CandleData?.StochSignal);
             return _StochSignalForeground!;
         }
     }
@@ -283,7 +283,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _Sma200Text ??= Object.Candle.CandleData?.Sma200?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _Sma200Text ??= Object.CandleData?.Sma200?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _Sma200Text!;
         }
     }
@@ -294,7 +294,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _Sma50Text ??= Object.Candle.CandleData?.Sma50?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _Sma50Text ??= Object.CandleData?.Sma50?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _Sma50Text!;
         }
     }
@@ -303,7 +303,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _Sma50Foreground ??= GetBrushColorSma50(Core.Enums.CryptoTradeSide.Long, Object.Candle.CandleData?.Sma50, Object.Candle.CandleData?.Sma50);
+            _Sma50Foreground ??= GetBrushColorSma50(Core.Enums.CryptoTradeSide.Long, Object.CandleData?.Sma50, Object.CandleData?.Sma50);
             return _Sma50Foreground!;
         }
     }
@@ -314,7 +314,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _Sma20Text ??= Object.Candle.CandleData?.Sma20?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _Sma20Text ??= Object.CandleData?.Sma20?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _Sma20Text!;
         }
     }
@@ -323,7 +323,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _Sma20Foreground ??= GetBrushColorSma20(Core.Enums.CryptoTradeSide.Long, Object.Candle.CandleData?.Sma20, Object.Candle.CandleData?.Sma50);
+            _Sma20Foreground ??= GetBrushColorSma20(Core.Enums.CryptoTradeSide.Long, Object.CandleData?.Sma20, Object.CandleData?.Sma50);
             return _Sma20Foreground!;
         }
     }
@@ -334,7 +334,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _PSarText ??= Object.Candle.CandleData?.PSar?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _PSarText ??= Object.CandleData?.PSar?.ToString0(Object.Symbol.PriceDisplayFormat);
             return _PSarText!;
         }
     }
@@ -343,7 +343,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _PSarForeground ??= GetBrushColorPSar(Core.Enums.CryptoTradeSide.Long, Object.Candle.CandleData?.PSar, Object.Candle.CandleData?.Sma20);
+            _PSarForeground ??= GetBrushColorPSar(Core.Enums.CryptoTradeSide.Long, Object.CandleData?.PSar, Object.CandleData?.Sma20);
             return _PSarForeground!;
         }
     }

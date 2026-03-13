@@ -1,10 +1,7 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
 
-using CryptoExchange.Net.SharedApis;
-
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.BybitApi.Futures;
@@ -44,7 +41,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = maxTime.ToDateTime();
 
-        var result = await api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(Category.Linear, symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate, limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {

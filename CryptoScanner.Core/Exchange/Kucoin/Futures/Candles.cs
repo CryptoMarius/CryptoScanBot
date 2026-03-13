@@ -1,8 +1,6 @@
 ﻿using CryptoExchange.Net.Objects.Errors;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Clients;
@@ -33,7 +31,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        FuturesKlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod) 
+        FuturesKlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
 
         //KucoinWeights.WaitForFairWeight(1);
@@ -79,7 +77,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle

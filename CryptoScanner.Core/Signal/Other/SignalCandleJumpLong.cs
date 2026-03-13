@@ -5,9 +5,6 @@ namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalCandleJumpLong : SignalCreateBase
 {
-    public SignalCandleJumpLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()

@@ -6,9 +6,6 @@ namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalDominantLevelNearLong : SignalCreateBase
 {
-    public SignalDominantLevelNearLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -39,7 +36,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                         }
                         else
                         {
@@ -70,7 +67,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                             {
                                 zone.CloseTime = CandleLast.Candle.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                                GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                             }
 
 
@@ -95,7 +92,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.DlzZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;
 

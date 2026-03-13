@@ -6,7 +6,6 @@ namespace CryptoScanner.Core.Barometer;
 
 public static class BarometerHelper
 {
-
     public static bool CheckValidBarometer(Model.CryptoExchange activeExchange, string quoteName, CryptoIntervalPeriod intervalPeriod, (decimal minValue, decimal maxValue) values, out string reaction)
     {
         if (!GlobalData.IntervalListPeriod.TryGetValue(intervalPeriod, out CryptoInterval? interval))

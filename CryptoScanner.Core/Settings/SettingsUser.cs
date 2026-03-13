@@ -45,7 +45,7 @@
 
 //    public GridSettingsUser GridSignal { get; set; } = new();
 //    public SortedList<string, ColumnSetting>? GridColumnsSignal { get; set; } // only for migration
-    
+
 //    public GridSettingsUser GridSymbol { get; set; } = new();
 //    public SortedList<string, ColumnSetting>? GridColumnsSymbol { get; set; } // only for migration
 

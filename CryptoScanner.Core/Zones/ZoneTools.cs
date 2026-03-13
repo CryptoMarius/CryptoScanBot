@@ -16,8 +16,9 @@ public class DatabaseStatistics
 
 public class ZoneTools
 {
-    public static void CreateZoneIndex(SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
-        IList<CryptoZone> zones, DatabaseStatistics dbStats)
+    public static void CreateZoneIndex(IList<CryptoZone> zones,
+        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
+        DatabaseStatistics statistics)
     {
         foreach (var zone in zones)
         {
@@ -27,7 +28,7 @@ public class ZoneTools
                 if (zone.Id > 0)
                 {
                     zone.Id *= -1;
-                    dbStats.Deleted++;
+                    statistics.Deleted++;
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
@@ -36,27 +37,15 @@ public class ZoneTools
     }
 
 
-    //public static void CollectAllZones(CryptoZones zoneData,
-    //    SortedList<(CryptoTradeSide, long?, decimal, decimal), CryptoZone> zonesFromDatabase,
-    //    DatabaseStatistics dbStats)
-    //{
-    //    CreateZoneIndex(zonesFromDatabase, zoneData.LongOpen, dbStats);
-    //    CreateZoneIndex(zonesFromDatabase, zoneData.ShortOpen, dbStats);
-    //    CreateZoneIndex(zonesFromDatabase, zoneData.LongClosed, dbStats);
-    //    CreateZoneIndex(zonesFromDatabase, zoneData.ShortClosed, dbStats);
-    //}
-
-
-
     public static void AddZonesToInternalLists(CryptoSymbolIntervalZones zoneData,
-        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase,
-        IList<CryptoZone> newCalculatedZones, DatabaseStatistics dbStats)
+        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones,
+        IList<CryptoZone> newZones, DatabaseStatistics dbStats)
     {
-        foreach (var zone in newCalculatedZones)
+        foreach (var zone in newZones)
         {
             // reuse an previous zone from the database if it exists
             bool zoneExistsInDatabase = false;
-            if (zonesFromDatabase.TryGetValue((zone.Side, zone.OpenTime, zone.Bottom, zone.Top), out CryptoZone? zoneInDb))
+            if (oldZones.TryGetValue((zone.Side, zone.OpenTime, zone.Bottom, zone.Top), out CryptoZone? zoneInDb))
             {
                 zone.Id = zoneInDb.Id;
                 zoneExistsInDatabase = zoneInDb.Id > 0; // might still be zero
@@ -65,10 +54,10 @@ public class ZoneTools
                 if (zoneInDb.CloseTime == zone.CloseTime && zoneInDb.Description == zone.Description &&
                     zoneInDb.IsValid == zone.IsValid && zoneInDb.Strength == zone.Strength)
                 {
-                    zonesFromDatabase.Remove((zone.Side, zone.OpenTime, zone.Bottom, zone.Top));
+                    oldZones.Remove((zone.Side, zone.OpenTime, zone.Bottom, zone.Top));
                     dbStats.Untouched++;
-                    //if (data.Symbol.Name == "HMSTRUSDT")
-                    //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} reusing={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                    if (zone.Symbol.Name == "1000PEPEUSDT")
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Reusing")}");
                     zoneData.Add(zone);
                     continue;
                 }
@@ -82,15 +71,15 @@ public class ZoneTools
             {
                 dbStats.Modified++;
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                //if (data.Symbol.Name == "HMSTRUSDT")
+                //if (data.Symbol.Name == "1000PEPEUSDT")
                 //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} modified={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
             }
             else
             {
                 dbStats.Inserted++;
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                //if (data.Symbol.Name == "HMSTRUSDT")
-                //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} inserted={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                if (zone.Symbol.Name == "1000PEPEUSDT")
+                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Inserted")}");
             }
         }
 
@@ -110,8 +99,8 @@ public class ZoneTools
                 zone.Id *= -1;
                 dbStats.Deleted++;
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                //if (data.Symbol.Name == "HMSTRUSDT")
-                //    GlobalData.AddTextToLogTab($"{data.Symbol.Name} deleting={zone.Id} {zone.Kind} {zone.Side} {zone.Bottom:N8} {zone.Top:N8}");
+                if (zone.Symbol.Name == "1000PEPEUSDT")
+                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Deleting")}");
             }
         }
     }

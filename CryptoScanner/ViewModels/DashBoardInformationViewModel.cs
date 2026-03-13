@@ -416,7 +416,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         CandleTime candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
             {
                 if (loX > candle!.OpenTime)
                     loX = candle.OpenTime;
@@ -523,7 +523,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
             {
                 point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
                 point2.Y = offsetY + scaleY * ((float)candle.Close);

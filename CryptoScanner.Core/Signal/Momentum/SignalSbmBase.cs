@@ -1,8 +1,6 @@
-﻿using CryptoScanner.Core.Model;
+﻿namespace CryptoScanner.Core.Signal.Momentum;
 
-namespace CryptoScanner.Core.Signal.Momentum;
-
-public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalCreateBase(symbol, interval, candle)
+public class SignalSbmBase : SignalCreateBase
 {
     public override bool IndicatorsOkay(MyData data)
     {

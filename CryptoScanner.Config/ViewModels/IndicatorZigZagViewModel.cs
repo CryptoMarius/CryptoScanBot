@@ -21,7 +21,7 @@ public partial class IndicatorZigZagViewModel : ObservableObject
 
     internal void SaveConfig(SettingsZigZag settings)
     {
-        settings.TrendType = UsePrimaryTrend ? TrendType.Primary: TrendType.Secondary;
+        settings.TrendType = UsePrimaryTrend ? TrendType.Primary : TrendType.Secondary;
         settings.UseHighLow = UseHighLow;
     }
 }

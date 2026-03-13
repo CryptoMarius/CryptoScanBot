@@ -1,16 +1,12 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Momentum;
 
 namespace CryptoScanner.Core.Signal.Other;
 
-public class SignalLuxNadarayaWatsonEnvelopePull: SignalCreateBase
+public class SignalLuxNadarayaWatsonEnvelopePull : SignalCreateBase
 {
-    public SignalLuxNadarayaWatsonEnvelopePull(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
     public override bool IndicatorsOkay(MyData data)
     {

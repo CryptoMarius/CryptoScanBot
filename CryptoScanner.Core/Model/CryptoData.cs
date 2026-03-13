@@ -43,13 +43,16 @@ public class CryptoData
     /// <summary>
     /// Stoch Signal %D (orange), average from the last 3 %K values
     /// </summary>
-    public double? StochSignal { get; set; } // Stochastic oscillator %D (orange, slow line)
+    public double? StochSignal { get; set; } // Stochastic signal %D (orange, slow line)
     //public float StochSurface { get; set; }
     //public float StochSurface2 { get; set; }
     //[Computed]
     //public double? SlopeStoch { get; set; }
 
-    //Where?
+    //[Computed]
+    //public double? Rvi { get; set; } // Stochastic oscillator
+    //[Computed]
+    //public double? RviSignal { get; set; } // Stochastic
 
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG

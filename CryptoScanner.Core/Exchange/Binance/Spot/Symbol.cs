@@ -23,7 +23,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 var api = client.SpotApi;
                 using CryptoDatabase database = new();
                 database.Open();
-               
+
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");

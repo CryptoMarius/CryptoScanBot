@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
-
-using Dapper;
+﻿using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Context;
@@ -1025,6 +1023,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
+            // Problem, sqlite does not support dropping foreign key.
+            // So we make the db corrupt because of "drop table tradeAccount!"
             try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
             try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // has an accountid field
 
@@ -1194,6 +1194,7 @@ public class Migration
         //
 
         //
+
     }
 }
 

@@ -21,9 +21,7 @@ public enum CryptoSignalStrategy
 #if DEBUG
     Stoch = 20,
 #endif
-#if DEBUG
-    SmaDist = 22, // experiment
-#endif
+
 
     NadarayaWatsonEnvelope = 25,
 #if DEBUG
@@ -40,21 +38,23 @@ public enum CryptoSignalStrategy
 #endif
 
 #if DEBUG
-    EmaCrossedSma20 = 32,
+    RollingFft = 37,
 #endif
 #if DEBUG
-    Ema9KcBand = 33,
+    RsiDivergence = 38,
 #endif
-#if DEBUG
-    Ema9KcCenter = 34,
-#endif  
-#if DEBUG
-    TemaCrossedKcBand = 35,
-#endif  
-#if DEBUG
-    TemaCrossedKcCenter = 36,
-#endif  
 
+#if DEBUG
+    BbmaReentryOld = 42,
+#endif
+#if DEBUG
+    BbmaReentryNew = 43,
+#endif
+
+#if DEBUG
+    // BB wick + SMA20 slope + SMA50 cross reversal signal
+    BbWickSma = 44,
+#endif
 
     DominantLevel = 1000,
     DominantLevelNear = 1001,

@@ -18,7 +18,7 @@ public class CryptoTradeList : SortedList<string, CryptoTrade>
                 {
                     Add(trade.TradeId, trade);
                     if (log)
-                        GlobalData.AddTextToLogTab($"{trade.Symbol.Name} order {trade.TradeTime} {trade.OrderId} added trade {trade.TradeId} (#{trade.Id})");
+                        GlobalData.AddTextToLogTab($"{trade.Symbol.Name} {trade.TradeTime} orderid={trade.OrderId} added trade.id={trade.Id} trade.TradeId={trade.TradeId}");
                 }
             }
 

@@ -1,9 +1,8 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
-
-using BitMart.Net.Clients;
+﻿using BitMart.Net.Clients;
 using BitMart.Net.Enums;
+
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.BitMart.Futures;
 
@@ -41,7 +40,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = maxTime.ToDateTime();
 
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {

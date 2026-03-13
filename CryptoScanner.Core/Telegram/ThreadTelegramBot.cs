@@ -25,7 +25,7 @@ namespace CryptoScanner.Core.Telegram;
 // 2: Choose a username for your bot: <BotName>Bot
 //
 // Copy the Token (like:1234567890:12345678901234567890123456789012345)
-// Paste it into the "Telegram Token" field of the Scanner telegram settings 
+// Paste it into the "Telegram Token" field of the Scanner telegram settings
 
 // Go the suggested Chat BotFather created
 // Type ChatId (a command of the Scanner)
@@ -99,7 +99,7 @@ public class ThreadTelegramBotInstance
 
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="text"></param>
     public async Task SendMessage(string text)
@@ -153,7 +153,7 @@ public class ThreadTelegramBotInstance
         databaseThread.Open();
 
         foreach (CryptoPosition position in databaseThread.Connection.Query<CryptoPosition>("select * from position " +
-            "where CloseTime >= @fromDate and status=2 and exchangeid=@exchangeid", 
+            "where CloseTime >= @fromDate and status=2 and exchangeid=@exchangeid",
             new { fromDate = DateTime.Today.ToUniversalTime(), exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             sumPositions++;
@@ -176,7 +176,7 @@ public class ThreadTelegramBotInstance
 
         // Bij het testen staat vaak de scanner aan, daarom bij sql telegram ff uit
 
-       // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+        // System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         //    // Extra parameters vanwege ambigious constructor (die ik niet geheel kon volgen)
         bot = new(token); //, "https://api.telegram.org/bot", "https://api.telegram.org/file/bot"
         try
@@ -247,7 +247,7 @@ public class ThreadTelegramBotInstance
                                         {
                                             TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
                                             stringBuilder.AppendLine();
-                                            Helper.ShowPositions(stringBuilder);
+                                            GlobalData.ActiveExchange!.Data.PositionList.ShowPositions(stringBuilder);
                                             stringBuilder.AppendLine();
                                             CommandShowProfits(stringBuilder);
                                             stringBuilder.AppendLine();
@@ -267,7 +267,7 @@ public class ThreadTelegramBotInstance
                                         else if (command == "ZONES")
                                             showInHtml = TelegramShowZones.Execute(arguments, stringBuilder);
                                         else if (command == "POSITIONS")
-                                            Helper.ShowPositions(stringBuilder);
+                                            GlobalData.ActiveExchange!.Data.PositionList.ShowPositions(stringBuilder);
                                         else if (command == "PROFITS")
                                             CommandShowProfits(stringBuilder);
                                         else if (command == "SLOTS")

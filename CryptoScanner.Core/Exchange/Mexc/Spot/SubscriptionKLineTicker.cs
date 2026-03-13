@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -29,7 +28,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
         var api = client.SpotApi;
 
-        SortedList<string, CryptoCandleList > symbolCandleCache = [];
+        SortedList<string, CryptoCandleList> symbolCandleCache = [];
 
         List<string> symbols = [];
         //string symbolName = "";

@@ -92,6 +92,11 @@ public partial class CryptoSymbol
         return Data.SymbolIntervalList[(int)intervalPeriod];
     }
 
+    public CryptoSymbolInterval GetSymbolInterval(CryptoInterval interval)
+    {
+        return Data.SymbolIntervalList[(int)interval.IntervalPeriod];
+    }
+
     public bool EnoughVolume()
     {
         if (QuoteData == null || QuoteData.MinimalVolume == 0)

@@ -1,15 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStobbLong : SignalSbmBaseLong
 {
-    public SignalStobbLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IndicatorsOkay(MyData data)

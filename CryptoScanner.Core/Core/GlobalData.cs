@@ -1,5 +1,4 @@
-﻿using Avalonia.Collections;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.Messaging;
@@ -13,6 +12,8 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
+//using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
@@ -20,7 +21,6 @@ using Dapper.Contrib.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json;
 
@@ -74,11 +74,22 @@ public static class GlobalData
     public static CryptoApplicationStatus ApplicationStatus
     {
         get { return _applicationStatus; }
-        set {
-            _applicationStatus = value;
-            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
+        set
+        {
+            if (_applicationStatus != value)
+            {
+                _applicationStatus = value;
+                SendMvvmMessage(new StatusesHaveChangedMessage());
+            }
         }
     }
+
+    public static void SendMvvmMessage<TMessage>(TMessage message) where TMessage : class
+    {
+        Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(message); }); // Avalonia
+        //MainForm!.BeginInvoke(() => { WeakReferenceMessenger.Default.Send(message); }); // Winforms
+    }
+
 
     // Amount of signals created
     public static int CreatedSignalCount { get; set; }
@@ -128,15 +139,16 @@ public static class GlobalData
 
     public static event AddTextEvent? LogToLogTabEvent;
     public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
+
+    // Events for refresing data
     public static event AddTextEvent? TelegramHasChangedEvent;
     public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
     //public static event AddTextEvent? AssetsHaveChangedEvent;
     //public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
 
-
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
-        public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
+    public static void SetCandleTimerEnable(bool value) => SetCandleTimerEnableEvent?.Invoke(value);
 
     public static AnalyseEvent? AnalyzeSignalCreated { get; set; }
 
@@ -268,7 +280,7 @@ public static class GlobalData
         //AddTextToLogTab("Reading symbol information");
         string sql = "select * from symbol where exchangeid=@exchangeid";
         using var database = new CryptoDatabase();
-        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id}))
+        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
             AddSymbol(symbol);
     }
 
@@ -451,13 +463,13 @@ public static class GlobalData
             string filename = Path.Combine(GlobalData.AppDataFolder, $"{Constants.AppName}-settings.json");
             if (File.Exists(filename))
             {
-                //using (FileStream readStream = new FileStream(fileName, FileMode.Open))
+                //using (FileStream readStream = new FileStream(filename, FileMode.Open))
                 //{
                 //    BinaryFormatter formatter = new BinaryFormatter();
                 //    Settings = (Settings)formatter.Deserialize(readStream);
                 //    readStream.Close();
                 //}
-                //string text = File.ReadAllText(fileName);
+                //string text = File.ReadAllText(filename);
                 //var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.DeSerializerOptions);
                 using FileStream stream = File.OpenRead(filename);
                 var value = JsonSerializer.Deserialize<SettingsBasic>(stream, JsonTools.DeSerializerOptions);
@@ -760,49 +772,6 @@ public static class GlobalData
         return AppDataFolder;
     }
 
-
-    public static void InitializeExchange()
-    {
-        // If application params contain an exchange this is leading
-        // Otherwise we take the one from the settings
-        string? exchangeName = ApplicationParams.Options!.ExchangeName;
-        if (exchangeName != null)
-        {
-            // People forget to use the right casing
-            exchangeName = exchangeName.Trim().ToLower();
-            string? found = ExchangeListName.Values.Where(x => x.Name.Equals(exchangeName, StringComparison.CurrentCultureIgnoreCase)).SingleOrDefault()?.Name;
-            if (found != null)
-                exchangeName = found;
-            Settings.General.ExchangeName = exchangeName;
-        }
-
-
-        if (ExchangeListName.TryGetValue(Settings.General.ExchangeName, out var exchange))
-            GlobalData.ActiveExchange = exchange;
-        else
-            throw new Exception($"Exchange {Settings.General.ExchangeName} does not exist");
-    }
-
-
-    //public static void DumpSessionInformation()
-    //{
-    //    foreach (Model.CryptoExchange exchange in ExchangeListName.Values.ToList())
-    //    {
-    //        int candleCount = 0;
-    //        foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
-    //        {
-    //            foreach (Model.CryptoSymbolInterval symbolInterval in symbol.SymbolIntervalList.ToList())
-    //            {
-    //                candleCount += symbolInterval.CandleList.Count;
-    //                if (symbolInterval.CandleList.Count > 0)
-    //                    AddTextToLogTab(string.Format("{0} {1} {2} candlecount={3}", exchange.Name, symbol.Name, symbolInterval.Interval.Name, symbolInterval.CandleList.Count), false);
-
-    //            }
-    //        }
-
-    //        AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
-    //    }
-    //}
 
     // Index for the available strategies (available via ui)
     public static void IndexStrategySettings()

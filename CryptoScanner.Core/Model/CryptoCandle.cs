@@ -1,13 +1,7 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Signal;
-
-using Dapper.Contrib.Extensions;
-
-using Skender.Stock.Indicators;
+﻿using Skender.Stock.Indicators;
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Model;
 
@@ -40,8 +34,9 @@ namespace CryptoScanner.Core.Model;
 //decimal 	±1.0 x 10-28 to ±7.9228 x 1028 	28-29 digits 	16 bytes System.Decimal                     16 bytes
 
 //candle
-// 1 * long 8           =  8
-// 5 decimals * 16      = 80
+// opentime als uint   =   4
+// 4 decimals * 16      = 64
+// volume as double      = 8
 //---------------------------
 // Total                = 88 bytes per candle, for 4.000.000 candles = 352 Mb (without dictionary keys etc)
 
@@ -113,6 +108,26 @@ public struct CryptoCandle : IQuote
             throw new ArgumentException("TickSize must be positive");
         byte decimals = (byte)Math.Round(-Math.Log10((double)tickSize));
         return decimals;
+    }
+
+    public void LoadVersion3(BinaryReader reader)
+    {
+        OpenTime = new CandleTime(reader.ReadUInt32());
+        _openTicks = reader.ReadInt32();
+        _highTicks = reader.ReadInt32();
+        _lowTicks = reader.ReadInt32();
+        _closeTicks = reader.ReadInt32();
+        _volume = reader.ReadDouble();
+    }
+
+    public readonly void SaveVersion3(BinaryWriter writer)
+    {
+        writer.Write(OpenTime.Minutes);
+        writer.Write(_openTicks);
+        writer.Write(_highTicks);
+        writer.Write(_lowTicks);
+        writer.Write(_closeTicks);
+        writer.Write(_volume);
     }
 }
 
@@ -216,7 +231,10 @@ public struct CryptoCandle : IQuote
 public readonly struct CandleTime : IEquatable<CandleTime>, IComparable<CandleTime>
 {
     private const int SecondsPerMinute = 60;
-    public static readonly DateTime Epoch = new(2010, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    // Epoch is Monday 2010-01-04 so that epoch-relative modulo aligns weekly candles to Monday 00:00 UTC,
+    // matching the Binance convention. Shifting by 3 days from Jan 1 (Friday) does not affect sub-daily
+    // or daily intervals because 3 days is an exact multiple of their durations.
+    public static readonly DateTime Epoch = new(2010, 1, 4, 0, 0, 0, DateTimeKind.Utc);
     private static readonly long EpochUnixSec = new DateTimeOffset(Epoch).ToUnixTimeSeconds();
 
     private readonly uint _minutes;

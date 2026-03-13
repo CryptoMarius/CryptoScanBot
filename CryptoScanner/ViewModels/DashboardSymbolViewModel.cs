@@ -71,8 +71,8 @@ public partial class DashboardSymbolViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _volumeText;
-    private decimal? _volume;
-    public decimal? Volume
+    private double? _volume;
+    public double? Volume
     {
         get
         {
@@ -140,7 +140,7 @@ public partial class DashboardSymbolViewModel : ObservableObject
     }
 
 
-    internal static string GetLargeVolumeText(decimal number)
+    internal static string GetLargeVolumeText(double number)
     {
         if (number >= 1_000_000_000) // Miljard
             return $"{number / 1_000_000_000:N2} B";

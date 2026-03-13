@@ -7,7 +7,6 @@ using CryptoScanner.Core.Model;
 using Dapper.Contrib.Extensions;
 
 using Kraken.Net.Clients;
-using Kraken.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.Kraken.Futures;
 
@@ -74,7 +73,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.Base + symbolInfo.Quote;
                                 //string[] nameParts = name.Split('/');
                                 //name = nameParts[0] + nameParts[1];
-                           
+
 
                                 //TODO: ?????????????????????????????????????????????
 
@@ -114,9 +113,9 @@ public class Symbol() : SymbolBase(), ISymbol
                                     symbol.Volume = 0;
 
                                 //if (symbolData.Status == SymbolStatus.Online)
-                                    symbol.Status = 1;
+                                symbol.Status = 1;
                                 //else
-                                    //symbol.Status = 0;
+                                //symbol.Status = 0;
 
                                 if (symbol.Id == 0)
                                 {

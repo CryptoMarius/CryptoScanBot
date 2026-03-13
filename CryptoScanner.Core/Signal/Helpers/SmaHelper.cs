@@ -1,4 +1,3 @@
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
 public static class SmaHelper

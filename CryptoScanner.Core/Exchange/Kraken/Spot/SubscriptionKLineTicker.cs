@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;

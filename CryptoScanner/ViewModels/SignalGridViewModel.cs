@@ -149,7 +149,7 @@ public partial class SignalGridViewModel : ObservableObject
                         var signalInfo = Signals[index];
                         var signal = signalInfo.Object;
 
-                        DateTime expirationDate = signal.GetExpirationDate(signal.Interval);
+                        DateTime expirationDate = Helper.GetExpirationDate(signal, signal.Interval);
                         if (expirationDate < DateTime.UtcNow)
                         {
                             Signals.RemoveAt(index);

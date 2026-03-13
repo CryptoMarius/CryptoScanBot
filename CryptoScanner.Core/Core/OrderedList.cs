@@ -133,45 +133,45 @@ public class OrderedList<T> : IList<T>, ICollection<T>, IList, ICollection, IRea
             _list.InsertRange(insertIndex, insertList.GetRange(i, endInsert - i + 1));
         }
     }
-    
+
     public int BinarySearch(T item)
     {
         return _list.BinarySearch(item, _comparer);
     }
-    
+
     public int BinarySearch(int index, int count, T item)
     {
         return _list.BinarySearch(index, count, item, _comparer);
     }
-    
+
     public ReadOnlyCollection<T> AsReadOnly()
     {
         return _list.AsReadOnly();
     }
 
     public void Clear() { _list.Clear(); }
-    
-    public bool Contains(T item) 
-    { 
-        return BinarySearch(item) >= 0; 
+
+    public bool Contains(T item)
+    {
+        return BinarySearch(item) >= 0;
     }
-    
+
     bool IList.Contains(object item)
     {
         return Contains((T)item);
     }
-    
+
     public List<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter) { return _list.ConvertAll(converter); }
-    
+
     public void CopyTo(T[] array) { _list.CopyTo(array); }
-    
+
     public void CopyTo(T[] array, int arrayIndex) { _list.CopyTo(array, arrayIndex); }
-    
+
     void ICollection.CopyTo(Array array, int arrayIndex) { _list.CopyTo((T[])array, arrayIndex); }
-    
+
     public void CopyTo(int index, T[] array, int arrayIndex, int count) { _list.CopyTo(index, array, arrayIndex, count); }
-    
-    
+
+
     public void ForEach(Action<T> action)
     {
         foreach (T item in _list)
@@ -194,8 +194,8 @@ public class OrderedList<T> : IList<T>, ICollection<T>, IList, ICollection, IRea
         _list.RemoveAt(index);
         return true;
     }
-    
-    
+
+
     void IList.Remove(object item)
     {
         Remove((T)item);
@@ -223,8 +223,8 @@ public class OrderedList<T> : IList<T>, ICollection<T>, IList, ICollection, IRea
     {
         return IndexOf((T)item);
     }
- 
-    
+
+
     /// <summary>
     /// Find the last index of the given item
     /// </summary>

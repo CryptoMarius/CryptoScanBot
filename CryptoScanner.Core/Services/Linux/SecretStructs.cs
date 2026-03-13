@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Tmds.DBus;
+﻿using Tmds.DBus;
 
 namespace CryptoScanner.Core.Services.Linux;
 

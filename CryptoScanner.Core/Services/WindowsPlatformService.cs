@@ -22,7 +22,7 @@ public class WindowsPlatformService : IPlatformService
             // This is the standard path + folder parameter
             return Path.Combine(baseFolder, folder);
         }
-        else 
+        else
         {
             // This is a full path given by the parameter
             return folder;

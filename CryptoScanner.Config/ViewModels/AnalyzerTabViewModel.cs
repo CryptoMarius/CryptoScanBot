@@ -32,7 +32,7 @@ public partial class AnalyzerTabViewModel : ObservableObject
     private MarketTrendFilterViewModel _analyzerMarketTrendFilterShortViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterShortViewModel;
-    
+
 
 
 

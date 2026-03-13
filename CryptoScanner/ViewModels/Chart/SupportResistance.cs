@@ -17,7 +17,7 @@ public class SupportResistanceLevel
 public class SupportResistance
 {
     public static List<SupportResistanceLevel> Detect(List<ZigZagResult> candles,
-        decimal mergeTolerancePercent = 0.5m, // marge in procent
+        decimal mergeTolerancePercent = 0.5m, // margin percent
         int minHits = 1)
     {
         var rawLevels = new List<SupportResistanceLevel>();
@@ -93,7 +93,7 @@ public class SupportResistance
                     MinimumX = bb.Candle.OpenTime.Minutes,
                     MaximumX = bb.Candle.OpenTime.Minutes + 25 * interval.Duration,
                     Color = color,
-                    //Line = "Horizontal" 
+                    //Line = "Horizontal"
                 };
 
                 chart.Annotations.Add(annotation);

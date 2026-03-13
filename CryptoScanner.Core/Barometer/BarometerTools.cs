@@ -3,7 +3,6 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
@@ -96,10 +95,11 @@ public class BarometerTools
         // Remove old candles from the barometer symbol (< 24 hours, 1440 candles)
         if (!GlobalData.BackTest)
         {
-            CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
-            while (candles.Values.Count > 0)
+            CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+            // Use TryGetFirstCandle() so the read is covered by the CryptoCandleList read lock,
+            // preventing InvalidOperationException when another thread concurrently calls Add().
+            while (candles.TryGetFirstCandle(out CryptoCandle c))
             {
-                CryptoCandle c = candles.Values.First();
                 if (c.OpenTime < startFetchUnix)
                     candles.Remove(c.OpenTime);
                 else break;
@@ -127,9 +127,9 @@ public class BarometerTools
                 periodStart = symbolInterval.LastCandleSynchronized.Value;
             else
             {
-                // Geef deze alvast een waarde
-                if (candles.Count > 0)
-                    periodStart = candles.Keys.First();
+                // Geef deze alvast een waarde — use TryGetFirstCandle() for thread-safe key access.
+                if (candles.TryGetFirstCandle(out CryptoCandle firstCandle))
+                    periodStart = firstCandle.OpenTime;
                 else
                     periodStart = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddDays(-2), 1);
 
@@ -291,7 +291,7 @@ public class BarometerTools
                 }
 
                 // Nu de barometer uitgerekend is mag het aantal 1m candles naar beneden
-                CandleIndicatorData.SetInitialCandleCountFetch(24 * 60 + 10);
+                CandleTools.SetInitialCandleCountFetch(24 * 60 + 10);
             }
         }
         catch (Exception error)

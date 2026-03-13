@@ -1,12 +1,13 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Coinbase.Net.Clients;
+using Coinbase.Net.Enums;
+
+using CryptoExchange.Net.SharedApis;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using Coinbase.Net.Clients;
-using Coinbase.Net.Enums;
-using CryptoExchange.Net.SharedApis;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
@@ -29,7 +30,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await api.ExchangeData.GetBookTickersAsync() ?? 
+                var tickerInfo = await api.ExchangeData.GetBookTickersAsync() ??
                     throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
@@ -49,7 +50,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 //LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await api.ExchangeData.GetSymbolsAsync(SymbolType.Spot) ?? 
+                var symbolInfo = await api.ExchangeData.GetSymbolsAsync(SymbolType.Spot) ??
                     throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);

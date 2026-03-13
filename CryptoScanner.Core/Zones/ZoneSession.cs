@@ -1,9 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
-
-using System.Text.Json;
 
 namespace CryptoScanner.Core.Zones;
 
@@ -23,15 +20,15 @@ public class ZoneSession
     public string SymbolBase { get; set; } = "BTC";
     public string SymbolQuote { get; set; } = "USDT";
     public string IntervalName { get; set; } = "1h";
+    public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // Period = UtcNow - X candles
     public CandleTime MinDate { get; set; }
     public CandleTime MaxDate { get; set; }
-    public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // hidden
     public bool UseOptimizing { get; set; } = false;
-    public decimal Deviation { get; set; } = 1m;
+    //public decimal Deviation { get; set; } = 1m;
 
     // trend
     public TrendType TrendType { get; set; } = TrendType.Primary;

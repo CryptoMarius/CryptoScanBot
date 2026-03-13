@@ -35,6 +35,8 @@ public partial class SymbolGridViewModel : ObservableObject
 
     public void Dispose()
     {
+        WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
+
         _timerRefreshZones.Stop();
         _timerRefreshZones.Tick -= TimerRefreshZonesTick;
     }
@@ -46,7 +48,7 @@ public partial class SymbolGridViewModel : ObservableObject
         List<SymbolViewModel> viewModels = [];
         foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
         {
-            if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
+            if (symbol.QuoteData.FetchCandles && symbol.Status == 1) //&& !symbol.IsBarometerSymbol()
             {
                 if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
                 {

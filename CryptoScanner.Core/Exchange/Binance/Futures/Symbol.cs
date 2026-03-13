@@ -23,7 +23,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 var api = client.UsdFuturesApi;
                 using CryptoDatabase database = new();
                 database.Open();
-               
+
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
@@ -60,7 +60,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
-                    List <CryptoSymbol> cache = [];
+                    List<CryptoSymbol> cache = [];
                     try
                     {
                         foreach (var symbolData in symbolInfo.Data.Symbols)

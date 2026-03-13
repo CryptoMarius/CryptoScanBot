@@ -1,7 +1,4 @@
-﻿using CryptoExchange.Net.SharedApis;
-
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using HyperLiquid.Net.Clients;
@@ -42,7 +39,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = maxTime.ToDateTime();
 
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {
@@ -75,7 +72,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle

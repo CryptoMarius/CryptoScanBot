@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Model;
-
-namespace CryptoScanner.Core.Signal.Helpers;
+﻿namespace CryptoScanner.Core.Signal.Helpers;
 
 public static class BollingerBandsHelper
 {

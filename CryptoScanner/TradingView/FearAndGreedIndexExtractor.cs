@@ -19,7 +19,7 @@ public class FearAndGreedIndexExtractor
 
 
     public static async void StartAsync(string url, string displayName,
-        Action<decimal, decimal> onDataReceived,
+        Action<decimal, double> onDataReceived,
         int startDelayMs = 250, int loopDelayMs = 6000,
         CancellationToken cancellationToken = default)
     {

@@ -10,10 +10,10 @@ public partial class StrategyDlzSettingsUnzoomedBoxViewModel : ObservableObject
     private bool _zonesApplyUnzoomed = false;
 
     [ObservableProperty]
-    private double _minimumUnZoomedPercentage = 0.0; 
+    private double _minimumUnZoomedPercentage = 0.0;
 
     [ObservableProperty]
-    private double _maximumUnZoomedPercentage = 0.0; 
+    private double _maximumUnZoomedPercentage = 0.0;
 
     public void LoadConfig(SettingsSignalStrategyZones settings)
     {

@@ -13,7 +13,7 @@ public class CryptoTrendData
     // 1 candle back
     public CandleTime? PrevTime { get; set; }
     public float? PrevPercentage { get; set; } // only for symbol level
-    public bool ReversalSignaled { get; set; } = true;
+    public CryptoTrendIndicator LastTrend { get; set; } = CryptoTrendIndicator.Unknown;
     public CryptoTrendIndicator PrevTrend { get; set; }
 
 
@@ -25,7 +25,7 @@ public class CryptoTrendData
 
         PrevTime = null;
         PrevPercentage = null;
-        ReversalSignaled = true;
+        LastTrend = CryptoTrendIndicator.Unknown;
         PrevTrend = CryptoTrendIndicator.Unknown;
     }
 }

@@ -1,14 +1,13 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using BitMart.Net.Clients;
+using BitMart.Net.Enums;
+
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using BitMart.Net.Clients;
-using CryptoScanner.Core.Json;
-using BitMart.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.BitMart.Spot;
 

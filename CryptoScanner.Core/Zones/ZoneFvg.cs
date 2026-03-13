@@ -150,20 +150,20 @@ public class ZoneFvg
         //        IsValid = false,
         //    };
 
-        //    zonesFromDatabase = zoneList.BinarySearch(s);
-        //    if (zonesFromDatabase < 0)
-        //        zonesFromDatabase = 0;
-        //    else if (zonesFromDatabase > zoneList.Count)
-        //        zonesFromDatabase = count - 1;
+        //    oldZones = zoneList.BinarySearch(s);
+        //    if (oldZones < 0)
+        //        oldZones = 0;
+        //    else if (oldZones > zoneList.Count)
+        //        oldZones = count - 1;
         //}
         //if (count > 20)
-        //    zonesFromDatabase = zonesFromDatabase; // debug
+        //    oldZones = oldZones; // debug
 
         while (index < zoneList.Count) // sorted on Zone.Top descending
         {
             var zone = zoneList[index];
 
-            // situation (A candle way above the zone) The list is sorted on top value and if there are no more reachable zonesFromDatabase break (save some looping time)
+            // situation (A candle way above the zone) The list is sorted on top value and if there are no more reachable oldZones break (save some looping time)
             if (candle.Low > zone.Top)
                 break;
 
@@ -183,7 +183,7 @@ public class ZoneFvg
                 }
             }
 
-            //if (zone.CloseTime != null) // remove all closed zonesFromDatabase
+            //if (zone.CloseTime != null) // remove all closed oldZones
             //{
             //    //zoneList.RemoveAt(index);
             //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -223,20 +223,20 @@ public class ZoneFvg
         //        IsValid = false,
         //    };
 
-        //    zonesFromDatabase = zoneList.BinarySearch(s); - this works a bit different than expected, need more time for this
-        //    if (zonesFromDatabase < 0)
-        //        zonesFromDatabase = 0;
-        //    else if (zonesFromDatabase > zoneList.Count)
-        //        zonesFromDatabase = count - 1;
+        //    oldZones = zoneList.BinarySearch(s); - this works a bit different than expected, need more time for this
+        //    if (oldZones < 0)
+        //        oldZones = 0;
+        //    else if (oldZones > zoneList.Count)
+        //        oldZones = count - 1;
         //}
         //if (count > 20)
-        //    zonesFromDatabase = zonesFromDatabase; // debug
+        //    oldZones = oldZones; // debug
 
         while (index < zoneList.Count) // sorted on Zone.Bottom asscending
         {
             var zone = zoneList[index];
 
-            // situation (A candle way below the zone) The list is sorted on bottom value and if there are no more reachable zonesFromDatabase break (save some looping time)
+            // situation (A candle way below the zone) The list is sorted on bottom value and if there are no more reachable oldZones break (save some looping time)
             if (candle.High < zone.Bottom)
                 break;
 
@@ -256,7 +256,7 @@ public class ZoneFvg
                 }
             }
 
-            //if (zone.CloseTime != null) // remove all closed zonesFromDatabase
+            //if (zone.CloseTime != null) // remove all closed oldZones
             //{
             //    //zoneList.RemoveAt(index);
             //    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -313,58 +313,61 @@ public class ZoneFvg
     }
 
 
-    private static void CalculateFvg(CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CryptoSymbolInterval symbolIntervalData)
+    private static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        // Collect old zones
-        DatabaseStatistics dbStats = new();
-        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.FvgZones.LongOpen, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.FvgZones.ShortOpen, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.FvgZones.LongClosed, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.FvgZones.ShortClosed, dbStats);
-        symbolIntervalData.FvgZones.Reset();
+        // Determine the period (using the candlecount)
+        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+        CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
+        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
 
-        // Create new zones
-        OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
-        OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
-        CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
-
-        // Rebuild
-        ZoneTools.AddZonesToInternalLists(symbolIntervalData.FvgZones, zonesFromDatabase, longZones, dbStats);
-        ZoneTools.AddZonesToInternalLists(symbolIntervalData.FvgZones, zonesFromDatabase, shortZones, dbStats);
-        ZoneTools.DeleteRemainingZones(zonesFromDatabase, dbStats);
+#if DEBUG
+        var count = symbol.GetSymbolInterval(interval).CandleList.Count;
+        GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} fvg from {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()} candles = {count}");
+#endif
+        return (minDate, maxDate);
     }
 
-    public static async Task CalculateFvgZonesAsync(AddTextEvent? sender, CryptoSymbol symbol, CryptoInterval interval,
+
+    public static async Task CalculateZonesAsync(AddTextEvent? sender, CryptoSymbol symbol, CryptoInterval interval,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         if (SignalPrepare.ZoneFvgActive())
         {
-            CryptoSymbolData symbolData = symbol.Data;
             try
             {
-                //if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
-                {
-                    sender?.Invoke($"Calculating fvg zones {symbol.Exchange.Name} {symbol.Name} {interval.Name}");
-                    var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
+                sender?.Invoke($"Calculating fvg zones {symbol.Exchange.Name} {symbol.Name} {interval.Name}");
+                var (minDate, maxDate) = await LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
 
-                    // Determine date boundaries
-                    CandleTime unixStartUp = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo Emulator date?
-                    CandleTime fetchFrom = IntervalTools.StartOfIntervalCandle(unixStartUp, interval.Duration);
-                    fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
+                CryptoSymbolData symbolData = symbol.Data;
+                var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
+                CryptoSymbolIntervalZones zones = symbolIntervalData.FvgZones;
 
-                    //// Load candles from disk
-                    //if (!loadedCandlesInMemory.TryGetValue(interval.IntervalPeriod, out bool _))
-                    //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
-                    //loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // in memory, alway's save
+                if (symbol.Name == "1000PEPEUSDT")
+                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                        $"fvg zones long = {zones.LongOpen.Count} " +
+                        $"fvg zones short = {zones.ShortOpen.Count} ");
 
-                    //// Load candles from the exchange
-                    //if (await ZoneCandleEngine.FetchFrom(symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
-                    //    loadedCandlesInMemory[interval.IntervalPeriod] = true; // in memory, alway's save
+                // Collect old zones and reset zones
+                DatabaseStatistics statistics = new();
+                SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
+                zones.Reset();
 
-                    await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount);
-                    CalculateFvg(symbol, interval, fetchFrom, symbolIntervalData);
-                }
+                // Create new zones 
+                OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
+                OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
+                CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
+
+                // Rebuild
+                ZoneTools.AddZonesToInternalLists(zones, oldZones, longZones, statistics);
+                ZoneTools.AddZonesToInternalLists(zones, oldZones, shortZones, statistics);
+                ZoneTools.DeleteRemainingZones(oldZones, statistics);
             }
             catch (Exception error)
             {

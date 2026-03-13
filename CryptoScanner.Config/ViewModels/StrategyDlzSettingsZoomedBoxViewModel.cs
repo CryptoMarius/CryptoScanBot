@@ -7,7 +7,7 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class StrategyDlzSettingsZoomedBoxViewModel : ObservableObject
 {
     // EXACT SAME TYPES as SettingsSignalStrategyZones
-    
+
     [ObservableProperty]
     private bool _zoomLowerTimeFrames = true; // bool
 

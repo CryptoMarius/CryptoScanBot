@@ -8,6 +8,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 using Dapper;
 
@@ -37,6 +38,11 @@ public partial class PositionOpenGridViewModel : ObservableObject
 
     public void Dispose()
     {
+        WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
+
+
         _timerRefreshFields.Stop();
         _timerRefreshFields.Tick -= TimerRefreshFieldsTick;
     }

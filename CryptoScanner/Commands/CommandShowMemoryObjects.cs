@@ -1,14 +1,10 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
 using Microsoft.Diagnostics.Runtime;
 
-using System.Text;
 using System.Diagnostics;
+using System.Text;
 
 namespace CryptoScanner.Commands;
 
@@ -22,6 +18,9 @@ public class CommandShowMemoryObjects : CommandBase
     public static void DumpSomething()
     {
         System.Diagnostics.Debug.WriteLine($"Show memory");
+        DateTime startTime = DateTime.UtcNow;
+        string folder = Path.Combine(GlobalData.AppDataFolder, "$debug", $"Memory Dump", $"{startTime:yyyy-MM-dd HHmmss}");
+        Directory.CreateDirectory(folder);
 
         int dataCount = 0;
         int candleCount = 0;
@@ -44,15 +43,7 @@ public class CommandShowMemoryObjects : CommandBase
 
                 foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
                 {
-                    int data = 0;
-                    foreach (var candle in symbolInterval.CandleList.Values)
-                    {
-                        if (candle.CandleData != null)
-                            data++;
-                    }
-                    log.AppendLine($"      Interval: {symbolInterval.Interval.Name} Candle synchronized: {symbolInterval.LastCandleSynchronized?.ToDateTime()} Candles: {symbolInterval.CandleList.Count} data: {data} LastCandle: {symbolInterval.LastCandle?.Date}");
-
-                    dataCount += data;
+                    log.AppendLine($"      Interval: {symbolInterval.Interval.Name} Candle synchronized: {symbolInterval.LastCandleSynchronized?.ToDateTime()} Candles: {symbolInterval.CandleList.Count} LastCandle: {symbolInterval.LastCandle.Date}");
                     candleCount += symbolInterval.CandleList.Count;
 
                     //if (symbolInterval.LastCandleSynchronized != null)
@@ -98,11 +89,11 @@ public class CommandShowMemoryObjects : CommandBase
         log.AppendLine($"");
         log.AppendLine($"");
 
-        
+
         log.AppendLine($"Global data:");
         log.AppendLine($"Total candles: {candleCount}");
         log.AppendLine($"Total candles with data: {dataCount}");
-       
+
         log.AppendLine($"ExternalUrls: {GlobalData.ExternalUrls.Count}");
         log.AppendLine($"IntervalList: {GlobalData.IntervalList.Count}");
         log.AppendLine($"IntervalListId: {GlobalData.IntervalListId.Count}");
@@ -121,50 +112,50 @@ public class CommandShowMemoryObjects : CommandBase
         log.AppendLine($"GC.GetTotalMemory: {GC.GetTotalMemory(true)}");
 
         //----------------------------------------------------------------------------------------------------------
-        string filename = Path.Combine(GlobalData.AppDataFolder, "Memory information1.txt");
+        string filename = Path.Combine(folder, "Memory information1.txt");
         File.WriteAllText(filename, log.ToString());
         log.Clear();
 
-        // does not work..
-        var app = Application.Current;
-        if (app?.Styles == null)
-            return;
+        //// does not work..
+        //var app = Application.Current;
+        //if (app?.Styles == null)
+        //    return;
 
-        foreach (var style in app.Styles)
-        {
-            if (style is IResourceDictionary rd) //IResourceProvider
-            {
-                foreach (var key in rd.Keys)
-                {
-                    if (rd.TryGetValue(key, out var val))
-                    {
-                        if (val is IBrush)
-                            log.AppendLine($"Resource key={key} type={val.GetType().Name}");
-                        //else if (val is IColor)
-                        //    log.AppendLine($"Resource key={key} type={val.GetType().Name}");
-                    }
-                }
+        //foreach (var style in app.Styles)
+        //{
+        //    if (style is IResourceDictionary rd) //IResourceProvider
+        //    {
+        //        foreach (var key in rd.Keys)
+        //        {
+        //            if (rd.TryGetValue(key, out var val))
+        //            {
+        //                if (val is IBrush)
+        //                    log.AppendLine($"Resource key={key} type={val.GetType().Name}");
+        //                //else if (val is IColor)
+        //                //    log.AppendLine($"Resource key={key} type={val.GetType().Name}");
+        //            }
+        //        }
 
-                // ThemeDictionaries (Light/Dark) if present
-                if (rd.ThemeDictionaries != null)
-                {
-                    foreach (var kv in rd.ThemeDictionaries)
-                    {
-                        log.AppendLine($"Theme variant={kv.Key}");
-                        if (kv.Value is IResourceDictionary trd)
-                        {
-                            foreach (var k in trd.Keys)
-                            {
-                                if (trd.TryGetValue(k, out var v) && v is IBrush)
-                                    log.AppendLine($"  {k} => {v.GetType().Name}");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        log.AppendLine($"");
-        log.AppendLine($"");
+        //        // ThemeDictionaries (Light/Dark) if present
+        //        if (rd.ThemeDictionaries != null)
+        //        {
+        //            foreach (var kv in rd.ThemeDictionaries)
+        //            {
+        //                log.AppendLine($"Theme variant={kv.Key}");
+        //                if (kv.Value is IResourceDictionary trd)
+        //                {
+        //                    foreach (var k in trd.Keys)
+        //                    {
+        //                        if (trd.TryGetValue(k, out var v) && v is IBrush)
+        //                            log.AppendLine($"  {k} => {v.GetType().Name}");
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+        //log.AppendLine($"");
+        //log.AppendLine($"");
 
 
 
@@ -271,11 +262,11 @@ public class CommandShowMemoryObjects : CommandBase
 
 
         //----------------------------------------------------------------------------------------------------------
-        filename = Path.Combine(GlobalData.AppDataFolder, "Memory information2.txt");
+        filename = Path.Combine(folder, "Memory information2.txt");
         File.WriteAllText(filename, log.ToString());
 
-        
-        filename = Path.Combine(GlobalData.AppDataFolder, "Memory DumpLargeObjects.txt");
+
+        filename = Path.Combine(folder, "Memory DumpLargeObjects.txt");
         DumpLargeObjects(filename);
 
         //----------------------------------------------------------------------------------------------------------

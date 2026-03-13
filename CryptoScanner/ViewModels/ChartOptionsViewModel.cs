@@ -34,6 +34,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showSignals = false;
 
     [ObservableProperty]
+    private bool _showPositions = false;
+
+    [ObservableProperty]
     private bool _showPoints = false;
 
     [ObservableProperty]
@@ -51,6 +54,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowFvgZones = session.ShowFvgZones;
         ShowDtb = session.ShowDtb;
         ShowSignals = session.ShowSignals;
+        ShowPositions = session.ShowPositions;
         ShowPoints = session.ShowPoints;
 
         // misc
@@ -69,6 +73,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowFvgZones = ShowFvgZones;
         session.ShowDtb = ShowDtb;
         session.ShowSignals = ShowSignals;
+        session.ShowPositions = ShowPositions;
         session.ShowPoints = ShowPoints;
 
         // misc

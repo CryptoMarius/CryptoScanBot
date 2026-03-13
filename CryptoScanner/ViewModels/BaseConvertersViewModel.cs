@@ -221,11 +221,11 @@ public partial class BaseConvertersViewModel : ObservableObject
         return $"{number:N2}";
     }
 
-    internal IBrush GetVolumeColor(CryptoSymbol symbol, decimal volume)
+    internal IBrush GetVolumeColor(CryptoSymbol symbol, double volume)
     {
         if (volume <= 0)
             return BrushNeutral;
-        else if (volume < symbol.QuoteData.MinimalVolume)
+        else if (volume < (double)symbol.QuoteData.MinimalVolume)
             return BrushRed;
         else
             return BrushGreen;

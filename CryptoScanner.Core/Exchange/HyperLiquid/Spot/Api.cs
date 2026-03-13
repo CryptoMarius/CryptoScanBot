@@ -1,10 +1,8 @@
 ﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
 using HyperLiquid.Net;

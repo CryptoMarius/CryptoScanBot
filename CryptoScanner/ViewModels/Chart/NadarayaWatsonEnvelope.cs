@@ -86,10 +86,10 @@ public class NadarayaWatsonEnvelope
 
         for (int i = 0; i < candles.Count; i++)
         {
-            if (candles.TryGetValue(offsett - (i + 0) * interval.Duration, out CryptoCandle? candleLast) &&
-                candles.TryGetValue(offsett - (i + 1) * interval.Duration, out CryptoCandle? candlePrev))
+            if (candles.TryGetValue(offsett - (i + 0) * interval.Duration, out CryptoCandle candleLast) &&
+                candles.TryGetValue(offsett - (i + 1) * interval.Duration, out CryptoCandle candlePrev))
             {
-                CandleTime openTime = CandleTime.AlignFromDateTime(candleLast!.Date, interval.Duration);
+                CandleTime openTime = CandleTime.AlignFromDateTime(candleLast.Date, interval.Duration);
                 if (openTime >= minDate && openTime <= maxDate)
                 {
                     var res = result[i];
@@ -111,7 +111,7 @@ public class NadarayaWatsonEnvelope
                     //    seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
                     //}
                     // Candle sticking pearsing trough the band
-                    if (candlePrev!.Close > lowerband && candleLast.Close <= lowerband)
+                    if (candlePrev.Close > lowerband && candleLast.Close <= lowerband)
                     {
                         nwevalue = candleLast.Low * 0.995m;
                         seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
@@ -125,7 +125,7 @@ public class NadarayaWatsonEnvelope
                     //    seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
                     //}
                     // Candle sticking pearsing trough the band
-                    if (candlePrev!.Close < upperband && candleLast.Close >= upperband)
+                    if (candlePrev.Close < upperband && candleLast.Close >= upperband)
                     {
                         nwevalue = candleLast.High * 1.005m;
                         seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));

@@ -10,7 +10,7 @@ namespace CryptoScanner.Core.Trend;
 
 public class TrendInterval
 {
-    private static bool ResolveStartAndEndDate(CryptoInterval interval, 
+    private static bool ResolveStartAndEndDate(CryptoInterval interval,
         CryptoCandleList candleList, ref CandleTime minDate, ref CandleTime maxDate)
     {
         // We cache the Primary indicator, this way we do not have to add all the candles again and again.
@@ -22,7 +22,10 @@ public class TrendInterval
         // start time
         if (minDate == 0)
         {
-            var candle = candleList.Values.First();
+            // Use the thread-safe helper — candleList.Values.First() enumerates without the read lock
+            // and throws InvalidOperationException when another thread calls Add() concurrently.
+            if (!candleList.TryGetFirstCandle(out var candle))
+                return false;
             if (maxDate > 0)
             {
                 // Need to set some limit or it will add 100.000 of candles (takes forever to initialize)
@@ -46,7 +49,8 @@ public class TrendInterval
         // end time
         if (maxDate == 0)
         {
-            var candle = candleList.Values.Last();
+            if (!candleList.TryGetLastCandle(out var candle))
+                return false;
             maxDate = candle.OpenTime; // in the right interval
         }
         else
@@ -122,13 +126,13 @@ public class TrendInterval
                 case CryptoTrendIndicator.Bearish:
                     if (zigZag.Value > value)
                         count++;
-                    else 
+                    else
                         count = 0;
                     break;
                 case CryptoTrendIndicator.Bullish:
                     if (zigZag.Value <= value)
                         count++;
-                    else 
+                    else
                         count = 0;
                     break;
             }
@@ -179,7 +183,7 @@ public class TrendInterval
             if (intervalTrend.Time != null)
             {
                 log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
-                ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
+                ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
             }
 #endif
             return;
@@ -192,7 +196,7 @@ public class TrendInterval
         if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
         {
             log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
-            ScannerLog.Logger.Trace($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
+            ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
             return;
         }
         //#if DEBUG
@@ -227,7 +231,7 @@ public class TrendInterval
             //#endif
             ;
             log?.AppendLine(text);
-            ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
+            ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
         }
         return;
     }

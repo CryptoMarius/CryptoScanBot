@@ -126,6 +126,8 @@ public abstract class ExchangeBase
                 builder.Append($" {tradeParams.ResponseStatusCode}");
             if (!success)
                 builder.Append($" {tradeParams.Error}");
+            if (tradeParams.StopPrice.HasValue && tradeParams.Price == tradeParams.StopPrice.Value)
+                builder.Append($" Lost!");
 
             if (tradeParams.DebugJson != null)
             {

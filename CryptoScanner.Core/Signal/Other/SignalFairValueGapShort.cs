@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal;
 
 public class SignalFairValueGapShort : SignalCreateBase
 {
-    public SignalFairValueGapShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -35,7 +31,7 @@ public class SignalFairValueGapShort : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
                         }
                         else if (CandleLast.Candle.High >= zone.Bottom)
                         {
@@ -51,7 +47,7 @@ public class SignalFairValueGapShort : SignalCreateBase
                             // Close if the candle touched the zone..
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
                         }
                     }
 
@@ -59,14 +55,14 @@ public class SignalFairValueGapShort : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.FvgZones.ShortOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
                     }
                     else index++;
 
 
                     // The list is sorted on zone.bottom and break if there are no more reachable zones (save some looping time)
                     if (CandleLast.Candle.High < zone.Bottom)
-                        break;						
+                        break;
                 }
             }
         }

@@ -122,7 +122,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "High");
         WriteCell(sheet, columns++, row, "Low");
         WriteCell(sheet, columns++, row, "Close");
-        WriteCell(sheet, columns++, row, "QuoteVolume");
+        WriteCell(sheet, columns++, row, "Volume");
 
         //WriteCell(sheet, columns++, row, "Rsi");
         //WriteCell(sheet, columns++, row, "StochOscillator");

@@ -1,10 +1,10 @@
-﻿using System.Text;
+﻿using CryptoScanner.Core.Services.Linux;
 
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 
 using Tmds.DBus;
-using CryptoScanner.Core.Services.Linux;
-using System.Runtime.Versioning;
 
 namespace CryptoScanner.Core.Services;
 

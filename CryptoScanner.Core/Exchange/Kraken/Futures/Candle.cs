@@ -1,10 +1,6 @@
-﻿using CryptoExchange.Net.SharedApis;
-
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-using Kraken.Net;
 using Kraken.Net.Clients;
 using Kraken.Net.Enums;
 

@@ -1,10 +1,7 @@
-﻿using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
-
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
+using CryptoScanner.Core.Trader;
 
 using Dapper;
 
@@ -20,7 +17,7 @@ public class CommandPositionDelete : CommandBase
 
     public async Task ExecuteAsync(object? parameter)
     {
-        System.Diagnostics.Debug.WriteLine($"CommandShowGraph");
+        System.Diagnostics.Debug.WriteLine($"CommandPositionDelete");
         if (GetObjectInformation(parameter, out ParameterObjects dto) && dto.symbol != null && dto.position != null)
         {
             // TODO: Confirm dialog
@@ -39,7 +36,8 @@ public class CommandPositionDelete : CommandBase
                 transaction.Commit();
 
                 // Remove the position from open or closed positions
-                Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsDeletedMessage(dto.position)); });
+                //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsDeletedMessage(dto.position)); });
+                GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(dto.position));
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, dto.position, false);
                 GlobalData.AddTextToLogTab($"{dto.position.Symbol.Name} manually deleted position {dto.position.Id} from the database");
             }

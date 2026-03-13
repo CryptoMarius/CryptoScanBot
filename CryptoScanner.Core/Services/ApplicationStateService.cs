@@ -290,7 +290,7 @@ public class ApplicationStateService
         {
             return splitterName switch
             {
-                "MainWindow" => _states.MainWindowSplitterPosition > 0 ? _states.MainWindowSplitterPosition: defaultValue,
+                "MainWindow" => _states.MainWindowSplitterPosition > 0 ? _states.MainWindowSplitterPosition : defaultValue,
                 _ => defaultValue
             };
         }

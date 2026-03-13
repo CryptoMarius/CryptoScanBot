@@ -1,16 +1,12 @@
-using CryptoScanner.Core.Core;
+ï»¿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Momentum;
 
 namespace CryptoScanner.Core.Signal.Other;
 
-public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
+public class SignalLuxNadarayaWatsonEnvelope : SignalCreateBase
 {
-    public SignalLuxNadarayaWatsonEnvelope(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
     public override bool IndicatorsOkay(MyData data)
     {
@@ -30,27 +26,28 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
 
     private static bool EnoughMomentum(List<decimal> nwe, int max, out decimal perc)
     {
-        // We noticed weak turn's
-        int count = 15;
-        decimal diff = 0;
-        decimal value = nwe[max - 1];
-        for (int i = max - 2; i > 0; i--)
-        {
-            var o2 = nwe[i];
-            decimal d = Math.Abs(o2 - value);
-            if (d > diff)
-                diff = d;
+        //// We noticed weak turn's
+        //int count = 15;
+        //decimal diff = 0;
+        //decimal value = nwe[max - 1];
+        //for (int i = max - 2; i > 0; i--)
+        //{
+        //    var o2 = nwe[i];
+        //    decimal d = Math.Abs(o2 - value);
+        //    if (d > diff)
+        //        diff = d;
 
-            count--;
-            if (count == 0)
-                break;
-        }
+        //    count--;
+        //    if (count == 0)
+        //        break;
+        //}
 
-        // less than x% change is not enough
-        perc = 100 * diff / value;
-        if (perc < 0.25m)
-            return true; // false
+        //// less than x% change is not enough
+        //perc = 100 * diff / value;
+        //if (perc < 0.25m)
+        //    return false
 
+        perc = 0;
         return true;
     }
 
@@ -229,13 +226,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             // Candle outside the band
             if (CandleLast!.Candle.Open <= lowerband && CandleLast.Candle.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
-                //ExtraText = $"{angle_degrees2:N2}°, {perc1:N2}%";
+                //ExtraText = $"{angle_degrees2:N2}ï¿½, {perc1:N2}%";
                 return true;
             }
             // Candle sticking pearsing trough the band
             if (candlePrev! > lowerband && CandleLast.Candle.Close <= lowerband && EnoughMomentum(nwe, max, out decimal _))
             {
-               //ExtraText = $"{angle_degrees2:N2}°, {perc2:N2}%";
+                //ExtraText = $"{angle_degrees2:N2}ï¿½, {perc2:N2}%";
                 return true;
             }
         }
@@ -247,13 +244,13 @@ public class SignalLuxNadarayaWatsonEnvelope: SignalCreateBase
             // Candle outside the band
             if (CandleLast!.Candle.Open >= upperband && CandleLast.Candle.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
-                //ExtraText = $"{angle_degrees2:N2}°, {perc3:N2}%";
+                //ExtraText = $"{angle_degrees2:N2}ï¿½, {perc3:N2}%";
                 return true;
             }
             // Candle sticking pearsing trough the band
             if (candlePrev! < upperband && CandleLast.Candle.Close >= upperband && EnoughMomentum(nwe, max, out decimal _))
             {
-                //ExtraText = $"{angle_degrees2:N2}°, {perc4:N2}%";
+                //ExtraText = $"{angle_degrees2:N2}ï¿½, {perc4:N2}%";
                 return true;
             }
         }

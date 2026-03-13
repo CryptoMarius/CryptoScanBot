@@ -19,14 +19,14 @@ public class SignalCreate
 
     // The last candle (in the requested interval)
     public required CryptoCandle Candle { get; set; }
-    public required CandleIndicatorData CandleData { get; set; }
+    public required CryptoData CandleData { get; set; }
 
     // Prepared indicator data
     public required CryptoIndicatorData IndicatorData { get; set; }
     public required CryptoIndicatorDataList IndicatorDataList { get; set; }
 
     // output
-    public List<CryptoSignal> SignalList { get; set; } = [];
+    //public List<CryptoSignal> SignalList { get; set; } = [];
 
 
     private void CalculateAdditionalSignalProperties(CryptoSignal signal, int candleCount)
@@ -97,8 +97,8 @@ public class SignalCreate
                 }
                 //else
                 //{
-                    // Toch maar even melden, want dit is niet normaal..
-                    //GlobalData.AddTextToLogTab($"Analyse {signal.Symbol.Name} {candleLast.DateLocal} {candleLast.Close:N8} iteration={iterations} heeft geen candledata of geen BB?");
+                // Toch maar even melden, want dit is niet normaal..
+                //GlobalData.AddTextToLogTab($"Analyse {signal.Symbol.Name} {candleLast.DateLocal} {candleLast.Close:N8} iteration={iterations} heeft geen candledata of geen BB?");
                 //}
                 prevCandle = candleLast;
             }
@@ -181,7 +181,7 @@ public class SignalCreate
         CandleTime openTime = Candle.OpenTime; // Note: backtest, alway's take the signal candle
         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (!symbolInterval.CandleList.TryGetValue(openTime - interval, out CryptoCandle candlePrev))
-            candlePrev = symbolInterval.CandleList.Values.First(); // better than zero of null (approx)
+            symbolInterval.CandleList.TryGetFirstCandle(out candlePrev); // better than zero or null (approx)
 
         double closeLast = (double)Candle.Close;
         double closePrev = (double)candlePrev!.Close;
@@ -249,7 +249,7 @@ public class SignalCreate
 
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
-        MyData myData = new() {Candle = this.Candle, CandleData = this.CandleData };
+        MyData myData = new() { Candle = this.Candle, CandleData = this.CandleData };
         if (!algorithm.AdditionalChecks(myData, out response))
         {
             eventText.Add(response);
@@ -412,7 +412,7 @@ public class SignalCreate
                     {
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
                         {
-                            SignalList.Add(signal);
+                            //SignalList.Add(signal);
                             if (GlobalData.Settings.Trading.Active)
                                 symbolInterval.SignalList.Add(signal);
                         }
@@ -481,7 +481,7 @@ public class SignalCreate
             {
                 try
                 {
-                    if (IndicatorData.Data.TryGetValue(Candle.OpenTime, out CandleIndicatorData? candleData))
+                    if (IndicatorData.Data.TryGetValue(Candle.OpenTime, out CryptoData? candleData))
                     {
                         //public CandleIndicatorData? candleLastData { get; set; }
 
@@ -517,11 +517,13 @@ public class SignalCreate
 
     public async Task<bool> ExecuteAlgorithmAsync(AlgorithmDefinition strategyDefinition)
     {
-        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy, Symbol, Interval, Candle!);
+        SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy);
         if (algorithm != null)
         {
             MyData myData = new() { Candle = IndicatorData.LastCandle, CandleData = IndicatorData.LastCandleData };
-            // Should have been in the constructor, but that is a huge refactor, so we set it here for now
+            algorithm.Symbol = Symbol;
+            algorithm.Interval = Interval;
+            algorithm.SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
             algorithm.CandleLast = myData;
             algorithm.IndicatorData = IndicatorData;
             algorithm.IndicatorDataList = IndicatorDataList;

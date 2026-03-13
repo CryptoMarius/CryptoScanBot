@@ -12,7 +12,7 @@ public partial class ExchangeViewModel : ObservableObject
 
     [ObservableProperty]
     private int _activeExchange;
-    
+
     [ObservableProperty]
     private int _activateExchange;
 
@@ -46,7 +46,7 @@ public partial class ExchangeViewModel : ObservableObject
             ActiveExchange = exchange.Id;
         else
             ActiveExchange = -1;
-        
+
         if (GlobalData.ExchangeListName.TryGetValue(general.ActivateExchangeName, out exchange))
             ActivateExchange = exchange.Id;
         else

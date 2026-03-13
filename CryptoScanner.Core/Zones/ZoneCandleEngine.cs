@@ -2,7 +2,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal;
 
 using System.IO.Compression;
 using System.Text;
@@ -11,29 +10,93 @@ namespace CryptoScanner.Core.Zones;
 
 public class ZoneCandleEngine
 {
-    private static async Task ReadCandlesFromStreamAsync(BinaryReader binaryReader, CryptoSymbol symbol, CryptoInterval interval)
+    private const int markerValue = 1234567890;
+
+    private static async Task ReadCandlesFromStreamAsync(BinaryReader reader, CryptoSymbol symbol, CryptoInterval interval)
     {
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
+            int version = reader.ReadInt32();
+
+            // "Synchronisation" marker (new in version 4)
+            if (version >= 4)
+            {
+                int marker = reader.ReadInt32();
+                if (marker != markerValue)
+                    throw new Exception($"file {symbol.Name} is corrupted");
+            }
+
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
-            int version = binaryReader.ReadInt32();
-            int candleCount = binaryReader.ReadInt32();
-            while (candleCount-- > 0)
+            // 2: Candle count
+            int candleCount = reader.ReadInt32();
+
+            symbolInterval.CandleList.Lock();
+            try
             {
-                CryptoCandle candle = new()
+                // 3: The OHLCV values
+                // TODO: candlelist can grow while reading
+                while (candleCount > 0)
                 {
-                    TickDecimals = symbol.PriceDecimals,
-                    OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
-                    Open = binaryReader.ReadDecimal(),
-                    High = binaryReader.ReadDecimal(),
-                    Low = binaryReader.ReadDecimal(),
-                    Close = binaryReader.ReadDecimal(),
-                    Volume = binaryReader.ReadDecimal(),
-                };
-                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-            }
+                    CryptoCandle candle = new()
+                    {
+                        TickDecimals = symbol.PriceDecimals
+                    };
+                    if (version <= 2)
+                    {
+                        candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
+                        candle.Open = reader.ReadDecimal();
+                        candle.High = reader.ReadDecimal();
+                        candle.Low = reader.ReadDecimal();
+                        candle.Close = reader.ReadDecimal();
+                        candle.Volume = reader.ReadDecimal();
+                    }
+                    else
+                    {
+                        // Delegates to the newer candle storage systen
+                        candle.LoadVersion3(reader);
+                    }
+
+                    // We had some data corruption and 1 candle in the year 2150...
+                    // It is not a nice solution, but skip those candles (really weird)
+                    //if (candle.OpenTime >= startFetchUnix)
+                    {
+                        //if (candle.OpenTime < futureCandles)
+                        {
+                            symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                            if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                                symbolInterval.LastCandle = candle;
+                        }
+                        //else
+                        //    GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.OpenTime}");
+                    }
+
+                    candleCount--;
+                }
+
+            //    int candleCount = reader.ReadInt32();
+            //while (candleCount-- > 0)
+            //{
+            //    CryptoCandle candle = new()
+            //    {
+            //        TickDecimals = symbol.PriceDecimals
+            //    };
+            //    if (version <= 2)
+            //    {
+            //        candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
+            //        candle.Open = reader.ReadDecimal();
+            //        candle.High = reader.ReadDecimal();
+            //        candle.Low = reader.ReadDecimal();
+            //        candle.Close = reader.ReadDecimal();
+            //        candle.Volume = reader.ReadDecimal();
+            //    }
+            //    else
+            //    {
+            //        candle.LoadVersion3(reader);
+            //    }
+            //    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+            //}
         }
         finally
         {
@@ -75,28 +138,33 @@ public class ZoneCandleEngine
     }
 
 
-    private static async Task WriteCandlesToStreamAsync(BinaryWriter binaryWriter, CryptoSymbol symbol, CryptoInterval interval)
+    private static async Task WriteCandlesToStreamAsync(BinaryWriter writer, CryptoSymbol symbol, CryptoInterval interval)
     {
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
-            int version = 1;
-            binaryWriter.Write(version);
-            int count = symbolInterval.CandleList.Count;
-            binaryWriter.Write(count);
+            int version = 4;
+            writer.Write(version);
 
-            foreach (var pair in symbolInterval.CandleList)
+            int marker = markerValue;
+            writer.Write(marker);
+
+            symbolInterval.CandleList.Lock();
+            try
             {
-                // TODO: Change storage to support the smaller types
-                CryptoCandle candle = pair.Value;
-                binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
-                binaryWriter.Write(candle.Open);
-                binaryWriter.Write(candle.High);
-                binaryWriter.Write(candle.Low);
-                binaryWriter.Write(candle.Close);
-                binaryWriter.Write(candle.Volume);
+                int count = symbolInterval.CandleList.Count;
+                writer.Write(count);
+
+                foreach (var candle in symbolInterval.CandleList.Values)
+                {
+                    candle.SaveVersion3(writer);
+                }
+            }
+            finally
+            {
+                symbolInterval.CandleList.Unlock();
             }
         }
         finally
@@ -172,7 +240,7 @@ public class ZoneCandleEngine
                 if (symbolInterval.CandleList.Count > 0)
                 {
                     // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
-                    CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                    CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
                     // investigate the first, does it need removal?
                     CandleTime openTime = symbolInterval.CandleList.Keys.First();
@@ -300,7 +368,8 @@ public class ZoneCandleEngine
                 else
                 {
                     // Do we need to calculate them from a lower interval?
-                    var lowerInterval = interval.ConstructFrom ?? throw new Exception("Unable to construct candles from lower interval");
+                    var lowerInterval = interval.ConstructFrom
+                        ?? throw new Exception("Unable to construct candles from lower interval");
                     fetchFrom -= fetchFrom % lowerInterval.Duration;
                     fetchCount *= (int)interval.Duration / (int)lowerInterval.Duration;
                     await FetchFrom(loadedCandlesInMemory, symbol, lowerInterval!, fetchFrom, fetchCount);

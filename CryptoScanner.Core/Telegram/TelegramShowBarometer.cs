@@ -6,6 +6,7 @@ using CryptoScanner.Core.Model;
 using System.Text;
 
 namespace CryptoScanner.Core.Telegram;
+
 public class TelegramShowBarometer
 {
     public static void ShowBarometer(string arguments, StringBuilder stringbuilder)

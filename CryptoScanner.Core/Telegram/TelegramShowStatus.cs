@@ -3,6 +3,7 @@
 using System.Text;
 
 namespace CryptoScanner.Core.Telegram;
+
 public class TelegramShowStatus
 {
     public static void ShowStatus(string arguments, StringBuilder stringbuilder)

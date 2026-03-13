@@ -7,9 +7,6 @@ namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStobbMultiShort : SignalSbmBaseShort
 {
-    public SignalStobbMultiShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IndicatorsOkay(MyData data)
@@ -96,21 +93,8 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
             return false;
         }
 
-        //// Er een data onder de bb opent of sluit
-        //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
-        //{
-        //    ExtraText = "niet beneden de bb.lower";
-        //    return false;
-        //}
 
-        //// Sprake van een oversold situatie (beide moeten onder de 20 zitten)
-        //if (!CandleLast.StochOversold())
-        //{
-        //    ExtraText = "stoch niet oversold";
-        //    return false;
-        //}
-
-        CandleTime unixDate = CandleLast.Candle.OpenTime;
+        CandleTime openTime = CandleLast.Candle.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -118,22 +102,16 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
-            CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
-            CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle _))
+            var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
+            if (!result.success)
                 return false;
 
-            // Calculate indicators if needed
-            IndicatorDataList.PrepareIndicators(Symbol, higherInterval.Interval, candleOpenTime, out _);
-            if (!IndicatorDataList.TryGetCandle(higherInterval.Interval, candleOpenTime, out MyData? candle))
-                return false;
-
-
-            if (IndicatorsOkay(candle!) && candle!.StochOverbought() && candle!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            if (IndicatorsOkay(result.candle!) && result.candle!.StochOverbought()
+                && result.candle!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
-                ExtraText += higherInterval.Interval.Name;
+                ExtraText += result.higherInterval.Interval.Name;
 
                 okay--;
                 if (okay == 0)
@@ -145,8 +123,6 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
                 if (count == 6)
                     return false;
             }
-
-            //if (okay < count) return false;
 
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;

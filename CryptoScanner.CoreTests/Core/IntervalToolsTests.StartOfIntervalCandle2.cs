@@ -7,7 +7,7 @@ namespace CryptoScanner.CoreTests.Core;
 [TestClass()]
 public class IntervalToolsTestsStartOfIntervalCandle2 : TestBase
 {
-    
+
     [TestMethod]
     public void StartOfIntervalCandle2Test10MinutesBack()
     {

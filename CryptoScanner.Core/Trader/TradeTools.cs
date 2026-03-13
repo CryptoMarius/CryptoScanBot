@@ -13,7 +13,24 @@ namespace CryptoScanner.Core.Trader;
 
 public class TradeTools
 {
-  
+    public static void LoadAssets()
+    {
+        //GlobalData.AddTextToLogTab("Reading asset information");
+
+        if (GlobalData.ActiveExchange != null)
+        {
+            // ALLE assets laden
+            GlobalData.ActiveExchange.Data.AssetList.Clear();
+
+            using var database = new CryptoDatabase();
+            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
+            {
+                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
+            }
+        }
+    }
+
+
     public static async Task CheckOpenPositions()
     {
         // De openstaande posities controleren
@@ -27,22 +44,6 @@ public class TradeTools
         }
     }
 
-
-    //private static StringBuilder DumpPosition(CryptoPosition position)
-    //{
-    //    StringBuilder stringBuilder = new(); // debug
-    //    stringBuilder.AppendLine($"positie {position.Symbol.Name}");
-    //    foreach (CryptoPositionPart part in position.PartList.Values.ToList())
-    //    {
-    //        stringBuilder.AppendLine($"dca {part.PartNumber} {part.Invested} {part.Commission} {part.CommissionQuote} {part.CommissionBase}");
-    //        foreach (CryptoPositionStep step in part.StepList.Values.ToList())
-    //        {
-    //            stringBuilder.AppendLine($"step {step.Side} {step.Status} {step.OrderId} {step.QuoteQuantityFilled} {step.Commission} {step.CommissionQuote} {step.CommissionBase}");
-    //        }
-    //    }
-    //    stringBuilder.AppendLine($"berekening={position.BreakEvenPrice}=({position.Invested}-{position.Returned}+{position.Commission})/({position.Quantity} + {position.CommissionBase})");
-    //    return stringBuilder;
-    //}
 
     /// <summary>
     /// De break-even prijs berekenen vanuit de parts en steps
@@ -58,12 +59,12 @@ public class TradeTools
         //----
         // De positie doorrekene,  er wordt alleen gerekend, geen beslissingen over status
         //https://dappgrid.com/binance-fees-explained-fee-calculation/
-        // You should first divide your order size(total) by 100 and then multiply it by your fee rate which 
+        // You should first divide your order size(total) by 100 and then multiply it by your fee rate which
         // is 0.10 % for VIP 0 / regular users. So, if you buy Bitcoin with 200 USDT, you will basically get
         // $199.8 worth of Bitcoin.To calculate these fees, you can also use our Binance fee calculator:
         // (als je verder gaat dan wordt het vanwege de kickback's tamelijk complex)
         // Op Bybit futures heb je de fundingrates, dat wordt in tijdblokken berekend met varierende fr..
-        //StringBuilder stringBuilderOld = DumpPosition(position);
+        StringBuilder stringBuilderOld = position.DumpPosition();
 
         position.Profit = 0;
         position.Quantity = 0;
@@ -276,7 +277,7 @@ public class TradeTools
 
             position.Profit = position.Returned - invested - position.Commission;
             position.Percentage = 0m;
-            if (position.Invested != 0m)
+            if (invested != 0m)
                 position.Percentage = 100m + (100m * position.Profit / invested);
         }
         else
@@ -297,16 +298,16 @@ public class TradeTools
 
             position.Profit = invested - position.Returned - position.Commission;
             position.Percentage = 0m;
-            if (position.Returned != 0m)
+            if (invested != 0m)
                 position.Percentage = 100m + (100m * position.Profit / invested);
         }
 
         if (BreakEvenPriceOld != position.BreakEvenPrice)
         {
             ScannerLog.Logger.Trace($"{position.Symbol.Name} aanpassing BE van {BreakEvenPriceOld} naar {position.BreakEvenPrice}");
-            //ScannerLog.Logger.Trace(stringBuilderOld);
-            //StringBuilder stringBuilderNew = DumpPosition(position);
-            //ScannerLog.Logger.Trace(stringBuilderNew);
+            ScannerLog.Logger.Trace(stringBuilderOld);
+            StringBuilder stringBuilderNew = position.DumpPosition();
+            ScannerLog.Logger.Debug(stringBuilderNew);
         }
     }
 
@@ -394,7 +395,7 @@ public class TradeTools
                 if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
                     orderStatusChanged = true;
-                    ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId}");
+                    ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side}");
 
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Problem finding parent part");
                     string msgInfo = $"{position.Symbol.Name} " +
@@ -418,12 +419,12 @@ public class TradeTools
                         if (step.CancelInProgress)
                         {
                             // Wij hebben de order geannuleerd via de CancelStep/CancelOrder/Status
-                            // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard. 
+                            // Probleem is dat de step.Status pas na het annuleren wordt gezet en bewaard.
                             // Geconstateerd: een cancel via de user stream kan (te) snel gaan
 
                             // NB: Er is nu wat overlappende code door die CancelInProgress
                             step.CloseTime = order.UpdateTime;
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> Canceled by trader");
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> Canceled by trader");
                         }
                         else
                         {
@@ -464,12 +465,12 @@ public class TradeTools
                                 GlobalData.AddTextToLogTab(s);
                                 GlobalData.AddTextToTelegram(s, position);
                             }
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> Canceled by user");
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side} -> Canceled by user");
                         }
                     }
                     else if (order.Status.IsFilled())
                     {
-                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled");
+                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side} -> IsFilled");
 
                         // Statistics entry or take profit order.
                         step.CloseTime = order.UpdateTime;
@@ -545,7 +546,7 @@ public class TradeTools
                                 position.Status = CryptoPositionStatus.Trading;
                             }
 
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled (entry)");
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order{order.OrderId} -> IsFilled (entry)");
                         }
 
 
@@ -553,7 +554,7 @@ public class TradeTools
                         if (step.Side == takeProfitOrderSide)
                         {
                             part.CloseTime = order.UpdateTime;
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> IsFilled (takeprofit)");
+                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> IsFilled (takeprofit)");
                         }
 
                         // Geen melding geven bij afgesloten orders
@@ -580,7 +581,7 @@ public class TradeTools
                     if (step.Status < CryptoOrderStatus.Canceled)
                     {
                         step.Status = order.Status;
-                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check {order.OrderId} -> set status to {order.Status}");
+                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> set status to {order.Status}");
                     }
                 }
             }
@@ -700,7 +701,7 @@ public class TradeTools
             }
 
             // Can only be done when closing the position, because the Change does not know the entry/tp values
-            if (oldPositionStatus != position.Status && position.Status == CryptoPositionStatus.Ready && position.Side == CryptoTradeSide.Short) //position.Exchange.TradingType == CryptoTradingType.Futures && 
+            if (oldPositionStatus != position.Status && position.Status == CryptoPositionStatus.Ready && position.Side == CryptoTradeSide.Short) //position.Exchange.TradingType == CryptoTradingType.Futures &&
             {
                 // This will increase the amount of quote on futures/perpetual (entry=sell, tp=buy, profit=technically a loss when success)
                 CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
@@ -798,7 +799,7 @@ public class TradeTools
         // Probleem? Wat als het plaatsen van eem order fout gaat? (hoe vangen we de fout op en hoe herstellen we dat?
         // Binance is een bitch af en toe!). Met name Binance wilde na het annuleren wel eens de assets niet
         // vrijgeven waardoor de assets/pf niet snel genoeg bijgewerkt werd en de volgende opdracht dan de fout
-        // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel 
+        // in zou kunnen gaan. Geld voor alles wat we in deze tool doen, qua buy en sell gaat de herkansing wel
         // goed, ook al zal je dan soms een repeterende fout voorbij zien komen (iedere minuut)
 
 
@@ -820,41 +821,50 @@ public class TradeTools
 
 
         // This is the amount we want in the TP
+        decimal remainingDust;
         decimal takeProfitQuantity = position.Quantity;
         decimal takeProfitQuantityOriginal = position.Quantity;
-        takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
-        decimal remainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // expected dust
-
-
-        // DEBUG --- ADD DUST to TP (short are excluded for now <how does that work?>)
-        if (GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long)
+        if (position.Symbol.Exchange.TradingType == CryptoTradingType.Futures)
         {
-            StringBuilder stringBuilder = new();
-            stringBuilder.AppendLine($"");
-            stringBuilder.AppendLine($"Symbol = {symbol.Name}");
-            stringBuilder.AppendLine($"position.Quantity = {position.Quantity}");
-            stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
-            stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
-            stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
-            stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
-
-            decimal dust = info.BaseFree - position.Quantity;
-            stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
-            if (dust > 0 && dust * symbol.LastPrice < 1.0m)
-            {
-                stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
-
-                decimal takeProfitQuantityWithExtraDust = info.BaseFree;
-                takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
-                stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
-
-                takeProfitQuantity = takeProfitQuantityWithExtraDust;
-                takeProfitQuantityOriginal = takeProfitQuantityWithExtraDust;
-            }
-            GlobalData.AddTextToLogTab(stringBuilder.ToString());
+            remainingDust = 0; // Futures deals with contracts and can never has dust
+            takeProfitQuantity = position.Quantity;
         }
-        //END DEBUG
+        else
+        {
+            takeProfitQuantity = takeProfitQuantity.Clamp(position.Symbol.QuantityMinimum, position.Symbol.QuantityMaximum, position.Symbol.QuantityTickSize);
+            remainingDust = takeProfitQuantityOriginal - takeProfitQuantity; // expected dust
 
+            // DEBUG --- ADD DUST to TP (short are excluded for now <how does that work?>)
+            //TODO: Short? / Margin?
+            if (GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long &&
+                position.Symbol.Exchange.TradingType != CryptoTradingType.Futures)
+            {
+                StringBuilder stringBuilder = new();
+                stringBuilder.AppendLine($"");
+                stringBuilder.AppendLine($"Symbol = {symbol.Name}");
+                stringBuilder.AppendLine($"position.Quantity = {position.Quantity}");
+                stringBuilder.AppendLine($"info.BaseFree = {info.BaseFree}");
+                stringBuilder.AppendLine($"info.BaseTotal = {info.BaseTotal}");
+                stringBuilder.AppendLine($"info.QuoteFree = {info.QuoteFree}");
+                stringBuilder.AppendLine($"info.QuoteTotal = {info.QuoteTotal}");
+
+                decimal dust = info.BaseFree - position.Quantity;
+                stringBuilder.AppendLine($"can we add quantity={dust} value={dust * position.Symbol.LastPrice}?");
+                if (dust > 0 && dust * symbol.LastPrice < 1.0m)
+                {
+                    stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
+
+                    decimal takeProfitQuantityWithExtraDust = info.BaseFree;
+                    takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
+                    stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
+
+                    takeProfitQuantity = takeProfitQuantityWithExtraDust;
+                    takeProfitQuantityOriginal = takeProfitQuantityWithExtraDust;
+                }
+                GlobalData.AddTextToLogTab(stringBuilder.ToString());
+            }
+            //END DEBUG
+        }
 
         // This could be more than expected because of the (unexpected) dust
         // But hey, what else are you going to do with the stupid useless dust?
@@ -896,7 +906,7 @@ public class TradeTools
 
 
     /// <summary>
-    /// Bepaal het entry bedrag 
+    /// Bepaal het entry bedrag
     /// </summary>
     public static decimal GetEntryAmount(CryptoSymbol symbol, decimal quoteAssetQuantity)
     {
@@ -904,7 +914,7 @@ public class TradeTools
 
         // Heeft de gebruiker een percentage of een aantal ingegeven?
         if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && symbol.QuoteData!.EntryPercentage > 0)
-            return (decimal)symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100m;
+            return (decimal)symbol.QuoteData.EntryPercentage * quoteAssetQuantity / 100.0m;
         else
             return symbol.QuoteData!.EntryAmount;
     }

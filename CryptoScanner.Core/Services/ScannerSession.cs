@@ -1,9 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
-using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -138,11 +135,6 @@ public class ScannerSession : IScannerSession
 
         SetTimerDefaults();
 
-        // Restart Telegram if token changed
-        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
-            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
-        //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
-
         // Change theme if needed
         if (Application.Current != null)
         {
@@ -164,8 +156,14 @@ public class ScannerSession : IScannerSession
             // Positions will be loaded later
             LoadAssets(); // not sure if we need this (papertrading perhaps?)
             GlobalData.LoadSymbols(); // need to load these before the tickers are created
-            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
+            //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
         }
+
+        // Restart Telegram if token changed
+        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
+            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
+        //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
     }
 
 

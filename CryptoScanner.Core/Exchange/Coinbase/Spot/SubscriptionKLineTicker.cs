@@ -1,11 +1,11 @@
-﻿using CryptoExchange.Net.Objects;
+﻿using Coinbase.Net.Clients;
+using Coinbase.Net.Objects.Models;
+
+using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
-
-using Coinbase.Net.Clients;
-using Coinbase.Net.Objects.Models;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 
@@ -25,8 +25,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab($"{symbolNames} Candle {kline.OpenTime.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
             }
@@ -44,7 +44,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // TODO: quick en dirty code hier, nog eens verbeteren
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
-        
+
         foreach (var symbol in SymbolList)
         {
             symbols.Add(symbol.ExchangeName);

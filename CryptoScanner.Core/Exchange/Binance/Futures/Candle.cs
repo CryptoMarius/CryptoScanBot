@@ -2,10 +2,7 @@
 using Binance.Net.Enums;
 using Binance.Net.ExtensionMethods;
 
-using CryptoExchange.Net.SharedApis;
-
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Binance.Futures;
@@ -15,7 +12,7 @@ namespace CryptoScanner.Core.Exchange.Binance.Futures;
 /// </summary>
 public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
-    public async Task<(bool, int, CandleTime)> GetCandlesForInterval(IDisposable clientBase, 
+    public async Task<(bool, int, CandleTime)> GetCandlesForInterval(IDisposable clientBase,
         CryptoSymbol symbol, CryptoInterval interval, CandleTime minTime, CandleTime maxFetch)
     {
         // Remarks:
@@ -32,13 +29,13 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 
         var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod) 
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: minTime.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
@@ -72,7 +69,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             ScannerLog.Logger.Info($"Binance.Futures.GetCandlesForInterval({symbol.Name}, {interval!.Name}, {result.RequestUrl} result={result.Data.Count()}");
 
 
-        CandleTime fetchedUpTo = minTime;
+        CandleTime fetchedUpTo = CandleTime.MinValue;
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
@@ -97,7 +94,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             }
             else
             {
-                // We did not receive any candles (and no errors). New coins dont have History 
+                // We did not receive any candles (and no errors). New coins dont have History
                 // and we are appearently asking for a period with no activity, skip that period
                 if (maxTime > maxFetch)
                     fetchedUpTo = maxFetch;

@@ -6,9 +6,6 @@ namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalDominantLevelLong : SignalCreateBase
 {
-    public SignalDominantLevelLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -38,7 +35,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                         }
                         else
                         {
@@ -55,7 +52,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                                     result = true;
                                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                                     ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
-                                    GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                                 }
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             }
@@ -82,7 +79,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.DlzZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;
 

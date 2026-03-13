@@ -1,9 +1,4 @@
-﻿using CryptoScanner.Core.Context;
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Trend;
-using CryptoScanner.CoreTests;
+﻿using CryptoScanner.CoreTests;
 
 
 [TestClass()]

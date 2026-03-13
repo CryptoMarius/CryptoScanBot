@@ -89,7 +89,7 @@ public partial class ColorAndSoundView : UserControl
         {
             var selectedFile = result[0];
             var filePath = selectedFile.Path.LocalPath;
-            
+
             if (File.Exists(filePath))
             {
                 viewModel.SoundFile = filePath;

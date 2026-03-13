@@ -1,15 +1,11 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStochLong : SignalSbmBaseLong
 {
-    public SignalStochLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IndicatorsOkay(MyData data)
@@ -148,20 +144,12 @@ public class SignalStochLong : SignalSbmBaseLong
         }
         if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
             return false;
-       
+
         if (candlePrev!.CandleData?.StochOscillator > oscLimit)
         {
             ExtraText = "prev stoch not oversold";
             return false;
         }
-
-
-        //// Stoch Oscilator needs to have 3 candles to be < 10 in the last 10 candles)
-        //if (!HasACoupleOfStochOversold(SymbolInterval, CandleLast, 10, 10, 3))
-        //{
-        //    ExtraText = $"stoch osc not oversold < {10}";
-        //    return false;
-        //}
 
         double stochSurface = this.StochOversoldSurface(SymbolInterval, CandleLast, 30, GlobalData.Settings.General.SettingsStoch.Oversold);
         if (stochSurface < 5)
@@ -172,46 +160,10 @@ public class SignalStochLong : SignalSbmBaseLong
 
         if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
             return false;
-        CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod + 1);
-
-        // To higher interval
-        var result = this.CalculateIndicatorsForInterval(SymbolInterval, Symbol, CandleLast, higherInterval);
-        if (!result.result)
+        var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, Interval.IntervalPeriod + 1);
+        if (!result.success)
             return false;
 
-        //// Stoch Oscilator on higher interval needs to have 2 candles to be < 15 in the last 10 candles)
-        //if (!HasACoupleOfStochOversold(result.higherInterval, CandleLast, 10, 15, 2))
-        //{
-        //    ExtraText = $"stoch osc not oversold < {15}";
-        //    return false;
-        //}
-
-
-        // does not work in higher interval, this needs extra work..
-        //if (!InLowerPartOfBollingerBands(3, 5.0m))
-        //{
-        //    ExtraText = "not in lower part of bb";
-        //    return false;
-        //}
-
-
-        //// storsi condition is too strong..
-        //if (!WasRsiOversoldInTheLast(30))
-        //{
-        //    ExtraText = "no prev rsi oversold";
-        //    return false;
-        //}
-
-        //if (HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
-        //{
-        //    ExtraText = "no prev storsi";
-        //    return false;
-        //}
-
-        //var x = CalculateBarometerIndicators(Symbol, Interval, CandleLast);
-        //if (!x.result)
-        //    return false;
-        //ExtraText = $"BM: RSI:{x.data!.CandleData!.Rsi:N2} SIG:{x.data!.CandleData!.StochOscillator:N2} HIS:{x.data!.CandleData!.MacdHistogram:N2}";
 
         double stochSurface2 = this.StochOversoldSurface(result.higherInterval, result.candle!, 30, GlobalData.Settings.General.SettingsStoch.Oversold);
         if (stochSurface2 < 5)

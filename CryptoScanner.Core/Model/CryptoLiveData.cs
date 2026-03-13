@@ -1,11 +1,9 @@
-﻿using CryptoScanner.Core.Signal;
-
-namespace CryptoScanner.Core.Model;
+﻿namespace CryptoScanner.Core.Model;
 
 public partial class CryptoLiveData
 {
     public required CryptoSymbol Symbol { get; set; }
     public required CryptoInterval Interval { get; set; }
     public required CryptoCandle Candle { get; set; }
-    public required CandleIndicatorData? CandleData { get; set; }
+    public required CryptoData? CandleData { get; set; }
 }

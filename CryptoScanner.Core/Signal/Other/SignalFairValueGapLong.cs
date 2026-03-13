@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalFairValueGapLong : SignalCreateBase
 {
-    public SignalFairValueGapLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -51,7 +47,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                             // Close if the candle touched the zone..
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
                         }
                     }
 
@@ -59,7 +55,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.FvgZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
                     }
                     else index++;
 

@@ -103,7 +103,7 @@ public class ZoneBroken
         // Called at startup..
         if (GlobalData.ActiveExchange != null)
         {
-            for (var i = 0; i < GlobalData.ActiveExchange.SymbolListName.Count; i ++)
+            for (var i = 0; i < GlobalData.ActiveExchange.SymbolListName.Count; i++)
             {
                 var symbol = GlobalData.ActiveExchange.SymbolListName.Values[i];
                 foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)

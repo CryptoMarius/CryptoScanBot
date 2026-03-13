@@ -1,13 +1,10 @@
 ﻿using CryptoExchange.Net.Objects.Errors;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using OKX.Net.Clients;
 using OKX.Net.Enums;
-using OKX.Net.Objects.Market;
 
 namespace CryptoScanner.Core.Exchange.Okx.Futures;
 
@@ -87,7 +84,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.Time,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.VolumeCurrencyQuote);
 
                 // remember the newest candle

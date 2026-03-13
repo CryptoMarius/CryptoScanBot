@@ -37,7 +37,7 @@ namespace CryptoScanner.Core.Exchange.Binance.Futures;
 // mooit overzicht: https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
 
 
-// Vanwege "The relationship of the prices for the orders is not correct." The prices set in the OCO 
+// Vanwege "The relationship of the prices for the orders is not correct." The prices set in the OCO
 // is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
 
 //"The relationship of the prices for the orders is not correct." The prices set in the OCO is breaking the Price rules. (de prijs is dan waarschijnlijk al hoger dan de gekozen sell prijs!!!!)
@@ -55,7 +55,7 @@ namespace CryptoScanner.Core.Exchange.Binance.Futures;
 // https://toscode.gitee.com/purplecity/binance-official-api-docs/blob/d5bab6053da63aecd71ed6393fbd7de1da88a43a/errors.md
 
 /*
- * 
+ *
 https://bybit-exchange.github.io/docs-legacy/futuresV2/inverse/#t-servertime
 https://api-testnet.bybit.com/v2/public/time
 {"ret_code":0,"ret_msg":"OK","result":{},"ext_code":"","ext_info":"","time_now":"1688116858.760925"}
@@ -297,7 +297,7 @@ public class Api : ExchangeBase
             return (true, tradeParams);
 
 
-        // Annuleer de order 
+        // Annuleer de order
         if (step.OrderId != null && step.OrderId != "")
         {
             // BinanceWeights.WaitForFairBinanceWeight(1);

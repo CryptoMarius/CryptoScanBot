@@ -1,5 +1,4 @@
 ﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -8,8 +7,6 @@ using CryptoScanner.Core.Model;
 
 using Kraken.Net;
 using Kraken.Net.Clients;
-using Kraken.Net.Enums;
-using Kraken.Net.Objects.Models;
 
 namespace CryptoScanner.Core.Exchange.Kraken.Spot;
 

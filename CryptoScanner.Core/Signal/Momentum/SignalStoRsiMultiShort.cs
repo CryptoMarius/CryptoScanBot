@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
@@ -12,9 +12,6 @@ namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStoRsiMultiLong : SignalSbmBaseLong
 {
-    public SignalStoRsiMultiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IndicatorsOkay(MyData data)
@@ -46,20 +43,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        CandleTime unixDate = CandleLast.Candle.OpenTime;
-
-        //if (!CandleLast.StochOversold(0))
-        //{
-        //    ExtraText = "stoch not oversold";
-        //    return false;
-        //}
-
-        //if (!CandleLast.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
-        //{
-        //    ExtraText = "rsi not oversold";
-        //    return false;
-        //}
-
+        CandleTime openTime = CandleLast.Candle.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -67,22 +51,16 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
-            CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
-            CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle _))
+            var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
+            if (!result.success)
                 return false;
 
-            // Calculate indicators if needed
-            IndicatorDataList.PrepareIndicators(Symbol, higherInterval.Interval, candleOpenTime, out _);
-            if (!IndicatorDataList.TryGetCandle(higherInterval.Interval, candleOpenTime, out MyData? candle))
-                return false;
-
-
-            if (IndicatorsOkay(candle!) && candle!.StochOversold() && candle!.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(result.candle!) && result.candle!.StochOversold()
+                && result.candle!.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
-                ExtraText += higherInterval.Interval.Name;
+                ExtraText += result.higherInterval.Interval.Name;
 
                 okay--;
                 if (okay == 0)
@@ -94,8 +72,6 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
                 if (count == 6)
                     return false;
             }
-
-            //if (okay < count) return false;
 
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;

@@ -104,7 +104,7 @@ public static class ThreadSoundPlayer
                 {
                     System.Diagnostics.Debug.WriteLine($"Sound file not found: {fileName}");
                 }
-                else 
+                else
                 {
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     {

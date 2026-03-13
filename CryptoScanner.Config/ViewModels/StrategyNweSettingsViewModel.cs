@@ -7,7 +7,7 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class StrategyNweSettingsViewModel : ObservableObject
 {
     // EXACT SAME TYPES as SettingsSignalStrategyNwe
-    
+
     [ObservableProperty]
     private bool _includeRsi = false; // bool
 

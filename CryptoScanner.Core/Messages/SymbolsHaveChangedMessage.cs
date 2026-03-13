@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Model;
-
-namespace CryptoScanner.Core.Messages;
+﻿namespace CryptoScanner.Core.Messages;
 
 public class SymbolsHaveChangedMessage
 {

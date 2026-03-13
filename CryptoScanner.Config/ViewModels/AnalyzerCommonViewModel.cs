@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 
 namespace CryptoScanner.Config.ViewModels;
@@ -52,7 +51,7 @@ public partial class AnalyzerCommonViewModel : ObservableObject
     private int _removeSignalAfterxCandles = 15;
 
     [ObservableProperty]
-    private bool _showInvalidSignals  = false;
+    private bool _showInvalidSignals = false;
 
     // Fine tuning (later)
     [ObservableProperty]

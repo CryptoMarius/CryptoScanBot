@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal;
 
 using System.IO.Compression;
 using System.Text;
@@ -12,17 +11,30 @@ namespace CryptoScanner.Core.Context;
 // https://stackoverflow.com/questions/64799591/is-there-a-high-performance-way-to-replace-the-binaryformatter-in-net5
 // </summary>
 
+// version:
+// 1: symbolname, [interval<1m .. 1d>, count, ohlcv <old style>]
+// 1: symbolname, [interval<1m .. 1w>, count, ohlcv <old style>]
+// 3: symbolname, [interval<1m .. 1w>, count, ohlcv <new style>]
+// 4: [marker<1234567890> interval<1m .. 1w>, count, ohlcv <new style>]
 
 public class DataStore
 {
+    private const int markerValue = 1234567890;
+
     // Prevent multiple sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
 
-    private static void ReadCandlesFromStream(BinaryReader binaryReader, CryptoSymbol symbol)
+    private static void ReadCandlesFromStream(BinaryReader reader, CryptoSymbol symbol)
     {
-        int version = binaryReader.ReadInt32();
-        string text = binaryReader.ReadString();
-        if (version >= 1 && version <=2 && symbol.Name.Equals(text))
+        int version = reader.ReadInt32();
+
+        if (version >= 1 && version <= 3)
+        {
+            // Name of symbol, removed in version 4
+            reader.ReadString();
+        }
+
+        if (version >= 1 && version <= 4)
         {
             foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             {
@@ -30,10 +42,21 @@ public class DataStore
                 if (version == 1 && symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
                     continue;
 
-                CryptoIntervalPeriod intervalPeriod = (CryptoIntervalPeriod)binaryReader.ReadInt32();
+                // "Synchronisation" marker (new in version 4)
+                if (version >= 4)
+                {
+                    int marker = reader.ReadInt32();
+                    if (marker != markerValue)
+                        throw new Exception($"file {symbol.Name} is corrupted");
+                }
+
+                // Interval enum value
+                CryptoIntervalPeriod intervalPeriod = (CryptoIntervalPeriod)reader.ReadInt32();
                 if (intervalPeriod != symbolInterval.IntervalPeriod)
                     throw new Exception($"file {symbol.Name} is corrupted (interval {intervalPeriod} does not match)");
-                long unix = binaryReader.ReadInt64();
+
+                // 3: Last candle Last synchronised date with the exchange
+                long unix = reader.ReadInt64();
                 if (unix == 0)
                     symbolInterval.LastCandleSynchronized = null;
                 else
@@ -45,43 +68,61 @@ public class DataStore
                 // For some reason we can have corrupted candles in the system.
                 // This killed the scanner because it had a loop until maxLong!
                 CandleTime futureCandles = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddHours(1), 1);
+                // Minimum synchronisation date (ignore candles below)
+                CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
 
-                // min candle date
-                CandleTime startFetchUnix = CandleIndicatorData.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                // 4: Candle count
+                int candleCount = reader.ReadInt32();
 
-                // Load interval from stream
-                int candleCount = binaryReader.ReadInt32();
-                while (candleCount > 0)
+                symbolInterval.CandleList.Lock();
+                try
                 {
-                    // TODO: Change storage to support the smaller types
-
-                    CryptoCandle candle = new()
+                    // 5: The OHLCV values
+                    // TODO: candlelist can grow while reading
+                    while (candleCount > 0)
                     {
-                        TickDecimals = symbol.PriceDecimals,
-                        OpenTime = CandleTime.FromUnixSeconds(binaryReader.ReadInt64()),
-                        Open = binaryReader.ReadDecimal(),
-                        High = binaryReader.ReadDecimal(),
-                        Low = binaryReader.ReadDecimal(),
-                        Close = binaryReader.ReadDecimal(),
-                        Volume = binaryReader.ReadDecimal(),
-                    };
-
-                    // We had some data corruption and 1 candle in the year 2150...
-                    // It is not a nice solution, but skip those candles (really weird)
-                    if (candle.OpenTime >= startFetchUnix)
-                    {
-                        if (candle.OpenTime < futureCandles)
+                        CryptoCandle candle = new()
                         {
-                            symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                            if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-                                symbolInterval.LastCandle = candle;
+                            TickDecimals = symbol.PriceDecimals
+                        };
+                        if (version <= 2)
+                        {
+                            candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
+                            candle.Open = reader.ReadDecimal();
+                            candle.High = reader.ReadDecimal();
+                            candle.Low = reader.ReadDecimal();
+                            candle.Close = reader.ReadDecimal();
+                            candle.Volume = reader.ReadDecimal();
                         }
-                        else
-                            GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.OpenTime}");
-                    }
+                        else if (version == 3)
+                        {
+                            // Delegates to the newer candle storage systen
+                            candle.LoadVersion3(reader);
+                        }
 
-                    candleCount--;
+                        // We had some data corruption and 1 candle in the year 2150...
+                        // It is not a nice solution, but skip those candles (really weird)
+                        if (candle.OpenTime >= startFetchUnix)
+                        {
+                            if (candle.OpenTime < futureCandles)
+                            {
+                                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                                if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                                    symbolInterval.LastCandle = candle;
+                            }
+                            else
+                                GlobalData.AddTextToLogTab($"{symbol.Name} skipped corrupted candle {candle.OpenTime}");
+                        }
+
+                        candleCount--;
+                    }
                 }
+                finally
+                {
+                    symbolInterval.CandleList.Unlock();
+                }
+
+
             }
         }
     }
@@ -129,34 +170,43 @@ public class DataStore
         }
     }
 
-    public static void LoadCandles()
+    public static async Task LoadCandlesAsync()
     {
         // De candles uit de database lezen
         // Voor de 1m hebben we de laatste 2 dagen nodig (vanwege de berekening van de barometer)
         // In het algemeen is een minimum van 2 dagen OF 215 candles nodig (indicators)
         GlobalData.AddTextToLogTab("Loading candle information (please wait!)");
 
-        var exchange = GlobalData.ActiveExchange;
-        if (exchange != null)
+        // Use the same semaphore as SaveCandlesAsync to prevent concurrent file access
+        await Semaphore.WaitAsync();
+        try
         {
-            string folderName = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
-
-            foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+            var exchange = GlobalData.ActiveExchange;
+            if (exchange != null)
             {
-                // ignore inactive
-                if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
-                {
-                    // Dont load candles for symbols below the minimal volume treshold
-                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
-                    {
-                        if (symbol.ClearCandles())
-                            ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
-                        continue;
-                    }
+                string folderName = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
 
-                    LoadCandleForSymbol(folderName, symbol);
+                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                {
+                    // ignore inactive
+                    if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
+                    {
+                        // Dont load candles for symbols below the minimal volume treshold
+                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                        {
+                            if (symbol.ClearCandles())
+                                ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
+                            continue;
+                        }
+
+                        LoadCandleForSymbol(folderName, symbol);
+                    }
                 }
             }
+        }
+        finally
+        {
+            Semaphore.Release();
         }
         //GlobalData.AddTextToLogTab("Information loaded");
     }
@@ -216,33 +266,44 @@ public class DataStore
                             {
                                 using FileStream fileStream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
                                 using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
-                                using BinaryWriter binaryWriter = new(zipStream, Encoding.UTF8, false);
+                                using BinaryWriter writer = new(zipStream, Encoding.UTF8, false);
 
-                                int version = 2; // Version 2 adds the weekly interval
-                                binaryWriter.Write(version);
-                                binaryWriter.Write(symbol.Name);
+                                int version = 4; // Version 2 adds the weekly interval
+                                writer.Write(version);
+                                //writer.Write(symbol.Name); gone in version 4
 
                                 foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
                                 {
-                                    binaryWriter.Write((int)symbolInterval.Interval.IntervalPeriod);
+                                    // 1: Interval.Synchronisation; "Synchronisation" marker (new in version 4)
+                                    int marker = markerValue;
+                                    writer.Write(marker); // new in version 4
+
+                                    // 2: Interval.EnumValue; Interval enum value
+                                    writer.Write((int)symbolInterval.Interval.IntervalPeriod);
+
+                                    // 3: Interval.SynchronisationDate; last sync date with exchange
                                     if (symbolInterval.LastCandleSynchronized.HasValue)
-                                        binaryWriter.Write(symbolInterval.LastCandleSynchronized.Value.ToUnixSeconds());
+                                        writer.Write(symbolInterval.LastCandleSynchronized.Value.ToUnixSeconds());
                                     else
-                                        binaryWriter.Write((long)0);
+                                        writer.Write((long)0);
 
-                                    binaryWriter.Write(symbolInterval.CandleList.Count);
-
-                                    foreach (var pair in symbolInterval.CandleList)
+                                    symbolInterval.CandleList.Lock();
+                                    try
                                     {
-                                        // TODO: Change storage to support the smaller types
-                                        CryptoCandle candle = pair.Value;
-                                        binaryWriter.Write(candle.OpenTime.ToUnixSeconds());
-                                        binaryWriter.Write(candle.Open);
-                                        binaryWriter.Write(candle.High);
-                                        binaryWriter.Write(candle.Low);
-                                        binaryWriter.Write(candle.Close);
-                                        binaryWriter.Write(candle.Volume);
+                                        // 4: Interval.Candle Count; Candle count
+                                        writer.Write(symbolInterval.CandleList.Count);
+
+                                        // 5: OHLCV values
+                                        foreach (var candle in symbolInterval.CandleList.Values)
+                                        {
+                                            candle.SaveVersion3(writer);
+                                        }
                                     }
+                                    finally
+                                    {
+                                        symbolInterval.CandleList.Unlock();
+                                    }
+
                                 }
                             }
                             finally

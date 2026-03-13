@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
+
+using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Config.ViewModels;
 

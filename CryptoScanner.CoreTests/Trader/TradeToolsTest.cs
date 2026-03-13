@@ -77,7 +77,7 @@ public class TradeToolsTest : TestBase
         // probleem, deze gaat rechtstreeks door naar andere routines (teveel verweven)
         Task task = Task.Run(() =>
         {
-            _ = PaperTrading.CreatePaperTradeObject(database, position, entryPart, step, tradeParams.Price, lastCandle1mCloseTimeDate);
+            _ = PaperTrading.CreatePaperTrade(database, position, entryPart, step, tradeParams.Price, lastCandle.OpenTime);
         });
         task.Wait();
 
@@ -158,10 +158,9 @@ public class TradeToolsTest : TestBase
         CryptoPositionPart dca1Part = position.PartList.Values.Last();
         CryptoPositionStep dca1Step = dca1Part.StepList.Values.Last();
         lastCandle = GenerateCandles(symbol, ref startTime, 20, dca1Step.Price);
-        lastCandle1mCloseTimeDate = lastCandle.Date.AddMinutes(1);
         tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, dca1Step.Price, dca1Step.Quantity);
 
-        task = Task.Run(() => _ = PaperTrading.CreatePaperTradeObject(database, position, dca1Part, dca1Step, tradeParams.Price, lastCandle1mCloseTimeDate));
+        task = Task.Run(() => _ = PaperTrading.CreatePaperTrade(database, position, dca1Part, dca1Step, tradeParams.Price, lastCandle.OpenTime));
         task.Wait();
 
         // Nu wordt het een en ander aangepast (en wordt het interessant)

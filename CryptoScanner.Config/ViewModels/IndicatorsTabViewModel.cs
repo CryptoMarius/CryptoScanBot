@@ -1,12 +1,7 @@
-using Avalonia.Media;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
-
-using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Config.ViewModels;
 

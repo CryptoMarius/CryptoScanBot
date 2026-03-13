@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalCandleJumpShort : SignalCreateBase
 {
-    public SignalCandleJumpShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
