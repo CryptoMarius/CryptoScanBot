@@ -12,10 +12,11 @@ namespace CryptoScanner.Core.Context;
 // </summary>
 
 // version:
-// 1: symbolname, [interval<1m .. 1d>, count, ohlcv <old style>]
-// 1: symbolname, [interval<1m .. 1w>, count, ohlcv <old style>]
-// 3: symbolname, [interval<1m .. 1w>, count, ohlcv <new style>]
-// 4: [marker<1234567890> interval<1m .. 1w>, count, ohlcv <new style>]
+// 1: symbolname, [interval<1m .. 1d>, synched, count, ohlcv <old style>]
+// 1: symbolname, [interval<1m .. 1w>, synched, count, ohlcv <old style>]
+// 3: symbolname, [interval<1m .. 1w>, synched, count, ohlcv <new style>]
+// 4: [marker<1234567890> interval<1m .. 1w>, synched<int64>, count, ohlcv <new style>]
+// 5: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, ohlcv <new style>]
 
 public class DataStore
 {
@@ -34,7 +35,7 @@ public class DataStore
             reader.ReadString();
         }
 
-        if (version >= 1 && version <= 4)
+        if (version >= 1 && version <= 5)
         {
             foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             {
@@ -56,13 +57,26 @@ public class DataStore
                     throw new Exception($"file {symbol.Name} is corrupted (interval {intervalPeriod} does not match)");
 
                 // 3: Last candle Last synchronised date with the exchange
-                long unix = reader.ReadInt64();
-                if (unix == 0)
-                    symbolInterval.LastCandleSynchronized = null;
+                if (version < 5)
+                {
+                    long unix = reader.ReadInt64();
+                    if (unix == 0)
+                        symbolInterval.LastCandleSynchronized = null;
+                    else
+                        symbolInterval.LastCandleSynchronized = CandleTime.FromUnixSeconds(unix);
+                    if (symbolInterval.LastCandleSynchronized == CandleTime.MinValue)
+                        symbolInterval.LastCandleSynchronized = null;
+                }
                 else
-                    symbolInterval.LastCandleSynchronized = CandleTime.FromUnixSeconds(unix);
-                if (symbolInterval.LastCandleSynchronized == CandleTime.MinValue)
-                    symbolInterval.LastCandleSynchronized = null;
+                {
+                    uint unix = reader.ReadUInt32();
+                    if (unix == CandleTime.MinValue)
+                        symbolInterval.LastCandleSynchronized = null;
+                    else
+                        symbolInterval.LastCandleSynchronized = new(unix);
+                    if (symbolInterval.LastCandleSynchronized == CandleTime.MinValue)
+                        symbolInterval.LastCandleSynchronized = null;
+                }
 
                 // max candle date
                 // For some reason we can have corrupted candles in the system.
@@ -94,7 +108,7 @@ public class DataStore
                             candle.Close = reader.ReadDecimal();
                             candle.Volume = reader.ReadDecimal();
                         }
-                        else if (version == 3)
+                        else
                         {
                             // Delegates to the newer candle storage systen
                             candle.LoadVersion3(reader);
@@ -268,24 +282,23 @@ public class DataStore
                                 using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
                                 using BinaryWriter writer = new(zipStream, Encoding.UTF8, false);
 
-                                int version = 4; // Version 2 adds the weekly interval
+                                int version = 5;
                                 writer.Write(version);
-                                //writer.Write(symbol.Name); gone in version 4
 
                                 foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
                                 {
                                     // 1: Interval.Synchronisation; "Synchronisation" marker (new in version 4)
-                                    int marker = markerValue;
-                                    writer.Write(marker); // new in version 4
+                                    writer.Write(markerValue); // new from version 4
 
                                     // 2: Interval.EnumValue; Interval enum value
                                     writer.Write((int)symbolInterval.Interval.IntervalPeriod);
 
                                     // 3: Interval.SynchronisationDate; last sync date with exchange
+                                    // From version 5 an uint instead of int64
+                                    uint value = CandleTime.MinValue.Minutes;
                                     if (symbolInterval.LastCandleSynchronized.HasValue)
-                                        writer.Write(symbolInterval.LastCandleSynchronized.Value.ToUnixSeconds());
-                                    else
-                                        writer.Write((long)0);
+                                        value = symbolInterval.LastCandleSynchronized.Value.Minutes;
+                                    writer.Write(value);
 
                                     symbolInterval.CandleList.Lock();
                                     try
