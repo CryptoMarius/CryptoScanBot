@@ -82,25 +82,6 @@
                     </StackPanel>
                 </HeaderedContentControl>
 
-                <!-- Playback Controls --> 
-                <!-- not working, turned off -->
-                <StackPanel Spacing="4" IsVisible="false">
-                    <Panel Height="30">
-                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <Button Content="-" Width="30" Command="{Binding PlaybackControls.ZoomInCommand}"/>
-                            <Button Content="+" Width="30" Command="{Binding PlaybackControls.ZoomOutCommand}"/>
-                            <TextBlock Text="{Binding PlaybackControls.CurrentIntervalDisplay}" VerticalAlignment="Center" Margin="8,0"/>
-                        </StackPanel>
-                    </Panel>
-
-                    <Panel Height="30">
-                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <Button Content="&lt;" Width="30" Command="{Binding PlaybackControls.NavigateLeftCommand}"/>
-                            <Button Content="&gt;" Width="30" Command="{Binding PlaybackControls.NavigateRightCommand}"/>
-                            <TextBlock Text="{Binding PlaybackControls.MaxTimeDisplay}" VerticalAlignment="Center" Margin="8,0"/>
-                        </StackPanel>
-                    </Panel>
-                </StackPanel>
 
                 <!-- Action Buttons -->
                 <StackPanel Spacing="4">
