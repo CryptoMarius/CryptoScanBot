@@ -4,9 +4,6 @@
 
 public class SignalIchimokuKumoBreakoutLong : SignalCreateBase
 {
-    public SignalIchimokuKumoBreakoutLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
     public override bool IndicatorsOkay(CryptoCandle candle)
     {

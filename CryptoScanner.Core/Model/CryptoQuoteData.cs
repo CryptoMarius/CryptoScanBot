@@ -1,11 +1,12 @@
-﻿using Dapper.Contrib.Extensions;
+﻿using Avalonia.Media;
 
-using System.Text.Json.Serialization;
 using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
-using Avalonia.Media;
+
+using Dapper.Contrib.Extensions;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Model;
 
@@ -17,14 +18,14 @@ public class CryptoQuoteData
 
     // Basecoin data
     public bool FetchCandles { get; set; }
-    public decimal MinimalVolume { get; set; }
+    public double MinimalVolume { get; set; }
     public decimal MinimalPrice { get; set; }
     // Trading: The initial entry amount
     public decimal EntryAmount { get; set; }
     // Trading: The initial entry percentage of PF
-    public decimal EntryPercentage { get; set; }
+    public float EntryPercentage { get; set; }
     // Color of the base coin in signal grid
-    public Color DisplayColor { get; set; } = Color.Parse("#00FFFFFF");
+    public Color DisplayColor { get; set; } = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
 
     // List of symbols (for this quote)
     [Computed]

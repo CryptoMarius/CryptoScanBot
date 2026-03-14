@@ -10,7 +10,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     //    var readCount = _lock.RecursiveReadCount;
     //    var writeCount = _lock.RecursiveWriteCount;
     //    var upgradeCount = _lock.RecursiveUpgradeCount;
-			
+
     //			if (readCount > 0 || writeCount > 0 || upgradeCount > 0)
     //			{
     //				System.Diagnostics.Debug.WriteLine($"⚠️ Recursive lock detected:");
@@ -20,6 +20,35 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     //				System.Diagnostics.Debug.WriteLine(new System.Diagnostics.StackTrace());
     //			}
     //#endif
+
+    public void Lock()
+    {
+        _lock.EnterWriteLock();
+    }
+
+    public void Unlock()
+    {
+        _lock.ExitWriteLock();
+    }
+
+    // Thread-safe indexer: getter uses read lock, setter uses write lock.
+    // Without this override, direct assignment (e.g. candles[key] = value) bypasses the lock,
+    // causing InvalidOperationException in concurrent enumerators (version mismatch).
+    public new CryptoCandle this[CandleTime key]
+    {
+        get
+        {
+            _lock.EnterReadLock();
+            try { return base[key]; }
+            finally { _lock.ExitReadLock(); }
+        }
+        set
+        {
+            _lock.EnterWriteLock();
+            try { base[key] = value; }
+            finally { _lock.ExitWriteLock(); }
+        }
+    }
 
     // Thread-safe Add
     public new void Add(CandleTime key, CryptoCandle value)
@@ -50,7 +79,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     }
 
     // Thread-safe TryGetValue
-    public new bool TryGetValue(CandleTime key, out CryptoCandle? value)
+    public new bool TryGetValue(CandleTime key, out CryptoCandle value)
     {
         _lock.EnterReadLock();
         try
@@ -74,6 +103,79 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         finally
         {
             _lock.ExitWriteLock();
+        }
+    }
+
+    // Thread-safe access to the first candle (lowest key).
+    // Callers must NOT use candleList.Values.First() — that enumerates without the read lock.
+    public bool TryGetFirstCandle(out CryptoCandle candle)
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            using var e = base.GetEnumerator();
+            if (e.MoveNext())
+            {
+                candle = e.Current.Value;
+                return true;
+            }
+            candle = default;
+            return false;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+    }
+
+    // Thread-safe access to the last candle (highest key).
+    // Callers must NOT use candleList.Values.Last() — that enumerates without the read lock.
+    public bool TryGetLastCandle(out CryptoCandle candle)
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            if (Count == 0)
+            {
+                candle = default;
+                return false;
+            }
+            using var e = base.GetEnumerator();
+            CryptoCandle last = default;
+            while (e.MoveNext())
+                last = e.Current.Value;
+            candle = last;
+            return true;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+    }
+
+    // Thread-safe snapshot of all entries, ordered by key (ascending, matching SortedDictionary order).
+    // Use this instead of direct LINQ enumeration (e.g. .OrderBy/.Select/.ToList) to avoid
+    // ArgumentException / InvalidOperationException when another thread calls Add() concurrently.
+    //
+    // NOTE: new List<>(this) must NOT be used here. The List<T>(ICollection<T>) constructor calls
+    // ICollection.Count once for pre-allocation and then SortedSet.CopyTo re-reads Count internally.
+    // When Count increases between those two reads (e.g. concurrent Add via a base-type reference),
+    // SortedSet.CopyTo throws ArgumentException: "Destination array is not long enough".
+    // Enumerating manually avoids both Count reads and the CopyTo path entirely.
+    public List<KeyValuePair<CandleTime, CryptoCandle>> GetSnapshot()
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            var snapshot = new List<KeyValuePair<CandleTime, CryptoCandle>>(base.Count);
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+                snapshot.Add(e.Current);
+            return snapshot;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
         }
     }
 

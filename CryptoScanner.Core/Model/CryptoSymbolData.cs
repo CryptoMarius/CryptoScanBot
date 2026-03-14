@@ -11,6 +11,7 @@ public class CryptoSymbolData
     /// </summary>
     // Lock for trend data
     public SemaphoreSlim TrendLock { get; set; } = new(1, 1);
+
     // Primary and Secondary trend data
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
@@ -56,6 +57,11 @@ public class CryptoSymbolData
     public CryptoSymbolInterval Get(CryptoIntervalPeriod intervalPeriod)
     {
         return SymbolIntervalList[(int)intervalPeriod];
+    }
+
+    public CryptoSymbolInterval Get(CryptoInterval interval)
+    {
+        return SymbolIntervalList[(int)interval.IntervalPeriod];
     }
 
     public void ResetFvgData()

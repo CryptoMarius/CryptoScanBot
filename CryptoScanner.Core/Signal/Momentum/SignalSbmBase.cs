@@ -1,20 +1,19 @@
-﻿using CryptoScanner.Core.Model;
+﻿namespace CryptoScanner.Core.Signal.Momentum;
 
-namespace CryptoScanner.Core.Signal.Momentum;
-
-public class SignalSbmBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalCreateBase(symbol, interval, candle)
+public class SignalSbmBase : SignalCreateBase
 {
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Sma20 == null
-           || candle.CandleData.Sma50 == null
-           || candle.CandleData.Sma200 == null
-           || candle.CandleData.PSar == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.Sma50 == null
+           || data.CandleData.Sma200 == null
+           || data.CandleData.PSar == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
         {
             ExtraText = "indicators not ok!";

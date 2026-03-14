@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Json;
 
@@ -29,12 +29,12 @@ public class SecureStringConverter : JsonConverter<string>
             string? text = reader.GetString();
             if (!string.IsNullOrEmpty(text))
             {
-                if (text.StartsWith(prefix, StringComparison.Ordinal)) 
-                { 
-                    var payload = text[prefix.Length..]; 
-                    return _stringProtectorService.Unprotect(payload); 
-                } 
-                
+                if (text.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    var payload = text[prefix.Length..];
+                    return _stringProtectorService.Unprotect(payload);
+                }
+
                 // It was not encrypted
                 return text;
             }
@@ -57,7 +57,7 @@ public class SecureStringConverter : JsonConverter<string>
         }
         else
         {
-            output = prefix + _stringProtectorService.Protect(value); 
+            output = prefix + _stringProtectorService.Protect(value);
         }
 
         writer.WriteStringValue(output);

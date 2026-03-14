@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "CryptoShowTrend": {
-      "commandName": "Project",
-      "commandLineArgs": "-e \"Binance Futures\" -f \"CryptoScanBot\\Binance\\Futures\""
-    }
-  }
-}

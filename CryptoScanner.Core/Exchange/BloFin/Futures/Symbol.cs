@@ -1,13 +1,13 @@
-﻿using CryptoExchange.Net.SharedApis;
+﻿using BloFin.Net.Clients;
+using BloFin.Net.Enums;
+
+using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
-
-using BloFin.Net.Clients;
-using BloFin.Net.Enums;
 
 namespace CryptoScanner.Core.Exchange.BloFin.Futures;
 
@@ -107,7 +107,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 //// volume from the tickers
                                 if (volumeTicker.TryGetValue(symbolData.Symbol, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (double)volume;
                                 else
                                     symbol.Volume = 0;
 

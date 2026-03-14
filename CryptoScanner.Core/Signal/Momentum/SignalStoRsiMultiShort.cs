@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
@@ -12,26 +12,24 @@ namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStoRsiMultiLong : SignalSbmBaseLong
 {
-    public SignalStoRsiMultiLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Rsi == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Rsi == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
         return true;
     }
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         // disable sbm conditions
         response = "";
@@ -45,20 +43,7 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-        CandleTime unixDate = CandleLast.OpenTime;
-
-        //if (!CandleLast.StochOversold(0))
-        //{
-        //    ExtraText = "stoch not oversold";
-        //    return false;
-        //}
-
-        //if (!CandleLast.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
-        //{
-        //    ExtraText = "rsi not oversold";
-        //    return false;
-        //}
-
+        CandleTime openTime = CandleLast.Candle.OpenTime;
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
@@ -66,24 +51,16 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
-            CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(intervalPeriod);
-            CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(unixDate, Interval.Duration, higherInterval.Interval.Duration);
-            if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle? candle))
+            var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
+            if (!result.success)
                 return false;
 
-            if (candle.CandleData == null)
-            {
-                List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string _);
-                if (history == null)
-                    return false;
-                CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-            }
-
-            if (IndicatorsOkay(candle!) && candle.StochOversold() && candle.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(result.candle!) && result.candle!.StochOversold()
+                && result.candle!.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
-                ExtraText += higherInterval.Interval.Name;
+                ExtraText += result.higherInterval.Interval.Name;
 
                 okay--;
                 if (okay == 0)
@@ -95,8 +72,6 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
                 if (count == 6)
                     return false;
             }
-
-            //if (okay < count) return false;
 
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;

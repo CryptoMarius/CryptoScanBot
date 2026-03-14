@@ -43,13 +43,16 @@ public class CryptoData
     /// <summary>
     /// Stoch Signal %D (orange), average from the last 3 %K values
     /// </summary>
-    public double? StochSignal { get; set; } // Stochastic oscillator %D (orange, slow line)
+    public double? StochSignal { get; set; } // Stochastic signal %D (orange, slow line)
     //public float StochSurface { get; set; }
     //public float StochSurface2 { get; set; }
     //[Computed]
     //public double? SlopeStoch { get; set; }
 
-    //Where?
+    //[Computed]
+    //public double? Rvi { get; set; } // Stochastic oscillator
+    //[Computed]
+    //public double? RviSignal { get; set; } // Stochastic
 
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG
@@ -102,7 +105,7 @@ public class CryptoData
     public double? PSar { get; set; }
 
     [Computed]
-    public int Lux5mValue { get; set; }
+    public short Lux5mValue { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -177,7 +180,7 @@ public class CryptoData
 public class CryptoData2 : CryptoData
 {
     public decimal SignalPrice { get; set; }
-    public decimal SignalVolume { get; set; }
+    public double SignalVolume { get; set; }
 
     public CryptoTradeSide Side { get; set; }
     [Computed]
@@ -187,24 +190,23 @@ public class CryptoData2 : CryptoData
     [Computed]
     public string StrategyText { get { return RegisterAlgorithms.GetAlgorithm(Strategy); } }
 
-
-    public double Last24HoursChange { get; set; }
-    public double LastXDaysEffective { get; set; }
+    public float Last24HoursChange { get; set; }
+    public float LastXDaysEffective { get; set; }
 
     public int LuxIndicator5m { get; set; }
 
     // Wellicht introduceren en weghalen uit de "Alarm"?
-    public int CandlesWithZeroVolume { get; set; } // Candles zonder volume
-    public int CandlesWithFlatPrice { get; set; } // De zogenaamde platte candles
-    public int AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
-    public int AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
+    public short CandlesWithZeroVolume { get; set; } // Candles zonder volume
+    public short CandlesWithFlatPrice { get; set; } // De zogenaamde platte candles
+    public short AboveBollingerBandsSma { get; set; } // Aantal candles die boven de BB.Sma uitkomen
+    public short AboveBollingerBandsUpper { get; set; } // Aantal candles die boven de BB.Upper uitkomen
 
     // Barometers
-    public decimal? Barometer15m { get; set; }
-    public decimal? Barometer30m { get; set; }
-    public decimal? Barometer1h { get; set; }
-    public decimal? Barometer4h { get; set; }
-    public decimal? Barometer1d { get; set; }
+    public float? Barometer15m { get; set; }
+    public float? Barometer30m { get; set; }
+    public float? Barometer1h { get; set; }
+    public float? Barometer4h { get; set; }
+    public float? Barometer1d { get; set; }
 
     // Market trend percentage (primary)
     public float TrendPercentagePrimary { get; set; }
@@ -221,12 +223,12 @@ public class CryptoData2 : CryptoData
 
     // Statistics, the min and max differences against the signalprice
     public decimal PriceMin { get; set; }
-    public double PriceMinPerc { get; set; }
+    public float PriceMinPerc { get; set; }
     public decimal PriceMax { get; set; }
-    public double PriceMaxPerc { get; set; }
+    public float PriceMaxPerc { get; set; }
     public CryptoSignalStatus SignalStatus { get; set; }
 
-    public double AvgBB { get; set; }
+    public float AvgBB { get; set; }
 
     public override void AssignValues(CryptoData source)
     {

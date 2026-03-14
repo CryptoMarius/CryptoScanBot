@@ -23,7 +23,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 var api = client.UsdFuturesApi;
                 using CryptoDatabase database = new();
                 database.Open();
-               
+
 
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
@@ -60,7 +60,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 SortedList<string, CryptoSymbol> activeSymbols = [];
                 using (var transaction = database.BeginTransaction())
                 {
-                    List <CryptoSymbol> cache = [];
+                    List<CryptoSymbol> cache = [];
                     try
                     {
                         foreach (var symbolData in symbolInfo.Data.Symbols)
@@ -71,7 +71,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 if (symbolData.ContractType != ContractType.Perpetual)
                                 {
 #if DEBUG
-                                    GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
+                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} contracttype != {ContractType.Perpetual}");
 #endif
                                     continue;
                                 }
@@ -100,7 +100,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (double)volume;
                                 else
                                     symbol.Volume = 0;
 

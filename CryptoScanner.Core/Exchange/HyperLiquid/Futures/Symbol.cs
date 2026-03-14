@@ -73,7 +73,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     List<CryptoSymbol> cache = [];
                     try
                     {
-                        for (int i= 0; i < symbolInfo.Data.ExchangeInfo.Symbols.Count(); i++)
+                        for (int i = 0; i < symbolInfo.Data.ExchangeInfo.Symbols.Count(); i++)
                         {
                             var tickerData = symbolInfo.Data.Tickers[i];
                             var symbolData = symbolInfo.Data.ExchangeInfo.Symbols[i];
@@ -128,7 +128,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (double)volume;
                                 else
                                     symbol.Volume = 0;
 

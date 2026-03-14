@@ -7,9 +7,9 @@ using CryptoScanner.Core.Trader;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
-public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : SignalSbmBase(symbol, interval, candle)
+public class SignalSbmBaseLong : SignalSbmBase
 {
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData candle, out string response)
     {
         // Er recovery is via de macd
         if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
@@ -18,13 +18,13 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
             return false;
         }
 
-        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
             !candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
             return false;
-        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage && 
+        if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
             !candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
             return false;
-        if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage && 
+        if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
             !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
             return false;
 
@@ -37,7 +37,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
 
     public override bool AllowStepIn(CryptoSignal signal)
     {
-        if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
+        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
             return false;
 
 
@@ -45,9 +45,9 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // ********************************************************************
         if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
         {
-            if (CandleLast.Close <= candlePrev!.Close)
+            if (CandleLast.Candle.Close <= candlePrev!.Candle.Close)
             {
-                ExtraText = $"Price {candlePrev!.Close:N8} goes down even more {CandleLast.Close:N8}";
+                ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes down even more {CandleLast.Candle.Close:N8}";
                 return false;
             }
 
@@ -180,7 +180,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // ********************************************************************
         // Instaptijd verstreken (oneindig wachten is geen optie)
         //if (CandleLast?.OpenTime - signal.EventTime > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
-        if (CandleLast?.OpenTime.Minutes - CandleTime.FromDateTime(signal.CloseDate).Minutes > GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration)
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;
@@ -213,7 +213,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         //    return true;
         //}
 
-        if (CandleLast?.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
+        if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
         {
             ExtraText = "Close of LastPrice above bb.upper";
             return true;
@@ -227,7 +227,7 @@ public class SignalSbmBaseLong(CryptoSymbol symbol, CryptoInterval interval, Cry
         // okay, ff wachten - slope van de laatste 5 candles
         // Die slope werkt niet lekker vindt ik, nog eens nazoeken
         // Er een candle onder de bb opent of sluit (eigenlijk overbodig icm macd)
-        //if (CandleLast.CandleData.SlopeRsi < 0) 
+        //if (CandleLast.CandleData.SlopeRsi < 0)
         //{
         //    ExtraText = "Slope RSI < 0";
         //    return true;

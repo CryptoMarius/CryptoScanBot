@@ -1,6 +1,6 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using Coinbase.Net.Enums;
 
-using Coinbase.Net.Enums;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Exchange.Coinbase.Spot;
 

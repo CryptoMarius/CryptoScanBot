@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Trend;
 
 using System.Collections.Concurrent;
 
@@ -36,52 +35,27 @@ public class ZoneThreadCalculate
                 //GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name} {interval.Name}");
 
                 var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                var symbolData = symbol.Data;
-                var symbolDataInterval = symbolData.Get(interval.IntervalPeriod);
+                var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
 
-
-                ZoneSession session = new()
-                {
-                    SymbolBase = symbol.Base,
-                    SymbolQuote = symbol.Quote,
-                    IntervalName = interval.Name,
-                    ActiveInterval = interval.IntervalPeriod,
-                    ShowDlzZones = true,
-                    ShowFibRetracement = false,
-                    ShowFibZigZag = false,
-                    ForceCalculation = true,
-                    UseOptimizing = false,
-                    Deviation = 1.0m,
-                    TrendType = TrendType.Primary,
-                };
-                
-
-                ZoneConfig data = new()
-                {
-                    Exchange = symbol.Exchange,
-                    Symbol = symbol,
-                    Interval = interval,
-                    SymbolInterval = symbolInterval,
-                };
-                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
-                data.IndicatorList.Add((trend.TrendType, trend.UseHighLow), 
-                    new(trend.TrendType, trend.UseHighLow, 1.0m));
-
-
-
-                ZoneDlz.LoadZonesForSymbol(symbol);
+                //var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
+                //TrendZigZagIndicatorList trendZigZagIndicatorList = [];
+                //trendZigZagIndicatorList.Add((trend.TrendType, trend.UseHighLow),
+                //    new(trend.TrendType, trend.UseHighLow, 1.0m));
 
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+                ZoneDlz.LoadZonesForSymbol(symbol);
 
                 // avoid candles being removed...
                 symbol.Data.CalculatingZones = true;
                 try
                 {
-                    session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-                    session.MaxDate = IntervalTools.StartOfIntervalCandle(session.MaxDate, interval.Duration);
-                    session.MinDate = session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration;
-                    await ZoneDlz.CalculateDlzBoxesAsync(null, session, data, loadedCandlesInMemory);
-                    await ZoneFvg.CalculateFvgZonesAsync(null, data.Symbol, interval, loadedCandlesInMemory);
+                    int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+                    CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+                    CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
+                    //await ZoneDlz.LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
+
+                    await ZoneDlz.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+                    await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
                 }
                 finally
                 {
@@ -90,11 +64,10 @@ public class ZoneThreadCalculate
                     _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
                     symbol.Data.CalculatingZones = false;
                 }
-
             }
         }
     }
-    
+
     public async Task ExecuteAsync()
     {
         //GlobalData.AddTextToLogTab("Starting task for calculating zones");

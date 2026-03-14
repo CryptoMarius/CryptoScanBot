@@ -85,31 +85,30 @@ public class SignalPrepare
 
 
 
-    public static Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> Execute(
-        CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
+    public static CryptoIndicatorDataList Execute(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
-        Dictionary<CryptoIntervalPeriod, List<CryptoCandle>> preparedHistoryCandles = [];
+        CryptoIndicatorDataList indicatorDataList = [];
 
-        // Prepare all the indicators on each interval
+        // Prepare all the indicators on the requested intervals
+        // The indexList contains only the checked intervals for the normal strategies
         if (Preparing.TryGetValue(SignalPrepareKind.Indicator, out SortedList<string, CryptoInterval>? indexList))
         {
             foreach (var interval in indexList.Values)
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    CandleTime candleOpenTime = lastCandle1mCloseTime - interval.Duration;
-                    List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(symbol, interval, candleOpenTime, out string _);
+                    // Remark: The candle in the requested interval could be missing in action.
+                    // Its something I did not expect in the beginning of this application.
 
-                    if (history != null)
-                    {
-                        preparedHistoryCandles.TryAdd(interval.IntervalPeriod, history);
-                        CandleIndicatorData.CalculateIndicators(symbol, interval, history);
-                    }
+                    // To the start of the candle for that interval
+                    CandleTime candleOpenTime = lastCandle1mCloseTime - interval.Duration;
+                    indicatorDataList.CalculateIndicatorsForInterval(symbol, interval, candleOpenTime, interval.IntervalPeriod);
                 }
             }
         }
 
         // Scan dlz zones
+        // The indexList contains only the checked intervals for the dlz strategy
         if (Preparing.TryGetValue(SignalPrepareKind.Dlz, out indexList))
         {
             foreach (var interval in indexList.Values)
@@ -135,18 +134,18 @@ public class SignalPrepare
 
 
         // Scan fvg zones
+        // The indexList contains only the checked intervals for the fvg strategy
         if (Preparing.TryGetValue(SignalPrepareKind.Fvg, out indexList))
         {
             foreach (var interval in indexList.Values)
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    // Remark: GlobalData.ThreadZoneCalculate also calculates the FVG?
                     ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
                 }
             }
         }
 
-        return preparedHistoryCandles;
+        return indicatorDataList;
     }
 }

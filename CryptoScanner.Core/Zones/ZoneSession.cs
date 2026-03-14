@@ -1,9 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
-
-using System.Text.Json;
 
 namespace CryptoScanner.Core.Zones;
 
@@ -23,18 +20,17 @@ public class ZoneSession
     public string SymbolBase { get; set; } = "BTC";
     public string SymbolQuote { get; set; } = "USDT";
     public string IntervalName { get; set; } = "1h";
+    public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // Period = UtcNow - X candles
     public CandleTime MinDate { get; set; }
     public CandleTime MaxDate { get; set; }
-    public CryptoIntervalPeriod ActiveInterval { get; set; } = CryptoIntervalPeriod.interval1h;
 
     // hidden
     public bool UseOptimizing { get; set; } = false;
-    public decimal Deviation { get; set; } = 1m;
+    //public decimal Deviation { get; set; } = 1m;
 
     // trend
-    //public TrendType TrendIndicator { get; set; } = TrendType.Primary;
     public TrendType TrendType { get; set; } = TrendType.Primary;
     public bool TrendShowZigZag { get; set; } = false;
 
@@ -43,9 +39,7 @@ public class ZoneSession
     public bool ShowFibRetracement { get; set; } = false;
     public bool ShowFibZigZag { get; set; } = false;
 
-    // options
-    public bool ShowPoints { get; set; } = false; // Pivot points
-    public bool ShowSignals { get; set; } = false; // Signals from the analyzer
+    // Indicators
     public bool ShowDlzZones { get; set; } = false; // Dominant Liquidity Zones
     public bool ShowFvgZones { get; set; } = false; // Fear Value Gaps
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
@@ -55,6 +49,11 @@ public class ZoneSession
     public bool ShowBollingerBand { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = true;
     //public bool ShowTrendLines { get; set; } = false;
+
+    // options
+    public bool ShowPoints { get; set; } = false; // Pivot points (debug)
+    public bool ShowSignals { get; set; } = false; // Signals from the analyzer
+    public bool ShowPositions { get; set; } = false; // Positions from the trader
 
     // misc
     public bool ForceCalculation { get; set; } = false;

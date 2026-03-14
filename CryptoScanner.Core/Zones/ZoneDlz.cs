@@ -8,7 +8,7 @@ using Dapper;
 
 namespace CryptoScanner.Core.Zones;
 
-// DLZ - Dominant Liquidity ZonesDlz 
+// DLZ - Dominant Liquidity ZonesDlz
 
 public class ZoneDlz
 {
@@ -23,7 +23,7 @@ public class ZoneDlz
         }
 
         using var database = new CryptoDatabase();
-        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null order by CreateTime";
+        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null order by OpenTime";
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             PutZoneInMemory(zone);
@@ -40,7 +40,7 @@ public class ZoneDlz
 
         using var database = new CryptoDatabase();
 
-        string sql = "select * from zone where SymbolId = @SymbolId order by CreateTime"; //and Kind=1 
+        string sql = "select * from zone where SymbolId = @SymbolId order by OpenTime"; //and Kind=1
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbol.Id }))
         {
             PutZoneInMemory(zone);
@@ -73,7 +73,7 @@ public class ZoneDlz
 
                         // Creation date is the date of the last swing point (SH/SL)
                         // TODO: The last swing low and high are now extracted from the boundaries of the zone, that is not 100% correct
-                        CandleTime timeLastSwingPoint = CandleTime.AlignFromDateTime(zone.CreateTime, 0);
+                        CandleTime timeLastSwingPoint = zone.OpenTime;
                         if (symbolInterval.DlzAdmin.TimeLastSwingPoint == null || timeLastSwingPoint > symbolInterval.DlzAdmin.TimeLastSwingPoint)
                         {
                             symbolInterval.DlzAdmin.TimeLastSwingPoint = timeLastSwingPoint;
@@ -89,30 +89,30 @@ public class ZoneDlz
     }
 
 
-    private static void CreateZonesFromZigZag(ZoneConfig data, List<ZigZagResult> zigZagList, List<CryptoZone> zones)
+    private static void CreateZonesFromZigZag(CryptoSymbol symbol, CryptoInterval interval,
+        List<ZigZagResult> zigZagList, List<CryptoZone> zones)
     {
         foreach (var zigZag in zigZagList)
         {
-            if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newCreatedZones (also the closed ones)
+            if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newZones (also the closed ones)
             {
                 CryptoZone zone = new()
                 {
                     Kind = CryptoZoneKind.DominantLevel,
                     Strength = zigZag.Strength, // depending on the percentage of the zone "intro"
-                    CreateTime = zigZag.Candle.Date,
-                    ExchangeId = data.Symbol.Exchange.Id,
-                    Exchange = data.Symbol.Exchange,
-                    SymbolId = data.Symbol.Id,
-                    Symbol = data.Symbol,
-                    IntervalId = data.Interval.Id,
-                    Interval = data.Interval,
+                    ExchangeId = symbol.Exchange.Id,
+                    Exchange = symbol.Exchange,
+                    SymbolId = symbol.Id,
+                    Symbol = symbol,
+                    IntervalId = interval.Id,
+                    Interval = interval,
                     OpenTime = zigZag.Candle.OpenTime,
                     Top = zigZag.Top,
                     Bottom = zigZag.Bottom,
                     Side = zigZag.PointType == 'L' ? CryptoTradeSide.Long : CryptoTradeSide.Short,
                     IsValid = zigZag.IsValid,
                     CloseTime = zigZag.CloseDate,
-                    Description = $"{data.Interval.Name}: {zigZag.Percentage:N2}% {zigZag.NiceIntro}",
+                    Description = $"{interval.Name}: {zigZag.Percentage:N2}% {zigZag.NiceIntro}",
                 };
                 zones.Add(zone);
             }
@@ -120,28 +120,10 @@ public class ZoneDlz
     }
 
 
-    public static void SaveZonesForSymbol(ZoneConfig data, List<ZigZagResult> zigZagList, DatabaseStatistics dbStats)
-    {
-        // We are going to rebuild all the dlz lists
-        var symbolData = data.Symbol.Data;
-        var symbolIntervalData = symbolData.Get(data.Interval.IntervalPeriod);
-
-        // Collect old zones
-        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> zonesFromDatabase = [];
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongOpen, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortOpen, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.LongClosed, dbStats);
-        ZoneTools.CreateZoneIndex(zonesFromDatabase, symbolIntervalData.DlzZones.ShortClosed, dbStats);
-        symbolIntervalData.DlzZones.Reset();
-
-        // Create new zones
-        List<CryptoZone> newCreatedZones = [];
-        CreateZonesFromZigZag(data, zigZagList, newCreatedZones);
-
-        // Rebuild
-        ZoneTools.AddZonesToInternalLists(symbolIntervalData.DlzZones, zonesFromDatabase, newCreatedZones, dbStats);
-        ZoneTools.DeleteRemainingZones(zonesFromDatabase, dbStats);
-    }
+    //private static void CombineAndSaveZones(CryptoSymbol symbol, CryptoInterval interval,
+    //    List<ZigZagResult> zigZagList, DatabaseStatistics statistics)
+    //{
+    //}
 
 
     private static bool UnzoomedPercentageBelowMinimum(ZigZagResult zigZag)
@@ -202,7 +184,7 @@ public class ZoneDlz
 
 
     public static async Task MakeDominantAndZoomInAsync(CryptoSymbol symbol, CryptoInterval interval,
-        ZigZagResult zigZag, decimal top, decimal bottom, 
+        ZigZagResult zigZag, decimal top, decimal bottom,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         zigZag.Top = top;
@@ -216,7 +198,7 @@ public class ZoneDlz
         if (zigZag.PointType == 'L')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
                 if (candle.Low < zigZag.Bottom)
                 {
@@ -236,7 +218,7 @@ public class ZoneDlz
         else if (zigZag.PointType == 'H')
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval!.IntervalPeriod);
-            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle? candle))
+            if (symbolInterval.CandleList.TryGetValue(zigZag.Candle.OpenTime + interval.Duration, out CryptoCandle candle))
             {
                 if (candle.High > zigZag.Top)
                 {
@@ -259,7 +241,7 @@ public class ZoneDlz
             //ScannerLog.Logger.Trace($"{symbol.Name} {interval.Name} Dominant pivot corrected {zigZag.Candle.DateLocal} {zigZag.PointType} top {zigZag.Top} bottom {zigZag.Bottom} perc={zigZag.Percentage:N2}");
         }
 
-        // Is the (unzoomed) percentage between the configured limits? 
+        // Is the (unzoomed) percentage between the configured limits?
         // Or is the percentage alread below the zoom-limit? (saves time)
         if (UnzoomedPercentageBelowMinimum(zigZag)
             || UnzoomedPercentageAboveMaximum(zigZag)
@@ -308,7 +290,7 @@ public class ZoneDlz
                         //DateTime loopDebug = CandleTools.GetUnixDate(loop);
                         if (loop >= zigZag.Candle.OpenTime) // really?
                         {
-                            if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                            if (zoomInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                             {
                                 if (zigZag.PointType == 'L')
                                 {
@@ -357,10 +339,11 @@ public class ZoneDlz
         }
     }
 
-    public static async Task CalculateDlzZonesAsync(AddTextEvent? sender, ZoneConfig data, ZigZagIndicator indicator, 
+    public static async Task CalculateDlzAsync(AddTextEvent? sender,
+        CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
-        //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newCreatedZones");
+        //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newZones");
 
         ZigZagResult? previous = null;
         ZigZagResult? previous2 = null;
@@ -368,16 +351,16 @@ public class ZoneDlz
         {
             if (previous != null && previous2 != null && !zigZag.Dummy)
             {
-                sender?.Invoke($"Calculating dlz zones {data.Symbol.Exchange.Name} {data.Symbol.Name} {data.Interval.Name} {zigZag.Candle.Date}");
+                sender?.Invoke($"Calculating dlz zones {symbol.Exchange.Name} {symbol.Name} {interval.Name} {zigZag.Candle.Date}");
 
                 // Check: a dominant Low leading to a new Higher High
                 if (zigZag.PointType == 'H' && previous.PointType == 'L' && previous2.PointType == 'H' && previous2.Value < zigZag.Value)
-                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
+                    await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         Math.Max(previous.Candle.Open, previous.Candle.Close), previous.Candle.Low, loadedCandlesInMemory);
 
                 // Check: a dominant High leading to a new Lower Low
                 if (zigZag.PointType == 'L' && previous.PointType == 'H' && previous2.PointType == 'L' && previous2.Value > zigZag.Value)
-                    await MakeDominantAndZoomInAsync(data.Symbol, data.SymbolInterval.Interval, previous,
+                    await MakeDominantAndZoomInAsync(symbol, interval, previous,
                         previous.Candle.High, Math.Min(previous.Candle.Open, previous.Candle.Close), loadedCandlesInMemory);
             }
             previous2 = previous;
@@ -386,95 +369,19 @@ public class ZoneDlz
     }
 
 
-    public static void CheckZones(ZoneConfig data, ref CandleTime key, CandleTime checkUpTo, long delay, List<ZigZagResult> zonesLong, List<ZigZagResult> zonesShort)
-    {
-        while (key <= checkUpTo)
-        {
-            if (data.SymbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
-            {
-                // Note: A candle can break multiple long or short boxes
-
-                foreach (var zigZag in zonesLong)
-                {
-                    if (key > zigZag.Candle.OpenTime + delay && candle.Low < zigZag.Top)
-                    {
-                        zigZag.CloseDate = candle.OpenTime + data.SymbolInterval.Interval.Duration;
-                        zonesLong.Remove(zigZag);
-                        break;
-                    }
-                }
-                foreach (var zigZag in zonesShort)
-                {
-                    if (key > zigZag.Candle.OpenTime + delay && candle.High > zigZag.Bottom)
-                    {
-                        zigZag.CloseDate = candle.OpenTime + data.SymbolInterval.Interval.Duration;
-                        zonesShort.Remove(zigZag);
-                        break;
-                    }
-                }
-            }
-            key += data.SymbolInterval.Interval.Duration;
-        }
-    }
-
-    
-    public static void CalculateBrokenBoxes(ZoneConfig data, ZigZagIndicator indicator)
-    {
-        List<ZigZagResult> zonesLong = [];
-        List<ZigZagResult> zonesShort = [];
-
-        long delay = 4 * data.SymbolInterval.Interval.Duration; // TODO, not correct!
-        CandleTime maxTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-
-        if (indicator.ZigZagList.Count > 0)
-        {
-            // brute force, this is going to take a lot of iterations..
-            int last = indicator.ZigZagList.Count - 1;
-            CandleTime key = indicator.ZigZagList.First().Candle.OpenTime + delay;
-
-            for (int i = 0; i <= last; i++)
-            {
-                var zigZag = indicator.ZigZagList[i];
-
-                if (zigZag.Dominant && !zigZag.Dummy) // all newCreatedZones (also the closed ones) //  && zigZag.IsValid
-                {
-                    // The newCreatedZones are growing as we iterate, broken newCreatedZones will be removed to keep the list small
-                    if (zigZag.PointType == 'L')
-                        zonesLong.Add(zigZag);
-                    else
-                        zonesShort.Add(zigZag);
-
-                    CandleTime checkUpTo;
-                    if (i < last)
-                        checkUpTo = zigZag.Candle.OpenTime;
-                    else
-                        checkUpTo = maxTime;
-
-                    CheckZones(data, ref key, checkUpTo, delay, zonesLong, zonesShort);
-                }
-                else
-                {
-                    // Close it just to be sure..
-                    zigZag.CloseDate = zigZag.Candle.OpenTime + data.SymbolInterval.Interval.Duration;
-                }
-            }
-            CheckZones(data, ref key, maxTime, delay, zonesLong, zonesShort);
-        }
-    }
-
-    internal static void CalculateIntroZone(ZoneConfig data, ZigZagIndicator indicator)
+    internal static void CalculateIntroZone(CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator)
     {
         // Determine if a liq. box/zone has an interesting intro
         if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
         {
-            //var indicator = data.IndicatorList[(session.TrendType, session.UseHighLow)];
+            //var trendZigZagIndicator = data.IndicatorList[(session.TrendType, session.UseHighLow)];
 
             ZigZagResult? previous = null;
             foreach (var zigZag in indicator.ZigZagList)
             {
                 if (previous != null)
                 {
-                    if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newCreatedZones (also the closed ones)
+                    if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newZones (also the closed ones)
                     {
                         decimal boxLimit;
                         if (zigZag.PointType == 'L')
@@ -483,14 +390,15 @@ public class ZoneDlz
                             boxLimit = zigZag.Top;
                         decimal price = boxLimit;
 
+                        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                         CandleTime max = zigZag.Candle.OpenTime;
-                        CandleTime min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * data.Interval.Duration;
+                        CandleTime min = max - GlobalData.Settings.Signal.ZonesDlz.ZoneStartCandleCount * interval.Duration;
                         // Is it on the right of the last zigzag point?
                         if (min < previous.Candle.OpenTime)
                             min = previous.Candle.OpenTime;
                         while (min < max)
                         {
-                            if (data.SymbolInterval.CandleList.TryGetValue(min, out CryptoCandle? candle))
+                            if (symbolInterval.CandleList.TryGetValue(min, out CryptoCandle candle))
                             {
                                 if (zigZag.PointType == 'L')
                                 {
@@ -503,7 +411,7 @@ public class ZoneDlz
                                         price = candle.Low;
                                 }
                             }
-                            min += data.SymbolInterval.Interval.Duration;
+                            min += interval.Duration;
                         }
 
 
@@ -514,7 +422,7 @@ public class ZoneDlz
                         if (perc <= GlobalData.Settings.Signal.ZonesDlz.ZoneStartPercentage)
                             zigZag.Strength = CryptoZoneStrength.Weak;
                         else
-                            zigZag.Strength = CryptoZoneStrength.Strong; 
+                            zigZag.Strength = CryptoZoneStrength.Strong;
                     }
                 }
                 previous = zigZag;
@@ -523,87 +431,225 @@ public class ZoneDlz
     }
 
 
-    public static async Task CalculateDlzBoxesAsync(AddTextEvent? sender, ZoneSession session,
-        ZoneConfig data, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    public static async Task<(CandleTime minDate, CandleTime maxDate)> LoadHistoricCandles(CryptoSymbol symbol, CryptoInterval interval,
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+    {
+        // Determine the period (using the candlecount)
+        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+        CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
+        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
+
+#if DEBUG
+        var count = symbol.GetSymbolInterval(interval).CandleList.Count;
+        GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} dlz from {minDate.ToLocalTime()} .. {maxDate.ToLocalTime()} candles = {count}");
+#endif
+        return (minDate, maxDate);
+    }
+
+
+    public static async Task CalculatePivots(CryptoSymbol symbol, CryptoInterval interval,
+        CandleTime minDate, CandleTime maxDate, TrendZigZagIndicatorList trendZigZagIndicatorList)
+    {
+        await symbol.Data.CandleLock.WaitAsync();
+        try
+        {
+            var candleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
+
+            // Calculate "indicators"
+            CandleTime loop = minDate;
+            while (loop <= maxDate)
+            {
+                if (candleList.TryGetValue(loop, out CryptoCandle candle))
+                {
+                    foreach (var trendZigZagIndicator in trendZigZagIndicatorList.Values)
+                    {
+                        trendZigZagIndicator.Calculate(candle, true);
+                    }
+                }
+                loop += interval.Duration;
+            }
+
+
+            // Remember the last swing point for the automatic zone calculation
+            CryptoSymbolInterval symbolIntervalData = symbol.Data.Get(interval.IntervalPeriod);
+
+            var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
+            var indicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
+            if (indicator.LastSwingPoint != null)
+                symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
+            if (indicator.LastSwingLow != null)
+                symbolIntervalData.DlzAdmin.LastSwingLow = indicator.LastSwingLow.Value;
+            if (indicator.LastSwingHigh != null)
+                symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
+
+            //if (true) //session.UseBatchProcess
+            //{
+            foreach (var indicatorX in trendZigZagIndicatorList.Values)
+                indicatorX.FinishBatch();
+            //data.Indicator.FinishBatch();
+            //}
+        }
+        finally
+        {
+            symbol.Data.CandleLock.Release();
+        }
+
+    }
+
+    private static void CheckAndMarkBrokenZones(CryptoInterval interval,
+        CryptoCandleList candleList, CryptoSymbolIntervalZones zones)
+    {
+        var oldest1 = zones.LongOpen.MinBy(z => z.OpenTime);
+        var oldest2 = zones.ShortOpen.MinBy(z => z.OpenTime);
+
+        CandleTime? startTime = null;
+        if (oldest1 != null) startTime = oldest1.OpenTime;
+        if (oldest2 != null && (startTime == null || oldest2.OpenTime < startTime))
+            startTime = oldest2.OpenTime;
+
+        if (startTime != null && candleList.Count > 0)
+        {
+            CandleTime loop = startTime.Value;
+            CandleTime loopEnd = candleList.Keys.Last();
+
+            while (loop <= loopEnd)
+            {
+                if (candleList.TryGetValue(loop, out CryptoCandle candle))
+                {
+                    List<CryptoZone> touched = [];
+                    //CheckBrokenZones(zones, candle, touched);
+
+                    // LongOpen sorted descending by Top. Stop as soon as candle.Low >= zone.Top
+                    if (zones.LongOpen.Count > 0) //&& candle.Low < zones.LongOpen[0].Top
+                    {
+                        foreach (var zone in zones.LongOpen)
+                        {
+                            if (candle.Low >= zone.Top)
+                                break;
+                            if (candle.OpenTime >= zone.OpenTime + zone.Interval.Duration)
+                            {
+                                //if (candle.High <= zone.Bottom)
+                                //    touched.Add(zone);
+                                //if (candle.Low < zone.Top)
+                                //    touched.Add(zone);
+                                touched.Add(zone);
+                            }
+                        }
+                    }
+
+
+                    // ShortOpen sorted ascending by Bottom. Stop as soon as candle.High <= zone.Bottom
+                    if (zones.ShortOpen.Count > 0) //&& candle.High > zones.ShortOpen[0].Bottom
+                    {
+                        foreach (var zone in zones.ShortOpen)
+                        {
+                            if (candle.High <= zone.Bottom)
+                                break;
+                            if (candle.OpenTime >= zone.OpenTime + zone.Interval.Duration)
+                            {
+                                // Close old invalid zone without notifications..
+                                //if (candle.Low >= zone.Top)
+                                //    touched.Add(zone);
+                                //if (candle.High > zone.Bottom)
+                                //    touched.Add(zone);
+                                touched.Add(zone);
+                            }
+                        }
+                    }
+
+
+                    // Close and move to closed list; CloseTime is picked up by AddZonesToInternalLists for DB save
+                    foreach (var zone in touched)
+                    {
+                        zone.CloseTime = candle.OpenTime + interval.Duration;
+
+                        if (zone.Side == CryptoTradeSide.Long)
+                        {
+                            zones.LongOpen.Remove(zone);
+                            zones.LongClosed.Add(zone);
+                        }
+                        else
+                        {
+                            zones.ShortOpen.Remove(zone);
+                            zones.ShortClosed.Add(zone);
+                        }
+                    }
+
+                    // Early exit when all zones are closed
+                    if (zones.LongOpen.Count + zones.ShortOpen.Count == 0)
+                        break;
+                }
+                loop += interval.Duration;
+            }
+        }
+    }
+
+
+    public static async Task CalculateZonesAsync(AddTextEvent? sender,
+        CryptoSymbol symbol, CryptoInterval interval,
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
         try
         {
-            // Determine the period
-            CandleTime unixCurrentTime = CandleTime.FromDateTime(DateTime.UtcNow);  // todo Emulator date?
-            CandleTime fetchFrom = IntervalTools.StartOfIntervalCandle(unixCurrentTime, data.SymbolInterval.Interval.Duration);
-            fetchFrom -= GlobalData.Settings.Signal.ZonesDlz.CandleCount * data.SymbolInterval.Interval.Duration;
-
-            //// Load candles from disk
-            //if (!loadedCandlesInMemory.TryGetValue(data.Interval.IntervalPeriod, out bool _))
-            //    await ZoneCandleEngine.ReadCandlesFromDiskAsync(data.Symbol, data.Interval);
-            //loadedCandlesInMemory.TryAdd(data.Interval.IntervalPeriod, true); // save alway's because of new candles
-
-            //// Load candles from exchange
-            //if (await ZoneCandleEngine.FetchFrom(data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount))
-            //    loadedCandlesInMemory[data.Interval.IntervalPeriod] = true;
-
-            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, data.Symbol, data.Interval, fetchFrom, GlobalData.Settings.Signal.ZonesDlz.CandleCount);
-            if (data.SymbolInterval.CandleList.Count == 0)
-                return;
-
-
-            await data.Symbol.Data.CandleLock.WaitAsync();
-            try
-            {
-                // Calculate indicators
-                foreach (var candle in data.SymbolInterval.CandleList.Values)
-                {
-                    if (candle.OpenTime >= session.MinDate && candle.OpenTime <= session.MaxDate)
-                    {
-                        foreach (var indicatorX in data.IndicatorList.Values)
-                        {
-                            indicatorX.Calculate(candle, true);
-                        }
-                    }
-                }
-
-                // Remember the last swing point for the automatic zone calculation
-                CryptoSymbolData symbolData = data.Symbol.Data;
-                CryptoSymbolInterval symbolIntervalData = symbolData.Get(data.Interval.IntervalPeriod);
-
-                //var trend = session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
-                var indicator = data.IndicatorList[(trend.TrendType, trend.UseHighLow)];
-                if (indicator.LastSwingPoint != null)
-                    symbolIntervalData.DlzAdmin.TimeLastSwingPoint = indicator.LastSwingPoint.Candle.OpenTime;
-                if (indicator.LastSwingLow != null)
-                    symbolIntervalData.DlzAdmin.LastSwingLow = indicator.LastSwingLow.Value;
-                if (indicator.LastSwingHigh != null)
-                    symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
-
-                //if (true) //session.UseBatchProcess
-                //{
-                foreach (var indicatorX in data.IndicatorList.Values)
-                    indicatorX.FinishBatch();
-                //data.Indicator.FinishBatch();
-                //}
-            }
-            finally
-            {
-                data.Symbol.Data.CandleLock.Release();
-            }
-
+            var (minDate, maxDate) = await LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
 
             // Mark the dominant lows or highs
-            if (session.ForceCalculation)
+            //if (forceCalculation)
             {
-                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
-                //var trend = session.TrendType == TrendType.Primary? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-                var indicator = data.IndicatorList[(trend.TrendType, trend.UseHighLow)];
-                await CalculateDlzZonesAsync(sender, data, indicator, loadedCandlesInMemory);
-                CalculateIntroZone(data, indicator);
-                CalculateBrokenBoxes(data, indicator);
+                CryptoSymbolData symbolData = symbol.Data;
+                var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
+                CryptoSymbolIntervalZones zones = symbolIntervalData.DlzZones;
 
-                DatabaseStatistics dbStats = new();
-                SaveZonesForSymbol(data, indicator.ZigZagList, dbStats);
-                GlobalData.AddTextToLogTab($"{data.Symbol.Name} {data.Interval.Name} Zones calculated ({trend.TrendType}, {trend.UseHighLow}), inserted={dbStats.Inserted} " +
-                    $"modified={dbStats.Modified} deleted={dbStats.Deleted} " +
-                    $"untouched={dbStats.Untouched} total={dbStats.Total}");
+                if (symbol.Name == "1000PEPEUSDT")
+                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                        $"dlz zones long = {zones.LongOpen.Count} " +
+                        $"dlz zones short = {zones.ShortOpen.Count} ");
+
+                var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
+                TrendZigZagIndicatorList trendZigZagIndicatorList = [];
+                trendZigZagIndicatorList.Add((trend.TrendType, trend.UseHighLow), new(trend.TrendType, trend.UseHighLow, 1.0m));
+                var trendZigZagIndicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
+
+                await CalculatePivots(symbol, interval, minDate, maxDate, trendZigZagIndicatorList);
+                await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
+                CalculateIntroZone(symbol, interval, trendZigZagIndicator);
+
+                // Collect old zones and reset zones
+                DatabaseStatistics statistics = new();
+                SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
+                ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
+                zones.Reset();
+
+                // Create new zones from the zigzag
+                List<CryptoZone> newZones = [];
+                CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
+
+                // Build a temporary sorted structure for the broken zone check (avoids a second Reset + re-add)
+                CryptoSymbolIntervalZones tempZones = new();
+                foreach (var zone in newZones)
+                    tempZones.Add(zone);
+
+                // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
+                CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
+
+                // Rebuild (now with correct CloseTime on broken zones)
+                ZoneTools.AddZonesToInternalLists(zones, oldZones, newZones, statistics);
+                ZoneTools.DeleteRemainingZones(oldZones, statistics);
+
+                var count = symbol.GetSymbolInterval(interval).CandleList.Count;
+                GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                    $"mindate = {minDate.ToLocalTime():yyyy-MM-dd HH:mm}, " +
+                    $"maxdate = {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                    $"Candles = {count}," +
+                    $"Zones calculated ({trend.TrendType}, {trend.UseHighLow}), " +
+                    $"inserted={statistics.Inserted} " +
+                    $"modified={statistics.Modified} deleted={statistics.Deleted} " +
+                    $"untouched={statistics.Untouched} total={statistics.Total}");
             }
 
 

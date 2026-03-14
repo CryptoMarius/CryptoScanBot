@@ -1,13 +1,7 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Signal;
-
-using Dapper.Contrib.Extensions;
-
-using Skender.Stock.Indicators;
+﻿using Skender.Stock.Indicators;
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Model;
 
@@ -40,8 +34,9 @@ namespace CryptoScanner.Core.Model;
 //decimal 	±1.0 x 10-28 to ±7.9228 x 1028 	28-29 digits 	16 bytes System.Decimal                     16 bytes
 
 //candle
-// 1 * long 8           =  8
-// 5 decimals * 16      = 80
+// opentime als uint   =   4
+// 4 decimals * 16      = 64
+// volume as double      = 8
 //---------------------------
 // Total                = 88 bytes per candle, for 4.000.000 candles = 352 Mb (without dictionary keys etc)
 
@@ -51,39 +46,89 @@ namespace CryptoScanner.Core.Model;
 
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public class CryptoCandle : IQuote
-//public struct CryptoCandle : IQuote
+public struct CryptoCandle : IQuote
 {
-    public CandleTime OpenTime { get; set; } // a long is 64 bit / 8 bytes, we can reduce this (uint, count only the minutes, value not needed)
-    public decimal Open { get; set; } // a decimal is an amazing 16 bytes
-    public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
-    public decimal Low { get; set; }
-    public decimal Close { get; set; }
-    public decimal Volume { get; set; } // float or double will suffice (but with rounding errors)
+    public CandleTime OpenTime { get; set; } // uint
+    //public decimal Open { get; set; } // a decimal is an amazing 16 bytes
+    //public decimal High { get; set; } // Could trick this in amount of ticks away from open +/-, problem is the non fixed tick size..
+    //public decimal Low { get; set; }
+    //public decimal Close { get; set; }
 
-    // Idea, we store it as uint together with the factor, this saves 50% memory
-    //public uint OpenStorage { get; set; }
-    //public uint HighStorage { get; set; }
-    //public uint LowStorage { get; set; }
-    //public uint CloseStorage { get; set; }
+    // works fine...
+    // Storage fields (internal, in satoshi's)
+    //private const decimal SatoshiMultiplier = 100_000_000m;
+    //private long _openSatoshi;
+    //public decimal Open { get => _openSatoshi / SatoshiMultiplier; set => _openSatoshi = (long)(value * SatoshiMultiplier);}
+    //private long _highSatoshi;
+    //public decimal High { get => _highSatoshi / SatoshiMultiplier; set => _highSatoshi = (long)(value * SatoshiMultiplier);}
+    //private long _lowSatoshi;
+    //public decimal Low { get => _lowSatoshi / SatoshiMultiplier; set => _lowSatoshi = (long)(value * SatoshiMultiplier); }
+    //private long _closeSatoshi;
+    //public decimal Close { get => _closeSatoshi / SatoshiMultiplier; set => _closeSatoshi = (long)(value * SatoshiMultiplier); }
 
-    //// decimal = 16 bytes, long = 8, uint = 4
-    //// 4*16 - 3*4 = 64 - 12 = 52 bytes per candle, is that wurth the effort??
-    //[Computed]
-    //public uint PriceFactor { get; set; }
-    //[Computed]
-    //public decimal OpenDecimal { get { return (long)OpenStorage / PriceFactor; } set { OpenStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal HighDecimal { get { return (long)HighStorage / PriceFactor; } set { HighStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal LowDecimal { get { return (long)LowStorage / PriceFactor; } set { LowStorage = (uint)(value * PriceFactor); } }
-    //[Computed]
-    //public decimal CloseDecimal { get { return (long)CloseStorage / PriceFactor; } set { CloseStorage = (uint)(value * PriceFactor); } }
+    // Properties
+    public byte TickDecimals;                 // 1 byte (aantal decimalen in tickSize)
+    // Pre-calculated tick sizes (0-8 decimals), less costly then Math.Pow()
+    private static readonly decimal[] TickSizeLookup =
+    {
+        1.0m,           // 0 decimals
+        0.1m,           // 1 decimal
+        0.01m,          // 2 decimals
+        0.001m,         // 3 decimals
+        0.0001m,        // 4 decimals
+        0.00001m,       // 5 decimals
+        0.000001m,      // 6 decimals
+        0.0000001m,     // 7 decimals
+        0.00000001m     // 8 decimals
+    };
+    //private decimal TickSize => 1m / (decimal)Math.Pow(10, TickDecimals);
+    private decimal TickSize => TickSizeLookup[TickDecimals];
+    private int _openTicks;                    // 4 bytes
+    public decimal Open { get => _openTicks * TickSize; set => _openTicks = (int)Math.Round(value / TickSize); }
+    private int _highTicks;                    // 4 bytes
+    public decimal High { get => _highTicks * TickSize; set => _highTicks = (int)Math.Round(value / TickSize); }
+    private int _lowTicks;                     // 4 bytes
+    public decimal Low { get => _lowTicks * TickSize; set => _lowTicks = (int)Math.Round(value / TickSize); }
+    private int _closeTicks;                   // 4 bytes
+    public decimal Close { get => _closeTicks * TickSize; set => _closeTicks = (int)Math.Round(value / TickSize); }
 
+    private double _volume;
+    public decimal Volume { get { return (decimal)_volume; } set { _volume = (double)value; } } // float or double will suffice (but with rounding errors)
 
     public DateTime Date { get { return OpenTime.ToDateTime(); } }
     public DateTime DateLocal { get { return OpenTime.ToDateTime().ToLocalTime(); } }
-    public CandleIndicatorData? CandleData { get; set; }
+
+    // Better: Direct calculation
+    public static byte CalculateDecimalsFromTickSize2(decimal tickSize)
+    {
+        // tickSize = 1 / (10^decimals)
+        // decimals = -log10(tickSize)
+
+        if (tickSize <= 0)
+            throw new ArgumentException("TickSize must be positive");
+        byte decimals = (byte)Math.Round(-Math.Log10((double)tickSize));
+        return decimals;
+    }
+
+    public void LoadVersion3(BinaryReader reader)
+    {
+        OpenTime = new CandleTime(reader.ReadUInt32());
+        _openTicks = reader.ReadInt32();
+        _highTicks = reader.ReadInt32();
+        _lowTicks = reader.ReadInt32();
+        _closeTicks = reader.ReadInt32();
+        _volume = reader.ReadDouble();
+    }
+
+    public readonly void SaveVersion3(BinaryWriter writer)
+    {
+        writer.Write(OpenTime.Minutes);
+        writer.Write(_openTicks);
+        writer.Write(_highTicks);
+        writer.Write(_lowTicks);
+        writer.Write(_closeTicks);
+        writer.Write(_volume);
+    }
 }
 
 //
@@ -186,7 +231,10 @@ public class CryptoCandle : IQuote
 public readonly struct CandleTime : IEquatable<CandleTime>, IComparable<CandleTime>
 {
     private const int SecondsPerMinute = 60;
-    public static readonly DateTime Epoch = new(2010, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    // Epoch is Monday 2010-01-04 so that epoch-relative modulo aligns weekly candles to Monday 00:00 UTC,
+    // matching the Binance convention. Shifting by 3 days from Jan 1 (Friday) does not affect sub-daily
+    // or daily intervals because 3 days is an exact multiple of their durations.
+    public static readonly DateTime Epoch = new(2010, 1, 4, 0, 0, 0, DateTimeKind.Utc);
     private static readonly long EpochUnixSec = new DateTimeOffset(Epoch).ToUnixTimeSeconds();
 
     private readonly uint _minutes;
@@ -292,6 +340,7 @@ public readonly struct CandleTime : IEquatable<CandleTime>, IComparable<CandleTi
     }
 
     public DateTime ToDateTime() => Epoch.AddMinutes(_minutes); //CandleTime.ToDateTimeInternal(_minutes);
+    public DateTime ToLocalTime() => Epoch.AddMinutes(_minutes).ToLocalTime(); //CandleTime.ToDateTimeInternal(_minutes);
     public long ToUnixSeconds() => EpochUnixSec + ((long)_minutes * SecondsPerMinute); //CandleTime.ToUnixSecondsInternal(_minutes);
 
     // Align the DateTime parameter to minutes

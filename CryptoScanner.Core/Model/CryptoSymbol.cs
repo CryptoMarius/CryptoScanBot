@@ -43,6 +43,8 @@ public partial class CryptoSymbol
     //can only be incremented in steps of this.
     public decimal PriceTickSize { get; set; }
     [Computed]
+    public byte PriceDecimals { get; set; } = 2;
+    [Computed]
     public string PriceDisplayFormat { get; set; } = "N8";
 
     // TODO: never used in this scanner sofar
@@ -63,7 +65,7 @@ public partial class CryptoSymbol
     public decimal? LastPrice { get; set; } = null;
 
     // Volume in the last 24 hour
-    public decimal Volume { get; set; }
+    public double Volume { get; set; }
 
     /// <summary>
     /// For fetching the trades
@@ -85,26 +87,38 @@ public partial class CryptoSymbol
     // Interval related data like candles and last candle fetched
     public CryptoSymbolData Data { get; set; } = new();
 
-
     public CryptoSymbolInterval GetSymbolInterval(CryptoIntervalPeriod intervalPeriod)
     {
         return Data.SymbolIntervalList[(int)intervalPeriod];
+    }
+
+    public CryptoSymbolInterval GetSymbolInterval(CryptoInterval interval)
+    {
+        return Data.SymbolIntervalList[(int)interval.IntervalPeriod];
     }
 
     public bool EnoughVolume()
     {
         if (QuoteData == null || QuoteData.MinimalVolume == 0)
             return true;
-        if (Volume > 0.9m * QuoteData.MinimalVolume)
+        if (Volume > 0.9 * QuoteData.MinimalVolume)
             return true;
         return false;
     }
 
-    public void ClearCandles()
+    public bool ClearCandles()
     {
+        int count = 0;
         foreach (var symbolInterval in Data.SymbolIntervalList)
         {
+            count += symbolInterval.CandleList.Count;
             symbolInterval.CandleList.Clear();
         }
+        return count > 0;
+    }
+
+    public bool IsTrading()
+    {
+        return Exchange!.Data.PositionList.ContainsKey(Name);
     }
 }

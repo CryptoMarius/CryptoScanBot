@@ -53,7 +53,7 @@ public interface ICandle
     /// retrieve candles of this interval in daterange (fetch and map from exchange to local)
     /// This method is for the virualisation of the zones and emulator
     /// </summary>
-    public Task<CandleTime> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch);
+    public Task<(bool succes, int count, CandleTime fetchedUpTo)> GetCandlesForInterval(IDisposable clientBase, CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch);
 
     /// <summary>
     /// retrieve candles of this interval in daterange
@@ -126,6 +126,8 @@ public abstract class ExchangeBase
                 builder.Append($" {tradeParams.ResponseStatusCode}");
             if (!success)
                 builder.Append($" {tradeParams.Error}");
+            if (tradeParams.StopPrice.HasValue && tradeParams.Price == tradeParams.StopPrice.Value)
+                builder.Append($" Lost!");
 
             if (tradeParams.DebugJson != null)
             {

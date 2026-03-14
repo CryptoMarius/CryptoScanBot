@@ -20,41 +20,28 @@ public partial class CryptoSignal : CryptoData2
     [Computed]
     public virtual required CryptoInterval Interval { get; set; }
 
-    //Hmmmm, de EventTime bevat de candle.OpenTime, maar niet gegarandeerd dat deze nog aanwezig is
     [Computed]
     public virtual required CryptoCandle? Candle { get; set; }
 
     public bool BackTest { get; set; }
-
-    // Melden en tevens bewaren
     public bool IsInvalid { get; set; }
-
-    /// <summary>
-    /// Time the signal is generated (at close of the candle) = CloseDate
-    /// </summary>
-    public long EventTime { get; set; }
 
     public DateTime OpenDate { get; set; }
 
     // Einde van de candle (voor sorteren in web)
     public DateTime CloseDate { get; set; }
 
-    // Tot dit tijdstip is het signaal geldig (for startup query)
+    // Valid until.. Used by the startup query
     public DateTime ExpirationDate { get; set; }
 
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
+    // This is a not null field which is not used anymore
     public string? EventText { get; set; }
 
     [Computed]
     public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * (Symbol.LastPrice / SignalPrice - 1)); else return 0; } }
-
-    // Display only, in het grid om em om een grijze regel laten zien
-    [Computed]
-    public int ItemIndex { get; set; }
-
-    //public double AvgBB { get; set; }
 
     [Computed]
     public decimal MinEntry

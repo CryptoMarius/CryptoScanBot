@@ -1,8 +1,4 @@
-﻿using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
-
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Messages;
@@ -44,7 +40,7 @@ public static class TradingRules
                         int candleCount = rule.Candles;
                         while (candleCount-- > 0)
                         {
-                            if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle? candle))
+                            if (symbolInterval.CandleList.TryGetValue(loop, out CryptoCandle candle))
                             {
                                 low = Math.Min(low, candle.Low);
                                 high = Math.Max(high, candle.High);
@@ -100,8 +96,7 @@ public static class TradingRules
             //GlobalData.AddTextToLogTab("CheckTradingRules()");
             CalculateTradingRules(pause, candleDate, candleDuration);
 
-
-            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
+            GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
             if (pause.Text != "")
                 return false;
         }
@@ -114,7 +109,7 @@ public static class TradingRules
 
 
     /// Check barometer(s) and cache that value
-    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange, 
+    public static bool CheckBarometerConditions(Model.CryptoExchange activeExchange,
         string quoteName, CryptoTradeSide side, CandleTime candleUnixDate, uint candleDuration, out string reaction)
     {
         reaction = "";

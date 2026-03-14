@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalFairValueGapLong : SignalCreateBase
 {
-    public SignalFairValueGapLong(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -29,29 +25,29 @@ public class SignalFairValueGapLong : SignalCreateBase
                 {
                     var zone = symbolIntervalData.FvgZones.LongOpen[index];
 
-                    if (CandleLast.OpenTime >= zone.OpenTime)
+                    if (CandleLast.Candle.OpenTime >= zone.OpenTime)
                     {
-                        if (CandleLast.High < zone.Bottom) // Close without notifications..
+                        if (CandleLast.Candle.High < zone.Bottom) // Close without notifications..
                         {
-                            zone.CloseTime = CandleLast.OpenTime;
+                            zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old fvg zone {zone.Id} {zone.Side} {zone.Description}");
                         }
-                        else if (CandleLast.Low <= zone.Top)
+                        else if (CandleLast.Candle.Low <= zone.Top)
                         {
-                            if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                            if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                             {
                                 result = true;
-                                zone.AlarmDate = CandleLast.Date;
+                                zone.AlarmDate = CandleLast.Candle.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                decimal dist = 100m * (CandleLast.Low - zone.Top) / CandleLast.Close;
+                                decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
                                 ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                             }
 
                             // Close if the candle touched the zone..
-                            zone.CloseTime = CandleLast.OpenTime;
+                            zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
                         }
                     }
 
@@ -59,13 +55,13 @@ public class SignalFairValueGapLong : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.FvgZones.LongOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
                     }
                     else index++;
 
 
                     // The list is sorted on zone.top and break if there are no more reachable zones (save some looping time)
-                    if (CandleLast.Low > zone.Top)
+                    if (CandleLast.Candle.Low > zone.Top)
                         break;
                 }
             }

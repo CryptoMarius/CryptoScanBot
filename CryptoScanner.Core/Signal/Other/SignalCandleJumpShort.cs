@@ -1,14 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalCandleJumpShort : SignalCreateBase
 {
-    public SignalCandleJumpShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -22,30 +18,29 @@ public class SignalCandleJumpShort : SignalCreateBase
         if (candleCount > 0)
         {
             // Wat is het laagste en hoogste punt in de laatste x candles
-            CandleTime minDate = CandleLast!.OpenTime;
+            CandleTime minDate = CandleLast!.Candle.OpenTime;
             decimal minValue = decimal.MaxValue;
-            CandleTime maxDate = CandleLast.OpenTime;
+            CandleTime maxDate = CandleLast.Candle.OpenTime;
             decimal maxValue = decimal.MinValue;
 
-            CryptoCandle? candle = CandleLast;
+            MyData? candle = CandleLast;
             while (candleCount > 0)
             {
-                decimal value = candle.GetLowValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
+                decimal value = candle!.Candle.GetLowValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value < minValue)
                 {
                     minValue = value;
-                    minDate = candle.OpenTime;
+                    minDate = candle!.Candle.OpenTime;
                 }
 
-                value = candle.GetHighValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
+                value = candle!.Candle.GetHighValue(GlobalData.Settings.Signal.Jump.UseLowHighCalculation);
                 if (value > maxValue)
                 {
                     maxValue = value;
-                    maxDate = candle.OpenTime;
+                    maxDate = candle!.Candle.OpenTime;
                 }
 
-                // 1 candle verder naar links
-                if (!Candles.TryGetValue(candle.OpenTime - Interval.Duration, out candle))
+                if (!GetPrevCandle(candle, out candle))
                     return false;
 
                 candleCount--;

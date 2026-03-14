@@ -13,37 +13,36 @@ namespace CryptoScanner.Core.Signal;
 // -Delaying: Een (optionele) delay
 // -TryStepIn: Na een OK van het algoritme om in te stappen
 
+public class MyData
+{
+    public required CryptoCandle Candle { get; set; }
+    public required CryptoData CandleData { get; set; }
+}
+
 public class SignalCreateBase
 {
-    protected Model.CryptoExchange Exchange;
-    protected CryptoSymbol Symbol;
-    protected CryptoSymbolInterval SymbolInterval;
-    protected CryptoInterval Interval;
-    protected CryptoQuoteData QuoteData;
-    protected CryptoCandleList Candles;
+    // RegisterAlgorithms.GetAlgorithm
+    public required CryptoSymbol Symbol { get; set; }
+    public required CryptoInterval Interval { get; set; }
+    public required CryptoSymbolInterval SymbolInterval { get; set; }
 
-    public CryptoTradeSide SignalSide;
-    public CryptoSignalStrategy SignalStrategy;
-    public CryptoCandle CandleLast;
+    // The requested strategy and side
+    public required CryptoTradeSide SignalSide { get; set; }
+    public required CryptoSignalStrategy SignalStrategy { get; set; }
+
+    // The requested candle and its indicator data (grouped)
+    public required MyData CandleLast { get; set; }
+
+    // Prepared indicator data
+    public required CryptoIndicatorData IndicatorData { get; set; }
+    public required CryptoIndicatorDataList IndicatorDataList { get; set; }
+
     public string ExtraText = "";
-
-    public SignalCreateBase(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
-    {
-        Symbol = symbol;
-        Exchange = symbol.Exchange!;
-        Interval = interval;
-        QuoteData = symbol.QuoteData!;
-        CandleLast = candle;
-
-        SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-        Candles = SymbolInterval.CandleList;
-    }
 
     /// <summary>
     /// Zijn de indicatoren aanwezig
     /// </summary>
-    public virtual bool IndicatorsOkay(CryptoCandle candle) => true;
-
+    public virtual bool IndicatorsOkay(MyData data) => data.Candle.OpenTime != 0 && data.CandleData != null;
 
     /// <summary>
     /// Is het een signaal?
@@ -51,7 +50,7 @@ public class SignalCreateBase
     public virtual bool IsSignal() => false;
 
 
-    public virtual bool AdditionalChecks(CryptoCandle candle, out string response)
+    public virtual bool AdditionalChecks(MyData candle, out string response)
     {
         response = "";
         return true;
@@ -59,7 +58,7 @@ public class SignalCreateBase
 
 
     public virtual string DisplayText()
-        => $"stoch={CandleLast?.CandleData?.StochOscillator:N8} signal={CandleLast?.CandleData?.StochSignal:N8}";
+        => $"stoch={CandleLast.CandleData?.StochOscillator:N8} signal={CandleLast.CandleData?.StochSignal:N8}";
 
 
     /// <summary>
@@ -78,7 +77,51 @@ public class SignalCreateBase
     public virtual bool AllowStepIn(CryptoSignal signal) => true;
 
 
-    public bool GetPrevCandle(CryptoCandle? oldCandle, out CryptoCandle? newCandle)
+    //// Get the candle and indicator data from the signal interval
+    //internal bool TryGetCandle(CandleTime time, out MyData? myData)
+    //{
+    //    if (SymbolInterval.CandleList.TryGetValue(time, out CryptoCandle? candle) &&
+    //        IndicatorData.Data.TryGetValue(time, out CandleIndicatorData? indicator))
+    //    {
+    //        myData = new()
+    //        {
+    //            Candle = candle!,
+    //            CandleData = indicator!
+    //        };
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        myData = null;
+    //        return false;
+    //    }
+    //}
+
+    //// Get the candle and indicator data from a DIFFERENT interval
+    //internal bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
+    //{
+    //    var symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
+    //    if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle? candle) &&
+    //        IndicatorDataList.TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData) &&
+    //        indicatorData!.Data.TryGetValue(time, out CandleIndicatorData? indicator))
+    //    {
+    //        myData = new()
+    //        {
+    //            Candle = candle!,
+    //            CandleData = indicator!
+    //        };
+    //        return true;
+    //    }
+    //    else
+    //    {
+    //        myData = null;
+    //        return false;
+    //    }
+    //}
+
+
+    // Get the candle and indicator data from the signal interval
+    public bool GetPrevCandle(MyData? oldCandle, out MyData? newCandle)
     {
         if (oldCandle == null)
         {
@@ -86,15 +129,44 @@ public class SignalCreateBase
             return false;
         }
 
-        if (!Candles.TryGetValue(oldCandle.OpenTime - Interval.Duration, out newCandle))
+        CandleTime targetTime = oldCandle.Candle.OpenTime - Interval.Duration;
+        if (!IndicatorData.TryGetCandle(targetTime, out newCandle))
         {
-            ExtraText = "No prev candle! " + oldCandle.DateLocal.ToString();
+            ExtraText = $"No prev candle or data! {targetTime.ToDateTime().ToLocalTime()}";
+            newCandle = null;
             return false;
         }
 
-        if (!IndicatorsOkay(newCandle))
+
+        if (!IndicatorsOkay(newCandle!))
         {
-            ExtraText = "Prev problem indicators " + newCandle.DateLocal.ToString();
+            ExtraText = $"Prev problem indicators! {targetTime.ToDateTime().ToLocalTime()}";
+            return false;
+        }
+
+        return true;
+    }
+
+    // Get the candle and indicator data from a DIFFERENT interval
+    public bool GetPrevCandle(CryptoInterval interval, MyData? oldData, out MyData? newData)
+    {
+        if (oldData == null)
+        {
+            newData = null;
+            return false;
+        }
+
+        CandleTime targetTime = oldData.Candle.OpenTime - interval.Duration;
+        if (!IndicatorDataList.TryGetCandle(interval, targetTime, out newData))
+        {
+            ExtraText = $"No prev candle or data! {targetTime.ToDateTime().ToLocalTime()}";
+            newData = null;
+            return false;
+        }
+
+        if (!IndicatorsOkay(newData!))
+        {
+            ExtraText = $"Prev problem indicators! {targetTime.ToDateTime().ToLocalTime()}";
             return false;
         }
 
@@ -102,12 +174,10 @@ public class SignalCreateBase
     }
 
 
-
-
-    protected CryptoCandle? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
+    protected MyData? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle? candle = CandleLast;
+        MyData? candle = CandleLast;
         while (candleCount > 0)
         {
             skipCandleCount--;
@@ -139,10 +209,10 @@ public class SignalCreateBase
 
 
 
-    protected CryptoCandle? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount, int correction = 0)
+    protected MyData? HadStorsiInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount, int correction = 0)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
-        CryptoCandle? candle = CandleLast;
+        MyData? candle = CandleLast;
         while (candleCount > 0)
         {
             skipCandleCount--; // GlobalData.Settings.Signal.StoRsi.AddRsiAmount
@@ -176,7 +246,7 @@ public class SignalCreateBase
     {
         // Was the price near the lower bb?
 
-        CryptoCandle? last = CandleLast;
+        MyData? last = CandleLast;
         while (candleCount-- > 0)
         {
             decimal band = (decimal)last!.CandleData?.BollingerBandsLowerBand!;
@@ -184,9 +254,9 @@ public class SignalCreateBase
 
             decimal value;
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
-                value = last.Low;
+                value = last.Candle.Low;
             else
-                value = Math.Max(last.Open, last.Close);
+                value = Math.Max(last.Candle.Open, last.Candle.Close);
 
             if (value <= band)
                 return true;
@@ -203,7 +273,7 @@ public class SignalCreateBase
     {
         // Was the price near the upper bb?
 
-        CryptoCandle? last = CandleLast;
+        MyData? last = CandleLast;
         while (candleCount > 0)
         {
             decimal band = (decimal)last!.CandleData?.BollingerBandsUpperBand!;
@@ -211,9 +281,9 @@ public class SignalCreateBase
 
             decimal value;
             if (GlobalData.Settings.Signal.Sbm.Sbm2UseLowHigh)
-                value = last.High;
+                value = last.Candle.High;
             else
-                value = Math.Max(last.Open, last.Close);
+                value = Math.Max(last.Candle.Open, last.Candle.Close);
 
             if (value >= band)
                 return true;
@@ -235,12 +305,11 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        CandleTime time = CandleLast.OpenTime;
-        //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle? prevCandle = null;
+        CandleTime time = CandleLast.Candle.OpenTime;
+        MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
+            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -276,25 +345,24 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        CandleTime time = CandleLast.OpenTime;
-        //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle? prevCandle = null;
+        CandleTime time = CandleLast.Candle.OpenTime;
+        MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
+            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
                 {
-                    if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
+                    if (IndicatorsOkay(lastCandle!) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 200 naar boven
                         if (prevCandle.CandleData!.Sma20 < prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData!.Sma20 >= lastCandle.CandleData.Sma200)
+                                lastCandle!.CandleData!.Sma20 >= lastCandle.CandleData.Sma200)
                             return true;
                         // de 50 kruist de 200 naar beneden
                         if (prevCandle.CandleData!.Sma20 > prevCandle.CandleData.Sma200 &&
-                                lastCandle.CandleData!.Sma20 <= lastCandle.CandleData.Sma200)
+                                lastCandle!.CandleData!.Sma20 <= lastCandle.CandleData.Sma200)
                             return true;
                     }
                 }
@@ -316,26 +384,25 @@ public class SignalCreateBase
     {
         // We gaan van rechts naar links (dus prev en last zijn ietwat raar)
         candlesAgo = 0;
-        CandleTime time = CandleLast.OpenTime;
-        //DateTime TimeDebug = CandleTools.GetUnixDate(CandleLast.OpenTime);
-        CryptoCandle? prevCandle = null;
+        CandleTime time = CandleLast.Candle.OpenTime;
+        MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (Candles.TryGetValue(time, out CryptoCandle? lastCandle))
+            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
                 {
-                    if (IndicatorsOkay(lastCandle) && IndicatorsOkay(prevCandle))
+                    if (IndicatorsOkay(lastCandle!) && IndicatorsOkay(prevCandle))
                     {
                         // de 50 kruist de 20 naar boven
                         if (prevCandle.CandleData!.Sma50 < prevCandle.CandleData.Sma20 &&
-                                lastCandle.CandleData!.Sma50 >= lastCandle.CandleData.Sma20)
+                                lastCandle!.CandleData!.Sma50 >= lastCandle.CandleData.Sma20)
                             return true;
 
                         // de 50 kruist de 20 naar beneden
                         if (prevCandle.CandleData!.Sma50 > prevCandle.CandleData.Sma20 &&
-                                lastCandle.CandleData!.Sma50 <= lastCandle.CandleData.Sma20)
+                                lastCandle!.CandleData!.Sma50 <= lastCandle.CandleData.Sma20)
                             return true;
                     }
                 }

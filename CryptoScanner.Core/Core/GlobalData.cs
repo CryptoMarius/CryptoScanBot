@@ -1,5 +1,4 @@
-﻿using Avalonia.Collections;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.Messaging;
@@ -13,6 +12,8 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Trader;
+//using CryptoScanner.Core.TradingView;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
@@ -20,7 +21,6 @@ using Dapper.Contrib.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json;
 
@@ -58,7 +58,7 @@ public static class GlobalData
     // And for the emulator we need to introduce a datetime service + candleservice or something like that
     public static bool BackTest { get; set; }
     public static DateTime BackTestDateTime { get; set; }
-    public static CryptoCandle? BackTestCandle { get; set; }
+    public static CryptoCandle BackTestCandle { get; set; } = default;
 
 
     // Replace with a proper DateTimeService
@@ -74,11 +74,22 @@ public static class GlobalData
     public static CryptoApplicationStatus ApplicationStatus
     {
         get { return _applicationStatus; }
-        set { 
-            _applicationStatus = value;
-            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
+        set
+        {
+            if (_applicationStatus != value)
+            {
+                _applicationStatus = value;
+                SendMvvmMessage(new StatusesHaveChangedMessage());
+            }
         }
     }
+
+    public static void SendMvvmMessage<TMessage>(TMessage message) where TMessage : class
+    {
+        Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(message); }); // Avalonia
+        //MainForm!.BeginInvoke(() => { WeakReferenceMessenger.Default.Send(message); }); // Winforms
+    }
+
 
     // Amount of signals created
     public static int CreatedSignalCount { get; set; }
@@ -128,11 +139,12 @@ public static class GlobalData
 
     public static event AddTextEvent? LogToLogTabEvent;
     public static void AddTextToLogTab(string text) => LogToLogTabEvent?.Invoke(text);
+
+    // Events for refresing data
     public static event AddTextEvent? TelegramHasChangedEvent;
     public static void TelegramHasChanged(string text) => TelegramHasChangedEvent?.Invoke(text);
     //public static event AddTextEvent? AssetsHaveChangedEvent;
     //public static void AssetsHaveChanged(string text) => AssetsHaveChangedEvent?.Invoke(text);
-
 
     // Ophalen van historische candles duurt lang, dus niet halverwege nog 1 starten (en nog 1 en...)
     public static event SetCandleTimerEnable? SetCandleTimerEnableEvent;
@@ -268,21 +280,9 @@ public static class GlobalData
         //AddTextToLogTab("Reading symbol information");
         string sql = "select * from symbol where exchangeid=@exchangeid";
         using var database = new CryptoDatabase();
-        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id}))
+        foreach (CryptoSymbol symbol in database.Connection.Query<CryptoSymbol>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
             AddSymbol(symbol);
     }
-    //// Laad symbols
-    //List<CryptoSymbol> list = [];
-    //    foreach (var symbol in GlobalData.ActiveExchange?.SymbolListName.Values ?? [])
-    //    {
-    //        if (symbol.QuoteData.FetchCandles && symbol.Status == 1 && !symbol.IsBarometerSymbol())
-    //        {
-    //            if (string.IsNullOrWhiteSpace(_currentFilter) || symbol.Name.Contains(_currentFilter, StringComparison.OrdinalIgnoreCase))
-    //            {
-    //                list.Add(symbol);
-    //            }
-    //        }
-    //    }
 
     public static List<CryptoSignal> LoadSignals(string filterText = "")
     {
@@ -294,7 +294,7 @@ public static class GlobalData
             string sql = "select * from signal where exchangeid=@exchangeid and BackTest=1 order by OpenDate";
 
             using var database = new CryptoDatabase();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, 
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
                 new { exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
@@ -330,7 +330,8 @@ public static class GlobalData
             }
 
             //SignalQueue.Clear();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
+                new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
@@ -405,7 +406,11 @@ public static class GlobalData
         {
             symbol.Exchange = exchange;
 
-            symbol.QuoteData = AddQuoteData(symbol.Quote);
+            if (symbol.Name == "" || exchange.SymbolListId.ContainsKey(symbol.Id))
+            {
+                //TODO: Delete the symbol? (first report all of them.......)
+                AddTextToLogTab($"DUPLICATE SYMBOL {exchange.Name} #{symbol.Id} {symbol.Name} {symbol.Base}/{symbol.Quote}?");
+            }
 
             if (!exchange.SymbolListId.ContainsKey(symbol.Id))
                 exchange.SymbolListId.Add(symbol.Id, symbol);
@@ -416,6 +421,7 @@ public static class GlobalData
             if (!exchange.SymbolListExchangeName.ContainsKey(symbol.ExchangeName))
                 exchange.SymbolListExchangeName.Add(symbol.ExchangeName, symbol);
 
+            symbol.QuoteData = AddQuoteData(symbol.Quote);
 
             string seperator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
 
@@ -429,6 +435,7 @@ public static class GlobalData
                 numberOfDecimalPlaces = s.Length;
             }
             else numberOfDecimalPlaces = 0;
+            symbol.PriceDecimals = (byte)numberOfDecimalPlaces;
             symbol.PriceDisplayFormat = "N" + numberOfDecimalPlaces.ToString();
 
 
@@ -456,13 +463,13 @@ public static class GlobalData
             string filename = Path.Combine(GlobalData.AppDataFolder, $"{Constants.AppName}-settings.json");
             if (File.Exists(filename))
             {
-                //using (FileStream readStream = new FileStream(fileName, FileMode.Open))
+                //using (FileStream readStream = new FileStream(filename, FileMode.Open))
                 //{
                 //    BinaryFormatter formatter = new BinaryFormatter();
                 //    Settings = (Settings)formatter.Deserialize(readStream);
                 //    readStream.Close();
                 //}
-                //string text = File.ReadAllText(fileName);
+                //string text = File.ReadAllText(filename);
                 //var value = JsonSerializer.Deserialize<SettingsBasic>(text, JsonTools.DeSerializerOptions);
                 using FileStream stream = File.OpenRead(filename);
                 var value = JsonSerializer.Deserialize<SettingsBasic>(stream, JsonTools.DeSerializerOptions);
@@ -752,25 +759,19 @@ public static class GlobalData
     }
 
 
-    //public static void DumpSessionInformation()
-    //{
-    //    foreach (Model.CryptoExchange exchange in ExchangeListName.Values.ToList())
-    //    {
-    //        int candleCount = 0;
-    //        foreach (Model.CryptoSymbol symbol in exchange.SymbolListName.Values.ToList())
-    //        {
-    //            foreach (Model.CryptoSymbolInterval symbolInterval in symbol.SymbolIntervalList.ToList())
-    //            {
-    //                candleCount += symbolInterval.CandleList.Count;
-    //                if (symbolInterval.CandleList.Count > 0)
-    //                    AddTextToLogTab(string.Format("{0} {1} {2} candlecount={3}", exchange.Name, symbol.Name, symbolInterval.Interval.Name, symbolInterval.CandleList.Count), false);
+    public static string GetBaseDir()
+    {
+        if (string.IsNullOrEmpty(AppDataFolder))
+        {
+            ApplicationParams.InitApplicationOptions();
+            AppDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                ApplicationParams.Options?.AppDataFolder ?? Constants.AppName);
+            Directory.CreateDirectory(AppDataFolder);
+            AppDataFolder += @"\";
+        }
+        return AppDataFolder;
+    }
 
-    //            }
-    //        }
-
-    //        AddTextToLogTab(string.Format("{0} symbolcount={1} candlecount={2}", exchange.Name, exchange.SymbolListName.Count, candleCount), false);
-    //    }
-    //}
 
     // Index for the available strategies (available via ui)
     public static void IndexStrategySettings()

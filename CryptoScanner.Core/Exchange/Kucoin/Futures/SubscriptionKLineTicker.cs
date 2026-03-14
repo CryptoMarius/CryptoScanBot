@@ -1,6 +1,5 @@
 ﻿using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
-using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -8,7 +7,6 @@ using CryptoScanner.Core.Model;
 
 using Kucoin.Net.Clients;
 using Kucoin.Net.Enums;
-using Kucoin.Net.Objects.Models.Spot;
 
 namespace CryptoScanner.Core.Exchange.Kucoin.Futures;
 
@@ -71,18 +69,21 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             bool addCandle = false;
                             CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
                             CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle? candle))
+                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
                             {
                                 addCandle = true;
                                 candle = new() { OpenTime = candleOpenUnix };
                             }
-                            candle!.Open = kline.OpenPrice;
+                            candle.TickDecimals = symbol.PriceDecimals;
+                            candle.Open = kline.OpenPrice;
                             candle.High = kline.HighPrice;
                             candle.Low = kline.LowPrice;
                             candle.Close = kline.ClosePrice;
                             candle.Volume = kline.Volume;
                             if (addCandle)
                                 candleCache.TryAdd(candleOpenUnix, candle);
+                            else
+                                candleCache[candleOpenUnix] = candle;
                             //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
                         }
                         finally
@@ -172,7 +173,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
 
                             // Finally do something with the cached data
-                            CryptoCandle? candleLast = null;
+                            CryptoCandle candleLast = default;
                             foreach (CryptoCandle candle in candleCache.Values.ToList())
                             {
                                 // Only the ready candles (might change the flow?)
@@ -193,7 +194,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 else break;
                             }
                             // Add the last candle in the analysis queue
-                            if (candleLast != null && candleLast.OpenTime == expectedCandlesUpto)
+                            if (candleLast.OpenTime == expectedCandlesUpto)
                             {
                                 // Last known price(s)
                                 if (!GlobalData.BackTest)

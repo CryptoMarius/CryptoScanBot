@@ -1,5 +1,4 @@
 ﻿using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.Momentum;
 using CryptoScanner.Core.Signal.Other;
@@ -91,7 +90,7 @@ public static class RegisterAlgorithms
         // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
         Register(new AlgorithmDefinition()
         {
-            Name = "storsi", // was WGHM = We Gaan Het Meemaken.. 
+            Name = "storsi", // was WGHM = We Gaan Het Meemaken..
             Strategy = CryptoSignalStrategy.StoRsi,
             AnalyzeLongType = typeof(SignalStoRsiLong),
             AnalyzeShortType = typeof(SignalStoRsiShort),
@@ -186,6 +185,28 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
+        // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma.reentry.old",
+            Strategy = CryptoSignalStrategy.BbmaReentryOld,
+            AnalyzeLongType = typeof(SignalBbmaReentryOldLong),
+            AnalyzeShortType = typeof(SignalBbmaReentryOldShort),
+        });
+#endif
+
+#if DEBUG
+        // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma.reentry.new",
+            Strategy = CryptoSignalStrategy.BbmaReentryNew,
+            AnalyzeLongType = typeof(SignalBbmaReentryNewLong),
+            AnalyzeShortType = typeof(SignalBbmaReentryNewShort),
+        });
+#endif
+
+#if DEBUG
         // Trend reversal
         Register(new AlgorithmDefinition()
         {
@@ -195,66 +216,42 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalTrendShort),
         });
 #endif
-        
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "dist.sma",
-            Strategy = CryptoSignalStrategy.SmaDist,
-            AnalyzeLongType = typeof(SignalSmaDistLong),
-            AnalyzeShortType = typeof(SignalSmaDistShort),
-        });
-#endif
+
+
+        // Does not perform well in the signal statistics
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "rolling fft",
+        //            Strategy = CryptoSignalStrategy.RollingFft,
+        //            AnalyzeLongType = typeof(SignalRollingFft),
+        //            AnalyzeShortType = typeof(SignalRollingFft),
+        //        });
+        //#endif
+
 
 #if DEBUG
         Register(new AlgorithmDefinition()
         {
-            Name = "ema9.tema",
-            Strategy = CryptoSignalStrategy.EmaCrossedSma20,
-            AnalyzeLongType = typeof(SignalEma9CrossedTemaLong),
-            AnalyzeShortType = typeof(SignalEma9CrossedTemaShort),
-        });
-#endif
-
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "ema9.kc-band",
-            Strategy = CryptoSignalStrategy.Ema9KcBand,
-            AnalyzeLongType = typeof(SignalEma9CrossedKeltnerBand),
-            AnalyzeShortType = typeof(SignalEma9CrossedKeltnerBand),
-        });
-#endif
-
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "ema9.kc-center",
-            Strategy = CryptoSignalStrategy.Ema9KcCenter,
-            AnalyzeLongType = typeof(SignalEma9CrossedKeltnerCenter),
-            AnalyzeShortType = typeof(SignalEma9CrossedKeltnerCenter),
+            Name = "rsi divergence",
+            Strategy = CryptoSignalStrategy.RsiDivergence,
+            AnalyzeLongType = typeof(SignalRsiDivergence),
+            AnalyzeShortType = typeof(SignalRsiDivergence),
         });
 #endif
 
 
-
 #if DEBUG
+
+        //***************************************************
+        // BbWickSma - BB wick rejection + SMA20 slope + SMA50 cross reversal
+        //***************************************************
         Register(new AlgorithmDefinition()
         {
-            Name = "tema.kc-band",
-            Strategy = CryptoSignalStrategy.TemaCrossedKcBand,
-            AnalyzeLongType = typeof(SignalTemaCrossedKeltnerBand),
-            AnalyzeShortType = typeof(SignalTemaCrossedKeltnerBand),
-        });
-#endif
-
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "tema.kc-center",
-            Strategy = CryptoSignalStrategy.TemaCrossedKcCenter,
-            AnalyzeLongType = typeof(SignalTemaCrossedKeltnerCenter),
-            AnalyzeShortType = typeof(SignalTemaCrossedKeltnerCenter),
+            Name = "bbwicksma",
+            Strategy = CryptoSignalStrategy.BbWickSma,
+            AnalyzeLongType = typeof(SignalBbWickSmaLong),
+            AnalyzeShortType = typeof(SignalBbWickSmaShort),
         });
 #endif
 
@@ -282,7 +279,7 @@ public static class RegisterAlgorithms
     /// <summary>
     /// Return an instance of the algorithm (long/short)
     /// </summary>
-    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide side, CryptoSignalStrategy strategy, CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle)
+    public static SignalCreateBase? GetAlgorithm(CryptoTradeSide side, CryptoSignalStrategy strategy)
     {
         if (GetAlgorithm(strategy, out AlgorithmDefinition? definition))
         {
@@ -294,9 +291,9 @@ public static class RegisterAlgorithms
 
             if (analyzeClass != null)
             {
-                SignalCreateBase? x = (SignalCreateBase?)Activator.CreateInstance(analyzeClass, [symbol, interval, candle]);
-                x!.SignalStrategy = strategy;
+                SignalCreateBase? x = (SignalCreateBase?)Activator.CreateInstance(analyzeClass);
                 x!.SignalSide = side;
+                x!.SignalStrategy = strategy;
                 return x;
             }
         }

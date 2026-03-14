@@ -1,27 +1,22 @@
-﻿using CryptoExchange.Net.Objects;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalStochShort : SignalSbmBaseShort
 {
-    public SignalStochShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData data)
     {
-        if (candle == null
-           || candle.CandleData == null
-           || candle.CandleData.Sma20 == null
-           || candle.CandleData.StochSignal == null
-           || candle.CandleData.StochOscillator == null
-           || candle.CandleData.BollingerBandsDeviation == null
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.StochSignal == null
+           || data.CandleData.StochOscillator == null
+           || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
 
@@ -29,7 +24,7 @@ public class SignalStochShort : SignalSbmBaseShort
     }
 
 
-    public override bool AdditionalChecks(CryptoCandle candle, out string response)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
         //if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
         //{
@@ -53,11 +48,11 @@ public class SignalStochShort : SignalSbmBaseShort
         //// Controle op de ma-kruisingen
         //if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         //{
-        //    if (!candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+        //    if (!data.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
         //        return false;
-        //    if (!candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+        //    if (!data.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
         //        return false;
-        //    if (!candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+        //    if (!data.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
         //        return false;
 
         //    if (!CheckMaCrossings(out response))
@@ -84,7 +79,7 @@ public class SignalStochShort : SignalSbmBaseShort
 
     public bool HadStochOscillatorPrettyOverboughtInThelastXCandles(int candleCount, int oscValue)
     {
-        CryptoCandle? candle = CandleLast;
+        MyData? candle = CandleLast;
         while (candleCount > 0)
         {
             candleCount--;
@@ -98,15 +93,15 @@ public class SignalStochShort : SignalSbmBaseShort
     }
 
 
-    //private bool HasACoupleOfStochOverbought(CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, int oscValue, int limit)
+    //private bool HasACoupleOfStochOverbought(CryptoSymbolInterval symbolInterval, CryptoCandle? data, int candleCount, int oscValue, int limit)
     //{
-    //    // Is a candle of the 5 last candles stoch oversold?
+    //    // Is a data of the 5 last candles stoch oversold?
     //    int count = 0;
     //    while (candleCount > 0)
     //    {
-    //        if (IndicatorsOkay(candle!) && candle!.CandleData!.StochOscillator > oscValue)
+    //        if (IndicatorsOkay(data!) && data!.CandleData!.StochOscillator > oscValue)
     //            count++;
-    //        if (!GetPrevCandle(symbolInterval, candle, out candle))
+    //        if (!GetPrevCandle(symbolInterval, data, out data))
     //            return false;
     //        candleCount--;
     //    }
@@ -129,7 +124,7 @@ public class SignalStochShort : SignalSbmBaseShort
         }
 
 
-        if (!SymbolInterval.RsiDecreasingInTheLast(CandleLast, 2, 999))
+        if (!this.RsiDecreasingInTheLast(SymbolInterval, CandleLast, 2, 999))
         {
             ExtraText = "rsi not decreasing";
             return false;
@@ -144,7 +139,7 @@ public class SignalStochShort : SignalSbmBaseShort
             ExtraText = "last stoch overbough";
             return false;
         }
-        if (!GetPrevCandle(CandleLast!, out CryptoCandle? candlePrev))
+        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
             return false;
         if (candlePrev!.CandleData?.StochOscillator < oscLimit)
         {
@@ -153,14 +148,8 @@ public class SignalStochShort : SignalSbmBaseShort
         }
 
 
-        //// Stoch Oscilator needs to have 3 candles to be > 90 in the last 10 candles)
-        //if (!HasACoupleOfStochOverbought(SymbolInterval, CandleLast, 10, 90, 3))
-        //{
-        //    ExtraText = $"stoch osc not overbough < {90}";
-        //    return false;
-        //}
 
-        double stochSurface = SymbolInterval.StochOverboughtSurface(CandleLast, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
+        double stochSurface = this.StochOverboughtSurface(SymbolInterval, CandleLast, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
         if (stochSurface < 5)
         {
             ExtraText = $"stoch osc not overbough < {90}";
@@ -171,55 +160,20 @@ public class SignalStochShort : SignalSbmBaseShort
         // To higher interval
         if (Interval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
             return false;
-        CryptoSymbolInterval higherInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod + 1);
-
-        // To higher interval
-        var result = SymbolInterval.CalculateIndicatorsForInterval(Symbol, CandleLast, higherInterval);
-        if (!result.result)
+        var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, Interval.IntervalPeriod + 1);
+        if (!result.success)
             return false;
 
-        //// Stoch Oscilator on higher interval needs to have 2 candles to be > 85 in the last 10 candles)
-        //if (!HasACoupleOfStochOverbought(result.higherInterval, CandleLast, 10, 85, 2))
-        //{
-        //    ExtraText = $"stoch osc not overbough < {85}";
-        //    return false;
-        //}
-
-
-        //// storsi condition is too strong..
-        //if (!WasRsiOverboughtInTheLast(30))
-        //{
-        //    ExtraText = "no prev rsi overbought";
-        //    return false;
-        //}
-
-        //if (HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
-        //{
-        //    ExtraText = "no prev storsi";
-        //    return false;
-        //}
-
-        //var x = CalculateBarometerIndicators(Symbol, Interval, CandleLast);
-        //if (!x.result)
-        //    return false;
-        //ExtraText = $"BM: RSI:{x.candle!.CandleData!.Rsi:N2} SIG:{x.candle!.CandleData!.StochOscillator:N2} HIS:{x.candle!.CandleData!.MacdHistogram:N2}";
-
-        double stochSurface2 = result.higherInterval.StochOverboughtSurface(result.candle!, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
+        double stochSurface2 = this.StochOverboughtSurface(result.higherInterval, result.candle!, 30, GlobalData.Settings.General.SettingsStoch.Overbought);
         if (stochSurface2 < 5)
         {
             ExtraText = $"stoch osc not overbough < {85}";
             return false;
         }
 
-        double rsiSurface = SymbolInterval.RsiOverboughtSurface(CandleLast, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
-        double rsiSurface2 = result.higherInterval.RsiOverboughtSurface(result.candle!, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
+        double rsiSurface = this.RsiOverboughtSurface(SymbolInterval, CandleLast, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
+        double rsiSurface2 = this.RsiOverboughtSurface(result.higherInterval, result.candle!, 70, GlobalData.Settings.General.SettingsRsi.Overbought);
         ExtraText = $"sto:{stochSurface:N2}/{stochSurface2:N2} rsi:{rsiSurface:N2}/{rsiSurface2:N2}";
-
-        //if (HadStobbInThelastXCandlesOversold(SignalSide, 0, 40) == null && HadStorsiInThelastXCandles(SignalSide, 0, 40) == null)
-        //{
-        //    ExtraText = "no prev stobb/storsi";
-        //    return false;
-        //}
 
         return true;
     }

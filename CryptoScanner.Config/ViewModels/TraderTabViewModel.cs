@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
 
@@ -45,7 +44,7 @@ public partial class TraderTabViewModel : ObservableObject
     [ObservableProperty]
     private TrendIntervalFilterViewModel _traderTrendIntervalFilterShortViewModel;
 
-       
+
 
     public TraderTabViewModel()
     {

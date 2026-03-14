@@ -3,6 +3,8 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Trend;
 
+public class TrendZigZagIndicatorList : Dictionary<(TrendType trendType, bool useHighLow), ZigZagIndicator>;
+
 public class ZigZagIndicator
 {
     private bool UseHighLow { get; set; } = false; // Use High/Low or Open/Close
@@ -18,7 +20,7 @@ public class ZigZagIndicator
 
     private readonly List<ZigZagResult> AddedDummyZigZag = []; // collected points for recreating a low/high after a BOS formed
 
-    public List<ZigZagResult> PivotList = []; // All l/h points (for determining high/low)
+    public List<ZigZagResult> PivotList = []; // All "raw" low and high pivot points (for determining high/low)
     public List<ZigZagResult> ZigZagList { get; set; } = []; // The resulting zigzag points
 
     public ZigZagResult? LastSwingLow = null; // the last Low Primary
@@ -28,7 +30,7 @@ public class ZigZagIndicator
     private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
 
-    public ZigZagIndicator(TrendType trendType, bool useHighLow, decimal deviation)
+    public ZigZagIndicator(TrendType trendType, bool useHighLow, decimal deviation = 1.0m)
     {
         TrendType = trendType;
         UseHighLow = useHighLow;
@@ -405,7 +407,7 @@ public class ZigZagIndicator
     {
         CandleCount++;
         //if (candle!.Time >= new DateTime(2024, 11, 15, 5+2, 00, 0, DateTimeKind.Utc))
-        //    candle = candle; // debug 
+        //    candle = candle; // debug
 
         // we need buffer of 8 candles to detect a low or high point
         if (ZigZagLanceBeggs.Add(candle))

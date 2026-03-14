@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{02EA681E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scanner", "Scanner", "{C258921C-E70A-42E4-877C-923E59F741C9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Avalonia!", "Avalonia!", "{2BBD80EF-BE4B-40BA-9C4A-686EC37092E7}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Avalonia.ListBox!", "Avalonia.ListBox!", "{2BBD80EF-BE4B-40BA-9C4A-686EC37092E7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner", "CryptoScanner\CryptoScanner.csproj", "{CA0DCE06-3D5E-0160-DEDE-E6C1B719599B}"
 EndProject

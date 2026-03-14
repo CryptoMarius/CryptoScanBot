@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings;
+
+using System.Collections.ObjectModel;
 
 namespace CryptoScanner.Config.ViewModels;
 
@@ -44,7 +44,7 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
 
     public void SaveConfig(SettingsTextualIntervalTrend settings)
     {
-        settings.List.Clear();        
+        settings.List.Clear();
         foreach (var item in Intervals)
         {
             if (item.IsChecked)

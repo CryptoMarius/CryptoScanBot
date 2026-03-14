@@ -1,6 +1,6 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using BitMart.Net.Enums;
 
-using BitMart.Net.Enums;
+using CryptoScanner.Core.Enums;
 
 namespace CryptoScanner.Core.Exchange.BitMart.Spot;
 

@@ -66,8 +66,8 @@ public class ZigZagIndicator9TestsEth : TestBase
         {
             while (indicator.PivotList.Count <= data.I)
             {
-                if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle? candle))
-                    indicator.Calculate(candle!, true);
+                if (symbolInterval.CandleList.TryGetValue(key, out CryptoCandle candle))
+                    indicator.Calculate(candle, true);
                 key += interval.Duration;
             }
 

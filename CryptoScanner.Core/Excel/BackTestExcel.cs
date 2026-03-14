@@ -2,7 +2,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.Signal.Momentum;
 
 using NPOI.HPSF;
 using NPOI.HSSF.UserModel;
@@ -217,140 +216,140 @@ public class BackTestExcel(CryptoSymbol symbol, List<CryptoCandle> history)
             cell.CellStyle = cellStyleDecimalNormal;
 
 
-            if (candle.CandleData != null)
-            {
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsLowerBand);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsUpperBand);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsPercentage);
-                if (candle.CandleData?.BollingerBandsPercentage >= 1.5)
-                    cell.CellStyle = cellStylePercentageGreen;
-                else
-                    cell.CellStyle = cellStylePercentageNormal;
+            //if (candle.CandleData != null)
+            //{
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsLowerBand);
+            //    cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsUpperBand);
+            //    cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.BollingerBandsPercentage);
+            //    if (candle.CandleData?.BollingerBandsPercentage >= 1.5)
+            //        cell.CellStyle = cellStylePercentageGreen;
+            //    else
+            //        cell.CellStyle = cellStylePercentageNormal;
 
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma200);
-                cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma50);
-                if (candle.CandleData?.Sma200 >= candle.CandleData?.Sma50)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma20);
-                if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.PSar);
-                if (candle.CandleData?.Sma20 > candle.CandleData?.PSar)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma200);
+            //    cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma50);
+            //    if (candle.CandleData?.Sma200 >= candle.CandleData?.Sma50)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.Sma20);
+            //    if (candle.CandleData?.Sma50 >= candle.CandleData?.Sma20)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.PSar);
+            //    if (candle.CandleData?.Sma20 > candle.CandleData?.PSar)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdValue);
-                cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdValue);
+            //    cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdSignal);
-                cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdSignal);
+            //    cell.CellStyle = cellStyleDecimalNormal;
 
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdHistogram);
-                if (candle.CandleData?.MacdHistogram >= 0)
-                {
-                    // above zero line = green
-                    if (prev == null || prev.CandleData == null)
-                        cell.CellStyle = cellStyleDecimalNormal;
-                    else
-                    {
-                        if (candle.CandleData.MacdHistogram >= prev.CandleData.MacdHistogram)
-                            cell.CellStyle = cellStyleDecimalGreen;
-                        else
-                            cell.CellStyle = cellStyleMacdLightGreen;
-                    }
-                }
-                else
-                {
-                    // below zero line = red
-                    if (prev == null || prev.CandleData == null)
-                        cell.CellStyle = cellStyleDecimalNormal;
-                    else
-                    {
-                        if (candle.CandleData?.MacdHistogram <= prev.CandleData.MacdHistogram)
-                            cell.CellStyle = cellStyleMacdRed;
-                        else
-                            cell.CellStyle = cellStyleMacdLightRed;
-                    }
-                }
-
-
-                if (candle.IsSbmConditionsOversold() && candle.IsSbmConditionsPSarOversold())
-                {
-                    WriteCell(sheet, column++, row, "yes");
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.MacdHistogram);
+            //    if (candle.CandleData?.MacdHistogram >= 0)
+            //    {
+            //        // above zero line = green
+            //        if (prev == null || prev.CandleData == null)
+            //            cell.CellStyle = cellStyleDecimalNormal;
+            //        else
+            //        {
+            //            if (candle.CandleData.MacdHistogram >= prev.CandleData.MacdHistogram)
+            //                cell.CellStyle = cellStyleDecimalGreen;
+            //            else
+            //                cell.CellStyle = cellStyleMacdLightGreen;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        // below zero line = red
+            //        if (prev == null || prev.CandleData == null)
+            //            cell.CellStyle = cellStyleDecimalNormal;
+            //        else
+            //        {
+            //            if (candle.CandleData?.MacdHistogram <= prev.CandleData.MacdHistogram)
+            //                cell.CellStyle = cellStyleMacdRed;
+            //            else
+            //                cell.CellStyle = cellStyleMacdLightRed;
+            //        }
+            //    }
 
 
-                if (candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                if (candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out _))
-                {
-                    cell = WriteCell(sheet, column++, row, "yes");
-                    cell.CellStyle = cellStyleStringGreen;
-                }
-                else
-                {
-                    WriteCell(sheet, column++, row, "no");
-                }
-
-                //WriteCell(sheet, column++, row, candle.ExtraText);
+            //    if (candle.IsSbmConditionsOversold() && candle.IsSbmConditionsPSarOversold())
+            //    {
+            //        WriteCell(sheet, column++, row, "yes");
+            //    }
+            //    else
+            //    {
+            //        WriteCell(sheet, column++, row, "no");
+            //    }
 
 
-                // overbodig?
+            //    if (candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out string _))
+            //    {
+            //        cell = WriteCell(sheet, column++, row, "yes");
+            //        cell.CellStyle = cellStyleStringGreen;
+            //    }
+            //    else
+            //    {
+            //        WriteCell(sheet, column++, row, "no");
+            //    }
 
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.Rsi);
-                if (candle.CandleData?.Rsi > 30)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.StochOscillator);
-                if (candle.CandleData?.StochOscillator > 20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
-                cell = WriteCell(sheet, column++, row, candle.CandleData?.StochSignal);
-                if (candle.CandleData?.StochSignal > 20)
-                    cell.CellStyle = cellStyleDecimalGreen;
-                else
-                    cell.CellStyle = cellStyleDecimalNormal;
+            //    if (candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out _))
+            //    {
+            //        cell = WriteCell(sheet, column++, row, "yes");
+            //        cell.CellStyle = cellStyleStringGreen;
+            //    }
+            //    else
+            //    {
+            //        WriteCell(sheet, column++, row, "no");
+            //    }
 
-                // wat kun je hiermee?
-                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema20);
-                //cell.CellStyle = cellStyleDecimalNormal;
-                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema50);
-                //cell.CellStyle = cellStyleDecimalNormal;
-                //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema200);
-                //cell.CellStyle = cellStyleDecimalNormal;
-            }
+            //    if (candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out _))
+            //    {
+            //        cell = WriteCell(sheet, column++, row, "yes");
+            //        cell.CellStyle = cellStyleStringGreen;
+            //    }
+            //    else
+            //    {
+            //        WriteCell(sheet, column++, row, "no");
+            //    }
+
+            //    //WriteCell(sheet, column++, row, candle.ExtraText);
+
+
+            //    // overbodig?
+
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.Rsi);
+            //    if (candle.CandleData?.Rsi > 30)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.StochOscillator);
+            //    if (candle.CandleData?.StochOscillator > 20)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
+            //    cell = WriteCell(sheet, column++, row, candle.CandleData?.StochSignal);
+            //    if (candle.CandleData?.StochSignal > 20)
+            //        cell.CellStyle = cellStyleDecimalGreen;
+            //    else
+            //        cell.CellStyle = cellStyleDecimalNormal;
+
+            //    // wat kun je hiermee?
+            //    //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema20);
+            //    //cell.CellStyle = cellStyleDecimalNormal;
+            //    //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema50);
+            //    //cell.CellStyle = cellStyleDecimalNormal;
+            //    //cell = WriteCell(sheet, column++, row, (double)candle.CandleData.Ema200);
+            //    //cell.CellStyle = cellStyleDecimalNormal;
+            //}
             prev = candle;
         }
 

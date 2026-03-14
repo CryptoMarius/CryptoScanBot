@@ -6,16 +6,13 @@ namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalDominantLevelNearShort : SignalCreateBase
 {
-    public SignalDominantLevelNearShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
     {
         ExtraText = "";
         bool result = false;
-        
+
         decimal closestZone = 100;
         CryptoSymbolData symbolData = Symbol.Data;
 
@@ -32,22 +29,22 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                 {
                     decimal? alarmPrice = null;
                     var zone = symbolIntervalData.DlzZones.ShortOpen[index];
-                    if (CandleLast.OpenTime >= zone.OpenTime) // emulator..
+                    if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
                         // Close old invalid zone without notifications..
-                        if (CandleLast.Low >= zone.Top)
+                        if (CandleLast.Candle.Low >= zone.Top)
                         {
-                            zone.CloseTime = CandleLast.OpenTime;
+                            zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                         }
                         else
                         {
                             // If it is within a certain percentage signal it..
                             alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
-                            if (CandleLast.High >= alarmPrice)
+                            if (CandleLast.Candle.High >= alarmPrice)
                             {
-                                if (zone.AlarmDate == null || CandleLast.Date > zone.AlarmDate?.AddHours(1))
+                                if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                                 {
                                     if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
                                     {
@@ -56,9 +53,9 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                                     else
                                     {
                                         result = true;
-                                        zone.AlarmDate = CandleLast.Date;
+                                        zone.AlarmDate = CandleLast.Candle.OpenTime;
                                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                        decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                        decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
                                         ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                                     }
                                 }
@@ -66,11 +63,11 @@ public class SignalDominantLevelNearShort : SignalCreateBase
 
 
                             // Close if the candle touched the zone..
-                            if (CandleLast.High >= zone.Bottom)
+                            if (CandleLast.Candle.High >= zone.Bottom)
                             {
-                                zone.CloseTime = CandleLast.OpenTime;
+                                zone.CloseTime = CandleLast.Candle.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{Symbol.Name} Closed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                                GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                             }
 
 
@@ -83,7 +80,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                                 }
                                 else
                                 {
-                                    decimal dist = 100m * (zone.Bottom - CandleLast.High) / CandleLast.Close;
+                                    decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
                                     if (dist < distance)
                                         distance = dist;
                                 }
@@ -95,7 +92,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                     if (zone.CloseTime != null)
                     {
                         symbolIntervalData.DlzZones.ShortOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{Symbol.Name} Removed dlz zone #{zone.Id} {zone.Side} {zone.Description}");
+                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;
 

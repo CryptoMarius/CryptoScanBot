@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Signal.Helpers;
 public static class StochHelper
 {
 
-    public static bool StochOversold(this CryptoCandle candle)
+    public static bool StochOversold(this MyData candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
         if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold)
@@ -51,7 +51,7 @@ public static class StochHelper
     //}
 
 
-    public static bool StochOverbought(this CryptoCandle candle)
+    public static bool StochOverbought(this MyData candle)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
         if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought)
@@ -65,7 +65,7 @@ public static class StochHelper
     /// <summary>
     /// Calculate the Stoch surface area of the oversold part from limit to stoch
     /// </summary>
-    public static double StochOversoldSurface(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, double limit)
+    public static double StochOversoldSurface(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;
         while (candleCount > 0)
@@ -81,7 +81,7 @@ public static class StochHelper
             if (candle.CandleData.StochOscillator.Value > 40)
                 break;
 
-            if (!symbolInterval.GetPrevCandle(candle, out candle))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
                 return 0;
             candleCount--;
         }
@@ -93,7 +93,7 @@ public static class StochHelper
     /// <summary>
     /// Calculate the Stoch surface area of the overbought part from limit to stoch
     /// </summary>
-    public static double StochOverboughtSurface(this CryptoSymbolInterval symbolInterval, CryptoCandle? candle, int candleCount, double limit)
+    public static double StochOverboughtSurface(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;
         while (candleCount > 0)
@@ -109,7 +109,7 @@ public static class StochHelper
             if (candle.CandleData.StochOscillator.Value < 60)
                 break;
 
-            if (!symbolInterval.GetPrevCandle(candle, out candle))
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
                 return 0;
             candleCount--;
         }

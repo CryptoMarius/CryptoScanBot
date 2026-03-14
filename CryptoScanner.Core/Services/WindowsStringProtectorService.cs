@@ -1,6 +1,6 @@
-﻿using System.Text;
+﻿using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using System.Runtime.Versioning;
+using System.Text;
 
 namespace CryptoScanner.Core.Services;
 

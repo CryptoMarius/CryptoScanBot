@@ -71,7 +71,7 @@ public class Symbol() : SymbolBase(), ISymbol
                         foreach (var symbolData in symbolInfo.Data)
                         {
                             SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
-                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol ? symbol))
+                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
                             {
 
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
@@ -108,7 +108,7 @@ public class Symbol() : SymbolBase(), ISymbol
 
                                 // volume from the tickers
                                 if (volumeTicker.TryGetValue(symbol!.Name, out decimal volume))
-                                    symbol.Volume = volume;
+                                    symbol.Volume = (float)volume;
                                 else
                                     symbol.Volume = 0;
 

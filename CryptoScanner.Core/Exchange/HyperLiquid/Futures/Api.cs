@@ -1,10 +1,8 @@
 ﻿using CryptoExchange.Net.Authentication;
-using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
 using HyperLiquid.Net;
@@ -65,11 +63,11 @@ public class Api : ExchangeBase
             //{x.DelayTime.Value.TotalSeconds}
             //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
             //{
-                //x.DelayTime = 0.1 * x.DelayTime;
-                //int delay = (int)Math.Round(x.DelayTime.Value.TotalSeconds * 10);
-                //Thread.Sleep(delay);
-                //await Task.Delay((int)Math.Round(x.DelayTime.Value.TotalSeconds * 1000));
-                //x.Behaviour = RateLimitingBehaviour.
+            //x.DelayTime = 0.1 * x.DelayTime;
+            //int delay = (int)Math.Round(x.DelayTime.Value.TotalSeconds * 10);
+            //Thread.Sleep(delay);
+            //await Task.Delay((int)Math.Round(x.DelayTime.Value.TotalSeconds * 1000));
+            //x.Behaviour = RateLimitingBehaviour.
             //}
             //Thread.Sleep(1000);
         };

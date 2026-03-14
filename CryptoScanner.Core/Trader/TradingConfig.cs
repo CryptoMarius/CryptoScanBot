@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
-using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Trader;
 
@@ -61,7 +59,7 @@ public static class TradingConfig
                     {
                         if (!exchange.SymbolListName.ContainsKey(symbol))
                         {
-                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && !string.IsNullOrEmpty(caption) )
+                            if (GlobalData.ApplicationStatus == CryptoApplicationStatus.Running && !string.IsNullOrEmpty(caption))
                                 GlobalData.AddTextToLogTab($"Error {caption} {symbol} does not exist!");
                         }
                     }

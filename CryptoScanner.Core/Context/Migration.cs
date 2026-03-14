@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Enums;
-
-using Dapper;
+﻿using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace CryptoScanner.Core.Context;
@@ -8,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 56;
+    public readonly static int CurrentDatabaseVersion = 57;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1025,6 +1023,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
+            // Problem, sqlite does not support dropping foreign key.
+            // So we make the db corrupt because of "drop table tradeAccount!"
             try { database.Connection.Execute("drop table [TradeAccount]", transaction); } catch { } // ignore
             try { database.Connection.Execute("drop table [Zone]", transaction); } catch { } // has an accountid field
 
@@ -1169,20 +1169,31 @@ public class Migration
         }
 
 
+        //***********************************************************
+        // 18-02-2026 Changed Zone.OpenTime and CloseTime to CandleTime
+        if (CurrentVersion > version.Version && version.Version == 56)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table signal drop column [EventTime]", transaction);
+            database.Connection.Execute("drop table [zone]", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
         // Apply the exchange defaults with each update
         if (updateExchanges)
             UpdateExchanges(database);
 
-
         //***********************************************************
-        // todo:
+        //
+        //
 
-        // drop signal.EventTime no longer needed
-
-        // position.SignalEventTime = signal.CloseDate; 
-        // rename SignalEventTime to SignalCloseDate
-        // ??? not sure.. what is a better name
-        // SignalTime? okay..
+        //
 
     }
 }

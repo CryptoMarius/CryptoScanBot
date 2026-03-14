@@ -4,12 +4,9 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Services;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
 
 using System.Reflection;
 using System.Text.Json;
@@ -20,52 +17,16 @@ public class TestBase
 {
     static bool IsSetupOnce = false;
 
-    public static void ConfigurePlatformServices(IServiceCollection services)
-    {
-        if (OperatingSystem.IsWindows())
-            services.AddSingleton<IPlatformService, WindowsPlatformService>();
-        else if (OperatingSystem.IsMacOS())
-            services.AddSingleton<IPlatformService, MacOSPlatformService>();
-        else if (OperatingSystem.IsLinux())
-            services.AddSingleton<IPlatformService, LinuxPlatformService>();
-        else
-            throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
-    }
-
     public static void InitializeApplicationVariables()
     {
-        // We need a version from the main assembly
+        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+
         var assembly = Assembly.GetExecutingAssembly().GetName();
         string appVersion = assembly.Version!.ToString();
         while (appVersion.EndsWith(".0.0"))
             appVersion = appVersion[0..^2];
+
         GlobalData.AppVersion = appVersion;
-        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
-
-        // We need a folder for accessing the Sounds
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
-        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppPath =  {GlobalData.AppPath}");
-
-        // We need a data folder to store our data (temporary dependency injection to hide details)
-        var services = new ServiceCollection();
-        ConfigurePlatformServices(services);
-        var platformService = services.BuildServiceProvider().GetService<IPlatformService>()
-            ?? throw new InvalidOperationException("IPlatformService not registered");
-        GlobalData.AppDataFolder = platformService.GetDataDirectory();
-        //System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
-
-        // DEBUG OUTPUT
-        Console.WriteLine($"OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
-        //Console.WriteLine($"ApplicationData: {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
-        //Console.WriteLine($"LocalApplicationData: {Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}");
-        //Console.WriteLine($"UserProfile: {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}");
-        //Console.WriteLine($"Personal: {Environment.GetFolderPath(Environment.SpecialFolder.Personal)}");
-        Console.WriteLine($"Scanner Version: {GlobalData.AppVersion}");
-        Console.WriteLine($"Scanner AppPath: {GlobalData.AppPath}");
-        Console.WriteLine($"Scanner AppDataFolder: {GlobalData.AppDataFolder}");
-
-        // Initialize the logging system (as soon as possible)
-        ScannerLog.InitializeLogging();
     }
 
     static void SetupOnce()
@@ -74,14 +35,10 @@ public class TestBase
         {
             IsSetupOnce = true;
 
-            ApplicationParams.Options = new ApplicationParams()
-            {
-                ExchangeName = "Binance Futures",
-                AppDataFolder = Path.Combine("E:\\CryptoScanBot", "Test"),
-            };
-            ;
-            InitializeApplicationVariables();
-            
+            // Vroeger dan alle andere..
+            //InitializeApplicationVariables();
+            //ScannerLog.InitializeLogging();
+
             // Description: toevoegen en mergen van candles (de happy flow)
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
             GlobalData.LogToLogTabEvent -= AddTextToLogTab;
@@ -170,7 +127,7 @@ public class TestBase
 
     public static CryptoCandle GenerateCandles(CryptoSymbol symbol, ref DateTime startTime, int count, decimal price)
     {
-        CryptoCandle? candle = null;
+        CryptoCandle candle = default;
 
         CandleTime startTimeUnix = CandleTime.AlignFromDateTime(startTime, 1);
         while (count > 0)
@@ -183,7 +140,7 @@ public class TestBase
             //Console.WriteLine(text);
 
             //// Calculate higher timeframes
-            //long candle1mCloseTime = candle.OpenTime + 1;
+            //long candle1mCloseTime = candle.OpenTime + 60;
             //foreach (CryptoInterval interval in GlobalData.IntervalList)
             //{
             //    if (interval.ConstructFrom != null && candle1mCloseTime % interval.Duration == 0)
@@ -196,11 +153,11 @@ public class TestBase
             //    }
             //}
 
-            startTimeUnix += 60;
+            startTimeUnix += 1;
             count--;
         }
 
-        if (candle == null)
+        if (candle.OpenTime == 0)
             throw new Exception("Geen count opgegeven");
         return candle;
     }

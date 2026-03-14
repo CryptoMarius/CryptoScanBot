@@ -119,7 +119,8 @@
                         -->
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowFvgZones, Mode=TwoWay}" Content="FVG Zones" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>

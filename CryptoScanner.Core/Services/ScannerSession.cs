@@ -1,9 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
-using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
@@ -31,19 +28,6 @@ public class ScannerSession : IScannerSession
     private bool IsStartedBefore { get; set; } = false;
     private bool IsStopInProgress { get; set; } = false;
 
-    // Er zit verschil in de threading aanpak tussen deze timers (wat is dat nu weer?)
-
-    // Timertje voor het doorgeven van de signalen en de log teksten in de memo
-    //public readonly System.Timers.Timer TimerAddSignal = new() { Enabled = false };
-    // Timertje voor de barometer grafiek
-    //public readonly System.Timers.Timer TimerShowInformation = new() { Enabled = false };
-    // Timer for heartbeat sound (for keeping bluetooth speakers awake)
-    public readonly System.Timers.Timer TimerSoundHeartBeat = new() { Enabled = false };
-    // Iedere zoveel uren de memo clearen (anders wordt het te traag)
-    //public readonly System.Timers.Timer TimerClearMemo = new() { Enabled = false };
-    public readonly System.Timers.Timer TimerClearData = new() { Enabled = false };
-
-
     // Timer voor het verversen van de exchange symbols (en bijbehorende volume enzovoort)
     private readonly System.Timers.Timer TimerGetExchangeInfoAndCandles = new() { Enabled = false };
     // Iedere x uren de candles bewaren (anders veel achterstand bij crash)
@@ -63,13 +47,11 @@ public class ScannerSession : IScannerSession
 
     public ScannerSession()
     {
-        TimerClearData.Elapsed += TimerClearData_Tick;
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
 
         TimerSaveCandleData.Elapsed += TimerSaveCandleData_Tick;
-        TimerSoundHeartBeat.Elapsed += TimerSoundHeartBeat_Tick;
 
         ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent_Tick);
         ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent_Tick);
@@ -153,11 +135,6 @@ public class ScannerSession : IScannerSession
 
         SetTimerDefaults();
 
-        // Restart Telegram if token changed
-        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
-            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
-        //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
-
         // Change theme if needed
         if (Application.Current != null)
         {
@@ -179,8 +156,14 @@ public class ScannerSession : IScannerSession
             // Positions will be loaded later
             LoadAssets(); // not sure if we need this (papertrading perhaps?)
             GlobalData.LoadSymbols(); // need to load these before the tickers are created
-            Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
+            //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
         }
+
+        // Restart Telegram if token changed
+        if (GlobalData.Telegram.Token != ThreadTelegramBot.Token || GlobalData.Telegram.ChatId != ThreadTelegramBot.ChatId)
+            await ThreadTelegramBot.Start(GlobalData.Telegram.Token, GlobalData.Telegram.ChatId);
+        //ThreadTelegramBot.ChatId = GlobalData.Telegram.ChatId;
     }
 
 
@@ -277,9 +260,7 @@ public class ScannerSession : IScannerSession
                 TimerCheckPositions.Enabled = false;
                 TimerCheckDataStream.Enabled = false;
                 TimerRestartStreams.Enabled = false;
-                TimerSoundHeartBeat.Enabled = false;
                 TimerGetExchangeInfoAndCandles.Enabled = false;
-                //TimerShowInformation.Enabled = false;
                 TimerSaveCandleData.Enabled = false;
 
                 ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
@@ -353,11 +334,6 @@ public class ScannerSession : IScannerSession
 
     public void SetTimerDefaults()
     {
-        //TimerAddSignal.InitTimerInterval(2.5); // 2.5 seconds
-        //TimerShowInformation.InitTimerInterval(5); // 5 seconds
-
-        TimerSoundHeartBeat.InitTimerInterval(60 * GlobalData.Settings.General.SoundHeartBeatMinutes); // x minutes
-
         // Check data stream's (om toch zeker te zijn van nieuwe candles)
         TimerRestartStreams.InitTimerInterval(0); // OFF
         TimerCheckDataStream.InitTimerInterval(5 * 60); // 5 minutes
@@ -368,14 +344,10 @@ public class ScannerSession : IScannerSession
         // Bewaar de candle data iedere x uur
         TimerSaveCandleData.InitTimerInterval(1 * 60 * 60); // 1 hour
 
-        // Maak de log leeg iedere 24 uur
-        //TimerClearMemo.InitTimerInterval(24 * 60 * 60); // 24 hours
-        TimerClearData.InitTimerInterval(24 * 60 * 60); // 24 hours
-
         // Controleer de posities (fix probleem user ticker)
         TimerCheckPositions.InitTimerInterval(1 * 60 * 60); // 1 hours
 
-        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles 
+        // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
     }
 
@@ -406,11 +378,6 @@ public class ScannerSession : IScannerSession
         //TimerCheckDataStream.InitTimerInterval(5 * 60); // reset interval (back to 5m)
         //TimerRestartStreams.InitTimerInterval(4 * 60 * 60); // reset interval (back to 4h)
         //}
-    }
-
-    private void TimerSoundHeartBeat_Tick(object? sender, EventArgs? e)
-    {
-        GlobalData.PlaySomeMusic("sound-heartbeat.wav");
     }
 
 

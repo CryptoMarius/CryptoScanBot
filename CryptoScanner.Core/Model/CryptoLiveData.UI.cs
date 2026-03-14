@@ -33,41 +33,41 @@ public partial class CryptoLiveData
     [Computed] public string VolumeText => Symbol.Volume.ToString("N0");
     [Computed] public IBrush VolumeForeground => GetVolumeColor(Symbol, Symbol.Volume);
 
-    [Computed] public string BBText => Candle.CandleData?.BollingerBandsPercentage?.ToString("N2") ?? "";
-    [Computed] public string BbLowerText => Candle.CandleData?.BollingerBandsLowerBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public string BbUpperText => Candle.CandleData?.BollingerBandsUpperBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public string BBText => CandleData?.BollingerBandsPercentage?.ToString("N2") ?? "";
+    [Computed] public string BbLowerText => CandleData?.BollingerBandsLowerBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public string BbUpperText => CandleData?.BollingerBandsUpperBand?.ToString0(Symbol.PriceDisplayFormat) ?? "";
 
-    [Computed] public string RsiText => Candle.CandleData?.Rsi?.ToString("N2") ?? "";
-    [Computed] public IBrush RsiForeground => GetBrushColorRsi(Candle.CandleData?.Rsi);
+    [Computed] public string RsiText => CandleData?.Rsi?.ToString("N2") ?? "";
+    [Computed] public IBrush RsiForeground => GetBrushColorRsi(CandleData?.Rsi);
 
-    [Computed] public string LuxIndicator5mText => Candle.CandleData?.Lux5mValue.ToString("N0") ?? "";
-    [Computed] public IBrush LuxIndicator5mForeground => GetBrushColorViaSign((double)(Candle.CandleData?.Lux5mValue ?? 0));
+    [Computed] public string LuxIndicator5mText => CandleData?.Lux5mValue.ToString("N0") ?? "";
+    [Computed] public IBrush LuxIndicator5mForeground => GetBrushColorViaSign((double)(CandleData?.Lux5mValue ?? 0));
 
-    [Computed] public string MacdValueText => Candle.CandleData?.MacdValue?.ToString("N5") ?? "";
-    [Computed] public IBrush MacdValueForeground => GetBrushColorViaSign(Candle.CandleData?.MacdValue);
+    [Computed] public string MacdValueText => CandleData?.MacdValue?.ToString("N5") ?? "";
+    [Computed] public IBrush MacdValueForeground => GetBrushColorViaSign(CandleData?.MacdValue);
 
-    [Computed] public string MacdSignalText => Candle.CandleData?.MacdSignal?.ToString("N5") ?? "";
-    [Computed] public IBrush MacdSignalForeground => GetBrushColorViaSign(Candle.CandleData?.MacdSignal);
+    [Computed] public string MacdSignalText => CandleData?.MacdSignal?.ToString("N5") ?? "";
+    [Computed] public IBrush MacdSignalForeground => GetBrushColorViaSign(CandleData?.MacdSignal);
 
-    [Computed] public string MacdHistogramText => Candle.CandleData?.MacdHistogram?.ToString("N2") ?? "";
-    [Computed] public IBrush MacdHistogramForeground => GetBrushColorViaSign(Candle.CandleData?.MacdHistogram);
+    [Computed] public string MacdHistogramText => CandleData?.MacdHistogram?.ToString("N2") ?? "";
+    [Computed] public IBrush MacdHistogramForeground => GetBrushColorViaSign(CandleData?.MacdHistogram);
 
-    [Computed] public string StochOscillatorText => Candle.CandleData?.StochOscillator?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public IBrush StochOscillatorForeground => GetBrushColorStoch(Candle.CandleData?.StochOscillator);
+    [Computed] public string StochOscillatorText => CandleData?.StochOscillator?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public IBrush StochOscillatorForeground => GetBrushColorStoch(CandleData?.StochOscillator);
 
-    [Computed] public string StochSignalText => Candle.CandleData?.StochSignal?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public IBrush StochSignalForeground => GetBrushColorStoch(Candle.CandleData?.StochSignal);
+    [Computed] public string StochSignalText => CandleData?.StochSignal?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public IBrush StochSignalForeground => GetBrushColorStoch(CandleData?.StochSignal);
 
-    [Computed] public string Sma200Text => Candle.CandleData?.Sma200?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public string Sma200Text => CandleData?.Sma200?.ToString0(Symbol.PriceDisplayFormat) ?? "";
 
-    [Computed] public string Sma50Text => Candle.CandleData?.Sma50?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public IBrush Sma50Foreground => GetBrushColorSma50(CryptoTradeSide.Long, Candle.CandleData?.Sma50, Candle.CandleData?.Sma200);
+    [Computed] public string Sma50Text => CandleData?.Sma50?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public IBrush Sma50Foreground => GetBrushColorSma50(CryptoTradeSide.Long, CandleData?.Sma50, CandleData?.Sma200);
 
-    [Computed] public string Sma20Text => Candle.CandleData?.Sma20?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public IBrush Sma20Foreground => GetBrushColorSma20(CryptoTradeSide.Long, Candle.CandleData?.Sma20, Candle.CandleData?.Sma50);
+    [Computed] public string Sma20Text => CandleData?.Sma20?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public IBrush Sma20Foreground => GetBrushColorSma20(CryptoTradeSide.Long, CandleData?.Sma20, CandleData?.Sma50);
 
-    [Computed] public string PSarText => Candle.CandleData?.PSar?.ToString0(Symbol.PriceDisplayFormat) ?? "";
-    [Computed] public IBrush PSarForeground => GetBrushColorPSar(CryptoTradeSide.Long, Candle.CandleData?.PSar, Candle.CandleData?.Sma20);
+    [Computed] public string PSarText => CandleData?.PSar?.ToString0(Symbol.PriceDisplayFormat) ?? "";
+    [Computed] public IBrush PSarForeground => GetBrushColorPSar(CryptoTradeSide.Long, CandleData?.PSar, CandleData?.Sma20);
 
     [Computed] public string FundingRateText => Symbol.FundingRate.ToString("N2") ?? "";
 

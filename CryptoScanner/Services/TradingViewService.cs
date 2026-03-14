@@ -51,7 +51,7 @@ public class TradingViewService : ITradingViewService, IDisposable
     /// Registers a TradingView symbol with automatic event wiring
     /// </summary>
     private static void RegisterTradingViewSymbol(string symbol, string displayName,
-        Action<decimal, decimal> onValueReceived, CancellationToken token)
+        Action<decimal, double> onValueReceived, CancellationToken token)
     {
         // Start the symbol polling
         Task.Factory.StartNew(() =>
@@ -65,7 +65,7 @@ public class TradingViewService : ITradingViewService, IDisposable
     /// Registers Fear & Greed Index with automatic event wiring
     /// </summary>
     private static void RegisterFearAndGreedSymbol(string url, string displayName,
-        Action<decimal, decimal> onValueReceived, CancellationToken token)
+        Action<decimal, double> onValueReceived, CancellationToken token)
     {
         Task.Factory.StartNew(() =>
         {

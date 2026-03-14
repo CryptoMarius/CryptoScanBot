@@ -1,4 +1,4 @@
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
@@ -7,9 +7,6 @@ namespace CryptoScanner.Core.Signal.Other;
 
 public class SignalTrendShort : SignalCreateBase
 {
-    public SignalTrendShort(CryptoSymbol symbol, CryptoInterval interval, CryptoCandle candle) : base(symbol, interval, candle)
-    {
-    }
 
 
     public override bool IsSignal()
@@ -21,10 +18,18 @@ public class SignalTrendShort : SignalCreateBase
             data.PrevTime + Interval.Duration == data.Time &&
             data.PrevTrend == CryptoTrendIndicator.Bullish && data.Trend == CryptoTrendIndicator.Bearish)
         {
-            if (!data.ReversalSignaled)
+            if (data.LastTrend != CryptoTrendIndicator.Bearish)
             {
-                data.ReversalSignaled = true;
-                return true;
+                if (data.Trend == CryptoTrendIndicator.Unknown)
+                {
+                    data.LastTrend = data.Trend;
+                    return false;
+                }
+                else
+                {
+                    data.LastTrend = data.Trend;
+                    return true;
+                }
             }
         }
 

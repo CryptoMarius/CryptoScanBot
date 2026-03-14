@@ -284,7 +284,7 @@ public static class CryptoDisplayHelpers
         return $"{number:N2}";
     }
 
-    internal static IBrush GetVolumeColor(CryptoSymbol symbol, decimal volume)
+    internal static IBrush GetVolumeColor(CryptoSymbol symbol, double volume)
     {
         if (volume <= 0)
             return BrushNeutral;

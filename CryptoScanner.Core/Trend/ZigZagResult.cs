@@ -18,7 +18,7 @@ public class ZigZagResult
     public CryptoZoneStrength Strength { get; set; } = CryptoZoneStrength.None;
 
     public decimal? BackupValue { get; set; }
-    public CryptoCandle? BackupCandle { get; set; }
+    public CryptoCandle BackupCandle { get; set; }
     public int? BackupIndex { get; set; }
 
 
@@ -59,7 +59,7 @@ public class ZigZagResult
     {
         if (BackupValue != null)
             Value = BackupValue.Value;
-        if (BackupCandle != null)
+        if (BackupCandle.OpenTime != 0)
             Candle = BackupCandle;
         if (BackupIndex != null)
             PivotIndex = BackupIndex.Value;

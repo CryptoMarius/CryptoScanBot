@@ -117,6 +117,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _applicationStateService = applicationStateService;
         _tradingViewService = tradingViewService;
 
+
         // Subscribe to market indicator events
         //_tradingViewService.MarketCapTotalChanged += (s, v) => MarketCapTotal.Update(v, null);
         //_tradingViewService.DollarIndexChanged += (s, v) => DollarIndex.Update(v, null);
@@ -415,7 +416,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         CandleTime candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
             {
                 if (loX > candle!.OpenTime)
                     loX = candle.OpenTime;
@@ -438,7 +439,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
 
         // ranges symbolViewModel and y
-        float screenX = hiX - loX; // candleTime time
+        float screenX = hiX - loX; // unix time
         float screenY = hiY - loY; // barometer, something like -5 .. +5
         if (screenY < 5)
             screenY = 5f; // from -2 to +2
@@ -522,7 +523,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         candleTime = candleList.Values.Last().OpenTime;
         while (candleCount-- > 0)
         {
-            if (candleList.TryGetValue(candleTime, out CryptoCandle? candle))
+            if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
             {
                 point2.X = offsetX + scaleX * (float)(candle!.OpenTime - loX);
                 point2.Y = offsetY + scaleY * ((float)candle.Close);

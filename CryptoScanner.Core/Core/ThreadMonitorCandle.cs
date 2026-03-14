@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 using System.Collections.Concurrent;
 

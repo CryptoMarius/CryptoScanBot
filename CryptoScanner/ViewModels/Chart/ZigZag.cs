@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
 
-//using DryIoc.ImTools;
-
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -10,14 +8,14 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class ZigZag
 {
-    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption, 
+    internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption,
         OxyColor color, CandleTime minDate, CandleTime maxDate, string tag)
     {
-        var seriesZigZag = new LineSeries { Title = caption, Color = color, Tag = tag };
-        var seriesHigh = new ScatterSeries { Title = "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, Tag = tag };
-        var seriesLow = new ScatterSeries { Title = "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, Tag = tag };
-        var seriesDummyHigh = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, Tag = tag };
-        var seriesDummyLow = new ScatterSeries { Title = "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, Tag = tag };
+        var seriesZigZag = new LineSeries { Title = tag + caption, Color = color, Tag = tag };
+        var seriesHigh = new ScatterSeries { Title = tag + "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, Tag = tag };
+        var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, Tag = tag };
+        var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, Tag = tag };
+        var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, Tag = tag };
         foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= minDate && zigzag.Candle!.OpenTime <= maxDate)

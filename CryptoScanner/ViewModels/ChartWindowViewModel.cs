@@ -17,28 +17,38 @@ using OxyPlot.Axes;
 
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 
 namespace CryptoScanner.ViewModels;
 
 public partial class ChartWindowViewModel : ObservableObject
 {
+    // Symbol related data
+    private readonly ZoneSession Session = new();
+    private CryptoSymbol Symbol { get; set; }
+    private CryptoInterval Interval { get; set; }
+    private CryptoSymbolInterval SymbolInterval { get; set; }
+
+    // Signals and positions for this symbol
+    public List<CryptoSignal> SignalList { get; set; } = [];
+    public List<CryptoPosition> PositionList { get; set; } = [];
+    private CandleTime lastLoadedSignalsAndPositions = CandleTime.MinValue;
+
+    // ZigZag data for the FIB trend and Main trend display
+    private TrendZigZagIndicatorList TrendZigZagIndicatorList { get; set; } = [];
+
+    [ObservableProperty]
+    private bool _isCalculating = false;
+
     [ObservableProperty]
     private OxyPlot.Avalonia.PlotView _plotView;
 
     [ObservableProperty]
     private PlotModel _plotModel;
 
-    // Crosshair annotations
+    // Chart crosshair annotations
     private LineAnnotation? CrossHairX;
     private LineAnnotation? CrossHairY;
-
-    // The data, symbol, interval etc..
-    private ZoneConfig? Data { get; set; } = null;
-    // The options and attributes for the PlotModel
-    private ZoneSession Session { get; set; } = new();
-
 
     // Sub-ViewModels for modular UI
     [ObservableProperty]
@@ -59,16 +69,12 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
     [ObservableProperty]
-    private string _windowTitle = "Crypto Visualisation";
+    private string _windowTitle = "Chart";
 
-    [ObservableProperty]
-    private bool _isCalculating = false;
-
-    private string _oldSymbolBase = "";
-    private string _oldSymbolQuote = "";
-    private string _oldIntervalName = "";
-
+    // TODO: How to fix this?
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public ChartWindowViewModel()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     {
         // Initialize sub-ViewModels
         _symbolSelector = new ChartSymbolSelectorViewModel();
@@ -83,11 +89,13 @@ public partial class ChartWindowViewModel : ObservableObject
         _plotView = new OxyPlot.Avalonia.PlotView
         {
             Model = PlotModel,
+            //Dock = DockStyle.Fill,
             //Background = OxyColors.Transparent,
             Controller = CreateController()
         };
 
         // Load session
+        ClearOptions();
         Session = LoadSessionSettings();
         Session.UseOptimizing = false;
 
@@ -102,24 +110,114 @@ public partial class ChartWindowViewModel : ObservableObject
         TrendSettings.PropertyChanged += OnTrendSettingsChanged;
         FibSettings.PropertyChanged += OnFibSettingsChanged;
         DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
-        PlaybackControls.PlaybackRequested += OnPlaybackRequested;
+        //PlaybackControls.PlaybackRequested += OnPlaybackRequested;
 
-        // Force display
-        //OnPropertyChanged(nameof(SymbolSelector.SelectedSymbol));
         RefreshCommand.ExecuteAsync(null);
         System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
     }
 
+
+    //private string lastDisplay = string.Empty;
+    private void ClearOptions(string symbolName = "", string intervalName = "")
+    {
+        //lastDisplay = string.Empty;
+
+        Symbol = null!;
+        Interval = null!;
+        SymbolInterval = null!;
+        SignalList.Clear();
+        PositionList.Clear();
+        optionsInChart.Clear();
+        optionsInChart["symbol"] = symbolName;
+        optionsInChart["interval"] = intervalName;
+
+        TrendZigZagIndicatorList.Clear();
+        TrendZigZagIndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false));
+        TrendZigZagIndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true));
+        TrendZigZagIndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false));
+        TrendZigZagIndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true));
+    }
+
+
+
+    //// A weird option to position the form over Altrady graph
+    //private void TransparentClick(object? sender, EventArgs e)
+    //{
+    //    if (EditTransparant.Checked)
+    //    {
+    //        BackColor = Color.Lime;
+    //        TransparencyKey = Color.Lime;
+    //        plotView.BackColor = Color.Lime;
+    //    }
+    //    else
+    //    {
+    //        BackColor = SystemColors.Control;
+    //        TransparencyKey = Color.Lime;
+    //        plotView.BackColor = Color.Black;
+    //    }
+    //    flowLayoutPanel1.BackColor = SystemColors.Control;
+    //}
+
+
+
+
+    //private void ButtonGoLeftOrRight(int direction)
+    //{
+    //    if (Data != null && plotModel != null)
+    //    {
+    //        PickupUserInput();
+    //        Session.MaxDate += direction * Interval.Duration;
+    //        _ = CalculateAsync();
+    //    }
+    //}
+
+
+    //private async void ButtonIntervalPlusOrMin(int direction)
+    //{
+    //    if (Data != null && plotModel != null &&
+    //        Session.ActiveInterval + direction >= CryptoIntervalPeriod.interval1m &&
+    //        Session.ActiveInterval + direction <= CryptoIntervalPeriod.interval1w)
+    //    {
+    //        Session.ActiveInterval += direction;
+    //        foreach (var serie in plotModel.Series)
+    //        {
+    //            if (serie.Title == "Candles")
+    //            {
+    //                plotModel.Series.Remove(serie);
+    //                break;
+    //            }
+    //        }
+
+    //        Symbol.Data.CalculatingZones = true;
+    //        try
+    //        {
+    //            CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Session.ActiveInterval);
+    //            await ZoneCandleEngine.ReadCandlesFromDiskAsync(Symbol, symbolInterval.Interval);
+    //            Chart.Candles.Draw(plotModel, Symbol, symbolInterval.Interval, Session.MinDate, Session.MaxDate);
+    //        }
+    //        finally
+    //        {
+    //            await ZoneCandleEngine.CleanLoadedCandlesAsync(Symbol);
+    //            Symbol.Data.CalculatingZones = false;
+    //        }
+
+    //        labelInterval.Text = Session.ActiveInterval.ToString();
+    //        plotModel?.InvalidatePlot(true);
+    //    }
+    //}
+
+
     private static PlotController CreateController()
     {
         var controller = new PlotController();
-        //controller.UnbindAll();
-        //controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
-        //controller.UnbindAll(); // leave the original intact, we just need to tweak it a bit
+
+        // Change the default behaviour
         controller.BindMouseDown(OxyMouseButton.Left, PlotCommands.PanAt);
+        controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift, PlotCommands.ZoomRectangle);
         controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control, PlotCommands.ZoomRectangle);
         controller.BindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Control | OxyModifierKeys.Alt, 2, PlotCommands.ResetAt);
-        controller.UnbindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift);
+        //controller.UnbindMouseDown(OxyMouseButton.Left, OxyModifierKeys.Shift);
+
         controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control | OxyModifierKeys.Alt, PlotCommands.ZoomRectangle);
         controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Control, 2, PlotCommands.ResetAt);
         controller.BindMouseDown(OxyMouseButton.Right, OxyModifierKeys.Alt, PlotCommands.PanAt);
@@ -127,30 +225,50 @@ public partial class ChartWindowViewModel : ObservableObject
         return controller;
     }
 
-    private string LabelFormatterX(double x)
-    {
-        string s;
-        CandleTime unix = new CandleTime((uint)x);
-        DateTime date = unix.ToDateTime(); //.ToLocalTime(); problem..?
-        if (Data?.Interval?.IntervalPeriod <= CryptoIntervalPeriod.interval1h && date.Hour == 0)
-            s = date.Day.ToString();
-        else if (Data?.Interval?.IntervalPeriod <= CryptoIntervalPeriod.interval1d)
-            s = date.Day.ToString();
-        else
-            s = "?";
 
-        if (date.Day == 1)
+    // Tracks the last day number shown in a label, to avoid repeating it within the same day.
+    // Reset whenever x goes backward, which signals the start of a new render pass.
+    private static int _lastShownDay = -1;
+    private static double _lastTickX = double.MinValue;
+
+    private static string LabelFormatterX(double x)
+    {
+        // OxyPlot renders ticks left-to-right within a single pass.
+        // If x goes backward, a new render pass has started - reset day tracking.
+        if (x < _lastTickX)
+            _lastShownDay = -1;
+        _lastTickX = x;
+
+        var unix = new CandleTime((uint)x);
+        DateTime date = unix.ToDateTime();
+
+        if (date.Hour == 0 && date.Minute == 0)
         {
-            string monthName = date.ToString("MMM", CultureInfo.InvariantCulture);
-            s += "\r\n" + monthName;
+            // Day boundary: show day number on first line
+            _lastShownDay = date.Day;
+            string s = date.Day.ToString();
+            if (date.Day == 1)
+            {
+                // First of month: add month name on second line
+                string monthName = date.ToString("MMM", CultureInfo.InvariantCulture);
+                s += "\r\n" + monthName;
+            }
+            return s;
         }
 
-        return s;
+        // Intra-day tick: show time, add day on second line only on the first tick of each new day
+        string time = $"{date.Hour:D2}:{date.Minute:D2}";
+        if (date.Day != _lastShownDay)
+        {
+            _lastShownDay = date.Day;
+            time += "\r\n" + date.Day;
+        }
+        return time;
     }
 
     private string LabelFormatterY(double x)
     {
-        string s = x.ToString(Data?.Symbol?.PriceDisplayFormat);
+        string s = x.ToString(Symbol?.PriceDisplayFormat);
         return s;
     }
 
@@ -163,8 +281,8 @@ public partial class ChartWindowViewModel : ObservableObject
         {
             Background = OxyColors.Black,
 
-            Title = "Chart 1.2.3.",
-            Subtitle = "...",
+            //Title = "Chart 1.2.3.",
+            //Subtitle = "...",
             TitleFont = Const.OxyFontName,
             TitleColor = OxyColors.White,
 
@@ -179,18 +297,18 @@ public partial class ChartWindowViewModel : ObservableObject
         // x-axis
         chart.Axes.Add(new LinearAxis
         {
-            Title = "Time",
-            StringFormat = "dd-MM HH:mm",
+            //Title = "Time",
+            //StringFormat = "dd-MM HH:mm",
             Font = Const.OxyFontName,
             FontSize = Const.OxyFontSize,
             TextColor = OxyColors.White,
             LabelFormatter = LabelFormatterX,
             Position = AxisPosition.Bottom,
 
-            MajorTickSize = 15,
-            MinorTickSize = 5,
+            //MajorTickSize = 15,
+            //MinorTickSize = 5,
             TicklineColor = OxyColors.Gray,
-            TickStyle = TickStyle.Inside,
+            TickStyle = OxyPlot.Axes.TickStyle.Inside,
 
             AxislineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.Gray,
@@ -221,7 +339,7 @@ public partial class ChartWindowViewModel : ObservableObject
             MajorTickSize = 15,
             MinorTickSize = 5,
             TicklineColor = OxyColors.Gray,
-            TickStyle = TickStyle.Inside,
+            TickStyle = OxyPlot.Axes.TickStyle.Inside,
 
             AxislineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.Gray,
@@ -254,9 +372,73 @@ public partial class ChartWindowViewModel : ObservableObject
 #pragma warning disable CS0618 // Type or member is obsolete
         chart.MouseMove += PlotModel_MouseMove; // Declared obsolete, but since there is no suggestion how to solve it (ridiculous)
         chart.MouseDown += PlotModel_MouseDown; // Declared obsolete, but since there is no suggestion how to solve it (ridiculous)
+        chart.Axes[0].AxisChanged += (s, e) => UpdateAxisTicks(chart.Axes[0]);
 #pragma warning restore CS0618 // Type or member is obsolete
 
         return chart;
+    }
+
+    private static void UpdateAxisTicks(Axis axis)
+    {
+        // ActualMinimum/ActualMaximum reflect the current visible range (respects zoom and pan),
+        // but are NaN before the first render. Fall back to Minimum/Maximum in that case.
+        double min = double.IsNaN(axis.ActualMinimum) ? axis.Minimum : axis.ActualMinimum;
+        double max = double.IsNaN(axis.ActualMaximum) ? axis.Maximum : axis.ActualMaximum;
+        double visibleRange = max - min;
+        if (double.IsNaN(visibleRange) || visibleRange <= 0)
+            return;
+
+        (double major, double minor) = PickTickSteps(visibleRange);
+        axis.MajorStep = major;
+        axis.MinorStep = minor;
+    }
+
+    /// <summary>
+    /// Returns (majorStep, minorStep) in minutes based on the visible range (also in minutes).
+    /// Major ticks get a date/time label via LabelFormatterX; minor ticks only get a tick mark.
+    /// At midnight the formatter shows the day number; at other hours it shows "HH:mm".
+    /// </summary>
+    private static (double majorStep, double minorStep) PickTickSteps(double visibleRange)
+    {
+        // visibleRange in minutes
+        if (visibleRange <= 4 * 60) return (30, 5);          // = 4h:  major 30min,  minor 5min
+        if (visibleRange <= 12 * 60) return (60, 15);         // = 12h: major 1h,     minor 15min
+        if (visibleRange <= 3 * 1440) return (240, 60);        // = 3d:  major 4h,     minor 1h   ? "04:00","08:00" etc.
+        if (visibleRange <= 7 * 1440) return (480, 240);       // = 7d:  major 8h,     minor 4h   ? "08:00","16:00" per dag
+        if (visibleRange <= 30 * 1440) return (1440, 240);      // = 30d: major 1d,     minor 4h
+        if (visibleRange <= 90 * 1440) return (10080, 1440);    // = 90d: major 1w,     minor 1d
+        return (43200, 10080);                                     // >90d:  major ~1mo,   minor 1w
+    }
+
+    //private static double SnapToNiceInterval(double rawStep)
+    //{
+    //    // Nice intervals in minutes, from 1m up to ~2 months
+    //    double[] niceIntervals =
+    //    [
+    //        1, 5, 10, 15, 30,           // minutes
+    //    60, 120, 240, 360, 720,     // hours
+    //    1440, 2880, 7200, 10080,    // days / weeks
+    //    20160, 43200, 86400         // 2w / month / 2m
+    //    ];
+
+    //    foreach (var interval in niceIntervals)
+    //        if (interval >= rawStep)
+    //            return interval;
+
+    //    return niceIntervals[^1];
+    //}
+
+
+
+
+
+    // Save the edits to the session configuration
+    private void PickupUserInput()
+    {
+        SymbolSelector.SaveToSession(Session);
+        TrendSettings.SaveToSession(Session);
+        FibSettings.SaveToSession(Session);
+        DisplayOptions.SaveToSession(Session);
     }
 
     public static ZoneSession LoadSessionSettings()
@@ -278,20 +460,13 @@ public partial class ChartWindowViewModel : ObservableObject
     {
         PickupUserInput();
 
-        // save current Session settings
+        // save current session settings
         Directory.CreateDirectory(GlobalData.AppDataFolder);
         string fileName = Path.Combine(GlobalData.AppDataFolder, $"CryptoScanBot-chart.json");
         string text = JsonSerializer.Serialize(Session, JsonTools.JsonSerializerIndented);
         File.WriteAllText(fileName, text);
     }
 
-    private void PickupUserInput()
-    {
-        SymbolSelector.SaveToSession(Session);
-        TrendSettings.SaveToSession(Session);
-        FibSettings.SaveToSession(Session);
-        DisplayOptions.SaveToSession(Session);
-    }
 
     private void OnSymbolChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -303,358 +478,15 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-
-    private bool _refreshChart = false;
-    private readonly Dictionary<string, string> optionsInChart = [];
-    private bool Toggle(PlotModel chart, string group, bool currentValue, string prefix = "")
-    {
-        optionsInChart.TryAdd(group, "");
-        string stored = optionsInChart[group];
-        string current = currentValue ? prefix + "1" : prefix + "0";
-
-        if (stored != current)
-        {
-            _refreshChart = true;
-            optionsInChart[group] = current;
-
-            if (currentValue)
-            {
-                return true; // draw indicator
-            }
-            else
-            {
-                RemoveFromChart(chart, group);
-                return false; // already done..
-            }
-        }
-        return false;
-    }
-
-
-    private void OnTrendSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // Trend settings changed - refresh display
-        //_ = CreateChartAndOverlaysAsync();
-
-        // Display options changed
-        if (Data == null)
-            return;
-
-        PickupUserInput();
-
-        // Draw trend zigzag
-        string group = "candles.trendlines";
-        if (Toggle(PlotModel, group, Session.TrendShowZigZag, Session.TrendType.ToString()))
-        {
-            RemoveFromChart(PlotModel, group);
-            SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-            var mainIndicator = Data.IndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
-            ZigZag.Draw(PlotModel, mainIndicator.ZigZagList, "maintrend",
-                OxyColors.White, Session.MinDate, Session.MaxDate, group);
-        }
-
-        if (_refreshChart && sender != null)
-        {
-            this.PlotModel.InvalidatePlot(true);
-            OnPropertyChanged(nameof(ChartWindowViewModel.PlotModel));
-            OnPropertyChanged(nameof(PlotView));
-            _refreshChart = false;
-        }
-    }
-
-    private void OnFibSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // FIB settings changed - refresh display
-        //_ = CreateChartAndOverlaysAsync();
-
-        // Display options changed
-        if (Data == null)
-            return;
-
-        PickupUserInput();
-
-        // Draw FIB retracement
-        string group = "fib.indicator";
-        if (Toggle(PlotModel, group, FibSettings.ShowFibRetracement))
-            FibRetracement.Draw(PlotModel, Data.Symbol, Data.Interval,
-                Data.IndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)], group);
-
-        // Draw FIB zigzag
-        group = "fib.trendlines";
-        if (Toggle(PlotModel, group, FibSettings.ShowZigZag, FibSettings.FibTrend.ToString()))
-        {
-            RemoveFromChart(PlotModel, group);
-            ZigZag.Draw(PlotModel,
-                Data.IndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)].ZigZagList,
-                "fib", OxyColors.White, Session.MinDate, Session.MaxDate, group);
-        }
-
-        if (_refreshChart && sender != null)
-        {
-            PlotModel.InvalidatePlot(true);
-            OnPropertyChanged(nameof(PlotModel));
-            OnPropertyChanged(nameof(PlotView));
-            _refreshChart = false;
-        }
-    }
-
-
-    private void OnDisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // Display options changed
-        if (Data == null)
-            return;
-
-        PickupUserInput();
-        SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-        var mainIndicator = Data.IndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
-
-        // Draw pivots
-        string group = "pivotpoints";
-        if (Toggle(PlotModel, group, Session.ShowPoints))
-            Points.Draw(PlotModel, mainIndicator.PivotList, Session.MinDate, Session.MaxDate, group);
-
-        // Draw double top/bottom
-        group = "dtb";
-        if (Toggle(PlotModel, group, Session.ShowDtb)) // Test double top/bottom
-            Dtb.Draw(PlotModel, Data.Interval, mainIndicator, group);
-
-        // Draw DLZ zones
-        group = "dlz.zones";
-        if (Toggle(PlotModel, group, Session.ShowDlzZones))
-            DlzZones.Draw(PlotModel, Data.Symbol, Session.MinDate, Session.MaxDate, group);
-
-        // Draw FVG zones
-        group = "fvg.zones";
-        if (Toggle(PlotModel, group, DisplayOptions.ShowFvgZones))
-            Chart.FvgZones.Draw(PlotModel, Data.Symbol, Session.MinDate, Session.MaxDate, group);
-
-        // Draw signals
-        group = "signals";
-        if (Toggle(PlotModel, group, Session.ShowSignals))
-            Signals.Draw(PlotModel, Data.Signals, Session.MinDate, Session.MaxDate, group);
-
-        // Draw Nadaraya Watson Envelope (non repainting)
-        group = "nwe.notrepainting";
-        if (Toggle(PlotModel, group, Session.ShowNadarayaWatsonEnvelope))
-            NadarayaWatsonEnvelope.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, false, group);
-
-        // Draw Nadaraya Watson Envelope (repainting)
-        group = "nwe.repainting";
-        if (Toggle(PlotModel, group, Session.ShowNadarayaWatsonEnvelopeRepainting))
-            NadarayaWatsonEnvelope.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, true, group);
-
-        // Draw Bollinger Bands
-        group = "bb";
-        if (Toggle(PlotModel, group, Session.ShowBollingerBand))
-            Bollingerbands.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, group);
-
-        // Draw PSar
-        group = "psar";
-        if (Toggle(PlotModel, group, Session.ShowPSar))
-            PSar.Draw(PlotModel, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate, group);
-
-        // Draw SMA lines
-        group = "sma";
-        if (Toggle(PlotModel, group, Session.ShowSmaLinesSbm))
-        {
-            Sma.Draw(PlotModel, Data.Symbol, Data.Interval, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
-            Sma.Draw(PlotModel, Data.Symbol, Data.Interval, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
-            Sma.Draw(PlotModel, Data.Symbol, Data.Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
-        }
-
-        if (_refreshChart && sender != null)
-        {
-            this.PlotModel.InvalidatePlot(true);
-            OnPropertyChanged(nameof(ChartWindowViewModel.PlotModel));
-            OnPropertyChanged(nameof(PlotView));
-            _refreshChart = false;
-        }
-    }
-
-    [RelayCommand]
-    private async Task Calculate()
-    {
-        await SymbolOrIntervalChanged(true);
-    }
-
-    [RelayCommand]
-    private async Task Refresh()
-    {
-        await SymbolOrIntervalChanged(false);
-    }
-
-    private void OnPlaybackRequested(int direction)
-    {
-        // Handle playback navigation (left/right through time)
-        if (Data != null)
-        {
-            Session.MaxDate += direction * Data.Interval.Duration;
-            _ = SymbolOrIntervalChanged(false);
-        }
-    }
-
-    [RelayCommand]
-    private void ZoomLast()
-    {
-        // Zoom to last candles
-        if (Data != null)
-        {
-            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-            Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
-            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
-
-            // ?
-
-            PlotModel.InvalidatePlot(true);
-            OnPropertyChanged(nameof(PlotModel));
-            OnPropertyChanged(nameof(PlotView));
-        }
-    }
-
     [RelayCommand]
     private void OpenTradingApp()
     {
-        if (Data != null)
+        if (Symbol != null)
         {
             CryptoExternalUrlType tradingAppInternExtern = CryptoExternalUrlType.External;
             if (GlobalData.Settings.General.TradingApp == CryptoTradingApp.TradingView || GlobalData.Settings.General.TradingApp == CryptoTradingApp.ExchangeUrl)
                 tradingAppInternExtern = GlobalData.Settings.General.TradingAppInternExtern;
-            CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, Data.Symbol, Data.Interval, tradingAppInternExtern);
-        }
-    }
-
-    private bool PrepareSessionData(out string reason)
-    {
-        var exchange = GlobalData.ActiveExchange;
-        if (exchange == null)
-        {
-            reason = "Exchange not found";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
-        {
-            reason = "Symbol not found";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
-        if (interval == null)
-        {
-            reason = "Interval not supported";
-            ScannerLog.Logger.Info($"{reason}");
-            return false;
-        }
-
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-        Data = new()
-        {
-            Exchange = exchange,
-            Symbol = symbol,
-            Interval = interval,
-            SymbolInterval = symbolInterval,
-        };
-
-        Data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, Session.Deviation));
-        Data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, Session.Deviation));
-
-        // Reset dates if symbol/interval changed
-        if (_oldSymbolBase != Session.SymbolBase || _oldSymbolQuote != Session.SymbolQuote || _oldIntervalName != Session.IntervalName)
-        {
-            optionsInChart.Clear();
-            _oldSymbolBase = Session.SymbolBase;
-            _oldSymbolQuote = Session.SymbolQuote;
-            _oldIntervalName = Session.IntervalName;
-
-            Session.IntervalName = Data.Interval.Name;
-            Session.ActiveInterval = Data.Interval.IntervalPeriod;
-            Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-            Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Data.Interval.Duration);
-            Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Data.Interval.Duration;
-
-            PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
-            PlaybackControls.UpdateMaxTimeDisplay(Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm"));
-
-            // Load signals
-            ExtraData.LoadSignalsForSymbol(Data, Session.MinDate);
-        }
-
-        reason = "";
-        return true;
-    }
-
-    private async Task CalculateZonesAndPlotZigZagAsync()
-    {
-        if (Data == null)
-            return;
-
-        StringBuilder log = new();
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
-
-        try
-        {
-            // Hide crosshair cursor
-            if (CrossHairX != null && CrossHairY != null)
-            {
-                CrossHairX.LineStyle = LineStyle.None;
-                CrossHairY.LineStyle = LineStyle.None;
-            }
-
-            Data.Symbol.Data.CalculatingZones = true;
-            try
-            {
-                // Load and (re)calculate the zones
-                ZoneDlz.LoadZonesForSymbol(Data.Symbol);
-
-                // Calculate FVG if forced
-                if (Session.ForceCalculation)
-                    await ZoneFvg.CalculateFvgZonesAsync(ShowProgress, Data.Symbol, Data.Interval, loadedCandlesInMemory);
-
-                // Calculate DLZ zones
-                await CalculateAllDlzZonesAsync(Session, Data, loadedCandlesInMemory);
-
-                // Create PlotModel and draw overlays
-                await CreateChartAndOverlaysAsync();
-            }
-            finally
-            {
-                await ZoneCandleEngine.SaveCandleDataToDiskAsync(Data.Symbol, loadedCandlesInMemory);
-                await ZoneCandleEngine.CleanLoadedCandlesAsync(Data.Symbol);
-                Data.Symbol.Data.CalculatingZones = false;
-            }
-
-            PlotModel.InvalidatePlot(true);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "CalculateZonesAndPlotZigZag error");
-            GlobalData.AddTextToLogTab($"ERROR {error}");
-        }
-    }
-
-    private async Task CalculateAllDlzZonesAsync(ZoneSession session, ZoneConfig data,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
-    {
-        try
-        {
-            data.IndicatorList.Clear();
-            data.IndicatorList.Add((TrendType.Primary, false), new(TrendType.Primary, false, session.Deviation));
-            data.IndicatorList.Add((TrendType.Primary, true), new(TrendType.Primary, true, session.Deviation));
-            data.IndicatorList.Add((TrendType.Secondary, false), new(TrendType.Secondary, false, session.Deviation));
-            data.IndicatorList.Add((TrendType.Secondary, true), new(TrendType.Secondary, true, session.Deviation));
-
-            await ZoneDlz.CalculateDlzBoxesAsync(ShowProgress, session, data, loadedCandlesInMemory);
-        }
-        catch (Exception error)
-        {
-            ScannerLog.Logger.Error(error, "CalculateAllDlzZones error");
-            GlobalData.AddTextToLogTab($"ERROR {error}");
+            CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, Symbol, Interval, tradingAppInternExtern);
         }
     }
 
@@ -674,61 +506,272 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-    private string lastDisplay = string.Empty;
-    private async Task CreateChartAndOverlaysAsync()
-    {
-        if (Data == null)
-            return;
 
+    private bool _refreshChart = false;
+    private readonly Dictionary<string, string> optionsInChart = [];
+    private bool Toggle(PlotModel model, string group, bool currentValue, string prefix = "")
+    {
+        optionsInChart.TryAdd(group, "");
+        string stored = optionsInChart[group];
+        string current = currentValue ? prefix + "1" : prefix + "0";
+
+        if (stored != current)
+        {
+            _refreshChart = true;
+            optionsInChart[group] = current;
+
+            if (currentValue)
+            {
+                return true; // draw indicator
+            }
+            else
+            {
+                RemoveFromChart(model, group);
+                return false; // already done..
+            }
+        }
+        return false;
+    }
+
+
+    private void OnTrendSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Display options changed
+        if (Symbol == null)
+            return;
         PickupUserInput();
 
-
-        var chart = PlotModel;
-        string newDisplay = $"{Data.Symbol.Name}, {Data.Interval.Name}";
-        if (lastDisplay != newDisplay)
+        string group = "maintrend.title";
+        if (Toggle(PlotModel, group, true, $"{Session.SymbolBase}{Session.SymbolQuote}{Interval.Name}{Session.TrendType}"))
         {
-            lastDisplay = newDisplay;
-            await ZoneCandleEngine.ReadCandlesFromDiskAsync(Data.Symbol, Data.Interval);
-
-            // Clear all series
-            chart.Series.Clear();
-
-            // And all annotations except the crosshairs
-            foreach (var annotation in chart.Annotations.ToList())
-            {
-                if (annotation.Tag?.ToString() != "crosshair")
-                    chart.Annotations.Remove(annotation);
-            }
-
-            // Get main trend indicator
             SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
-            var mainIndicator = Data.IndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
+            var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
             CryptoTrendIndicator trendIndicator = TrendInterval.InterpretZigZagPoints(mainIndicator, null);
-            chart.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Data.Interval.Name} UTC " +
+            PlotModel.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Interval.Name} UTC " +
                 $"{trendIndicator} candles={mainIndicator.CandleCount} points={mainIndicator.ZigZagList.Count}";
+        }
 
-            // Akward... 
-            chart.Axes[0].MajorStep = (24 * 60 / Data.Interval.Duration) * Data.Interval.Duration;
-            chart.Axes[0].MinorStep = (24 * 60 / Data.Interval.Duration) * Data.Interval.Duration / 6;
+        // Draw trend zigzag
+        group = "candles.zigzag";
+        if (Toggle(PlotModel, group, Session.TrendShowZigZag, Session.TrendType.ToString()))
+        {
+            RemoveFromChart(PlotModel, group);
+            SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+            var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
+            ZigZag.Draw(PlotModel, mainIndicator.ZigZagList, "maintrend",
+                OxyColors.White, Session.MinDate, Session.MaxDate, group);
+        }
 
-            // Draw candles (should do this just once, it will not change unless interval changes)
-            Candles.Draw(chart, Data.Symbol, Data.Interval, Session.MinDate, Session.MaxDate);
-
-            // force indicators to draw itself
-            optionsInChart.Clear();
-            OnDisplayOptionsChanged(this, null!);
-            OnTrendSettingsChanged(this, null!);
-            OnFibSettingsChanged(this, null!);
-            OnDisplayOptionsChanged(this, null!);
-
-            // force refresh of the PlotModel
+        if (_refreshChart && sender != null)
+        {
+            PlotModel.InvalidatePlot(true);
+            OnPropertyChanged(nameof(ChartWindowViewModel.PlotModel));
+            OnPropertyChanged(nameof(PlotView));
             _refreshChart = false;
+        }
+    }
+
+    private void OnFibSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Display options changed
+        if (Symbol == null)
+            return;
+        PickupUserInput();
+
+        // Draw FIB retracement
+        string group = "fib.indicator";
+        if (Toggle(PlotModel, group, FibSettings.ShowFibRetracement))
+            FibRetracement.Draw(PlotModel, Symbol, Interval,
+                TrendZigZagIndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)], group);
+
+        // Draw FIB zigzag
+        group = "fib.trendlines";
+        if (Toggle(PlotModel, group, FibSettings.ShowZigZag, FibSettings.FibTrend.ToString()))
+        {
+            RemoveFromChart(PlotModel, group);
+            ZigZag.Draw(PlotModel,
+                TrendZigZagIndicatorList[(FibSettings.FibTrend == 0 ? TrendType.Primary : TrendType.Secondary, true)].ZigZagList,
+                "fib", OxyColors.White, Session.MinDate, Session.MaxDate, group);
+        }
+
+        if (_refreshChart && sender != null)
+        {
             PlotModel.InvalidatePlot(true);
             OnPropertyChanged(nameof(PlotModel));
             OnPropertyChanged(nameof(PlotView));
+            _refreshChart = false;
+        }
+    }
+
+
+    private void OnDisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Display options changed
+        if (Symbol == null)
+            return;
+        PickupUserInput();
+
+        SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+        var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
+
+        // Draw double top/bottom
+        string group = "dtb";
+        if (Toggle(PlotModel, group, Session.ShowDtb)) // Test double top/bottom
+            Dtb.Draw(PlotModel, Interval, mainIndicator, group);
+
+        // Draw DLZ zones
+        group = "dlz.zones";
+        if (Toggle(PlotModel, group, Session.ShowDlzZones))
+            DlzZones.Draw(PlotModel, Symbol, Session.MinDate, Session.MaxDate, group);
+
+        // Draw FVG zones
+        group = "fvg.zones";
+        if (Toggle(PlotModel, group, DisplayOptions.ShowFvgZones))
+            Chart.FvgZones.Draw(PlotModel, Symbol, Session.MinDate, Session.MaxDate, group);
+
+        // Draw Nadaraya Watson Envelope (non repainting)
+        group = "nwe.notrepainting";
+        if (Toggle(PlotModel, group, Session.ShowNadarayaWatsonEnvelope))
+            NadarayaWatsonEnvelope.Draw(PlotModel, Symbol, Interval, Session.MinDate, Session.MaxDate, false, group);
+
+        // Draw Nadaraya Watson Envelope (repainting)
+        group = "nwe.repainting";
+        if (Toggle(PlotModel, group, Session.ShowNadarayaWatsonEnvelopeRepainting))
+            NadarayaWatsonEnvelope.Draw(PlotModel, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
+
+        // Draw Bollinger Bands
+        group = "bb";
+        if (Toggle(PlotModel, group, Session.ShowBollingerBand))
+            Bollingerbands.Draw(PlotModel, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+        // Draw PSar
+        group = "psar";
+        if (Toggle(PlotModel, group, Session.ShowPSar))
+            PSar.Draw(PlotModel, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+        // Draw SMA lines
+        group = "sma";
+        if (Toggle(PlotModel, group, Session.ShowSmaLinesSbm))
+        {
+            Sma.Draw(PlotModel, Symbol, Interval, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
+            Sma.Draw(PlotModel, Symbol, Interval, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
+            Sma.Draw(PlotModel, Symbol, Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
         }
 
+        // Other options
 
+        // Draw pivots
+        group = "pivots";
+        if (Toggle(PlotModel, group, Session.ShowPoints))
+            Points.Draw(PlotModel, mainIndicator.PivotList, Session.MinDate, Session.MaxDate, group);
+
+        // Draw signals
+        group = "signals";
+        if (Toggle(PlotModel, group, Session.ShowSignals))
+            Signals.Draw(PlotModel, SignalList, Session.MinDate, Session.MaxDate, group);
+
+        // Draw signals
+        group = "positions";
+        if (Toggle(PlotModel, group, Session.ShowPositions))
+            Positions.Draw(PlotModel, PositionList, Interval, Session.MinDate, Session.MaxDate, group);
+
+
+        if (_refreshChart && sender != null)
+        {
+            this.PlotModel.InvalidatePlot(true);
+            OnPropertyChanged(nameof(ChartWindowViewModel.PlotModel));
+            OnPropertyChanged(nameof(PlotView));
+            _refreshChart = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task Calculate()
+    {
+        await SymbolOrIntervalChangedAsync(true);
+    }
+
+    [RelayCommand]
+    private async Task Refresh()
+    {
+        await SymbolOrIntervalChangedAsync(false);
+    }
+
+    //private void OnPlaybackRequested(int direction)
+    //{
+    //    // Handle playback navigation (left/right through time)
+    //    if (Symbol != null)
+    //    {
+    //        Session.MaxDate += direction * Interval.Duration;
+    //        _ = SymbolOrIntervalChangedAsync(false);
+    //    }
+    //}
+
+    //[RelayCommand]
+    //private void ZoomLast()
+    //{
+    //    // Zoom to last candles
+    //    if (Data != null)
+    //    {
+    //        Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+    //        Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Interval.Duration);
+    //        Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Interval.Duration;
+
+    //        // ?
+
+    //        PlotModel.InvalidatePlot(true);
+    //        OnPropertyChanged(nameof(PlotModel));
+    //        OnPropertyChanged(nameof(PlotView));
+    //    }
+    //}
+
+    [RelayCommand]
+    private void ZoomLast()
+    {
+        if (Symbol != null && PlotView.Model != null && SymbolInterval.CandleList.Count > 0)
+        {
+            decimal l = decimal.MaxValue;
+            decimal h = decimal.MinValue;
+            CryptoCandle candleLast = SymbolInterval.CandleList.Values.Last();
+            CandleTime unix = candleLast.OpenTime;
+            int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
+            CryptoCandle xlast = candleLast;
+            CryptoCandle xfirst = candleLast;
+            while (count > 0)
+            {
+                if (SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
+                {
+                    if (candle!.High > h)
+                        h = candle.High;
+                    if (candle.Low < l)
+                        l = candle.Low;
+                    if (candle.Date < xfirst.Date)
+                        xfirst = candle;
+                }
+                unix -= Interval.Duration;
+                count--;
+            }
+
+            //PlotView!.Model = PlotView.Model;
+
+            int extra = 5;
+            if (Session.ShowFibRetracement)
+                extra = 25;
+            // X axis
+            PlotView.ActualModel.Axes[0].Reset();
+            PlotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime.Minutes - 5 * Interval.Duration;
+            PlotView.ActualModel.Axes[0].Maximum = xlast.OpenTime.Minutes + extra * Interval.Duration;
+
+            // Y axis
+            l -= 0.02m * l;
+            h += 0.02m * h;
+            PlotView.ActualModel.Axes[1].Reset();
+            PlotView.ActualModel.Axes[1].Minimum = (double)l;
+            PlotView.ActualModel.Axes[1].Maximum = (double)h;
+
+            PlotModel?.InvalidatePlot(true);
+            OnPropertyChanged(nameof(PlotModel));
+        }
     }
 
     //public async Task RenderChartToImage()
@@ -743,6 +786,8 @@ public partial class ChartWindowViewModel : ObservableObject
     //    OnPropertyChanged(nameof(ChartBitmap)); // Bind to Image
     //}
 
+
+    // Display
     private void ShowProgress(string text)
     {
         WindowTitle = text;
@@ -793,14 +838,14 @@ public partial class ChartWindowViewModel : ObservableObject
     /// </summary>
     private void PlotModel_MouseMove(object? sender, OxyMouseEventArgs e)
     {
-        if (Data != null && CrossHairY != null && CrossHairX != null)
+        var model = PlotModel;
+        if (Symbol != null && CrossHairY != null && CrossHairX != null)
         {
-            var model = PlotModel;
             var screenPoint = new ScreenPoint(e.Position.X, e.Position.Y);
             double x = model.Axes[0].InverseTransform(screenPoint.X);
             double y = model.Axes[1].InverseTransform(screenPoint.Y);
 
-            var symbolInterval = Data.Symbol.GetSymbolInterval(Session.ActiveInterval);
+            var symbolInterval = Symbol.GetSymbolInterval(Session.ActiveInterval);
             CandleTime unix = new CandleTime((uint)x) + symbolInterval.Interval.Duration / 2;
             unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
             if (unix < 0)
@@ -808,130 +853,79 @@ public partial class ChartWindowViewModel : ObservableObject
 
             try
             {
-                // Update crosshair coordinates
-                CrossHairX.X = unix.Minutes;
-                CrossHairX.LineStyle = LineStyle.DashDot;
 
+                // Update croshair coordinates
+                CrossHairX.X = unix.Minutes;
                 CrossHairY.Y = y;
-                CrossHairY.LineStyle = LineStyle.DashDot;
+                //CrossHairX.LineStyle = LineStyle.DashDot;
+                //CrossHairY.LineStyle = LineStyle.DashDot;
 
                 string subtitle;
-                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
+                if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
-                    subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(Data.Symbol.PriceDisplayFormat)}";
-                    subtitle += $" (O: {candle.Open.ToString(Data.Symbol.PriceDisplayFormat)}";
-                    subtitle += $" H: {candle.High.ToString(Data.Symbol.PriceDisplayFormat)}";
-                    subtitle += $" L: {candle.Low.ToString(Data.Symbol.PriceDisplayFormat)}";
-                    subtitle += $" C: {candle.Close.ToString(Data.Symbol.PriceDisplayFormat)}";
+                    subtitle = $"{candle.Date.ToLocalTime():ddd yyyy-MM-dd HH:mm}, price: {y.ToString(Symbol.PriceDisplayFormat)}";
+                    subtitle += $" (O: {candle.Open.ToString(Symbol.PriceDisplayFormat)}";
+                    subtitle += $" H: {candle.High.ToString(Symbol.PriceDisplayFormat)}";
+                    subtitle += $" L: {candle.Low.ToString(Symbol.PriceDisplayFormat)}";
+                    subtitle += $" C: {candle.Close.ToString(Symbol.PriceDisplayFormat)}";
                     subtitle += $" V: {candle.Volume.ToString0()})";
                 }
                 else
                 {
                     DateTime date = unix.ToDateTime();
-                    subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(Data.Symbol.PriceDisplayFormat)}";
+                    subtitle = $"{date.ToLocalTime():yyyy-MM-dd HH:mm}, price: {y.ToString(Symbol.PriceDisplayFormat)}";
                 }
+                model.Subtitle = subtitle;
 
-                PlotModel.Subtitle = subtitle;
-
-                PlaybackControls.UpdateIntervalDisplay(Session.ActiveInterval.ToString());
+                PlaybackControls.UpdateIntervalDisplay(Session.IntervalName);
             }
             catch (Exception error)
             {
-                ScannerLog.Logger.Info("UpdateCrosshair.Error " + error.ToString());
+                ScannerLog.Logger.Info("PlotModel_MouseMove.Error " + error.ToString());
             }
-
-
-
-            //if (IsMeasuring Control.ModifierKeys == Keys.Shift && mouseDownPointX != null && mouseDownPointY != null)
-            if (IsMeasuring && mouseDownPointX != null && mouseDownPointY != null)
-            {
-                ScreenPoint mouseUpPoint = new(e.Position.X, e.Position.Y);
-                // assuming your x-axis is at the bottom and your y-axis is at the left.
-                OxyPlot.Axes.Axis? xAxis = PlotModel!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Bottom);
-                OxyPlot.Axes.Axis? yAxis = PlotModel!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Right);
-                if (xAxis == null || yAxis == null)
-                    return;
-
-                double xstart = xAxis.InverseTransform((double)mouseDownPointX);
-                double ystart = yAxis.InverseTransform((double)mouseDownPointY);
-                double xend = xAxis.InverseTransform(mouseUpPoint.X);
-                double yend = yAxis.InverseTransform(mouseUpPoint.Y);
-                double perc = 100 * (yend - ystart) / Math.Min(yend, ystart);
-                //Line = $"{Session.SymbolBase}{Session.SymbolQuote} {perc:N2}%";
-
-                if (lastRectangle != null)
-                    PlotModel.Annotations.Remove(lastRectangle);
-
-                lastRectangle = new RectangleAnnotation
-                {
-                    MinimumX = xstart,
-                    MaximumX = xend,
-                    MinimumY = ystart,
-                    MaximumY = yend,
-                    TextRotation = 0,
-                    Text = $"{perc:N2}%",
-                    Fill = OxyColor.FromAColor(99, OxyColors.Blue),
-                    Stroke = OxyColors.Black,
-                    StrokeThickness = 2
-                };
-                PlotModel.Annotations.Add(lastRectangle);
-            }
-
-            PlotModel.InvalidatePlot(true);
-            OnPropertyChanged(nameof(PlotModel));
-            OnPropertyChanged(nameof(PlotView));
         }
-    }
 
-
-    private void ButtonFocusLastCandlesClick(object? sender, EventArgs e)
-    {
-        if (Data != null && PlotModel != null && PlotView != null && Data.SymbolInterval.CandleList.Count > 0)
+        //if (IsMeasuring Control.ModifierKeys == Keys.Shift && mouseDownPointX != null && mouseDownPointY != null)
+        if (IsMeasuring && mouseDownPointX != null && mouseDownPointY != null)
         {
-            decimal l = decimal.MaxValue;
-            decimal h = decimal.MinValue;
-            CryptoCandle candleLast = Data.SymbolInterval.CandleList.Values.Last();
-            CandleTime unix = candleLast.OpenTime;
-            int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
-            CryptoCandle xlast = candleLast;
-            CryptoCandle xfirst = candleLast;
-            while (count > 0)
+            ScreenPoint mouseUpPoint = new(e.Position.X, e.Position.Y);
+            // assuming your x-axis is at the bottom and your y-axis is at the left.
+            Axis? xAxis = model!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Bottom);
+            Axis? yAxis = model!.Axes.FirstOrDefault(a => a.Position == AxisPosition.Right);
+            if (xAxis == null || yAxis == null)
+                return;
+
+            double xstart = xAxis.InverseTransform((double)mouseDownPointX);
+            double ystart = yAxis.InverseTransform((double)mouseDownPointY);
+            double xend = xAxis.InverseTransform(mouseUpPoint.X);
+            double yend = yAxis.InverseTransform(mouseUpPoint.Y);
+            double perc = 100 * (yend - ystart) / Math.Min(yend, ystart);
+            WindowTitle = $"{Session.SymbolBase}{Session.SymbolQuote} {perc:N2}%";
+
+            if (lastRectangle != null)
+                model.Annotations.Remove(lastRectangle);
+
+            lastRectangle = new RectangleAnnotation
             {
-                if (Data.SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle? candle))
-                {
-                    if (candle.High > h)
-                        h = candle.High;
-                    if (candle.Low < l)
-                        l = candle.Low;
-                    if (candle.Date < xfirst.Date)
-                        xfirst = candle;
-                }
-                unix -= Data.Interval.Duration;
-                count--;
-            }
-
-            //PlotModel!.Model = PlotModel;
-
-            int extra = 5;
-            if (Session.ShowFibRetracement)
-                extra = 25;
-
-            // X axis
-            PlotView.ActualModel.Axes[0].Reset();
-            PlotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime.Minutes - 5 * Data.Interval.Duration;
-            PlotView.ActualModel.Axes[0].Maximum = xlast.OpenTime.Minutes + extra * Data.Interval.Duration;
-
-            // Y axis
-            l -= 0.02m * l;
-            h += 0.02m * h;
-            PlotView.ActualModel.Axes[1].Reset();
-            PlotView.ActualModel.Axes[1].Minimum = (double)l;
-            PlotView.ActualModel.Axes[1].Maximum = (double)h;
-
-            PlotModel?.InvalidatePlot(true);
-            OnPropertyChanged(nameof(PlotModel));
+                Layer = AnnotationLayer.BelowSeries,
+                MinimumX = xstart,
+                MaximumX = xend,
+                MinimumY = ystart,
+                MaximumY = yend,
+                TextRotation = 0,
+                Text = $"{perc:N2}%",
+                Fill = OxyColor.FromAColor(99, OxyColors.Blue),
+                Stroke = OxyColors.Black,
+                StrokeThickness = 2
+            };
+            PlotModel.Annotations.Add(lastRectangle);
         }
+
+        PlotModel.InvalidatePlot(true);
+        OnPropertyChanged(nameof(PlotModel));
+        OnPropertyChanged(nameof(PlotView));
     }
+
 
 
     public void OnClosing()
@@ -940,41 +934,181 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
-    private async Task SymbolOrIntervalChanged(bool forceCalculation)
+    private async Task<(bool succes, string reason)> PrepareSessionDataAsync()
+    {
+        string reason = "";
+
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null)
+        {
+            reason = "Exchange not found";
+            ScannerLog.Logger.Info($"{reason}");
+            return (false, reason);
+        }
+
+        if (!exchange.SymbolListName.TryGetValue(Session.SymbolBase + Session.SymbolQuote, out CryptoSymbol? symbol))
+        {
+            reason = "Symbol not found";
+            ScannerLog.Logger.Info($"{reason}");
+            return (false, reason);
+        }
+
+        var interval = GlobalData.IntervalList.Find(x => x.Name.Equals(Session.IntervalName));
+        if (interval == null)
+        {
+            reason = "Interval not supported";
+            ScannerLog.Logger.Info($"{reason}");
+            return (false, reason);
+        }
+
+        // Reset dates if symbol/interval changed
+        string displayedSymbol = optionsInChart["symbol"];
+        string displayedInterval = optionsInChart["interval"];
+        if (displayedSymbol != symbol.Name || displayedInterval != interval.Name || Session.ForceCalculation)
+        {
+            ClearOptions(symbol.Name, interval.Name);
+            Symbol = symbol;
+            Interval = interval;
+            SymbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            lastLoadedSignalsAndPositions = CandleTime.MinValue;
+
+            Session.IntervalName = Interval.Name;
+            Session.ActiveInterval = Interval.IntervalPeriod;
+
+            await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
+
+
+            // Clear all series and and all annotations except the crosshairs
+            var chart = PlotView.Model;
+            chart.Series.Clear();
+            foreach (var annotation in chart.Annotations.ToList())
+            {
+                if (annotation.Tag?.ToString() != "crosshair")
+                    chart.Annotations.Remove(annotation);
+            }
+
+            UpdateAxisTicks(chart.Axes[0]);
+        }
+
+        // Reset the min and maxdate so the refresh draw'subtitle the new candles and attributes
+        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+        Session.MinDate = Session.MaxDate - candleFetchCount * Interval.Duration;
+        //Session.MaxDate += 1 * Interval.Duration; // Allow room for extra candles (we draw the 1m candles there)
+
+        // Load or refresh signals each minute
+        if (lastLoadedSignalsAndPositions.Minutes != Session.MaxDate)
+        {
+            lastLoadedSignalsAndPositions = Session.MaxDate;
+            ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, SignalList);
+            ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, PositionList);
+        }
+
+
+        PlaybackControls.UpdateIntervalDisplay(Session.IntervalName);
+        PlaybackControls.UpdateMaxTimeDisplay(Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm"));
+        //labelInterval.Text = Session.IntervalName;
+        //labelMaxTime.Text = Session.MaxDate.ToDateTime().ToLocalTime().ToString("dd MMM HH:mm");
+        return (true, "");
+    }
+
+    private async Task SymbolOrIntervalChangedAsync(bool forceCalculation)
     {
         if (IsCalculating)
             return;
-
         IsCalculating = true;
 
         try
         {
+            PickupUserInput();
             SaveSessionSettings();
 
             Session.ForceCalculation = forceCalculation;
-            if (!PrepareSessionData(out string reason))
+            var (succes, reason) = await PrepareSessionDataAsync();
+            if (!succes)
             {
                 WindowTitle = $"{GlobalData.ActiveExchange!.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {reason}";
                 return;
             }
-            WindowTitle = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
+            WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
 
-            await CalculateZonesAndPlotZigZagAsync();
-            ButtonFocusLastCandlesClick(null, EventArgs.Empty);
 
-            WindowTitle = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
+            // Hide the crosshair cursor
+            if (CrossHairX != null && CrossHairY != null)
+            {
+                CrossHairX.LineStyle = LineStyle.None;
+                CrossHairY.LineStyle = LineStyle.None;
+            }
+
+            SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+
+            Symbol.Data.CalculatingZones = true;
+            try
+            {
+                // Load and (re)calculate the zones
+                ZoneDlz.LoadZonesForSymbol(Symbol);
+
+                // Calculate the required zigzag points to draw the FIB and/or Main trend
+                // (DLZ zones will not be calculated, routine can be splitted I guess)
+                await ZoneDlz.LoadHistoricCandles(Symbol, Interval, loadedCandlesInMemory);
+                await ZoneDlz.CalculatePivots(Symbol, Interval, Session.MinDate, Session.MaxDate, TrendZigZagIndicatorList);
+
+                // Force DLZ and FVG zones to be calculated (they are calculated on other intervals)
+                if (Session.ForceCalculation)
+                {
+
+                    // Calculate the DLZ zones for the configured intervals
+                    foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                    {
+                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                        {
+                            await ZoneDlz.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
+                        }
+                    }
+
+                    // Calculate the FVG zones for the configured intervals
+                    foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                    {
+                        if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var intervalX))
+                        {
+                            await ZoneFvg.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
+                        }
+                    }
+                }
+
+                // Draw the indicator layers and candles
+                OnDisplayOptionsChanged(null, null!);
+                OnFibSettingsChanged(null, null!);
+                OnTrendSettingsChanged(null, null!);
+
+                // Draw candles (note: we draw additional candles each minutes if needed)
+                var chart = PlotView.Model;
+                Candles.Draw(chart, Symbol, Interval, Session.MinDate, Session.MaxDate);
+            }
+            finally
+            {
+                await ZoneCandleEngine.SaveCandleDataToDiskAsync(Symbol, loadedCandlesInMemory);
+                await ZoneCandleEngine.CleanLoadedCandlesAsync(Symbol);
+                Symbol.Data.CalculatingZones = false;
+            }
+
+            ZoomLast();
+            PlotModel.InvalidatePlot(true);
+
+            WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         }
         catch (Exception error)
         {
             Debug.WriteLine($"Error: {error.Message}");
             ScannerLog.Logger.Error(error, "Calculate error");
-            WindowTitle = $"{Data!.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
+            WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Error {error.Message}";
         }
         finally
         {
             IsCalculating = false;
         }
     }
+
 
 
 }

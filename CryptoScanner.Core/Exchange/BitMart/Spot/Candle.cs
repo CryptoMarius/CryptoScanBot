@@ -2,7 +2,6 @@
 using BitMart.Net.Enums;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 
@@ -13,7 +12,7 @@ namespace CryptoScanner.Core.Exchange.BitMart.Spot;
 /// </summary>
 public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 {
-    public async Task<CandleTime> GetCandlesForInterval(IDisposable clientBase, 
+    public async Task<(bool, int, CandleTime)> GetCandlesForInterval(IDisposable clientBase,
         CryptoSymbol symbol, CryptoInterval interval, CandleTime minFetch, CandleTime maxFetch)
     {
         // Remarks:
@@ -43,7 +42,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = minTime + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         DateTime maxDate = maxTime.ToDateTime();
 
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: minDate, endTime: maxDate); //, limit: ExchangeOptions.CandleLimit
         if (!result.Success)
         {
@@ -51,7 +50,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no succes.json");
 #endif
-            return minFetch;
+            return (false, 0, minTime);
         }
 
 
@@ -62,7 +61,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
 #if DEBUG
             SaveCandleInfo(result, $"candles {symbol.Base}-{symbol.Quote} {interval.Name} no data.json");
 #endif
-            return minFetch;
+            return (false, 0, minTime);
         }
 
 
@@ -72,15 +71,11 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         {
             foreach (var kline in result.Data)
             {
-                if (symbolInterval.IntervalPeriod != CryptoIntervalPeriod.interval1m)
-                {
-                    CandleTime unix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
-                    if (unix + symbolInterval.Interval.Duration > maxFetch) // future candle?
-                        continue;
-                }
+                if (CheckFutureCandleReceived(kline.OpenTime, symbol, interval, maxFetch))
+                    continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
 
                 // remember the newest candle
@@ -114,7 +109,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CryptoCandleList candles = symbolPeriod.CandleList;
         string s = $"{symbol.Exchange.Name} {symbol.Name} {interval.Name} fetch from {minDate.ToLocalTime()} .. {fetchedUpTo.ToDateTime().ToLocalTime()}";
         GlobalData.AddTextToLogTab($"{s} received: {count} total: {candles.Count}");
-        return fetchedUpTo;
+        return (true, count, fetchedUpTo);
     }
 
 }

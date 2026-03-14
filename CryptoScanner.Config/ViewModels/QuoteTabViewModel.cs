@@ -36,10 +36,10 @@ public partial class QuoteItem : ObservableObject
         QuoteData = quoteData;
         Symbol = quoteData.Name;
         IsEnabled = quoteData.FetchCandles;
-        MinVolume = quoteData.MinimalVolume;
+        MinVolume = (decimal)quoteData.MinimalVolume;
         MinPrice = quoteData.MinimalPrice;
         Amount = quoteData.EntryAmount;
-        Percentage = quoteData.EntryPercentage;
+        Percentage = (decimal)quoteData.EntryPercentage;
         BackgroundColor = quoteData.DisplayColor;
         SymbolCount = quoteData.SymbolList.Count;
     }
@@ -64,10 +64,10 @@ public partial class QuoteTabViewModel : ObservableObject
         {
             var quoteData = quote.QuoteData;
             quoteData.FetchCandles = quote.IsEnabled;
-            quoteData.MinimalVolume = quote.MinVolume;
+            quoteData.MinimalVolume = (double)quote.MinVolume;
             quoteData.MinimalPrice = quote.MinPrice;
             quoteData.EntryAmount = quote.Amount;
-            quoteData.EntryPercentage = quote.Percentage;
+            quoteData.EntryPercentage = (float)quote.Percentage;
             quoteData.DisplayColor = quote.BackgroundColor;
         }
     }

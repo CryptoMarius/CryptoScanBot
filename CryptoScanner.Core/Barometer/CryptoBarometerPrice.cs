@@ -24,9 +24,10 @@ internal class CryptoBarometerPrice
             if (symbol.QuoteData!.FetchCandles && !symbol.IsBarometerSymbol() && symbol.EnoughVolume())
             {
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
-                if (symbolInterval.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle? candlePrev) && symbolInterval.CandleList.TryGetValue(unixCandleLast, out CryptoCandle? candleLast))
+                if (symbolInterval.CandleList.TryGetValue(unixCandlePrev, out CryptoCandle candlePrev) &&
+                    symbolInterval.CandleList.TryGetValue(unixCandleLast, out CryptoCandle candleLast))
                 {
-                    if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
+                    //if (candlePrev != null && candleLast != null) // Er worden in kucoin null candles toegevoegd?
                     {
                         decimal perc;
                         decimal diff = candleLast.Close - candlePrev.Close;

@@ -20,7 +20,7 @@ public class MarketTrend
             {
                 // Take the last 1m endtime as timing (
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                if (symbolInterval.LastCandle == null)
+                if (symbolInterval.LastCandle.OpenTime == 0)
                     return symbolTrend; // should never happen
                 CandleTime candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
 
@@ -40,13 +40,16 @@ public class MarketTrend
 
                         bool isCached = false;
                         symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                        if (symbolInterval.LastCandle == null)
+                        if (symbolInterval.LastCandle.OpenTime == 0)
                             return symbolTrend; // should never happen
                         CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
                         candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
                         if (intervalTrend.Time == null || candleIntervalEnd > intervalTrend.Time || log != null)
                         {
-                            intervalTrend.Time = candleIntervalEnd;
+                            // Do NOT pre-set intervalTrend.Time here. TrendInterval.CalculateAsync saves
+                            // intervalTrend.Time into PrevTime before overwriting it with maxDate.
+                            // Pre-setting it here would cause PrevTime == Time, making the consecutive-candle
+                            // check in SignalTrendShort/Long (PrevTime + Interval.Duration == Time) always fail.
                             await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trend, log);
                         }
                         else isCached = true;
@@ -59,18 +62,18 @@ public class MarketTrend
                         weightMax += intervalWeight;
 
                         text = $"{symbol.Name} {interval.Name} {intervalTrend.Trend} weight={intervalWeight} sum={weightSum}";
-                        if (isCached) 
+                        if (isCached)
                             text += " (cached)";
                         log?.AppendLine(text);
-                        ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
+                        ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
                     }
                     symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
 
                     log?.AppendLine("");
-                    ScannerLog.Logger.Trace("");
+                    ScannerLog.Logger.Debug("");
                     text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
                     log?.AppendLine(text);
-                    ScannerLog.Logger.Trace("MarketTrend.Calculate " + text);
+                    ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
                 }
             }
             finally

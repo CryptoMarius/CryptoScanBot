@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
-using CryptoScanner.CoreTests;
 
 namespace CryptoScanner.CoreTests.Core;
 

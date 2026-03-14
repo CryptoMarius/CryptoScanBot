@@ -1,8 +1,4 @@
-﻿using Avalonia.Threading;
-
-using CommunityToolkit.Mvvm.Messaging;
-
-using CryptoScanner.Core.Barometer;
+﻿using CryptoScanner.Core.Barometer;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
@@ -15,9 +11,6 @@ using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 
 using Dapper;
-
-using Microsoft.Extensions.DependencyInjection;
-
 
 namespace CryptoScanner.Core.Core;
 
@@ -166,10 +159,10 @@ public class ThreadLoadData
 
     public static void IndexQuoteDataSymbols(Model.CryptoExchange exchange)
     {
-        // Index the symbols
+        // De index lijsten opbouwen (een gedeelte van de ~2100 munten)
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            // Lock
+            // Lock (zie onder andere de BarometerTools)
             Monitor.Enter(quoteData.SymbolList);
             try
             {
@@ -188,7 +181,7 @@ public class ThreadLoadData
             }
         }
 
-        // Remove quotes without any sumbols
+        // Remove the quotes who dont have any symbols
         foreach (CryptoQuoteData quoteData in GlobalData.Settings.QuoteCoins.Values.ToList())
         {
             if (quoteData.SymbolList.Count == 0 && !quoteData.FetchCandles)
@@ -196,7 +189,8 @@ public class ThreadLoadData
 
         }
 
-        Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
+        // Add the symbols to the userinterface
+        GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
     }
 
 
@@ -234,10 +228,10 @@ public class ThreadLoadData
                 ZoneDlz.LoadAllZones();
 
                 GlobalData.AddTextToLogTab("Reading candle information");
-                DataStore.LoadCandles();
+                await DataStore.LoadCandlesAsync();
 
                 //************************************************************************************
-                // Vanaf dit moment worden de candles (en candleperiod) bewaard 
+                // Vanaf dit moment worden de candles (en candleperiod) bewaard
                 // (het herberekenen kan definitieve candles produceren)
                 //************************************************************************************
 
@@ -331,7 +325,7 @@ public class ThreadLoadData
                     //_ = ExchangeBase.UserTicker!.StartAsync();
 
 
-                    //************************************************************************************              
+                    //************************************************************************************
                     // De assets van de exchange halen (overlappend met exchange monitoring om niets te missen)
                     // Via een event worden de assets in de userinterface gezet (dat duurt even)
                     //************************************************************************************
@@ -349,7 +343,7 @@ public class ThreadLoadData
                 GlobalData.AddTextToTelegram("");
 
 
-               // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
+                // Dit is een enorme cpu drain, eventjes 3 * 250 * ~3 intervallen bijlangs
                 //RecalculateLastXCandles(1);
 
 
@@ -366,6 +360,8 @@ public class ThreadLoadData
                 IScannerSession _scannerSession = GlobalData.GetService<IScannerSession>()
                     ?? throw new InvalidOperationException("IScannerSession not registered in services");
                 _scannerSession.SetTimerDefaults();
+
+                GlobalData.SendMvvmMessage(new BarometerRefreshMessage());
             }
         }
         catch (Exception error)

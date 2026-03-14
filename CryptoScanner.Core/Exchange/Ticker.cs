@@ -58,7 +58,7 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
                 {
                     foreach (var symbol in symbols.ToList())
                     {
-                        if (!symbol.EnoughVolume())
+                        if (!symbol.EnoughVolume() && !symbol.IsTrading())
                             symbols.Remove(symbol);
                     }
                 }

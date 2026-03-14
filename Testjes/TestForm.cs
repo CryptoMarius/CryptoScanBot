@@ -110,7 +110,7 @@ public partial class TestForm : Form
         {
             comboBox1.Items.Add(def.Name);
         }
-        if (comboBox1.Items.Count > 4) 
+        if (comboBox1.Items.Count > 4)
             comboBox1.SelectedIndex = 5;
 
         tabControl.SelectedTab = tabPageLog;
@@ -177,7 +177,7 @@ public partial class TestForm : Form
         databaseMain = new();
         databaseMain.Open();
 
-        //Alle symbols uit de database lezen 
+        //Alle symbols uit de database lezen
         //GlobalData.AddTextToLogTab("Reading symbol information from database");
         //foreach (CryptoSymbol symbol in databaseMain.Connection.GetAll<CryptoSymbol>())
         //{
@@ -209,22 +209,22 @@ public partial class TestForm : Form
 
         //SymbolValue valueDxy = new SymbolValue();
         //valueDxy.Name = "Dollar Index";
-        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("TVC:DXY", valueDxy, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("TVC:DXY", valueDxy, 10));
 
         //SymbolValue valueSpx500 = new SymbolValue();
         //valueSpx500.Name = "SPX 500";
-        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("SP:SPX", valueSpx500, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("SP:SPX", valueSpx500, 10));
 
         //SymbolValue bitcoinDominance = new SymbolValue();
         //bitcoinDominance.Name = "BTC.D";
-        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("CRYPTOCAP:BTC.D", bitcoinDominance, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:BTC.D", bitcoinDominance, 10));
 
         //SymbolValue marketcapTotal = new SymbolValue();
         //marketcapTotal.Name = "Maerketcap total";
-        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().Start("CRYPTOCAP:TOTAL3", marketcapTotal, 10));
 
 
-        //Task.Factory.StartNew(() => new TradingViewSymbolExtractor().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
+        //Task.Factory.StartNew(() => new TradingViewSymbolInfo().StartAsync("FX_IDC:EURUSD", "dit is een test", "N2", GlobalData.TradingViewDollarIndex, 1000));
         Button1_Click(null, null);
     }
 
@@ -344,9 +344,9 @@ public partial class TestForm : Form
 
         stringBuilder.AppendLine();
         if (!signal.BackTest)
-            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " " + DateTime.Now.ToLocalTime()); //+ " notification " + notification 
+            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " " + DateTime.Now.ToLocalTime()); //+ " notification " + notification
         else
-            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " (backTest)"); //+ " notification " + notification 
+            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " (backTest)"); //+ " notification " + notification
 
         string s = signal.Symbol.Name + " " + signal.Interval.Name + " " + CandleTools.GetUnixDate(signal.Candle!.OpenTime).ToLocalTime() + " (" + signal.StrategyText + ") " + signal.EventText;
         stringBuilder.AppendLine(s);
@@ -414,7 +414,7 @@ public partial class TestForm : Form
         // Display grid lines.
         listView1.GridLines = true;
         // Sort the items in the list in ascending order.
-        //listView1.Sorting = GridSortOrder.None;
+        //listView1.Sorting = ListSortDirection.None;
 
         //listView1.HotTracking = true; // verstoord de kleuren en is onrustig
 
@@ -461,7 +461,7 @@ public partial class TestForm : Form
 
         ////string iconPath = Path.GetDirectoryName((System.Reflection.Assembly.GetEntryAssembly().Location)); GlobalData.GetBaseDir();
         //string iconPath = @"C:\inetpub\Sites\Cryptobot\wwwroot\images\coins\";
-        ////iconPath = Path.Combine(...iconPath + @"\data\icons\";
+        ////iconPath = iconPath + @"\data\icons\";
 
         //var iconArray = System.IO.Directory.EnumerateFiles(iconPath).ToArray();
         //foreach (string file in iconArray)
@@ -654,10 +654,10 @@ public partial class TestForm : Form
                 decimal quantity = amount / price;
                 quantity = quantity.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
 
-                //decimal notational = price * quantity; //En die moet boven de symbol.MinNotional liggen 
+                //decimal notational = price * quantity; //En die moet boven de symbol.MinNotional liggen
                 //Dat is hij, toch een error, ook bij Altrady overigens, Binance zit fout (denk ik)
 
-                // Plaats de buy order op Binance 
+                // Plaats de buy order op Binance
                 WebCallResult<BinanceOrderOcoList> result;
                 using var client = new BinanceRestClient();
                 {
@@ -768,7 +768,7 @@ public partial class TestForm : Form
         //Laad de gecachte 1m candlesticks (langere historie, minder overhad)
         //string x = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
         string folderName = Path.Combine(GlobalData.GetBaseDir(), "backtest");
-        //Directory.CreateDirectory(folderName);
+        //Directory.CreateDirectory(filename);
         string fileName = Path.Combine(folderName, "backtest.json");
         if (System.IO.File.Exists(fileName))
         {
@@ -1920,13 +1920,13 @@ public partial class TestForm : Form
     //            ////SolidBrush drawBrush = new SolidBrush(Color.Black);
 
     //            ////TextFormatFlags flags = TextFormatFlags.Bottom; // | TextFormatFlags.WordBreak;
-    //            //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit; 
+    //            //g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
     //            ////System.Drawing.Text.TextRenderingHint.AntiAlias;
     //            //TextRenderer.DrawText(g, "15:01", drawFont,
     //            //    new Rectangle(2, 0, intWidth, intHeight - 6), Color.Gray, Color.Transparent, TextFormatFlags.Bottom);
     //            ////SystemColors.ControlText, SystemColors.ControlDark
 
-    //            ////g.DrawString("Hello", this.Font, 
+    //            ////g.DrawString("Hello", this.Font,
 
 
     //            //bmp.Save(@"e:\test.bmp");
@@ -2047,7 +2047,7 @@ public partial class TestForm : Form
     //            take_Profit2.position_percentage = 50;
     //            take_ProfitList.Add(take_Profit2);
 
-    //            //"stop_loss": 
+    //            //"stop_loss":
     //            //{
     //            //"stop_percentage": 0,
     //            //"cool_down_amount": 0,
@@ -2081,7 +2081,7 @@ public partial class TestForm : Form
     //        catch (Exception error)
     //        {
     //            ScannerLog.Logger.Error(error, "");
-    //            GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " + 
+    //            GlobalData.AddTextToLogTab("error webhook " + error.ToString()); // symbol.Text + " " +
     //        }
     //    }
 
@@ -2126,14 +2126,14 @@ public partial class TestForm : Form
     //    if (dateList.Any())
     //    {
     //        string downLoadFolder = GlobalData.GetBaseDir();
-    //        downLoadFolder += Path.Combine(.... @"\backtest\Downloads\";
+    //        downLoadFolder += @"\backtest\Downloads\";
     //        Directory.CreateDirectory(downLoadFolder);
 
     //        foreach (long unix in dateList.Keys)
     //        {
 
     //            //hoofdpagina: //https://data.binance.vision/?prefix=data/spot/daily/klines/ACABUSD/1m/
-    //            //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACAUSDT/1m/ACAUSDT-1m-2022-12-02.zip                        
+    //            //downloadlink: https://data.binance.vision/data/spot/daily/klines/ACAUSDT/1m/ACAUSDT-1m-2022-12-02.zip
     //            DateTime date = CandleTools.GetUnixDate(unix);
     //            if (date == DateTime.Today)
     //                break;
@@ -2349,13 +2349,13 @@ public partial class TestForm : Form
         // (and we have a lot of hardcoded timestamps to fix as live code does not expect emulator calls)
         // We also have a lot of hardcoded Date() and Now() calls (no fun)
 
-        string algorithm = ""; //string algorithm, 
+        string algorithm = ""; //string algorithm,
         Invoke((MethodInvoker)(() => algorithm = comboBox1.Text));
 
         // TODO: Zorgen dat alleen het gekozen interval en algoritme actief is in de instellingen
 
         createdSignalCount = 0;
-        GlobalData.LoadSettings();
+        GlobalData.LoadConfiguration();
 
         CryptoBackConfig config = new();
         LoadConfig(ref config);
@@ -2555,7 +2555,7 @@ public partial class TestForm : Form
                         catch (Exception error)
                         {
                             ScannerLog.Logger.Error(error, "");
-                            GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " + 
+                            GlobalData.AddTextToLogTab("error back testing " + error.ToString()); // symbol.Text + " " +
                         }
                     }
                 });
@@ -2924,7 +2924,7 @@ public partial class TestForm : Form
 
 
         var bbma = new BbmaStrategyGrok2();
-        bbma.SignalTriggered += (sender, args) => 
+        bbma.SignalTriggered += (sender, args) =>
         {
             if (args.Event == BbmaStrategyGrok2.BbmaEvent.ReEntry)
                 GlobalData.AddTextToLogTab($"{symbol.Name} ({interval1.Name}/{interval2.Name}/{interval3.Name}) {args.Side} {args.Event} {args.Message}");

@@ -159,7 +159,7 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
             return;
         }
 
-        flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowGraph(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Open symbol Chart", Command = new CommandShowChart(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open trading app", Command = new CommandLaunchTradingAppStandard(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview internal", Command = new CommandLaunchTradingViewInternal(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Open Tradingview External", Command = new CommandLaunchTradingViewExternal(), CommandParameter = parameter });
@@ -218,11 +218,11 @@ public abstract class UserControlWithListBox<TItem, TColumnEnum, TViewModel, TCo
 
     internal void RestoreColumnWidths()
     {
-        var saved = _applicationStateService.GetColumnWidths(_gridName);
-        if (!string.IsNullOrEmpty(saved))
-        {
-            _viewModel.UpdateColumnWidths(saved);
-        }
+        //var saved = _applicationStateService.cGetColumnWidths(_gridName);
+        //if (!string.IsNullOrEmpty(saved))
+        //{
+        //    _viewModel.UpdateColumnWidths(saved);
+        //}
     }
 
     internal void RestoreGridState()
