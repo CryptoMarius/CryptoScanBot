@@ -431,4 +431,38 @@ public static class Helper
     }
 
 
+    public static void ShowPosition(StringBuilder stringBuilder, CryptoPosition position)
+    {
+        decimal investedInTrades = position.Invested - position.Returned;
+        string s = $"{position.Symbol.Name} {position.Side} {investedInTrades.ToString(position.Symbol.QuoteData.DisplayFormat)} " +
+            //$"{position.MarketValue().ToString(position.Symbol.QuoteData.DisplayFormat)} " +
+            $"{position.CurrentBreakEvenPercentage():N2}%";
+
+        if (position.PartCount > 0)
+            s += " " + position.PartCountText();
+        stringBuilder.AppendLine(s);
+    }
+
+
+    public static void ShowPositions(StringBuilder stringBuilder)
+    {
+        int positionTotal = 0;
+        if (GlobalData.ActiveExchange != null)
+        {
+            if (GlobalData.ActiveExchange.Data.PositionList.Count != 0)
+            {
+                int positionCount = 0;
+                foreach (var position in GlobalData.ActiveExchange.Data.PositionList.Values)
+                {
+                    //De muntparen toevoegen aan de userinterface
+                    ShowPosition(stringBuilder, position);
+                    positionCount++;
+                    positionTotal++;
+                }
+                stringBuilder.AppendLine(string.Format("{0} posities", positionCount));
+            }
+        }
+        if (positionTotal == 0)
+            stringBuilder.AppendLine("no posities");
+    }
 }
