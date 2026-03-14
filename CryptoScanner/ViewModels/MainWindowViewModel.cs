@@ -41,7 +41,6 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.Active = value;
                 OnPropertyChanged(nameof(AnalyzerActive));
-                //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
                 GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
             }
         }
@@ -58,7 +57,6 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Signal.SoundsActive = value;
                 OnPropertyChanged(nameof(SoundsActive));
-                //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
                 GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
             }
         }
@@ -75,7 +73,6 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.Settings.Trading.Active = value;
                 OnPropertyChanged(nameof(TraderActive));
-                //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new StatusesHaveChangedMessage()); });
                 GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
             }
         }
