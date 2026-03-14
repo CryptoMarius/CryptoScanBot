@@ -63,8 +63,6 @@ public partial class ChartWindowViewModel : ObservableObject
     [ObservableProperty]
     private ChartOptionsViewModel _displayOptions;
 
-
-
     [ObservableProperty]
     private string _windowTitle = "Chart";
 
@@ -103,9 +101,9 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Subscribe to changes from sub-ViewModels
         SymbolSelector.PropertyChanged += OnSymbolChanged;
-        TrendSettings.PropertyChanged += OnTrendSettingsChanged;
-        FibSettings.PropertyChanged += OnFibSettingsChanged;
-        DisplayOptions.PropertyChanged += OnDisplayOptionsChanged;
+        TrendSettings.PropertyChanged += TrendSettingsChanged;
+        FibSettings.PropertyChanged += FibSettingsChanged;
+        DisplayOptions.PropertyChanged += DisplayOptionsChanged;
 
         RefreshCommand.ExecuteAsync(null);
         System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
@@ -538,7 +536,7 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
-    private void OnTrendSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void TrendSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
         if (Symbol == null)
@@ -576,7 +574,7 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-    private void OnFibSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void FibSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
         if (Symbol == null)
@@ -610,7 +608,7 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
-    private void OnDisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
         if (Symbol == null)
@@ -1071,9 +1069,9 @@ public partial class ChartWindowViewModel : ObservableObject
                 }
 
                 // Draw the indicator layers and candles
-                OnDisplayOptionsChanged(null, null!);
-                OnFibSettingsChanged(null, null!);
-                OnTrendSettingsChanged(null, null!);
+                DisplayOptionsChanged(null, null!);
+                FibSettingsChanged(null, null!);
+                TrendSettingsChanged(null, null!);
 
                 // Draw candles (note: we draw additional candles each minutes if needed)
                 var chart = PlotView.Model;
