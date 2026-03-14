@@ -14,7 +14,7 @@ public class JsonTools
         IgnoreReadOnlyFields = true,
         PropertyNameCaseInsensitive = true,
         WriteIndented = true,
-        Converters = { new ColorConverter()}
+        Converters = { new ColorConverter(), new CandleTimeConverter() }
     };
 
     public static readonly JsonSerializerOptions JsonSerializerNotIndented = new()
@@ -25,7 +25,7 @@ public class JsonTools
         IgnoreReadOnlyFields = true,
         PropertyNameCaseInsensitive = true,
         WriteIndented = false,
-        Converters = { new ColorConverter() }
+        Converters = { new ColorConverter(), new CandleTimeConverter() }
     };
 
     public static readonly JsonSerializerOptions DeSerializerOptions = new()
@@ -36,7 +36,7 @@ public class JsonTools
         IgnoreReadOnlyFields = true,
         PropertyNameCaseInsensitive = true,
         WriteIndented = true,
-        Converters = { new ColorConverter() }
+        Converters = { new ColorConverter(), new CandleTimeConverter() }
     };
 
 
