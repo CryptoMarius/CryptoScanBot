@@ -74,29 +74,11 @@ public class ZoneCandleEngine
 
                     candleCount--;
                 }
-
-            //    int candleCount = reader.ReadInt32();
-            //while (candleCount-- > 0)
-            //{
-            //    CryptoCandle candle = new()
-            //    {
-            //        TickDecimals = symbol.PriceDecimals
-            //    };
-            //    if (version <= 2)
-            //    {
-            //        candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
-            //        candle.Open = reader.ReadDecimal();
-            //        candle.High = reader.ReadDecimal();
-            //        candle.Low = reader.ReadDecimal();
-            //        candle.Close = reader.ReadDecimal();
-            //        candle.Volume = reader.ReadDecimal();
-            //    }
-            //    else
-            //    {
-            //        candle.LoadVersion3(reader);
-            //    }
-            //    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-            //}
+            }
+            finally
+            {
+                symbolInterval.CandleList.Unlock();
+            }
         }
         finally
         {
