@@ -37,6 +37,15 @@ public abstract class CommandBase : ICommand
 {
     public event EventHandler? CanExecuteChanged;
 
+    /// <summary>
+    /// Raises <see cref="CanExecuteChanged"/> so that the UI re-evaluates <see cref="CanExecute"/>.
+    /// Call this from a subclass whenever the result of <see cref="CanExecute"/> changes.
+    /// </summary>
+    protected void RaiseCanExecuteChanged()
+    {
+        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public virtual bool CanExecute(object? parameter)
     {
         return true;
