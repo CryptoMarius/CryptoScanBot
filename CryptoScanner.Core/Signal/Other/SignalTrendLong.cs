@@ -18,18 +18,13 @@ public class SignalTrendLong : SignalCreateBase
             data.PrevTime + Interval.Duration == data.Time &&
             data.PrevTrend == CryptoTrendIndicator.Bearish && data.Trend == CryptoTrendIndicator.Bullish)
         {
+            // Prevent duplicate signals: only fire once per trend change.
+            // LastTrend is reset to a different value when the opposite signal fires (SignalTrendShort).
             if (data.LastTrend != CryptoTrendIndicator.Bullish)
             {
-                if (data.Trend == CryptoTrendIndicator.Unknown)
-                {
-                    data.LastTrend = data.Trend;
-                    return false;
-                }
-                else
-                {
-                    data.LastTrend = data.Trend;
-                    return true;
-                }
+                // Note: data.Trend == Unknown is unreachable here (outer check already requires Bullish).
+                data.LastTrend = data.Trend;
+                return true;
             }
         }
 

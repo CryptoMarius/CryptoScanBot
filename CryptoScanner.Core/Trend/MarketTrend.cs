@@ -46,7 +46,10 @@ public class MarketTrend
                         candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
                         if (intervalTrend.Time == null || candleIntervalEnd > intervalTrend.Time || log != null)
                         {
-                            intervalTrend.Time = candleIntervalEnd;
+                            // Do NOT pre-set intervalTrend.Time here. TrendInterval.CalculateAsync saves
+                            // intervalTrend.Time into PrevTime before overwriting it with maxDate.
+                            // Pre-setting it here would cause PrevTime == Time, making the consecutive-candle
+                            // check in SignalTrendShort/Long (PrevTime + Interval.Duration == Time) always fail.
                             await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trend, log);
                         }
                         else isCached = true;
