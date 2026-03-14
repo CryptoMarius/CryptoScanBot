@@ -15,6 +15,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AvaloniaXaml Remove="Exchange\BloFin\Spot\**" />
+    <Compile Remove="Exchange\BloFin\Spot\**" />
+    <EmbeddedResource Remove="Exchange\BloFin\Spot\**" />
+    <None Remove="Exchange\BloFin\Spot\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Exchange\Binance\Futures\Asset.cs" />
     <Compile Remove="Exchange\Binance\Futures\Order.cs" />
     <Compile Remove="Exchange\Binance\Futures\SubscriptionPriceTicker.cs" />
@@ -296,7 +303,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Exchange\BloFin\Spot\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 

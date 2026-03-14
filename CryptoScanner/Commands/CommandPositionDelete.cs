@@ -36,7 +36,6 @@ public class CommandPositionDelete : CommandBase
                 transaction.Commit();
 
                 // Remove the position from open or closed positions
-                //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new PositionIsDeletedMessage(dto.position)); });
                 GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(dto.position));
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, dto.position, false);
                 GlobalData.AddTextToLogTab($"{dto.position.Symbol.Name} manually deleted position {dto.position.Id} from the database");
