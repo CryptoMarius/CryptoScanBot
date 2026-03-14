@@ -4,9 +4,9 @@ using CommandLine;
 
 namespace CryptoScanner.Core.Core;
 
-/// 
+///
 /// A class to parse the application arguments
-/// 
+///
 public class ApplicationParams
 {
 
