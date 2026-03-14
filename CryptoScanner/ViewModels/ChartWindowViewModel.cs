@@ -63,9 +63,6 @@ public partial class ChartWindowViewModel : ObservableObject
     [ObservableProperty]
     private ChartOptionsViewModel _displayOptions;
 
-    [ObservableProperty]
-    private ChartPlaybackControlsViewModel _playbackControls;
-
 
 
     [ObservableProperty]
