@@ -37,6 +37,9 @@ public class ScannerSession : IScannerSession
     // Vervolg van check, herstel actie in de vorm van exchangeinfo + achterstand candles inhalen
     private readonly System.Timers.Timer TimerRestartStreams = new() { Enabled = false };
 
+    // Heart beat to make blue tooth speakers awake
+    private readonly System.Timers.Timer TimerSoundHeartBeat = new() { Enabled = false };
+
     // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
     private readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
 
@@ -50,6 +53,7 @@ public class ScannerSession : IScannerSession
         TimerCheckPositions.Elapsed += TimerCheckPositions_Tick;
         TimerCheckDataStream.Elapsed += TimerCheckDataStream_Tick;
         TimerRestartStreams.Elapsed += TimerRestartStreams_Tick;
+        TimerSoundHeartBeat.Elapsed += TimerHeartBeath_Tick;
 
         TimerSaveCandleData.Elapsed += TimerSaveCandleData_Tick;
 
@@ -260,6 +264,7 @@ public class ScannerSession : IScannerSession
                 TimerCheckPositions.Enabled = false;
                 TimerCheckDataStream.Enabled = false;
                 TimerRestartStreams.Enabled = false;
+                TimerSoundHeartBeat.Enabled = false;
                 TimerGetExchangeInfoAndCandles.Enabled = false;
                 TimerSaveCandleData.Enabled = false;
 
@@ -334,8 +339,6 @@ public class ScannerSession : IScannerSession
 
     public void SetTimerDefaults()
     {
-        // Check data stream's (om toch zeker te zijn van nieuwe candles)
-        TimerRestartStreams.InitTimerInterval(0); // OFF
         TimerCheckDataStream.InitTimerInterval(5 * 60); // 5 minutes
 
         // Restart data stream's every day
@@ -349,6 +352,8 @@ public class ScannerSession : IScannerSession
 
         // Interval voor het ophalen van de exchange info (delisted coins) + bijwerken candles
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
+
+        TimerSoundHeartBeat.InitTimerInterval(GlobalData.Settings.General.SoundHeartBeatMinutes * 60);
     }
 
 
@@ -357,6 +362,13 @@ public class ScannerSession : IScannerSession
         TimerRestartStreams.InitTimerInterval(1 * 5);
     }
 
+    
+    private async void TimerHeartBeath_Tick(object? sender, EventArgs? e)
+    {
+        GlobalData.PlaySomeMusic(GlobalData.Settings.General.SoundHeartBeat);
+    }
+
+    
     private async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("ScannerSession.Restart");
