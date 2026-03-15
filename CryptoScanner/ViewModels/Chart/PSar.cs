@@ -9,16 +9,17 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class PSar
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string tag)
     {
-        var seriesMiddle = new LineSeries
+        var series = new ScatterSeries
         {
             Title = "psar",
-            MarkerSize = 1,
-            MarkerFill = OxyColors.Yellow,
-            Color = OxyColors.Yellow,
-            Tag = group,
+            MarkerSize = 2,
+            MarkerFill = OxyColors.White,
+            MarkerType = MarkerType.Square,
+            Tag = tag
         };
+
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         if (symbolInterval.CandleList.Count == 0)
@@ -34,10 +35,12 @@ public class PSar
                 double? psarValue = psar.Sar;
 
                 if (psarValue.HasValue)
-                    seriesMiddle.Points.Add(new DataPoint(openTime.Minutes, psarValue.Value));
+                {
+                    series?.Points.Add(new ScatterPoint(openTime.Minutes, psarValue.Value));
+                }
             }
         }
 
-        chart.Series.Add(seriesMiddle);
+        chart.Series.Add(series);
     }
 }
