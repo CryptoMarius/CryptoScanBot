@@ -6,6 +6,7 @@
              x:Class="CryptoScanner.Views.DashBoardInformationView"
              xmlns:vm="using:CryptoScanner.ViewModels"
              xmlns:converters="using:CryptoScanner.Converters"
+             xmlns:views="using:CryptoScanner.Views"
              x:DataType="vm:DashBoardInformationViewModel">
 
     <UserControl.Resources>
@@ -111,10 +112,15 @@
 
         <!-- Column=2, Barometer chart -->
         <Border Grid.Column="4" MinWidth="400" MinHeight="100" Margin="0,2,2,0"
-                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                 BorderThickness="0">
-            <Image Source="{Binding ChartImage}" Width="400" Height="100" Stretch="Fill"/>
+            <Grid>
+                <!-- Loading animation: visible while ChartImage is null -->
+                <views:LoadingCandlesticksView
+                    IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                <!-- Chart bitmap: visible once loaded -->
+                <Image Source="{Binding ChartImage}" Width="400" Height="100" Stretch="Fill"
+                       IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </Grid>
         </Border>
 
         <!-- Separator -->
