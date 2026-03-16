@@ -208,7 +208,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _InvestedText = "-";
                 else
-                    _InvestedText = Object.Invested.ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _InvestedText = Object.Invested.ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _InvestedText!;
         }
@@ -230,7 +230,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _ReturnedText = "-";
                 else
-                    _ReturnedText = Object.Returned.ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _ReturnedText = Object.Returned.ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _ReturnedText!;
         }
@@ -252,7 +252,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _CommissionText = "-";
                 else
-                    _CommissionText = Object.Commission.ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _CommissionText = Object.Commission.ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _CommissionText!;
         }
@@ -275,7 +275,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _TotalProfitText = "-";
                 else
-                    _TotalProfitText = Object.Profit.ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _TotalProfitText = Object.Profit.ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _TotalProfitText!;
         }
@@ -293,7 +293,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _CurrentProfit = "-";
                 else
-                    _CurrentProfit = Object.CurrentProfit().ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _CurrentProfit = Object.CurrentProfit().ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _CurrentProfit!;
         }
@@ -344,7 +344,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _OpenText = "-";
                 else
-                    _OpenText = (Object.Invested - Object.Returned - Object.Commission).ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _OpenText = (Object.Invested - Object.Returned - Object.Commission).ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _OpenText!;
         }
@@ -448,7 +448,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _CurrentProfitPercentage = "-";
                 else
-                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString0(Object.Symbol.QuoteData.DisplayFormat);
+                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString(Object.Symbol.QuoteData.DisplayFormat);
             }
             return _CurrentProfitPercentage!;
         }
@@ -465,7 +465,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _CurrentProfitPercentageForeground ??= GetBrushColorViaSign(Object.CurrentProfitPercentage());
+            _CurrentProfitPercentageForeground ??= GetBrushColorViaSign(Object.CurrentProfit());
             return _CurrentProfitPercentageForeground!;
         }
     }

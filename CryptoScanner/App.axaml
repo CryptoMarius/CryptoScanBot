@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="CryptoScanner.App"
              xmlns:helper="using:CryptoScanner.Helpers"
+             xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
              RequestedThemeVariant="Default">
     
     <Application.Resources>
@@ -100,6 +101,15 @@
             <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
         </FluentTheme.Palettes>
     </FluentTheme>
+
+        <!-- ============================================ -->
+        <!-- OxyPlot tracker popup: dark background, white text -->
+        <!-- ============================================ -->
+        <Style Selector="oxy|TrackerControl">
+            <Setter Property="Background" Value="#EE1E1E2E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#888888"/>
+        </Style>
 
         <!-- ============================================ -->
         <!-- Common theming -->

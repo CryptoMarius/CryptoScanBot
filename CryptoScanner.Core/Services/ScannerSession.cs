@@ -160,7 +160,6 @@ public class ScannerSession : IScannerSession
             // Positions will be loaded later
             LoadAssets(); // not sure if we need this (papertrading perhaps?)
             GlobalData.LoadSymbols(); // need to load these before the tickers are created
-            //Dispatcher.UIThread.Post(() => { WeakReferenceMessenger.Default.Send(new SymbolsHaveChangedMessage()); });
             GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
         }
 
@@ -362,13 +361,13 @@ public class ScannerSession : IScannerSession
         TimerRestartStreams.InitTimerInterval(1 * 5);
     }
 
-    
+
     private async void TimerHeartBeath_Tick(object? sender, EventArgs? e)
     {
         GlobalData.PlaySomeMusic(GlobalData.Settings.General.SoundHeartBeat);
     }
 
-    
+
     private async void TimerRestartStreams_Tick(object? sender, EventArgs? e)
     {
         GlobalData.AddTextToLogTab("ScannerSession.Restart");

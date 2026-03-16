@@ -9,6 +9,7 @@ using CryptoScanner.Core.Model;
 using Dapper;
 
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Legends;
 using OxyPlot.Series;
@@ -24,7 +25,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
     {
         public DateTime CloseTime { get; set; }
         public string Quote { get; set; } = "";
-        public CryptoOrderStatus Status { get; set; }
+        //public CryptoOrderStatus Status { get; set; }
 
         public int Positions { get; set; }
         public decimal Invested { get; set; }
@@ -182,7 +183,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
     {
         // Query voor positie data
         StringBuilder builder = new();
-        builder.AppendLine("select date(position.CloseTime,'localtime') as CloseTime, symbol.quote, position.Status, count(position.id) as Positions,");
+        builder.AppendLine("select date(position.CloseTime,'localtime') as CloseTime, symbol.quote, count(position.id) as Positions,");
         builder.AppendLine("round(MIN(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MinMin,");
         builder.AppendLine("round(AVG(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS AvgMin,");
         builder.AppendLine("round(MAX(ROUND((JULIANDAY(position.CloseTime) - JULIANDAY(position.CreateTime)) * 86400 / 3600)), 2) AS MaxMin,");
@@ -198,8 +199,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
         builder.AppendLine("where position.Invested > 0");
         builder.AppendLine("and position.Status in (0,1,2,3)");
         builder.AppendLine($"and symbol.quote = '{QuoteData!.Name}'");
-        builder.AppendLine("group by date(position.CloseTime,'localtime'), position.Status, symbol.quote");
-        builder.AppendLine("order by date(position.CloseTime,'localtime') desc, position.Status, symbol.quote");
+        builder.AppendLine("group by date(position.CloseTime,'localtime'), symbol.quote");
+        builder.AppendLine("order by date(position.CloseTime,'localtime'), position.Status, symbol.quote");
 
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
@@ -213,7 +214,6 @@ public partial class DashboardPositionsViewModel : ObservableObject
             if (data.CloseTime.Date > new DateTime(2000, 01, 01))
             {
                 QueryPositionDataList.Add(data);
-
                 closedData.Positions += data.Positions;
                 closedData.Invested += data.Invested;
                 closedData.Returned += data.Returned;
@@ -249,7 +249,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
     {
         var model = new PlotModel
         {
-            Title = "Aantal gesloten posities per dag",
+            Title = "Positions per day",
             TextColor = OxyColors.White,
             Background = OxyColors.Black
         };
@@ -257,9 +257,11 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
-            StringFormat = "dd-MM",
+            StringFormat = "dd",
             MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
             MinorGridlineStyle = LineStyle.Dot,
+            MinorGridlineColor = OxyColor.FromArgb(40, 255, 255, 255),
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
             TextColor = OxyColors.White,
@@ -268,33 +270,135 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Axes.Add(new LinearAxis
         {
             Position = AxisPosition.Left,
-            Title = "Aantal",
+            //Title = "Count",
+            Minimum = 0,
             MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
             AxislineColor = OxyColors.White,
             TextColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
             StringFormat = "N0"
         });
 
-        var series = new LineSeries
+        // OxyPlot 2.x: RectangleBarSeries uses explicit left/right bounds in data-space (OADate days),
+        // so each bar is exactly 80% of one day wide regardless of zoom or chart size.
+        // LinearBarSeries.BarWidth is in pixels, which made bars appear only 2 pixels wide.
+        var series = new RectangleBarSeries
         {
-            Title = "Posities",
-            Color = OxyColors.Green,
-            MarkerType = MarkerType.Circle,
-            MarkerSize = 4,
-            MarkerFill = OxyColors.Green
+            Title = "number of positions",
+            FillColor = OxyColors.Green,
+            StrokeColor = OxyColors.DarkGreen,
+            StrokeThickness = 1,
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
+            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:N0}",
         };
 
-        foreach (var data in QueryPositionDataList)
+        foreach (QueryPositionData data in QueryPositionDataList)
         {
-            series.Points.Add(new DataPoint(DateTimeAxis.ToDouble(data.CloseTime.Date), data.Positions));
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
+                double x = DateTimeAxis.ToDouble(data.CloseTime.Date);
+                // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
+                series.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, data.Positions));
+            }
         }
 
         model.Series.Add(series);
 
-        model.Legends.Add(new Legend
+        //model.Legends.Add(new Legend
+        //{
+        //    LegendPosition = LegendPosition.RightTop
+        //});
+
+        return model;
+    }
+
+    private PlotModel CreateChartProfitsPerDay()
+    {
+        var model = new PlotModel
         {
-            LegendPosition = LegendPosition.RightTop
+            Title = "Profits per day",
+            TextColor = OxyColors.White,
+            Background = OxyColors.Black
+        };
+
+        model.Axes.Add(new DateTimeAxis
+        {
+            Position = AxisPosition.Bottom,
+            StringFormat = "dd",
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
+            MinorGridlineStyle = LineStyle.Dot,
+            MinorGridlineColor = OxyColor.FromArgb(40, 255, 255, 255),
+            AxislineColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            TextColor = OxyColors.White,
+        });
+
+        model.Axes.Add(new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            //Title = "Value",
+            //Minimum = 0,
+            MajorGridlineStyle = LineStyle.Solid,
+            MajorGridlineColor = OxyColor.FromArgb(80, 255, 255, 255),
+            AxislineColor = OxyColors.White,
+            TextColor = OxyColors.White,
+            AxislineStyle = LineStyle.Solid,
+            StringFormat = QuoteData!.DisplayFormat,
+        });
+
+        // OxyPlot 2.x: RectangleBarSeries uses explicit left/right bounds in data-space (OADate days),
+        // so each bar is exactly 80% of one day wide regardless of zoom or chart size.
+        // LinearBarSeries.BarWidth is in pixels, which made bars appear only 2 pixels wide.
+        // RectangleBarItem has no per-item color, so two separate series are used for positive/negative profit.
+        var seriesProfit = new RectangleBarSeries
+        {
+            Title = "Total profit",
+            FillColor = OxyColors.Green,
+            StrokeColor = OxyColors.DarkGreen,
+            StrokeThickness = 1,
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
+            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:" + QuoteData!.DisplayFormat + "}",
+        };
+
+        var seriesLoss = new RectangleBarSeries
+        {
+            Title = "Total loss",
+            FillColor = OxyColors.Red,
+            StrokeColor = OxyColors.DarkRed,
+            StrokeThickness = 1,
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
+            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:" + QuoteData!.DisplayFormat + "}",
+        };
+
+        foreach (QueryPositionData data in QueryPositionDataList)
+        {
+            if (data.CloseTime.Date > new DateTime(2000, 01, 01))
+            {
+                double x = DateTimeAxis.ToDouble(data.CloseTime.Date);
+                // Each bar spans ±0.4 days around the day centre = 80% width, 20% gap.
+                if (data.TotalProfit < 0)
+                    seriesLoss.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
+                else
+                    seriesProfit.Items.Add(new RectangleBarItem(x - 0.4, 0, x + 0.4, (double)data.TotalProfit));
+            }
+        }
+
+        model.Series.Add(seriesProfit);
+        model.Series.Add(seriesLoss);
+
+        // Thick horizontal zero line to clearly separate profit from loss.
+        model.Annotations.Add(new LineAnnotation
+        {
+            Type = LineAnnotationType.Horizontal,
+            Y = 0,
+            Color = OxyColors.White,
+            StrokeThickness = 2,
+            LineStyle = LineStyle.Solid,
         });
 
         return model;
@@ -307,7 +411,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Axes.Add(new DateTimeAxis
         {
             Position = AxisPosition.Bottom,
-            StringFormat = "dd-MM",
+            StringFormat = "dd",
             MajorGridlineStyle = LineStyle.Solid,
             AxislineColor = OxyColors.White,
             AxislineStyle = LineStyle.Solid,
@@ -340,54 +444,6 @@ public partial class DashboardPositionsViewModel : ObservableObject
         model.Series.Add(minSeries);
         model.Series.Add(avgSeries);
         model.Series.Add(maxSeries);
-
-        model.Legends.Add(new Legend
-        {
-            LegendPosition = LegendPosition.RightTop
-        });
-
-        return model;
-    }
-
-    private PlotModel CreateChartProfitsPerDay()
-    {
-        var model = new PlotModel { Title = "Winst/verlies per dag", TextColor = OxyColors.White, Background = OxyColors.Black };
-
-        model.Axes.Add(new DateTimeAxis
-        {
-            Position = AxisPosition.Bottom,
-            StringFormat = "dd-MM",
-            MajorGridlineStyle = LineStyle.Solid,
-            AxislineColor = OxyColors.White,
-            AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
-        });
-
-        model.Axes.Add(new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            Title = QuoteData?.Name ?? "Value",
-            MajorGridlineStyle = LineStyle.Solid,
-            AxislineColor = OxyColors.White,
-            AxislineStyle = LineStyle.Solid,
-            TextColor = OxyColors.White,
-        });
-
-        var series = new LineSeries
-        {
-            Title = "Winst",
-            Color = OxyColors.DarkGreen,
-            MarkerType = MarkerType.Circle,
-            MarkerSize = 4,
-            MarkerFill = OxyColors.DarkGreen
-        };
-
-        foreach (var data in QueryPositionDataList)
-        {
-            series.Points.Add(new DataPoint(DateTimeAxis.ToDouble(data.CloseTime.Date), (double)data.TotalProfit));
-        }
-
-        model.Series.Add(series);
 
         model.Legends.Add(new Legend
         {

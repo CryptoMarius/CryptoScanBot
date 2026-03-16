@@ -4,104 +4,237 @@
 
     <UserControl.Styles>
 
-        <!-- Candle 1: Bear, delay 0.0s — falls from tall to short -->
+        <!-- Candle 1: Bear, delay 0.0s -->
         <Style Selector="Border#C1Body">
-            <Setter Property="Height" Value="50"/>
+            <Setter Property="Height" Value="45"/>
             <Style.Animations>
-                <Animation Duration="0:0:1.4" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.0">
-                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="50"/></KeyFrame>
-                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="16"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Height" Value="50"/></KeyFrame>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.0">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="45"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="14"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="45"/></KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
 
-        <!-- Candle 2: Bull, delay 0.2s — rises from short to tall -->
+        <!-- Candle 2: Bull, delay 0.2s -->
         <Style Selector="Border#C2Body">
-            <Setter Property="Height" Value="30"/>
+            <Setter Property="Height" Value="25"/>
             <Style.Animations>
-                <Animation Duration="0:0:1.4" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.2">
-                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="30"/></KeyFrame>
-                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="58"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Height" Value="30"/></KeyFrame>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.2">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="25"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="52"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="25"/></KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
 
         <!-- Candle 3: Bear, delay 0.4s -->
         <Style Selector="Border#C3Body">
-            <Setter Property="Height" Value="42"/>
+            <Setter Property="Height" Value="38"/>
             <Style.Animations>
-                <Animation Duration="0:0:1.4" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.4">
-                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="42"/></KeyFrame>
-                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="20"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Height" Value="42"/></KeyFrame>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.4">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="38"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="17"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="38"/></KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
 
         <!-- Candle 4: Bull, delay 0.6s -->
         <Style Selector="Border#C4Body">
-            <Setter Property="Height" Value="22"/>
+            <Setter Property="Height" Value="17"/>
             <Style.Animations>
-                <Animation Duration="0:0:1.4" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.6">
-                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="22"/></KeyFrame>
-                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="52"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Height" Value="22"/></KeyFrame>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.6">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="17"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="48"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="17"/></KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
 
         <!-- Candle 5: Bear, delay 0.8s -->
         <Style Selector="Border#C5Body">
-            <Setter Property="Height" Value="46"/>
+            <Setter Property="Height" Value="42"/>
             <Style.Animations>
-                <Animation Duration="0:0:1.4" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.8">
-                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="46"/></KeyFrame>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:0.8">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="42"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="12"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="42"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 6: Bull, delay 1.0s -->
+        <Style Selector="Border#C6Body">
+            <Setter Property="Height" Value="14"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:1.0">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="14"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="45"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="14"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 7: Bear, delay 1.2s -->
+        <Style Selector="Border#C7Body">
+            <Setter Property="Height" Value="35"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:1.2">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="35"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="16"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="35"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 8: Bull, delay 1.4s -->
+        <Style Selector="Border#C8Body">
+            <Setter Property="Height" Value="21"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:1.4">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="21"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="55"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="21"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 9: Bear, delay 1.6s -->
+        <Style Selector="Border#C9Body">
+            <Setter Property="Height" Value="48"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:1.6">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="48"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="19"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="48"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 10: Bull, delay 1.8s -->
+        <Style Selector="Border#C10Body">
+            <Setter Property="Height" Value="16"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:1.8">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="16"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="50"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="16"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 11: Bear, delay 2.0s -->
+        <Style Selector="Border#C11Body">
+            <Setter Property="Height" Value="31"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:2.0">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="31"/></KeyFrame>
                     <KeyFrame Cue="50%"> <Setter Property="Height" Value="14"/></KeyFrame>
-                    <KeyFrame Cue="100%"><Setter Property="Height" Value="46"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="31"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <!-- Candle 12: Bull, delay 2.2s -->
+        <Style Selector="Border#C12Body">
+            <Setter Property="Height" Value="19"/>
+            <Style.Animations>
+                <Animation Duration="0:0:2.8" IterationCount="INFINITE" Easing="SineEaseInOut" Delay="0:0:2.2">
+                    <KeyFrame Cue="0%">  <Setter Property="Height" Value="19"/></KeyFrame>
+                    <KeyFrame Cue="50%"> <Setter Property="Height" Value="46"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Height" Value="19"/></KeyFrame>
                 </Animation>
             </Style.Animations>
         </Style>
 
     </UserControl.Styles>
 
-    <StackPanel Orientation="Horizontal" Spacing="8"
+    <StackPanel Orientation="Horizontal" Spacing="4"
                 HorizontalAlignment="Center" VerticalAlignment="Center">
 
         <!-- Candle 1: Bearish (red) -->
-        <Grid Width="16" Height="70">
-            <Rectangle Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
-            <Border x:Name="C1Body" Width="16" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="2"/>
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C1Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 2: Bullish (green) -->
-        <Grid Width="16" Height="70">
-            <Rectangle Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
-            <Border x:Name="C2Body" Width="16" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="2"/>
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C2Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 3: Bearish (red) -->
-        <Grid Width="16" Height="70">
-            <Rectangle Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
-            <Border x:Name="C3Body" Width="16" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="2"/>
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C3Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 4: Bullish (green) -->
-        <Grid Width="16" Height="70">
-            <Rectangle Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
-            <Border x:Name="C4Body" Width="16" VerticalAlignment="Center"
-                    Background="#45c173" CornerRadius="2"/>
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C4Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
         </Grid>
 
         <!-- Candle 5: Bearish (red) -->
-        <Grid Width="16" Height="70">
-            <Rectangle Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
-            <Border x:Name="C5Body" Width="16" VerticalAlignment="Center"
-                    Background="#cd4040" CornerRadius="2"/>
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C5Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 6: Bullish (green) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C6Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 7: Bearish (red) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C7Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 8: Bullish (green) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C8Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 9: Bearish (red) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C9Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 10: Bullish (green) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C10Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 11: Bearish (red) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C11Body" Width="8" VerticalAlignment="Center"
+                    Background="#cd4040" CornerRadius="1"/>
+        </Grid>
+
+        <!-- Candle 12: Bullish (green) -->
+        <Grid Width="8" Height="70">
+            <Rectangle Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Fill="#555"/>
+            <Border x:Name="C12Body" Width="8" VerticalAlignment="Center"
+                    Background="#45c173" CornerRadius="1"/>
         </Grid>
 
     </StackPanel>
