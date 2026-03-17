@@ -184,6 +184,11 @@
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <!-- Right border makes the resize boundary visible between column headers.
+                 The resize gripper (8 px transparent area at the right edge) still works
+                 as before; the border just shows users where to hover and drag. -->
+            <Setter Property="BorderBrush" Value="#50808080" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
         </Style>
 
         <!-- Alternating row colors -->
