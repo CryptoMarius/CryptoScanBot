@@ -255,6 +255,20 @@ public static class RegisterAlgorithms
         });
 #endif
 
+#if DEBUG
+        //***************************************************
+        // BBMA Magic Extreme – WMA5(Low/High) AND WMA10(Low/High) both outside the Bollinger Band,
+        // combined with a price wick that touches/breaks the band but closes back inside.
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma.magic.extreme",
+            Strategy = CryptoSignalStrategy.BbmaMagicExtreme,
+            AnalyzeLongType = typeof(SignalBbmaMagicExtreme),
+            AnalyzeShortType = typeof(SignalBbmaMagicExtreme),
+        });
+#endif
+
     }
 
 

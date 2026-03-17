@@ -56,6 +56,11 @@ public enum CryptoSignalStrategy
     BbWickSma = 44,
 #endif
 
+#if DEBUG
+    // BBMA Magic Extreme: WMA5(Low/High) AND WMA10(Low/High) both outside the Bollinger Band
+    BbmaMagicExtreme = 45,
+#endif
+
     DominantLevel = 1000,
     DominantLevelNear = 1001,
     FairValueGap = 1003,
