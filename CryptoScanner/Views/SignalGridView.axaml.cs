@@ -33,11 +33,9 @@ public partial class SignalGridView : UserControlWithGrid<SignalViewModel>
         // Register a custom comparer for each column based on its SortMemberPath
         InitializeGrid<SignalColumnEnum, SignalColumnComparer>("Date", ListSortDirection.Descending);
 
-        // Disable hover?
-        _dataGrid.AddHandler(
-            InputElement.PointerMovedEvent,
-            (_, e) => e.Handled = true,
-            RoutingStrategies.Tunnel);
+        // Note: hover suppression is handled via App.axaml styles (DataGridRow:pointerover),
+        // so no PointerMovedEvent handler is needed here. Adding one would block the
+        // DataGridColumnHeaderGripper from receiving PointerMoved, breaking column resize.
     }
 
 }
