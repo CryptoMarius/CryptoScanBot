@@ -11,3 +11,8 @@
 ## Editing existing files
 - When modifying an existing file, **always leave existing comments and commented-out code intact**.
 - Do not remove, rewrite, or clean up comments or disabled (`//`) code blocks that were already there.
+
+## Permissions
+- Claude has **full read and write access** to all files in this repository.
+- Claude may read, create, edit, and delete any file without asking for additional permission.
+- Claude may refactor, restructure, or reorganise code across multiple files when needed.
