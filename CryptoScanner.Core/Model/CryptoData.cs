@@ -49,11 +49,6 @@ public class CryptoData
     //[Computed]
     //public double? SlopeStoch { get; set; }
 
-    //[Computed]
-    //public double? Rvi { get; set; } // Stochastic oscillator
-    //[Computed]
-    //public double? RviSignal { get; set; } // Stochastic
-
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG
     //public double? Ema8 { get; set; }

@@ -28,7 +28,7 @@ public class ZoneSession
 
     // hidden
     public bool UseOptimizing { get; set; } = false;
-    //public decimal Deviation { get; set; } = 1m;
+    //public decimal Deviation { get; set; } = 1m; now fixed
 
     // trend
     public TrendType TrendType { get; set; } = TrendType.Primary;
@@ -48,7 +48,6 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = true;
-    //public bool ShowTrendLines { get; set; } = false;
 
     // options
     public bool ShowPoints { get; set; } = false; // Pivot points (debug)

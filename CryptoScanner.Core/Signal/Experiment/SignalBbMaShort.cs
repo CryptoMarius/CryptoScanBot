@@ -97,15 +97,10 @@ public class SignalBbMaShort : SignalBbmaBase
     //        //decimal wma10HighPrev = (decimal)data.CandleData!.Wma10High!;
 
     //        // CSD (CSAK): LWMA5/WMA10 crossover (use lows for buy, highs for sell)
-    //        //bool csd = wma05High < wma10High && wma05HighPrev >= wma10HighPrev;
-
-    //        //// CSD (CSAK): LWMA5/WMA10 crossover (use lows for buy, highs for sell)
-    //        //bool csdBull = i > 0 && lwma5_low[i] > lwma10_low[i] && lwma5_low[i - 1] <= lwma10_low[i - 1];
-    //        //bool csdBear = i > 0 && lwma5_high[i] < lwma10_high[i] && lwma5_high[i - 1] >= lwma10_high[i - 1];
+    //        //bool csd = wma05Low > wma10Low && wma05LowPrev <= wma10LowPrev;
 
     //        //// Early CSD: CSD zonder volledige MLV (hoog risico)
-    //        //bool earlyCsdBull = csdBull && (!signals[tf].ContainsKey("MLV") || !signals[tf]["MLV"].Active);
-    //        //bool earlyCsdBear = csdBear && (!signals[tf].ContainsKey("MLV") || !signals[tf]["MLV"].Active);
+    //        //bool earlyCsdBull = csd && (!signals[tf].ContainsKey("MLV") || !signals[tf]["MLV"].Active);
 
     //        //// CSM: Strong data after CSD
     //        //double bodySize = Math.Abs(candles[i].Close - candles[i].Open);
@@ -127,10 +122,8 @@ public class SignalBbMaShort : SignalBbmaBase
 
     //        data = prev!;
     //    }
-
     //    return false;
     //}
-
 
 
     public bool Calculate(CryptoIntervalPeriod tf1, CryptoIntervalPeriod tf2, CryptoIntervalPeriod tf3)
@@ -175,18 +168,11 @@ public class SignalBbMaShort : SignalBbmaBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 
-
-        // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-
-        //if (!IsExtreme(CandleLast, 2))
-        //    return false;
-
-
 
         if (!GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3))
             return false;

@@ -87,12 +87,11 @@ public class SettingsSignal
         Long.Barometer.List.Add("1h", (-1.5m, 999m));
         Short.Barometer.List.Add("1h", (-999m, 1.5m));
 
-        // Geeft vragen.. (aansluiting oude scanner)
+        // Migrations issues.. Nah..
         //Long.CryptoTrendData.List.Add("1h");
         //Short.CryptoTrendData.List.Add("1h");
 
         //Long.MarketTrend.List.Add((0m, 100m));
         //Short.MarketTrend.List.Add((-100m, 0));
     }
-
 }

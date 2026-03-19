@@ -20,7 +20,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
         // De Quote volume is the volume in terms of the second currency pair.
-        // For example, for "MFN/USDT": 
+        // For example, for "MFN/USDT":
         // base volume would be MFN
         // quote volume would be USDT
 
