@@ -92,9 +92,10 @@ public partial class LogGridViewModel : ObservableObject
                         list.Add(LogQueue.Dequeue());
                     LogLines.AddRange(list);
 
-                    // Keep only last MaxLogLines entries
-                    while (LogLines.Count > MaxLogLines)
-                        LogLines.RemoveAt(0);
+                    // Keep only last MaxLogLines entries (single RemoveRange to avoid DataGridCollectionView index desync)
+                    int excess = LogLines.Count - MaxLogLines;
+                    if (excess > 0)
+                        LogLines.RemoveRange(0, excess);
 
 
                     //// Restore selection
