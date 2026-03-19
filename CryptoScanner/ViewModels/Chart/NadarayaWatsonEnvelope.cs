@@ -93,7 +93,7 @@ public class NadarayaWatsonEnvelope
                 if (openTime >= minDate && openTime <= maxDate)
                 {
                     var res = result[i];
-                    if (res.Lower == null)
+                    if (res.Lower == null || res.Center == null || res.Upper == null)
                         continue;
                     decimal lowerband = res.Lower.Value;
                     decimal nwevalue = res.Center.Value;
