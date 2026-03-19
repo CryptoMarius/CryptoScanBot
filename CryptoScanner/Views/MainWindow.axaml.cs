@@ -4,6 +4,8 @@
 //https://chatgpt.com/share/6974f916-e54c-8012-aeae-4e9528d9705a
 //https://chatgpt.com/share/6974f916-e54c-8012-aeae-4e9528d9705a
 
+#pragma warning disable AVLN3001 // MainWindow uses DI constructor, no parameterless constructor needed
+
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -168,7 +170,7 @@ public partial class MainWindow : Window
         //    if (appIcon != null)
         //        appIcon.IsVisible = false;
 
-        //    //// Creëer native menu bar
+        //    //// Creï¿½er native menu bar
         //    //var nativeMenu = new NativeMenu(); // Gebruik NativeMenu voor macOS integration
         //    //var fileMenuItem = new NativeMenuItem { Header = "_Filex" };
         //    //var helpMenuItem = new NativeMenuItem { Header = "_Helpx" };
@@ -200,6 +202,7 @@ public partial class MainWindow : Window
         MenuTools.Items.Add(new MenuItem { Header = "Export all exchange information to Excel", Command = new CommandExcelExchangeInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Export barameter information to Excel", Command = new CommandExcelBarometerInformation(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "Dump memory info", Command = new CommandShowMemoryObjects(), CommandParameter = this });
 
         MenuTools.Items.Add(new MenuItem { Header = "-" });
