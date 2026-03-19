@@ -83,6 +83,10 @@ public class ZoneFvg
     // FVG (just a quick approach)
     public static void ScanForNew(CryptoSymbol symbol, CryptoInterval interval, CandleTime lastCandle1mCloseTime)
     {
+        // Skip if CalculateZonesAsync is currently rebuilding zones for this symbol (race condition guard)
+        if (symbol.Data.CalculatingZones)
+            return;
+
         // GetSymbolData the last 3 candles
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
@@ -359,7 +363,7 @@ public class ZoneFvg
                 ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
                 zones.Reset();
 
-                // Create new zones 
+                // Create new zones
                 OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
                 OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
                 CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
