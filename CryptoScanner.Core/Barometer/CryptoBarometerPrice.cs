@@ -5,6 +5,10 @@ namespace CryptoScanner.Core.Barometer;
 
 internal class CryptoBarometerPrice
 {
+    // Outlier threshold: symbols with an absurdly high/low percentage are skipped
+    // (guards against corrupted candle.Close values caused by race conditions on decimal reads)
+    private const decimal OutlierThreshold = 200m;
+
     public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
         CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
     {
@@ -36,10 +40,17 @@ internal class CryptoBarometerPrice
                             perc = 100m * (diff / candlePrev.Close);
                         else perc = 0;
 
+                        // Detect and log anomaly (possible corruption due to torn decimal read)
                         // Fix for weird values
                         // Sometimes even 700...900 times higher than x hours ago, what is the base problem?
-                        if (perc >= 500)
-                            perc = 0;
+                        if (Math.Abs(perc) > OutlierThreshold)
+                        {
+                            GlobalData.AddTextToLogTab($"BAROMETER ANOMALY {symbol.Name} {interval.Name} " +
+                                $"prev={candlePrev.Close} ({unixCandlePrev.ToLocalTime()}) " +
+                                $"last={candleLast.Close} ({unixCandleLast.ToLocalTime()}) " +
+                                $"perc={perc:F2}% (skipped)");
+                            continue; // Skip outlier
+                        }
 
                         sumPerc += perc;
                         coinsMatching++;
