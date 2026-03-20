@@ -110,11 +110,10 @@ public struct CryptoCandle : IQuote
         return decimals;
     }
 
-    public void LoadVersion3(BinaryReader reader, int version)
+    public void LoadVersion3(BinaryReader reader)
     {
         OpenTime = new CandleTime(reader.ReadUInt32());
-        if (version >= 6)
-            TickDecimals = reader.ReadByte();
+        TickDecimals = reader.ReadByte();
         _openTicks = reader.ReadInt32();
         _highTicks = reader.ReadInt32();
         _lowTicks = reader.ReadInt32();

@@ -20,7 +20,7 @@ public class ZoneCandleEngine
             int version = reader.ReadInt32();
 
             // "Synchronisation" marker (new in version 4)
-            if (version >= 4)
+            if (version == 1)
             {
                 int marker = reader.ReadInt32();
                 if (marker != markerValue)
@@ -43,7 +43,7 @@ public class ZoneCandleEngine
                     {
                         TickDecimals = symbol.PriceDecimals
                     };
-                    if (version <= 2)
+                    if (version == 1)
                     {
                         candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
                         candle.Open = reader.ReadDecimal();
@@ -55,7 +55,7 @@ public class ZoneCandleEngine
                     else
                     {
                         // Delegates to the newer candle storage systen
-                        candle.LoadVersion3(reader, version);
+                        candle.LoadVersion3(reader);
                     }
 
                     // We had some data corruption and 1 candle in the year 2150...
@@ -127,7 +127,7 @@ public class ZoneCandleEngine
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
-            int version = 6;
+            int version = 2;
             writer.Write(version);
 
             int marker = markerValue;

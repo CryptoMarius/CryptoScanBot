@@ -30,9 +30,9 @@ public class DataStore
     {
         int version = reader.ReadInt32();
 
-        if (version >= 1 && version <= 3)
+        if (version == 1)
         {
-            // Name of symbol, removed in version 4
+            // Name of symbol, removed in version 2
             reader.ReadString();
         }
 
@@ -45,7 +45,7 @@ public class DataStore
                     continue;
 
                 // "Synchronisation" marker (new in version 4)
-                if (version >= 4)
+                if (version != 1)
                 {
                     int marker = reader.ReadInt32();
                     if (marker != markerValue)
@@ -58,7 +58,7 @@ public class DataStore
                     throw new Exception($"file {symbol.Name} is corrupted (interval {intervalPeriod} does not match)");
 
                 // 3: Last candle Last synchronised date with the exchange
-                if (version < 5)
+                if (version == 1)
                 {
                     long unix = reader.ReadInt64();
                     if (unix == 0)
@@ -100,7 +100,7 @@ public class DataStore
                         {
                             TickDecimals = symbol.PriceDecimals
                         };
-                        if (version <= 2)
+                        if (version == 1)
                         {
                             candle.OpenTime = CandleTime.FromUnixSeconds(reader.ReadInt64());
                             candle.Open = reader.ReadDecimal();
@@ -112,7 +112,7 @@ public class DataStore
                         else
                         {
                             // Delegates to the newer candle storage systen
-                            candle.LoadVersion3(reader, version);
+                            candle.LoadVersion3(reader);
                         }
 
                         // We had some data corruption and 1 candle in the year 2150...
@@ -142,7 +142,7 @@ public class DataStore
         }
     }
 
-    private static void LoadCandleForSymbol(string exchangeStoragePath, CryptoSymbol symbol)
+    private static void LoadCandlesForSymbol(string exchangeStoragePath, CryptoSymbol symbol)
     {
         symbol.LastPrice = null;
         string oldFileName = Path.Combine(exchangeStoragePath, symbol.Quote.ToLower(), symbol.Base.ToLower());
@@ -214,7 +214,7 @@ public class DataStore
                             continue;
                         }
 
-                        LoadCandleForSymbol(folderName, symbol);
+                        LoadCandlesForSymbol(folderName, symbol);
                     }
                 }
             }
@@ -283,7 +283,7 @@ public class DataStore
                                 using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
                                 using BinaryWriter writer = new(zipStream, Encoding.UTF8, false);
 
-                                int version = 6;
+                                int version = 2;
                                 writer.Write(version);
 
                                 foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
@@ -307,7 +307,7 @@ public class DataStore
                                         // 4: Interval.Candle Count; Candle count
                                         writer.Write(symbolInterval.CandleList.Count);
 
-                                        // 5+: OHLCV values
+                                        // 5: OHLCV values
                                         foreach (var candle in symbolInterval.CandleList.Values)
                                         {
                                             candle.SaveVersion3(writer);

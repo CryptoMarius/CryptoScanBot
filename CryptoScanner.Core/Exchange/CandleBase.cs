@@ -225,7 +225,7 @@ public class CandleBase(ExchangeBase api)
     public async Task<bool> FetchFrom(CryptoSymbol symbol, CryptoInterval interval, CandleTime unixLoop, CandleTime unixMax)
     {
         // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
-        // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because 
+        // Kind of the same as the CandleBase.GetCandlesForIntervalAsync, but also different because
         // of the symbolInterval.LastCandleSynchronized and calculation of higher interval candles
 
         //if (GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))

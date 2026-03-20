@@ -36,6 +36,11 @@ internal class CryptoBarometerPrice
                             perc = 100m * (diff / candlePrev.Close);
                         else perc = 0;
 
+                        // Fix for weird values
+                        // Sometimes even 700...900 times higher than x hours ago, what is the base problem?
+                        if (perc >= 500)
+                            perc = 0;
+
                         sumPerc += perc;
                         coinsMatching++;
                     }
