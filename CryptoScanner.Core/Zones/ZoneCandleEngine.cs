@@ -55,7 +55,7 @@ public class ZoneCandleEngine
                     else
                     {
                         // Delegates to the newer candle storage systen
-                        candle.LoadVersion3(reader);
+                        candle.LoadVersion3(reader, version);
                     }
 
                     // We had some data corruption and 1 candle in the year 2150...
@@ -127,7 +127,7 @@ public class ZoneCandleEngine
         {
             CryptoSymbolInterval symbolInterval = symbol!.GetSymbolInterval(interval.IntervalPeriod);
 
-            int version = 4;
+            int version = 6;
             writer.Write(version);
 
             int marker = markerValue;

@@ -17,6 +17,7 @@ namespace CryptoScanner.Core.Context;
 // 3: symbolname, [interval<1m .. 1w>, synched, count, ohlcv <new style>]
 // 4: [marker<1234567890> interval<1m .. 1w>, synched<int64>, count, ohlcv <new style>]
 // 5: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, ohlcv <new style>]
+// 6: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, <ticks>ohlcv <new style>]
 
 public class DataStore
 {
@@ -35,7 +36,7 @@ public class DataStore
             reader.ReadString();
         }
 
-        if (version >= 1 && version <= 5)
+        if (version >= 1 && version <= 6)
         {
             foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             {
@@ -111,7 +112,7 @@ public class DataStore
                         else
                         {
                             // Delegates to the newer candle storage systen
-                            candle.LoadVersion3(reader);
+                            candle.LoadVersion3(reader, version);
                         }
 
                         // We had some data corruption and 1 candle in the year 2150...
@@ -282,7 +283,7 @@ public class DataStore
                                 using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
                                 using BinaryWriter writer = new(zipStream, Encoding.UTF8, false);
 
-                                int version = 5;
+                                int version = 6;
                                 writer.Write(version);
 
                                 foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
@@ -306,7 +307,7 @@ public class DataStore
                                         // 4: Interval.Candle Count; Candle count
                                         writer.Write(symbolInterval.CandleList.Count);
 
-                                        // 5: OHLCV values
+                                        // 5+: OHLCV values
                                         foreach (var candle in symbolInterval.CandleList.Values)
                                         {
                                             candle.SaveVersion3(writer);
