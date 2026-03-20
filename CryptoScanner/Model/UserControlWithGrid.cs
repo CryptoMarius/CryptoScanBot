@@ -310,6 +310,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         flyout.Items.Add(new MenuItem { Header = "Export symbol information to Excel", Command = new CommandExcelSymbolInformation(), CommandParameter = parameter });
         if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = parameter });
+        flyout.Items.Add(new MenuItem { Header = "Export barometer information to Excel", Command = new CommandExcelBarometerInformation(), CommandParameter = parameter });
 
         flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
