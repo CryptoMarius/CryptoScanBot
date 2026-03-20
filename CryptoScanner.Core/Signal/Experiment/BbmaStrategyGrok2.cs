@@ -188,7 +188,7 @@ public class BbmaStrategyGrok2
         // SortedDictionary is already ordered ascending by key, so OrderBy is not needed.
         return dict?.GetSnapshot().Select(x => new Quote
         {
-            Date = DateTimeOffset.FromUnixTimeSeconds(x.Key.ToUnixSeconds()).UtcDateTime,
+            Date = x.Value.Date,
             Open = x.Value.Open,
             High = x.Value.High,
             Low = x.Value.Low,
