@@ -82,17 +82,21 @@ public struct CryptoCandle : IQuote
         0.00000001m,    // 8 decimals
         0.000000001m,   // 9 decimals
     };
-    private decimal TickSize => TickDecimals < TickSizeLookup.Length
-        ? TickSizeLookup[TickDecimals]
-        : 1m / (decimal)Math.Pow(10, TickDecimals);
+    private decimal TickSize()
+    {
+        if (TickDecimals < TickSizeLookup.Length)
+            return TickSizeLookup[TickDecimals];
+        else
+            return 1m / (decimal)Math.Pow(10, TickDecimals);
+    }
     private int _openTicks;                    // 4 bytes
-    public decimal Open { get => _openTicks * TickSize; set => _openTicks = (int)Math.Round(value / TickSize); }
+    public decimal Open { get => _openTicks * TickSize(); set => _openTicks = (int)Math.Round(value / TickSize()); }
     private int _highTicks;                    // 4 bytes
-    public decimal High { get => _highTicks * TickSize; set => _highTicks = (int)Math.Round(value / TickSize); }
+    public decimal High { get => _highTicks * TickSize(); set => _highTicks = (int)Math.Round(value / TickSize()); }
     private int _lowTicks;                     // 4 bytes
-    public decimal Low { get => _lowTicks * TickSize; set => _lowTicks = (int)Math.Round(value / TickSize); }
+    public decimal Low { get => _lowTicks * TickSize(); set => _lowTicks = (int)Math.Round(value / TickSize()); }
     private int _closeTicks;                   // 4 bytes
-    public decimal Close { get => _closeTicks * TickSize; set => _closeTicks = (int)Math.Round(value / TickSize); }
+    public decimal Close { get => _closeTicks * TickSize(); set => _closeTicks = (int)Math.Round(value / TickSize()); }
 
     private double _volume;
     public decimal Volume { get { return (decimal)_volume; } set { _volume = (double)value; } } // float or double will suffice (but with rounding errors)
