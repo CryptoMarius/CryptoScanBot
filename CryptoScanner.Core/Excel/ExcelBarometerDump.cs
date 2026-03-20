@@ -35,10 +35,16 @@ public class ExcelBarometerDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
         WriteCell(sheet, columns++, row, "");
         WriteCell(sheet, columns++, row, "Time1");
         WriteCell(sheet, columns++, row, "Tick1");
+        WriteCell(sheet, columns++, row, "Open");
+        WriteCell(sheet, columns++, row, "High");
+        WriteCell(sheet, columns++, row, "Low");
         WriteCell(sheet, columns++, row, "Close");
         WriteCell(sheet, columns++, row, "");
         WriteCell(sheet, columns++, row, "Time2");
         WriteCell(sheet, columns++, row, "Tick2");
+        WriteCell(sheet, columns++, row, "Open2");
+        WriteCell(sheet, columns++, row, "High2");
+        WriteCell(sheet, columns++, row, "Low2");
         WriteCell(sheet, columns++, row, "Close2");
         WriteCell(sheet, columns++, row, "");
         WriteCell(sheet, columns++, row, "Perc");
@@ -70,15 +76,20 @@ public class ExcelBarometerDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
                         row++;
                         int column = 0;
 
-                        //WriteCell(sheet, column++, row, candle.OpenTime.ToDateTime(), CellStyleDate);
                         WriteCell(sheet, column++, row, symbol.Name);
                         WriteCell(sheet, column++, row, "");
                         WriteCell(sheet, column++, row, candlePrev.DateLocal, CellStyleDate);
                         WriteCell(sheet, column++, row, candlePrev.TickDecimals);
+                        WriteCell(sheet, column++, row, candlePrev.Open, CellStyleDecimalNormal);
+                        WriteCell(sheet, column++, row, candlePrev.High, CellStyleDecimalNormal);
+                        WriteCell(sheet, column++, row, candlePrev.Low, CellStyleDecimalNormal);
                         WriteCell(sheet, column++, row, candlePrev.Close, CellStyleDecimalNormal);
                         WriteCell(sheet, column++, row, "");
                         WriteCell(sheet, column++, row, candleLast.DateLocal, CellStyleDate);
                         WriteCell(sheet, column++, row, candleLast.TickDecimals);
+                        WriteCell(sheet, column++, row, candleLast.Open, CellStyleDecimalNormal);
+                        WriteCell(sheet, column++, row, candleLast.High, CellStyleDecimalNormal);
+                        WriteCell(sheet, column++, row, candleLast.Low, CellStyleDecimalNormal);
                         WriteCell(sheet, column++, row, candleLast.Close, CellStyleDecimalNormal);
                         WriteCell(sheet, column++, row, "");
                         WriteCell(sheet, column++, row, perc, CellStyleDecimalNormal);
@@ -98,12 +109,12 @@ public class ExcelBarometerDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
         // summation row
         row++;
-        WriteCell(sheet, 8, row, sumPerc);
-        WriteCell(sheet, 9, row, coinsMatching);
+        WriteCell(sheet, 14, row, sumPerc);
+        WriteCell(sheet, 15, row, coinsMatching);
 
         // avaerage
         row++;
-        WriteCell(sheet, 8, row, barometerPerc);
+        WriteCell(sheet, 14, row, barometerPerc);
 
         AutoSize(sheet, columns);
     }
