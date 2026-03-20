@@ -85,6 +85,8 @@ public class CandleBase(ExchangeBase api)
                         queue.Enqueue(symbol);
                     }
 
+                    int symbolTotal = queue.Count;
+                    int symbolsDone = 0;
 
                     // En dan door x tasks de queue leeg laten trekken
                     List<Task> taskList = [];
@@ -114,6 +116,9 @@ public class CandleBase(ExchangeBase api)
                                     // Er is niet geswitched van exchange (omdat het ophalen zo lang duurt)
                                     if (symbol.ExchangeId == GlobalData.ActiveExchange!.Id)
                                     {
+                                        int done = Interlocked.Increment(ref symbolsDone);
+                                        GlobalData.CandleProgressText = $"{done} / {symbolTotal}  ({symbol.Name})";
+
                                         // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
                                         // De datum en tijd tot na het activeren van beide streams (overlap)
                                         CandleTime fetchMax = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
@@ -125,12 +130,13 @@ public class CandleBase(ExchangeBase api)
                             catch (Exception error)
                             {
                                 ScannerLog.Logger.Error(error, "");
-                                GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " + 
+                                GlobalData.AddTextToLogTab("error getting candles " + error.ToString()); // symbol.Text + " " +
                             }
                         });
                         taskList.Add(task);
                     }
                     await Task.WhenAll(taskList).ConfigureAwait(false);
+                    GlobalData.CandleProgressText = "";
 
                     //GlobalData.AddTextToLogTab("Candles ophalen klaar");
                 }

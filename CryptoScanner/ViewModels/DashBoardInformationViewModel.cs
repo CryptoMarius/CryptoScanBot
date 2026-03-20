@@ -105,6 +105,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
     [ObservableProperty]
     private string _scannerPositionCount = "";
 
+    [ObservableProperty]
+    private string _candleProgressText = "";
+
 
 
     private readonly ApplicationStateService _applicationStateService;
@@ -333,6 +336,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
         }
         if (ScannerPositionCount != text)
             ScannerPositionCount = text;
+
+        if (CandleProgressText != GlobalData.CandleProgressText)
+            CandleProgressText = GlobalData.CandleProgressText;
     }
 
 

@@ -115,8 +115,13 @@
                 BorderThickness="0">
             <Grid>
                 <!-- Loading animation: visible while ChartImage is null -->
-                <views:LoadingCandlesticksView
-                    IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                <StackPanel IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNull}}"
+                            VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4">
+                    <views:LoadingCandlesticksView/>
+                    <TextBlock Text="{Binding CandleProgressText}" FontSize="11"
+                               HorizontalAlignment="Center" Opacity="0.7"
+                               IsVisible="{Binding CandleProgressText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
                 <!-- Chart bitmap: visible once loaded -->
                 <Image Source="{Binding ChartImage}" Width="400" Height="100" Stretch="Fill"
                        IsVisible="{Binding ChartImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>

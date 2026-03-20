@@ -94,6 +94,9 @@ public static class GlobalData
     // Amount of signals created
     public static int CreatedSignalCount { get; set; }
 
+    // Progress text during candle fetching (e.g. "Loading candles 42 / 350 (BTCUSDT)")
+    public static string CandleProgressText { get; set; } = "";
+
     /// <summary>
     /// Scanner settings
     /// </summary>
