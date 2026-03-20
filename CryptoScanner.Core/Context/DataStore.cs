@@ -14,9 +14,8 @@ namespace CryptoScanner.Core.Context;
 // </summary>
 
 // version:
-// 1: symbolname, [interval<1m .. 1d>, synched, count, ohlcv <old style>]
-// 2: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, <ticks>ohlcv <new style>]
-// compression: .compressed = GZip (legacy, read-only) or .lz4 = LZ4
+// 1: symbolname, [interval<1m .. 1d>, synched<int64>, count, ohlcv <decimal, old style>]
+// 2: [marker, interval<1m .. 1w>, synched<uint32>, count, <TickDecimals+ticks>ohlcv] (LZ4)
 
 public class DataStore
 {
@@ -40,7 +39,7 @@ public class DataStore
             reader.ReadString();
         }
 
-        if (version >= 1 && version <= 6)
+        if (version >= 1 && version <= 2)
         {
             foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
             {
@@ -159,6 +158,7 @@ public class DataStore
             // an old uncompressed file
             if (File.Exists(oldFileName))
             {
+                // Ancient format: uncompressed
                 fileName = oldFileName;
                 using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
                 using BinaryReader binaryReader = new(fileStream, Encoding.UTF8, false);
@@ -166,7 +166,7 @@ public class DataStore
             }
             else if (File.Exists(newFileName))
             {
-                // Ancient format: uncompressed
+                // New lz4 compressed file
                 fileName = newFileName;
                 using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
                 using LZ4DecoderStream lz4Stream = LZ4Stream.Decode(fileStream);

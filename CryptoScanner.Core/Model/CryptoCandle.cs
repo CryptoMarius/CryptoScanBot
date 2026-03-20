@@ -79,10 +79,12 @@ public struct CryptoCandle : IQuote
         0.00001m,       // 5 decimals
         0.000001m,      // 6 decimals
         0.0000001m,     // 7 decimals
-        0.00000001m     // 8 decimals
+        0.00000001m,    // 8 decimals
+        0.000000001m,   // 9 decimals
     };
-    //private decimal TickSize => 1m / (decimal)Math.Pow(10, TickDecimals);
-    private decimal TickSize => TickSizeLookup[TickDecimals];
+    private decimal TickSize => TickDecimals < TickSizeLookup.Length
+        ? TickSizeLookup[TickDecimals]
+        : 1m / (decimal)Math.Pow(10, TickDecimals);
     private int _openTicks;                    // 4 bytes
     public decimal Open { get => _openTicks * TickSize; set => _openTicks = (int)Math.Round(value / TickSize); }
     private int _highTicks;                    // 4 bytes
