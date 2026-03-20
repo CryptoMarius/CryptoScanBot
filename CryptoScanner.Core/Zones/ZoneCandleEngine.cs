@@ -3,7 +3,9 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
-using System.IO.Compression;
+using K4os.Compression.LZ4;
+using K4os.Compression.LZ4.Streams;
+
 using System.Text;
 
 namespace CryptoScanner.Core.Zones;
@@ -106,8 +108,8 @@ public class ZoneCandleEngine
             {
                 fileName = newFileName;
                 using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
-                using GZipStream zipStream = new(fileStream, CompressionMode.Decompress);
-                using BinaryReader binaryReader = new(zipStream, Encoding.UTF8, false);
+                using LZ4DecoderStream lz4Stream = LZ4Stream.Decode(fileStream);
+                using BinaryReader binaryReader = new(lz4Stream, Encoding.UTF8, false);
                 await ReadCandlesFromStreamAsync(binaryReader, symbol, interval);
             }
         }
@@ -173,8 +175,8 @@ public class ZoneCandleEngine
 
             // a new compressed file (preferred)
             using FileStream fileStream = new(newFileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
-            using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
-            using BinaryWriter binaryWriter = new(zipStream, Encoding.UTF8, false);
+            using LZ4EncoderStream lz4Stream = LZ4Stream.Encode(fileStream, LZ4Level.L00_FAST);
+            using BinaryWriter binaryWriter = new(lz4Stream, Encoding.UTF8, false);
             await WriteCandlesToStreamAsync(binaryWriter, symbol, interval);
         }
         catch (Exception error)

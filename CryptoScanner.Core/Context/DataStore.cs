@@ -1,8 +1,10 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-using System.IO.Compression;
+using K4os.Compression.LZ4;
+using K4os.Compression.LZ4.Streams;
+
 using System.Text;
 
 namespace CryptoScanner.Core.Context;
@@ -13,18 +15,20 @@ namespace CryptoScanner.Core.Context;
 
 // version:
 // 1: symbolname, [interval<1m .. 1d>, synched, count, ohlcv <old style>]
-// 1: symbolname, [interval<1m .. 1w>, synched, count, ohlcv <old style>]
-// 3: symbolname, [interval<1m .. 1w>, synched, count, ohlcv <new style>]
-// 4: [marker<1234567890> interval<1m .. 1w>, synched<int64>, count, ohlcv <new style>]
-// 5: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, ohlcv <new style>]
-// 6: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, <ticks>ohlcv <new style>]
+// 2: [marker<1234567890> interval<1m .. 1w>, synched<uint>, count, <ticks>ohlcv <new style>]
+// compression: .compressed = GZip (legacy, read-only) or .lz4 = LZ4
 
 public class DataStore
 {
     private const int markerValue = 1234567890;
 
-    // Prevent multiple sessions
+    // Prevent multiple save sessions
     private static readonly SemaphoreSlim Semaphore = new(1);
+
+    private static readonly ParallelOptions ParallelOptions = new()
+    {
+        MaxDegreeOfParallelism = Math.Min(8, Environment.ProcessorCount)
+    };
 
     private static void ReadCandlesFromStream(BinaryReader reader, CryptoSymbol symbol)
     {
@@ -111,7 +115,7 @@ public class DataStore
                         }
                         else
                         {
-                            // Delegates to the newer candle storage systen
+                            // Delegates to the newer candle storage system
                             candle.LoadVersion3(reader);
                         }
 
@@ -136,8 +140,6 @@ public class DataStore
                 {
                     symbolInterval.CandleList.Unlock();
                 }
-
-
             }
         }
     }
@@ -148,48 +150,41 @@ public class DataStore
         string oldFileName = Path.Combine(exchangeStoragePath, symbol.Quote.ToLower(), symbol.Base.ToLower());
         string newFileName = Path.ChangeExtension(oldFileName, ".compressed");
 
-        // reset the previous collected trend data (once a day is preferred)
-        CryptoSymbolData accountSymbolData = symbol.Data;
-        accountSymbolData.ResetTrendData();
+        // Reset the previous collected trend data (once a day is preferred)
+        symbol.Data.ResetTrendData();
 
         string fileName = string.Empty;
+        try
         {
-            try
+            // an old uncompressed file
+            if (File.Exists(oldFileName))
             {
-                // an old uncompressed file
-                if (File.Exists(oldFileName))
-                {
-                    fileName = oldFileName;
-                    using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
-                    using BinaryReader binaryReader = new(fileStream, Encoding.UTF8, false);
-                    ReadCandlesFromStream(binaryReader, symbol);
-                }
-                // a new compressed file (preferred)
-                else if (File.Exists(newFileName))
-                {
-                    fileName = newFileName;
-                    using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
-                    using GZipStream zipStream = new(fileStream, CompressionMode.Decompress);
-                    using BinaryReader binaryReader = new(zipStream, Encoding.UTF8, false);
-                    ReadCandlesFromStream(binaryReader, symbol);
-                }
+                fileName = oldFileName;
+                using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
+                using BinaryReader binaryReader = new(fileStream, Encoding.UTF8, false);
+                ReadCandlesFromStream(binaryReader, symbol);
             }
-            catch (Exception error)
+            else if (File.Exists(newFileName))
             {
-                GlobalData.AddTextToLogTab("Problem " + symbol.Name);
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab(error.ToString());
-                File.Delete(fileName);
+                // Ancient format: uncompressed
+                fileName = newFileName;
+                using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
+                using LZ4DecoderStream lz4Stream = LZ4Stream.Decode(fileStream);
+                using BinaryReader binaryReader = new(lz4Stream, Encoding.UTF8, false);
+                ReadCandlesFromStream(binaryReader, symbol);
             }
-
+        }
+        catch (Exception error)
+        {
+            GlobalData.AddTextToLogTab("Problem " + symbol.Name);
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab(error.ToString());
+            File.Delete(fileName);
         }
     }
 
     public static async Task LoadCandlesAsync()
     {
-        // De candles uit de database lezen
-        // Voor de 1m hebben we de laatste 2 dagen nodig (vanwege de berekening van de barometer)
-        // In het algemeen is een minimum van 2 dagen OF 215 candles nodig (indicators)
         GlobalData.AddTextToLogTab("Loading candle information (please wait!)");
 
         // Use the same semaphore as SaveCandlesAsync to prevent concurrent file access
@@ -201,29 +196,30 @@ public class DataStore
             {
                 string folderName = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
 
-                foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                {
-                    // ignore inactive
-                    if (symbol.QuoteData.FetchCandles && symbol.Status == 1)
-                    {
-                        // Dont load candles for symbols below the minimal volume treshold
-                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
-                        {
-                            if (symbol.ClearCandles())
-                                ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
-                            continue;
-                        }
+                // Snapshot to avoid enumerating a live collection in parallel
+                var symbols = exchange.SymbolListName.Values.ToList();
 
-                        LoadCandlesForSymbol(folderName, symbol);
+                Parallel.ForEach(symbols, ParallelOptions, symbol =>
+                {
+                    if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
+                        return;
+
+                    // Don't load candles for symbols below the minimal volume threshold
+                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                    {
+                        if (symbol.ClearCandles())
+                            ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
+                        return;
                     }
-                }
+
+                    LoadCandlesForSymbol(folderName, symbol);
+                });
             }
         }
         finally
         {
             Semaphore.Release();
         }
-        //GlobalData.AddTextToLogTab("Information loaded");
     }
 
 
@@ -238,9 +234,11 @@ public class DataStore
             {
                 string folderName = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
 
-                for (int i = 0; i < exchange.SymbolListName.Count; i++)
+                // Snapshot to avoid enumerating a live collection in parallel
+                var symbols = exchange.SymbolListName.Values.ToList();
+
+                await Parallel.ForEachAsync(symbols, ParallelOptions, async (symbol, cancellationToken) =>
                 {
-                    CryptoSymbol symbol = exchange.SymbolListName.Values[i];
                     string quoteFolder = Path.Combine(folderName, symbol.Quote.ToLower());
                     try
                     {
@@ -252,7 +250,7 @@ public class DataStore
 
                         string fileName = Path.ChangeExtension(oldfileName, ".compressed");
 
-                        // Dont save candles for symbols below the minimal volume treshold
+                        // Don't save candles for symbols below the minimal volume threshold
                         if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                         {
                             symbol.ClearCandles();
@@ -267,63 +265,57 @@ public class DataStore
                         {
                             if (File.Exists(fileName))
                                 File.Delete(fileName);
-                            continue;
+                            return;
                         }
 
-                        if (count > 0)
+                        Directory.CreateDirectory(quoteFolder);
+                        ScannerLog.Logger.Trace($"Saving candle information for {symbol.Name} candle count={count}");
+
+                        await symbol.Data.CandleLock.WaitAsync(cancellationToken);
+                        try
                         {
-                            Directory.CreateDirectory(quoteFolder);
-                            ScannerLog.Logger.Trace($"Saving candle information for {symbol.Name} candle count={count}");
+                            using FileStream fileStream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
+                            using LZ4EncoderStream lz4Stream = LZ4Stream.Encode(fileStream, LZ4Level.L00_FAST);
+                            using BinaryWriter writer = new(lz4Stream, Encoding.UTF8, false);
 
+                            int version = 2;
+                            writer.Write(version);
 
-                            await symbol.Data.CandleLock.WaitAsync();
-                            try
+                            foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
                             {
-                                using FileStream fileStream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None, 2 * 1024 * 1024);
-                                using GZipStream zipStream = new(fileStream, CompressionLevel.Optimal);
-                                using BinaryWriter writer = new(zipStream, Encoding.UTF8, false);
+                                // 1: "Synchronisation" marker (new in version 4)
+                                writer.Write(markerValue);
 
-                                int version = 2;
-                                writer.Write(version);
+                                // 2: Interval enum value
+                                writer.Write((int)symbolInterval.Interval.IntervalPeriod);
 
-                                foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+                                // 3: Last sync date with exchange
+                                uint value = CandleTime.MinValue.Minutes;
+                                if (symbolInterval.LastCandleSynchronized.HasValue)
+                                    value = symbolInterval.LastCandleSynchronized.Value.Minutes;
+                                writer.Write(value);
+
+                                symbolInterval.CandleList.Lock();
+                                try
                                 {
-                                    // 1: Interval.Synchronisation; "Synchronisation" marker (new in version 4)
-                                    writer.Write(markerValue); // new from version 4
+                                    // 4: Candle count
+                                    writer.Write(symbolInterval.CandleList.Count);
 
-                                    // 2: Interval.EnumValue; Interval enum value
-                                    writer.Write((int)symbolInterval.Interval.IntervalPeriod);
-
-                                    // 3: Interval.SynchronisationDate; last sync date with exchange
-                                    // From version 5 an uint instead of int64
-                                    uint value = CandleTime.MinValue.Minutes;
-                                    if (symbolInterval.LastCandleSynchronized.HasValue)
-                                        value = symbolInterval.LastCandleSynchronized.Value.Minutes;
-                                    writer.Write(value);
-
-                                    symbolInterval.CandleList.Lock();
-                                    try
+                                    // 5: OHLCV values
+                                    foreach (var candle in symbolInterval.CandleList.Values)
                                     {
-                                        // 4: Interval.Candle Count; Candle count
-                                        writer.Write(symbolInterval.CandleList.Count);
-
-                                        // 5: OHLCV values
-                                        foreach (var candle in symbolInterval.CandleList.Values)
-                                        {
-                                            candle.SaveVersion3(writer);
-                                        }
+                                        candle.SaveVersion3(writer);
                                     }
-                                    finally
-                                    {
-                                        symbolInterval.CandleList.Unlock();
-                                    }
-
+                                }
+                                finally
+                                {
+                                    symbolInterval.CandleList.Unlock();
                                 }
                             }
-                            finally
-                            {
-                                symbol.Data.CandleLock.Release();
-                            }
+                        }
+                        finally
+                        {
+                            symbol.Data.CandleLock.Release();
                         }
                     }
                     catch (Exception error)
@@ -332,20 +324,17 @@ public class DataStore
                         GlobalData.AddTextToLogTab($"Problem {symbol.Name}");
                         GlobalData.AddTextToLogTab(error.ToString());
                     }
-                }
+                });
             }
 
             ScannerLog.Logger.Trace("Candle information saved");
         }
         finally
         {
-            // Enabled analysing
+            // Enable analysing
             GlobalData.SetCandleTimerEnable(true);
 
             Semaphore.Release();
         }
     }
-
-
 }
-
