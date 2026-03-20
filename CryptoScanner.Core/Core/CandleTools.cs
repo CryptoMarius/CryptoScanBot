@@ -230,7 +230,7 @@ public static class CandleTools
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                     ScannerLog.Logger.Info($"Debug BulkAddMissingCandles {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
 
-                //ScannerLog.Logger.Info($"Debug BulkAddMissingCandles {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
+                ScannerLog.Logger.Info($"Debug BulkAddMissingCandles {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
                 //realCandle = candle;
 
                 ScannerLog.Logger.Info($"DEBUG BulkAdd {symbol.Name} {interval.Name} First={realCandle.OpenTime.ToDateTime().ToLocalTime()} LastSync={symbolInterval.LastCandleSynchronized?.ToDateTime().ToLocalTime()} Count={candleList.Count}");
