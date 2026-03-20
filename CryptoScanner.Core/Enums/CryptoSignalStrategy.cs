@@ -25,7 +25,6 @@ public enum CryptoSignalStrategy
 
     NadarayaWatsonEnvelope = 25,
 #if DEBUG
-    NadarayaWatsonEnvelopeCross = 27,
     NadarayaWatsonEnvelopePull = 28,
 #endif
 
