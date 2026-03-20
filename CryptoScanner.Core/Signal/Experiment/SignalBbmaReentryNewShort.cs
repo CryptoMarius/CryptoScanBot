@@ -103,6 +103,15 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (high > bbUpperDec && close < bbUpperDec && open < bbUpperDec)
             return BbmaTfState.E;
 
+        // E (Extreme Advance): wick rejection of EMA50 (High above EMA50, Close + Open below EMA50)
+        double? ema50advance = data.CandleData!.Ema50;
+        if (ema50advance != null)
+        {
+            decimal ema50AdvDec = (decimal)ema50advance;
+            if (high > ema50AdvDec && close < ema50AdvDec && open < ema50AdvDec)
+                return BbmaTfState.E;
+        }
+
         // R (Reentry): bearish CSD has occurred + price at or above LWMA5High (in or beyond the 510 sell zone)
         // Per PDF: R is valid when price reaches the 510 zone OR goes beyond it (e.g. touches EMA50)
         if (wma5High < wma10High && close >= (decimal)wma5High)
@@ -197,6 +206,21 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (state1 != BbmaTfState.M && state1 != BbmaTfState.E && state1 != BbmaTfState.EE)
         {
             ExtraText = $"TF1 ({Interval.Name}) not in setup state (is {TfStateCode(state1)})";
+            return false;
+        }
+
+        // EMA50 trend filter: EMA50 must be above mid-BB (SMA20) to confirm a bearish trend
+        // Per PDF: EMA50 position relative to mid-BB determines trade direction
+        double? ema50Tf1 = CandleLast.CandleData!.Ema50;
+        double? midBbTf1 = CandleLast.CandleData!.Sma20;
+        if (ema50Tf1 == null || midBbTf1 == null)
+        {
+            ExtraText = "EMA50 or mid-BB not available for trend filter";
+            return false;
+        }
+        if (ema50Tf1 <= midBbTf1)
+        {
+            ExtraText = $"EMA50 ({ema50Tf1:N6}) not above mid-BB ({midBbTf1:N6}) — bullish bias, no Short setup";
             return false;
         }
 
