@@ -5,7 +5,8 @@ namespace CryptoScanner.Core.Barometer;
 
 internal class CryptoBarometerPrice
 {
-    public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols, CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
+    public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
+        CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
     {
         // Wat is de candle in het vorige interval
         CandleTime unixCandlePrev = unixCandleLast - interval.Duration;
@@ -17,7 +18,7 @@ internal class CryptoBarometerPrice
         decimal sumPerc = 0;
         int coinsMatching = 0;
 
-        for (int i = 0; i < quoteData.SymbolList.Count; i++) // foreach with ToList() is overkill
+        for (int i = 0; i < quoteData.SymbolList.Count; i++)
         {
             CryptoSymbol symbol = quoteData.SymbolList[i];
 

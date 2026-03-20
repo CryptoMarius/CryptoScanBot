@@ -144,6 +144,12 @@ public class BarometerTools
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
 
 
+        if (priceBarometer)
+            GlobalData.AddTextToLogTab($"Calculating price barometer chart {quoteData.Name} {interval.Name} from {periodStart.ToDateTime()} to {periodStop.ToDateTime()}");
+        else
+            GlobalData.AddTextToLogTab($"Calculating volume barometer chart {quoteData.Name} {interval.Name} from {periodStart.ToDateTime()} to {periodStop.ToDateTime()}");
+
+
         // De opgegeven periode per minuut itereren
         while (periodStart <= periodStop)
         {
@@ -190,6 +196,11 @@ public class BarometerTools
 
                 if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == bmSymbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
                     ScannerLog.Logger.Trace($"Debug candle {candle.OhlcText(bmSymbol, GlobalData.IntervalList[0], bmSymbol.PriceDisplayFormat, true, true, true)}");
+
+                if (priceBarometer)
+                    GlobalData.AddTextToLogTab($"Calculated price barometer chart {quoteData.Name} {interval.Name} {periodStart.ToDateTime()} {BarometerPerc}");
+                else
+                    GlobalData.AddTextToLogTab($"Calculated volume barometer chart {quoteData.Name} {interval.Name} {periodStart.ToDateTime()} {BarometerPerc}");
             }
 
             // Naar de volgende 1m candle
@@ -232,7 +243,8 @@ public class BarometerTools
     /// <summary>
     /// Deze routine maakt barometer per 1m (ondanks dat we met de IntervalPeriod suggereren dat we het in een bepaald interval doen)
     /// </summary>
-    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData, CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
+    private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData,
+        CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
     {
         TimerDebugCandles_Tick(quoteData);
 

@@ -29,7 +29,7 @@ public class ScannerLog
 
     public static void InitializeLogging()
     {
-        // Create configuration object 
+        // Create configuration object
         var config = new NLog.Config.LoggingConfiguration();
 
         var fileTarget = CreateTarget("default", "");
