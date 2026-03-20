@@ -65,7 +65,7 @@ public class MarketTrend
                         if (isCached)
                             text += " (cached)";
                         log?.AppendLine(text);
-                        ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
+                        //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
                     }
                     symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
 
@@ -73,7 +73,7 @@ public class MarketTrend
                     ScannerLog.Logger.Debug("");
                     text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
                     log?.AppendLine(text);
-                    ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
+                    //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
                 }
             }
             finally

@@ -183,7 +183,7 @@ public class TrendInterval
             if (intervalTrend.Time != null)
             {
                 log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
-                ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
+                //ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
             }
 #endif
             return;
@@ -196,7 +196,7 @@ public class TrendInterval
         if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
         {
             log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
-            ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
+            //ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
             return;
         }
         //#if DEBUG
@@ -231,7 +231,7 @@ public class TrendInterval
             //#endif
             ;
             log?.AppendLine(text);
-            ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
+            //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
         }
         return;
     }
