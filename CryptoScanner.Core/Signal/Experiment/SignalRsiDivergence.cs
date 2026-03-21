@@ -30,9 +30,7 @@ public class SignalRsiDivergence : SignalCreateBase
 
     public override bool IsSignal()
     {
-        if (!CandleLast.CheckBollingerBandsWidth(
-                GlobalData.Settings.Signal.StoRsi.BBMinPercentage,
-                GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -151,29 +149,32 @@ public class SignalRsiDivergence : SignalCreateBase
         swingLow = null;
         swingLowPrice = decimal.MaxValue;
 
-        if (!GetPrevCandle(CandleLast, out MyData? prev))
+        // Sliding window: right → pivot → left (right is more recent)
+        if (!GetPrevCandle(CandleLast, out MyData? right))
             return false;
 
-        if (!GetPrevCandle(prev!, out MyData? prev2))
+        if (!GetPrevCandle(right!, out MyData? pivot))
+            return false;
+
+        if (!GetPrevCandle(pivot!, out MyData? left))
             return false;
 
         for (int i = 0; i < SwingLookback; i++)
         {
-            if (!GetPrevCandle(prev2!, out MyData? next))
-                break;
-
-            // prev is a local low if its close is below both neighbours
-            if (prev!.Candle.Close < prev2!.Candle.Close &&
-                prev.Candle.Close < CandleLast.Candle.Close)
+            // pivot is a local low if its close is below both neighbours
+            if (pivot!.Candle.Close < right!.Candle.Close &&
+                pivot.Candle.Close < left!.Candle.Close)
             {
-                swingLow = prev;
-                swingLowPrice = prev.Candle.Close;
+                swingLow = pivot;
+                swingLowPrice = pivot.Candle.Close;
                 return true;
             }
 
-            CandleLast = prev2;
-            prev = prev2;
-            prev2 = next;
+            // Slide one candle further into the past
+            right = pivot;
+            pivot = left;
+            if (!GetPrevCandle(left!, out left))
+                break;
         }
 
         return false;
@@ -188,29 +189,32 @@ public class SignalRsiDivergence : SignalCreateBase
         swingHigh = null;
         swingHighPrice = decimal.MinValue;
 
-        if (!GetPrevCandle(CandleLast, out MyData? prev))
+        // Sliding window: right → pivot → left (right is more recent)
+        if (!GetPrevCandle(CandleLast, out MyData? right))
             return false;
 
-        if (!GetPrevCandle(prev!, out MyData? prev2))
+        if (!GetPrevCandle(right!, out MyData? pivot))
+            return false;
+
+        if (!GetPrevCandle(pivot!, out MyData? left))
             return false;
 
         for (int i = 0; i < SwingLookback; i++)
         {
-            if (!GetPrevCandle(prev2!, out MyData? next))
-                break;
-
-            // prev is a local high if its close is above both neighbours
-            if (prev!.Candle.Close > prev2!.Candle.Close &&
-                prev.Candle.Close > CandleLast.Candle.Close)
+            // pivot is a local high if its close is above both neighbours
+            if (pivot!.Candle.Close > right!.Candle.Close &&
+                pivot.Candle.Close > left!.Candle.Close)
             {
-                swingHigh = prev;
-                swingHighPrice = prev.Candle.Close;
+                swingHigh = pivot;
+                swingHighPrice = pivot.Candle.Close;
                 return true;
             }
 
-            CandleLast = prev2;
-            prev = prev2;
-            prev2 = next;
+            // Slide one candle further into the past
+            right = pivot;
+            pivot = left;
+            if (!GetPrevCandle(left!, out left))
+                break;
         }
 
         return false;
