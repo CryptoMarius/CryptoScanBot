@@ -289,9 +289,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
             FillColor = OxyColors.Green,
             StrokeColor = OxyColors.DarkGreen,
             StrokeThickness = 1,
-            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
-            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
-            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:N0}",
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y1}=bar top value (RectangleBarItem property)
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y1:N0}",
         };
 
         foreach (QueryPositionData data in QueryPositionDataList)
@@ -359,9 +358,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
             FillColor = OxyColors.Green,
             StrokeColor = OxyColors.DarkGreen,
             StrokeThickness = 1,
-            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
-            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
-            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:" + QuoteData!.DisplayFormat + "}",
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y1}=bar top value (RectangleBarItem property)
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y1:" + QuoteData!.DisplayFormat + "}",
         };
 
         var seriesLoss = new RectangleBarSeries
@@ -370,9 +368,8 @@ public partial class DashboardPositionsViewModel : ObservableObject
             FillColor = OxyColors.Red,
             StrokeColor = OxyColors.DarkRed,
             StrokeThickness = 1,
-            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y2}=bar top value (item property)
-            // Note: {3}=Y midpoint, {4}=Y-axis title string — use {Y2} to get the actual bar-top value.
-            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y2:" + QuoteData!.DisplayFormat + "}",
+            // {0}=series title  {2}=date (X midpoint, OADate double)  {Y1}=bar top value (RectangleBarItem property)
+            TrackerFormatString = "{0}\n{2:dd-MM-yyyy}\n{Y1:" + QuoteData!.DisplayFormat + "}",
         };
 
         foreach (QueryPositionData data in QueryPositionDataList)
