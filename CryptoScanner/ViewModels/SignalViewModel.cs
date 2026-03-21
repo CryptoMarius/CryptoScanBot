@@ -790,7 +790,9 @@ public partial class SignalViewModel : BaseConvertersViewModel
         set
         {
             _SignalStatusText = null;
+            _SignalStatusForeground = null;
             OnPropertyChanged(nameof(SignalStatus));
+            OnPropertyChanged(nameof(SignalStatusForeground));
         }
     }
     private IBrush? _SignalStatusForeground;
