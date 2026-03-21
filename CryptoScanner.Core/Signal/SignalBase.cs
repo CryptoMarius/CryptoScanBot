@@ -181,8 +181,8 @@ public class SignalCreateBase
         while (candleCount > 0)
         {
             skipCandleCount--;
-            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(false) && candle.StochOversold();
-            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(false) && candle.StochOverbought();
+            bool isOverSold = candle is not null && candle.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh) && candle.StochOversold();
+            bool isOverBought = candle is not null && candle.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh) && candle.StochOverbought();
 
             if (side == CryptoTradeSide.Long)
             {
