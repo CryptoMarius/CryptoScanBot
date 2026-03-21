@@ -771,6 +771,19 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Called after the window's first OxyPlot render so that ActualMinimum/ActualMaximum
+    /// are valid. Re-applies the correct axis tick spacing without resetting the zoom level.
+    /// </summary>
+    public void RefreshAxisTicks()
+    {
+        if (PlotView?.ActualModel?.Axes.Count > 0)
+        {
+            UpdateAxisTicks(PlotView.ActualModel.Axes[0]);
+            PlotModel?.InvalidatePlot(false);
+        }
+    }
+
     //public async Task RenderChartToImage()
     //{
     //    var pngExporter = new OxyPlot.PngExporter { Width = 1200, Height = 800 };

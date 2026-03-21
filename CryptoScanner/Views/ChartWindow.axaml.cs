@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
@@ -24,6 +25,18 @@ public partial class ChartWindow : Window
         _applicationStateService.RestoreWindowState("ChartWindow", this);
 
         Closing += OnWindowClosing; // - save state
+
+        // After OxyPlot's first render ActualMinimum/ActualMaximum are set correctly.
+        // Refresh the x-axis ticks at that point so the initial labels are correct.
+        Opened += (_, _) =>
+        {
+            if (DataContext is ChartWindowViewModel vm)
+            {
+                Dispatcher.UIThread.Post(
+                    () => vm.RefreshAxisTicks(),
+                    DispatcherPriority.Background);
+            }
+        };
 
         if (DataContext == null)
         {
