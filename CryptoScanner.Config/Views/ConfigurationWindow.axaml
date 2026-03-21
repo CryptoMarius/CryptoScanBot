@@ -51,8 +51,8 @@
                         <settings:AnalyzerTabView DataContext="{Binding AnalyzerTabViewModel}" />                        
 				    </TabItem>
 
-                    <!-- Trading -->
-				    <TabItem Header="Trading" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+                    <!-- Trader -->
+				    <TabItem Header="Trader" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
                         <settings:TraderTabView DataContext="{Binding TraderTabViewModel}" />                        
 				    </TabItem>
 

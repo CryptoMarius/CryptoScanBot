@@ -10,7 +10,7 @@
              x:Class="CryptoScanner.Config.Views.TraderTabView">
 
     <TabControl Grid.Row="2" Margin="0" >
-		<TabItem Header="Trading common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem Header="Trader common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto" >
                 <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
                     <settings:TraderMiscSettingsView DataContext="{Binding TraderMiscSettingsViewModel}" />
@@ -23,7 +23,7 @@
                 </WrapPanel>
             </ScrollViewer>
 		</TabItem>
-		<TabItem Header="Trading long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem Header="Trader long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" >
                     <settings:StrategyView Grid.Column="0" DataContext="{Binding TraderStrategyLongViewModel}" />
@@ -36,7 +36,7 @@
                 </Grid>
             </ScrollViewer>
 		</TabItem>
-		<TabItem Header="Trading short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem Header="Trader short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" >
                     <settings:StrategyView Grid.Column="0" DataContext="{Binding TraderStrategyShortViewModel}" />
