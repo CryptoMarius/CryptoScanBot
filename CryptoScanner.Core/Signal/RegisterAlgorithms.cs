@@ -115,6 +115,16 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStochShort),
         });
 
+        // 5m + 1h directional: 1h was in extreme zone and is on its way to the other side,
+        // 5m confirms the same direction
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stoch.dir",
+            Strategy = CryptoSignalStrategy.StochDir,
+            AnalyzeLongType = typeof(SignalStochDirLong),
+            AnalyzeShortType = typeof(SignalStochDirShort),
+        });
+
 #endif
 
         //***************************************************
@@ -241,19 +251,20 @@ public static class RegisterAlgorithms
 #endif
 
 
-#if DEBUG
+//#if DEBUG
 
-        //***************************************************
-        // BbWickSma - BB wick rejection + SMA20 slope + SMA50 cross reversal
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bbwicksma",
-            Strategy = CryptoSignalStrategy.BbWickSma,
-            AnalyzeLongType = typeof(SignalBbWickSmaLong),
-            AnalyzeShortType = typeof(SignalBbWickSmaShort),
-        });
-#endif
+//        //***************************************************
+//        // BbWickSma - BB wick rejection + SMA20 slope + SMA50 cross reversal
+//        // Trade statistics is kind of bad
+//        //***************************************************
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "bbwicksma",
+//            Strategy = CryptoSignalStrategy.BbWickSma,
+//            AnalyzeLongType = typeof(SignalBbWickSmaLong),
+//            AnalyzeShortType = typeof(SignalBbWickSmaShort),
+//        });
+//#endif
 
 #if DEBUG
         //***************************************************
