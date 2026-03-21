@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -76,16 +76,24 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     /// <summary>
     /// Classifies the current BBMA state of a candle for Short setups.
     /// Uses LWMA5(high), LWMA10(high), BB.Upper, and candle OHLC.
-    /// Priority order: EE → E (Type A) → E (Type B) → R → M → None
+    /// Priority order: EE → E (Type A) → E (Type B) → E (Advance) → R → M → None
+    ///
+    /// allowWickDetection: when false (used for TF2/TF3), wick-based detections (Type B,
+    /// Advance Extreme, MA Retest) are skipped because higher-TF candles are still forming
+    /// and their wicks are not yet final — MA-position checks remain reliable.
     /// </summary>
-    private BbmaTfState ClassifyStateShort(MyData data)
+    private BbmaTfState ClassifyStateShort(MyData data, bool allowWickDetection = true)
     {
-        double? wma5High = data.CandleData!.Wma05High;
+        double? wma5High  = data.CandleData!.Wma05High;
         double? wma10High = data.CandleData!.Wma10High;
-        double? bbUpper = data.CandleData!.BollingerBandsUpperBand;
+        double? bbUpper   = data.CandleData!.BollingerBandsUpperBand;
 
         if (wma5High == null || wma10High == null || bbUpper == null)
             return BbmaTfState.None;
+
+        decimal high  = data.Candle.High;
+        decimal close = data.Candle.Close;
+        decimal open  = data.Candle.Open;
 
         // EE (Magic Extreme): both MAs are above BB.Upper
         if (wma5High > bbUpper && wma10High > bbUpper)
@@ -95,27 +103,40 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (wma5High > bbUpper)
             return BbmaTfState.E;
 
-        // E (Extreme Type B): wick rejection of BB.Upper (high above, close + open below)
-        decimal high = data.Candle.High;
-        decimal close = data.Candle.Close;
-        decimal open = data.Candle.Open;
-        decimal bbUpperDec = (decimal)bbUpper;
-        if (high > bbUpperDec && close < bbUpperDec && open < bbUpperDec)
-            return BbmaTfState.E;
-
-        // E (Extreme Advance): wick rejection of EMA50 (High above EMA50, Close + Open below EMA50)
-        double? ema50advance = data.CandleData!.Ema50;
-        if (ema50advance != null)
+        if (allowWickDetection)
         {
-            decimal ema50AdvDec = (decimal)ema50advance;
-            if (high > ema50AdvDec && close < ema50AdvDec && open < ema50AdvDec)
+            decimal bbUpperDec = (decimal)bbUpper;
+
+            // E (Extreme Type B): wick rejection of BB.Upper (high above, close + open below)
+            if (high > bbUpperDec && close < bbUpperDec && open < bbUpperDec)
                 return BbmaTfState.E;
+
+            // E (Extreme Advance): wick rejection of EMA50 (High above EMA50, Close + Open below EMA50)
+            double? ema50adv = data.CandleData!.Ema50;
+            if (ema50adv != null)
+            {
+                decimal ema50AdvDec = (decimal)ema50adv;
+                if (high > ema50AdvDec && close < ema50AdvDec && open < ema50AdvDec)
+                    return BbmaTfState.E;
+            }
         }
 
-        // R (Reentry): bearish CSD has occurred + price at or above LWMA5High (in or beyond the 510 sell zone)
+        // R (Reentry): bearish CSD has occurred + price reached the 510 sell zone
+        // Two variants are accepted:
+        //   Standard  : close at or above WMA5High (price is in or beyond the zone)
+        //   MA Retest : wick spiked above WMA5High AND close recovered below WMA10High
+        //               (per BBMA community: "best entry — high above MA5, close below MA10")
+        //               MA Retest only checked when wick data is reliable (TF1).
         // Per PDF: R is valid when price reaches the 510 zone OR goes beyond it (e.g. touches EMA50)
-        if (wma5High < wma10High && close >= (decimal)wma5High)
-            return BbmaTfState.R;
+        if (wma5High < wma10High)
+        {
+            decimal wma5Dec  = (decimal)wma5High;
+            decimal wma10Dec = (decimal)wma10High;
+            bool priceInZone = close >= wma5Dec;
+            bool maRetest    = allowWickDetection && high > wma5Dec && close < wma10Dec;
+            if (priceInZone || maRetest)
+                return BbmaTfState.R;
+        }
 
         // M (MHV phase): LWMA5(high) below BB.Upper but still above LWMA10(high)
         if (wma5High <= bbUpper && wma5High > wma10High)
@@ -134,7 +155,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     private static bool IsExtremeCandleShort(MyData data)
     {
         double? wma5High = data.CandleData!.Wma05High;
-        double? bbUpper = data.CandleData!.BollingerBandsUpperBand;
+        double? bbUpper  = data.CandleData!.BollingerBandsUpperBand;
 
         if (wma5High == null || bbUpper == null)
             return false;
@@ -143,9 +164,9 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (wma5High > bbUpper)
             return true;
 
-        decimal high = data.Candle.High;
+        decimal high  = data.Candle.High;
         decimal close = data.Candle.Close;
-        decimal open = data.Candle.Open;
+        decimal open  = data.Candle.Open;
 
         // Type B: wick rejection of BB.Upper
         decimal bbUpperDec = (decimal)bbUpper;
@@ -187,6 +208,32 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     }
 
 
+    /// <summary>
+    /// Returns an interval-appropriate lookback depth for HadRecentExtremeShort.
+    /// On higher timeframes each candle covers more time, so a smaller lookback
+    /// is sufficient to cover a meaningful historical window without picking up
+    /// extremes that are too far in the past to still be relevant.
+    /// </summary>
+    private int GetExtremeLookback() => Interval.IntervalPeriod switch
+    {
+        CryptoIntervalPeriod.interval1m  => 30,
+        CryptoIntervalPeriod.interval2m  => 30,
+        CryptoIntervalPeriod.interval3m  => 30,
+        CryptoIntervalPeriod.interval5m  => 30,
+        CryptoIntervalPeriod.interval10m => 25,
+        CryptoIntervalPeriod.interval15m => 20,
+        CryptoIntervalPeriod.interval30m => 20,
+        CryptoIntervalPeriod.interval1h  => 15,
+        CryptoIntervalPeriod.interval2h  => 12,
+        CryptoIntervalPeriod.interval3h  => 12,
+        CryptoIntervalPeriod.interval4h  => 10,
+        CryptoIntervalPeriod.interval6h  => 10,
+        CryptoIntervalPeriod.interval8h  => 10,
+        CryptoIntervalPeriod.interval12h => 8,
+        _                                => 15
+    };
+
+
     public override bool IsSignal()
     {
         ExtraText = "";
@@ -226,7 +273,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
         // Step 2: For MHV (M) state on TF1, verify a recent Extreme occurred before it
         // E and EE states are themselves the Extreme — no additional lookback needed
-        if (state1 == BbmaTfState.M && !HadRecentExtremeShort(30))
+        if (state1 == BbmaTfState.M && !HadRecentExtremeShort(GetExtremeLookback()))
         {
             ExtraText = $"TF1 ({Interval.Name}) is M (MHV) but no preceding Extreme found";
             return false;
@@ -237,6 +284,8 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             return false;
 
         // Step 4: Classify TF2 state
+        // Wick-based detection is disabled for TF2/TF3: higher-TF candles are still forming,
+        // so their wicks are not yet final. MA-position checks remain reliable.
         var result2 = IndicatorDataList.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, period2);
 
@@ -246,9 +295,10 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             return false;
         }
 
-        BbmaTfState state2 = ClassifyStateShort(result2.candle);
+        BbmaTfState state2 = ClassifyStateShort(result2.candle, allowWickDetection: false);
 
         // Step 5: Classify TF3 state
+        // Wick-based detection disabled for the same reason as TF2.
         var result3 = IndicatorDataList.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, period3);
 
@@ -258,7 +308,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             return false;
         }
 
-        BbmaTfState state3 = ClassifyStateShort(result3.candle);
+        BbmaTfState state3 = ClassifyStateShort(result3.candle, allowWickDetection: false);
 
         // Step 6: TF3 (HTF) must be in Reentry state — key BBMA table requirement
         // All 4 valid patterns (REM, RRE, REE, RMEE) have TF3=R
@@ -272,6 +322,8 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         string code = TfStateCode(state3) + TfStateCode(state2) + TfStateCode(state1);
 
         // Only the 4 valid BBMA MTF codes are accepted (PDF chapter 7): REM, RRE, REE, RMEE
+        // Note: some community sources mention an RMR pattern (TF3=R, TF2=M, TF1=R), but this
+        // contradicts the core BBMA rule that TF1 is never R before the signal fires. RMR excluded.
         if (code != "REM" && code != "RRE" && code != "REE" && code != "RMEE")
         {
             ExtraText = $"invalid code {code} [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
