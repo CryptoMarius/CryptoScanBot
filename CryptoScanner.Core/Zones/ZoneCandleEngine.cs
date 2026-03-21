@@ -22,7 +22,7 @@ public class ZoneCandleEngine
             int version = reader.ReadInt32();
 
             // "Synchronisation" marker (new in version 4)
-            if (version == 1)
+            if (version != 1)
             {
                 int marker = reader.ReadInt32();
                 if (marker != markerValue)
