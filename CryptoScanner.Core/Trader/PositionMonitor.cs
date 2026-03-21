@@ -819,7 +819,7 @@ public class PositionMonitor //: IDisposable
 
             //////////////////////////////////////////////////////////////////
 
-            // problem, if the dca has just been closed we use the global BE and risk beiging stopped out right away
+            // problem, if the dca has just been closed we use the global BE and risk being stopped out right away
             //CryptoPositionStep? stepDca = PositionTools.FindOpenStep(position, dcaOrderSide, CryptoPartPurpose.Dca);
             //if (stepDca != null)
             //    breakEven = stepDca.Price;
@@ -842,21 +842,25 @@ public class PositionMonitor //: IDisposable
                     .SelectMany(p => p.StepList.Values)
                     .MaxBy(s => s.Price);
             }
-            if (stepDca != null)
-                breakEven = stepDca.Price;
+
+            decimal lastDcaPrice;
+            if (stepDca == null)
+                lastDcaPrice = position.EntryPrice!.Value;
+            else
+                lastDcaPrice = stepDca.Price;
             //////////////////////////////////////////////////////////////////
 
             // We are now using fixed percentages entry=0, dca1=4, dca2=10, stop=12, limit=13
-            breakEven = position.EntryPrice!.Value;
+            //breakEven = position.EntryPrice!.Value;
 
             // Stop price
             decimal perc = Math.Abs(GlobalData.Settings.Trading.StopLossPercentage) / 100;
-            decimal stop = breakEven - (multiplier * breakEven * perc);
+            decimal stop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
             stop = stop.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             // Limit prijs x% lager
             perc = Math.Abs(GlobalData.Settings.Trading.StopLossLimitPercentage) / 100;
-            decimal limit = breakEven - (multiplier * breakEven * perc);
+            decimal limit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
             limit = limit.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             return (price, stop, limit);
