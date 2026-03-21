@@ -114,6 +114,15 @@ public class SignalExecute
                                     GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
                                 continue;
                             }
+
+                            // Barometer consensus check (only higher-timeframe barometers)
+                            if (!BarometerHelper.CheckConsensusBarometer(GlobalData.ActiveExchange!, symbol.Quote,
+                                interval.IntervalPeriod, TradingConfig.Signals[side].BarometerMinConsensus, side, out reaction))
+                            {
+                                if (TradingConfig.Signals[side].BarometerLog)
+                                    GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
+                                continue;
+                            }
                         }
                         //GlobalData.Logger.Info($"analyze({interval.Name}):" + LastCandle1m.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, false, true));
 

@@ -39,6 +39,8 @@ public class SettingsTextualBarometer
 {
     public Dictionary<string, (decimal minValue, decimal maxValue)> List { get; set; } = [];
     public bool Log = true;
+    // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
+    public int MinConsensus { get; set; } = 0;
 }
 
 [Serializable]

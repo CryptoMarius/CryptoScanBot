@@ -52,4 +52,59 @@ public static class BarometerHelper
         return true;
     }
 
+
+    /// Check how many higher-timeframe barometers align with the signal direction.
+    /// Only barometers with a higher duration than the signal interval are considered.
+    /// Returns true if the consensus count meets the minimum, or if the check is not applicable.
+    public static bool CheckConsensusBarometer(Model.CryptoExchange activeExchange, string quoteName,
+        CryptoIntervalPeriod signalIntervalPeriod, int minConsensus, CryptoTradeSide side, out string reaction)
+    {
+        reaction = "";
+        if (minConsensus <= 0)
+            return true;
+
+        // The fixed barometer intervals available in the system
+        CryptoIntervalPeriod[] barometerIntervals =
+        [
+            CryptoIntervalPeriod.interval15m,
+            CryptoIntervalPeriod.interval30m,
+            CryptoIntervalPeriod.interval1h,
+            CryptoIntervalPeriod.interval4h,
+            CryptoIntervalPeriod.interval1d,
+        ];
+
+        // Determine the signal interval duration for comparison
+        if (!GlobalData.IntervalListPeriod.TryGetValue(signalIntervalPeriod, out CryptoInterval? signalInterval))
+            return true; // Unknown signal interval - skip check
+
+        // Only include barometers with a higher duration than the signal interval
+        List<CryptoIntervalPeriod> higherIntervals = barometerIntervals
+            .Where(p => GlobalData.IntervalListPeriod.TryGetValue(p, out CryptoInterval? bInterval) &&
+                        bInterval!.Duration > signalInterval.Duration)
+            .ToList();
+
+        // If fewer higher intervals are available than required, the check cannot be satisfied - skip it
+        if (higherIntervals.Count == 0 || minConsensus > higherIntervals.Count)
+            return true;
+
+        int count = 0;
+        foreach (CryptoIntervalPeriod period in higherIntervals)
+        {
+            CryptoBarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, period);
+            if (barometerData?.PriceBarometer.HasValue == true)
+            {
+                if (side == CryptoTradeSide.Long && barometerData.PriceBarometer.Value > 0)
+                    count++;
+                else if (side == CryptoTradeSide.Short && barometerData.PriceBarometer.Value < 0)
+                    count++;
+            }
+        }
+
+        if (count >= minConsensus)
+            return true;
+
+        reaction = $"Barometer consensus {count}/{higherIntervals.Count} < {minConsensus}";
+        return false;
+    }
+
 }

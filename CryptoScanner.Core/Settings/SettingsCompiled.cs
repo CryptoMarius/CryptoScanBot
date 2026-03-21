@@ -41,6 +41,8 @@ public class SettingsCompiled
     // Minimale barometer om de meldingen te genereren
     public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = [];
     public bool BarometerLog = false;
+    // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
+    public int BarometerMinConsensus = 0;
 
 
     // The black- and whitelist
@@ -82,6 +84,7 @@ public class SettingsCompiled
         }
         TrendLog = settings.IntervalTrend.Log;
         BarometerLog = settings.Barometer.Log;
+        BarometerMinConsensus = settings.Barometer.MinConsensus;
 
 
         // Market trend% (min..max), er is maar 1 aanwezig
