@@ -63,6 +63,70 @@ public static class StochHelper
 
 
     /// <summary>
+    /// Is the Stoch oscillator increasing in the last x candles
+    /// allowedDown: how many candles are allowed to deviate downward
+    /// </summary>
+    public static bool StochIncreasingInTheLast(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? data, int candleCount, int allowedDown)
+    {
+        // from right to left
+        int down = 0;
+        bool first = true;
+        while (candleCount > 0)
+        {
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, data!, out MyData? prev))
+                return false;
+            if (prev!.CandleData == null || prev.CandleData.StochOscillator == null)
+                return false;
+
+            if (data?.CandleData?.StochOscillator <= prev?.CandleData?.StochOscillator)
+            {
+                down++;
+                if (first || down > allowedDown)
+                    return false;
+            }
+
+            data = prev;
+            candleCount--;
+            first = false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// Is the Stoch oscillator decreasing in the last x candles
+    /// allowedDown: how many candles are allowed to deviate upward
+    /// </summary>
+    public static bool StochDecreasingInTheLast(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? data, int candleCount, int allowedDown)
+    {
+        // from right to left
+        int down = 0;
+        bool first = true;
+        while (candleCount > 0)
+        {
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, data!, out MyData? prev))
+                return false;
+            if (prev!.CandleData == null || prev.CandleData.StochOscillator == null)
+                return false;
+
+            if (data?.CandleData?.StochOscillator >= prev?.CandleData?.StochOscillator)
+            {
+                down++;
+                if (first || down > allowedDown)
+                    return false;
+            }
+
+            data = prev;
+            candleCount--;
+            first = false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
     /// Calculate the Stoch surface area of the oversold part from limit to stoch
     /// </summary>
     public static double StochOversoldSurface(this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)

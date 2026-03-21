@@ -22,7 +22,6 @@ public enum CryptoSignalStrategy
     Stoch = 20,
 #endif
 
-
     NadarayaWatsonEnvelope = 25,
 #if DEBUG
     NadarayaWatsonEnvelopePull = 28,
@@ -58,6 +57,10 @@ public enum CryptoSignalStrategy
 #if DEBUG
     // BBMA Magic Extreme: WMA5(Low/High) AND WMA10(Low/High) both outside the Bollinger Band
     BbmaMagicExtreme = 45,
+#endif
+
+#if DEBUG
+    StochDir = 46,
 #endif
 
     DominantLevel = 1000,
