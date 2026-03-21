@@ -44,7 +44,7 @@ public class SignalStochDirShort : SignalSbmBaseShort
     /// Unique higher-interval checks (exited overbought, travel distance, recent history,
     /// previous-candle cross) are handled inline in IsSignal.
     /// </summary>
-    private bool CheckIntervalShort(CryptoSymbolInterval si, MyData data, string name,
+    private bool CheckIntervalShort(CryptoSymbolInterval symbolInterval, MyData data, 
         bool checkBb, int stochLookback, int stochAllowed)
     {
         if (checkBb && !data.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
@@ -55,35 +55,35 @@ public class SignalStochDirShort : SignalSbmBaseShort
 
         if (data.StochOverbought())
         {
-            ExtraText = $"{name} stoch still overbought";
+            ExtraText = $"{symbolInterval.Interval.Name} stoch still overbought";
             return false;
         }
 
         // Stoch must not yet be oversold — if already there the move is mostly done
         if (data.StochOversold())
         {
-            ExtraText = $"{name} stoch already oversold ({data.CandleData.StochOscillator:N1})";
+            ExtraText = $"{symbolInterval.Interval.Name} stoch already oversold ({data.CandleData.StochOscillator:N1})";
             return false;
         }
 
         // Stoch must be falling
-        if (!this.StochDecreasingInTheLast(si, data, stochLookback, stochAllowed))
+        if (!this.StochDecreasingInTheLast(symbolInterval, data, stochLookback, stochAllowed))
         {
-            ExtraText = $"{name} stoch not falling";
+            ExtraText = $"{symbolInterval.Interval.Name} stoch not falling";
             return false;
         }
 
         // %K must be below %D (bearish alignment)
         if (data.CandleData!.StochOscillator >= data.CandleData.StochSignal)
         {
-            ExtraText = $"{name} %K({data.CandleData.StochOscillator:N1}) above %D({data.CandleData.StochSignal:N1})";
+            ExtraText = $"{symbolInterval.Interval.Name} %K({data.CandleData.StochOscillator:N1}) above %D({data.CandleData.StochSignal:N1})";
             return false;
         }
 
         // RSI must be decreasing (allow 2 deviations for a forming candle)
-        if (!this.RsiDecreasingInTheLast(si, data, 3, 2))
+        if (!this.RsiDecreasingInTheLast(symbolInterval, data, 3, 2))
         {
-            ExtraText = $"{name} rsi not decreasing";
+            ExtraText = $"{symbolInterval.Interval.Name} rsi not decreasing";
             return false;
         }
 
@@ -97,7 +97,7 @@ public class SignalStochDirShort : SignalSbmBaseShort
 
         // ── Step 1: lower-interval checks (cheap, no extra candle lookup) ────────────────
 
-        if (!CheckIntervalShort(SymbolInterval, CandleLast, Interval.Name, checkBb: true, stochLookback: 2, stochAllowed: 999))
+        if (!CheckIntervalShort(SymbolInterval, CandleLast, checkBb: true, stochLookback: 2, stochAllowed: 999))
             return false;
 
         // ── Step 2: higher-interval checks (only reached when lower interval matched) ────
@@ -113,8 +113,9 @@ public class SignalStochDirShort : SignalSbmBaseShort
         if (!result.success)
             return false;
 
-        string higherName = result.higherInterval.Interval.Name;
+
         MyData higherData = result.candle!;
+        var higherInterval = result.higherInterval.Interval;
         double stochHigher = higherData.CandleData!.StochOscillator!.Value;
 
         // Higher-interval stoch must have traveled at least 15 points down from the overbought boundary,
@@ -123,7 +124,7 @@ public class SignalStochDirShort : SignalSbmBaseShort
         double stochTraveled = GlobalData.Settings.General.SettingsStoch.Overbought - stochHigher;
         if (stochTraveled < MinStochTravel)
         {
-            ExtraText = $"{higherName} stoch barely moved ({stochTraveled:N1} < {MinStochTravel})";
+            ExtraText = $"{higherInterval.Name} stoch barely moved ({stochTraveled:N1} < {MinStochTravel})";
             return false;
         }
 
@@ -137,7 +138,14 @@ public class SignalStochDirShort : SignalSbmBaseShort
         {
             if (!GetPrevCandle(result.higherInterval.Interval, walkCandle, out walkCandle))
                 break;
-            if (walkCandle?.CandleData?.StochOscillator >= GlobalData.Settings.General.SettingsStoch.Overbought)
+
+            if (walkCandle!.StochOversold())
+            {
+                ExtraText = $"{higherInterval.Name} stoch oversold";
+                return false;
+            }
+
+            if (walkCandle!.StochOverbought())
             {
                 wasOverbought = true;
                 break;
@@ -145,12 +153,12 @@ public class SignalStochDirShort : SignalSbmBaseShort
         }
         if (!wasOverbought)
         {
-            ExtraText = $"{higherName} not recently overbought";
+            ExtraText = $"{higherInterval.Name} not recently overbought";
             return false;
         }
 
         // Shared direction checks for the higher interval
-        if (!CheckIntervalShort(result.higherInterval, higherData, higherName, checkBb: false, stochLookback: 3, stochAllowed: 2))
+        if (!CheckIntervalShort(result.higherInterval, higherData, checkBb: false, stochLookback: 3, stochAllowed: 2))
             return false;
 
         // Also verify previous higher-interval candle had %K below %D — a recent bullish cross signals weakness
@@ -158,12 +166,12 @@ public class SignalStochDirShort : SignalSbmBaseShort
             && prevHigher?.CandleData?.StochOscillator != null
             && prevHigher.CandleData.StochOscillator >= prevHigher.CandleData.StochSignal)
         {
-            ExtraText = $"{higherName} stoch %K recently crossed above %D";
+            ExtraText = $"{higherInterval.Name} stoch %K recently crossed above %D";
             return false;
         }
 
         double stochLow = CandleLast.CandleData!.StochOscillator!.Value;
-        ExtraText = $"{Interval.Name}:%K{stochLow:N1}/%D{CandleLast.CandleData.StochSignal:N1} {higherName}:%K{stochHigher:N1}/%D{higherData.CandleData.StochSignal:N1} trvl:{stochTraveled:N1} bb:{CandleLast.CandleData.BollingerBandsPercentage:N2}";
+        ExtraText = $"{Interval.Name}:%K{stochLow:N1}/%D{CandleLast.CandleData.StochSignal:N1} {higherInterval.Name}:%K{stochHigher:N1}/%D{higherData.CandleData.StochSignal:N1} trvl:{stochTraveled:N1} bb:{CandleLast.CandleData.BollingerBandsPercentage:N2}";
 
         return true;
     }
