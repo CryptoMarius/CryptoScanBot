@@ -50,11 +50,10 @@ public class TradeTools
     /// </summary>
     public static void CalculateProfitAndBreakEvenPrice(CryptoPosition position)
     {
+        // We do not return early here: the step statuses already in memory (from the last DB sync) are
+        // sufficient for a meaningful recalculation.  The flag check is just a diagnostic safeguard.
         if (!position.HasOrdersAndTradesLoaded)
-        {
-            // debug
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} CalculateProfitAndBreakEvenPrice without orders and trades!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
+            ScannerLog.Logger.Warn($"{position.Symbol.Name} CalculateProfitAndBreakEvenPrice called without orders/trades loaded");
 
         //----
         // De positie doorrekene,  er wordt alleen gerekend, geen beslissingen over status
@@ -238,14 +237,14 @@ public class TradeTools
         if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Trading)
         {
             position.Status = CryptoPositionStatus.Timeout; // or timeout?
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} position takes up an open slot (debug, fixing position?)");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} open position takes up a slot (debug, fixing position?)");
         }
 
         // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
         if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Waiting)
         {
             position.Status = CryptoPositionStatus.Timeout; // or timeout?
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} position takes up an open slot (debug, fixing position?)");
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} waiting position takes up a slot (debug, fixing position?)");
         }
 
 
@@ -262,14 +261,10 @@ public class TradeTools
         decimal BreakEvenPriceOld = position.BreakEvenPrice;
         if (position.Side == CryptoTradeSide.Long)
         {
+            // Long BE: need to sell high enough to recover cost + all commissions (entry paid + predicted exit).
+            // Commission increases BE because every fee paid raises the bar for break-even.
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
-                //position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission - predictedCommission) / (position.Quantity + position.CommissionBase);
                 position.BreakEvenPrice = (position.Invested - position.Returned + position.Commission + predictedCommission) / position.Quantity;
-            //else
-            //    if (position.ProfitPrice.HasValue)
-            //    position.BreakEvenPrice = position.ProfitPrice.Value; // last TP-price
-            //else
-            //  position.BreakEvenPrice = 0; // position.EntryPrice!.Value; // Estimate
 
             decimal invested = position.Invested;
             if (position.RemainingDust > 0)
@@ -282,16 +277,12 @@ public class TradeTools
         }
         else
         {
+            // Short BE: need to buy back low enough so that net proceeds cover all commissions.
+            // Commission decreases BE because every fee paid lowers the price at which we can still break even.
+            // Asymmetric sign vs Long is intentional — direction of the trade is reversed.
             if (position.Quantity > 0 && position.Status == CryptoPositionStatus.Trading)
-                //position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission - predictedCommission) / (position.Quantity + position.CommissionBase);
                 position.BreakEvenPrice = (position.Invested - position.Returned - position.Commission - predictedCommission) / position.Quantity;
-            //else
-            //    if (position.ProfitPrice.HasValue)
-            //    position.BreakEvenPrice = position.ProfitPrice.Value; // last TP-price
-            //else
-            //    position.BreakEvenPrice = position.EntryPrice!.Value; // Estimate
 
-            // TODO: Test if this is the right formula? (think I messed up here?)
             decimal invested = position.Invested;
             if (position.RemainingDust > 0)
                 invested -= position.RemainingDust * position.BreakEvenPrice;
@@ -317,10 +308,7 @@ public class TradeTools
         ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check step={step.OrderId}");
 
         if (!position.HasOrdersAndTradesLoaded)
-        {
-            // debug
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} CalculateOrderFeeFromTrades without orders and trades!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
+            ScannerLog.Logger.Warn($"{position.Symbol.Name} CalculateOrderFeeFromTrades called without orders/trades loaded");
 
         // Calculate fee from the trades (Bybit V5 doesn't return fee via orders)
         // Afhankelijk van de asset wordt de commissie berekend (debug)
@@ -679,16 +667,27 @@ public class TradeTools
             }
 
 
-            // De positie bewaren (dit kost nogal wat tijd, dus extra controle of het nodig is)
+            // Persist position state (only when something actually changed — saves are expensive)
             if (orderStatusChanged || markedAsReady)
             {
-                foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+                using var transaction = database.BeginTransaction();
+                try
                 {
-                    foreach (CryptoPositionStep step in part.StepList.Values.ToList())
-                        database.Connection.Update<CryptoPositionStep>(step);
-                    database.Connection.Update<CryptoPositionPart>(part);
+                    foreach (CryptoPositionPart part in position.PartList.Values.ToList())
+                    {
+                        foreach (CryptoPositionStep step in part.StepList.Values.ToList())
+                            database.Connection.Update<CryptoPositionStep>(step, transaction);
+                        database.Connection.Update<CryptoPositionPart>(part, transaction);
+                    }
+                    database.Connection.Update<CryptoPosition>(position, transaction);
+                    transaction.Commit();
                 }
-                database.Connection.Update<CryptoPosition>(position);
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    ScannerLog.Logger.Error(ex, $"{position.Symbol.Name} CalculatePositionResultsViaOrders failed to persist position state");
+                    throw;
+                }
             }
 
 
@@ -700,13 +699,6 @@ public class TradeTools
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position);
             }
 
-            // Can only be done when closing the position, because the Change does not know the entry/tp values
-            if (oldPositionStatus != position.Status && position.Status == CryptoPositionStatus.Ready && position.Side == CryptoTradeSide.Short) //position.Exchange.TradingType == CryptoTradingType.Futures &&
-            {
-                // This will increase the amount of quote on futures/perpetual (entry=sell, tp=buy, profit=technically a loss when success)
-                CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-                PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, takeProfitOrderSide, CryptoOrderStatus.Filled, 0, 2 * position.Profit, "TradeTools.CalculatePositionResultsViaOrders.Profits++");
-            }
         }
     }
 
