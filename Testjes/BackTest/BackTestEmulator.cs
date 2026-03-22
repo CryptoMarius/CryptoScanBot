@@ -813,7 +813,7 @@ public class BackTestEmulator
                     {
                         if (order.Trailing == CryptoTrailing.TrailWaiting)
                         {
-                            if (order.TrailActivatePrice.HasValue && (CandleLast.High < order.TrailActivatePrice) & CalculateTrailing(order, out price))
+                            if (order.TrailActivatePrice.HasValue && (CandleLast.High < order.TrailActivatePrice) && CalculateTrailing(order, out price))
                             {
                                 order.OrderType = CryptoOrderType.StopLimit; // // De order komt nu pas op de markt (was NotOnMarket)
                                 order.Trailing = CryptoTrailing.TrailActive;
@@ -850,7 +850,7 @@ public class BackTestEmulator
                     {
                         if (order.Trailing == CryptoTrailing.TrailWaiting)
                         {
-                            if (order.TrailActivatePrice.HasValue && (CandleLast.Low > order.TrailActivatePrice) & CalculateTrailing(order, out price))
+                            if (order.TrailActivatePrice.HasValue && (CandleLast.Low > order.TrailActivatePrice) && CalculateTrailing(order, out price))
                             {
                                 order.OrderType = CryptoOrderType.StopLimit;
                                 order.Trailing = CryptoTrailing.TrailActive;
