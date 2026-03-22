@@ -63,10 +63,12 @@ public static class VolumeHelper
         if (candleList.Count < settings.Lookback)
             return true; // Not enough history - skip check gracefully
 
-        // Calculate the rolling volume SMA over the last 'Lookback' candles
+        // Calculate the rolling volume SMA over the last 'Lookback' candles.
+        // Use GetLastNValues() — direct LINQ enumeration on candleList.Values throws
+        // InvalidOperationException when another thread adds a candle concurrently.
         decimal sumVolume = 0m;
         int count = 0;
-        foreach (var candle in candleList.Values.TakeLast(settings.Lookback))
+        foreach (var candle in candleList.GetLastNValues(settings.Lookback))
         {
             sumVolume += candle.Volume;
             count++;
