@@ -46,8 +46,10 @@ public class PaperTrading
             QuantityFilled = step.Quantity,
             QuoteQuantityFilled = step.Quantity * price,
 
-            Commission = 0, //step.Quantity * price * feeRate * GlobalData.Settings.General.Exchange.FeeRate / 100, // commission, zou ook per quote of munt kunnen?
-            CommissionAsset = "" //symbol.Quote,
+            // Commission on the order stays 0 — the real commission is set on the trade below
+            // and is read back via CalculateOrderFeeFromTrades (which reads from TradeList, not OrderList).
+            Commission = 0,
+            CommissionAsset = "",
         };
         if (part.Purpose == CryptoPartPurpose.Dca)
             order.Status = CryptoOrderStatus.Filled;
@@ -76,21 +78,53 @@ public class PaperTrading
             CommissionAsset = "",
         };
 
-        // full commission = 0.1, met BNB korting=0.075 (zonder kickback, anders was het 0.065?)
+        // full commission = 0.1%, met BNB korting = 0.075% (zonder kickback, anders 0.065%)
         decimal feeRate = position.Exchange.FeeRate;
 
-        // Entry commissie opboeken in base amount (base/quote)
-        if (step.Side == position.GetEntryOrderSide())
+        if (position.Exchange.TradingType == CryptoTradingType.Futures)
         {
-            trade.CommissionAsset = symbol.Base;
-            trade.Commission = (decimal)(step.Quantity * feeRate / 100);
-        }
-
-        // TP commissie opboeken in quote amount (base/quote)
-        if (step.Side == position.GetTakeProfitOrderSide())
-        {
+            // Linear futures (USDT-margined): commission is always in quote, for both entry and TP.
+            // Contract quantity is never reduced by commission — only cash (quote) is deducted.
+            // This matches Bybit Futures behaviour (CommissionAsset hardcoded to Quote in real trade pickup).
             trade.CommissionAsset = symbol.Quote;
-            trade.Commission = (decimal)(step.Quantity * step.Price * feeRate / 100);
+            trade.Commission = (decimal)(step.Quantity * price * feeRate / 100);
+        }
+        else
+        {
+            // Spot: which asset the commission is charged in depends on which side of the trade you receive.
+            //   Entry Buy  (long)  → receive base  → fee in base
+            //   Entry Sell (short) → receive quote → fee in quote
+            //   TP    Sell (long)  → receive quote → fee in quote
+            //   TP    Buy  (short) → receive base  → fee in base
+            // CommissionBase > 0 flows into filledQuantity = QuantityFilled - CommissionBase,
+            // which correctly reduces the net quantity received.
+            if (step.Side == position.GetEntryOrderSide())
+            {
+                if (position.Side == CryptoTradeSide.Long)
+                {
+                    trade.CommissionAsset = symbol.Base;
+                    trade.Commission = (decimal)(step.Quantity * feeRate / 100);
+                }
+                else
+                {
+                    trade.CommissionAsset = symbol.Quote;
+                    trade.Commission = (decimal)(step.Quantity * price * feeRate / 100);
+                }
+            }
+
+            if (step.Side == position.GetTakeProfitOrderSide())
+            {
+                if (position.Side == CryptoTradeSide.Long)
+                {
+                    trade.CommissionAsset = symbol.Quote;
+                    trade.Commission = (decimal)(step.Quantity * price * feeRate / 100);
+                }
+                else
+                {
+                    trade.CommissionAsset = symbol.Base;
+                    trade.Commission = (decimal)(step.Quantity * feeRate / 100);
+                }
+            }
         }
         database.Connection.Insert<CryptoTrade>(trade);
         position.TradeList.AddTrade(trade);
