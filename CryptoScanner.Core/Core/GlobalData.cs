@@ -388,7 +388,7 @@ public static class GlobalData
 
     public static void AddSymbol(CryptoSymbol symbol)
     {
-        if (!string.IsNullOrEmpty(ApplicationParams.Options!.AppLimitSymbols))
+        if (ApplicationParams.Options != null && !string.IsNullOrEmpty(ApplicationParams.Options.AppLimitSymbols))
         {
             // Test with limits anount of symbols for debugging purposes
             if (!
