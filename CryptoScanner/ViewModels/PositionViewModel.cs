@@ -216,6 +216,8 @@ public partial class PositionViewModel : BaseConvertersViewModel
         {
             _InvestedText = null;
             OnPropertyChanged(nameof(Invested));
+            _PartsText = null;
+            OnPropertyChanged(nameof(Parts));
         }
     }
 
