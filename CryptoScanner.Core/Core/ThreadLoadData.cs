@@ -312,6 +312,9 @@ public class ThreadLoadData
                 //GlobalData.AddTextToLogTab("Starting task for checking positions");
                 _ = Task.Run(async () => { await GlobalData.ThreadCheckPosition!.ExecuteAsync(); });
 
+                // Load open positions into memory so the trading engine can manage them
+                // immediately — without waiting for the UI positions tab to be opened.
+                PositionTools.LoadOpenPositionsFromDatabase(databaseThread);
                 await TradeTools.CheckOpenPositions();
 
 
