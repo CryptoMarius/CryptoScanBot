@@ -168,27 +168,22 @@ public class PaperAssets
             }
             else
             {
-                // TODO, when going short it will increase the quote (if successfull, but we do not now how much here)
+                // Short: tracked entirely via quote (USDT) — base is not modified.
+                // This matches both spot-margin and USDT-margined futures behaviour.
+                // Entry (Sell): receive sale proceeds in quote, lock quote as collateral.
+                // TP/SL (Buy): pay buyback cost from quote, lock quote to reserve funds.
 
-                if (side == CryptoOrderSide.Sell) // entry
+                if (side == CryptoOrderSide.Sell) // entry: sell base, receive quote proceeds
                 {
-                    AddLocked(assetQuote, status, quoteQuantity);
-                    //if (status == CryptoOrderStatus.New) asset.Locked += quoteQuantity; else asset.Locked -= quoteQuantity;
+                    AddLocked(assetQuote, status, quoteQuantity); // lock quote as open-order collateral
                     if (status.IsFilled())
-                    {
-                        assetBase.Total += quantity;
-                        assetQuote.Total -= quoteQuantity;
-                    }
+                        assetQuote.Total += quoteQuantity;     // quote increases (sale proceeds received)
                 }
-                if (side == CryptoOrderSide.Buy) // tp or sl
+                if (side == CryptoOrderSide.Buy) // tp or sl: buy back base, spend quote
                 {
-                    AddLocked(assetBase, status, quantity);
-                    //if (status == CryptoOrderStatus.New) assetBase.Locked += quantity; else assetBase.Locked -= quantity;
+                    AddLocked(assetQuote, status, quoteQuantity); // lock quote to cover buyback
                     if (status.IsFilled())
-                    {
-                        assetBase.Total -= quantity;
-                        assetQuote.Total += quoteQuantity;
-                    }
+                        assetQuote.Total -= quoteQuantity;     // quote decreases (buyback cost paid)
                 }
             }
 
