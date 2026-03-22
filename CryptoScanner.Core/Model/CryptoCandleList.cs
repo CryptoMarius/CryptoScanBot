@@ -153,6 +153,33 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
     }
 
+    // Thread-safe snapshot of the last N candle values, ordered ascending by time.
+    // Use this in preference to candleList.Values.TakeLast(n) — that enumerates the underlying
+    // SortedSet without the read lock and throws InvalidOperationException under concurrent writes.
+    public List<CryptoCandle> GetLastNValues(int n)
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            int total = base.Count;
+            int skip = Math.Max(0, total - n);
+            var result = new List<CryptoCandle>(Math.Min(n, total));
+            int i = 0;
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+            {
+                if (i >= skip)
+                    result.Add(e.Current.Value);
+                i++;
+            }
+            return result;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+    }
+
     // Thread-safe snapshot of all entries, ordered by key (ascending, matching SortedDictionary order).
     // Use this instead of direct LINQ enumeration (e.g. .OrderBy/.Select/.ToList) to avoid
     // ArgumentException / InvalidOperationException when another thread calls Add() concurrently.
