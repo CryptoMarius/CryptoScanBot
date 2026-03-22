@@ -616,20 +616,19 @@ public class ZoneDlz
                 await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
                 CalculateIntroZone(symbol, interval, trendZigZagIndicator);
 
-                // Collect old zones and reset zones
+                // Index old zones for DB merge (must happen before zones are rebuilt)
                 DatabaseStatistics statistics = new();
                 SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
                 ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
-                zones.Reset();
 
-                // Create new zones from the zigzag
+                // Create new zones from the zigzag (local list, never visible to other threads)
                 List<CryptoZone> newZones = [];
                 CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
 
-                // Build a temporary sorted structure for the broken zone check (avoids a second Reset + re-add)
+                // Sorted temp object for broken-zone detection — still local, not the live reference
                 CryptoSymbolIntervalZones tempZones = new();
                 foreach (var zone in newZones)
                     tempZones.Add(zone);
@@ -637,9 +636,13 @@ public class ZoneDlz
                 // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
                 CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
 
-                // Rebuild (now with correct CloseTime on broken zones)
-                ZoneTools.AddZonesToInternalLists(zones, oldZones, newZones, statistics);
+                // Merge with DB state into a fresh object, then atomically replace the live reference.
+                // Other threads always see either the old complete object or the new complete one —
+                // never a half-built list (which was the source of null holes in OrderedList).
+                CryptoSymbolIntervalZones finalZones = new();
+                ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
                 ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                symbolIntervalData.DlzZones = finalZones;
 
                 var count = symbol.GetSymbolInterval(interval).CandleList.Count;
                 GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +

@@ -23,12 +23,14 @@ public class SignalDominantLevelNearShort : SignalCreateBase
             {
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
+                // Capture reference so a concurrent DlzZones swap mid-loop does not cause IndexOutOfRangeException
+                var shortOpen = symbolIntervalData.DlzZones.ShortOpen;
                 int index = 0;
                 decimal distance = 100m;
-                while (index < symbolIntervalData.DlzZones.ShortOpen.Count) // sorted on Zone.Bottom (ascending)
+                while (index < shortOpen.Count) // sorted on Zone.Bottom (ascending)
                 {
                     decimal? alarmPrice = null;
-                    var zone = symbolIntervalData.DlzZones.ShortOpen[index];
+                    var zone = shortOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
                         // Close old invalid zone without notifications..
@@ -91,7 +93,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                     // Remove closed zones
                     if (zone.CloseTime != null)
                     {
-                        symbolIntervalData.DlzZones.ShortOpen.RemoveAt(index);
+                        shortOpen.RemoveAt(index);
                         GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;

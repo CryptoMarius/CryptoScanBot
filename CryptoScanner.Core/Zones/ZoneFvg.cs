@@ -354,24 +354,27 @@ public class ZoneFvg
                         $"fvg zones long = {zones.LongOpen.Count} " +
                         $"fvg zones short = {zones.ShortOpen.Count} ");
 
-                // Collect old zones and reset zones
+                // Index old zones for DB merge (must happen before Reset)
                 DatabaseStatistics statistics = new();
                 SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
                 ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
                 ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
-                zones.Reset();
 
-                // Create new zones
+                // Compute new zones into local lists (never visible to other threads)
                 OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
                 OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
                 CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
 
-                // Rebuild
-                ZoneTools.AddZonesToInternalLists(zones, oldZones, longZones, statistics);
-                ZoneTools.AddZonesToInternalLists(zones, oldZones, shortZones, statistics);
+                // Merge with DB state into a fresh object, then atomically replace the live reference.
+                // Other threads always see either the old complete object or the new complete one —
+                // never a half-built list (which was the source of null holes in OrderedList).
+                CryptoSymbolIntervalZones freshZones = new();
+                ZoneTools.AddZonesToInternalLists(freshZones, oldZones, longZones, statistics);
+                ZoneTools.AddZonesToInternalLists(freshZones, oldZones, shortZones, statistics);
                 ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                symbolIntervalData.FvgZones = freshZones;
             }
             catch (Exception error)
             {

@@ -20,10 +20,12 @@ public class SignalFairValueGapShort : SignalCreateBase
             {
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
+                // Capture reference so a concurrent FvgZones swap mid-loop does not cause IndexOutOfRangeException
+                var shortOpen = symbolIntervalData.FvgZones.ShortOpen;
                 int index = 0;
-                while (index < symbolIntervalData.FvgZones.ShortOpen.Count) // sorted on Zone.Bottom asscending
+                while (index < shortOpen.Count) // sorted on Zone.Bottom ascending
                 {
-                    var zone = symbolIntervalData.FvgZones.ShortOpen[index];
+                    var zone = shortOpen[index];
 
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime)
                     {
@@ -54,7 +56,7 @@ public class SignalFairValueGapShort : SignalCreateBase
                     // Remove closed zones
                     if (zone.CloseTime != null)
                     {
-                        symbolIntervalData.FvgZones.ShortOpen.RemoveAt(index);
+                        shortOpen.RemoveAt(index);
                         GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
                     }
                     else index++;
