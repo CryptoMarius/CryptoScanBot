@@ -63,8 +63,11 @@ public partial class CryptoPosition : CryptoData2
     // Een experiment (die weg kan, we zetten er nu even de naam van de munt in, handig)
     public string Data { get; set; } = "";
 
-    // Is de Parts.Count (met een active DCA)
+    // Number of DCA parts that have actually been filled (Invested > 0).
+    // A pending (open but unfilled) DCA part is NOT counted here — see ActiveDca.
+    // Use PartList.Count for the total number of parts including pending and TP parts.
     public int PartCount { get; set; }
+    // True when there is at least one DCA part that has been created but not yet filled (Invested == 0).
     public bool ActiveDca { get; set; }
 
     // Zou computed kunnen, maar voor de zekerheid in de database
