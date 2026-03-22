@@ -18,6 +18,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     [ObservableProperty]
     private BarometerFilterViewModel _analyzerBarometerFilterLongViewModel;
     [ObservableProperty]
+    private VolumeFilterViewModel _analyzerVolumeFilterLongViewModel;
+    [ObservableProperty]
     private MarketTrendFilterViewModel _analyzerMarketTrendFilterLongViewModel;
     [ObservableProperty]
     private TrendIntervalFilterViewModel _analyzerTrendIntervalFilterLongViewModel;
@@ -28,6 +30,8 @@ public partial class AnalyzerTabViewModel : ObservableObject
     private StrategyViewModel _analyzerStrategyShortViewModel;
     [ObservableProperty]
     private BarometerFilterViewModel _analyzerBarometerFilterShortViewModel;
+    [ObservableProperty]
+    private VolumeFilterViewModel _analyzerVolumeFilterShortViewModel;
     [ObservableProperty]
     private MarketTrendFilterViewModel _analyzerMarketTrendFilterShortViewModel;
     [ObservableProperty]
@@ -43,12 +47,14 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerIntervalLongViewModel = new();
         _analyzerStrategyLongViewModel = new();
         _analyzerBarometerFilterLongViewModel = new();
+        _analyzerVolumeFilterLongViewModel = new();
         _analyzerMarketTrendFilterLongViewModel = new();
         _analyzerTrendIntervalFilterLongViewModel = new();
 
         _analyzerIntervalShortViewModel = new();
         _analyzerStrategyShortViewModel = new();
         _analyzerBarometerFilterShortViewModel = new();
+        _analyzerVolumeFilterShortViewModel = new();
         _analyzerMarketTrendFilterShortViewModel = new();
         _analyzerTrendIntervalFilterShortViewModel = new();
     }
@@ -61,12 +67,14 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerIntervalLongViewModel.LoadConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.LoadConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.LoadConfig(settings.Long.Barometer);
+        AnalyzerVolumeFilterLongViewModel.LoadConfig(settings.Long.Volume);
         AnalyzerMarketTrendFilterLongViewModel.LoadConfig(settings.Long.MarketTrend);
         AnalyzerTrendIntervalFilterLongViewModel.LoadConfig(settings.Long.IntervalTrend, CryptoTradeSide.Long);
 
         AnalyzerIntervalShortViewModel.LoadConfig(settings.Short.Interval);
         AnalyzerStrategyShortViewModel.LoadConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.LoadConfig(settings.Short.Barometer);
+        AnalyzerVolumeFilterShortViewModel.LoadConfig(settings.Short.Volume);
         AnalyzerMarketTrendFilterShortViewModel.LoadConfig(settings.Short.MarketTrend);
         AnalyzerTrendIntervalFilterShortViewModel.LoadConfig(settings.Short.IntervalTrend, CryptoTradeSide.Short);
     }
@@ -78,12 +86,14 @@ public partial class AnalyzerTabViewModel : ObservableObject
         AnalyzerIntervalLongViewModel.SaveConfig(settings.Long.Interval);
         AnalyzerStrategyLongViewModel.SaveConfig(settings.Long.Strategy);
         AnalyzerBarometerFilterLongViewModel.SaveConfig(settings.Long.Barometer);
+        AnalyzerVolumeFilterLongViewModel.SaveConfig(settings.Long.Volume);
         AnalyzerMarketTrendFilterLongViewModel.SaveConfig(settings.Long.MarketTrend);
         AnalyzerTrendIntervalFilterLongViewModel.SaveConfig(settings.Long.IntervalTrend);
 
         AnalyzerIntervalShortViewModel.SaveConfig(settings.Short.Interval);
         AnalyzerStrategyShortViewModel.SaveConfig(settings.Short.Strategy);
         AnalyzerBarometerFilterShortViewModel.SaveConfig(settings.Short.Barometer);
+        AnalyzerVolumeFilterShortViewModel.SaveConfig(settings.Short.Volume);
         AnalyzerMarketTrendFilterShortViewModel.SaveConfig(settings.Short.MarketTrend);
         AnalyzerTrendIntervalFilterShortViewModel.SaveConfig(settings.Short.IntervalTrend);
     }

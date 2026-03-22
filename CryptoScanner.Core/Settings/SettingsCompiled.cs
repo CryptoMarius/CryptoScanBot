@@ -44,6 +44,13 @@ public class SettingsCompiled
     // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
     public int BarometerMinConsensus = 0;
 
+    // Relative volume filter: RelVol = current_candle_volume / SMA(volume, VolumeLookback)
+    public bool VolumeActive = false;
+    public decimal VolumeMinRelative = 0m;
+    public decimal VolumeMaxRelative = 999m;
+    public int VolumeLookback = 20;
+    public bool VolumeLog = false;
+
 
     // The black- and whitelist
     public SortedList<string, bool> BlackList { get; } = [];
@@ -85,6 +92,12 @@ public class SettingsCompiled
         TrendLog = settings.IntervalTrend.Log;
         BarometerLog = settings.Barometer.Log;
         BarometerMinConsensus = settings.Barometer.MinConsensus;
+
+        VolumeActive = settings.Volume.IsActive;
+        VolumeMinRelative = settings.Volume.MinRelVol;
+        VolumeMaxRelative = settings.Volume.MaxRelVol;
+        VolumeLookback = settings.Volume.Lookback;
+        VolumeLog = settings.Volume.Log;
 
 
         // Market trend% (min..max), er is maar 1 aanwezig

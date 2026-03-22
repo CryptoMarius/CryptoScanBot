@@ -131,6 +131,22 @@ public class SignalExecute
                         {
                             if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
                             {
+                                // Relative volume check (same gate as barometer - skip for dlz/fvg zones)
+                                if (entry.Key.checkBarometer)
+                                {
+                                    if (!VolumeHelper.CheckRelativeVolume(indicatorData,
+                                        TradingConfig.Signals[side].VolumeActive,
+                                        TradingConfig.Signals[side].VolumeMinRelative,
+                                        TradingConfig.Signals[side].VolumeMaxRelative,
+                                        TradingConfig.Signals[side].VolumeLookback,
+                                        out string volReaction))
+                                    {
+                                        if (TradingConfig.Signals[side].VolumeLog)
+                                            GlobalData.AddTextToLogTab($"{symbol.Name} {side} {volReaction}");
+                                        continue;
+                                    }
+                                }
+
                                 SignalCreate createSignal = new()
                                 {
                                     Symbol = symbol,
