@@ -37,7 +37,7 @@
                                Value="{Binding MinConsensus, Mode=TwoWay}"
                                Minimum="0" Maximum="5" Increment="1"
                                Height="26" FontSize="12" Padding="4,2"
-                               CornerRadius="4" Width="80"
+                               CornerRadius="4" Width="110"
                                FormatString="0"/>
             </Grid>
 
