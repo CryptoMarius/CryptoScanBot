@@ -32,7 +32,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.Jump,
             AnalyzeLongType = typeof(SignalCandleJumpShort),
             AnalyzeShortType = typeof(SignalCandleJumpLong),
-            BypassFilters = true, // Informational: always fire, bypass barometer/volume/feedback filters
         });
 
         //***************************************************
@@ -137,7 +136,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.DominantLevel,
             AnalyzeLongType = typeof(SignalDominantLevelLong),
             AnalyzeShortType = typeof(SignalDominantLevelShort),
-            BypassFilters = true, // Informational: bypass volume and feedback filters
         });
 
         Register(new AlgorithmDefinition()
@@ -146,7 +144,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.DominantLevelNear,
             AnalyzeLongType = typeof(SignalDominantLevelNearLong),
             AnalyzeShortType = typeof(SignalDominantLevelNearShort),
-            BypassFilters = true, // Informational: bypass volume and feedback filters
         });
 
 
@@ -166,7 +163,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.FairValueGap,
             AnalyzeLongType = typeof(SignalFairValueGapLong),
             AnalyzeShortType = typeof(SignalFairValueGapShort),
-            BypassFilters = true, // Informational: bypass volume and feedback filters
         });
 
         Register(new AlgorithmDefinition()
