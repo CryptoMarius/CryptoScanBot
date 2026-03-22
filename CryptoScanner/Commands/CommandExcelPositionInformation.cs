@@ -21,9 +21,9 @@ public class CommandExcelPositionInformation : CommandBase
         {
             var position = dto.position;
             using CryptoDatabase databaseThread = new();
+            databaseThread.Open();
             if (position.Status >= CryptoPositionStatus.Ready)
             {
-                databaseThread.Open();
                 PositionTools.LoadPosition(databaseThread, position);
             }
             GlobalData.AddTextToLogTab($"{position.Symbol.Name} position {position.Id} manual for Excel");
