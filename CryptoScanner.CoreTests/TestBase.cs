@@ -17,17 +17,7 @@ public class TestBase
 {
     static bool IsSetupOnce = false;
 
-    public static void InitializeApplicationVariables()
-    {
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
 
-        var assembly = Assembly.GetExecutingAssembly().GetName();
-        string appVersion = assembly.Version!.ToString();
-        while (appVersion.EndsWith(".0.0"))
-            appVersion = appVersion[0..^2];
-
-        GlobalData.AppVersion = appVersion;
-    }
 
     static void SetupOnce()
     {
@@ -35,15 +25,7 @@ public class TestBase
         {
             IsSetupOnce = true;
 
-            // Vroeger dan alle andere..
-            //InitializeApplicationVariables();
-            //ScannerLog.InitializeLogging();
-
-            // Description: toevoegen en mergen van candles (de happy flow)
-            GlobalData.LogToLogTabEvent -= AddTextToLogTab;
-            GlobalData.LogToLogTabEvent -= AddTextToLogTab;
-            GlobalData.LogToLogTabEvent += AddTextToLogTab;
-
+            // AppPath and AppDataFolder are guaranteed to be set by TestAssemblySetup.[AssemblyInitialize].
             GlobalData.LoadConfiguration();
             CryptoDatabase.SetDatabaseDefaults();
             GlobalData.LoadExchanges();
