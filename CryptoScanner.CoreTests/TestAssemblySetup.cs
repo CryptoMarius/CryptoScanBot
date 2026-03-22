@@ -1,4 +1,3 @@
-using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 
 using System.Reflection;

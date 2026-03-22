@@ -8,7 +8,6 @@ using CryptoScanner.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-using System.Reflection;
 using System.Text.Json;
 
 namespace CryptoScanner.CoreTests;
