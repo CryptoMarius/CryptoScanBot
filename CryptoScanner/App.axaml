@@ -266,7 +266,7 @@
         <Style Selector="HeaderedContentControl.groupbox">
             <Setter Property="VerticalAlignment" Value="Top"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="4"/>
             <Setter Property="Margin" Value="4,10,4,4"/>
