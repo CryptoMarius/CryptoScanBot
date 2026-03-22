@@ -129,10 +129,17 @@ public class SignalExecute
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
                         {
+                            // Quality filters (volume + feedback) do not apply to informational strategies
+                            bool isInformational = strategyDefinition!.BypassFilters;
+
+                            // Performance feedback: skip underperforming strategies
+                            if (!isInformational && StrategyPerformanceMonitor.IsBlocked(entry.Key.strategy, side))
+                                continue;
+
                             if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
                             {
-                                // Relative volume check (same gate as barometer - skip for dlz/fvg zones)
-                                if (entry.Key.checkBarometer)
+                                // Relative volume check: skip for informational strategies
+                                if (!isInformational)
                                 {
                                     if (!VolumeHelper.CheckRelativeVolume(indicatorData,
                                         TradingConfig.Signals[side].VolumeActive,

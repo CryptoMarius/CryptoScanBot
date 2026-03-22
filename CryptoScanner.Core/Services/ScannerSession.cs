@@ -43,6 +43,9 @@ public class ScannerSession : IScannerSession
     // Voor het geval de user ticker het laat afwaten controleren we de posities ook 1x per uur
     private readonly System.Timers.Timer TimerCheckPositions = new() { Enabled = false };
 
+    // Periodiek de strategy performance herberekenen (adaptieve feedback)
+    private readonly System.Timers.Timer TimerCheckStrategyPerformance = new() { Enabled = false };
+
     // Exchange events
     private AddTextEvent ConnectionWasLostEvent { get; set; }
     private AddTextEvent ConnectionWasRestoredEvent { get; set; }
@@ -56,6 +59,7 @@ public class ScannerSession : IScannerSession
         TimerSoundHeartBeat.Elapsed += TimerHeartBeath_Tick;
 
         TimerSaveCandleData.Elapsed += TimerSaveCandleData_Tick;
+        TimerCheckStrategyPerformance.Elapsed += TimerCheckStrategyPerformance_Tick;
 
         ConnectionWasLostEvent += new AddTextEvent(ConnectionWasLostEvent_Tick);
         ConnectionWasRestoredEvent += new AddTextEvent(ConnectionWasRestoredEvent_Tick);
@@ -133,6 +137,9 @@ public class ScannerSession : IScannerSession
         GlobalData.IndexStrategySettings();
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
+
+        // Initial performance refresh so the monitor is up-to-date immediately after (re)configuration
+        await StrategyPerformanceMonitor.RefreshAsync();
 
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
@@ -266,6 +273,7 @@ public class ScannerSession : IScannerSession
                 TimerSoundHeartBeat.Enabled = false;
                 TimerGetExchangeInfoAndCandles.Enabled = false;
                 TimerSaveCandleData.Enabled = false;
+                TimerCheckStrategyPerformance.Enabled = false;
 
                 ScannerLog.Logger.Trace($"Debug: Request for ticker cancel");
                 ExchangeBase.CancellationTokenSource.Cancel();
@@ -334,6 +342,11 @@ public class ScannerSession : IScannerSession
         await DataStore.SaveCandlesAsync();
     }
 
+    private async void TimerCheckStrategyPerformance_Tick(object? sender, EventArgs? e)
+    {
+        await StrategyPerformanceMonitor.RefreshAsync();
+    }
+
 
 
     public void SetTimerDefaults()
@@ -353,6 +366,9 @@ public class ScannerSession : IScannerSession
         TimerGetExchangeInfoAndCandles.InitTimerInterval(GlobalData.Settings.General.GetCandleInterval * 60);
 
         TimerSoundHeartBeat.InitTimerInterval(GlobalData.Settings.General.SoundHeartBeatMinutes * 60);
+
+        // Herbereken strategy performance elke 15 minuten
+        TimerCheckStrategyPerformance.InitTimerInterval(15 * 60);
     }
 
 

@@ -25,6 +25,7 @@
                     <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
                         <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterLongViewModel}" />
                         <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterLongViewModel}" />
+                        <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterLongViewModel}" />
                         <settings:IntervalView DataContext="{Binding AnalyzerIntervalLongViewModel}" />
                     </StackPanel>
                     <settings:MarketTrendFilterView Grid.Column="3" VerticalAlignment="Top" DataContext="{Binding AnalyzerMarketTrendFilterLongViewModel}" />
@@ -39,6 +40,7 @@
                     <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
                         <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterShortViewModel}" />
                         <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterShortViewModel}" />
+                        <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterShortViewModel}" />
                         <settings:IntervalView DataContext="{Binding AnalyzerIntervalShortViewModel}" />
                     </StackPanel>
                     <settings:MarketTrendFilterView Grid.Column="3" VerticalAlignment="Top" DataContext="{Binding AnalyzerMarketTrendFilterShortViewModel}" />

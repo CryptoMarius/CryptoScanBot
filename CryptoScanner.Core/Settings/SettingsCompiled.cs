@@ -51,6 +51,14 @@ public class SettingsCompiled
     public int VolumeLookback = 20;
     public bool VolumeLog = false;
 
+    // Adaptive performance feedback
+    public bool FeedbackActive = false;
+    public int FeedbackMaxDays = 7;
+    public int FeedbackMinSignals = 5;
+    public decimal FeedbackBlockThreshold = 40m;
+    public int FeedbackReEnableHours = 24;
+    public bool FeedbackLog = true;
+
 
     // The black- and whitelist
     public SortedList<string, bool> BlackList { get; } = [];
@@ -98,6 +106,13 @@ public class SettingsCompiled
         VolumeMaxRelative = settings.Volume.MaxRelVol;
         VolumeLookback = settings.Volume.Lookback;
         VolumeLog = settings.Volume.Log;
+
+        FeedbackActive = settings.Feedback.IsActive;
+        FeedbackMaxDays = settings.Feedback.MaxLookbackDays;
+        FeedbackMinSignals = settings.Feedback.MinSignals;
+        FeedbackBlockThreshold = settings.Feedback.BlockThresholdPercent;
+        FeedbackReEnableHours = settings.Feedback.ReEnableHours;
+        FeedbackLog = settings.Feedback.Log;
 
 
         // Market trend% (min..max), er is maar 1 aanwezig
