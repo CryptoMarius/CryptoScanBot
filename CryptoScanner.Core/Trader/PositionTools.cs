@@ -173,6 +173,27 @@ public static class PositionTools
         return step;
     }
 
+    /// <summary>
+    /// Loads all open positions from the database into the in-memory PositionList at startup.
+    /// Must be called before CheckOpenPositions() so the trading engine can manage them
+    /// without depending on the UI positions tab being opened first.
+    /// </summary>
+    public static void LoadOpenPositionsFromDatabase(CryptoDatabase database)
+    {
+        string sql = "select * from position where exchangeid=@exchangeid and closetime is null and status < 2";
+        foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
+        {
+            // Skip positions already in memory (e.g. loaded by the UI tab before this call)
+            if (GlobalData.ActiveExchange.Data.PositionList.ContainsKey(position.Symbol?.Name ?? ""))
+                continue;
+
+            AddPosition(position);
+            if (position.Symbol != null)
+                LoadPosition(database, position);
+        }
+    }
+
+
     public static void AddPosition(CryptoPosition position)
     {
         if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Model.CryptoExchange? exchange))
