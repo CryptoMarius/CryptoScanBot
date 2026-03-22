@@ -141,14 +141,10 @@ public class SignalExecute
                                 // Relative volume check: skip for informational strategies
                                 if (!isInformational)
                                 {
-                                    if (!VolumeHelper.CheckRelativeVolume(indicatorData,
-                                        TradingConfig.Signals[side].VolumeActive,
-                                        TradingConfig.Signals[side].VolumeMinRelative,
-                                        TradingConfig.Signals[side].VolumeMaxRelative,
-                                        TradingConfig.Signals[side].VolumeLookback,
-                                        out string volReaction))
+                                    var volume = TradingConfig.Signals[side].Volume;
+                                    if (!VolumeHelper.CheckRelativeVolume(indicatorData, volume, out string volReaction))
                                     {
-                                        if (TradingConfig.Signals[side].VolumeLog)
+                                        if (volume.Log)
                                             GlobalData.AddTextToLogTab($"{symbol.Name} {side} {volReaction}");
                                         continue;
                                     }
@@ -181,31 +177,6 @@ public class SignalExecute
                                 Interlocked.Increment(ref analyseCount);
                             }
                             else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
-
-                            //// OLD SETUP...
-                            //// The candle list can be missing in action, too little candles for example
-                            //if (preparedHistoryCandles.TryGetValue(interval.IntervalPeriod, out var history))
-                            //{
-                            //    //createSignal.History = history;
-                            //    createSignal.Candle = history[^1];
-
-                            //    // TODO: Set the right Candle!!!!!
-                            //    string text = "";
-                            //    if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
-                            //    {
-                            //        text = "*";
-                            //        signalList.AddRange(createSignal.SignalList);
-                            //    }
-
-                            //    if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                            //        GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} {text}");
-                            //    //ScannerLog.Logger.Trace($"SignalCreate.Start {symbol.Name} {Interval.Name}");
-                            //    //GlobalData.AddTextToLogTab($"SignalCreate.Start {symbol.Name} {Interval.Name} {Side}");
-
-                            //    // Counter for mainscreen so you can see symbols analyzing etc..
-                            //    Interlocked.Increment(ref analyseCount);
-                            //}
-                            //else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting history");
                         }
                         else GlobalData.AddTextToLogTab($"Debug Signal create {symbol.Name} {interval.Name} {side} Error collecting algorithm {entry.Key.strategy}");
                     }

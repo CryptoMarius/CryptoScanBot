@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Barometer;
@@ -33,23 +34,20 @@ public static class VolumeHelper
     /// <summary>
     /// Checks whether the current candle's relative volume falls within the configured range.
     /// Returns true (pass) when:
-    ///   - The filter is disabled (isActive = false)
+    ///   - The filter is disabled (settings.Active = false)
     ///   - There are not enough candles to calculate the baseline (graceful skip)
-    ///   - RelVol is between minRelVol and maxRelVol
+    ///   - RelVol is between settings.MinRelative and settings.MaxRelative
     /// Returns false (block) when RelVol is outside the configured range.
     /// </summary>
     /// <param name="indicatorData">Indicator data for the current interval, used to access the candle list.</param>
-    /// <param name="isActive">When false the check is skipped entirely.</param>
-    /// <param name="minRelVol">Minimum relative volume (inclusive). Signals below this are blocked.</param>
-    /// <param name="maxRelVol">Maximum relative volume (inclusive). Signals above this are blocked.</param>
-    /// <param name="lookback">Number of candles used for the SMA volume baseline.</param>
+    /// <param name="settings">Compiled volume filter settings.</param>
     /// <param name="reaction">Human-readable reason when the check fails; empty string when it passes.</param>
     public static bool CheckRelativeVolume(CryptoIndicatorData indicatorData,
-        bool isActive, decimal minRelVol, decimal maxRelVol, int lookback, out string reaction)
+        SettingsCompiledVolume settings, out string reaction)
     {
         reaction = "";
 
-        if (!isActive)
+        if (!settings.Active)
             return true;
 
         // Current candle volume
@@ -60,15 +58,15 @@ public static class VolumeHelper
             return true;
         }
 
-        // Need at least 'lookback' candles in the list to compute a meaningful average
+        // Need at least 'Lookback' candles in the list to compute a meaningful average
         var candleList = indicatorData.CandleList;
-        if (candleList.Count < lookback)
+        if (candleList.Count < settings.Lookback)
             return true; // Not enough history - skip check gracefully
 
-        // Calculate the rolling volume SMA over the last 'lookback' candles
+        // Calculate the rolling volume SMA over the last 'Lookback' candles
         decimal sumVolume = 0m;
         int count = 0;
-        foreach (var candle in candleList.Values.TakeLast(lookback))
+        foreach (var candle in candleList.Values.TakeLast(settings.Lookback))
         {
             sumVolume += candle.Volume;
             count++;
@@ -80,9 +78,9 @@ public static class VolumeHelper
         decimal avgVolume = sumVolume / count;
         decimal relVol = currentVolume / avgVolume;
 
-        if (relVol < minRelVol || relVol > maxRelVol)
+        if (relVol < settings.MinRelative || relVol > settings.MaxRelative)
         {
-            reaction = $"Relative volume {relVol:N2} not between {minRelVol:N2} and {maxRelVol:N2}";
+            reaction = $"Relative volume {relVol:N2} not between {settings.MinRelative:N2} and {settings.MaxRelative:N2}";
             return false;
         }
 

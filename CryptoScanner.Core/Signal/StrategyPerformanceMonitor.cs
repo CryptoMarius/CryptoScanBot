@@ -45,7 +45,7 @@ public static class StrategyPerformanceMonitor
     public static bool IsBlocked(CryptoSignalStrategy strategy, CryptoTradeSide side)
     {
         var settings = TradingConfig.Signals[side];
-        if (!settings.FeedbackActive)
+        if (!settings.Feedback.Active)
             return false;
 
         lock (_lock)
@@ -99,11 +99,11 @@ public static class StrategyPerformanceMonitor
         var settingsLong = TradingConfig.Signals[CryptoTradeSide.Long];
         var settingsShort = TradingConfig.Signals[CryptoTradeSide.Short];
 
-        if (!settingsLong.FeedbackActive && !settingsShort.FeedbackActive)
+        if (!settingsLong.Feedback.Active && !settingsShort.Feedback.Active)
             return Task.CompletedTask;
 
         // Use the widest lookback window so a single query covers both sides
-        int maxDays = Math.Max(settingsLong.FeedbackMaxDays, settingsShort.FeedbackMaxDays);
+        int maxDays = Math.Max(settingsLong.Feedback.MaxDays, settingsShort.Feedback.MaxDays);
         DateTime fromDate = DateTime.UtcNow.AddDays(-maxDays);
 
         try
@@ -138,15 +138,15 @@ public static class StrategyPerformanceMonitor
                 int total = wins + losses;
 
                 SettingsCompiled settings = TradingConfig.Signals[side];
-                if (!settings.FeedbackActive)
+                if (!settings.Feedback.Active)
                     continue;
 
                 // Not enough data to make a reliable decision
-                if (total < settings.FeedbackMinSignals)
+                if (total < settings.Feedback.MinSignals)
                     continue;
 
                 decimal winRate = (decimal)wins / total * 100m;
-                bool shouldBlock = winRate < settings.FeedbackBlockThreshold;
+                bool shouldBlock = winRate < settings.Feedback.BlockThreshold;
 
                 lock (_lock)
                 {
@@ -170,14 +170,14 @@ public static class StrategyPerformanceMonitor
                     {
                         // New block
                         entry.BlockedAt = DateTime.UtcNow;
-                        entry.BlockedUntil = DateTime.UtcNow.AddHours(settings.FeedbackReEnableHours);
-                        if (settings.FeedbackLog)
-                            GlobalData.AddTextToLogTab($"[FeedbackMonitor] {strategy} {side} blocked — win rate {winRate:N1}% over {total} signals (threshold {settings.FeedbackBlockThreshold:N0}%, re-enable after {settings.FeedbackReEnableHours}h)");
+                        entry.BlockedUntil = DateTime.UtcNow.AddHours(settings.Feedback.ReEnableHours);
+                        if (settings.Feedback.Log)
+                            GlobalData.AddTextToLogTab($"[FeedbackMonitor] {strategy} {side} blocked — win rate {winRate:N1}% over {total} signals (threshold {settings.Feedback.BlockThreshold:N0}%, re-enable after {settings.Feedback.ReEnableHours}h)");
                     }
                     else if (!shouldBlock && entry.BlockedAt.HasValue)
                     {
                         // Strategy recovered
-                        if (settings.FeedbackLog)
+                        if (settings.Feedback.Log)
                             GlobalData.AddTextToLogTab($"[FeedbackMonitor] {strategy} {side} unblocked — win rate {winRate:N1}% over {total} signals");
                         entry.BlockedAt = null;
                         entry.BlockedUntil = null;

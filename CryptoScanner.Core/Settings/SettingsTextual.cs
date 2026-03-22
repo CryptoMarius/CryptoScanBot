@@ -79,7 +79,7 @@ public class SettingsTextual
     // Relative volume filter
     public SettingsTextualVolume Volume = new();
 
-    // Adaptive performance feedback (auto-dempen van slecht presterende strategieën)
+    // Adaptive strategy feedback filter
     public SettingsTextualFeedback Feedback = new();
 }
 
