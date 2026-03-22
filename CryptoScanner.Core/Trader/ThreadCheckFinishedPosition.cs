@@ -265,14 +265,6 @@ public class ThreadCheckFinishedPosition
                     return;
                 }
 
-                //if (GlobalData.Settings.General.DebugSignalStrength)
-                //{
-                //    if (await UpdatePositionStatisticsAsync(position))
-                //    {
-                //        GlobalData.ThreadSaveObjects!.AddToQueue(position);
-                //    }
-                //}
-
                 if (position.Status >= CryptoPositionStatus.Ready) // (Ready, Timeout and TakeOver)
                     await PositionReadyCancelAllOrderAndMove(database, position);
                 else

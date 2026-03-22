@@ -10,9 +10,6 @@ public partial class DebugTabViewModel : ObservableObject
     private bool _debugTrendCalculation = false;
 
     [ObservableProperty]
-    private bool _debugSignalStrength = false;
-
-    [ObservableProperty]
     private string _debugSymbol = "";
 
     [ObservableProperty]
@@ -30,7 +27,6 @@ public partial class DebugTabViewModel : ObservableObject
     public void LoadConfig(SettingsGeneral settings)
     {
         DebugTrendCalculation = settings.DebugTrendCalculation;
-        DebugSignalStrength = settings.DebugSignalStrength;
         DebugSymbol = settings.DebugSymbol.Trim().ToUpper();
         DebugKLineReceive = settings.DebugKLineReceive;
         DebugSignalCreate = settings.DebugSignalCreate;
@@ -41,7 +37,6 @@ public partial class DebugTabViewModel : ObservableObject
     public void SaveConfig(SettingsGeneral settings)
     {
         settings.DebugTrendCalculation = DebugTrendCalculation;
-        settings.DebugSignalStrength = DebugSignalStrength;
         settings.DebugSymbol = DebugSymbol.Trim().ToUpper();
         settings.DebugKLineReceive = DebugKLineReceive;
         settings.DebugSignalCreate = DebugSignalCreate;

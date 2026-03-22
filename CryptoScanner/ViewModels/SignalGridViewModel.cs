@@ -156,7 +156,7 @@ public partial class SignalGridViewModel : ObservableObject
                             updateStats = true;
                         }
 
-                        if (GlobalData.Settings.General.DebugSignalStrength && updateStats)
+                        if (updateStats)
                         {
                             if (signalInfo.UpdateSignalStatistics())
                             {

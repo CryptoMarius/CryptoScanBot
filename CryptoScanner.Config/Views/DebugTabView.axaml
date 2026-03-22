@@ -15,11 +15,6 @@
                       Content="Show more information during TrendCalculation (in file)"
                       FontSize="12"/>
 
-            <!-- Debug signal strength -->
-            <CheckBox IsChecked="{Binding DebugSignalStrength, Mode=TwoWay}"
-                      Content="Calculate statistics (min and max price + perc for signal and position)"
-                      FontSize="12"/>
-
             <!-- Debug symbol -->
             <StackPanel Spacing="8" Margin="0,8,0,0">
                 <Grid ColumnDefinitions="120,*" RowDefinitions="Auto">
