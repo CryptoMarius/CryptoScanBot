@@ -107,8 +107,9 @@ public class PositionMonitor //: IDisposable
             return false;
         }
 
-        // Er moet in ieder geval cooldown tijd verstreken zijn ten opzichte van de vorige entry opdracht
-        if (step.CloseTime?.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
+        // At least one cooldown period must have elapsed since the last filled entry.
+        // step.CloseTime is always set here because the search loop above filters on CloseTime.HasValue.
+        if (step.CloseTime!.Value.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
         {
             reaction = "het is te vroeg voor een bijkoop vanwege de cooldown";
             ClearSignals();
@@ -117,7 +118,10 @@ public class PositionMonitor //: IDisposable
 
 
 
-        // Weird, als we dus even hebben gepauseerd en de prijs eronder zit doen we geen dca meer? echt?
+        // The next DCA target is calculated as a fixed % from the original entry price.
+        // If that target is above (long) or below (short) the lowest already-filled entry,
+        // a new DCA would be placed at a worse price than what we already have — skip it.
+        // This guards against triggering an unnecessary DCA after a pause or restart.
         decimal entryPrice = position.EntryPrice.Value;
         var dcaEntry = GlobalData.Settings.Trading.DcaList[position.PartCount];
         decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
@@ -525,7 +529,7 @@ public class PositionMonitor //: IDisposable
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                                    CryptoEntryOrDcaStrategy.AfterNextSignal, signal.SignalPrice, LastCandle1mCloseTimeDate);
+                                    GlobalData.Settings.Trading.EntryStrategy, signal.SignalPrice, LastCandle1mCloseTimeDate);
                             }
                             finally
                             {
@@ -576,11 +580,10 @@ public class PositionMonitor //: IDisposable
                                     return;
                                 }
 
-                                // De positie uitbreiden nalv een nieuw signaal (wordt een aparte DCA)
-                                // dcaPrice is gebaseerd op gefixeerde perc (wellicht niet meer geschikt voor trailing?)
+                                // Extend the position with a new DCA part using the configured DCA strategy.
                                 SignalBlockStats.Increment(SignalBlockStats.DcaCreated);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, signal.Interval, signal.Strategy,
-                                    CryptoEntryOrDcaStrategy.AfterNextSignal, dcaPrice, LastCandle1mCloseTimeDate);
+                                    GlobalData.Settings.Trading.DcaStrategy, dcaPrice, LastCandle1mCloseTimeDate);
                                 return;
                             }
                         }
@@ -811,10 +814,13 @@ public class PositionMonitor //: IDisposable
         price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
 
+        // Stop-loss is only supported in paper/backtest mode.
+        // Real trading would require OCO orders (or a separate stop-limit order), which are not yet implemented.
+        // The condition StopLossPercentage < StopLossLimitPercentage ensures the stop triggers before the limit.
         if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade && GlobalData.Settings.Trading.StopLossPercentage > 0 && GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
             GlobalData.Settings.Trading.StopLossPercentage < GlobalData.Settings.Trading.StopLossLimitPercentage)
         {
-            // Put a SL above/below the dca
+            // Calculate SL price relative to the last (lowest/highest) DCA entry
             CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
 
             //////////////////////////////////////////////////////////////////
@@ -1118,11 +1124,14 @@ public class PositionMonitor //: IDisposable
                         PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, result.tradeParams.OrderSide,
                             step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "HandleEntryPart.HandleEntryPart");
 
-                        // Een eventuele market order direct laten vullen
+                        // For paper/backtest: immediately fill a market order.
+                        // CreatePaperTrade → HandleTradeAsync → CalculatePositionResultsViaOrders sets Reposition=true.
+                        // We reset it here so the outer monitor loop does not try to reposition the TP a second time
+                        // in the same candle tick (which would cancel and recreate it unnecessarily).
                         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading && step.OrderType == CryptoOrderType.Market)
                         {
                             await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime);
-                            position.Reposition = false; // anders twee keer achter elkaar indien papertrading of backtesting!
+                            position.Reposition = false;
                         }
                     }
                     else
@@ -1424,14 +1433,14 @@ public class PositionMonitor //: IDisposable
                         //}
 
                         // Als de instellingen veranderd zijn de lopende order annuleren
-                        else if (part.Purpose == CryptoPartPurpose.Entry & part.EntryMethod != GlobalData.Settings.Trading.EntryStrategy)
+                        else if (part.Purpose == CryptoPartPurpose.Entry && part.EntryMethod != GlobalData.Settings.Trading.EntryStrategy)
                         {
                             newStatus = CryptoOrderStatus.ChangedSettings;
                             cancelReason = "annuleren vanwege aanpassing entry instellingen";
                         }
 
                         // Als de instellingen veranderd zijn de lopende order annuleren
-                        else if (part.Purpose == CryptoPartPurpose.Dca & part.EntryMethod != GlobalData.Settings.Trading.DcaStrategy)
+                        else if (part.Purpose == CryptoPartPurpose.Dca && part.EntryMethod != GlobalData.Settings.Trading.DcaStrategy)
                         {
                             newStatus = CryptoOrderStatus.ChangedSettings;
                             cancelReason = "annuleren vanwege aanpassing dca instellingen";
@@ -1447,13 +1456,8 @@ public class PositionMonitor //: IDisposable
                         }
 
 
-                        // De instellingen zijn gewijzigd....?
-                        // Oh? Dat klopt niet, we hebben geen StepOutMethod in de instellingen! TODO: Controleren en fixen!
-                        //else if (part.StepOutMethod != GlobalData.Settings.Trading.Ehhhh?)
-                        //{
-                        //    newStatus = CryptoOrderStatus.ChangedSettings;
-                        //    cancelText = "annuleren vanwege aanpassing instellingen";
-                        //}
+                        // Note: there is no separate TP-strategy setting yet (unlike EntryStrategy / DcaStrategy),
+                        // so changed-settings detection for take-profit orders is not implemented here.
                     }
 
 
