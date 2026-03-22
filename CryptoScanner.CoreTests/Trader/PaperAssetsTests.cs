@@ -33,40 +33,40 @@ public class PaperAssetsTests : TestBase
         database.Connection.Insert(assetQuote);
 
         const decimal entryPrice = 200m;
-        const decimal entryQty   = 0.5m;
-        const decimal tpPrice    = 180m;
-        const decimal tpQty      = 0.5m;
+        const decimal entryQty = 0.5m;
+        const decimal tpPrice = 180m;
+        const decimal tpQty = 0.5m;
 
         // Act — entry order placed (New → lock USDT as collateral)
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Short, CryptoOrderSide.Sell,
             CryptoOrderStatus.New, entryQty, entryPrice * entryQty, "spot-short-entry-new");
 
-        Assert.AreEqual(1000m, assetQuote.Total,  "USDT total unchanged on New");
-        Assert.AreEqual(100m,  assetQuote.Locked, "USDT locked = entry collateral (100)");
-        Assert.AreEqual(900m,  assetQuote.Free,   "USDT free = 1000 - 100");
+        Assert.AreEqual(1000m, assetQuote.Total, "USDT total unchanged on New");
+        Assert.AreEqual(100m, assetQuote.Locked, "USDT locked = entry collateral (100)");
+        Assert.AreEqual(900m, assetQuote.Free, "USDT free = 1000 - 100");
 
         // Act — entry filled: collateral released, sale proceeds received
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Short, CryptoOrderSide.Sell,
             CryptoOrderStatus.Filled, entryQty, entryPrice * entryQty, "spot-short-entry-filled");
 
-        Assert.AreEqual(1100m, assetQuote.Total,  "USDT = 1000 + 100 sale proceeds");
-        Assert.AreEqual(0m,    assetQuote.Locked, "Lock released on fill");
+        Assert.AreEqual(1100m, assetQuote.Total, "USDT = 1000 + 100 sale proceeds");
+        Assert.AreEqual(0m, assetQuote.Locked, "Lock released on fill");
 
         // Act — TP order placed (New → lock USDT to cover buyback)
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Short, CryptoOrderSide.Buy,
             CryptoOrderStatus.New, tpQty, tpPrice * tpQty, "spot-short-tp-new");
 
-        Assert.AreEqual(1100m, assetQuote.Total,  "USDT total unchanged on New");
-        Assert.AreEqual(90m,   assetQuote.Locked, "USDT locked = TP buyback cost (90)");
-        Assert.AreEqual(1010m, assetQuote.Free,   "USDT free = 1100 - 90");
+        Assert.AreEqual(1100m, assetQuote.Total, "USDT total unchanged on New");
+        Assert.AreEqual(90m, assetQuote.Locked, "USDT locked = TP buyback cost (90)");
+        Assert.AreEqual(1010m, assetQuote.Free, "USDT free = 1100 - 90");
 
         // Act — TP filled: lock released, buyback cost paid
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Short, CryptoOrderSide.Buy,
             CryptoOrderStatus.Filled, tpQty, tpPrice * tpQty, "spot-short-tp-filled");
 
-        Assert.AreEqual(1010m, assetQuote.Total,  "USDT = 1000 + profit(10): shorted at 200, closed at 180");
-        Assert.AreEqual(0m,    assetQuote.Locked, "No open orders, nothing locked");
-        Assert.AreEqual(1010m, assetQuote.Free,   "Free = Total when nothing is locked");
+        Assert.AreEqual(1010m, assetQuote.Total, "USDT = 1000 + profit(10): shorted at 200, closed at 180");
+        Assert.AreEqual(0m, assetQuote.Locked, "No open orders, nothing locked");
+        Assert.AreEqual(1010m, assetQuote.Free, "Free = Total when nothing is locked");
     }
 
     /// <summary>
@@ -106,9 +106,9 @@ public class PaperAssetsTests : TestBase
         PaperAssets.Change(GlobalData.ActiveExchange!, symbol, CryptoTradeSide.Short, CryptoOrderSide.Buy,
             CryptoOrderStatus.Filled, 0.2m, 200m, "futures-short-tp-filled");
 
-        Assert.AreEqual(1990m, assetQuote.Total,  "USDT = 2000 - loss(10): avg entry 950, closed at 1000");
-        Assert.AreEqual(0m,    assetQuote.Locked, "No open orders, nothing locked");
-        Assert.AreEqual(1990m, assetQuote.Free,   "Free = Total when nothing is locked");
+        Assert.AreEqual(1990m, assetQuote.Total, "USDT = 2000 - loss(10): avg entry 950, closed at 1000");
+        Assert.AreEqual(0m, assetQuote.Locked, "No open orders, nothing locked");
+        Assert.AreEqual(1990m, assetQuote.Free, "Free = Total when nothing is locked");
     }
 
     [TestMethod()]
