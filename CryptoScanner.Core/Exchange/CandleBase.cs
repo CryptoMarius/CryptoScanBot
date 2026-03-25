@@ -32,7 +32,7 @@ public class CandleBase(ExchangeBase api)
 
     }
 
-    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol, CandleTime fetchMax)
+    public async Task GetCandlesForAllIntervalsAsync(CryptoSymbol symbol)
     {
         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0 || symbol.IsBarometerSymbol())
             return;
@@ -40,7 +40,7 @@ public class CandleBase(ExchangeBase api)
         using IDisposable client = Api.GetClient();
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval, fetchMax);
+            await Api.Candle.GetCandlesForIntervalAsync(client, symbol, interval);
         }
 
         // Remove the candles we needed because of the not supported intervals & bulk calculation
@@ -121,9 +121,8 @@ public class CandleBase(ExchangeBase api)
 
                                         // Haal de candles op en zorg dat deze overlapt met de candles van de socket stream(s)
                                         // De datum en tijd tot na het activeren van beide streams (overlap)
-                                        CandleTime fetchMax = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
-                                        CandleTools.DetermineFetchStartDate(symbol, fetchMax);
-                                        await GetCandlesForAllIntervalsAsync(symbol, fetchMax);
+                                        CandleTools.DetermineFetchStartDate(symbol);
+                                        await GetCandlesForAllIntervalsAsync(symbol);
                                     }
                                 }
                             }
@@ -157,38 +156,41 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval, CandleTime fetchMax)
+    public async Task GetCandlesForIntervalAsync(IDisposable client, CryptoSymbol symbol, CryptoInterval interval)
     {
         if (symbol.Status == 0 || symbol.IsBarometerSymbol() || !symbol.QuoteData!.FetchCandles)
             return;
 
+        CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         bool intervalSupported = symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod);
         if (intervalSupported)
         {
             // Fetch the candles (we have coins starting and stopping, be aware for endless loops)
-            while (symbolInterval.LastCandleSynchronized < fetchMax)
+            while (symbolInterval.LastCandleSynchronized < currentTime)
             {
-                if (symbolInterval.LastCandleSynchronized + interval.Duration > fetchMax)
+                if (symbolInterval.LastCandleSynchronized + interval.Duration > currentTime)
                     break;
 
                 // LastCandleSynchronized alway's has a value (minimum period start or last synched)
-                CandleTime lastFetched = (CandleTime)symbolInterval.LastCandleSynchronized!;
-                var (succes, _, fetchedUpTo) = await Api.Candle.GetCandlesForInterval(client, symbol, interval, lastFetched, fetchMax);
+                CandleTime fetchFrom = symbolInterval.LastCandleSynchronized.Value;
+                var (_, _, fetchedUpTo) = await Api.Candle.GetCandlesForInterval(client, symbol, interval, fetchFrom);
+                symbolInterval.LastCandleSynchronized = fetchedUpTo;
 
-                if (succes)
-                {
-                    symbolInterval.LastCandleSynchronized = fetchedUpTo;
-                }
-                else
-                {
-                    symbolInterval.LastCandleSynchronized = fetchedUpTo;
-                }
+                //await symbol.Data.CandleLock.WaitAsync();
+                //try
+                //{
+                //    CandleTools.UpdateCandleFetched(symbol, interval);
+                //}
+                //finally
+                //{
+                //    symbol.Data.CandleLock.Release();
+                //}
 
-                CandleTools.UpdateCandleFetched(symbol, interval);
-                if (symbolInterval.LastCandleSynchronized == lastFetched) // not moving forward
+                if (symbolInterval.LastCandleSynchronized == fetchFrom) // not moving forward
                     break;
+                currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
             }
         }
 
@@ -196,6 +198,9 @@ public class CandleBase(ExchangeBase api)
         await symbol.Data.CandleLock.WaitAsync();
         try
         {
+            // once
+            CandleTools.UpdateCandleFetched(symbol, interval);
+
             // Add missing candles (the only place we know it can be done safely)
             CandleTools.BulkAddMissingCandles(symbol, interval);
 
@@ -204,20 +209,20 @@ public class CandleBase(ExchangeBase api)
             {
                 CryptoInterval targetInterval = GlobalData.IntervalListPeriod[interval.IntervalPeriod + 1];
                 CryptoInterval sourceInterval = targetInterval.ConstructFrom!;
-                CandleTools.BulkCalculateCandles(symbol, sourceInterval, targetInterval, fetchMax);
+                CandleTools.BulkCalculateCandles(symbol, sourceInterval, targetInterval, currentTime);
             }
+
+            //// Adjust the administration for the not supported interval's
+            //if (!intervalSupported)
+            //{
+            //    CandleTools.UpdateCandleFetched(symbol, interval);
+            //}
+            // twice
+            CandleTools.UpdateCandleFetched(symbol, interval);
         }
         finally
         {
             symbol.Data.CandleLock.Release();
-        }
-
-
-        // Adjust the administration for the not supported interval's
-        if (!intervalSupported && symbolInterval.CandleList.Count > 0)
-        {
-            CryptoCandle candle = symbolInterval.CandleList.Values.Last();
-            symbolInterval.LastCandleSynchronized = candle.OpenTime + symbolInterval.Interval.Duration;
         }
     }
 
@@ -245,14 +250,11 @@ public class CandleBase(ExchangeBase api)
                     break;
 
                 CandleTime minTime = unixLoop;
-                DateTime minDate = minTime.ToDateTime();
                 CandleTime maxTime = unixLoop + (ExchangeBase.ExchangeOptions.CandleLimit - 1) * interval.Duration;
-                DateTime maxDate = maxTime.ToDateTime();
-                //string text = $"Fetch historical klines {symbol.Name} {interval!.Name} from {minDate.ToLocalTime()} up to {maxDate.ToLocalTime()}";
 
                 CandleTime lastDate = minTime;
                 int countBefore = symbolInterval.CandleList.Count;
-                var result = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, minTime, maxTime);
+                var result = await symbol.Exchange.GetApiInstance().Candle.GetCandlesForInterval(client, symbol, interval, minTime);
                 unixLoop = result.fetchedUpTo;
 
                 int added = symbolInterval.CandleList.Count - countBefore;
@@ -285,17 +287,14 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    internal bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval, CandleTime maxFetch)
+    internal static bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval)
     {
-
-        //if (symbolInterval.IntervalPeriod != CryptoIntervalPeriod.interval1m)
+        CandleTime candleTime = CandleTime.AlignFromDateTime(openTime, interval.Duration);
+        CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, interval.Duration);
+        if (candleTime + interval.Duration > currentTime)
         {
-            CandleTime time = CandleTime.AlignFromDateTime(openTime, interval.Duration);
-            if (time + interval.Duration > maxFetch) // future candle?
-            {
-                ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {time.ToLocalTime()}");
-                return true;
-            }
+            ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {candleTime.ToLocalTime()}");
+            return true;
         }
         return false;
     }

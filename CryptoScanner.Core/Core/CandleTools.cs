@@ -368,11 +368,12 @@ public static class CandleTools
 
     /// <summary>
     /// Determine the (worst case) fetch date per interval
-    /// fetchMaxTime = the current time + 1 minute extra
+    /// currentTime = the current time + 1 minute extra
     /// </summary>
-    public static void DetermineFetchStartDate(CryptoSymbol symbol, CandleTime fetchMaxTime)
+    public static void DetermineFetchStartDate(CryptoSymbol symbol)
     {
-        DateTime fetchEndDate = fetchMaxTime.ToDateTime();
+        CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1) + 1;
+        DateTime fetchEndDate = currentTime.ToDateTime();
         Dictionary<CryptoIntervalPeriod, CandleTime> fetchFrom = [];
 
         // Determine the (minimum) startdate per interval
