@@ -43,12 +43,15 @@ public class ZoneThreadCalculate
                 //    new(trend.TrendType, trend.UseHighLow, 1.0m));
 
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
-                ZoneDlz.LoadZonesForSymbol(symbol);
 
-                // avoid candles being removed...
+                // Set BEFORE LoadZonesForSymbol: ScanForNew also writes to FvgZones.LongOpen/ShortOpen.
+                // Concurrent access to the non-thread-safe OrderedList corrupts its internal List<T>,
+                // producing null holes that later cause ArgumentNullException in BinarySearch.
                 symbol.Data.CalculatingZones = true;
                 try
                 {
+                    ZoneDlz.LoadZonesForSymbol(symbol);
+
                     int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
                     CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
                     CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
