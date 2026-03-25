@@ -182,8 +182,8 @@ public class TradingViewSymbolWebSocket(string tickerName)
             string request = ConstructRequest("quote_create_session", ["my_session", ""], []);
             await SendData(request);
 
-            //request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
-            //await SendData(request);
+            request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
+            await SendData(request);
 
             //request = ConstructRequest("set_data_quality", ["low"], []);
             //await SendData(request);
