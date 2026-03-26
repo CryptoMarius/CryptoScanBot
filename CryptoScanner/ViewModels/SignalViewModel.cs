@@ -849,7 +849,6 @@ public partial class SignalViewModel : BaseConvertersViewModel
                         result = true;
                     }
 
-#if DEBUG
                     if (signal.SignalStatus == CryptoSignalStatus.Run)
                     {
                         decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
@@ -901,7 +900,6 @@ public partial class SignalViewModel : BaseConvertersViewModel
                             }
                         }
                     }
-#endif
                     return result;
                 }
             }
