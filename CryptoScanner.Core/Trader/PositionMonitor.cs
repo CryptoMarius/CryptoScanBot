@@ -349,6 +349,15 @@ public class PositionMonitor //: IDisposable
                                 return;
                             }
 
+                            // Performance feedback: don't open positions for underperforming strategies,
+                            // but keep the signal alive so statistics (PriceMin/Max, SignalStatus) keep updating.
+                            if (StrategyPerformanceMonitor.IsBlocked(signal.Strategy, signal.Side))
+                            {
+                                GlobalData.AddTextToLogTab(text + " strategy blocked by performance feedback (skipped)");
+                                SignalBlockStats.Increment(SignalBlockStats.PerformanceFeedback);
+                                continue;
+                            }
+
                             // Controles die noodzakelijk zijn voor een entry
                             // (inclusief de overhead van controles van de analyser)
                             // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
@@ -1914,7 +1923,7 @@ public class PositionMonitor //: IDisposable
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 
             // Remove old candles or CandleData
-            if (!GlobalData.BackTest && !Symbol.Data.CalculatingZones)
+            if (!GlobalData.BackTest && Symbol.Data.ZoneLock.CurrentCount > 0)
                 await CandleTools.CleanCandleDataAsync(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);

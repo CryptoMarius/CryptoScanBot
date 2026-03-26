@@ -44,10 +44,9 @@ public class ZoneThreadCalculate
 
                 SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-                // Set BEFORE LoadZonesForSymbol: ScanForNew also writes to FvgZones.LongOpen/ShortOpen.
-                // Concurrent access to the non-thread-safe OrderedList corrupts its internal List<T>,
-                // producing null holes that later cause ArgumentNullException in BinarySearch.
-                symbol.Data.CalculatingZones = true;
+                // Hold ZoneLock for the entire load + recalculation so ScanForNew cannot
+                // concurrently write to the same OrderedList (non-thread-safe List<T> inside).
+                await symbol.Data.ZoneLock.WaitAsync();
                 try
                 {
                     ZoneDlz.LoadZonesForSymbol(symbol);
@@ -65,7 +64,7 @@ public class ZoneThreadCalculate
                     await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
                     loadedCandlesInMemory.Clear();
                     _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
-                    symbol.Data.CalculatingZones = false;
+                    symbol.Data.ZoneLock.Release();
                 }
             }
         }

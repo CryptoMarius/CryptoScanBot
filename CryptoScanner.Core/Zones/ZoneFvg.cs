@@ -83,46 +83,51 @@ public class ZoneFvg
     // FVG (just a quick approach)
     public static void ScanForNew(CryptoSymbol symbol, CryptoInterval interval, CandleTime lastCandle1mCloseTime)
     {
-        // Skip if CalculateZonesAsync is currently rebuilding zones for this symbol (race condition guard)
-        if (symbol.Data.CalculatingZones)
+        // Non-blocking: skip if a full recalculation currently holds ZoneLock.
+        // This prevents concurrent writes to the non-thread-safe OrderedList.
+        if (!symbol.Data.ZoneLock.Wait(0))
             return;
-
-        // GetSymbolData the last 3 candles
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 1 * interval.Duration, out CryptoCandle candle))
-            return;
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 2 * interval.Duration, out CryptoCandle prev))
-            return;
-        if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 3 * interval.Duration, out CryptoCandle prev2))
-            return;
-
-        // scan voor long FVG
-        //if (side == CryptoTradeSide.Long)
+        try
         {
-            var zone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
-            if (zone != null)
-            {
-                //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Long} FVG {prev2.High}..{candle.Low} {zone.Description}");
-                var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
-                symbolDataInterval.FvgZones.LongOpen.Add(zone);
-                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+            // GetSymbolData the last 3 candles
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
+            if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 1 * interval.Duration, out CryptoCandle candle))
+                return;
+            if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 2 * interval.Duration, out CryptoCandle prev))
+                return;
+            if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 3 * interval.Duration, out CryptoCandle prev2))
+                return;
+
+            // scan voor long FVG
+            //if (side == CryptoTradeSide.Long)
+            {
+                var zone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
+                if (zone != null)
+                {
+                    //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Long} FVG {prev2.High}..{candle.Low} {zone.Description}");
+                    var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
+                    symbolDataInterval.FvgZones.LongOpen.Add(zone);
+                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                }
+            }
+
+            // scan voor short FVG
+            //if (side == CryptoTradeSide.Short)
+            {
+                var zone = ScanForShortFvg(symbol, interval, prev2, prev!, candle);
+                if (zone != null)
+                {
+                    //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
+                    var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
+                    symbolDataInterval.FvgZones.ShortOpen.Add(zone);
+                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                }
             }
         }
-
-        // scan voor short FVG
-        //if (side == CryptoTradeSide.Short)
+        finally
         {
-            var zone = ScanForShortFvg(symbol, interval, prev2, prev!, candle);
-            if (zone != null)
-            {
-                //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} {CryptoTradeSide.Short} FVG {candle.Low}..{prev2.High} {zone.Description}");
-                var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
-                symbolDataInterval.FvgZones.ShortOpen.Add(zone);
-                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-            }
+            symbol.Data.ZoneLock.Release();
         }
     }
 

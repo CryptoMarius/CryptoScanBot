@@ -29,8 +29,10 @@ public class CryptoSymbolData
     /// <summary>
     /// DlzAdmin
     /// </summary>
-    // Avoid the accidental removal of candles
-    public bool CalculatingZones { get; set; } = false;
+    // Guards zone list writes: CalculateZones holds it exclusively (WaitAsync),
+    // ScanForNew tries non-blocking (Wait(0)) and skips if unavailable,
+    // preventing concurrent OrderedList corruption.
+    public SemaphoreSlim ZoneLock { get; } = new(1, 1);
 
     // For display in the symbol grid
     // These are the closest DLZ zones (calculated from all the zones)

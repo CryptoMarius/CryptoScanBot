@@ -29,6 +29,7 @@ public static class SignalBlockStats
     public const string NotAllowedYet = "algorithm AllowStepIn (waiting for confirmation)";
 
     // New-position checks
+    public const string PerformanceFeedback = "strategy performance feedback (blocked)";
     public const string NewPositionsOff = "new positions disabled";
     public const string Barometer = "barometer conditions";
     public const string Whitelist = "whitelist";

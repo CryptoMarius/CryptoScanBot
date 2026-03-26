@@ -129,10 +129,6 @@ public class SignalExecute
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
                         {
-                            // Performance feedback: skip underperforming strategies
-                            if (entry.Key.checkBarometer && StrategyPerformanceMonitor.IsBlocked(entry.Key.strategy, side))
-                                continue;
-
                             if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
                             {
                                 // Relative volume check: skip for informational strategies
