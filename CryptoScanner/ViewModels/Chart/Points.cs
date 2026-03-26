@@ -8,7 +8,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Points
 {
-    internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, CandleTime minDate, CandleTime maxDate, string tag)
+    internal static void Draw(PlotModel chart, List<ZigZagResult> pivotList, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesHigh = new ScatterSeries
         {
@@ -16,7 +16,7 @@ public class Points
             MarkerSize = 2,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Square,
-            Tag = tag
+            Tag = group
         };
         var seriesLow = new ScatterSeries
         {
@@ -24,7 +24,7 @@ public class Points
             MarkerSize = 2,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Square,
-            Tag = tag
+            Tag = group
         };
 
         foreach (var zigzag in pivotList)
