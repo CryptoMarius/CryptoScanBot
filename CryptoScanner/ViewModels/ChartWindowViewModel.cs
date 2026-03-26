@@ -663,6 +663,12 @@ public partial class ChartWindowViewModel : ObservableObject
             Sma.Draw(model, Symbol, Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
         }
 
+        // Draw BBMA
+        group = "bbma";
+        if (Toggle(model, group, Session.ShowBbma))
+            Bbma.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+
         // Other options
 
         // Draw pivots
@@ -1047,7 +1053,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
             SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-            Symbol.Data.CalculatingZones = true;
+            await Symbol.Data.ZoneLock.WaitAsync();
             try
             {
                 // Load and (re)calculate the zones
@@ -1094,7 +1100,7 @@ public partial class ChartWindowViewModel : ObservableObject
             {
                 await ZoneCandleEngine.SaveCandleDataToDiskAsync(Symbol, loadedCandlesInMemory);
                 await ZoneCandleEngine.CleanLoadedCandlesAsync(Symbol);
-                Symbol.Data.CalculatingZones = false;
+                Symbol.Data.ZoneLock.Release();
             }
 
             ZoomLast();

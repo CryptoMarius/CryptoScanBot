@@ -6,6 +6,10 @@ namespace CryptoScanner.ViewModels;
 
 public partial class ChartOptionsViewModel : ObservableObject
 {
+    
+    [ObservableProperty]
+    private bool _showBbma = false;
+
     [ObservableProperty]
     private bool _showSmaLinesSbm = false;
 
@@ -45,6 +49,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     public void LoadFromSession(ZoneSession session)
     {
         // Options
+        ShowBbma = session.ShowBbma;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNadarayaWatsonEnvelope = session.ShowNadarayaWatsonEnvelope;
         ShowNadarayaWatsonEnvelopeRepainting = session.ShowNadarayaWatsonEnvelopeRepainting;
@@ -64,6 +69,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     public void SaveToSession(ZoneSession session)
     {
         // Options
+        session.ShowBbma = ShowBbma;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNadarayaWatsonEnvelope = ShowNadarayaWatsonEnvelope;
         session.ShowNadarayaWatsonEnvelopeRepainting = ShowNadarayaWatsonEnvelopeRepainting;
