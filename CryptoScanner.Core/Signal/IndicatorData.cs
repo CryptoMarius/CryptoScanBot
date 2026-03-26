@@ -217,14 +217,13 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
-#if DEBUG
+
         // https://dotnet.stockindicators.dev/utilities/#content
         List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
-#endif
 
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
@@ -315,7 +314,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 ////candleData.Ema8 = emaList8[index].Ema;
                 candleData.Ema26 = emaList26[index].Ema;
                 candleData.Ema20 = emaList20[index].Ema;
-                candleData.Ema50 = emaList50[index].Ema;
+                candleData.Ema50 = emaList50[index].Ema; --> see wma / bbma
                 //candleData.Ema100 = emaList100[index].Ema;
                 //candleData.Ema200 = emaList200[index].Ema;
 #endif
@@ -341,14 +340,12 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
-#if DEBUG
                 // BbMa
                 candleData.Ema50 = emaList50[index].Ema;
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
-#endif
 
 #if DEBUG
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
