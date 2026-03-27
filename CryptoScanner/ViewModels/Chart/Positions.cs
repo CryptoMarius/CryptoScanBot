@@ -9,182 +9,157 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Positions
 {
-    // Draws a vertical line at the position's open time.
-    // Long positions grow up from y=0; short positions hang down from y=yAxisTop.
-    private static void DrawVerticalLine(PlotModel chart, DateTime? time,
-        decimal? atPrice, double yAxisTop, OxyColor color, string title, string tag)
+    // Color convention: Buy orders = green, Sell orders = red.
+    // This naturally handles all cases: long entry/DCA (buy=green), long TP (sell=red),
+    // short entry/DCA (sell=red), short TP (buy=green).
+    //private static OxyColor StepColor(CryptoPositionStep step) =>
+    //    step.Side == CryptoOrderSide.Buy ? OxyColors.Green : OxyColors.Red;
+
+    // Draws a vertical line at the open time of a position.
+    // Long: grows up from y=0. Short: hangs down from y=yAxisTop.
+    private static void DrawVerticalLine(PlotModel chart, DateTime time,
+        decimal atPrice, decimal yAxisTop, OxyColor color, string group)
     {
-        if (time.HasValue && atPrice.HasValue)
-        {
-            double x = CandleTime.FromDateTime(time.Value).Minutes;
-            var series = new LineSeries { Title = title, Color = color, LineStyle = LineStyle.Dot, StrokeThickness = 0.5, Font = Const.OxyFontName, Tag = tag, };
-            series.Points.Add(new DataPoint(x, yAxisTop));
-            series.Points.Add(new DataPoint(x, (double)atPrice.Value));
-            chart.Series.Add(series);
-        }
+        var series = new LineSeries { 
+            Color = color, 
+            LineStyle = LineStyle.Dot, 
+            StrokeThickness = 0.7, 
+            Font = Const.OxyFontName, 
+            Tag = group 
+        };
+        double x = CandleTime.FromDateTime(time).Minutes;
+        series.Points.Add(new DataPoint(x, (double)yAxisTop));
+        series.Points.Add(new DataPoint(x, (double)atPrice));
+        chart.Series.Add(series);
     }
 
-    // Low-level helper: draws a horizontal line with a white left-aligned text label.
-    // xLabelOffset shifts the label slightly right of the line start for readability.
-    private static void DrawLabeledLine(PlotModel chart, double xStart, double xEnd,
-        decimal atPrice, OxyColor color, string title, string caption, double xLabelOffset, string tag)
+    // Draws a labeled horizontal line between xStart and xEnd at the given price.
+    // The caption is placed just right of xStart in white left-aligned text.
+    private static void DrawHorizontalLine(PlotModel chart, double xStart, double xEnd,
+        decimal atPrice, OxyColor color, string caption, double xLabelOffset, string group)
     {
-        var series = new LineSeries { Title = title, Color = color, LineStyle = LineStyle.Dot, StrokeThickness = 0.5, Font = Const.OxyFontName, Tag = tag };
+        var series = new LineSeries { 
+            Color = color, 
+            LineStyle = LineStyle.Dot, 
+            StrokeThickness = 0.7, 
+            Font = Const.OxyFontName, 
+            Tag = group 
+        };
         series.Points.Add(new DataPoint(xStart, (double)atPrice));
         series.Points.Add(new DataPoint(xEnd, (double)atPrice));
         chart.Series.Add(series);
 
-        chart.Annotations.Add(new TextAnnotation
+        if (caption != "")
         {
-            Text = caption,
-            TextPosition = new DataPoint(xStart + xLabelOffset, (double)atPrice),
-            TextHorizontalAlignment = HorizontalAlignment.Left,
-            TextColor = OxyColors.White,
-            Background = OxyColors.Transparent,
-            FontSize = 9,
-            Tag = tag,
-        });
-    }
-
-    // Draws a horizontal line for a step, starting at the position's open time.
-    // Extends to closeTime when filled, or to the end of the chart when still open.
-    private static void DrawHorizontalLine(PlotModel chart, CryptoPosition position,
-        CryptoPositionStep step, decimal atPrice, OxyColor color, CandleTime maxDate, string title, string caption, double xLabelOffset, string tag)
-    {
-        double xStart = CandleTime.FromDateTime(position.CreateTime).Minutes;
-        double xEnd = step.CloseTime.HasValue
-            ? CandleTime.FromDateTime(step.CloseTime.Value).Minutes
-            : maxDate.Minutes;
-
-        DrawLabeledLine(chart, xStart, xEnd, atPrice, color, title, caption, xLabelOffset, tag);
-    }
-
-    private static void DrawSomething(PlotModel chart, CryptoPosition position, CryptoPositionStep step,
-        CandleTime time, ScatterSeries scatterSeries, OxyColor lineColor, string caption, double xLabelOffset, CandleTime maxDate, string tag, bool isFilled)
-    {
-        if (isFilled)
-            scatterSeries?.Points.Add(new ScatterPoint(time.Minutes - 1, (double)step.AveragePrice));
-
-        double xStart = CandleTime.FromDateTime(position.CreateTime).Minutes;
-
-        if (isFilled)
-        {
-            // Draw from position open to the fill time
-            DrawLabeledLine(chart, xStart, time.Minutes, step.AveragePrice, lineColor, "line", caption, xLabelOffset, tag);
-        }
-        else
-        {
-            // Draw from position open to the end of the chart (order still open)
-            DrawLabeledLine(chart, xStart, maxDate.Minutes, step.Price, lineColor, "line", caption, xLabelOffset, tag);
-
-            // Stop and stoplimit levels drawn in orange; only relevant while the order is open
-            if (step.StopPrice.HasValue)
-                DrawHorizontalLine(chart, position, step, step.StopPrice.Value, OxyColors.Orange, maxDate, "stop", "stoploss", xLabelOffset, tag);
-            if (step.StopLimitPrice.HasValue)
-                DrawHorizontalLine(chart, position, step, step.StopLimitPrice.Value, OxyColors.Orange, maxDate, "limit", "stoplimit", xLabelOffset, tag);
+            chart.Annotations.Add(new TextAnnotation
+            {
+                Text = caption,
+                TextPosition = new DataPoint(xStart + xLabelOffset, (double)atPrice),
+                TextHorizontalAlignment = HorizontalAlignment.Left,
+                TextColor = OxyColors.White,
+                Background = OxyColors.Transparent,
+                FontSize = 9,
+                Tag = group,
+            });
         }
     }
 
 
     internal static void Draw(PlotModel chart, List<CryptoPosition> positionList, CryptoInterval interval,
-        CandleTime minDate, CandleTime maxDate, string tag)
+        CandleTime minDate, CandleTime maxDate, string group)
     {
-        var seriesSell = new ScatterSeries
-        {
-            Title = "buy",
-            MarkerSize = 4,
-            MarkerFill = OxyColors.White,
-            MarkerType = MarkerType.Diamond,
-            Tag = tag
-        };
+        // Label offset: 1.5 candle-widths to the right of the line start
+        double xLabelOffset = interval.Duration * 1.5;
 
-        var seriesBuy = new ScatterSeries
-        {
-            Title = "sell",
-            MarkerSize = 4,
-            MarkerFill = OxyColors.Yellow,
-            MarkerType = MarkerType.Diamond,
-            Tag = tag
-        };
-
-        // Offset labels half an interval to the right so they sit just beside the vertical start line
-        double xLabelOffset = interval.Duration / 2.0;
+        var seriesBuy = new ScatterSeries { Title = "buy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Diamond, Tag = group };
+        var seriesSell = new ScatterSeries { Title = "sell", MarkerSize = 4, MarkerFill = OxyColors.White, MarkerType = MarkerType.Diamond, Tag = group };
 
         foreach (CryptoPosition position in positionList)
         {
-            OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.Green : OxyColors.Red;
-            bool isOpen = !position.CloseTime.HasValue;
+            double xStart = CandleTime.FromDateTime(position.CreateTime).Minutes;
+            double xEnd = position.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(position.CloseTime!.Value).Minutes;
 
-            // Long: vertical line grows up from baseline (y=0).
-            // Short: vertical line hangs down from the top of the visible chart.
-            if (position.Side == CryptoTradeSide.Long)
-                DrawVerticalLine(chart, position.CreateTime, position.EntryPrice, (double)(position.EntryPrice!.Value * 0.5m), positionColor, "start", tag);
-            else
-                DrawVerticalLine(chart, position.CreateTime, position.EntryPrice, (double)(position.EntryPrice!.Value * 2.0m), positionColor, "start", tag);
+            decimal yStart = position.Side == CryptoTradeSide.Long
+                ? (position.EntryPrice!.Value * 0.5m)
+                : (position.EntryPrice!.Value * 2.0m);
+            decimal yEnd = position.EntryPrice.Value;
 
-            if (isOpen)
-            {
-                double xStart = CandleTime.FromDateTime(position.CreateTime).Minutes;
-                double xEnd = maxDate.Minutes + 2;
-
-                // Break-even level
-                if (position.BreakEvenPrice > 0)
-                    DrawLabeledLine(chart, xStart, xEnd, position.BreakEvenPrice, OxyColors.Gray, "be", "breakeven", xLabelOffset, tag);
-            }
-
-            // The first entry-side step = "entry", subsequent entry-side steps = "dca#1", "dca#2", ...
-            // Opposite-side steps = "take profit" (executed TP orders).
-            // Stop-triggered fills = "stoploss".
-            CryptoOrderSide entrySide = position.Side == CryptoTradeSide.Long ? CryptoOrderSide.Buy : CryptoOrderSide.Sell;
-            int entryCount = 0;
-
+            // Steps: first entry-side step = "entry", subsequent = "dca#1", "dca#2", ...
             foreach (CryptoPositionPart positionPart in position.PartList.Values)
             {
                 foreach (var step in positionPart.StepList.Values)
                 {
-                    // For a number of reasons cancelled
                     if (step.Status > CryptoOrderStatus.Filled)
                         continue;
 
-                    bool isFilled = step.Status != CryptoOrderStatus.New;
-
-                    CandleTime time = step.CloseTime.HasValue
+                    CandleTime stepTime = step.CloseTime.HasValue
                         ? CandleTime.FromDateTime(step.CloseTime.Value)
                         : CandleTime.FromDateTime(step.CreateTime);
 
-                    if (time < minDate || time > maxDate)
+                    if (stepTime < minDate || stepTime > maxDate)
                         continue;
 
-                    // Determine caption and color for this step
-                    bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
-                    string caption;
-                    OxyColor lineColor;
+                    //bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
+                    //OxyColor stepColor = isStopTriggered ? OxyColors.Orange : StepColor(step);
+                    //OxyColor StepColor(CryptoPositionStep step) =>
+                    OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.Green : OxyColors.Red;
+                    
+                    if (positionPart.Purpose == CryptoPartPurpose.Entry)
+                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
+                    
+                    if (positionPart.Purpose == CryptoPartPurpose.Dca)
+                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
 
-                    if (isStopTriggered)
+                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit)
+                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "take profit", xLabelOffset, group);
+
+                    //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
+                    //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
+
+                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit && step.StopPrice.HasValue)
+                        DrawHorizontalLine(chart, xStart, xEnd, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
+                    
+                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit && step.StopLimitPrice.HasValue)
+                        DrawHorizontalLine(chart, xStart, xEnd, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
+
+
+                    if (step.CloseTime.HasValue)
                     {
-                        caption = "stoploss";
-                        lineColor = OxyColors.Orange;
+                        ScatterSeries scatter = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
+                        double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
+                        scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
                     }
-                    else if (step.Side == entrySide)
+
+                    // extend the vertical line if needed
+                    if (position.Side == CryptoTradeSide.Long)
                     {
-                        caption = entryCount == 0 ? "entry" : $"dca#{entryCount}";
-                        entryCount++;
-                        lineColor = positionColor;
+                        if (step.Price > yEnd)
+                            yEnd = step.Price;
                     }
                     else
                     {
-                        caption = "take profit";
-                        lineColor = positionColor;
+                        if (step.Price < yEnd)
+                            yEnd = step.Price;
                     }
-
-                    ScatterSeries scatterSeries = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
-                    DrawSomething(chart, position, step, time, scatterSeries, lineColor, caption, xLabelOffset, maxDate, tag, isFilled);
                 }
             }
+
+            // Vertical marker at position open time.
+            // Long grows up from y=0; short hangs down from 2× entry price.
+            // TODO: Draw line to the TP above the entry
+            OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.Green : OxyColors.Red;
+            DrawVerticalLine(chart, position.CreateTime, yStart, yEnd, positionColor, group);
+
+            // Break-even and take-profit levels, only while the position is open
+            if (position.CloseTime == null)
+            {
+                if (position.BreakEvenPrice > 0)
+                    DrawHorizontalLine(chart, xStart, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group);
+            }
+
         }
 
-        // Scatter markers are added last so OxyPlot renders them on top of all position lines,
-        // ensuring the diamond symbols are always visible.
+        // Scatter markers added last so they render on top of all position lines
         chart.Series.Add(seriesBuy);
         chart.Series.Add(seriesSell);
     }
