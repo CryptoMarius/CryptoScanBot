@@ -54,31 +54,23 @@ public static class BarometerHelper
 
 
     /// Check how many higher-timeframe barometers align with the signal direction.
-    /// Only barometers with a higher duration than the signal interval are considered.
+    /// Only active barometer intervals (those enabled via the Active checkbox) with a higher
+    /// duration than the signal interval are considered.
     /// Returns true if the consensus count meets the minimum, or if the check is not applicable.
     public static bool CheckConsensusBarometer(Model.CryptoExchange activeExchange, string quoteName,
-        CryptoIntervalPeriod signalIntervalPeriod, int minConsensus, CryptoTradeSide side, out string reaction)
+        CryptoIntervalPeriod signalIntervalPeriod, Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> activeBarometerIntervals,
+        int minConsensus, CryptoTradeSide side, out string reaction)
     {
         reaction = "";
-        if (minConsensus <= 0)
+        if (minConsensus <= 0 || activeBarometerIntervals.Count == 0)
             return true;
-
-        // The fixed barometer intervals available in the system
-        CryptoIntervalPeriod[] barometerIntervals =
-        [
-            CryptoIntervalPeriod.interval15m,
-            CryptoIntervalPeriod.interval30m,
-            CryptoIntervalPeriod.interval1h,
-            CryptoIntervalPeriod.interval4h,
-            CryptoIntervalPeriod.interval1d,
-        ];
 
         // Determine the signal interval duration for comparison
         if (!GlobalData.IntervalListPeriod.TryGetValue(signalIntervalPeriod, out CryptoInterval? signalInterval))
             return true; // Unknown signal interval - skip check
 
-        // Only include barometers with a higher duration than the signal interval
-        List<CryptoIntervalPeriod> higherIntervals = barometerIntervals
+        // Only include active barometers with a higher duration than the signal interval
+        List<CryptoIntervalPeriod> higherIntervals = activeBarometerIntervals.Keys
             .Where(p => GlobalData.IntervalListPeriod.TryGetValue(p, out CryptoInterval? bInterval) &&
                         bInterval!.Duration > signalInterval.Duration)
             .ToList();

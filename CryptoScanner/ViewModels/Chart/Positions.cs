@@ -23,7 +23,7 @@ public class Positions
         var series = new LineSeries { 
             Color = color, 
             LineStyle = LineStyle.Dot, 
-            StrokeThickness = 0.7, 
+            StrokeThickness = 0.8, 
             Font = Const.OxyFontName, 
             Tag = group 
         };
@@ -40,8 +40,8 @@ public class Positions
     {
         var series = new LineSeries { 
             Color = color, 
-            LineStyle = LineStyle.Dot, 
-            StrokeThickness = 0.7, 
+            LineStyle = LineStyle.DashDashDot, 
+            StrokeThickness = 0.8, 
             Font = Const.OxyFontName, 
             Tag = group 
         };
@@ -102,26 +102,28 @@ public class Positions
                     //bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
                     //OxyColor stepColor = isStopTriggered ? OxyColors.Orange : StepColor(step);
                     //OxyColor StepColor(CryptoPositionStep step) =>
-                    OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.Green : OxyColors.Red;
-                    
-                    if (positionPart.Purpose == CryptoPartPurpose.Entry)
-                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
-                    
-                    if (positionPart.Purpose == CryptoPartPurpose.Dca)
-                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
+                    OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.DarkGreen: OxyColors.DarkRed;
 
-                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit)
-                        DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "take profit", xLabelOffset, group);
+                    switch (positionPart.Purpose)
+                    {
+                        case CryptoPartPurpose.Entry:
+                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
+                            break;
+                        case CryptoPartPurpose.Dca:
+                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
+                            break;
+                        case CryptoPartPurpose.TakeProfit:
+                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "take profit", xLabelOffset, group);
 
-                    //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
-                    //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
+                            //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
+                            //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
+                            if (step.StopPrice.HasValue)
+                                DrawHorizontalLine(chart, xStart, xEnd, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
 
-                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit && step.StopPrice.HasValue)
-                        DrawHorizontalLine(chart, xStart, xEnd, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
-                    
-                    if (positionPart.Purpose == CryptoPartPurpose.TakeProfit && step.StopLimitPrice.HasValue)
-                        DrawHorizontalLine(chart, xStart, xEnd, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
-
+                            if (step.StopLimitPrice.HasValue)
+                                DrawHorizontalLine(chart, xStart, xEnd, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
+                            break;
+                    }
 
                     if (step.CloseTime.HasValue)
                     {
@@ -130,7 +132,7 @@ public class Positions
                         scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
                     }
 
-                    // extend the vertical line if needed
+                    // Extend the vertical line if needed
                     if (position.Side == CryptoTradeSide.Long)
                     {
                         if (step.Price > yEnd)
@@ -147,7 +149,7 @@ public class Positions
             // Vertical marker at position open time.
             // Long grows up from y=0; short hangs down from 2× entry price.
             // TODO: Draw line to the TP above the entry
-            OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.Green : OxyColors.Red;
+            OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.DarkGreen : OxyColors.DarkRed;
             DrawVerticalLine(chart, position.CreateTime, yStart, yEnd, positionColor, group);
 
             // Break-even and take-profit levels, only while the position is open

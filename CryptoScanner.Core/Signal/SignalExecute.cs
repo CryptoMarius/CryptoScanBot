@@ -115,9 +115,9 @@ public class SignalExecute
                                 continue;
                             }
 
-                            // Barometer consensus check (only higher-timeframe barometers)
+                            // Barometer consensus check (only active, higher-timeframe barometers)
                             if (!BarometerHelper.CheckConsensusBarometer(GlobalData.ActiveExchange!, symbol.Quote,
-                                interval.IntervalPeriod, TradingConfig.Signals[side].BarometerMinConsensus, side, out reaction))
+                                interval.IntervalPeriod, TradingConfig.Signals[side].Barometer, TradingConfig.Signals[side].BarometerMinConsensus, side, out reaction))
                             {
                                 if (TradingConfig.Signals[side].BarometerLog)
                                     GlobalData.AddTextToLogTab($"{symbol.Name} {side} {reaction}");
