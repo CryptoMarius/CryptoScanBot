@@ -7,7 +7,7 @@
              x:DataType="vm:FeedbackFilterViewModel"
              x:Class="CryptoScanner.Config.Views.FeedbackFilterView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Performance feedback (auto-dempen)">
+    <HeaderedContentControl Classes="groupbox" Header="Performance feedback (auto-dempen)" IsVisible="false">
         <StackPanel Margin="8" Spacing="4">
 
             <!-- Active toggle -->
