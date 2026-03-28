@@ -251,10 +251,15 @@ public class BarometerTools
         // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval15m ||
+            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval10m || 
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval15m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval30m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1h ||
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval2h ||
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval3h ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval4h ||
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval8h ||
+                interval.IntervalPeriod == CryptoIntervalPeriod.interval12h ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1d)
             {
                 //GlobalData.AddTextToLogTab("Calculating barometer chart " + bmSymbol.Name + " " + interval.Name);
