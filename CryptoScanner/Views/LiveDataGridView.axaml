@@ -24,7 +24,7 @@
 
 			<DataGrid.Columns>
 				<!-- Date -->
-				<DataGridTextColumn Header="Date" Width="180" MinWidth="90" SortMemberPath="Date" Binding="{Binding Date}" />
+				<DataGridTextColumn Header="Date" Width="145" MinWidth="145" SortMemberPath="Date" Binding="{Binding Date}" />
 
 				<!-- Exchange -->
 				<DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>

@@ -32,10 +32,10 @@
                 </DataGridTemplateColumn>
 
                 <!-- Date -->
-                <DataGridTextColumn Header="Date" Width="180" MinWidth="90" SortMemberPath="Date" Binding="{Binding Date}" />
+                <DataGridTextColumn Header="Date" Width="145" MinWidth="145" SortMemberPath="Date" Binding="{Binding Date}" />
 
                 <!-- Exchange -->
-                <DataGridTextColumn Header="Exchange" Width="110" MinWidth="90" SortMemberPath="Exchange" 
+                <DataGridTextColumn Header="Exchange" Width="110" MinWidth="100" SortMemberPath="Exchange" 
                                     IsVisible="False" Binding="{Binding Exchange}" />
 
                 <!-- Symbol -->
@@ -50,7 +50,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Side -->
-                <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
+                <DataGridTemplateColumn Header="Side" Width="50" MinWidth="50" SortMemberPath="Side" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" 

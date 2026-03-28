@@ -34,10 +34,10 @@
 			<DataGridTextColumn Header="AltradyId" Width="180" MinWidth="90" SortMemberPath="AltradyId" Binding="{Binding AltradyPositionId}" />
 
 			<!-- CreateTime -->
-            		<DataGridTextColumn Header="Created" Width="100" MinWidth="80" SortMemberPath="CreateTime" Binding="{Binding CreateTime}" />
+            		<DataGridTextColumn Header="Created" Width="105" MinWidth="105" SortMemberPath="CreateTime" Binding="{Binding CreateTime}" />
 
 			<!-- UpdateTime -->
-           		 <DataGridTextColumn Header="Updated" Width="100" MinWidth="80" SortMemberPath="UpdateTime" Binding="{Binding UpdateTime}" />
+           		 <DataGridTextColumn Header="Updated" Width="105" MinWidth="105" SortMemberPath="UpdateTime" Binding="{Binding UpdateTime}" />
 
 			<!-- Duration -->
             		<DataGridTextColumn Header="Duration" Width="90" MinWidth="80" SortMemberPath="Duration" Binding="{Binding Duration}" />
@@ -57,7 +57,7 @@
             </DataGridTemplateColumn>
 
             <!-- Side -->
-            <DataGridTemplateColumn Header="Side" Width="60" SortMemberPath="Side" >
+            <DataGridTemplateColumn Header="Side" Width="50" MinWidth="50" SortMemberPath="Side" >
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" 
