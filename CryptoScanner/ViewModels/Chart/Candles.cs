@@ -10,9 +10,9 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Candles
 {
 
-    public static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate)
+    public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate)
     {
-
+        CandleTime lastCandleTime = CandleTime.MinValue;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         var candleSerie = new CandleStickSeries
@@ -43,6 +43,8 @@ public class Candles
                         var curHighLow = new HighLowItem(c.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         candleSerie.Items.Add(curHighLow);
                         last = c;
+
+                        lastCandleTime = c.OpenTime;
                     }
                     catch (Exception error)
                     {
@@ -105,6 +107,8 @@ public class Candles
             }
         }
         chart.Series.Add(candleSerie);
+
+        return lastCandleTime;
     }
 
 
