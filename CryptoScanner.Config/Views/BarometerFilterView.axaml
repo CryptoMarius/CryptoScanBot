@@ -26,16 +26,18 @@
             <!-- 1d interval -->
             <settings:BarometerFilterRangeView DataContext="{Binding Interval1d}" />
 
-            <!-- Min consensus -->
-            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" ColumnSpacing="8" Margin="0,4,0,0">
-                <TextBlock Grid.Column="0"
-                           Text="Min consensus (0=off)"
-                           FontSize="12"
-                           VerticalAlignment="Center"
-                           MinWidth="80"/>
+            <!-- Consensus active + min consensus -->
+            <Grid ColumnDefinitions="Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding ConsensusActive, Mode=TwoWay}"
+                          Content="Min consensus"
+                          FontSize="12"
+                          VerticalAlignment="Center"
+                          MinWidth="80"/>
                 <NumericUpDown Grid.Column="1"
                                Value="{Binding MinConsensus, Mode=TwoWay}"
-                               Minimum="0" Maximum="5" Increment="1"
+                               IsEnabled="{Binding ConsensusActive}"
+                               Minimum="1" Maximum="5" Increment="1"
                                Height="26" FontSize="12" Padding="4,2"
                                CornerRadius="4" Width="110"
                                FormatString="0"/>

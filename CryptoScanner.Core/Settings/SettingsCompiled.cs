@@ -63,6 +63,8 @@ public class SettingsCompiled
     // Minimale barometer om de meldingen te genereren
     public Dictionary<CryptoIntervalPeriod, (decimal minValue, decimal maxValue)> Barometer { get; set; } = [];
     public bool BarometerLog = false;
+    // Whether the consensus check is enabled (mirrors SettingsTextualBarometer.ConsensusActive)
+    public bool BarometerConsensusActive = false;
     // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
     public int BarometerMinConsensus = 0;
 
@@ -112,6 +114,7 @@ public class SettingsCompiled
         }
         TrendLog = settings.IntervalTrend.Log;
         BarometerLog = settings.Barometer.Log;
+        BarometerConsensusActive = settings.Barometer.ConsensusActive;
         BarometerMinConsensus = settings.Barometer.MinConsensus;
 
         Volume.Active = settings.Volume.IsActive;

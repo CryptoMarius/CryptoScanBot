@@ -24,7 +24,11 @@ public partial class BarometerFilterViewModel : ObservableObject
     [ObservableProperty]
     private bool _log = true;
 
-    // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
+    // Whether the consensus check is enabled
+    [ObservableProperty]
+    private bool _consensusActive = false;
+
+    // Minimum number of higher-timeframe barometers that must align with the signal direction
     [ObservableProperty]
     private int _minConsensus = 0;
 
@@ -40,6 +44,7 @@ public partial class BarometerFilterViewModel : ObservableObject
     public void LoadConfig(SettingsTextualBarometer settings)
     {
         Log = settings.Log;
+        ConsensusActive = settings.ConsensusActive;
         MinConsensus = settings.MinConsensus;
 
         LoadInterval("15m", Interval15m, settings.List);
@@ -77,6 +82,7 @@ public partial class BarometerFilterViewModel : ObservableObject
         SaveInterval("1d", Interval1d, settings.List);
 
         settings.Log = Log;
+        settings.ConsensusActive = ConsensusActive;
         settings.MinConsensus = MinConsensus;
     }
 
