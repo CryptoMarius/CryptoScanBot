@@ -7,7 +7,7 @@
              x:DataType="vm:TraderStopLossViewModel"
              x:Class="CryptoScanner.Config.Views.TraderStopLossView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Stop loss (not working)">
+    <HeaderedContentControl Classes="groupbox" Header="Stop loss">
         <StackPanel Margin="8" Spacing="12">
             
             <!-- Stop Loss Percentage -->
