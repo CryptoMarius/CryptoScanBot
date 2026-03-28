@@ -9,9 +9,9 @@
              x:DataType="vm:TraderTabViewModel"
              x:Class="CryptoScanner.Config.Views.TraderTabView">
 
-    <TabControl Grid.Row="2" Margin="0" >
-		<TabItem Header="Trader common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" >
+    <TabControl Grid.Row="2" Margin="0">
+        <TabItem Header="Trader common" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
                     <settings:TraderMiscSettingsView DataContext="{Binding TraderMiscSettingsViewModel}" />
                     <settings:TraderEntryConditionsView DataContext="{Binding TraderEntryConditionsViewModel}" />
@@ -22,33 +22,53 @@
                     <settings:TraderDcaView DataContext="{Binding TraderDcaViewModel}" />
                 </WrapPanel>
             </ScrollViewer>
-		</TabItem>
-		<TabItem Header="Trader long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+        </TabItem>
+
+        <TabItem Header="Trader long" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" >
-                    <settings:StrategyView Grid.Column="0" DataContext="{Binding TraderStrategyLongViewModel}" />
-                    <settings:TrendIntervalFilterView Grid.Column="1" DataContext="{Binding TraderTrendIntervalFilterShortViewModel}" />
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
+                    <!-- Col 0: Strategies -->
+                    <settings:StrategyView Grid.Column="0"
+                        DataContext="{Binding TraderStrategyLongViewModel}" />
+                    <!-- Col 1: Trend interval filter + Market trend filter -->
+                    <StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Top">
+                        <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterLongViewModel}" />
+                        <settings:MarketTrendFilterView DataContext="{Binding TraderMarketTrendFilterLongViewModel}" />
+                    </StackPanel>
+                    <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
-                        <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterLongViewModel}" />
                         <settings:IntervalView DataContext="{Binding TraderIntervalLongViewModel}" />
                     </StackPanel>
-                    <settings:MarketTrendFilterView Grid.Column="3" VerticalAlignment="Top" DataContext="{Binding TraderMarketTrendFilterLongViewModel}" />
+                    <!-- Col 3: Barometer -->
+                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top">
+                        <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterLongViewModel}" />
+                    </StackPanel>
                 </Grid>
             </ScrollViewer>
-		</TabItem>
-		<TabItem Header="Trader short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+        </TabItem>
+
+        <TabItem Header="Trader short" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" >
-                    <settings:StrategyView Grid.Column="0" DataContext="{Binding TraderStrategyShortViewModel}" />
-                    <settings:TrendIntervalFilterView Grid.Column="1" DataContext="{Binding TraderTrendIntervalFilterShortViewModel}" />
+                <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
+                    <!-- Col 0: Strategies -->
+                    <settings:StrategyView Grid.Column="0"
+                        DataContext="{Binding TraderStrategyShortViewModel}" />
+                    <!-- Col 1: Trend interval filter + Market trend filter -->
+                    <StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Top">
+                        <settings:TrendIntervalFilterView DataContext="{Binding TraderTrendIntervalFilterShortViewModel}" />
+                        <settings:MarketTrendFilterView DataContext="{Binding TraderMarketTrendFilterShortViewModel}" />
+                    </StackPanel>
+                    <!-- Col 2: Intervals -->
                     <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
-                        <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterShortViewModel}" />
                         <settings:IntervalView DataContext="{Binding TraderIntervalShortViewModel}" />
                     </StackPanel>
-                    <settings:MarketTrendFilterView Grid.Column="3" VerticalAlignment="Top" DataContext="{Binding TraderMarketTrendFilterShortViewModel}" />
+                    <!-- Col 3: Barometer -->
+                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top">
+                        <settings:BarometerFilterView DataContext="{Binding TraderBarometerFilterShortViewModel}" />
+                    </StackPanel>
                 </Grid>
             </ScrollViewer>
-		</TabItem>
-    </TabControl>				
+        </TabItem>
+    </TabControl>
 
 </UserControl>
