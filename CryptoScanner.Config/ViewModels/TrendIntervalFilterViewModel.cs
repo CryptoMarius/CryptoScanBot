@@ -25,6 +25,10 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<IntervalCheckboxViewModel> _intervals = [];
 
+    // Split the flat list into two halves for a two-column top-to-bottom layout
+    public IEnumerable<IntervalCheckboxViewModel> IntervalsColumn1 => Intervals.Take((Intervals.Count + 1) / 2);
+    public IEnumerable<IntervalCheckboxViewModel> IntervalsColumn2 => Intervals.Skip((Intervals.Count + 1) / 2);
+
 
     public void LoadConfig(SettingsTextualIntervalTrend settings, CryptoTradeSide side)
     {
@@ -40,6 +44,10 @@ public partial class TrendIntervalFilterViewModel : ObservableObject
                 IsChecked = settings.List.Contains(interval.Name),
             });
         }
+
+        // Notify the two column views after the list is fully populated
+        OnPropertyChanged(nameof(IntervalsColumn1));
+        OnPropertyChanged(nameof(IntervalsColumn2));
     }
 
     public void SaveConfig(SettingsTextualIntervalTrend settings)
