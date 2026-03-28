@@ -670,6 +670,10 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
         // Other options
+        // Draw candles (note: we draw additional candles each minutes if needed)
+        group = "candles";
+        if (Toggle(model, group, true, Session.IntervalName + CandleTime.AlignFromDateTime(DateTime.UtcNow, Interval.Duration).Minutes.ToString()))
+            Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate);
 
         // Draw pivots
         group = "pivots";
@@ -1091,10 +1095,6 @@ public partial class ChartWindowViewModel : ObservableObject
                 DisplayOptionsChanged(null, null!);
                 FibSettingsChanged(null, null!);
                 TrendSettingsChanged(null, null!);
-
-                // Draw candles (note: we draw additional candles each minutes if needed)
-                var chart = PlotView.Model;
-                Candles.Draw(chart, Symbol, Interval, Session.MinDate, Session.MaxDate);
             }
             finally
             {

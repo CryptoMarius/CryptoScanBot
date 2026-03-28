@@ -71,8 +71,19 @@ public class Positions
         // Label offset: 1.5 candle-widths to the right of the line start
         double xLabelOffset = interval.Duration * 1.5;
 
-        var seriesBuy = new ScatterSeries { Title = "buy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Diamond, Tag = group };
-        var seriesSell = new ScatterSeries { Title = "sell", MarkerSize = 4, MarkerFill = OxyColors.White, MarkerType = MarkerType.Diamond, Tag = group };
+        var seriesBuy = new ScatterSeries { 
+            Title = "buy", 
+            MarkerSize = 4, 
+            MarkerFill = OxyColors.Yellow, 
+            MarkerType = MarkerType.Diamond, 
+            Tag = group,
+        };
+        var seriesSell = new ScatterSeries {
+            Title = "sell", 
+            MarkerSize = 4, 
+            MarkerFill = OxyColors.White, 
+            MarkerType = MarkerType.Diamond, 
+            Tag = group };
 
         foreach (CryptoPosition position in positionList)
         {
@@ -128,7 +139,7 @@ public class Positions
                     if (step.CloseTime.HasValue)
                     {
                         ScatterSeries scatter = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
-                        double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
+                        double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes - interval.Duration;
                         scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
                     }
 
