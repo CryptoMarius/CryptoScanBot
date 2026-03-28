@@ -32,7 +32,7 @@ public class SettingsCompiledFeedback
     public int MinSignals = 5;
     public decimal BlockThreshold = 40m;
     public int ReEnableHours = 24;
-    public bool Log = true;
+    public bool Log = false;
 }
 
 
@@ -41,13 +41,13 @@ public class SettingsCompiledFeedback
 [Serializable]
 public class SettingsCompiled
 {
-    // Welke intervallen zijn actief
+    // The active intervals
     [JsonIgnore]
     public List<CryptoInterval> Interval { get; set; } = [];
     public SortedList<CryptoIntervalPeriod, bool> IntervalPeriod { get; set; } = [];
 
 
-    // Welke strategien zijn actief (en speciaal voor de CreateSignal een onderverdeling)
+    // The active strategies
     public SortedList<CryptoSignalStrategy, bool> Strategy { get; set; } = [];
 
 
