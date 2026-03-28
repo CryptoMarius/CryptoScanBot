@@ -123,6 +123,10 @@ public class SettingsTrading
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;
 
+    // Experimental, reverse the trading direction
+    // (long signal=trade short, short signal = trade long)
+    public bool ReverseTrading { get; set; } = false;
+
     //***************************
     // Take profit
     public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;

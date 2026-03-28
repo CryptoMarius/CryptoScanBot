@@ -47,6 +47,10 @@
                      Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
         </Grid>
 
-    </StackPanel>
+		<!-- Reverse trading -->
+		<CheckBox IsChecked="{Binding ReverseTrading, Mode=TwoWay}"
+                  Content="Reverse trade direction"
+                  FontSize="12"/>
+	</StackPanel>
 
 </UserControl>

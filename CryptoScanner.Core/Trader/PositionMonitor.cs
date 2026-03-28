@@ -259,9 +259,16 @@ public class PositionMonitor //: IDisposable
                 {
                     text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
 
+                    // Sometime i'm wundering why the sacanner takes such idiotic entry points
+                    // So lets try something complete different and turn things upside down ;-)
+                    // This should not lead to any profits, but i'm very curious, and suprise, it works.. weird
+                    CryptoTradeSide tradeSide = signal.Side;
+                    if (GlobalData.Settings.Trading.ReverseTrading)
+                        tradeSide = signal.Side == CryptoTradeSide.Long ? CryptoTradeSide.Short : CryptoTradeSide.Long;
+
 
                     // Does the user want to trade on this interval
-                    if (!TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(interval.IntervalPeriod))
+                    if (!TradingConfig.Trading[tradeSide].IntervalPeriod.ContainsKey(interval.IntervalPeriod))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
                         SignalBlockStats.Increment(SignalBlockStats.IntervalNotConfig);
@@ -270,7 +277,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // Does the user want to trade with this strategy
-                    if (!TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
+                    if (!TradingConfig.Trading[tradeSide].Strategy.ContainsKey(signal.Strategy))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
                         SignalBlockStats.Increment(SignalBlockStats.StrategyNotConfig);
@@ -299,7 +306,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // Create the strategy and fill all the properties (todo: not a neat solution)
-                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy);
+                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(tradeSide, signal.Strategy);
                     if (algorithm == null)
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -351,10 +358,11 @@ public class PositionMonitor //: IDisposable
 
                             // Performance feedback: don't open positions for underperforming strategies,
                             // but keep the signal alive so statistics (PriceMin/Max, SignalStatus) keep updating.
-                            if (StrategyPerformanceMonitor.IsBlocked(signal.Strategy, signal.Side))
+                            if (StrategyPerformanceMonitor.IsBlocked(signal.Strategy, tradeSide))
                             {
                                 GlobalData.AddTextToLogTab(text + " strategy blocked by performance feedback (skipped)");
                                 SignalBlockStats.Increment(SignalBlockStats.PerformanceFeedback);
+                                //ClearSignals(); ... keep them please
                                 continue;
                             }
 
@@ -363,7 +371,7 @@ public class PositionMonitor //: IDisposable
                             // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
 
                             // Is de barometer goed genoeg dat we willen traden?
-                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
+                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, tradeSide, LastCandle1m.OpenTime, 60, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 SignalBlockStats.Increment(SignalBlockStats.Barometer);
@@ -372,7 +380,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Staat op de whitelist (kan leeg zijn)
-                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
+                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, tradeSide, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 SignalBlockStats.Increment(SignalBlockStats.Whitelist);
@@ -381,7 +389,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Staat niet in de blacklist
-                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
+                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, tradeSide, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 SignalBlockStats.Increment(SignalBlockStats.Blacklist);
@@ -417,9 +425,9 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
+                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[tradeSide].Trend, out reaction))
                             {
-                                if (TradingConfig.Trading[signal.Side].TrendLog)
+                                if (TradingConfig.Trading[tradeSide].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 SignalBlockStats.Increment(SignalBlockStats.TrendConditions);
                                 ClearSignals();
@@ -427,7 +435,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
+                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[tradeSide].MarketTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 SignalBlockStats.Increment(SignalBlockStats.MarketTrend);
@@ -452,7 +460,7 @@ public class PositionMonitor //: IDisposable
                             try
                             {
                                 // We willen 1 slot per symbol en x slots voor de long en shorts
-                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
+                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, tradeSide, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
                                     SignalBlockStats.Increment(SignalBlockStats.SlotsFull);
@@ -484,61 +492,62 @@ public class PositionMonitor //: IDisposable
                                 decimal entryQuote = resultAvailableAssets.entryQuoteAsset;
 
                                 // Check the assets, the symbol limits..
+
+                                // Bepaal het entry bedrag
+                                decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                                decimal entryBase = entryQuote / entryPrice;
+                                entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                                entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
+
+                                // Its rounded towards zero
+                                if (entryBase <= 0)
                                 {
-                                    // Bepaal het entry bedrag
-                                    decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
-                                    decimal entryBase = entryQuote / entryPrice;
-                                    entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                                    entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
+                                    SignalBlockStats.Increment(SignalBlockStats.EntryQtyZero);
+                                    ClearSignals();
+                                    return;
+                                }
 
-                                    // Its rounded towards zero
-                                    if (entryBase <= 0)
+                                // Below the minimum allowed quantity
+                                if (entryBase == Symbol.QuantityMinimum)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                    SignalBlockStats.Increment(SignalBlockStats.EntryQtyMinimum);
+                                    ClearSignals();
+                                    return;
+                                }
+
+                                // Below the minimum allowed value
+                                if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
+                                {
+                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
+                                    SignalBlockStats.Increment(SignalBlockStats.EntryValueMinimum);
+                                    ClearSignals();
+                                    return;
+                                }
+
+                                if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && GlobalData.ActiveExchange.TradingType == CryptoTradingType.Spot)
+                                {
+                                    if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
                                     {
-                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
-                                        SignalBlockStats.Increment(SignalBlockStats.EntryQtyZero);
+                                        GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
+                                        SignalBlockStats.Increment(SignalBlockStats.InsufficientBalance);
                                         ClearSignals();
                                         return;
-                                    }
-
-                                    // Below the minimum allowed quantity
-                                    if (entryBase == Symbol.QuantityMinimum)
-                                    {
-                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
-                                        SignalBlockStats.Increment(SignalBlockStats.EntryQtyMinimum);
-                                        ClearSignals();
-                                        return;
-                                    }
-
-                                    // Below the minimum allowed value
-                                    if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
-                                    {
-                                        GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
-                                        SignalBlockStats.Increment(SignalBlockStats.EntryValueMinimum);
-                                        ClearSignals();
-                                        return;
-                                    }
-
-                                    if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.RealTrading && GlobalData.ActiveExchange.TradingType == CryptoTradingType.Spot)
-                                    {
-                                        if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
-                                        {
-                                            GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
-                                            SignalBlockStats.Increment(SignalBlockStats.InsufficientBalance);
-                                            ClearSignals();
-                                            return;
-                                        }
                                     }
                                 }
 
 
                                 // Create position + entry part
                                 SignalBlockStats.Increment(SignalBlockStats.PositionCreated);
-                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side, symbolInterval, LastCandle1mCloseTimeDate);
+                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, tradeSide, 
+                                    symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
-                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, signal.Interval, signal.Strategy,
-                                    GlobalData.Settings.Trading.EntryStrategy, signal.SignalPrice, LastCandle1mCloseTimeDate);
+                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, 
+                                    signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy, 
+                                    signal.SignalPrice, LastCandle1mCloseTimeDate);
                             }
                             finally
                             {
