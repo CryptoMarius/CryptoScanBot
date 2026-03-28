@@ -7,7 +7,7 @@
              x:DataType="vm:TraderDcaViewModel"
              x:Class="CryptoScanner.Config.Views.TraderDcaView">
 
-    <HeaderedContentControl Classes="groupbox" Header="DCA/Bijkoop">
+    <HeaderedContentControl Classes="groupbox" Header="DCA">
         <StackPanel Margin="8" Spacing="12">
             
             <!-- DCA Method Settings -->
