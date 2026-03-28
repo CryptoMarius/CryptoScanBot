@@ -208,6 +208,7 @@ public class BarometerTools
         }
     }
 
+#if debug
     // first 20 should be enough..
     static int dumpCount = 0;
     static DateTime startTime;
@@ -239,6 +240,7 @@ public class BarometerTools
             dumpCount++;
         }
     }
+#endif
 
     /// <summary>
     /// Deze routine maakt barometer per 1m (ondanks dat we met de IntervalPeriod suggereren dat we het in een bepaald interval doen)
@@ -246,7 +248,9 @@ public class BarometerTools
     private static void CalculateBarometerIntervals(CryptoSymbol symbol, CryptoQuoteData quoteData,
         CalcBarometerMethod calcBarometerMethod, bool pricebarometer)
     {
+#if debug
         TimerDebugCandles_Tick(quoteData);
+#endif
 
         // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
