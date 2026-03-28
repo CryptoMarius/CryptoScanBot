@@ -7,7 +7,7 @@
              x:DataType="vm:TraderFuturesViewModel"
              x:Class="CryptoScanner.Config.Views.TraderFuturesView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Futures">
+    <HeaderedContentControl Classes="groupbox" Header="Futures" IsVisible="false">
         <StackPanel Margin="8" Spacing="8">
             
             <!-- Margin (Cross/Isolated) -->
