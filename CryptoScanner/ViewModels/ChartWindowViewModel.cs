@@ -607,7 +607,7 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-
+    private static CandleTime lastCandleTime = CandleTime.MinValue;
     private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
@@ -672,8 +672,8 @@ public partial class ChartWindowViewModel : ObservableObject
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
         group = "candles";
-        if (Toggle(model, group, true, Session.IntervalName + CandleTime.AlignFromDateTime(DateTime.UtcNow, Interval.Duration).Minutes.ToString()))
-            Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate);
+        if (Toggle(model, group, true, Session.IntervalName + lastCandleTime.Minutes.ToString()))
+            lastCandleTime = Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate);
 
         // Draw pivots
         group = "pivots";
