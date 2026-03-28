@@ -46,7 +46,10 @@ public partial class App : Application
     public override void RegisterServices()
     {
         base.RegisterServices();
-        AvaloniaWebViewBuilder.Initialize(default);
+
+        // Store WebView cache in the app data folder (set from -f parameter) instead of
+        // next to the executable, so multiple instances each get their own profile.
+        AvaloniaWebViewBuilder.Initialize(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
     }
 
     public override void OnFrameworkInitializationCompleted()
