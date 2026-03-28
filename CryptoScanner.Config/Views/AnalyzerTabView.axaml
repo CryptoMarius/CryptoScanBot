@@ -21,7 +21,7 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" RowDefinitions="Auto" ColumnSpacing="4">
                     <settings:StrategyView Grid.Column="0" DataContext="{Binding AnalyzerStrategyLongViewModel}" />
-                    <settings:TrendIntervalFilterView Grid.Column="1" DataContext="{Binding AnalyzerTrendIntervalFilterShortViewModel}" />
+                    <settings:TrendIntervalFilterView Grid.Column="1" DataContext="{Binding AnalyzerTrendIntervalFilterLongViewModel}" />
                     <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
                         <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterLongViewModel}" />
                         <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterLongViewModel}" />
