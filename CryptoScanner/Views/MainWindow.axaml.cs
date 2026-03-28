@@ -38,6 +38,23 @@ public partial class MainWindow : Window
     private readonly LogGridView _logView;
 
 
+    // Required by the Avalonia runtime loader (AVLN3001). Never called at runtime — DI always
+    // uses the parameterized constructor, so the uninitialized fields are intentional here.
+    public MainWindow()
+    {
+        _applicationStateService = null!;
+        _tradingViewService = null!;
+        InitializeComponent();
+
+        _signalView = null!;
+        _liveDataView = null!;
+        _dashboardView = null!;
+        _openPositionsView = null!;
+        _closedPositionsView = null!;
+        _logView = null!;
+
+    }
+
     public MainWindow(MainWindowViewModel viewModel,
         ApplicationStateService applicationStateService,
         ITradingViewService tradingViewService)
