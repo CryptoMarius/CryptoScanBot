@@ -18,12 +18,12 @@ namespace CryptoScanner.Core.Signal.Experiment;
 ///   RMEE : TF3=Reentry, TF2=MHV,      TF1=MagicExtrm (strongest, rarest)
 ///
 /// IMPORTANT: TF1 (signal TF) is NEVER "R" in a valid BBMA setup code.
-/// The signal fires BEFORE the CSD on TF1, when TF1 is still in M, E, or EE phase.
+/// The signal fires BEFORE the CSD on TF1, when TF1 is still in M, Extreme, or MagicExtreme phase.
 /// After the signal, the user waits for the CSD on TF1 and enters on the 510 sell zone.
 ///
 /// State classifications per timeframe (Short, using High indicators):
-///   EE = Magic Extreme : both LWMA5(high) and LWMA10(high) are above BB.Upper
-///   E  = Extreme       : LWMA5(high) above BB.Upper, or wick/EMA50 rejection
+///   MagicExtreme = Magic Extreme : both LWMA5(high) and LWMA10(high) are above BB.Upper
+///   Extreme  = Extreme       : LWMA5(high) above BB.Upper, or wick/EMA50 rejection
 ///   M  = MHV phase     : LWMA5(high) below BB.Upper but still above LWMA10(high)
 ///   R  = Reentry       : active bearish CSD (LWMA5 < LWMA10) + close in the 510 sell zone
 ///
@@ -32,7 +32,7 @@ namespace CryptoScanner.Core.Signal.Experiment;
 /// </summary>
 public class SignalBbmaReentryNewShort : SignalBbmaBase
 {
-    private enum BbmaTfState { None, M, E, EE, R }
+    private enum BbmaTfState { None, M, Extreme, MagicExtreme, R }
 
 
     public override bool IndicatorsOkay(MyData data)
@@ -40,6 +40,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (data == null
            || data.Candle.OpenTime == 0
            || data.CandleData == null
+           || data.CandleData.Ema50 == null
            || data.CandleData.Wma05High == null
            || data.CandleData.Wma10High == null
            || data.CandleData.BollingerBandsDeviation == null
@@ -50,23 +51,14 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     }
 
 
-    public override string DisplayText()
-    {
-        return string.Format("wma5.high={0:N8} wma10.high={1:N8}",
-            CandleLast.CandleData!.Wma05High,
-            CandleLast.CandleData!.Wma10High
-        );
-    }
-
-
     /// <summary>
     /// Returns the display string for a BBMA state in the MTF code.
-    /// EE (Magic Extreme) maps to "EE" so RMEE is correctly shown as a 4-character code.
+    /// MagicExtreme (Magic Extreme) maps to "MagicExtreme" so RMEE is correctly shown as a 4-character code.
     /// </summary>
     private static string TfStateCode(BbmaTfState state) => state switch
     {
-        BbmaTfState.EE => "EE",
-        BbmaTfState.E => "E",
+        BbmaTfState.MagicExtreme => "EE",
+        BbmaTfState.Extreme => "E",
         BbmaTfState.M => "M",
         BbmaTfState.R => "R",
         _ => "-"
@@ -76,7 +68,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     /// <summary>
     /// Classifies the current BBMA state of a candle for Short setups.
     /// Uses LWMA5(high), LWMA10(high), BB.Upper, and candle OHLC.
-    /// Priority order: EE → E (Type A) → E (Type B) → E (Advance) → R → M → None
+    /// Priority order: MagicExtreme → Extreme (Type A) → Extreme (Type B) → Extreme (Advance) → R → M → None
     ///
     /// allowWickDetection: when false (used for TF2/TF3), wick-based detections (Type B,
     /// Advance Extreme, MA Retest) are skipped because higher-TF candles are still forming
@@ -95,29 +87,29 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         decimal close = data.Candle.Close;
         decimal open  = data.Candle.Open;
 
-        // EE (Magic Extreme): both MAs are above BB.Upper
+        // MagicExtreme (Magic Extreme): both MAs are above BB.Upper
         if (wma5High > bbUpper && wma10High > bbUpper)
-            return BbmaTfState.EE;
+            return BbmaTfState.MagicExtreme;
 
-        // E (Extreme Type A): LWMA5(high) is above BB.Upper
+        // Extreme (Extreme Type A): LWMA5(high) is above BB.Upper
         if (wma5High > bbUpper)
-            return BbmaTfState.E;
+            return BbmaTfState.Extreme;
 
         if (allowWickDetection)
         {
             decimal bbUpperDec = (decimal)bbUpper;
 
-            // E (Extreme Type B): wick rejection of BB.Upper (high above, close + open below)
+            // Extreme (Extreme Type B): wick rejection of BB.Upper (high above, close + open below)
             if (high > bbUpperDec && close < bbUpperDec && open < bbUpperDec)
-                return BbmaTfState.E;
+                return BbmaTfState.Extreme;
 
-            // E (Extreme Advance): wick rejection of EMA50 (High above EMA50, Close + Open below EMA50)
+            // Extreme (Extreme Advance): wick rejection of EMA50 (High above EMA50, Close + Open below EMA50)
             double? ema50adv = data.CandleData!.Ema50;
             if (ema50adv != null)
             {
                 decimal ema50AdvDec = (decimal)ema50adv;
                 if (high > ema50AdvDec && close < ema50AdvDec && open < ema50AdvDec)
-                    return BbmaTfState.E;
+                    return BbmaTfState.Extreme;
             }
         }
 
@@ -246,11 +238,11 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         }
 
         // Step 1: Classify TF1 (signal TF) state
-        // Per the BBMA MTF table, the signal TF must be in M, E, or EE state
+        // Per the BBMA MTF table, the signal TF must be in M, Extreme, or MagicExtreme state
         // TF1 is NEVER "R" in any valid BBMA code — the signal fires BEFORE the CSD on TF1
         BbmaTfState state1 = ClassifyStateShort(CandleLast);
 
-        if (state1 != BbmaTfState.M && state1 != BbmaTfState.E && state1 != BbmaTfState.EE)
+        if (state1 != BbmaTfState.M && state1 != BbmaTfState.Extreme && state1 != BbmaTfState.MagicExtreme)
         {
             ExtraText = $"TF1 ({Interval.Name}) not in setup state (is {TfStateCode(state1)})";
             return false;
@@ -272,7 +264,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         }
 
         // Step 2: For MHV (M) state on TF1, verify a recent Extreme occurred before it
-        // E and EE states are themselves the Extreme — no additional lookback needed
+        // Extreme and MagicExtreme states are themselves the Extreme — no additional lookback needed
         if (state1 == BbmaTfState.M && !HadRecentExtremeShort(GetExtremeLookback()))
         {
             ExtraText = $"TF1 ({Interval.Name}) is M (MHV) but no preceding Extreme found";

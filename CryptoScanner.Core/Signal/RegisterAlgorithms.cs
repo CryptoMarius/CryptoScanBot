@@ -106,15 +106,6 @@ public static class RegisterAlgorithms
         });
 
 #if DEBUG
-        // another combined with a higher timeframe
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stoch",
-            Strategy = CryptoSignalStrategy.Stoch,
-            AnalyzeLongType = typeof(SignalStochLong),
-            AnalyzeShortType = typeof(SignalStochShort),
-        });
-
         // 5m + 1h directional: 1h was in extreme zone and is on its way to the other side,
         // 5m confirms the same direction
         Register(new AlgorithmDefinition()
@@ -228,18 +219,6 @@ public static class RegisterAlgorithms
 #endif
 
 
-        // Does not perform well in the signal statistics
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "rolling fft",
-        //            Strategy = CryptoSignalStrategy.RollingFft,
-        //            AnalyzeLongType = typeof(SignalRollingFft),
-        //            AnalyzeShortType = typeof(SignalRollingFft),
-        //        });
-        //#endif
-
-
 #if DEBUG
         Register(new AlgorithmDefinition()
         {
@@ -250,21 +229,6 @@ public static class RegisterAlgorithms
         });
 #endif
 
-
-//#if DEBUG
-
-//        //***************************************************
-//        // BbWickSma - BB wick rejection + SMA20 slope + SMA50 cross reversal
-//        // Trade statistics is kind of bad
-//        //***************************************************
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "bbwicksma",
-//            Strategy = CryptoSignalStrategy.BbWickSma,
-//            AnalyzeLongType = typeof(SignalBbWickSmaLong),
-//            AnalyzeShortType = typeof(SignalBbWickSmaShort),
-//        });
-//#endif
 
 #if DEBUG
         //***************************************************

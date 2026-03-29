@@ -18,10 +18,6 @@ public enum CryptoSignalStrategy
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
-#if DEBUG
-    Stoch = 20,
-#endif
-
     NadarayaWatsonEnvelope = 25,
 #if DEBUG
     NadarayaWatsonEnvelopePull = 28,
@@ -47,11 +43,6 @@ public enum CryptoSignalStrategy
 #endif
 #if DEBUG
     BbmaReentryNew = 43,
-#endif
-
-#if DEBUG
-    // BB wick + SMA20 slope + SMA50 cross reversal signal
-    BbWickSma = 44,
 #endif
 
 #if DEBUG
