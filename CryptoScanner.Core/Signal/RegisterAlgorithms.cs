@@ -178,7 +178,7 @@ public static class RegisterAlgorithms
         // BBMA - Oma Ally
         Register(new AlgorithmDefinition()
         {
-            Name = "bbma",
+            Name = "bbma.grok",
             Strategy = CryptoSignalStrategy.BbMa,
             AnalyzeLongType = typeof(SignalBbMaLong),
             AnalyzeShortType = typeof(SignalBbMaShort),
@@ -189,7 +189,7 @@ public static class RegisterAlgorithms
         // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
         Register(new AlgorithmDefinition()
         {
-            Name = "bbma.reentry.old",
+            Name = "bbma.old",
             Strategy = CryptoSignalStrategy.BbmaReentryOld,
             AnalyzeLongType = typeof(SignalBbmaReentryOldLong),
             AnalyzeShortType = typeof(SignalBbmaReentryOldShort),
@@ -200,7 +200,7 @@ public static class RegisterAlgorithms
         // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
         Register(new AlgorithmDefinition()
         {
-            Name = "bbma.reentry.new",
+            Name = "bbma.new",
             Strategy = CryptoSignalStrategy.BbmaReentryNew,
             AnalyzeLongType = typeof(SignalBbmaReentryNewLong),
             AnalyzeShortType = typeof(SignalBbmaReentryNewShort),
@@ -229,20 +229,6 @@ public static class RegisterAlgorithms
         });
 #endif
 
-
-#if DEBUG
-        //***************************************************
-        // BBMA Magic Extreme – WMA5(Low/High) AND WMA10(Low/High) both outside the Bollinger Band,
-        // combined with a price wick that touches/breaks the band but closes back inside.
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bbma.magic.extreme",
-            Strategy = CryptoSignalStrategy.BbmaMagicExtreme,
-            AnalyzeLongType = typeof(SignalBbmaMagicExtreme),
-            AnalyzeShortType = typeof(SignalBbmaMagicExtreme),
-        });
-#endif
 
     }
 
