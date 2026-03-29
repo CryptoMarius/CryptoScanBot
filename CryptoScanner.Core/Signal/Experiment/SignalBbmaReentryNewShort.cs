@@ -260,12 +260,12 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
         // Step 3: BB must be flattening on TF1 — momentum fading on entry interval
         // Per Forex Nexus: BB nearly horizontal signals trend exhaustion / reversal point.
-        if (!CheckBbFlatteningShort(out string bbReason))
-        {
-            ExtraText = bbReason;
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            return false;
-        }
+        //if (!CheckBbFlatteningShort(out string bbReason))
+        //{
+        //    ExtraText = bbReason;
+        //    GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+        //    return false;
+        //}
 
         // Step 4: Resolve fixed BBMA higher timeframe pair
         if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
@@ -295,7 +295,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         BbmaTfState state3 = ClassifyStateShort(result3.candle, allowWickDetection: false);
         if (state3 != BbmaTfState.Reentry)
         {
-            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in R state (is {TfStateCode(state3)})";
+            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)})";
             GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
