@@ -78,6 +78,6 @@ class Program
            => AppBuilder.Configure<App>()
                .UsePlatformDetect()
                .LogToTrace()
-               .UseDesktopWebView();
+               .UseDesktopWebView(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
 
 }

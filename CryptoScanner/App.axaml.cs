@@ -5,8 +5,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-using AvaloniaWebView;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 using CryptoScanner.Core.Sounds;
@@ -43,16 +41,7 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void RegisterServices()
-    {
-        base.RegisterServices();
-
-        // Store WebView cache in the app data folder (set from -f parameter) instead of
-        // next to the executable, so multiple instances each get their own profile.
-        AvaloniaWebViewBuilder.Initialize(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
-    }
-
-    public override void OnFrameworkInitializationCompleted()
+public override void OnFrameworkInitializationCompleted()
     {
         System.Diagnostics.Debug.WriteLine($"App.OnFrameworkInitializationCompleted");
 
