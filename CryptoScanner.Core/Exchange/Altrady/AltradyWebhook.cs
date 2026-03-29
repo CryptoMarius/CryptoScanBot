@@ -191,13 +191,13 @@ public class AltradyWebhook
             // Send request using HttpClient
             string json = request.ToString();
             GlobalData.AddTextToLogTab(json);
-            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook json {json}");
+            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {json}");
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _httpClient.PostAsync(url, content);
 
             string result = await response.Content.ReadAsStringAsync();
-
+            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 
             string info = "";
