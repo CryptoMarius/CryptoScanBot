@@ -23,32 +23,6 @@ public class SignalBbMaShort : SignalBbmaBase
     }
 
 
-    //private bool PrepareHigherInterval(CryptoIntervalPeriod higher, out CryptoSymbolInterval higherInterval, out CryptoCandle? data)
-    //{
-    //    higherInterval = Symbol.GetSymbolInterval(higher);
-    //    long candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
-    //    if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out data))
-    //    {
-    //        ExtraText += $"nocandle:{candleOpenTime}";
-    //        return false;
-    //    }
-
-    //    if (data.CandleData == null)
-    //    {
-    //        List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
-    //        if (history == null)
-    //        {
-    //            DateTime x = CandleTools.GetUnixDate(candleOpenTime);
-    //            ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
-    //            return false;
-    //        }
-    //        CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-    //    }
-
-    //    return true;
-    //}
-
-
     //private bool IsExtreme(CryptoCandle data, int backward)
     //{
     //    // go back x extra data(s)?
@@ -129,19 +103,16 @@ public class SignalBbMaShort : SignalBbmaBase
     public bool Calculate(CryptoIntervalPeriod tf1, CryptoIntervalPeriod tf2, CryptoIntervalPeriod tf3)
     {
         CryptoInterval interval1 = GlobalData.IntervalListPeriod[tf1];
-        //LoadSymbolCandles(symbol, interval1);
         CryptoCandleList candlesTf1 = Symbol.GetSymbolInterval(tf1).CandleList;
         if (candlesTf1.Count == 0)
             return false;
 
         CryptoInterval interval2 = GlobalData.IntervalListPeriod[tf2];
-        //LoadSymbolCandles(symbol, interval2);
         CryptoCandleList candlesTf2 = Symbol.GetSymbolInterval(tf2).CandleList;
         if (candlesTf2.Count == 0)
             return false;
 
         CryptoInterval interval3 = GlobalData.IntervalListPeriod[tf3];
-        //LoadSymbolCandles(symbol, interval3);
         CryptoCandleList candlesTf3 = Symbol.GetSymbolInterval(tf3).CandleList;
         if (candlesTf3.Count == 0)
             return false;

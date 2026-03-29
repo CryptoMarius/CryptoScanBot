@@ -4,6 +4,14 @@ namespace CryptoScanner.Core.Signal.Experiment;
 
 public class SignalBbmaBase : SignalCreateBase
 {
+    internal enum BbmaTfState 
+    { 
+        None,
+        Extreme,
+        MagicExtreme,
+        M, 
+        Reentry 
+    }
 
 
     /// <summary>

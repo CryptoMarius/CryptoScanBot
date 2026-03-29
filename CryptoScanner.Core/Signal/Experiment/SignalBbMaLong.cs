@@ -22,33 +22,6 @@ public class SignalBbMaLong : SignalBbmaBase
         return true;
     }
 
-
-    //private bool PrepareHigherInterval(CryptoIntervalPeriod higher, out CryptoSymbolInterval higherInterval, out CryptoCandle? candle)
-    //{
-    //    higherInterval = Symbol.GetSymbolInterval(higher);
-    //    CandleTime candleOpenTime = IntervalTools.StartOfIntervalCandle2(CandleLast.Candle.OpenTime, Interval.Duration, higherInterval.Interval.Duration);
-    //    if (!higherInterval.CandleList.TryGetValue(candleOpenTime, out candle))
-    //    {
-    //        ExtraText += $"nocandle:{candleOpenTime}";
-    //        return false;
-    //    }
-
-    //    if (data.CandleData == null)
-    //    {
-    //    //    List<CryptoCandle>? history = CandleIndicatorData.CollectCandles(Symbol, higherInterval.Interval, candleOpenTime, out string reason);
-    //    //    if (history == null)
-    //    //    {
-    //    //        DateTime x = candleOpenTime.ToDateTime();
-    //    //        ExtraText += $"hist:null {x.ToLocalTime()} {reason}";
-    //    //        return false;
-    //    //    }
-    //    //    CandleIndicatorData.CalculateIndicators(Symbol, higherInterval.Interval, history);
-    //    //}
-
-    //    return true;
-    //}
-
-
     //private bool IsExtreme(CryptoCandle data, int backward)
     //{
     //    // go back x extra data(s)?
