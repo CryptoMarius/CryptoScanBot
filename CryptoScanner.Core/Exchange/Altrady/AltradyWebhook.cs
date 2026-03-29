@@ -40,19 +40,19 @@ namespace CryptoScanner.Core.Exchange.Altrady;
 
 public class AltradyWebhookSignalData
 {
-    public required string SignalId { get; set; }
+    public string? SignalId { get; set; }
 }
 
 public class AltradyWebhookBotPositions
 {
     public int Id { get; set; }
-    public required string CoinraySymbol { get; set; }
-    public required AltradyWebhookSignalData SignalData { get; set; }
+    public string? CoinraySymbol { get; set; }
+    public AltradyWebhookSignalData? SignalData { get; set; }
 }
 
 public class AltradyWebhookPayload
 {
-    public required AltradyWebhookBotPositions SignalBotPositions { get; set; }
+    public AltradyWebhookBotPositions? SignalBotPositions { get; set; }
 }
 
 public class AltradyWebhook
@@ -213,8 +213,8 @@ public class AltradyWebhook
                 }
                 else
                 {
-                    position.AltradyPositionId = resultObject.SignalBotPositions?.SignalData.SignalId;
-                    info = $"id={resultObject.SignalBotPositions?.Id} SignalId={resultObject.SignalBotPositions?.SignalData.SignalId}";
+                    position.AltradyPositionId = resultObject.SignalBotPositions?.SignalData?.SignalId;
+                    info = $"id={resultObject.SignalBotPositions?.Id} SignalId={resultObject.SignalBotPositions?.SignalData?.SignalId}";
                 }
             }
             catch (Exception error)
