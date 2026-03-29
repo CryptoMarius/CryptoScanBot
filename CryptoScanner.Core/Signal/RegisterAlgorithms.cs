@@ -179,14 +179,15 @@ public static class RegisterAlgorithms
         Register(new AlgorithmDefinition()
         {
             Name = "bbma.grok",
-            Strategy = CryptoSignalStrategy.BbMa,
+            Strategy = CryptoSignalStrategy.BbMaGrok,
             AnalyzeLongType = typeof(SignalBbMaLong),
             AnalyzeShortType = typeof(SignalBbMaShort),
         });
 #endif
 
 #if DEBUG
-        // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
+        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
+        // No confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
         {
             Name = "bbma.old",
@@ -197,7 +198,8 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
-        // BBMA Reentry - Oma Ally: price returns to the 510 zone after a CSD crossover
+        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
+        // Confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
         {
             Name = "bbma.new",

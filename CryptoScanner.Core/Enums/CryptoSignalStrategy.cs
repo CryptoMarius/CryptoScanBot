@@ -24,7 +24,7 @@ public enum CryptoSignalStrategy
 #endif
 
 #if DEBUG
-    BbMa = 30, // still studying, its complicated
+    BbMaGrok = 30, // still studying, its complicated // Confirmations from higher timeframe(s)
 #endif
 
 #if DEBUG
@@ -39,10 +39,10 @@ public enum CryptoSignalStrategy
 #endif
 
 #if DEBUG
-    BbmaReentryOld = 42,
+    BbmaReentryOld = 42, // No confirmations from higher timeframe(s)
 #endif
 #if DEBUG
-    BbmaReentryNew = 43,
+    BbmaReentryNew = 43, // Confirmations from higher timeframe(s)
 #endif
 
 #if DEBUG
