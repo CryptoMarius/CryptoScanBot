@@ -20,7 +20,7 @@ namespace CryptoScanner.Core.Signal.Experiment;
 ///
 /// MTF structure required:
 ///   TF3 = Reentry (HTF directional anchor — already in reentry after its own CSD)
-///   TF2 = any meaningful state (Reentry, Extreme, M, MagicExtreme — confirms setup active on mid TF)
+///   TF2 = any meaningful state (Reentry, Extreme, Mlv, MagicExtreme — confirms setup active on mid TF)
 ///   TF1 = Reentry (entry condition — the actual trade entry per PDF)
 ///
 /// Fixed BBMA timeframe pairs:
@@ -37,6 +37,8 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
            || data.CandleData.Wma05High == null
            || data.CandleData.Wma10High == null
            || data.CandleData.BollingerBandsDeviation == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.BollingerBandsPercentage == null
            )
             return false;
 
@@ -46,17 +48,16 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
     /// <summary>
     /// Classifies the BBMA state of a candle for Short setups (uses LWMA5/10 on highs).
-    /// Priority: MagicExtreme → Extreme(TypeA) → Extreme(TypeB) → Extreme(Advance) → Reentry → M → None
+    /// Priority: MagicExtreme → Extreme(TypeA) → Extreme(TypeB) → Extreme(Advance) → Reentry → Mlv → None
     ///
     /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
     /// wick levels are not yet final, but MA positions are reliable.
     /// </summary>
     private BbmaTfState ClassifyStateShort(MyData data, bool allowWickDetection = true)
     {
-        double wma5High  = data.CandleData!.Wma05High!.Value;
+        double wma5High = data.CandleData!.Wma05High!.Value;
         double wma10High = data.CandleData!.Wma10High!.Value;
-        double bbUpper   = data.CandleData!.BollingerBandsUpperBand!.Value;
-
+        double bbUpper = data.CandleData!.BollingerBandsUpperBand!.Value;
 
         // MagicExtreme (Magic Extreme): both MAs above BB.Upper
         if (wma5High > bbUpper && wma10High > bbUpper)
@@ -84,20 +85,20 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
                 return BbmaTfState.Extreme;
         }
 
-        // Reentry (Reentry): bearish CSD active + price reached the 510 sell zone
+        // Reentry: bearish CSD active + price reached the 510 sell zone
         //   Standard : close at or above LWMA5(high) — in or beyond the zone
         //   MA Retest: wick spiked above LWMA5(high), close recovered below LWMA10(high)
         if (wma5High < wma10High)
         {
-            decimal wma5Dec  = (decimal)wma5High;
+            decimal wma5Dec = (decimal)wma5High;
             decimal wma10Dec = (decimal)wma10High;
             bool priceInZone = close >= wma5Dec;
-            bool maRetest    = allowWickDetection && high > wma5Dec && close < wma10Dec;
+            bool maRetest = allowWickDetection && high > wma5Dec && close < wma10Dec;
             if (priceInZone || maRetest)
                 return BbmaTfState.Reentry;
         }
 
-        // M (MHV phase): LWMA5(high) below BB.Upper but above LWMA10(high) — pre-CSD
+        // Mlv (MHV phase): LWMA5(high) below BB.Upper but above LWMA10(high) — pre-CSD
         if (wma5High <= bbUpper && wma5High > wma10High)
             return BbmaTfState.Mlv;
 
@@ -106,12 +107,88 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
 
     /// <summary>
-    /// Verifies that TF2=M represents a genuine MHV (Market High Volume — the bearish mirror of MLV)
+    /// Verifies that TF1 has recently transitioned through a BBMA alert phase (Mlv/E/EE)
+    /// before the current Reentry. Per the PDF: entry is only valid when TF1 previously had
+    /// an alert (Extreme or MLV). The pattern can repeat (M→R→M→R...) and expires as soon
+    /// as price closes above SMA20 while CSD is still active (bearish reversal has failed).
+    /// GetPrevCandle calls IndicatorsOkay internally — no manual null checks needed.
+    /// </summary>
+    private bool CheckTf1AlertHistoryShort(out string reason)
+    {
+        reason = "";
+        const int lookback = 20;
+
+        MyData? candle = CandleLast;
+        for (int i = 0; i < lookback; i++)
+        {
+            if (!GetPrevCandle(candle, out MyData? prev))
+            {
+                reason = $"TF1 alert: insufficient history ({i} candles checked)";
+                return false;
+            }
+
+            candle = prev!;
+            BbmaTfState state = ClassifyStateShort(candle);
+
+            // Found prior alert phase (Mlv/Extreme/MagicExtreme) — Reentry is valid
+            if (state == BbmaTfState.Mlv || state == BbmaTfState.Extreme || state == BbmaTfState.MagicExtreme)
+                return true;
+
+            // CSD active (wma5 < wma10) but price closed above SMA20 — bearish reversal expired
+            if (candle.CandleData!.Wma05High!.Value < candle.CandleData!.Wma10High!.Value
+                && (double)candle.Candle.Close > candle.CandleData!.Sma20!.Value)
+            {
+                reason = "TF1 alert: pattern expired (CSD active but close above SMA20)";
+                return false;
+            }
+        }
+
+        reason = "TF1 alert: no prior Mlv/E/EE alert phase found in lookback";
+        return false;
+    }
+
+
+    /// <summary>
+    /// Verifies that the BB is flattening (narrowing) on TF1.
+    /// Per Forex Nexus: the BB should be almost horizontal on the lowest interval at the
+    /// moment of a trend reversal — indicating the explosive move is losing steam.
+    /// Checks that BollingerBandsPercentage is lower now than N candles ago.
+    /// </summary>
+    private bool CheckBbFlatteningShort(out string reason)
+    {
+        reason = "";
+        const int lookback = 5;
+
+        double currentBbPct = CandleLast.CandleData!.BollingerBandsPercentage!.Value;
+
+        MyData? candle = CandleLast;
+        for (int i = 0; i < lookback; i++)
+        {
+            if (!GetPrevCandle(candle, out MyData? prev))
+            {
+                reason = $"BB flattening: insufficient history ({i} candles)";
+                return false;
+            }
+            candle = prev!;
+        }
+
+        double olderBbPct = candle.CandleData!.BollingerBandsPercentage!.Value;
+        if (currentBbPct >= olderBbPct)
+        {
+            reason = $"BB not flattening: {currentBbPct:N2}% >= {olderBbPct:N2}% ({lookback} candles ago)";
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// Verifies that TF2=Mlv represents a genuine MHV (Market High Volume — bearish mirror of MLV)
     /// phase per the PDF:
     ///   1. A recent Extreme (LWMA5(high) above BB.Upper) occurred within the lookback window.
     ///   2. Since that Extreme, no candle high has touched BB.Upper again —
-    ///      price is progressively fading away from the upper band, which is the defining
-    ///      characteristic of the bearish MLV phase ("price no longer makes it to the BB").
+    ///      price is progressively fading away from the upper band ("no longer makes it to the BB").
     ///   - If no Extreme is found within the lookback window, reject.
     /// </summary>
     private bool CheckMlvShort(CryptoInterval tf2Interval, MyData tf2Candle, out string reason)
@@ -128,17 +205,17 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
                 return false;
             }
 
-            candle = prev;
-            double wma5High = candle!.CandleData.Wma05High!.Value;
-            double bbUpper = candle.CandleData.BollingerBandsUpperBand!.Value;
+            candle = prev!;
+            double wma5High = candle.CandleData!.Wma05High!.Value;
+            double bbUpper = candle.CandleData!.BollingerBandsUpperBand!.Value;
 
-            // Prior Extreme found (Type A: LWMA5 below BB.Lower):
+            // Prior Extreme found (Type A: LWMA5 above BB.Upper):
             // All candles between the current Mlv candle and this Extreme were already
-            // verified not to touch BB.Lower → genuine MLV confirmed.
+            // verified not to touch BB.Upper → genuine MHV confirmed.
             if (wma5High > bbUpper)
                 return true;
 
-            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
+            // Price still reaching BB.Upper → not a genuine MHV phase per PDF.
             if (candle.Candle.High >= (decimal)bbUpper)
             {
                 reason = "TF2 Mlv: price still reaching BB.Upper — MLV not confirmed";
@@ -167,69 +244,51 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         BbmaTfState state1 = ClassifyStateShort(CandleLast);
         if (state1 != BbmaTfState.Reentry)
         {
-            //ExtraText = $"TF1 ({Interval.Name}) not in Reentry state ({TfStateCode(state1)})";
-            GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            ExtraText = $"TF1 ({Interval.Name}) not in Reentry state ({TfStateCode(state1)})";
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
-        // EMA50 trend filter: EMA50 must be above mid-BB (SMA20) for bearish bias
-        // Per PDF: EMA50 above mid-BB = downtrend
-        double ema50Tf1 = CandleLast.CandleData!.Ema50!.Value;
-        double midBbTf1 = CandleLast.CandleData!.Sma20!.Value;
-        if (ema50Tf1 <= midBbTf1)
+        // Step 2: Verify TF1 history — there must have been a prior alert phase (Mlv/E/EE)
+        // before this Reentry. Detects both valid setups and expired patterns (close above SMA20).
+        if (!CheckTf1AlertHistoryShort(out string alertReason))
         {
-            ExtraText = $"EMA50 ({ema50Tf1:N6}) not above mid-BB — bullish bias, no Short";
-            //GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            ExtraText = alertReason;
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
+        // Step 3: BB must be flattening on TF1 — momentum fading on entry interval
+        // Per Forex Nexus: BB nearly horizontal signals trend exhaustion / reversal point.
+        if (!CheckBbFlatteningShort(out string bbReason))
+        {
+            ExtraText = bbReason;
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
 
-        // Step 2: Resolve fixed BBMA higher timeframe pair (2 and 3 will be higher intervals)
+        // Step 4: Resolve fixed BBMA higher timeframe pair
         if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
             return false;
 
-
-        // Step 3: TF2 state (wick detection disabled — candle still forming on higher TF)
-        var result2 = IndicatorDataList.CalculateIndicatorsForInterval(
-            Symbol, Interval, CandleLast.Candle.OpenTime, period2);
-
-        if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
-        {
-            ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            return false;
-        }
-
-        BbmaTfState state2 = ClassifyStateShort(result2.candle, allowWickDetection: false);
-        if (state2 == BbmaTfState.None)
-        {
-            ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) has no clear BBMA state";
-            GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            return false;
-        }
-
-        // If TF2 is in MHV/MLV phase, verify it is a genuine MLV per the PDF:
-        // a prior Extreme must exist and price must have faded from BB.Upper since then.
-        if (state2 == BbmaTfState.Mlv)
-        {
-            if (!CheckMlvShort(result2.higherInterval.Interval, result2.candle, out string mlvReason))
-            {
-                ExtraText = mlvReason;
-                GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-                return false;
-            }
-        }
-
-
-        // Step 4: TF3 must be in Reentry state — HTF directional anchor
-        // Per PDF: the highest timeframe shows a completed reentry (CSD + price in zone)
+        // Step 5: TF3 state — HTF directional anchor (computed first: trend is judged on highest TF)
         var result3 = IndicatorDataList.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, period3);
 
         if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
         {
             ExtraText = $"no data for TF3 ({result3.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
+
+        // Trend filter on TF3 (highest TF): EMA50 above mid-BB (SMA20) = bearish bias
+        // Per PDF: trend direction is determined on the highest timeframe, not on TF1.
+        double ema50Tf3 = result3.candle.CandleData!.Ema50!.Value;
+        double midBbTf3 = result3.candle.CandleData!.Sma20!.Value;
+        if (ema50Tf3 <= midBbTf3)
+        {
+            ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not above mid-BB — bullish bias on HTF, no Short";
             return false;
         }
 
@@ -237,8 +296,39 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         if (state3 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in R state (is {TfStateCode(state3)})";
-            GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
+        }
+
+        // Step 6: TF2 state (wick detection disabled — candle still forming on higher TF)
+        var result2 = IndicatorDataList.CalculateIndicatorsForInterval(
+            Symbol, Interval, CandleLast.Candle.OpenTime, period2);
+
+        if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
+        {
+            ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name})";
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
+
+        BbmaTfState state2 = ClassifyStateShort(result2.candle, allowWickDetection: false);
+        if (state2 == BbmaTfState.None)
+        {
+            ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) has no clear BBMA state";
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
+
+        // If TF2 is in MHV/MLV phase, verify it is genuine per the PDF:
+        // a prior Extreme must exist and price must have faded from BB.Upper since then.
+        if (state2 == BbmaTfState.Mlv)
+        {
+            if (!CheckMlvShort(result2.higherInterval.Interval, result2.candle, out string mlvReason))
+            {
+                ExtraText = mlvReason;
+                GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+                return false;
+            }
         }
 
         // MTF code: TF3→TF2→TF1 (highest to lowest).
@@ -256,7 +346,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         }
 
         ExtraText = $"invalid MTF code {code} [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
-        GlobalData.AddTextToLogTab($"{Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+        GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
         return false;
     }
 }
