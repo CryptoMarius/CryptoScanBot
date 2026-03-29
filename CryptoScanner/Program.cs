@@ -1,6 +1,8 @@
 ﻿using Avalonia;
 using Avalonia.WebView.Desktop;
 
+using AvaloniaWebView;
+
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 
@@ -70,6 +72,10 @@ class Program
         // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging();
 
+        // Configure WebView cache folder before Avalonia initializes the WebView subsystem.
+        // AppDataFolder is already set above, so this runs at the correct moment.
+        AvaloniaWebViewBuilder.Initialize(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
@@ -78,6 +84,6 @@ class Program
            => AppBuilder.Configure<App>()
                .UsePlatformDetect()
                .LogToTrace()
-               .UseDesktopWebView(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
+               .UseDesktopWebView();
 
 }
