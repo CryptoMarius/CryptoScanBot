@@ -1,8 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.WebView.Desktop;
 
-using AvaloniaWebView;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Services;
 
@@ -59,6 +57,11 @@ class Program
         GlobalData.AppDataFolder = platformService.GetDataDirectory();
         //System.Diagnostics.Debug.WriteLine($"GlobalData.AppDataFolder =  {GlobalData.AppDataFolder}");
 
+        // WebView2 reads WEBVIEW2_USER_DATA_FOLDER at process level before any initialization.
+        // Setting it here (before BuildAvaloniaApp) ensures the cache lands in the app data folder.
+        // Note: WebView2 appends "\EBWebView" to this path automatically.
+        Environment.SetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER", GlobalData.AppDataFolder);
+
         // DEBUG OUTPUT
         Console.WriteLine($"OS: {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
         //Console.WriteLine($"ApplicationData: {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
@@ -71,10 +74,6 @@ class Program
 
         // Initialize the logging system (as soon as possible)
         ScannerLog.InitializeLogging();
-
-        // Configure WebView cache folder before Avalonia initializes the WebView subsystem.
-        // AppDataFolder is already set above, so this runs at the correct moment.
-        AvaloniaWebViewBuilder.Initialize(config => { config.UserDataFolder = GlobalData.AppDataFolder; });
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
