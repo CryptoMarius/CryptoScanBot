@@ -61,7 +61,13 @@
 				<!-- Separator line -->
 				<Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="1" Margin="0,0"/>
 
-				<Grid Grid.Row="2" Name="MainGrid" ColumnDefinitions="300,4,1,*">
+				<Grid Grid.Row="2" Name="MainGrid">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="300" MinWidth="80"/>
+						<ColumnDefinition Width="4"/>
+						<ColumnDefinition Width="1"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
 
 					<!-- The symbols on the left -->
 					<Grid Grid.Column ="0" x:Name="SymbolSplitView" RowDefinitions="48,*">
