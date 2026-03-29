@@ -7,50 +7,53 @@
              x:DataType="vm:TraderMiscSettingsViewModel"
              x:Class="CryptoScanner.Config.Views.TraderMiscSettingsView">
 
-    <StackPanel Spacing="12">
-        
-        <!-- Trade Via -->
-        <Grid ColumnDefinitions="Auto,*,170" RowDefinitions="Auto">
-            <TextBlock Grid.Column="0" Text="Trading:" 
-                       VerticalAlignment="Center" 
-                       Margin="0,0,12,0" FontSize="12"/>
-            <ComboBox Grid.Column="2" 
-                      ItemsSource="{Binding TradeViaList}"
-                      SelectedValue="{Binding TradeVia, Mode=TwoWay}"
-                      DisplayMemberBinding="{Binding Key}"
-                      SelectedValueBinding="{Binding Value}"
+    <HeaderedContentControl Classes="groupbox" Header="Common">
+        <StackPanel Spacing="12" Margin="0,8,0,0">
+
+            <!-- Trade Via -->
+            <Grid ColumnDefinitions="Auto,*,170" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Trading:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <ComboBox Grid.Column="2"
+                          ItemsSource="{Binding TradeViaList}"
+                          SelectedValue="{Binding TradeVia, Mode=TwoWay}"
+                          DisplayMemberBinding="{Binding Key}"
+                          SelectedValueBinding="{Binding Value}"
+                          FontSize="12"/>
+            </Grid>
+
+            <!-- Sound Trade Notification -->
+            <CheckBox IsChecked="{Binding SoundTradeNotification, Mode=TwoWay}"
+                      Content="Sound trade notification"
                       FontSize="12"/>
-        </Grid>
 
-        <!-- Sound Trade Notification -->
-        <CheckBox IsChecked="{Binding SoundTradeNotification, Mode=TwoWay}"
-                  Content="Sound trade notification"
-                  FontSize="12"/>
+            <!-- Disable New Positions -->
+            <CheckBox IsChecked="{Binding DisableNewPositions, Mode=TwoWay}"
+                      Content="Disable new positions"
+                      FontSize="12"/>
 
-        <!-- Disable New Positions -->
-        <CheckBox IsChecked="{Binding DisableNewPositions, Mode=TwoWay}"
-                  Content="Disable new positions"
-                  FontSize="12"/>
+            <!-- Log Canceled Orders -->
+            <CheckBox IsChecked="{Binding LogCanceledOrders, Mode=TwoWay}"
+                      Content="Log cancelled orders"
+                      FontSize="12"/>
 
-        <!-- Log Canceled Orders -->
-        <CheckBox IsChecked="{Binding LogCanceledOrders, Mode=TwoWay}"
-                  Content="Log cancelled orders"
-                  FontSize="12"/>
+            <!-- Cool Down Time -->
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Cool down time (m):"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding GlobalBuyCooldownTime, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
 
-        <!-- Cool Down Time -->
-        <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-            <TextBlock Grid.Column="0" Text="Cool down time (m):" 
-                       VerticalAlignment="Center" 
-                       Margin="0,0,12,0" FontSize="12"/>
-            <TextBox Grid.Column="2" 
-                     Text="{Binding GlobalBuyCooldownTime, Mode=TwoWay}" 
-                     Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-        </Grid>
+            <!-- Reverse trading -->
+            <CheckBox IsChecked="{Binding ReverseTrading, Mode=TwoWay}"
+                      Content="Reverse trade direction"
+                      FontSize="12"/>
 
-		<!-- Reverse trading -->
-		<CheckBox IsChecked="{Binding ReverseTrading, Mode=TwoWay}"
-                  Content="Reverse trade direction"
-                  FontSize="12"/>
-	</StackPanel>
+        </StackPanel>
+    </HeaderedContentControl>
 
 </UserControl>
