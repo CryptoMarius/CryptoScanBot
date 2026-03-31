@@ -23,6 +23,7 @@ public class SignalTrendLong : SignalCreateBase
             if (data.LastTrend != CryptoTrendIndicator.Bullish)
             {
                 // Note: data.Trend == Unknown is unreachable here (outer check already requires Bullish).
+                ExtraText = "Going bullish";
                 data.LastTrend = data.Trend;
                 return true;
             }
