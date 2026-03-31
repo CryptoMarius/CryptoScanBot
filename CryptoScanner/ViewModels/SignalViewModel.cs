@@ -836,13 +836,13 @@ public partial class SignalViewModel : BaseConvertersViewModel
                 {
                     var result = false;
 
-                    if (candle.Low < signal.PriceMin || signal.PriceMin == 0)
+                    if (candle.Low < signal.PriceMin)
                     {
                         signal.PriceMin = candle.Low;
                         signal.PriceMinPerc = (float)(100 * (signal.PriceMin / signal.SignalPrice - 1));
                         result = true;
                     }
-                    else if (candle.High > signal.PriceMax || signal.PriceMax == 0)
+                    if (candle.High > signal.PriceMax)
                     {
                         signal.PriceMax = candle.High;
                         signal.PriceMaxPerc = (float)(100 * (signal.PriceMax / signal.SignalPrice - 1));
