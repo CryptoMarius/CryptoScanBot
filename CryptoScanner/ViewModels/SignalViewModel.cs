@@ -125,6 +125,12 @@ public partial class SignalViewModel : BaseConvertersViewModel
             return _StrategyBackground!;
         }
     }
+
+    public void ResetStrategyBackground()
+    {
+        _StrategyBackground = null;
+        OnPropertyChanged(nameof(StrategyBackground));
+    }
     //public decimal SignalPrice => Object.SignalPrice;
     private string? _SignalPriceText;
     public string SignalPrice

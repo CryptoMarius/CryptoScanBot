@@ -2,9 +2,11 @@
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Telegram;
@@ -26,6 +28,8 @@ public partial class SignalGridViewModel : ObservableObject
 
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
+        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+
         _timerAddSignalsFromQueue.Tick += TimerAddSignalsFromQueueTick;
         _timerAddSignalsFromQueue.Start();
 
@@ -40,11 +44,19 @@ public partial class SignalGridViewModel : ObservableObject
 
     public void Dispose()
     {
+        WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+
         _timerAddSignalsFromQueue.Stop();
         _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
 
         _timerClearAndUpdateSignals.Stop();
         _timerClearAndUpdateSignals.Tick -= TimerClearAndUpdateSignalsTick;
+    }
+
+    private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
+    {
+        foreach (var signal in Signals)
+            signal.ResetStrategyBackground();
     }
 
 

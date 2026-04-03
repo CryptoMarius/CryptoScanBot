@@ -2,6 +2,7 @@
 
 using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Services;
 
@@ -108,7 +109,15 @@ public class CommandShowConfiguration : CommandBase
                 // Schedule a reload of data
                 scannerSession.ScheduleRefresh();
             }
-            else await scannerSession.ApplyConfigurationAsync(false);
+            else
+            {
+                await scannerSession.ApplyConfigurationAsync(false);
+                // Refresh symbol grid so filters like MinimalPrice take effect immediately
+                GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
+            }
+
+            // Reset cached strategy colors in the signal grid
+            GlobalData.SendMvvmMessage(new ConfigurationChangedMessage());
 
         }
         catch (Exception error)
