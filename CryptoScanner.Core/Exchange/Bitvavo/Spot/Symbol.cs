@@ -1,5 +1,4 @@
-﻿using Binance.Net.Clients;
-using Binance.Net.Enums;
+using System.Globalization;
 
 using CryptoExchange.Net.SharedApis;
 
@@ -15,155 +14,101 @@ public class Symbol() : SymbolBase(), ISymbol
 {
     public async Task GetSymbolsAsync()
     {
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (!GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+            return;
+
+        try
         {
-            try
+            using var client = new BitvavoRestClient();
+
+            using CryptoDatabase database = new();
+            database.Open();
+
+            GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+            LimitRate.WaitForFairWeight(1);
+
+            var markets = await client.GetMarketsAsync();
+            if (markets == null)
+                throw new ExchangeException("No market data received from Bitvavo");
+            SaveExchangeInfo(markets, "symbols.json");
+
+
+            // Track active symbols to deactivate delisted ones afterwards
+            SortedList<string, CryptoSymbol> activeSymbols = [];
+
+            using (var transaction = database.BeginTransaction())
             {
-                using var client = new BinanceRestClient();
-                var api = client.SpotApi;
-                using CryptoDatabase database = new();
-                database.Open();
-
-
-                // Tickers for the 24h volume
-                GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await api.ExchangeData.GetTickersAsync() ?? throw new ExchangeException("No ticker data received");
-                if (!tickerInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
-                if (tickerInfo == null)
-                    throw new ExchangeException("No ticker data received");
-                SaveExchangeInfo(tickerInfo.OriginalData, "tickers.json");
-
-                // Create dictionary for the volume
-                SortedList<string, decimal> volumeTicker = [];
-                if (tickerInfo.Data != null && tickerInfo.Data != null)
+                List<CryptoSymbol> cache = [];
+                try
                 {
-                    foreach (var tickerData in tickerInfo.Data)
-                        volumeTicker.Add(tickerData.Symbol, tickerData.QuoteVolume);
+                    foreach (var market in markets)
+                    {
+                        // Market format on Bitvavo: "BTC-EUR" (base-quote with dash)
+                        // ParseSymbol(exchangeSymbol, base, quote)
+                        SymbolInfo info = ParseSymbol(market.Market, market.Base, market.Quote);
+
+#pragma warning disable CS8625
+                        if (IsSymbolAccepted(exchange, info, null, TradingMode.Spot, out CryptoSymbol? symbol))
+#pragma warning restore CS8625
+                        {
+                            symbol!.QuantityMinimum = decimal.TryParse(market.MinOrderInBaseAsset,
+                                NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qMin) ? qMin : 0;
+                            symbol.QuantityMaximum = 0;  // No hard maximum on Bitvavo
+                            symbol.QuantityTickSize = 0;
+
+                            symbol.PriceTickSize = market.PricePrecision > 0
+                                ? (decimal)Math.Pow(10, -market.PricePrecision)
+                                : 0;
+
+                            symbol.Status = market.Status == "trading" ? 1 : 0;
+
+                            if (symbol.Id == 0)
+                            {
+                                database.Connection.Insert(symbol, transaction);
+                                cache.Add(symbol);
+                            }
+                            else
+                                database.Connection.Update(symbol, transaction);
+
+                            activeSymbols.Add(symbol.Name, symbol);
+                        }
+                    }
+
+                    // Deactivate symbols no longer listed
+                    int deactivated = 0;
+                    foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
+                    {
+                        if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
+                        {
+                            deactivated++;
+                            symbol.Status = 0;
+                            database.Connection.Update(symbol, transaction);
+                        }
+                    }
+                    if (deactivated > 0)
+                        GlobalData.AddTextToLogTab($"{deactivated} symbols deactivated");
+
+                    transaction.Commit();
+
+                    foreach (CryptoSymbol symbol in cache)
+                        GlobalData.AddSymbol(symbol);
                 }
-
-
-                GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
-                if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
-                if (symbolInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
-                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
-
-
-                // Om achteraf de niet gedeactiveerde munten te melden en te deactiveren
-                SortedList<string, CryptoSymbol> activeSymbols = [];
-                using (var transaction = database.BeginTransaction())
+                catch (Exception error)
                 {
-                    List<CryptoSymbol> cache = [];
-                    try
-                    {
-                        foreach (var symbolData in symbolInfo.Data.Symbols)
-                        {
-                            SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
-                            if (IsSymbolAccepted(exchange, info, api, TradingMode.Spot, out CryptoSymbol? symbol))
-                            {
-                                //Tijdelijk alles overnemen (vanwege into nieuwe velden)
-                                //De te gebruiken precisie in prijzen
-                                //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
-                                //symbol.QuoteAssetPrecision = binanceSymbol.QuoteAssetPrecision;
-                                // Tijdelijke fix voor Binance.net (kan waarschijnlijk weer weg)
-                                //if (binanceSymbol.MinNotionalFilter != null)
-                                //    symbol.MinNotional = binanceSymbol.MinNotionalFilter.MinNotional;
-                                //else
-                                //    symbol.MinNotional = 0;
-
-                                //Minimale en maximale amount voor een order (in base amount)
-                                symbol!.QuantityMinimum = symbolData.LotSizeFilter?.MinQuantity ?? 0;
-                                symbol.QuantityMaximum = symbolData.LotSizeFilter?.MaxQuantity ?? 0;
-                                symbol.QuantityTickSize = symbolData.LotSizeFilter?.StepSize ?? 0;
-
-                                //Minimale en maximale prijs voor een order (in base price)
-                                symbol.PriceMinimum = symbolData.PriceFilter?.MinPrice ?? 0;
-                                symbol.PriceMaximum = symbolData.PriceFilter?.MaxPrice ?? 0;
-                                symbol.PriceTickSize = symbolData.PriceFilter?.TickSize ?? 0;
-
-                                //symbol.IsSpotTradingAllowed = symbolData.IsSpotTradingAllowed;
-                                //symbol.IsMarginTradingAllowed = symbolData.IsMarginTradingAllowed;
-
-                                // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
-                                    symbol.Volume = (double)volume;
-                                else
-                                    symbol.Volume = 0;
-
-                                if (symbolData.IsSpotTradingAllowed && (symbolData.Status == SymbolStatus.Trading | symbolData.Status == SymbolStatus.EndOfDay))
-                                    symbol.Status = 1;
-                                else
-                                    symbol.Status = 0; //Zet de status door (PreTrading, PostTrading of Halt)
-
-                                if (symbol.Id == 0)
-                                {
-                                    database.Connection.Insert(symbol, transaction);
-                                    cache.Add(symbol);
-                                }
-                                else
-                                    database.Connection.Update(symbol, transaction);
-
-                                activeSymbols.Add(symbol.Name, symbol);
-                            }
-                        }
-
-                        // Deactivate the symbols who have disappeared
-                        List<string> reportSymbols = [];
-                        foreach (CryptoSymbol symbol in exchange.SymbolListName.Values)
-                        {
-                            if (symbol.Status == 1 && !symbol.IsBarometerSymbol() && !activeSymbols.ContainsKey(symbol.Name))
-                            {
-                                if (symbol.Status != 0)
-                                {
-                                    symbol.Status = 0;
-                                    database.Connection.Update(symbol, transaction);
-
-                                    reportSymbols.Add(symbol.Name);
-                                }
-                            }
-                        }
-                        if (reportSymbols.Count != 0)
-                        {
-                            var symbols = string.Join(',', [.. reportSymbols]);
-                            GlobalData.AddTextToLogTab($"{reportSymbols.Count} symbols deactivated {symbols}");
-                        }
-
-
-                        transaction.Commit();
-
-
-                        // De nieuwe symbols toevoegen aan de lijst
-                        // (omdat de symbols pas tijdens de BulkInsert een id krijgen)
-                        foreach (CryptoSymbol symbol in cache)
-                        {
-                            GlobalData.AddSymbol(symbol);
-                        }
-
-                    }
-                    catch (Exception error)
-                    {
-                        ScannerLog.Logger.Error(error, "");
-                        GlobalData.AddTextToLogTab(error.ToString());
-                        transaction.Rollback();
-                        throw;
-                    }
+                    ScannerLog.Logger.Error(error, "");
+                    GlobalData.AddTextToLogTab(error.ToString());
+                    transaction.Rollback();
+                    throw;
                 }
-
-                exchange.LastTimeFetched = DateTime.UtcNow;
-                database.Connection.Update(exchange);
-
-            }
-            catch (Exception error)
-            {
-                ScannerLog.Logger.Error(error, "");
-                GlobalData.AddTextToLogTab(error.ToString());
             }
 
+            exchange.LastTimeFetched = DateTime.UtcNow;
+            database.Connection.Update(exchange);
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, "");
+            GlobalData.AddTextToLogTab(error.ToString());
         }
     }
 }
