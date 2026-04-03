@@ -79,18 +79,21 @@ public class Api : ExchangeBase
 
     public override Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,
         CryptoPosition position, CryptoPositionPart part, DateTime currentDate,
-        CryptoOrderType orderType, CryptoOrderSide orderSide,
-        decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
+        CryptoOrderType orderType, CryptoOrderSide orderSide, decimal quantity,
+        decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {
         // not implemented
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 
-    public override Task<(bool succes, TradeParams? tradeParams)> Cancel(CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
+
+    public override Task<(bool succes, TradeParams? tradeParams)> Cancel(
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
         // not implemented
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
+
 
     public static CryptoExternalUrls GetExchangeLinks()
     {
@@ -115,7 +118,6 @@ public class Api : ExchangeBase
             },
             ExchangeUrl = new()
             {
-                // Geen idee
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.kucoin.com/trade/{QUOTE}/{BASE}&interval={interval}",
             }
