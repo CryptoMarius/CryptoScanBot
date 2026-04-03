@@ -63,6 +63,16 @@ public static class Helper
                     return new BitMart.Spot.Api();
                 else
                     return new BitMart.Futures.Api();
+            case CryptoExchangeType.Alpaca:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Alpaca.Spot.Api();
+                else
+                    throw new Exception("Alpaca Futures not supported");
+            case CryptoExchangeType.Bitvavo:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return new Bitvavo.Spot.Api();
+                else
+                    throw new Exception("Bitvavo Futures not supported");
             default:
                 throw new Exception("Exchange not supported");
         }
@@ -127,6 +137,16 @@ public static class Helper
                     return BitMart.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
                 else
                     return BitMart.Futures.Interval.GetExchangeInterval(intervalPeriod) != null;
+            case CryptoExchangeType.Alpaca:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return Alpaca.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
+                else
+                    return false;
+            case CryptoExchangeType.Bitvavo:
+                if (exchange.TradingType == CryptoTradingType.Spot)
+                    return Bitvavo.Spot.Interval.GetExchangeInterval(intervalPeriod) != null;
+                else
+                    return false;
             default:
                 return false;
         }

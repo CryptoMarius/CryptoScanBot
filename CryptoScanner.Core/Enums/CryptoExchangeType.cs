@@ -13,4 +13,6 @@ public enum CryptoExchangeType
     BitMart = 9,
     BloFin = 10,
     BybitEu = 11,
+    Alpaca = 12,
+    Bitvavo = 13,
 }

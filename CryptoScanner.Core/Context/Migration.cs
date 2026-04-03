@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 57;
+    public readonly static int CurrentDatabaseVersion = 58;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1183,6 +1183,16 @@ public class Migration
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+
+        //***********************************************************
+        // 03-04-2026 Added Bitvavvo (experiment) and Alpaca
+        // There are no field changes, only version number for UpdateExchanges
+        if (CurrentVersion > version.Version && version.Version == 57)
+        {
+            // nothing, trigger an UpdateExchanges
+        }
+
 
 
         // Apply the exchange defaults with each update
