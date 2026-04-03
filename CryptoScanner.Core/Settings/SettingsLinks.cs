@@ -24,6 +24,10 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         this.TryAdd("Binance Spot", Exchange.Binance.Spot.Api.GetExchangeLinks());
         this.TryAdd("Binance Futures", Exchange.Binance.Futures.Api.GetExchangeLinks());
 
+        Remove("Bitvavo");
+        this.TryAdd("Bitvavo Spot", Exchange.Bitvavo.Spot.Api.GetExchangeLinks());
+        //this.TryAdd("Bitvavo Futures", Exchange.Bitvavo.Futures.Api.GetExchangeLinks());
+
         this.TryAdd("BloFin Futures", Exchange.BloFin.Futures.Api.GetExchangeLinks());
 
         Remove("Bybit");
