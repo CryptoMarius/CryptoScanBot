@@ -183,6 +183,8 @@ public class ZigZagIndicator
             return true;
         // It breaks the box
         var value = LastSwingLow.Value;
+        if (value == 0)
+            return true;
         if (candleValue < value)
             return true;
         // or if previous distance was really high
