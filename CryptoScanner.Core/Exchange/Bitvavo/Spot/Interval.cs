@@ -4,7 +4,7 @@ namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 
 public class Interval
 {
-    // Bitvavo supported intervals: 1m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 1w
+    // Bitvavo supported intervals: 1m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d (1w returns 400)
     public static string? GetExchangeInterval(CryptoIntervalPeriod interval)
     {
         return interval switch
@@ -20,7 +20,7 @@ public class Interval
             CryptoIntervalPeriod.interval8h  => "8h",
             CryptoIntervalPeriod.interval12h => "12h",
             CryptoIntervalPeriod.interval1d  => "1d",
-            CryptoIntervalPeriod.interval1w  => "1w",
+            CryptoIntervalPeriod.interval1w  => null, // Not supported by Bitvavo API
             _ => null,
         };
     }
