@@ -30,7 +30,7 @@ public class Api : ExchangeBase
     public override void ExchangeDefaults()
     {
         // 1000 bars per request, defaultQuote USD, max 100 symbols per WebSocket group
-        ExchangeOptions.SetDefaultOptions("Alpaca Spot", "USD", 1000, false, 100);
+        ExchangeOptions.SetDefaultOptions("Alpaca", "USD", 1000, false, 100);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
