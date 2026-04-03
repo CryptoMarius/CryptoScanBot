@@ -1190,7 +1190,12 @@ public class Migration
         // There are no field changes, only version number for UpdateExchanges
         if (CurrentVersion > version.Version && version.Version == 57)
         {
-            // nothing, trigger an UpdateExchanges
+            using var transaction = database.BeginTransaction();
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
         }
 
 
