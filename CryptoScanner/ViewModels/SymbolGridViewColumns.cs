@@ -41,7 +41,7 @@ public class SymbolColumnComparer : IComparer
                 {
                     SymbolColumnEnum.Id => ObjectCompare.Compare(a.Id, b.Id),
                     SymbolColumnEnum.Symbol => ObjectCompare.Compare(a.Symbol, b.Symbol),
-                    SymbolColumnEnum.Volume => ObjectCompare.Compare(a.Volume, b.Volume),
+                    SymbolColumnEnum.Volume => ObjectCompare.Compare(a.Object.Volume, b.Object.Volume),
                     //SymbolColumnEnum.Price => ObjectCompare.Compare(a.LastPrice, b.LastPrice),
                     SymbolColumnEnum.Distance => ObjectCompare.Compare(ZoneTools.ZoneDistance(a.Object), ZoneTools.ZoneDistance(b.Object)),
                     //SymbolColumnEnum.MarketTrendPrimary => ObjectCompare.Compare(MarketTrendPrimary(a), MarketTrendPrimary(b)),
