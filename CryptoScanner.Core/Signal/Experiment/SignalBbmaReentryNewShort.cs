@@ -53,7 +53,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
     /// wick levels are not yet final, but MA positions are reliable.
     /// </summary>
-    private BbmaTfState ClassifyStateShort(MyData data, bool allowWickDetection = true)
+    private BbmaTfState ClassifyState(MyData data, bool allowWickDetection = true)
     {
         double wma5High = data.CandleData!.Wma05High!.Value;
         double wma10High = data.CandleData!.Wma10High!.Value;
@@ -113,7 +113,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     /// as price closes above SMA20 while CSD is still active (bearish reversal has failed).
     /// GetPrevCandle calls IndicatorsOkay internally — no manual null checks needed.
     /// </summary>
-    private bool CheckTf1AlertHistoryShort(out string reason)
+    private bool CheckTf1AlertHistory(out string reason)
     {
         reason = "";
         const int lookback = 20;
@@ -128,7 +128,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             }
 
             candle = prev!;
-            BbmaTfState state = ClassifyStateShort(candle);
+            BbmaTfState state = ClassifyState(candle);
 
             // Found prior alert phase (Mlv/Extreme/MagicExtreme) — Reentry is valid
             if (state == BbmaTfState.Mlv || state == BbmaTfState.Extreme || state == BbmaTfState.MagicExtreme)
@@ -154,7 +154,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     /// moment of a trend reversal — indicating the explosive move is losing steam.
     /// Checks that BollingerBandsPercentage is lower now than N candles ago.
     /// </summary>
-    private bool CheckBbFlatteningShort(out string reason)
+    private bool CheckBbFlattening(out string reason)
     {
         reason = "";
         const int lookback = 5;
@@ -191,7 +191,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     ///      price is progressively fading away from the upper band ("no longer makes it to the BB").
     ///   - If no Extreme is found within the lookback window, reject.
     /// </summary>
-    private bool CheckMlvShort(CryptoInterval tf2Interval, MyData tf2Candle, out string reason)
+    private bool CheckMlv(CryptoInterval tf2Interval, MyData tf2Candle, out string reason)
     {
         reason = "";
         const int lookback = 15;
@@ -232,16 +232,16 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
     {
         ExtraText = "";
 
-        // BB width filter
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
-        {
-            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
-            return false;
-        }
+        //// BB width filter
+        //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        //{
+        //    ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+        //    return false;
+        //}
 
         // Step 1: TF1 must be in Reentry state — this IS the entry condition per PDF chapter 6:
         // CSD has occurred on TF1 and price has pulled back into the 510 sell zone.
-        BbmaTfState state1 = ClassifyStateShort(CandleLast);
+        BbmaTfState state1 = ClassifyState(CandleLast);
         if (state1 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF1 ({Interval.Name}) not in Reentry state ({TfStateCode(state1)})";
@@ -251,7 +251,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
         // Step 2: Verify TF1 history — there must have been a prior alert phase (Mlv/E/EE)
         // before this Reentry. Detects both valid setups and expired patterns (close above SMA20).
-        if (!CheckTf1AlertHistoryShort(out string alertReason))
+        if (!CheckTf1AlertHistory(out string alertReason))
         {
             ExtraText = alertReason;
             GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -260,7 +260,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
 
         // Step 3: BB must be flattening on TF1 — momentum fading on entry interval
         // Per Forex Nexus: BB nearly horizontal signals trend exhaustion / reversal point.
-        //if (!CheckBbFlatteningShort(out string bbReason))
+        //if (!CheckBbFlattening(out string bbReason))
         //{
         //    ExtraText = bbReason;
         //    GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -292,7 +292,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             return false;
         }
 
-        BbmaTfState state3 = ClassifyStateShort(result3.candle, allowWickDetection: false);
+        BbmaTfState state3 = ClassifyState(result3.candle, allowWickDetection: false);
         if (state3 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)})";
@@ -311,7 +311,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
             return false;
         }
 
-        BbmaTfState state2 = ClassifyStateShort(result2.candle, allowWickDetection: false);
+        BbmaTfState state2 = ClassifyState(result2.candle, allowWickDetection: false);
         if (state2 == BbmaTfState.None)
         {
             ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) has no clear BBMA state";
@@ -323,7 +323,7 @@ public class SignalBbmaReentryNewShort : SignalBbmaBase
         // a prior Extreme must exist and price must have faded from BB.Upper since then.
         if (state2 == BbmaTfState.Mlv)
         {
-            if (!CheckMlvShort(result2.higherInterval.Interval, result2.candle, out string mlvReason))
+            if (!CheckMlv(result2.higherInterval.Interval, result2.candle, out string mlvReason))
             {
                 ExtraText = mlvReason;
                 GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
