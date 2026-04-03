@@ -24,6 +24,21 @@ public class Symbol() : SymbolBase(), ISymbol
             using CryptoDatabase database = new();
             database.Open();
 
+            // Tickers for the 24h volume
+            GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
+            LimitRate.WaitForFairWeight(1);
+            var tickers = await client.GetTickersAsync();
+            SortedList<string, decimal> volumeTicker = [];
+            if (tickers != null)
+            {
+                SaveExchangeInfo(tickers, "tickers.json");
+                foreach (var ticker in tickers)
+                {
+                    if (decimal.TryParse(ticker.VolumeQuote, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal vol))
+                        volumeTicker[ticker.Market] = vol;
+                }
+            }
+
             GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
             LimitRate.WaitForFairWeight(1);
 
@@ -54,10 +69,15 @@ public class Symbol() : SymbolBase(), ISymbol
                             symbol!.QuantityMinimum = decimal.TryParse(market.MinOrderInBaseAsset,
                                 NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qMin) ? qMin : 0;
                             symbol.QuantityMaximum = 0;  // No hard maximum on Bitvavo
-                            symbol.QuantityTickSize = 0;
+                            symbol.QuantityTickSize = GetTickSizeFromString(market.MinOrderInBaseAsset);
 
                             symbol.PriceTickSize = market.PricePrecision > 0
-                                ? (decimal)Math.Pow(10, -market.PricePrecision)
+                                ? (decimal)Math.Pow(10, -market.PricePrecision.GetValueOrDefault())
+                                : GetTickSizeFromString(market.MinOrderInQuoteAsset);
+
+                            // Volume from the tickers (market format on Bitvavo: "BTC-EUR")
+                            symbol.Volume = volumeTicker.TryGetValue(market.Market, out decimal volume)
+                                ? (double)volume
                                 : 0;
 
                             symbol.Status = market.Status == "trading" ? 1 : 0;
@@ -110,5 +130,21 @@ public class Symbol() : SymbolBase(), ISymbol
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString());
         }
+    }
+
+    // Derives a tick size from a minimum order string by counting significant decimal places.
+    // E.g. "0.001" -> 0.001, "5" -> 1, "" -> 1 (default).
+    private static decimal GetTickSizeFromString(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return 1m;
+
+        int dotIndex = value.IndexOf('.');
+        if (dotIndex < 0)
+            return 1m;
+
+        int decimals = value.Length - dotIndex - 1;
+
+        return decimals > 0 ? (decimal)Math.Pow(10, -decimals) : 1m;
     }
 }

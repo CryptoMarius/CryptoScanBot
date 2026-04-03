@@ -95,6 +95,25 @@ public class BitvavoRestClient : IDisposable
     }
 
 
+    /// <summary>
+    /// Fetches 24h ticker data for all markets from Bitvavo.
+    /// </summary>
+    public async Task<List<BitvavoTicker>?> GetTickersAsync()
+    {
+        string json;
+        try
+        {
+            json = await _http.GetStringAsync($"{BaseUrl}/ticker/24h");
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new ExchangeException($"Bitvavo HTTP error fetching tickers: {ex.Message}");
+        }
+
+        return JsonSerializer.Deserialize<List<BitvavoTicker>>(json);
+    }
+
+
     public void Dispose() => _http.Dispose();
 }
 
@@ -107,6 +126,16 @@ public class BitvavoCandle
     public decimal Low { get; set; }
     public decimal Close { get; set; }
     public decimal Volume { get; set; }
+}
+
+
+public class BitvavoTicker
+{
+    [JsonPropertyName("market")]
+    public string Market { get; set; } = "";
+
+    [JsonPropertyName("volumeQuote")]
+    public string VolumeQuote { get; set; } = "0";
 }
 
 
