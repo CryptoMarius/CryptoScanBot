@@ -47,6 +47,9 @@ public class ApplicationState : IApplicationState
     // Splitter position MainWindow (Size left panel)
     public double MainWindowSplitterPosition { get; set; } = 300;
 
+    // Whether the symbol panel on the left is collapsed
+    public bool SymbolPanelCollapsed { get; set; } = false;
+
     // Window state, Size, Object, Monitor etc.
     public Dictionary<string, WindowState> WindowStates { get; set; } = [];
 
@@ -268,6 +271,23 @@ public class ApplicationStateService
         return state;
     }
 
+
+    public bool GetSymbolPanelCollapsed()
+    {
+        lock (_lock)
+        {
+            return _states.SymbolPanelCollapsed;
+        }
+    }
+
+    public void SaveSymbolPanelCollapsed(bool collapsed)
+    {
+        lock (_lock)
+        {
+            _states.SymbolPanelCollapsed = collapsed;
+            FlushToDisk();
+        }
+    }
 
     public void SaveSplitterPosition(string splitterName, double position)
     {

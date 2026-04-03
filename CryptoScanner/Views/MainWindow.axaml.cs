@@ -9,6 +9,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
@@ -29,6 +30,13 @@ public partial class MainWindow : Window
 {
     private readonly ApplicationStateService _applicationStateService;
     private readonly ITradingViewService _tradingViewService;
+
+    private double _symbolPanelStoredWidth = 300;
+    private bool _isSymbolPanelCollapsed = false;
+
+    private bool _isSplitterDragging = false;
+    private double _splitterDragStartWindowX = 0;
+    private double _splitterDragStartColWidth = 0;
 
     private readonly SignalGridView _signalView;
     private readonly LiveDataGridView _liveDataView;
@@ -79,8 +87,12 @@ public partial class MainWindow : Window
         _applicationStateService.RestoreWindowState("MainWindow", this);
 
         // Restore splitter position
-        var position = _applicationStateService.GetSplitterPosition("MainWindow", 300);
-        MainGrid.ColumnDefinitions[0].Width = new GridLength(position);
+        _symbolPanelStoredWidth = _applicationStateService.GetSplitterPosition("MainWindow", 300);
+        MainGrid.ColumnDefinitions[0].Width = new GridLength(_symbolPanelStoredWidth);
+
+        // Restore collapsed state
+        if (_applicationStateService.GetSymbolPanelCollapsed())
+            CollapseSymbolPanel();
 
         // Start TradingView service
         _tradingViewService.Start();
@@ -129,11 +141,99 @@ public partial class MainWindow : Window
         BeginMoveDrag(e);
     }
 
-    private void OnGridSplitterDragCompleted(object? sender, VectorEventArgs e)
+    private void OnSplitterPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        // Save splitter position
-        var position = MainGrid.ColumnDefinitions[0].ActualWidth;
-        _applicationStateService.SaveSplitterPosition("MainWindow", position);
+        if (_isSymbolPanelCollapsed) return;
+        if (!e.GetCurrentPoint(SplitterHandle).Properties.IsLeftButtonPressed) return;
+
+        _isSplitterDragging = true;
+        _splitterDragStartWindowX = e.GetPosition(this).X;
+        _splitterDragStartColWidth = MainGrid.ColumnDefinitions[0].ActualWidth;
+        e.Pointer.Capture(SplitterHandle);
+
+        // Show a thin vertical preview line — no layout update yet
+        DragPreviewLine.Height = Bounds.Height;
+        Canvas.SetLeft(DragPreviewLine, _splitterDragStartWindowX);
+        DragPreviewCanvas.IsVisible = true;
+        e.Handled = true;
+    }
+
+    private void OnSplitterPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_isSplitterDragging) return;
+
+        var mouseX = e.GetPosition(this).X;
+        var newWidth = _splitterDragStartColWidth + (mouseX - _splitterDragStartWindowX);
+        newWidth = Math.Max(100, newWidth);
+
+        // Move only the preview line — zero layout recalculation
+        Canvas.SetLeft(DragPreviewLine, mouseX);
+        e.Handled = true;
+    }
+
+    private void OnSplitterPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_isSplitterDragging) return;
+
+        _isSplitterDragging = false;
+        e.Pointer.Capture(null);
+        DragPreviewCanvas.IsVisible = false;
+
+        // Single layout update on release
+        var mouseX = e.GetPosition(this).X;
+        var newWidth = _splitterDragStartColWidth + (mouseX - _splitterDragStartWindowX);
+        newWidth = Math.Max(100, newWidth);
+
+        MainGrid.ColumnDefinitions[0].Width = new GridLength(newWidth);
+        _symbolPanelStoredWidth = newWidth;
+        _applicationStateService.SaveSplitterPosition("MainWindow", newWidth);
+        e.Handled = true;
+    }
+
+    private void OnToggleSymbolPanel(object? sender, RoutedEventArgs e)
+    {
+        if (_isSymbolPanelCollapsed)
+            ExpandSymbolPanel();
+        else
+            CollapseSymbolPanel();
+    }
+
+    private void CollapseSymbolPanel()
+    {
+        var currentWidth = MainGrid.ColumnDefinitions[0].ActualWidth;
+        if (currentWidth > 28)
+            _symbolPanelStoredWidth = currentWidth;
+
+        MainGrid.ColumnDefinitions[0].MinWidth = 28;
+        MainGrid.ColumnDefinitions[0].Width = new GridLength(28);
+        MainGrid.ColumnDefinitions[1].Width = new GridLength(0); // hide splitter
+
+        SymbolGridContent.IsVisible = false;
+        SymbolsLabel.IsVisible = false;
+        SymbolsFilterLabel.IsVisible = false;
+        FilterTextBox.IsVisible = false;
+        TogglePanelButton.Content = "►";
+        TogglePanelButton.SetValue(ToolTip.TipProperty, "Toon symbolen");
+
+        _isSymbolPanelCollapsed = true;
+        _applicationStateService.SaveSymbolPanelCollapsed(true);
+    }
+
+    private void ExpandSymbolPanel()
+    {
+        MainGrid.ColumnDefinitions[0].MinWidth = 100;
+        MainGrid.ColumnDefinitions[0].Width = new GridLength(_symbolPanelStoredWidth);
+        MainGrid.ColumnDefinitions[1].Width = new GridLength(4); // restore splitter
+
+        SymbolGridContent.IsVisible = true;
+        SymbolsLabel.IsVisible = true;
+        SymbolsFilterLabel.IsVisible = true;
+        FilterTextBox.IsVisible = true;
+        TogglePanelButton.Content = "◄";
+        TogglePanelButton.SetValue(ToolTip.TipProperty, "Verberg symbolen");
+
+        _isSymbolPanelCollapsed = false;
+        _applicationStateService.SaveSymbolPanelCollapsed(false);
     }
 
     private bool hasEnded = false;
@@ -147,9 +247,10 @@ public partial class MainWindow : Window
         Closing -= OnWindowClosing; // observed multiple calls..
         //e.Cancel = true;  // Blokkeer standaard close tot cleanup klaar
 
-        // Save splitter position
-        var position = MainGrid.ColumnDefinitions[0].ActualWidth;
-        _applicationStateService.SaveSplitterPosition("MainWindow", position);
+        // Always save the expanded width, not the collapsed 28px strip
+        if (!_isSymbolPanelCollapsed)
+            _symbolPanelStoredWidth = MainGrid.ColumnDefinitions[0].ActualWidth;
+        _applicationStateService.SaveSplitterPosition("MainWindow", _symbolPanelStoredWidth);
 
         // Save window state
         _applicationStateService.SaveWindowState("MainWindow", this);

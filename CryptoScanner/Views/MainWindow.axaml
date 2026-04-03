@@ -63,7 +63,7 @@
 
 				<Grid Grid.Row="2" Name="MainGrid">
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="300" MinWidth="80"/>
+						<ColumnDefinition Width="300" MinWidth="100"/>
 						<ColumnDefinition Width="4"/>
 						<ColumnDefinition Width="1"/>
 						<ColumnDefinition Width="*"/>
@@ -71,21 +71,37 @@
 
 					<!-- The symbols on the left -->
 					<Grid Grid.Column ="0" x:Name="SymbolSplitView" RowDefinitions="48,*">
-							<Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto">
-								<TextBlock Grid.Column="0" Text="Symbols" FontSize="15" FontWeight="Bold" Margin="10,0,0,2"/>
-								<TextBlock Grid.Column="1" Text="Filter:" FontSize="12" HorizontalAlignment="Left" Margin="10"/>
-								<TextBox Grid.Column="2" FontSize="12" x:Name="FilterTextBox" BorderThickness="0" HorizontalAlignment="Left" Margin="10" Width="100" Height="15"
+						<!-- Header: button always in Auto column on the right, content clips in * column -->
+						<Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+							<StackPanel Grid.Column="0" Orientation="Horizontal" ClipToBounds="True" VerticalAlignment="Center">
+								<TextBlock x:Name="SymbolsLabel" Text="Symbols" FontSize="15" FontWeight="Bold" Margin="10,0,6,0"/>
+								<TextBlock x:Name="SymbolsFilterLabel" Text="Filter:" FontSize="12" Margin="0,0,4,0"/>
+								<TextBox FontSize="12" x:Name="FilterTextBox" BorderThickness="0" Width="100" Height="15"
 										 Text="{Binding SymbolFilterText}">
 									<TextBox.KeyBindings>
 										<KeyBinding Gesture="Enter" Command="{Binding ApplyFilterCommand}" CommandParameter="{Binding #FilterTextBox.Text}"/>
 									</TextBox.KeyBindings>
 								</TextBox>
-							</Grid>
-						<views:SymbolGridView Grid.Row="1" DataContext="{Binding SymbolGridViewModel}"/>
+							</StackPanel>
+							<Button x:Name="TogglePanelButton" Grid.Column="1" Click="OnToggleSymbolPanel"
+									Content="◄" Padding="6,2" VerticalAlignment="Center" Margin="4,0"
+									FontSize="11" ToolTip.Tip="Verberg symbolen"/>
+						</Grid>
+						<views:SymbolGridView x:Name="SymbolGridContent" Grid.Row="1" DataContext="{Binding SymbolGridViewModel}"/>
 					</Grid>
 
-					<!-- Splitter between symbols and the signals -->
-					<GridSplitter Grid.Column="1" ResizeDirection="Columns" DragCompleted="OnGridSplitterDragCompleted"/>
+					<!-- Custom drag handle: only applies the new width on mouse release (deferred resize) -->
+					<Border x:Name="SplitterHandle" Grid.Column="1"
+							Background="Transparent" Cursor="SizeWestEast"
+							PointerPressed="OnSplitterPointerPressed"
+							PointerMoved="OnSplitterPointerMoved"
+							PointerReleased="OnSplitterPointerReleased">
+						<Border.Styles>
+							<Style Selector="Border#SplitterHandle:pointerover">
+								<Setter Property="Background" Value="{DynamicResource SystemControlHighlightBaseMediumLowBrush}"/>
+							</Style>
+						</Border.Styles>
+					</Border>
 					<Border Grid.Column="2" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="0,0,0,2"/>
 
 					<!-- Main screen -->
@@ -118,5 +134,11 @@
 		<!-- IsHitTestVisible="False" allows clicks to pass through to content below -->
 		<Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"  BorderThickness="1"
 				Background="Transparent" IsHitTestVisible="False"/>
+
+		<!-- Preview line shown while dragging the splitter handle -->
+		<Canvas x:Name="DragPreviewCanvas" IsHitTestVisible="False" IsVisible="False">
+			<Border x:Name="DragPreviewLine" Width="2"
+					Background="{DynamicResource SystemAccentColor}"/>
+		</Canvas>
 	</Panel>
 </Window>
