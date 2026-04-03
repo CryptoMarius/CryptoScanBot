@@ -29,7 +29,9 @@ public class CryptoSymbolInterval
     // These are the closest DLZ zones (calculated from all the zones)
     public CryptoZoneDistance DlzZoneDistance { get; } = new();
 
-    // Primary and Secondary trend data
+    // Primary and Secondary trend data (Dow Theory interpretation)
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
+    // BOS/CHoCH trend data (Break of Structure / Change of Character)
+    public CryptoTrendData TrendBos = new();
 }

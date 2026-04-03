@@ -106,9 +106,11 @@ public class TrendInterval
         }
 
 
-        // New strategy [There is discussion about the last zigzag value (market value instead of a low/high)]
+        // Process from index 2 onward — points 0 and 1 were already used to initialise
+        // lastLow/lastHigh above, so starting at 0 would double-count them and cause
+        // a spurious trend flip on the very first two points.
         ZigZagResult zigZag;
-        for (int i = 0; i < zigZagList.Count; i++)
+        for (int i = 2; i < zigZagList.Count; i++)
         {
             zigZag = zigZagList[i];
 
@@ -130,7 +132,7 @@ public class TrendInterval
                         count = 0;
                     break;
                 case CryptoTrendIndicator.Bullish:
-                    if (zigZag.Value <= value)
+                    if (zigZag.Value < value)   // strictly less than: equal values are not a lower high/low
                         count++;
                     else
                         count = 0;

@@ -69,6 +69,34 @@ public class MarketTrend
                     }
                     symbolTrend.Percentage = 100 * (float)weightSum / weightMax;
 
+                    // BOS/CHoCH calculation runs on the Primary ZigZag only
+                    if (trend.TrendType == TrendType.Primary)
+                    {
+                        int weightSumBos = 0;
+                        int weightMaxBos = 0;
+                        foreach (var bosInterval in GlobalData.IntervalList)
+                        {
+                            if (bosInterval.IntervalPeriod == CryptoIntervalPeriod.interval1w)
+                                continue;
+                            CryptoSymbolInterval bosSymbolInterval = symbol.GetSymbolInterval(bosInterval.IntervalPeriod);
+                            CandleTime bosIntervalEnd = bosSymbolInterval.LastCandle.OpenTime;
+                            if (bosSymbolInterval.TrendBos.Time == null || bosIntervalEnd > bosSymbolInterval.TrendBos.Time || log != null)
+                            {
+                                await TrendIntervalBos.CalculateAsync(symbol, bosInterval, bosSymbolInterval.CandleList,
+                                    bosSymbolInterval.TrendBos, trend, log);
+                            }
+
+                            int weightBos = (int)bosInterval.Duration;
+                            if (bosSymbolInterval.TrendBos.Trend == CryptoTrendIndicator.Bullish)
+                                weightSumBos += weightBos;
+                            else if (bosSymbolInterval.TrendBos.Trend == CryptoTrendIndicator.Bearish)
+                                weightSumBos -= weightBos;
+                            weightMaxBos += weightBos;
+                        }
+                        symbol.Data.TrendBos.Time = symbolTrend.Time;
+                        symbol.Data.TrendBos.Percentage = 100 * (float)weightSumBos / weightMaxBos;
+                    }
+
                     log?.AppendLine("");
                     ScannerLog.Logger.Debug("");
                     text = $"{symbol.Name} sum ={weightSum} / {weightMax} = {symbolTrend.Percentage:N2}";
