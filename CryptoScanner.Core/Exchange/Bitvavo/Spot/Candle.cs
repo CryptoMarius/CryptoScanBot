@@ -98,4 +98,5 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         GlobalData.AddTextToLogTab($"{s} received: {count} total: {candles.Count}");
         return (true, count, fetchedUpTo);
     }
+
 }

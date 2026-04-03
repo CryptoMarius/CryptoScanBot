@@ -140,7 +140,7 @@ public class CryptoData
         //public double? SlopeEma20 { get; set; }
         Tema = source.Tema;
 #endif
-        
+
 
         //public double? SlopeEma50 { get; set; }
         //public double? Ema100 { get; set; }
@@ -160,7 +160,7 @@ public class CryptoData
         //SlopeSma200 = source.SlopeSma200;
 
 #if debug
-        Ema50 = source.Ema50;        
+        Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;
