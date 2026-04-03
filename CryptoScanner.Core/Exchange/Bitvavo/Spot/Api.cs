@@ -10,10 +10,12 @@ public class Api : ExchangeBase
     [System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute]
     public Api()
     {
+        //Asset = new Asset();
         Candle = new Candle(this);
         Symbol = new Symbol();
+        //Order = new Order();
+        //Trade = new Trade();
     }
-
 
     public override IDisposable GetClient()
     {
@@ -25,7 +27,7 @@ public class Api : ExchangeBase
     {
         // Bitvavo is a Dutch EUR-based exchange. Max 1440 candles per REST request.
         // symbolLimitPerSubscription = 100 (Bitvavo WS accepts many markets per channel subscription)
-        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 100);
+        ExchangeOptions.SetDefaultOptions("Bitvavo Spot", "EUR", 1440, false, 10);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
@@ -54,7 +56,12 @@ public class Api : ExchangeBase
     {
         return new()
         {
-            Altrady = null,
+            Altrady = new()
+            {
+                Code = "BVVO",
+                Execute = CryptoExternalUrlType.Internal,
+                Url = "https://app.altrady.com/d/BVVO_{QUOTE}_{BASE}:{interval}",
+            },
             HyperTrader = null,
             TradingView = new()
             {
