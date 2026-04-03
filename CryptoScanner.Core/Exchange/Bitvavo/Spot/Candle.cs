@@ -40,6 +40,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             return (false, 0, fetchFrom);
         }
 
+
+        // Might have problems with no internet etc.
         if (bars == null || bars.Count == 0)
         {
             GlobalData.AddTextToLogTab($"{prefix} fetch from {fetchFrom.ToDateTime()} no candles received");
@@ -62,18 +64,25 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, bar.OpenTime,
                     bar.Open, bar.High, bar.Low, bar.Close, bar.Volume);
 
+                // remember the newest candle
                 if (candle.OpenTime > fetchedUpTo)
                     fetchedUpTo = candle.OpenTime;
+                //GlobalData.AddTextToLogTab("Debug: Fetched candle " + symbol.Name + " " + interval.Name + " " + candle.DateLocal);
             }
 
+            // For the next session
             if (fetchedUpTo > CandleTime.MinValue)
             {
                 fetchedUpTo += interval.Duration;
             }
             else
             {
+                // New coins dont have History, we appearently asking for a period with no activity, skip that period
                 CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1);
-                fetchedUpTo = maxTime > currentTime ? currentTime : maxTime;
+                if (maxTime > currentTime)
+                    fetchedUpTo = currentTime;
+                else
+                    fetchedUpTo = maxTime;
             }
         }
         finally
