@@ -26,7 +26,7 @@ namespace CryptoScanner.Core.Signal.Experiment;
 /// Fixed BBMA timeframe pairs:
 ///   5m→15m→1h,  15m→1h→4h,  1h→4h→1d,  4h→1d→1w
 /// </summary>
-public class SignalBbmaReentryNewShort : SignalBbmaBase
+public class SignalBbmaReentryNew2Short : SignalBbmaBase
 {
     public override bool IndicatorsOkay(MyData data)
     {

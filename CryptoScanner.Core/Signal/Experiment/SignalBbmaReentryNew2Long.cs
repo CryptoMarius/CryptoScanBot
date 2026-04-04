@@ -26,7 +26,7 @@ namespace CryptoScanner.Core.Signal.Experiment;
 /// Fixed BBMA timeframe pairs:
 ///   5m→15m→1h,  15m→1h→4h,  1h→4h→1d,  4h→1d→1w
 /// </summary>
-public class SignalBbmaReentryNewLong : SignalBbmaBase
+public class SignalBbmaReentryNew2Long : SignalBbmaBase
 {
     public override bool IndicatorsOkay(MyData data)
     {
@@ -183,55 +183,33 @@ public class SignalBbmaReentryNewLong : SignalBbmaBase
     }
 
 
-    /// <summary>
-    /// Verifies that TF2=Mlv is a genuine MLV (Market Loss Volume) phase per the PDF.
-    /// Walking backwards from the current TF2 candle via GetPrevCandle:
-    ///   - Each candle must have its low above BB.Lower (price fading away — "no longer makes it to BB").
-    ///   - Once a prior Extreme is found (LWMA5(low) below BB.Lower), all candles between
-    ///     that Extreme and the current Mlv candle have already been verified → MLV confirmed.
-    ///   - If price touches BB.Lower before an Extreme is found, reject.
-    ///   - If no Extreme is found within the lookback window, reject.
-    /// </summary>
-    private bool CheckMlv(CryptoInterval tf2Interval, MyData tf2Candle, out string reason)
-    {
-        reason = "";
-        const int lookback = 15;
+    //public virtual bool GiveUp(CryptoSignal signal)
+    //{
+    //    ExtraText = "";
+    //    return false;
+    //}
 
-        MyData? candle = tf2Candle;
-        for (int i = 0; i < lookback; i++)
-        {
-            if (!GetPrevCandle(tf2Interval, candle, out MyData? prev))
-            {
-                reason = $"TF2 Mlv: insufficient history ({i} candles checked)";
-                return false;
-            }
 
-            candle = prev!;
-            double wma5Low = candle.CandleData!.Wma05Low!.Value;
-            double bbLower = candle.CandleData!.BollingerBandsLowerBand!.Value;
+    //public virtual bool AllowStepIn(CryptoSignal signal)
+    //{
+    //    // TODO: Wait x candles for the Re-Entry
+    //    return true;
+    //}
+    
 
-            // Prior Extreme found (Type A: LWMA5 below BB.Lower):
-            // All candles between the current Mlv candle and this Extreme were already
-            // verified not to touch BB.Lower → genuine MLV confirmed.
-            if (wma5Low < bbLower)
-                return true;
-
-            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
-            if (candle.Candle.Low <= (decimal)bbLower)
-            {
-                reason = "TF2 Mlv: price still reaching BB.Lower — MLV not confirmed";
-                return false;
-            }
-        }
-
-        reason = "TF2 Mlv: no prior Extreme found in lookback — not a genuine MLV";
-        return false;
-    }
 
 
     public override bool IsSignal()
     {
+        // Checklist google
+        // file:///D:/Shares/Marius/Documents/Crypto/BbMa/Grok/Poging%201/Google%20-%20Fact%20sheet.htm
+
         ExtraText = "";
+
+        // Find the higher timeframes
+        if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
+            return false;
+
 
         //// BB width filter
         //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
@@ -240,8 +218,8 @@ public class SignalBbmaReentryNewLong : SignalBbmaBase
         //    return false;
         //}
 
-        // Step 1: TF1 must be in Reentry state — this IS the entry condition per PDF chapter 6:
-        // CSD has occurred on TF1 and price has pulled back into the 510 buy zone.
+
+        // 3.2 
         BbmaTfState state1 = ClassifyState(CandleLast);
         if (state1 != BbmaTfState.Reentry)
         {
@@ -249,6 +227,19 @@ public class SignalBbmaReentryNewLong : SignalBbmaBase
             //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
+
+        // 3.1 Is there a CSM Buy? (Candle closes above bb.upper)
+        if (!CheckCsmLong(Interval, CandleLast))
+        {
+            ExtraText = "No CSM present on TF1";
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
+
+
+
+
+        // -------------------------- from other strategy
 
         // Step 2: Verify TF1 history — there must have been a prior alert phase (Mlv/E/EE)
         // before this Reentry. Detects both valid setups and expired patterns (close below SMA20).
@@ -268,9 +259,6 @@ public class SignalBbmaReentryNewLong : SignalBbmaBase
         //    return false;
         //}
 
-        // Step 4: Resolve fixed BBMA higher timeframe pair
-        if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
-            return false;
 
         // Step 5: TF3 state — HTF directional anchor (computed first: trend is judged on highest TF)
         var result3 = IndicatorDataList.CalculateIndicatorsForInterval(
@@ -324,9 +312,9 @@ public class SignalBbmaReentryNewLong : SignalBbmaBase
         // a prior Extreme must exist and price must have faded from BB.Lower since then.
         if (state2 == BbmaTfState.Mlv)
         {
-            if (!CheckMlv(result2.higherInterval.Interval, result2.candle, out string mlvReason))
+            if (DetectMlv(result2.higherInterval.Interval, result2.candle) != BbmaState.ValidMLV)
             {
-                ExtraText = mlvReason;
+                ExtraText = "No MLV detected";
                 GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }

@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Experiment;
 
@@ -10,6 +11,7 @@ public class SignalBbmaBase : SignalCreateBase
         Extreme,
         MagicExtreme,
         Mlv,
+        Csm,
         Reentry
     }
 
@@ -97,4 +99,133 @@ public class SignalBbmaBase : SignalCreateBase
         }
         return true;
     }
+
+
+    // Is there a previous CSM
+    internal bool CheckCsmLong(CryptoInterval interval, MyData? candle, int lookback = 15)
+    {
+        for (int i = 0; i < lookback; i++)
+        {
+            if (!GetPrevCandle(interval, candle, out candle))
+                return false;
+
+            decimal band = (decimal)candle!.CandleData!.BollingerBandsUpperBand!.Value;
+
+            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
+            if (candle.Candle.Close > band && candle.Candle.Open < band)
+                return true;
+        }
+        return false;
+    }
+
+    // Is there a previous CSM
+    internal bool CheckCsmShort(CryptoInterval interval, MyData? candle, int lookback = 15)
+    {
+        for (int i = 0; i < lookback; i++)
+        {
+            if (!GetPrevCandle(interval, candle, out candle))
+                return false;
+
+            decimal band = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
+
+            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
+            if (candle.Candle.Close < band && candle.Candle.Open > band)
+                return true;
+        }
+        return false;
+    }
+
+
+    internal enum BbmaState { None, FoundExtreme, FoundTPW, ValidMLV }
+
+    internal BbmaState DetectMlv(CryptoInterval interval, MyData candle)
+    {
+        int lookback = 25;
+        // Binnen 25 candles zowel een Extreme, TPW en een MLV
+
+        // stap 1: Find the most recent extreme
+        MyData loop = candle;
+        MyData? extreme = null;
+        bool isExtremeLow = false;
+        bool isExtremeHigh = false;
+        for (int i = 0; i < lookback; i++)
+        {
+            // Een Extreme is een CLOSE buiten de BB
+            decimal lBand = (decimal)loop!.CandleData!.BollingerBandsLowerBand!.Value;
+            decimal uBand = (decimal)loop!.CandleData!.BollingerBandsUpperBand!.Value;
+
+            if (loop.Candle.Close > uBand)
+            {
+                extreme = loop;
+                isExtremeHigh = true;
+                break;
+            }
+            if (loop.Candle.Close < lBand)
+            {
+                extreme = loop;
+                isExtremeLow = true;
+                break;
+            }
+
+            if (!GetPrevCandle(interval, loop, out loop!))
+                return BbmaState.None;
+        }
+
+        // KRITISCHE CHECK: Geen Extreme gevonden in de lookback? Dan geen MLV.
+        if (extreme == null) 
+            return BbmaState.None;
+
+
+        // stap 2: Is er een TPW (Touch Mid BB) geweest NA de Extreme?
+        loop = extreme;
+        bool hasTPW = false;
+        for (int i = 0; i < lookback; i++)
+        {
+            // Price needs to overlap the middle bollingerbands 
+            decimal mBand = (decimal)loop!.CandleData!.Sma20!.Value;
+            if (loop.Candle.Low <= mBand && loop.Candle.High >= mBand)
+            {
+                hasTPW = true;
+                break;
+            }
+            if (!GetNextCandle(interval, loop, out loop!))
+                return BbmaState.None;
+        }
+        if (!hasTPW) 
+            return BbmaState.FoundExtreme;
+
+
+        // stap 3: De huidige candle testen op MLV(Rejection)
+        if (isExtremeHigh)
+        {
+            decimal upperBand = (decimal)candle!.CandleData!.BollingerBandsUpperBand!.Value;
+
+            // KRITISCH: Als de huidige candle BUITEN de BB sluit, is het Momentum (CSM), 
+            // en dat heft de MLV onmiddellijk op!
+            if (candle.Candle.Close > upperBand)
+                return BbmaState.None;
+
+            // Detectie: De prijs probeert de uiterste BB te testen maar faalt (Close blijft binnen)
+            // We kijken of de wick (High/Low) dichtbij de BB komt voor de 'rejection' look
+            bool isUpperMLV = candle.Candle.High >= upperBand * 0.998m && candle.Candle.Close < upperBand;
+            return (isUpperMLV) ? BbmaState.ValidMLV : BbmaState.FoundTPW;
+        }
+        else if (isExtremeLow)
+        {
+            decimal lowerBand = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
+
+            // KRITISCH: Als de huidige candle BUITEN de BB sluit, is het Momentum (CSM), 
+            // en dat heft de MLV onmiddellijk op!
+            if (candle.Candle.Close < lowerBand)
+                return BbmaState.None;
+
+            // Detectie: De prijs probeert de uiterste BB te testen maar faalt (Close blijft binnen)
+            // We kijken of de wick (High/Low) dichtbij de BB komt voor de 'rejection' look
+            bool isLowerMLV = candle.Candle.Low <= lowerBand * 1.002m && candle.Candle.Close > lowerBand;
+            return (isLowerMLV) ? BbmaState.ValidMLV : BbmaState.FoundTPW;
+        }
+
+        return BbmaState.None;
+    }
+
 }

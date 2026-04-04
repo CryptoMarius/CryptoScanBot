@@ -147,7 +147,7 @@ public class SignalCreateBase
         return true;
     }
 
-    // Get the candle and indicator data from a DIFFERENT interval
+    // Get the previous candle and indicator data from a DIFFERENT interval
     public bool GetPrevCandle(CryptoInterval interval, MyData? oldData, out MyData? newData)
     {
         if (oldData == null)
@@ -174,6 +174,33 @@ public class SignalCreateBase
     }
 
 
+    // Get the candle and indicator data from a DIFFERENT interval
+    public bool GetNextCandle(CryptoInterval interval, MyData? oldData, out MyData? newData)
+    {
+        if (oldData == null)
+        {
+            newData = null;
+            return false;
+        }
+
+        CandleTime targetTime = oldData.Candle.OpenTime + interval.Duration;
+        if (!IndicatorDataList.TryGetCandle(interval, targetTime, out newData))
+        {
+            ExtraText = $"No next candle or data! {targetTime.ToDateTime().ToLocalTime()}";
+            newData = null;
+            return false;
+        }
+
+        if (!IndicatorsOkay(newData!))
+        {
+            ExtraText = $"Next problem indicators! {targetTime.ToDateTime().ToLocalTime()}";
+            return false;
+        }
+
+        return true;
+    }
+    
+    
     protected MyData? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?
