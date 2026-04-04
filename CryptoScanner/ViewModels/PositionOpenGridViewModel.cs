@@ -29,6 +29,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
         WeakReferenceMessenger.Default.Register<PositionIsCreatedMessage>(this, OnPositionIsCreated);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
+        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
 
         _timerRefreshFields.Tick += TimerRefreshFieldsTick;
         _timerRefreshFields.Start();
@@ -41,6 +42,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
 
 
         _timerRefreshFields.Stop();
@@ -80,6 +82,12 @@ public partial class PositionOpenGridViewModel : ObservableObject
     //    firstTimer.Start();
     //}
 
+
+    private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
+    {
+        foreach (var position in Positions)
+            position.ResetColors();
+    }
 
     private void LoadOpenPositions()
     {

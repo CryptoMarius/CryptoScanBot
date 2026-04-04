@@ -2,9 +2,11 @@
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
@@ -26,12 +28,22 @@ public partial class LiveDataGridViewModel : ObservableObject
 
         _updateTimer.Tick += TimerAddLiveDataTick;
         _updateTimer.Start();
+
+        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
     }
 
     public void Dispose()
     {
         _updateTimer.Stop();
         _updateTimer.Tick -= TimerAddLiveDataTick;
+
+        WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+    }
+
+    private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
+    {
+        foreach (var liveData in LiveDatas)
+            liveData.ResetSymbolBackground();
     }
 
 

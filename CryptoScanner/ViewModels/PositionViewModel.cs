@@ -172,6 +172,14 @@ public partial class PositionViewModel : BaseConvertersViewModel
         }
     }
 
+    public void ResetColors()
+    {
+        _StrategyBackground = null;
+        _SymbolBackground = null;
+        OnPropertyChanged(nameof(StrategyBackground));
+        OnPropertyChanged(nameof(SymbolBackground));
+    }
+
     //public CryptoPositionStatus Status => Object.Status;
     private string? _StatusText;
     public string Status

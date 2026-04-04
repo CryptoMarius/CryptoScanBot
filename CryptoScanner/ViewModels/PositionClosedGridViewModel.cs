@@ -27,11 +27,24 @@ public partial class PositionClosedGridViewModel : ObservableObject
         //_timerUpdatePositions.Start();
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
-
+        WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
 
         LoadClosedPositions();
     }
 
+
+    public void Dispose()
+    {
+        WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+    }
+
+    private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
+    {
+        foreach (var position in Positions)
+            position.ResetColors();
+    }
 
     //public void TimerUpdatePositionsTick(object? sender, EventArgs? e)
     //{

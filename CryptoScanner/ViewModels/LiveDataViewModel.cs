@@ -51,6 +51,12 @@ public class LiveDataViewModel : BaseConvertersViewModel
         }
     }
 
+    public void ResetSymbolBackground()
+    {
+        _SymbolBackground = null;
+        OnPropertyChanged(nameof(SymbolBackground));
+    }
+
     //public string Interval => Object.Interval.Name;
     private string? _IntervalText;
     public string Interval

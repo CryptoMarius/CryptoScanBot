@@ -56,7 +56,7 @@ public partial class SignalGridViewModel : ObservableObject
     private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)
     {
         foreach (var signal in Signals)
-            signal.ResetStrategyBackground();
+            signal.ResetColors();
     }
 
 
