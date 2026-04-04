@@ -233,11 +233,11 @@ public partial class ChartWindowViewModel : ObservableObject
         _lastTickX = x;
 
         var unix = new CandleTime((uint)x);
-        DateTime date = unix.ToDateTime();
+        DateTime date = unix.ToLocalTime();  // Local: used for all labels and boundary detection
 
         if (date.Hour == 0 && date.Minute == 0)
         {
-            // Day boundary: show day number on first line
+            // Local midnight tick: show local day number
             _lastShownDay = date.Day;
             string s = date.Day.ToString();
             if (date.Day == 1)
@@ -249,7 +249,7 @@ public partial class ChartWindowViewModel : ObservableObject
             return s;
         }
 
-        // Intra-day tick: show time, add day on second line only on the first tick of each new day
+        // Intra-day tick: show local time, add day on second line only on the first tick of each new local day
         string time = $"{date.Hour:D2}:{date.Minute:D2}";
         if (date.Day != _lastShownDay)
         {
@@ -287,8 +287,8 @@ public partial class ChartWindowViewModel : ObservableObject
 
         chart.Axes.Clear();
 
-        // x-axis
-        chart.Axes.Add(new LinearAxis
+        // x-axis: uses LocalMidnightLinearAxis so major ticks align to local midnight (00:00) instead of UTC midnight
+        chart.Axes.Add(new LocalMidnightLinearAxis
         {
             //Title = "Time",
             //StringFormat = "dd-MM HH:mm",
