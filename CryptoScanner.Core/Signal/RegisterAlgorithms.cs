@@ -202,7 +202,7 @@ public static class RegisterAlgorithms
         // Confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
         {
-            Name = "bbma.new",
+            Name = "bbma.new1",
             Strategy = CryptoSignalStrategy.BbmaReentryNew1,
             AnalyzeLongType = typeof(SignalBbmaReentryNew1Long),
             AnalyzeShortType = typeof(SignalBbmaReentryNew1Short),
@@ -214,7 +214,7 @@ public static class RegisterAlgorithms
         // Confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
         {
-            Name = "bbma.new",
+            Name = "bbma.new2",
             Strategy = CryptoSignalStrategy.BbmaReentryNew2,
             AnalyzeLongType = typeof(SignalBbmaReentryNew2Long),
             AnalyzeShortType = typeof(SignalBbmaReentryNew2Short),

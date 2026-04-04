@@ -138,6 +138,7 @@ public class SignalBbmaBase : SignalCreateBase
 
     internal enum BbmaState { None, FoundExtreme, FoundTPW, ValidMLV }
 
+    // We use MLV for the abbreviation MHV internally
     internal BbmaState DetectMlv(CryptoInterval interval, MyData candle)
     {
         int lookback = 25;
