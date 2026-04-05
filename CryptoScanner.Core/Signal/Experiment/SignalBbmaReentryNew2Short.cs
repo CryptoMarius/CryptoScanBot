@@ -36,11 +36,11 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         if (data == null
            || data.Candle.OpenTime == 0
            || data.CandleData == null
-           || data.CandleData.Ema50 == null
-           || data.CandleData.Wma05Low == null
-           || data.CandleData.Wma10Low == null
-           || data.CandleData.BollingerBandsDeviation == null
            || data.CandleData.Sma20 == null
+           || data.CandleData.Ema50 == null
+           || data.CandleData.Wma05High == null
+           || data.CandleData.Wma10High == null
+           || data.CandleData.BollingerBandsDeviation == null
            || data.CandleData.BollingerBandsPercentage == null
            )
             return false;
@@ -119,10 +119,12 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         if (state1 != BbmaTfState.Reentry)
         {
             ExtraText = $"waiting Reentry — TF1 currently {TfStateCode(state1)}";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
         ExtraText = "Reentry reached — entry allowed";
+        GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
         return true;
     }
 
@@ -141,17 +143,19 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         if (CandleTime.FromDateTime(signal.CloseDate).Minutes + MaxWaitCandles * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return true;
         }
 
         // Pattern invalidated: CSD still active but price closed above SMA20
         // — the reversal move has failed and a genuine Reentry will not follow
-        double wma5High = CandleLast.CandleData!.Wma05High!.Value;
+        double wma5High = CandleLast!.CandleData!.Wma05High!.Value;
         double wma10High = CandleLast.CandleData!.Wma10High!.Value;
         double sma20 = CandleLast.CandleData!.Sma20!.Value;
         if (wma5High < wma10High && (double)CandleLast.Candle.Close > sma20)
         {
             ExtraText = "GiveUp: CSD active but close above SMA20 — bearish reversal failed";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return true;
         }
 
@@ -181,9 +185,9 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         // file:///D:/Shares/Marius/Documents/Crypto/BbMa/Grok/Poging%201/Google%20-%20Fact%20sheet.htm
 
 
-        // -------------------------- 
+        // --------------------------
         // 3 Lager Tijdframe (LTF): De Execute (Entry)
-        // 3.2 
+        // 3.2
         BbmaTfState state1 = ClassifyState(CandleLast);
         if (state1 != BbmaTfState.Reentry)
         {
@@ -201,7 +205,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         }
 
 
-        // -------------------------- 
+        // --------------------------
         // 2 Middelste Tijdframe (MTF): De Validatie
         var result2 = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, period2);
         if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
@@ -238,7 +242,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         }
 
 
-        // -------------------------- 
+        // --------------------------
         // 1 Hoger Tijdframe (HTF): De Setup
         var result3 = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, period2);
         if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
@@ -263,7 +267,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         BbmaTfState state3 = ClassifyState(result3.candle, allowWickDetection: false);
         if (state3 != BbmaTfState.Reentry)
         {
-            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)})";
+            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
@@ -278,7 +282,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
         }
         if (midBbTf3 <= prevCandle!.CandleData!.Sma20!.Value)
         {
-            ExtraText = $"Error TF3 going down";
+            ExtraText = $"Error TF3 going up ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }

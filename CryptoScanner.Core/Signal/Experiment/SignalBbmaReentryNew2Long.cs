@@ -36,11 +36,11 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (data == null
            || data.Candle.OpenTime == 0
            || data.CandleData == null
+           || data.CandleData.Sma20 == null
            || data.CandleData.Ema50 == null
            || data.CandleData.Wma05Low == null
            || data.CandleData.Wma10Low == null
            || data.CandleData.BollingerBandsDeviation == null
-           || data.CandleData.Sma20 == null
            || data.CandleData.BollingerBandsPercentage == null
            )
             return false;
@@ -119,10 +119,12 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (state1 != BbmaTfState.Reentry)
         {
             ExtraText = $"waiting Reentry — TF1 currently {TfStateCode(state1)}";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
         ExtraText = "Reentry reached — entry allowed";
+        GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
         return true;
     }
 
@@ -141,17 +143,19 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (CandleTime.FromDateTime(signal.CloseDate).Minutes + MaxWaitCandles * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return true;
         }
 
         // Pattern invalidated: CSD still active but price closed below SMA20
         // — the reversal move has failed and a genuine Reentry will not follow
-        double wma5Low = CandleLast.CandleData!.Wma05Low!.Value;
+        double wma5Low = CandleLast!.CandleData!.Wma05Low!.Value;
         double wma10Low = CandleLast.CandleData!.Wma10Low!.Value;
         double sma20 = CandleLast.CandleData!.Sma20!.Value;
         if (wma5Low > wma10Low && (double)CandleLast.Candle.Close < sma20)
         {
             ExtraText = "GiveUp: CSD active but close below SMA20 — bullish reversal failed";
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return true;
         }
 
@@ -264,7 +268,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         BbmaTfState state3 = ClassifyState(result3.candle, allowWickDetection: false);
         if (state3 != BbmaTfState.Reentry)
         {
-            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)})";
+            ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
@@ -279,7 +283,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         }
         if (midBbTf3 >= prevCandle!.CandleData!.Sma20!.Value)
         {
-            ExtraText = $"Error TF3 going up";
+            ExtraText = $"Error TF3 going up ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
