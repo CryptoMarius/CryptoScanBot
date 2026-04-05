@@ -48,7 +48,7 @@ public class Api : ExchangeBase
             options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new BybitCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         BybitSocketClient.SetDefaultOptions(options =>
@@ -62,7 +62,7 @@ public class Api : ExchangeBase
             //options.SpotV3Options.SocketNoDataTimeout = options.SocketNoDataTimeout;
 
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new BybitCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

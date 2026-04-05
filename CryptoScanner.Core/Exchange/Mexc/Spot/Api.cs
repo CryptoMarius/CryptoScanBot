@@ -42,7 +42,7 @@ public class Api : ExchangeBase
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new MexcCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         MexcSocketClient.SetDefaultOptions(options =>
@@ -53,7 +53,7 @@ public class Api : ExchangeBase
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
 
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new MexcCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

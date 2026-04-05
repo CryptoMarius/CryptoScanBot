@@ -49,8 +49,9 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             return (false, 0, fetchFrom);
         }
 
+
         // Be carefull not going over boundaries (we stop early at 700..800 while the limit is actually 1200)
-        int? weight = result.ResponseHeaders.UsedWeight();
+        int? weight = result.ResponseHeaders?.Select(h => new KeyValuePair<string, string[]>(h.Key, h.Value.ToArray())).ToArray().UsedWeight();
         if (weight > 700)
         {
             GlobalData.AddTextToLogTab($"{prefix} delay needed because of rate limits");

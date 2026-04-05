@@ -1,10 +1,9 @@
-﻿using CryptoExchange.Net.Authentication;
-
-using CryptoScanner.Core.Context;
+﻿using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
+using BloFin.Net;
 using BloFin.Net.Clients;
 
 
@@ -48,7 +47,7 @@ public class Api : ExchangeBase
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             //options.SpotOptions.RateLimiters = ?
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new BloFinCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
         BloFinSocketClient.SetDefaultOptions(options =>
@@ -58,7 +57,7 @@ public class Api : ExchangeBase
             options.ReconnectInterval = TimeSpan.FromSeconds(10); // standard=5 seconds
             options.SocketNoDataTimeout = TimeSpan.FromMinutes(1); // standard=30 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new BloFinCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

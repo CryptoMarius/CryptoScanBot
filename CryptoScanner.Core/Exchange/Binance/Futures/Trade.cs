@@ -66,7 +66,7 @@ public class Trade() : TradeBase(), ITrade
                 }
 
                 // Als we over het randje gaan qua API verzoeken even inhouden
-                int? weight = result.ResponseHeaders.UsedWeight();
+                int? weight = result.ResponseHeaders?.Select(h => new KeyValuePair<string, string[]>(h.Key, h.Value.ToArray())).ToArray().UsedWeight();
                 if (weight > 700)
                 {
                     GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} delay needed for weight: {weight} (because of rate limits)");

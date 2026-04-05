@@ -1,4 +1,5 @@
 ﻿using CryptoExchange.Net.Interfaces;
+using CryptoExchange.Net.Interfaces.Clients;
 using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Core;
