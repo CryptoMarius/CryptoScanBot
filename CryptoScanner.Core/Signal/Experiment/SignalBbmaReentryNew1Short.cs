@@ -185,7 +185,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
         {
             ExtraText = $"no data for TF3 ({result3.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -202,7 +202,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         if (state3 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not Reentry ({TfStateCode(state3)})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -213,7 +213,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
         {
             ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -225,7 +225,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
             if (!CheckMlv(result2.higherInterval.Interval, result2.candle, out string mlvReason))
             {
                 ExtraText = mlvReason;
-                GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+                //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
         }
@@ -239,7 +239,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         if (code == "REM" || code == "RRE" || code == "REE" || code == "RMEE")
         {
             ExtraText = $"{code} [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} ALERT {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} ALERT {ExtraText}");
             return true;
         }
 

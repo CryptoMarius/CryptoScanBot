@@ -188,7 +188,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (state1 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF1 ({Interval.Name}) not in reentry state ({TfStateCode(state1)})";
-            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -196,7 +196,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (!CheckCsmLong(Interval, CandleLast))
         {
             ExtraText = "No CSM present on TF1";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -207,7 +207,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
         {
             ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -216,24 +216,24 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (DetectMlv(result2.higherInterval.Interval, CandleLast) != BbmaState.ValidMLV)
         {
             ExtraText = "No MLV/MHV present on TF2";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
         // 2.2 Is er een Extreme Buy zichtbaar? (MA 5 Low steekt buiten de Lower BB).
         BbmaTfState state2 = ClassifyState(result2.candle);
-        if (state2 != BbmaTfState.Extreme)
-        {
-            ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) not an extreme ({TfStateCode(state2)})";
-            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            return false;
-        }
+        //if (state2 != BbmaTfState.Extreme)
+        //{
+        //    ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) not an extreme ({TfStateCode(state2)})";
+        //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+        //    return false;
+        //}
 
         // 2.3 Sluit de prijs boven de Mid BB? (Bevestiging van kracht).
         if (result2.candle.Candle.Close < (decimal)result2.candle.CandleData.Sma20!.Value)
         {
             ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) not below sma20 ({TfStateCode(state2)})";
-            //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -244,18 +244,19 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
         {
             ExtraText = $"no data for TF3 ({result3.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
         // 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
-        // Trend filter on TF3 (highest TF): EMA50 below mid-BB (SMA20) = bullish bias
+        // Trend filter on TF3 (highest TF): EMA50 below mid-BB (SMA20) = bullish AddTextToLogTab($"BBMA2 {Symbol.Name}
         // Per PDF: trend direction is determined on the highest timeframe, not on TF1.
         double ema50Tf3 = result3.candle.CandleData!.Ema50!.Value;
         double midBbTf3 = result3.candle.CandleData!.Sma20!.Value;
         if (ema50Tf3 >= midBbTf3)
         {
-            ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not below mid-BB — bearish bias on HTF, no Long";
+            ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not below mid-BB — bearish on HTF, no Long";
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -264,7 +265,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (state3 != BbmaTfState.Reentry)
         {
             ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)})";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -273,13 +274,13 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (!GetPrevCandle(result3.higherInterval.Interval, result3.candle, out MyData? prevCandle))
         {
             ExtraText = $"Error TF3 get prevcandle";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
         if (midBbTf3 >= prevCandle!.CandleData!.Sma20!.Value)
         {
             ExtraText = $"Error TF3 going up";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -299,7 +300,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
 
 
         ExtraText = $"invalid MTF code {code} [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
-        GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+        GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
         return false;
     }
 }
