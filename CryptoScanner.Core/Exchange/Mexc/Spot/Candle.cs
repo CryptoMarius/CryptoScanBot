@@ -29,8 +29,6 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             throw new Exception("Expected BybitRestClient");
         var api = client.SpotApi;
 
-        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
         KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
             ?? throw new Exception($"Not supported interval");
         LimitRate.WaitForFairWeight(1);

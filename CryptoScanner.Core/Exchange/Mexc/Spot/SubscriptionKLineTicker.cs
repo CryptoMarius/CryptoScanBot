@@ -204,7 +204,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 {
                                     symbol.LastPrice = candleLast.Close;
                                 }
-
                                 //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
                                 GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candleLast);
                             }

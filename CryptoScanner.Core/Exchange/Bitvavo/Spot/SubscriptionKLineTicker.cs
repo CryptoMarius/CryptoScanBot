@@ -7,6 +7,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
@@ -25,7 +26,7 @@ namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 /// The Bitvavo SDK is not available as a JKorf/CryptoExchange.Net package, so we use
 /// ClientWebSocket directly and override StartAsync/StopAsync.
 ///
-/// Candle processing uses a cache + timer pattern (like Kucoin/Kraken):
+/// Candle processing uses a cache + timer pattern (same as Mexc):
 /// WebSocket updates are cached per market; the timer processes completed candles
 /// once per minute (~6 seconds after the minute boundary).
 /// </summary>
@@ -33,15 +34,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 {
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _localCts;
-    private System.Timers.Timer? _timerKline;
+
     private const string WsUrl = "wss://ws.bitvavo.com/v2/";
-
-    // Cache: latest in-progress 1m candle per market, updated on every WebSocket push.
-    // Protected by _cacheSemaphore; processed and cleared by the minute timer.
-    private readonly SemaphoreSlim _cacheSemaphore = new(1, 1);
-    private readonly Dictionary<string, CachedCandle> _candleCache = [];
-
-    private record struct CachedCandle(DateTime OpenTime, decimal Open, decimal High, decimal Low, decimal Close, decimal Volume);
 
 
     static double GetNextTimer()
@@ -51,7 +45,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     }
 
 
-    private async Task ProcessMessageAsync(string json)
+    private async Task ProcessMessageAsync(string json, SemaphoreSlim cacheListSemaphore, SortedList<string, CryptoCandleList> symbolCandleCache)
     {
         try
         {
@@ -73,22 +67,45 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             if (candleArr.Length < 6)
                 return;
 
-            DateTime openTime = DateTimeOffset.FromUnixTimeMilliseconds(candleArr[0].GetInt64()).UtcDateTime;
+            DateTime openTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(candleArr[0].GetInt64()).UtcDateTime;
             decimal open   = decimal.Parse(candleArr[1].GetString()!, CultureInfo.InvariantCulture);
             decimal high   = decimal.Parse(candleArr[2].GetString()!, CultureInfo.InvariantCulture);
             decimal low    = decimal.Parse(candleArr[3].GetString()!, CultureInfo.InvariantCulture);
             decimal close  = decimal.Parse(candleArr[4].GetString()!, CultureInfo.InvariantCulture);
             decimal volume = decimal.Parse(candleArr[5].GetString()!, CultureInfo.InvariantCulture);
 
-            // Cache the latest state of this candle; the timer will process it after the minute closes
-            await _cacheSemaphore.WaitAsync();
-            try
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
-                _candleCache[market] = new CachedCandle(openTime, open, high, low, close, volume);
-            }
-            finally
-            {
-                _cacheSemaphore.Release();
+                if (exchange.SymbolListExchangeName.TryGetValue(market, out CryptoSymbol? symbol))
+                {
+                    await cacheListSemaphore.WaitAsync();
+                    try
+                    {
+                        // Add or update the local cache
+                        bool addCandle = false;
+                        CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(openTimeUtc, 1);
+                        CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                        if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
+                        {
+                            addCandle = true;
+                            candle = new() { OpenTime = candleOpenUnix };
+                        }
+                        candle.TickDecimals = symbol.PriceDecimals;
+                        candle.Open  = open;
+                        candle.High  = high;
+                        candle.Low   = low;
+                        candle.Close = close;
+                        candle.Volume = volume;
+                        if (addCandle)
+                            candleCache.TryAdd(candleOpenUnix, candle);
+                        else
+                            candleCache[candleOpenUnix] = candle;
+                    }
+                    finally
+                    {
+                        cacheListSemaphore.Release();
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -98,60 +115,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     }
 
 
-    private async Task ProcessCachedCandlesAsync()
-    {
-        if (!GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
-            return;
-
-        // Only process candles whose minute has fully passed
-        DateTime currentMinuteStart = DateTime.UtcNow;
-        currentMinuteStart = currentMinuteStart.AddSeconds(-currentMinuteStart.Second).AddMilliseconds(-currentMinuteStart.Millisecond);
-
-        List<(string Market, CachedCandle Candle)> toProcess = [];
-
-        await _cacheSemaphore.WaitAsync();
-        try
-        {
-            foreach (var kv in _candleCache)
-            {
-                if (kv.Value.OpenTime < currentMinuteStart)
-                    toProcess.Add((kv.Key, kv.Value));
-            }
-            foreach (var (market, _) in toProcess)
-                _candleCache.Remove(market);
-        }
-        finally
-        {
-            _cacheSemaphore.Release();
-        }
-
-        foreach (var (market, cached) in toProcess)
-        {
-            try
-            {
-                if (exchange.SymbolListExchangeName.TryGetValue(market, out CryptoSymbol? symbol))
-                {
-                    Interlocked.Increment(ref TickerCount);
-                    if (TickerCount > 999999999)
-                        Interlocked.Exchange(ref TickerCount, 0);
-
-                    if (!GlobalData.BackTest)
-                        symbol.LastPrice = cached.Close;
-
-                    var candle = await CandleTools.Process1mCandleAsync(symbol, cached.OpenTime,
-                        cached.Open, cached.High, cached.Low, cached.Close, cached.Volume);
-                    GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candle);
-                }
-            }
-            catch (Exception ex)
-            {
-                ScannerLog.Logger.Error(ex, $"Bitvavo timer candle processing error for {market}");
-            }
-        }
-    }
-
-
-    private async Task ReceiveLoopAsync(CancellationToken ct)
+    private async Task ReceiveLoopAsync(CancellationToken ct, SemaphoreSlim cacheListSemaphore, SortedList<string, CryptoCandleList> symbolCandleCache)
     {
         var buffer = new byte[65536];
         var messageBuilder = new StringBuilder();
@@ -183,7 +147,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 {
                     string msg = messageBuilder.ToString();
                     messageBuilder.Clear();
-                    await ProcessMessageAsync(msg);
+                    await ProcessMessageAsync(msg, cacheListSemaphore, symbolCandleCache);
                 }
             }
         }
@@ -221,13 +185,28 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
 
         try
         {
+            SemaphoreSlim cacheListSemaphore = new(1, 1);
+
+            SortedList<string, CryptoCandleList> symbolCandleCache = [];
+
+            List<string> markets = [];
+            foreach (var symbol in SymbolList)
+            {
+                markets.Add(symbol.ExchangeName);
+                symbolCandleCache.Add(symbol.ExchangeName, []);
+            }
+
+            if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
+                throw new Exception("Geen intervallen?");
+
+
+            // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
             _localCts = CancellationTokenSource.CreateLinkedTokenSource(ExchangeBase.CancellationToken);
             _ws = new ClientWebSocket();
 
             await _ws.ConnectAsync(new Uri(WsUrl), _localCts.Token);
 
             // Subscribe to 1m candles for all symbols in this group
-            var markets = SymbolList.Select(s => s.ExchangeName).ToList();
             var subscribeMsg = JsonSerializer.Serialize(new
             {
                 action = "subscribe",
@@ -238,21 +217,79 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             await _ws.SendAsync(new ArraySegment<byte>(msgBytes), WebSocketMessageType.Text, true, _localCts.Token);
 
             // Start background receive loop
-            _ = Task.Run(() => ReceiveLoopAsync(_localCts.Token), _localCts.Token);
+            _ = Task.Run(() => ReceiveLoopAsync(_localCts.Token, cacheListSemaphore, symbolCandleCache), _localCts.Token);
 
-            // Timer fires ~6 seconds after each minute boundary to process completed candles
-            _timerKline = new System.Timers.Timer { AutoReset = false };
-            _timerKline.Elapsed += async (sender, e) =>
+
+            // Implementatie kline timer (fix)
+            // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)
+            // kun je aanvullend een timer kunnen gebruiken die alsnog de vorige candle herhaalt.
+            // De gedachte is om dat iedere minuut 10 seconden na het normale kline event te doen.
+
+            System.Timers.Timer timerKline = new()
             {
-                await ProcessCachedCandlesAsync();
+                AutoReset = false,
+            };
+            timerKline.Elapsed += new System.Timers.ElapsedEventHandler(async (sender, e) =>
+            {
+                foreach (var symbol in SymbolList)
+                {
+                    try
+                    {
+                        await cacheListSemaphore.WaitAsync();
+                        try
+                        {
+                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                            CandleTime expectedCandlesUpto = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1) - interval.Duration;
+
+                            // Finally do something with the cached data
+                            CryptoCandle candleLast = default;
+                            foreach (CryptoCandle candle in candleCache.Values.ToList())
+                            {
+                                // Only the ready candles (might change the flow?)
+                                if (candle.OpenTime <= expectedCandlesUpto)
+                                {
+                                    candleCache.Remove(candle.OpenTime);
+                                    Interlocked.Increment(ref TickerCount);
+                                    if (TickerCount > 999999999)
+                                        Interlocked.Exchange(ref TickerCount, 0);
+
+                                    await CandleTools.Process1mCandleAsync(symbol, candle.Date,
+                                        candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+                                    candleLast = candle;
+                                }
+                                else break;
+                            }
+                            // Add the last candle in the analysis queue
+                            if (candleLast.OpenTime == expectedCandlesUpto)
+                            {
+                                // Last known price(s)
+                                if (!GlobalData.BackTest)
+                                    symbol.LastPrice = candleLast.Close;
+                                GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candleLast);
+                            }
+                        }
+                        finally
+                        {
+                            cacheListSemaphore.Release();
+                        }
+                    }
+                    catch (Exception error)
+                    {
+                        ScannerLog.Logger.Error(error, symbol.Name);
+#if DEBUG
+                        GlobalData.AddTextToLogTab($"KLine Ticker {symbol.Name} ERROR {error.Message}");
+#endif
+                    }
+                }
+
                 if (sender is System.Timers.Timer t)
                 {
                     t.Interval = GetNextTimer();
                     t.Start();
                 }
-            };
-            _timerKline.Interval = GetNextTimer();
-            _timerKline.Start();
+            });
+            timerKline.Interval = GetNextTimer();
+            timerKline.Start();
 
             ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} started");
             GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} started ({SymbolList.Count} symbols)");
@@ -261,10 +298,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         {
             ScannerLog.Logger.Error(ex, "");
             GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} kline ticker group {GroupName} startup error: {ex.Message}");
-
-            _timerKline?.Stop();
-            _timerKline?.Dispose();
-            _timerKline = null;
 
             _ws?.Dispose();
             _ws = null;
@@ -286,10 +319,6 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         }
 
         ScannerLog.Logger.Trace($"Bitvavo kline ticker group {GroupName} stopping");
-
-        _timerKline?.Stop();
-        _timerKline?.Dispose();
-        _timerKline = null;
 
         _localCts?.Cancel();
 

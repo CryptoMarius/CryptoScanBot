@@ -47,10 +47,9 @@ public class Api : ExchangeBase
     public override Task<(bool succes, TradeParams? tradeParams)> Cancel(
         CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step)
     {
-        // Not implemented
+        // not implemented
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
-
 
     public static CryptoExternalUrls GetExchangeLinks()
     {

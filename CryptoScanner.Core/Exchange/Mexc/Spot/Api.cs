@@ -121,7 +121,7 @@ public class Api : ExchangeBase
         CryptoOrderType orderType, CryptoOrderSide orderSide,
         decimal quantity, decimal price, decimal? stop, decimal? limit, bool generateJsonDebug = false)
     {
-        // not implemented
+        // Not implemented
         return Task.FromResult<(bool succes, TradeParams? tradeParams)>((false, null));
     }
 

@@ -29,12 +29,8 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
             throw new Exception("Expected KucoinRestClient");
         var api = client.SpotApi;
 
-        var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod);
-        if (exchangeInterval == null)
-            throw new Exception($"Not supported interval");
-
+        KlineInterval? exchangeInterval = Interval.GetExchangeInterval(interval.IntervalPeriod)
+            ?? throw new Exception($"Not supported interval");
         //KucoinWeights.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
@@ -42,7 +38,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = fetchFrom + (limit - 1) * interval.Duration;
 
     Again:
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime());
         if (!result.Success)
         {
