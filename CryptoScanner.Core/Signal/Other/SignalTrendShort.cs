@@ -11,6 +11,9 @@ public class SignalTrendShort : SignalCreateBase
 
     public override bool IsSignal()
     {
+        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
+            return false;
+
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 
         CryptoTrendData data = SymbolInterval.TrendPrimary;
