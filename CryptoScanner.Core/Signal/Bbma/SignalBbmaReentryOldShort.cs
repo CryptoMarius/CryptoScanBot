@@ -1,7 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Bbma;
 
 #if DEBUG
 /// <summary>

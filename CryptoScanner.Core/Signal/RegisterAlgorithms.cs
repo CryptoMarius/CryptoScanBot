@@ -1,4 +1,5 @@
 ﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.Momentum;
 using CryptoScanner.Core.Signal.Other;

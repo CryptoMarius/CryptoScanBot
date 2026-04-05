@@ -3,10 +3,10 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Bbma;
 
 #if DEBUG
-public class SignalBbMaLong : SignalBbmaBase
+public class SignalBbMaShort : SignalBbmaBase
 {
     public override bool IndicatorsOkay(MyData data)
     {
@@ -14,7 +14,7 @@ public class SignalBbMaLong : SignalBbmaBase
            || data.Candle.OpenTime == 0
            || data.CandleData == null
            //|| data.CandleData.Ema50 == null
-           //|| data.CandleData.Wma05Low == null
+           //|| data.CandleData.Wma05High == null
            || data.CandleData.BollingerBandsDeviation == null
            )
             return false;
@@ -22,27 +22,28 @@ public class SignalBbMaLong : SignalBbmaBase
         return true;
     }
 
+
     //private bool IsExtreme(CryptoCandle data, int backward)
     //{
     //    // go back x extra data(s)?
     //    while (backward-- > 0)
     //    {
-    //        decimal wma05Low = (decimal)data.CandleData!.Wma05Low!;
-    //        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!;
-    //        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
+    //        decimal wma05High = (decimal)data.CandleData!.Wma05High!;
+    //        decimal wma10High = (decimal)data.CandleData!.Wma10High!;
+    //        decimal bbUpper = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
 
     //        // Extreme Type A: LWMA 5 high/low closes above/below BB
-    //        bool extremeTypeA = wma05Low < bbLower;
+    //        bool extremeTypeA = wma05High > bbUpper;
 
     //        // Extreme Type B: Bullish/bearish data rejects BB
-    //        bool extremeTypeB = data.Low < bbLower && data.Close > bbLower && data.Open > bbLower;
+    //        bool extremeTypeB = data.High > bbUpper && data.Open < bbUpper && data.Close < bbUpper;
 
     //        // Magic Extreme: LWMA 5 + LWMA 10 outside BB
-    //        bool magicExtreme = extremeTypeA && wma10Low < bbLower;
+    //        bool magicExtreme = extremeTypeA && wma10High > bbUpper; // && data.Close < data.Open;
 
     //        // Advance Extreme: Price rejects EMA 50 (wick rejection)
     //        decimal ema50 = (decimal)data.CandleData!.Ema50!;
-    //        bool advanceExtreme = data.Low < ema50 && data.Open > ema50 && data.Close > ema50;
+    //        bool advanceExtreme = data.High > ema50 && data.Close < ema50 && data.Open < ema50;
 
     //        if (extremeTypeA || extremeTypeB || advanceExtreme || magicExtreme)
     //            return true;
@@ -63,11 +64,11 @@ public class SignalBbMaLong : SignalBbmaBase
     //        if (!GetPrevCandle(data, out CryptoCandle? prev))
     //            return false;
 
-    //        decimal wma05Low = (decimal)data.CandleData!.Wma05Low!;
-    //        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!;
+    //        decimal wma05High = (decimal)data.CandleData!.Wma05High!;
+    //        decimal wma10High = (decimal)data.CandleData!.Wma10High!;
 
-    //        //decimal wma05LowPrev = (decimal)data.CandleData!.Wma05Low!;
-    //        //decimal wma10LowPrev = (decimal)data.CandleData!.Wma10Low!;
+    //        //decimal wma05HighPrev = (decimal)data.CandleData!.Wma05High!;
+    //        //decimal wma10HighPrev = (decimal)data.CandleData!.Wma10High!;
 
     //        // CSD (CSAK): LWMA5/WMA10 crossover (use lows for buy, highs for sell)
     //        //bool csd = wma05Low > wma10Low && wma05LowPrev <= wma10LowPrev;
@@ -78,16 +79,18 @@ public class SignalBbMaLong : SignalBbmaBase
     //        //// CSM: Strong data after CSD
     //        //double bodySize = Math.Abs(candles[i].Close - candles[i].Open);
     //        //bool strongCandle = bodySize > 0.01 * candles[i].Close;
-    //        //bool csmBull = csd && strongCandle && candles[i].Close > candles[i].Open;
+    //        //bool csmBull = csdBull && strongCandle && candles[i].Close > candles[i].Open;
+    //        //bool csmBear = csdBear && strongCandle && candles[i].Close < candles[i].Open;
 
     //        //// Early CSM: CSM zonder volledige CSD (hoog risico)
     //        //bool earlyCsmBull = csmBull && (!signals[tf].ContainsKey("CSDBull") || !signals[tf]["CSDBull"].Active);
+    //        //bool earlyCsmBear = csmBear && (!signals[tf].ContainsKey("CSDBear") || !signals[tf]["CSDBear"].Active);
 
     //        //// Re-entry Zones (na CSD/CSM)
-    //        //bool reentryBuyZone = (csd || csmBull || earlyCsdBull || earlyCsmBull) && candles[i].Close >= wma05Low && candles[i].Close <= wma10Low;
-    //        //return reentryBuyZone;
+    //        //bool reentryBuyZone = (csdBull || csmBull || earlyCsdBull || earlyCsmBull) && candles[i].Close >= lwma5_low[i] && candles[i].Close <= lwma10_low[i];
+    //        //bool reentrySellZone = (csdBear || csmBear || earlyCsdBear || earlyCsmBear) && candles[i].Close <= lwma5_high[i] && candles[i].Close >= lwma10_high[i];
 
-    //        bool possibleReentry = data.Close >= wma05Low && data.Close <= wma10Low;
+    //        bool possibleReentry = data.Close >= wma10High && data.Close <= wma05High;
     //        if (possibleReentry)
     //            return true;
 
@@ -100,19 +103,16 @@ public class SignalBbMaLong : SignalBbmaBase
     public bool Calculate(CryptoIntervalPeriod tf1, CryptoIntervalPeriod tf2, CryptoIntervalPeriod tf3)
     {
         CryptoInterval interval1 = GlobalData.IntervalListPeriod[tf1];
-        //LoadSymbolCandles(symbol, interval1);
         CryptoCandleList candlesTf1 = Symbol.GetSymbolInterval(tf1).CandleList;
         if (candlesTf1.Count == 0)
             return false;
 
         CryptoInterval interval2 = GlobalData.IntervalListPeriod[tf2];
-        //LoadSymbolCandles(symbol, interval2);
         CryptoCandleList candlesTf2 = Symbol.GetSymbolInterval(tf2).CandleList;
         if (candlesTf2.Count == 0)
             return false;
 
         CryptoInterval interval3 = GlobalData.IntervalListPeriod[tf3];
-        //LoadSymbolCandles(symbol, interval3);
         CryptoCandleList candlesTf3 = Symbol.GetSymbolInterval(tf3).CandleList;
         if (candlesTf3.Count == 0)
             return false;
@@ -176,7 +176,7 @@ public class SignalBbMaLong : SignalBbmaBase
         //}
         //if (!IsReentry(candle3!, 3))
         //    return false;
-        //else ExtraText += $", {interval3_.Interval.Name} {candle3!.DateLocal:dd-MM HH:mm}";
+        //ExtraText += $", {interval3_.Interval.Name} {candle3!.DateLocal:dd-MM HH:mm}";
 
 
         //return true;

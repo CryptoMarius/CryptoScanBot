@@ -3,7 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Bbma;
 
 public class BbmaStrategyGrok2
 {
@@ -351,28 +351,33 @@ public class BbmaStrategyGrok2
         for (int j = 0; j < m; j++)
         {
             var candle = candles2[j];
-            double jMiddle = htf2Bb[j].Sma ?? 0;
-            double jUpper = htf2Bb[j].UpperBand ?? 0;
-            double jLower = htf2Bb[j].LowerBand ?? 0;
-            double jMa5H = htf2Ma5H[j].Wma ?? 0;
-            double jMa10H = htf2Ma10H[j].Wma ?? 0;
-            double jMa5L = htf2Ma5L[j].Wma ?? 0;
-            double jMa10L = htf2Ma10L[j].Wma ?? 0;
+            double middle = htf2Bb[j].Sma ?? 0;
+            double upper = htf2Bb[j].UpperBand ?? 0;
+            double lower = htf2Bb[j].LowerBand ?? 0;
+            double ma5H = htf2Ma5H[j].Wma ?? 0;
+            double ma10H = htf2Ma10H[j].Wma ?? 0;
+            double ma5L = htf2Ma5L[j].Wma ?? 0;
+            double ma10L = htf2Ma10L[j].Wma ?? 0;
 
-            double jAtr = htf2Atr[j].Atr ?? 0;
-            bool jBigBody = Math.Abs(candle.Close - candle.Open) > (decimal)(0.6 * jAtr);
+            double atr = htf2Atr[j].Atr ?? 0;
+            bool bigBody = Math.Abs(candle.Close - candle.Open) > (decimal)(0.6 * atr);
 
-            tf2.htf2ExtBuyBase[j] = (candle.Low < (decimal)jLower && candle.Close > (decimal)jLower) && (StrictExtreme ? jMa5L < jLower : jMa5L < jLower || jMa10L < jLower);
-            tf2.htf2ExtSellBase[j] = (candle.High > (decimal)jUpper && candle.Close < (decimal)jUpper) && (StrictExtreme ? jMa5H > jUpper : jMa5H > jUpper || jMa10H > jUpper);
+            tf2.htf2ExtBuyBase[j] = (candle.Low < (decimal)lower && candle.Close > (decimal)lower) 
+                && (StrictExtreme ? ma5L < lower : ma5L < lower || ma10L < lower);
+
+            tf2.htf2ExtSellBase[j] = (candle.High > (decimal)upper && candle.Close < (decimal)upper) 
+                && (StrictExtreme ? ma5H > upper : ma5H > upper || ma10H > upper);
 
             tf2.htf2Up[j] = candle.Close > (decimal)(htf2Ema50[j].Ema ?? 0);
             tf2.htf2Down[j] = candle.Close < (decimal)(htf2Ema50[j].Ema ?? 0);
 
-            tf2.htf2CsakBuyBase[j] = jBigBody && candle.Close > (decimal)jMiddle;
-            tf2.htf2CsakSellBase[j] = jBigBody && candle.Close < (decimal)jMiddle;
+            tf2.htf2CsakBuyBase[j] = bigBody && candle.Close > (decimal)middle;
+            tf2.htf2CsakSellBase[j] = bigBody && candle.Close < (decimal)middle;
 
-            tf2.htf2ReEntryBuyBase[j] = tf2.htf2Up[j] && (candle.Low <= (decimal)Math.Max(jMa5L, jMa10L)) && candle.Close >= (decimal)jMiddle;
-            tf2.htf2ReEntrySellBase[j] = tf2.htf2Down[j] && (candle.High >= (decimal)Math.Min(jMa5H, jMa10H)) && candle.Close <= (decimal)jMiddle;
+            tf2.htf2ReEntryBuyBase[j] = tf2.htf2Up[j] && (candle.Low <= (decimal)Math.Max(ma5L, ma10L)) 
+                && candle.Close >= (decimal)middle;
+            tf2.htf2ReEntrySellBase[j] = tf2.htf2Down[j] && (candle.High >= (decimal)Math.Min(ma5H, ma10H)) 
+                && candle.Close <= (decimal)middle;
         }
 
         tf2.htf2ExtBuyBSHist = Enumerable.Range(0, m).Select(j => GetSince(tf2.htf2ExtBuyBase, j, LookbackSig)).ToArray();
@@ -383,11 +388,11 @@ public class BbmaStrategyGrok2
         for (int j = 0; j < m; j++)
         {
             var candle = candles2[j];
-            double jLower = htf2Bb[j].LowerBand ?? 0;
-            double jUpper = htf2Bb[j].UpperBand ?? 0;
+            double lower = htf2Bb[j].LowerBand ?? 0;
+            double upper = htf2Bb[j].UpperBand ?? 0;
 
-            tf2.htf2MhvBuyBase[j] = (candle.Low < (decimal)jLower && candle.Close > (decimal)jLower) && tf2.htf2ExtBuyBSHist[j] < LookbackSig;
-            tf2.htf2MhvSellBase[j] = (candle.High > (decimal)jUpper && candle.Close < (decimal)jUpper) && tf2.htf2ExtSellBSHist[j] < LookbackSig;
+            tf2.htf2MhvBuyBase[j] = (candle.Low < (decimal)lower && candle.Close > (decimal)lower) && tf2.htf2ExtBuyBSHist[j] < LookbackSig;
+            tf2.htf2MhvSellBase[j] = (candle.High > (decimal)upper && candle.Close < (decimal)upper) && tf2.htf2ExtSellBSHist[j] < LookbackSig;
         }
 
         // Project HTF to LTF
