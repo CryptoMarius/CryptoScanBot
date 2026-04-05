@@ -11,6 +11,12 @@
             <!-- Suppress the datagrid sort indicator (takes up to much space) -->
             <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
 
+            <!-- Override Fluent theme scrollbar thumb scale transforms with identity (= no shrink).
+                 By default, scaleX/scaleY(0.125) shrinks the thumb when the pointer leaves.
+                 ScaleX/Y=1 is an identity transform so the thumb stays at full size at all times. -->
+            <ScaleTransform x:Key="VerticalSmallScrollThumbScaleTransform" ScaleX="0.75" ScaleY="1"/>
+            <ScaleTransform x:Key="HorizontalSmallScrollThumbScaleTransform" ScaleX="1" ScaleY="0.75"/>
+
             <ResourceDictionary.ThemeDictionaries>
                 <!-- Light theme resources -->
                 <ResourceDictionary x:Key="Light">
@@ -180,6 +186,12 @@
        	<Style Selector="DataGrid ScrollBar">
 		    <Setter Property="AllowAutoHide" Value="False"/>
 	    </Style>
+
+        <!-- Always show both scrollbars in DataGrid, never hide them -->
+        <Style Selector="DataGrid ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
+        </Style>
 
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="0" />
