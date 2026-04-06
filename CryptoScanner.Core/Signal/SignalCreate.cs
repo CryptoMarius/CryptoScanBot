@@ -334,7 +334,9 @@ public class SignalCreate
 
 
         // Check "Barcode" charts
-        decimal barcodePercentage = 100 * Symbol.PriceTickSize / Symbol.LastPrice ?? 0;
+        decimal barcodePercentage = Symbol.LastPrice is > 0
+            ? 100 * Symbol.PriceTickSize / Symbol.LastPrice.Value
+            : 0;
         if (barcodePercentage > GlobalData.Settings.Signal.MinimumTickPercentage)
         {
             // Er zijn nogal wat van die flut munten, laat de tekst maar achterwege
