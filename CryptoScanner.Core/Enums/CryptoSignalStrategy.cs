@@ -47,11 +47,6 @@ public enum CryptoSignalStrategy
 #endif
 
 #if DEBUG
-    // BBMA Magic Extreme: WMA5(Low/High) AND WMA10(Low/High) both outside the Bollinger Band
-    BbmaMagicExtreme = 45,
-#endif
-
-#if DEBUG
     StochDir = 46,
 #endif
 
