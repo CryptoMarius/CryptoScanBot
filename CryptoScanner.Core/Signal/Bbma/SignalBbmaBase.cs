@@ -3,6 +3,7 @@ using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Bbma;
 
+#if DEBUG
 public class SignalBbmaBase : SignalCreateBase
 {
     internal enum BbmaState
@@ -370,3 +371,4 @@ public class SignalBbmaBase : SignalCreateBase
 
 
 }
+#endif
