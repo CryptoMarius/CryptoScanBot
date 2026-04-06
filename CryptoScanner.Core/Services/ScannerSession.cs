@@ -310,7 +310,7 @@ public class ScannerSession : IScannerSession
                 if (ExchangeBase.KLineTicker != null && !GlobalData.ApplicationIsClosing)
                 {
                     //await ExchangeHelper.KLineTicker?.StopAsync();
-                    task = Task.Run(() => { ExchangeBase.KLineTicker?.StopAsync(); });
+                    task = Task.Run(async () => { await ExchangeBase.KLineTicker.StopAsync(); });
                     taskList.Add(task);
                 }
 
