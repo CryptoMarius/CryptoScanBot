@@ -230,7 +230,7 @@ public partial class MainWindow : Window
         SymbolsFilterLabel.IsVisible = true;
         FilterTextBox.IsVisible = true;
         TogglePanelButton.Content = "◄";
-        TogglePanelButton.SetValue(ToolTip.TipProperty, "Verberg symbolen");
+        TogglePanelButton.SetValue(ToolTip.TipProperty, "Hide symbols");
 
         _isSymbolPanelCollapsed = false;
         _applicationStateService.SaveSymbolPanelCollapsed(false);

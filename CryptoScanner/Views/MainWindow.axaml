@@ -85,7 +85,7 @@
 							</StackPanel>
 							<Button x:Name="TogglePanelButton" Grid.Column="1" Click="OnToggleSymbolPanel"
 									Content="◄" Padding="6,2" VerticalAlignment="Center" Margin="4,0"
-									FontSize="11" ToolTip.Tip="Verberg symbolen"/>
+									FontSize="11" ToolTip.Tip="Hide symbols"/>
 						</Grid>
 						<views:SymbolGridView x:Name="SymbolGridContent" Grid.Row="1" DataContext="{Binding SymbolGridViewModel}"/>
 					</Grid>
