@@ -131,6 +131,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("DashBoardInformationViewModel constructor called");
 
         WeakReferenceMessenger.Default.Register<StatusesHaveChangedMessage>(this, OnStatusesHaveChanged);
+        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
+        WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
 
         InitializeBarometer();
 
@@ -149,12 +151,33 @@ public partial class DashBoardInformationViewModel : ObservableObject
         _barometerTimer.Tick -= OnBarometerTimer;
 
         WeakReferenceMessenger.Default.Unregister<StatusesHaveChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
     }
 
 
     private void OnStatusesHaveChanged(object recipient, StatusesHaveChangedMessage message)
     {
         StatusesHaveChanged();
+    }
+
+    private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
+    {
+        // Refresh quotes and symbols after GetSymbolsAsync() or exchange switch
+        InitializeBarometer();
+        RegisterExchangeSymbols();
+    }
+
+    private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)
+    {
+        // Reinitialize barometer with the quotes of the new exchange
+        InitializeBarometer();
+        RegisterExchangeSymbols();
+
+        // Switch to the default quote of the new exchange if it is available
+        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        if (!string.IsNullOrEmpty(defaultQuote) && Quotes.Contains(defaultQuote))
+            SelectedQuote = defaultQuote;
     }
 
     private void StatusesHaveChanged()

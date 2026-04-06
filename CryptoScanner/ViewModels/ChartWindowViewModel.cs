@@ -1017,7 +1017,8 @@ public partial class ChartWindowViewModel : ObservableObject
         //Session.MaxDate += 1 * Interval.Duration; // Allow room for extra candles (we draw the 1m candles there)
 
         // Load or refresh signals each minute
-        if (lastLoadedSignalsAndPositions.Minutes != Session.MaxDate)
+        var currentTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+        if (lastLoadedSignalsAndPositions.Minutes != currentTime)
         {
             lastLoadedSignalsAndPositions = Session.MaxDate;
             ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, SignalList);

@@ -108,6 +108,10 @@ public class CommandShowConfiguration : CommandBase
 
                 // Schedule a reload of data
                 scannerSession.ScheduleRefresh();
+
+                // Notify subscribers that the active exchange has changed
+                if (exchangeChanged)
+                    GlobalData.SendMvvmMessage(new ExchangeSwitchedMessage());
             }
             else
             {

@@ -1,9 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -107,6 +110,37 @@ public partial class DashboardPositionsViewModel : ObservableObject
     {
         RefreshCommand = new AsyncRelayCommand(RefreshInformationAsync);
 
+        InitializeQuoteOptions();
+
+        WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
+        WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
+    }
+
+    public void Dispose()
+    {
+        WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
+    }
+
+    private void OnSymbolsHaveChanged(object recipient, SymbolsHaveChangedMessage message)
+    {
+        // Refresh quote options after GetSymbolsAsync() or exchange switch
+        InitializeQuoteOptions();
+    }
+
+    private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)
+    {
+        // Reinitialize quote options for the new exchange
+        InitializeQuoteOptions();
+
+        // Switch to the default quote of the new exchange if it is available
+        string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
+        if (!string.IsNullOrEmpty(defaultQuote) && QuoteOptions.Contains(defaultQuote))
+            SelectedQuote = defaultQuote;
+    }
+
+    private void InitializeQuoteOptions()
+    {
         // Add the active quotes (default=usdt)
         List<string> quotes = [];
         foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
@@ -117,7 +151,10 @@ public partial class DashboardPositionsViewModel : ObservableObject
         if (quotes.Count == 0)
             quotes.Add("USDT");
         QuoteOptions = new ObservableCollection<string>(quotes);
-        SelectedQuote = quotes[0];
+
+        // Keep the selected quote if it is still valid, otherwise fall back to the first option
+        if (!quotes.Contains(SelectedQuote))
+            SelectedQuote = quotes[0];
     }
 
     partial void OnSelectedQuoteChanged(string value)

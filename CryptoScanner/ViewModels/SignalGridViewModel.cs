@@ -29,6 +29,7 @@ public partial class SignalGridViewModel : ObservableObject
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+        WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
 
         _timerAddSignalsFromQueue.Tick += TimerAddSignalsFromQueueTick;
         _timerAddSignalsFromQueue.Start();
@@ -45,6 +46,7 @@ public partial class SignalGridViewModel : ObservableObject
     public void Dispose()
     {
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
 
         _timerAddSignalsFromQueue.Stop();
         _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
@@ -57,6 +59,21 @@ public partial class SignalGridViewModel : ObservableObject
     {
         foreach (var signal in Signals)
             signal.ResetColors();
+    }
+
+    private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)
+    {
+        // Discard any queued signals that may belong to the previous exchange
+        if (Monitor.TryEnter(GlobalData.SignalQueue))
+        {
+            try { GlobalData.SignalQueue.Clear(); }
+            finally { Monitor.Exit(GlobalData.SignalQueue); }
+        }
+
+        // Reload signals for the now-active exchange and apply current filter
+        Signals.Clear();
+        var viewModels = GlobalData.LoadSignals(_currentFilter).Select(s => new SignalViewModel { Object = s });
+        Signals.AddRange(viewModels);
     }
 
 
