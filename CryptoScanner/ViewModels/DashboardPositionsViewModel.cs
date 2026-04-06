@@ -137,6 +137,32 @@ public partial class DashboardPositionsViewModel : ObservableObject
         string? defaultQuote = ExchangeBase.ExchangeOptions.DefaultQuote;
         if (!string.IsNullOrEmpty(defaultQuote) && QuoteOptions.Contains(defaultQuote))
             SelectedQuote = defaultQuote;
+
+        // Clear stale statistics from the previous exchange
+        ResetDashboard();
+    }
+
+    private void ResetDashboard()
+    {
+        // Clear position data
+        QueryPositionDataList.Clear();
+        OpenData = new QueryPositionData();
+        ClosedData = new QueryPositionData();
+        QuoteData = null;
+
+        // Reset summary labels
+        NettoPnlValue = "0.00";
+        CurrentValue = "0.00";
+        VirtualProfit = "0.00";
+        VirtualProfitPercentage = "0.00";
+        ClosedProfitPercentage = "";
+
+        // Clear charts
+        ChartPositionsPerDay = null;
+        ChartProfitsPerDay = null;
+        ChartProfitPercentagePerDay = null;
+        ChartInvestedReturnedPerDay = null;
+        ChartDoorlooptijden = null;
     }
 
     private void InitializeQuoteOptions()
@@ -145,7 +171,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
         List<string> quotes = [];
         foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            if (cryptoQuoteData.FetchCandles)
+            if (cryptoQuoteData.FetchCandles && cryptoQuoteData.SymbolList.Count > 0)
                 quotes.Add(cryptoQuoteData.Name);
         }
         if (quotes.Count == 0)

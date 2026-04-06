@@ -170,6 +170,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
     private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)
     {
+        ChartImage = null;
+        GlobalData.CreatedSignalCount = 0;
+        SignalExecute.ResetAnalyseCount();
+        ExchangeBase.KLineTicker!.Reset();
+
         // Reinitialize barometer with the quotes of the new exchange
         InitializeBarometer();
         RegisterExchangeSymbols();
@@ -221,7 +226,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         List<string> quotes = [];
         foreach (CryptoQuoteData cryptoQuoteData in GlobalData.Settings.QuoteCoins.Values)
         {
-            if (cryptoQuoteData.FetchCandles)
+            if (cryptoQuoteData.FetchCandles && cryptoQuoteData.SymbolList.Count > 0)
                 quotes.Add(cryptoQuoteData.Name);
         }
         if (quotes.Count == 0)
