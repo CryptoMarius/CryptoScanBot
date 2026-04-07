@@ -1022,7 +1022,11 @@ public partial class ChartWindowViewModel : ObservableObject
         {
             lastLoadedSignalsAndPositions = Session.MaxDate;
             ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, SignalList);
+            optionsInChart.TryAdd("signals", "");
+            optionsInChart["signals"] = "";
             ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, PositionList);
+            optionsInChart.TryAdd("positions", "");
+            optionsInChart["positions"] = "";
         }
 
         return (true, "");
