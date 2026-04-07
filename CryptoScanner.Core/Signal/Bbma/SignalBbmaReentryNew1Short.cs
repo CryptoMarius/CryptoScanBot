@@ -85,17 +85,17 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(1.5, 100))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
         // Step 1: TF1 must currently be in Reentry state — this is the entry moment
-        BbmaState state1Now = BbmaStateShort(CandleLast);
-        if (state1Now != BbmaState.Reentry)
+        BbmaState stateLtfNow = BbmaStateShort(CandleLast);
+        if (stateLtfNow != BbmaState.Reentry)
         {
-            ExtraText = $"TF1 not in Reentry ({TfStateCode(state1Now)})";
+            ExtraText = $"TF1 not in Reentry ({TfStateCode(stateLtfNow)})";
             return false;
         }
 
@@ -106,70 +106,70 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         // Step 3: Walk back through TF1 history to find the preceding alert candle
         //   Skip any Reentry candles — the Reentry may have started a few candles ago.
         //   Stop at the first non-Reentry candle; that must be the alert candle.
-        MyData? tf1 = CandleLast;
+        MyData? dataLtf = CandleLast;
         for (int i = 0; i < MaxWaitCandles; i++)
         {
-            if (!GetPrevCandle(tf1, out tf1))
+            if (!GetPrevCandle(dataLtf, out dataLtf) || dataLtf == null)
             {
                 ExtraText = $"insufficient TF1 history for lookback ({i} candles checked)";
                 return false;
             }
 
-            BbmaState state1 = BbmaStateShort(tf1!);
+            BbmaState stateLtf = BbmaStateShort(dataLtf!);
 
             // Still in Reentry — keep walking back to find the alert that preceded it
-            if (state1 == BbmaState.Reentry)
+            if (stateLtf == BbmaState.Reentry)
                 continue;
 
             // Found a non-Reentry candle — it must be an alert state for the setup to be valid
-            if (state1 != BbmaState.Extreme && state1 != BbmaState.MagicExtreme && state1 != BbmaState.Mlv)
+            if (stateLtf != BbmaState.Extreme && stateLtf != BbmaState.MagicExtreme && stateLtf != BbmaState.Mlv)
             {
-                ExtraText = $"no valid alert before this Reentry (found {TfStateCode(state1)} at -{i + 1} candles)";
+                ExtraText = $"no valid alert before this Reentry (found {TfStateCode(stateLtf)} at -{i + 1} candles)";
                 return false;
             }
 
             // Step 4: Check TF3 state at the time of the historical alert candle
-            var result3 = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, tf1.Candle.OpenTime, period3);
+            var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
+                Symbol, Interval, dataLtf.Candle.OpenTime, period3);
 
-            if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
+            if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
             {
-                ExtraText = $"no data for TF3 ({result3.higherInterval.Interval.Name}) at alert candle";
+                ExtraText = $"no data for TF3 ({resultHtf.higherInterval.Interval.Name}) at alert candle";
                 return false;
             }
 
             // Trend filter on TF3: EMA50 above mid-BB (SMA20) = bearish bias
-            double ema50Tf3 = result3.candle.CandleData!.Ema50!.Value;
-            double midBbTf3 = result3.candle.CandleData!.Sma20!.Value;
+            double ema50Tf3 = resultHtf.candle.CandleData!.Ema50!.Value;
+            double midBbTf3 = resultHtf.candle.CandleData!.Sma20!.Value;
             if (ema50Tf3 <= midBbTf3)
             {
                 ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not above mid-BB at alert time — bullish bias, no Short";
                 return false;
             }
 
-            BbmaState state3 = BbmaStateShort(result3.candle, allowWickDetection: false);
-            if (state3 != BbmaState.Reentry)
+            BbmaState stateHtf = BbmaStateShort(resultHtf.candle, allowWickDetection: false);
+            if (stateHtf != BbmaState.Reentry)
             {
-                ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not Reentry at alert time ({TfStateCode(state3)})";
+                ExtraText = $"TF3 ({resultHtf.higherInterval.Interval.Name}) not Reentry at alert time ({TfStateCode(stateHtf)})";
                 return false;
             }
 
             // Step 5: Check TF2 state at the time of the historical alert candle
-            var result2 = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, tf1.Candle.OpenTime, period2);
+            var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
+                Symbol, Interval, dataLtf.Candle.OpenTime, period2);
 
-            if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
+            if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
             {
-                ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name}) at alert candle";
+                ExtraText = $"no data for TF2 ({resultMtf.higherInterval.Interval.Name}) at alert candle";
                 return false;
             }
 
-            BbmaState state2 = BbmaStateShort(result2.candle, allowWickDetection: false);
+            BbmaState stateMtf = BbmaStateShort(resultMtf.candle, allowWickDetection: false);
 
             // If TF2 was in MHV/MLV phase at the alert time, verify it was genuine per the PDF
-            if (state2 == BbmaState.Mlv)
+            if (stateMtf == BbmaState.Mlv)
             {
-                if (!CheckMlv(result2.higherInterval.Interval, result2.candle, out string mlvReason))
+                if (!CheckMlv(resultMtf.higherInterval.Interval, resultMtf.candle, out string mlvReason))
                 {
                     ExtraText = mlvReason;
                     return false;
@@ -181,10 +181,10 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
             //   RRE  — TF3=R, TF2=R, TF1=E   (Extreme on TF1, mid-TF already in reentry)
             //   REE  — TF3=R, TF2=E, TF1=E   (Extreme on both TF1 and TF2)
             //   RMEE — TF3=R, TF2=M, TF1=EE  (MagicExtreme on TF1, MLV on TF2)
-            string code = TfStateCode(state3) + TfStateCode(state2) + TfStateCode(state1);
+            string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
             if (code == "REM" || code == "RRE" || code == "REE" || code == "RMEE")
             {
-                ExtraText = $"{code} (alert {i + 1} candle(s) ago) [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
+                ExtraText = $"{code} (alert {i + 1} candle(s) ago) [{resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}]";
                 //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} REENTRY {ExtraText}");
                 return true;
             }

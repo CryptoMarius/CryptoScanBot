@@ -37,27 +37,27 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(1.5, 100))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
-        MyData? candleTf1 = CandleLast;
+        MyData? candleLtf = CandleLast;
 
         // TF1 must currently be in Reentry state — this is the entry moment
-        BbmaState state1Now = BbmaStateLong(candleTf1);
-        //if (state1Now != BbmaState.Reentry)
-        //{
-        //    ExtraText = $"TF1 not in Reentry ({TfStateCode(state1Now)})";
-        //    return false;
-        //}
-        if (!(state1Now == BbmaState.Extreme || state1Now == BbmaState.MagicExtreme))
+        BbmaState stateLtfNow = BbmaStateLong(candleLtf);
+        if (stateLtfNow != BbmaState.Reentry)
         {
-            ExtraText = $"TF1 ({Interval.Name}) not in reentry state ({TfStateCode(state1Now)})";
-            //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            ExtraText = $"TF1 not in Reentry ({TfStateCode(stateLtfNow)})";
             return false;
         }
+        //if (!(stateLtfNow == BbmaState.Extreme || stateLtfNow == BbmaState.MagicExtreme))
+        //{
+        //    ExtraText = $"TF1 ({Interval.Name}) not in reentry state ({TfStateCode(stateLtfNow)})";
+        //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+        //    return false;
+        //}
 
         // Resolve fixed BBMA higher timeframe pair
         if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
@@ -68,7 +68,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         // Stop at the first non-Reentry candle; that must be the alert candle.
         for (int i = 0; i < MaxWaitCandles; i++)
         {
-            if (!GetPrevCandle(candleTf1, out candleTf1))
+            if (!GetPrevCandle(candleLtf, out candleLtf))
             {
                 ExtraText = $"insufficient TF1 history for lookback ({i} candles checked)";
                 return false;
@@ -79,9 +79,9 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             // file:///D:/Shares/Marius/Documents/Crypto/BbMa/Grok/Poging%201/Google%20-%20Fact%20sheet.htm
 
             //// BB width filter
-            //if (!candleTf1.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+            //if (!candleLtf.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
             //{
-            //    ExtraText = $"bb.width too small {candleTf1.CandleData!.BollingerBandsPercentage:N2}";
+            //    ExtraText = $"bb.width too small {candleLtf.CandleData!.BollingerBandsPercentage:N2}";
             //    return false;
             //}
 
@@ -102,20 +102,20 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             // Prijs herstelt en sluit terug boven de MA5/10 of Mid BB.
             // Re-entry vindt plaats in de "Zone of Fire" (gebied rond MA5/10 + Mid BB).
 
-            BbmaState state1 = BbmaStateLong(candleTf1);
+            BbmaState stateLtf = BbmaStateLong(candleLtf!);
             // Still in Reentry — keep walking back to find the alert that preceded it
-            if (state1 == BbmaState.Reentry)
+            if (stateLtf == BbmaState.Reentry)
                 continue;
 
-            //if (!(state1 == BbmaState.Extreme || state1 == BbmaState.MagicExtreme))
+            //if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme))
             //{
-            //    ExtraText = $"TF1 ({Interval.Name}) not in reentry state ({TfStateCode(state1)})";
+            //    ExtraText = $"TF1 ({Interval.Name}) not in reentry state ({TfStateCode(stateLtf)})";
             //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             //    return false;
             //}
 
             //// 3.1 Is there a CSM Buy? (Candle closes above bb.upper)
-            //if (!CheckCsmLong(Interval, candleTf1))
+            //if (!CheckCsmLong(Interval, candleLtf))
             //{
             //    ExtraText = "No CSM present on TF1";
             //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -125,18 +125,18 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
 
             // --------------------------
             // 2 Middle timeframe (MTF)
-            var result2 = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, candleTf1.Candle.OpenTime, period2);
-            if (!result2.success || result2.candle == null || !IndicatorsOkay(result2.candle))
+            var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
+                Symbol, Interval, candleLtf.Candle.OpenTime, period2);
+            if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
             {
-                ExtraText = $"no data for TF2 ({result2.higherInterval.Interval.Name})";
+                ExtraText = $"no data for TF2 ({resultMtf.higherInterval.Interval.Name})";
                 GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
 
 
             //// 2.1 Is er een MHV Buy? (Prijs kan niet meer onder de Lower BB sluiten).
-            //if (DetectMlv(result2.higherInterval.Interval, candleTf1) != BbmaState.ValidMLV)
+            //if (DetectMlv(resultMtf.higherInterval.Interval, candleLtf) != BbmaState.ValidMLV)
             //{
             //    ExtraText = "No MLV/MHV present on TF2";
             //    //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -148,19 +148,19 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             // OF MHV / MLV (Market Has/Low Volume) na extreme.
 
             // 2.2 Is er een Extreme Buy zichtbaar? (MA 5 Low steekt buiten de Lower BB).
-            BbmaState state2 = BbmaStateLong(result2.candle);
-            if (state2 != BbmaState.Extreme)
+            BbmaState stateMtf = BbmaStateLong(resultMtf.candle);
+            if (stateMtf != BbmaState.Extreme)
             {
-                ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) not an extreme ({TfStateCode(state2)})";
+                ExtraText = $"TF2 ({resultMtf.higherInterval.Interval.Name}) not an extreme ({TfStateCode(stateMtf)})";
                 //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
 
 
             //// 2.3 Sluit de prijs boven de Mid BB? (Bevestiging van kracht).
-            //if (result2.candle.Candle.Close < (decimal)result2.candle.CandleData.Sma20!.Value)
+            //if (resultMtf.candle.Candle.Close < (decimal)resultMtf.candle.CandleData.Sma20!.Value)
             //{
-            //    ExtraText = $"TF2 ({result2.higherInterval.Interval.Name}) not below sma20 ({TfStateCode(state2)})";
+            //    ExtraText = $"TF2 ({resultMtf.higherInterval.Interval.Name}) not below sma20 ({TfStateCode(stateMtf)})";
             //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             //    return false;
             //}
@@ -168,52 +168,52 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
 
             // --------------------------
             // 1 Highest timeframe (HTF)
-            var result3 = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, candleTf1.Candle.OpenTime, period3);
-            if (!result3.success || result3.candle == null || !IndicatorsOkay(result3.candle))
+            var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
+                Symbol, Interval, candleLtf.Candle.OpenTime, period3);
+            if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
             {
-                ExtraText = $"no data for TF3 ({result3.higherInterval.Interval.Name})";
+                ExtraText = $"no data for TF3 ({resultHtf.higherInterval.Interval.Name})";
                 GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
 
-            //// 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
-            //// Trend filter on TF3 EMA50 below mid-BB (SMA20) = bullish bias
-            //// Bullish trend bevestigd (prijs boven Mid BB / EMA50, Mid BB wijst omhoog)
-            //double ema50Tf3 = result3.candle.CandleData!.Ema50!.Value;
-            //double midBbTf3 = result3.candle.CandleData!.Sma20!.Value;
-            //if (ema50Tf3 >= result3.candle!.CandleData!.Sma20!.Value || midBbTf3 >= result3.candle!.CandleData!.Sma20!.Value)
-            //{
-            //    ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not below mid-BB — bearish on HTF, no Long";
-            //    GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            //    return false;
-            //}
+            // 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
+            // Trend filter on TF3 EMA50 below mid-BB (SMA20) = bullish bias
+            // Bullish trend bevestigd (prijs boven Mid BB / EMA50, Mid BB wijst omhoog)
+            double ema50Tf3 = resultHtf.candle.CandleData!.Ema50!.Value;
+            double midBbTf3 = resultHtf.candle.CandleData!.Sma20!.Value;
+            if (ema50Tf3 >= resultHtf.candle!.CandleData!.Sma20!.Value || midBbTf3 >= resultHtf.candle!.CandleData!.Sma20!.Value)
+            {
+                ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not below mid-BB — bearish on HTF, no Long";
+                GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+                return false;
+            }
 
             // 1.2 Is er een Re-entry Buy zone? (Prijs raakt de MA 5/10 LOW aan).
-            BbmaState state3 = BbmaStateLong(result3.candle, allowWickDetection: false);
-            if (state3 != BbmaState.Reentry)
+            BbmaState stateHtf = BbmaStateLong(resultHtf.candle, allowWickDetection: false);
+            if (stateHtf != BbmaState.Reentry)
             {
-                ExtraText = $"TF3 ({result3.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
+                ExtraText = $"TF3 ({resultHtf.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(stateHtf)}{TfStateCode(stateMtf)}{TfStateCode(stateLtf)})";
                 GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
 
             // 1.3 Is de Mid BB stijgend of vlak? (Niet scherp omlaag).
             // This might be a problem codewise?
-            //if (!GetPrevCandle(result3.higherInterval.Interval, result3.candle, out MyData? prevCandle))
+            //if (!GetPrevCandle(resultHtf.higherInterval.Interval, resultHtf.candle, out MyData? prevCandle))
             //{
             //    ExtraText = $"Error TF3 get prevcandle";
             //    GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             //    return false;
             //}
-            //if (midBbTf3 >= result3.candle!.CandleData!.Sma20!.Value)
+            //if (midBbTf3 >= resultHtf.candle!.CandleData!.Sma20!.Value)
             //{
-            //    ExtraText = $"Error TF3 going up ({TfStateCode(state3)}{TfStateCode(state2)}{TfStateCode(state1)})";
+            //    ExtraText = $"Error TF3 going up ({TfStateCode(stateHtf)}{TfStateCode(stateMtf)}{TfStateCode(stateLtf)})";
             //    GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
             //    return false;
             //}
 
-            //if (!CheckCsmLong(result3.higherInterval.Interval, result3.candle))
+            //if (!CheckCsmLong(resultHtf.higherInterval.Interval, resultHtf.candle))
             //{
             //    ExtraText = "No CSM present on TF3";
             //    //GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -230,10 +230,10 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             //   PDF alert REM  → entry code RER  (TF2=Extreme, from M alert)
             //   PDF alert REE  → entry code RER  (TF2=Extreme, from E alert)
             //   PDF alert RMEE → entry code RMR  (TF2=MLV, from MagicExtreme alert)
-            string code = TfStateCode(state3) + TfStateCode(state2) + TfStateCode(state1);
+            string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
             if (code == "REM" || code == "RRE" || code == "RME" || code == "REE")
             {
-                ExtraText = $"{code} [{result3.higherInterval.Interval.Name}/{result2.higherInterval.Interval.Name}/{Interval.Name}]";
+                ExtraText = $"{code} [{resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}]";
                 return true;
             }
         }

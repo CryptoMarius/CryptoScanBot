@@ -261,17 +261,19 @@ public class SignalBbmaBase : SignalCreateBase
     /// </summary>
     internal static BbmaState BbmaStateLong(MyData data, bool allowWickDetection = true)
     {
-        double wma5Low = data.CandleData!.Wma05Low!.Value;
-        double wma10Low = data.CandleData!.Wma10Low!.Value;
-        double bbLower = data.CandleData!.BollingerBandsLowerBand!.Value;
+        decimal wma5 = (decimal)data.CandleData!.Wma05Low!.Value;
+        decimal wma10 = (decimal)data.CandleData!.Wma10Low!.Value;
+        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
 
-        // MagicExtreme (EE): both MAs below BB.Lower
-        if (wma5Low < bbLower && wma10Low < bbLower)
-            return BbmaState.MagicExtreme;
+        if (wma5 < bbLower)
+        {
+            // MagicExtreme (EE): both MAs below BB.Lower
+            if (wma10 < bbLower)
+                return BbmaState.MagicExtreme;
 
-        // Extreme (Type A): LWMA5(low) below BB.Lower
-        if (wma5Low < bbLower)
+            // Extreme (Type A): LWMA5(low) below BB.Lower
             return BbmaState.Extreme;
+        }
 
         decimal low = data.Candle.Low;
         decimal close = data.Candle.Close;
@@ -280,8 +282,7 @@ public class SignalBbmaBase : SignalCreateBase
         if (allowWickDetection)
         {
             // Extreme (Type B): wick rejection of BB.Lower
-            decimal bbLowerDec = (decimal)bbLower;
-            if (low < bbLowerDec && close > bbLowerDec && open > bbLowerDec)
+            if (low < bbLower && close > bbLower && open > bbLower)
                 return BbmaState.Extreme;
 
             // Extreme (Advance): wick rejection of EMA50
@@ -291,20 +292,19 @@ public class SignalBbmaBase : SignalCreateBase
         }
 
         // Reentry: bullish CSD active + price reached the 510 buy zone
-        //   Standard : close at or below LWMA5(low) — in or beyond the zone
+        //   Standard : close within the zone — between LWMA10(low) and LWMA5(low)
         //   MA Retest: wick dipped below LWMA5(low), close recovered above LWMA10(low)
-        if (wma5Low > wma10Low)
+        if (wma5 > wma10)
         {
-            decimal wma5Dec = (decimal)wma5Low;
-            decimal wma10Dec = (decimal)wma10Low;
-            bool priceInZone = close <= wma5Dec;
-            bool maRetest = allowWickDetection && low < wma5Dec && close > wma10Dec;
+            bool priceInZone = close <= wma5 && close >= wma10;
+            //bool maRetest = allowWickDetection && low < wma5 && close > wma10;
+            bool maRetest = allowWickDetection && low < wma5;
             if (priceInZone || maRetest)
                 return BbmaState.Reentry;
         }
 
         // Mlv (Market Loss Volume): LWMA5(low) above BB.Lower but below LWMA10(low) — pre-CSD
-        if (wma5Low >= bbLower && wma5Low < wma10Low)
+        if (wma5 >= bbLower && wma5 < wma10)
             return BbmaState.Mlv;
 
         return BbmaState.None;
@@ -319,17 +319,19 @@ public class SignalBbmaBase : SignalCreateBase
     /// </summary>
     internal static BbmaState BbmaStateShort(MyData data, bool allowWickDetection = true)
     {
-        double wma5High = data.CandleData!.Wma05High!.Value;
-        double wma10High = data.CandleData!.Wma10High!.Value;
-        double bbUpper = data.CandleData!.BollingerBandsUpperBand!.Value;
+        decimal wma5 = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal wma10 = (decimal)data.CandleData!.Wma10High!.Value;
+        decimal bbUpper = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
 
-        // MagicExtreme (EE): both MAs above BB.Upper
-        if (wma5High > bbUpper && wma10High > bbUpper)
-            return BbmaState.MagicExtreme;
+        if (wma5 > bbUpper)
+        {
+            // MagicExtreme (EE): both MAs above BB.Upper
+            if (wma10 > bbUpper)
+                return BbmaState.MagicExtreme;
 
-        // Extreme (Type A): LWMA5(high) above BB.Upper
-        if (wma5High > bbUpper)
+            // Extreme (Type A): LWMA5(high) above BB.Upper
             return BbmaState.Extreme;
+        }
 
         decimal high = data.Candle.High;
         decimal close = data.Candle.Close;
@@ -338,8 +340,7 @@ public class SignalBbmaBase : SignalCreateBase
         if (allowWickDetection)
         {
             // Extreme (Type B): wick rejection of BB.Upper
-            decimal bbUpperDec = (decimal)bbUpper;
-            if (high > bbUpperDec && close < bbUpperDec && open < bbUpperDec)
+            if (high > bbUpper && close < bbUpper && open < bbUpper)
                 return BbmaState.Extreme;
 
             // Extreme (Advance): wick rejection of EMA50
@@ -349,20 +350,19 @@ public class SignalBbmaBase : SignalCreateBase
         }
 
         // Reentry: bearish CSD active + price reached the 510 sell zone
-        //   Standard : close at or above LWMA5(high) — in or beyond the zone
+        //   Standard : close within the zone — between LWMA5(high) and LWMA10(high)
         //   MA Retest: wick spiked above LWMA5(high), close recovered below LWMA10(high)
-        if (wma5High < wma10High)
+        if (wma5 < wma10)
         {
-            decimal wma5Dec = (decimal)wma5High;
-            decimal wma10Dec = (decimal)wma10High;
-            bool priceInZone = close >= wma5Dec;
-            bool maRetest = allowWickDetection && high > wma5Dec && close < wma10Dec;
+            bool priceInZone = close >= wma5 && close <= wma10;
+            //bool maRetest = allowWickDetection && high > wma5 && close < wma10;
+            bool maRetest = allowWickDetection && high > wma5;
             if (priceInZone || maRetest)
                 return BbmaState.Reentry;
         }
 
         // Mlv (MHV phase): LWMA5(high) below BB.Upper but above LWMA10(high) — pre-CSD
-        if (wma5High <= bbUpper && wma5High > wma10High)
+        if (wma5 <= bbUpper && wma5 > wma10)
             return BbmaState.Mlv;
 
         return BbmaState.None;
