@@ -36,7 +36,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
     /// Exacte check op HTF voor Short Re-entry na CSM (Oma Ally BBMA)
     /// Gebruikt uitsluitend de reeds berekende data in candle.CandleData
     /// </summary>
-    private bool CheckHtf(MyData current)
+    private bool CheckHtf(CryptoInterval interval, MyData current)
     {
         decimal sma20 = (decimal)current.CandleData.Sma20!.Value;
         decimal wma5Low = (decimal)current.CandleData.Wma05Low!.Value;
@@ -46,7 +46,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         if (wma10Low < sma20)
         {
             ExtraText = $"HTF Wma10Low not above mid-BB - ranging";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {interval.Name} {SignalSide} {ExtraText}");
             return false;
         }
 
@@ -61,7 +61,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         MyData? prev = current;
         for (int i = 0; i < 30 && i >= 0; i++)
         {
-            if (!GetPrevCandle(prev, out prev))
+            if (!GetPrevCandle(interval, prev, out prev))
                 return false;
 
             decimal bbUpper = (decimal)prev!.CandleData.BollingerBandsUpperBand!.Value;

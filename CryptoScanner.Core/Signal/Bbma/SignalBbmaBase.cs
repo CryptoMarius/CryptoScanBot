@@ -271,7 +271,7 @@ public class SignalBbmaBase : SignalCreateBase
             if (wma10Low < lowerBand)
                 return BbmaState.MagicExtreme;
 
-            // Extreme (Type A): LWMA5(low) below BB.Lower
+            // Extreme (Type A): WMA5(low) below BB.Lower
             return BbmaState.Extreme;
         }
 
@@ -333,7 +333,7 @@ public class SignalBbmaBase : SignalCreateBase
             if (wma10 > bbUpper)
                 return BbmaState.MagicExtreme;
 
-            // Extreme (Type A): LWMA5(high) above BB.Upper
+            // Extreme (Type A): WMA5(high) above BB.Upper
             return BbmaState.Extreme;
         }
 
