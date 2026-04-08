@@ -218,16 +218,20 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
                 return false;
             }
 
-            //// 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
-            //// Trend filter on TF3: EMA50 above mid-BB (SMA20) = bearish bias
+            // 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
+            // Trend filter on TF3: EMA50 above mid-BB (SMA20) = bearish bias
             //decimal ema50Tf3 = (decimal)resultHtf.candle.CandleData!.Ema50!.Value;
             //decimal midBbTf3 = (decimal)resultHtf.candle.CandleData!.Sma20!.Value;
             //if (ema50Tf3 <= midBbTf3 || resultHtf.candle.Candle.Close >= midBbTf3)
-            //{
-            //    ExtraText = $"TF3 EMA50 ({ema50Tf3:N6}) not above mid-BB — bullish bias on HTF, no Short";
-            //    GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
-            //    return false;
-            //}
+            double wma05HighTf3 = resultHtf.candle.CandleData!.Wma05High!.Value;
+            double ema50Tf3 = resultHtf.candle.CandleData!.Ema50!.Value;
+            double midBbTf3 = resultHtf.candle.CandleData!.Sma20!.Value;
+            if (ema50Tf3 <= midBbTf3 || wma05HighTf3 >= midBbTf3)
+            {
+                ExtraText = $"HTF EMA50 ({ema50Tf3:N6}) not above mid-BB — bullish bias on HTF, no Short";
+                GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {ExtraText}");
+                return false;
+            }
 
             //// 1.2 Is er een Re-entry Buy zone? (Prijs raakt de MA 5/10 LOW aan).
             //BbmaState stateHtf = BbmaStateShort(resultHtf.candle, allowWickDetection: false);
@@ -241,10 +245,10 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
 
             //-----
             var stateHtf = BbmaState.Reentry;
-            if (!CheckHtf(resultHtf.candle))
+            if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle))
             {
                 ExtraText = $"TF3 ({resultHtf.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(stateHtf)}{TfStateCode(stateMtf)}{TfStateCode(stateLtf)})";
-                GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
+                GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {ExtraText}");
                 return false;
             }
 

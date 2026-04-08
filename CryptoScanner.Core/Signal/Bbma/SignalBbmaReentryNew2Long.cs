@@ -33,7 +33,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
     private const int MaxWaitCandles = 20;
 
     /// <summary>
-    /// Exacte check op HTF voor Short Re-entry na CSM (Oma Ally BBMA)
+    /// Exacte check op HTF voor Long Re-entry na CSM (Oma Ally BBMA)
     /// Gebruikt uitsluitend de reeds berekende data in candle.CandleData
     /// </summary>
     private bool CheckHtf(CryptoInterval interval, MyData current)
@@ -226,9 +226,10 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             // 1.1 Zit de prijs boven de EMA 50? (Trendfilter)
             // Trend filter on TF3 EMA50 below mid-BB (SMA20) = bullish bias
             // Bullish trend bevestigd (prijs boven Mid BB / EMA50, Mid BB wijst omhoog)
+            double wma05LowTf3 = resultHtf.candle.CandleData!.Wma05Low!.Value;
             double ema50Tf3 = resultHtf.candle.CandleData!.Ema50!.Value;
             double midBbTf3 = resultHtf.candle.CandleData!.Sma20!.Value;
-            if (ema50Tf3 >= resultHtf.candle!.CandleData!.Sma20!.Value || midBbTf3 >= resultHtf.candle!.CandleData!.Sma20!.Value)
+            if (ema50Tf3 >= midBbTf3 || wma05LowTf3 >= midBbTf3)
             {
                 ExtraText = $"HTF EMA50 ({ema50Tf3:N6}) not below mid-BB — bearish on HTF, no Long";
                 GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
@@ -237,7 +238,7 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
 
 
             var stateHtf = BbmaState.Reentry;
-            if (!CheckHtf(resultHtf.candle))
+            if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle))
             {
                 ExtraText = $"HTF ({resultHtf.higherInterval.Interval.Name}) not in Reentry state ({TfStateCode(stateHtf)}{TfStateCode(stateMtf)}{TfStateCode(stateLtf)})";
                 GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {ExtraText}");
