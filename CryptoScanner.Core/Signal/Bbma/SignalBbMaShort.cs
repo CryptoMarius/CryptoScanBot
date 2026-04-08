@@ -100,20 +100,20 @@ public class SignalBbMaShort : SignalBbmaBase
     //}
 
 
-    public bool Calculate(CryptoIntervalPeriod tf1, CryptoIntervalPeriod tf2, CryptoIntervalPeriod tf3)
+    public bool Calculate(CryptoIntervalPeriod ltf, CryptoIntervalPeriod mtf, CryptoIntervalPeriod htf)
     {
-        CryptoInterval interval1 = GlobalData.IntervalListPeriod[tf1];
-        CryptoCandleList candlesTf1 = Symbol.GetSymbolInterval(tf1).CandleList;
+        CryptoInterval interval1 = GlobalData.IntervalListPeriod[ltf];
+        CryptoCandleList candlesTf1 = Symbol.GetSymbolInterval(ltf).CandleList;
         if (candlesTf1.Count == 0)
             return false;
 
-        CryptoInterval interval2 = GlobalData.IntervalListPeriod[tf2];
-        CryptoCandleList candlesTf2 = Symbol.GetSymbolInterval(tf2).CandleList;
+        CryptoInterval interval2 = GlobalData.IntervalListPeriod[mtf];
+        CryptoCandleList candlesTf2 = Symbol.GetSymbolInterval(mtf).CandleList;
         if (candlesTf2.Count == 0)
             return false;
 
-        CryptoInterval interval3 = GlobalData.IntervalListPeriod[tf3];
-        CryptoCandleList candlesTf3 = Symbol.GetSymbolInterval(tf3).CandleList;
+        CryptoInterval interval3 = GlobalData.IntervalListPeriod[htf];
+        CryptoCandleList candlesTf3 = Symbol.GetSymbolInterval(htf).CandleList;
         if (candlesTf3.Count == 0)
             return false;
 
@@ -125,7 +125,7 @@ public class SignalBbMaShort : SignalBbmaBase
             {
                 result = true;
                 ExtraText = $"{interval1.Name}/{interval2.Name}/{interval3.Name}";
-                //GlobalData.AddTextToLogTab($"{symbol.Name} ({interval1.Name}/{interval2.Name}/{interval3.Name}) {args.Side} {args.Event} {args.Message}");
+                //GlobalData.AddTextToLogTab($"{symbol.Name} ({interval1.Name}/{mtf.Name}/{htf.Name}) {args.Side} {args.Event} {args.Message}");
             }
         };
         bbma.Compute(candlesTf1, candlesTf2, candlesTf3);
@@ -139,16 +139,16 @@ public class SignalBbMaShort : SignalBbmaBase
         if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
-        if (!GetIntervals(out CryptoIntervalPeriod interval2, out CryptoIntervalPeriod interval3))
+        if (!GetIntervals(out CryptoIntervalPeriod mtf, out CryptoIntervalPeriod htf))
             return false;
 
-        return Calculate(Interval.IntervalPeriod, interval2, interval3);
+        return Calculate(Interval.IntervalPeriod, mtf, htf);
 
         //// For now just focus on the 2 extremes (the second situation), REE
 
@@ -156,10 +156,10 @@ public class SignalBbMaShort : SignalBbmaBase
         //// REE,   1h Reentry 15m Extreme, 5m Extreme
         //// REM,   1h Reentry 15m Extreme, 5m Momentum?
 
-        //if (!PrepareHigherInterval(interval2, out CryptoSymbolInterval interval2_, out CryptoCandle? candle2))
+        //if (!PrepareHigherInterval(mtf, out CryptoSymbolInterval interval2_, out CryptoCandle? candle2))
         //{
-        //    GlobalData.AddTextToLogTab($"{Symbol.Name} {interval2} {CryptoTradeSide.Long} failed PrepareHigherInterval (2)");
-        //    //PrepareHigherInterval(interval2, out interval2_, out candle2);
+        //    GlobalData.AddTextToLogTab($"{Symbol.Name} {mtf} {CryptoTradeSide.Long} failed PrepareHigherInterval (2)");
+        //    //PrepareHigherInterval(mtf, out interval2_, out candle2);
         //    return false;
         //}
         //if (!IsExtreme(candle2!, 3))
@@ -167,11 +167,11 @@ public class SignalBbMaShort : SignalBbmaBase
         //ExtraText += $"{Interval.Name} {CandleLast.DateLocal:dd-MM HH:mm}, {interval2_.Interval.Name} {candle2!.DateLocal}";
 
 
-        //if (!PrepareHigherInterval(interval3, out CryptoSymbolInterval interval3_, out CryptoCandle? candle3))
+        //if (!PrepareHigherInterval(htf, out CryptoSymbolInterval interval3_, out CryptoCandle? candle3))
         //{
-        //    //GlobalData.AddTextToLogTab($"{Symbol.Name} {interval3} {CryptoTradeSide.Long} failed PrepareHigherInterval (3)");
+        //    //GlobalData.AddTextToLogTab($"{Symbol.Name} {htf} {CryptoTradeSide.Long} failed PrepareHigherInterval (3)");
         //    ExtraText += $", {interval3_.Interval.Name} {candle3?.DateLocal:dd-MM HH:mm} FAILED";
-        //    //    PrepareHigherInterval(interval3, out interval3_, out candle3); // debug
+        //    //    PrepareHigherInterval(htf, out interval3_, out candle3); // debug
         //    return false;
         //}
         //if (!IsReentry(candle3!, 3))

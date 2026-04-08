@@ -85,7 +85,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(1.5, 100))
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -100,7 +100,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
         }
 
         // Step 2: Resolve fixed BBMA higher timeframe pair
-        if (!GetIntervals(out CryptoIntervalPeriod period2, out CryptoIntervalPeriod period3))
+        if (!GetIntervals(out CryptoIntervalPeriod mtf, out CryptoIntervalPeriod htf))
             return false;
 
         // Step 3: Walk back through TF1 history to find the preceding alert candle
@@ -130,7 +130,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
 
             // Step 4: Check TF3 state at the time of the historical alert candle
             var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, dataLtf.Candle.OpenTime, period3);
+                Symbol, Interval, dataLtf.Candle.OpenTime, htf);
 
             if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
             {
@@ -156,7 +156,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
 
             // Step 5: Check TF2 state at the time of the historical alert candle
             var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
-                Symbol, Interval, dataLtf.Candle.OpenTime, period2);
+                Symbol, Interval, dataLtf.Candle.OpenTime, mtf);
 
             if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
             {
@@ -184,8 +184,7 @@ public class SignalBbmaReentryNew1Short : SignalBbmaBase
             string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
             if (code == "REM" || code == "RRE" || code == "REE" || code == "RMEE")
             {
-                ExtraText = $"{code} (alert {i + 1} candle(s) ago) [{resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}]";
-                //GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} REENTRY {ExtraText}");
+                ExtraText = $"{code} {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name} (alert {i + 1} candle(s) ago)";
                 return true;
             }
         }

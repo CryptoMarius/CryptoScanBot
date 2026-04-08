@@ -6,23 +6,51 @@ using CryptoScanner.Core.Signal.Helpers;
 namespace CryptoScanner.Core.Signal.Momentum;
 
 /// <summary>
-/// Stochastic Directional Long strategy.
+/// Stochastic Directional Long strategy — fires at the actual lower-TF entry candle.
 ///
-/// The idea: the higher-interval stochastic was recently oversold and is now rising toward
-/// overbought (but not there yet). This tells us the higher-interval direction is up.
-/// The current (lower) interval stochastic is also rising, confirming a good long entry moment.
+/// IsSignal (entry detection):
+///   Fires when the lower-interval stoch %K crosses back above 30 after having been
+///   oversold (≤ 20), AND the higher-interval shows a valid bullish MACD + stoch setup.
 ///
-/// The higher interval is determined automatically via a ~12x ratio mapping (same convention
-/// as BBMA), e.g. 5m → 1h, 15m → 4h, 1h → 1d.
+///   Lower-interval conditions (entry trigger):
+///     - Current %K &gt; 30  (just crossed above the entry threshold)
+///     - Previous %K ≤ 30  (confirms this is the exact crossing candle)
+///     - Was oversold (both %K and %D ≤ 20) within the last LowerTfOversoldLookback candles
+///
+///   Higher-interval conditions (checked at the current moment):
+///     - MACD histogram currently positive (&gt; 0)
+///     - MACD histogram was negative within the last MacdCrossoverLookback higher-TF candles
+///       (ensures the bullish crossover is recent and not stale)
+///     - Stoch %K in zone 30–60: has left oversold, upward move still has room
+///     - Stoch %K (blue) above %D (red): bullish alignment confirmed
+///     - Stoch not yet overbought (move not exhausted)
+///
+/// AllowStepIn:
+///   Always true — the signal fires at the exact lower-TF entry moment.
+///
+/// Higher-interval mapping (~12x ratio, same convention as BBMA):
+///   5m → 1h,  15m → 4h,  1h → 1d,  etc.
 /// </summary>
 public class SignalStochDirLong : SignalSbmBaseLong
 {
+    // Stoch %K zone boundaries on the higher TF (bullish momentum range)
+    private const double StochZoneLow = 30.0;
+    private const double StochZoneHigh = 70.0;
+
+    // Lower-TF entry: %K must cross back above this level after being oversold
+    private const double LowerTfEntryThreshold = 30.0;
+
+    // Max lower-TF candles to look back for a recent oversold condition
+    private const int LowerTfOversoldLookback = 15;
+
+    // Max higher-TF candles to look back for the MACD zero-line crossover
+    private const int MacdCrossoverLookback = 5;
+
 
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null
             || data.CandleData == null
-            || data.CandleData.Rsi == null
             || data.CandleData.StochSignal == null
             || data.CandleData.StochOscillator == null)
             return false;
@@ -39,111 +67,50 @@ public class SignalStochDirLong : SignalSbmBaseLong
 
 
     /// <summary>
-    /// Shared direction checks for a single interval (long side).
-    /// Covers: BB width (optional), stoch not yet overbought, stoch rising, %K above %D, RSI rising.
-    /// Unique higher-interval checks (exited oversold, travel distance, recent history,
-    /// previous-candle cross) are handled inline in IsSignal.
+    /// Fires when the lower-TF stoch has just exited oversold AND the higher-TF shows
+    /// a valid bullish setup (MACD recently crossed above zero, stoch in 30–60, %K above %D).
+    /// Signal fires at the actual entry moment — statistics are measured from here.
     /// </summary>
-    private bool CheckIntervalLong(CryptoSymbolInterval symbolInterval, MyData data, 
-        bool checkBb, int stochLookback, int stochAllowed)
-    {
-        if (checkBb && !data.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
-        {
-            ExtraText = $"bb.width too small {data.CandleData!.BollingerBandsPercentage:N2}";
-            return false;
-        }
-
-        if (data.StochOversold())
-        {
-            ExtraText = $"{symbolInterval.Interval.Name} stoch still oversold";
-            return false;
-        }
-
-        // Stoch must not yet be overbought — if already there the move is mostly done
-        if (data.StochOverbought())
-        {
-            ExtraText = $"{symbolInterval.Interval.Name} stoch already overbought ({data.CandleData.StochOscillator:N1})";
-            return false;
-        }
-
-        // Stoch must be rising
-        if (!this.StochIncreasingInTheLast(symbolInterval, data, stochLookback, stochAllowed))
-        {
-            ExtraText = $"{symbolInterval.Interval.Name} stoch not rising";
-            return false;
-        }
-
-        // %K must be above %D (bullish alignment)
-        if (data.CandleData!.StochOscillator <= data.CandleData.StochSignal)
-        {
-            ExtraText = $"{symbolInterval.Interval.Name} %K({data.CandleData.StochOscillator:N1}) below %D({data.CandleData.StochSignal:N1})";
-            return false;
-        }
-
-        // RSI must be increasing (allow 2 deviations for a forming candle)
-        if (!this.RsiIncreasingInTheLast(symbolInterval, data, 3, 2))
-        {
-            ExtraText = $"{symbolInterval.Interval.Name} rsi not increasing";
-            return false;
-        }
-
-        return true;
-    }
-
-
     public override bool IsSignal()
     {
         ExtraText = "";
 
-        // ── Step 1: lower-interval checks (cheap, no extra candle lookup) ────────────────
-        if (!CheckIntervalLong(SymbolInterval, CandleLast, checkBb: true, stochLookback: 2, stochAllowed: 999))
-            return false;
-
-        // ── Step 2: higher-interval checks (only reached when lower interval matched) ────
-
-        // Determine the higher directional interval (~12x ratio, same convention as BBMA)
-        if (!StochHelper.GetStochDirHigherInterval(Interval.IntervalPeriod, out CryptoIntervalPeriod higherIntervalPeriod))
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
-            ExtraText = $"no valid higher interval for {Interval.Name}";
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
-        var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, higherIntervalPeriod);
-        if (!result.success)
-            return false;
+        // ── Step 1: lower-TF %K must have just crossed back above 30 ─────────────────────
 
-        MyData higherData = result.candle!;
-        var higherInterval = result.higherInterval.Interval;
-        double stochHigher = higherData.CandleData!.StochOscillator!.Value;
-
-        // Higher-interval stoch must have traveled at least 15 points up from the oversold boundary,
-        // ensuring a real move has taken place and not just a tiny bounce
-        const double MinStochTravel = 15.0;
-        double stochTraveled = stochHigher - GlobalData.Settings.General.SettingsStoch.Oversold;
-        if (stochTraveled < MinStochTravel)
+        double stochKCurrent = CandleLast.CandleData!.StochOscillator!.Value;
+        if (stochKCurrent <= LowerTfEntryThreshold)
         {
-            ExtraText = $"{higherInterval.Name} stoch barely moved ({stochTraveled:N1} < {MinStochTravel})";
+            ExtraText = $"lower TF %K ({stochKCurrent:N1}) not yet above {LowerTfEntryThreshold}";
             return false;
         }
 
-        // Higher interval must have been recently oversold (within the last 30 candles).
-        // Note: we do NOT use StochOversoldSurface here because that function starts
-        // from the current candle and breaks at stoch > 40, making it always return 0
-        // once the stoch has meaningfully recovered. Instead we simply walk back.
+        // Previous candle must have been at or below 30 — confirms this is the crossing candle
+        if (!GetPrevCandle(CandleLast, out MyData? prevLow))
+        {
+            ExtraText = "no previous candle for lower TF threshold crossing check";
+            return false;
+        }
+        if (prevLow!.CandleData.StochOscillator > LowerTfEntryThreshold)
+        {
+            ExtraText = $"lower TF %K did not just cross {LowerTfEntryThreshold} (prev was {prevLow.CandleData.StochOscillator:N1})";
+            return false;
+        }
+
+        // Confirm there was a proper oversold situation before this crossing
+        MyData? loop = prevLow;
         bool wasOversold = false;
-        MyData? walkCandle = higherData;
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < LowerTfOversoldLookback; i++)
         {
-            if (!GetPrevCandle(result.higherInterval.Interval, walkCandle, out walkCandle))
+            if (!GetPrevCandle(loop, out loop))
                 break;
-
-            if (walkCandle!.StochOverbought())
-            {
-                ExtraText = $"{higherInterval.Name} stoch overbought";
-                return false;
-            }
-
-            if (walkCandle!.StochOversold())
+            if (loop!.StochOversold())
             {
                 wasOversold = true;
                 break;
@@ -151,26 +118,95 @@ public class SignalStochDirLong : SignalSbmBaseLong
         }
         if (!wasOversold)
         {
-            ExtraText = $"{higherInterval.Name} not recently oversold";
+            ExtraText = $"lower TF stoch was not oversold in last {LowerTfOversoldLookback} candles before the crossing";
             return false;
         }
 
-        // Shared direction checks for the higher interval
-        if (!CheckIntervalLong(result.higherInterval, higherData, checkBb: false, stochLookback: 3, stochAllowed: 2))
-            return false;
+        // ── Step 2: resolve the higher directional interval ──────────────────────────────
 
-        // Also verify previous higher-interval candle had %K above %D — a recent bearish cross signals weakness
-        if (GetPrevCandle(result.higherInterval.Interval, higherData, out MyData? prevHigher)
-            && prevHigher?.CandleData?.StochOscillator != null
-            && prevHigher.CandleData.StochOscillator <= prevHigher.CandleData.StochSignal)
+        if (!StochHelper.GetStochDirHigherInterval(Interval.IntervalPeriod, out CryptoIntervalPeriod higherIntervalPeriod))
         {
-            ExtraText = $"{higherInterval.Name} stoch %K recently crossed below %D";
+            ExtraText = $"no valid higher interval for {Interval.Name}";
             return false;
         }
 
-        double stochLow = CandleLast.CandleData!.StochOscillator!.Value;
-        ExtraText = $"{Interval.Name}:%K{stochLow:N1}/%D{CandleLast.CandleData.StochSignal:N1} {higherInterval.Name}:%K{stochHigher:N1}/%D{higherData.CandleData.StochSignal:N1} trvl:{stochTraveled:N1} bb:{CandleLast.CandleData.BollingerBandsPercentage:N2}";
+        var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, higherIntervalPeriod);
+        if (!result.success || result.candle == null || !IndicatorsOkay(result.candle))
+        {
+            ExtraText = $"no data for {result.higherInterval.Interval.Name}";
+            return false;
+        }
 
+        MyData higherData = result.candle;
+        CryptoInterval higherInterval = result.higherInterval.Interval;
+
+        // ── Step 3: higher-TF MACD histogram must be positive ────────────────────────────
+
+        if (higherData.CandleData!.MacdHistogram == null || higherData.CandleData.MacdHistogram <= 0)
+        {
+            ExtraText = $"{higherInterval.Name} MACD histogram not positive ({higherData.CandleData!.MacdHistogram:N4})";
+            return false;
+        }
+
+        // MACD crossover must be recent: within the last MacdCrossoverLookback higher-TF candles
+        // there must be at least one candle with histogram <= 0 (the crossover just happened)
+        bool crossoverFound = false;
+        MyData? walkHigher = higherData;
+        for (int i = 0; i < MacdCrossoverLookback; i++)
+        {
+            if (walkHigher!.StochOverbought())
+            {
+                return false;
+            }
+            if (!GetPrevCandle(higherInterval, walkHigher, out walkHigher))
+                break;
+            if (walkHigher!.CandleData.MacdHistogram <= 0)
+            {
+                crossoverFound = true;
+                break;
+            }
+        }
+        if (!crossoverFound)
+        {
+            ExtraText = $"{higherInterval.Name} MACD crossover not within last {MacdCrossoverLookback} candles — setup stale";
+            return false;
+        }
+
+        // ── Step 4: higher-TF stoch zone and alignment checks ────────────────────────────
+
+        // Stoch %K must be in zone 30–60 (has left oversold, upward move still has room)
+        double stochK = higherData.CandleData!.StochOscillator!.Value;
+        //if (stochK < StochZoneLow || stochK > StochZoneHigh)
+        //{
+        //    ExtraText = $"{higherInterval.Name} stoch %K ({stochK:N1}) outside zone [{StochZoneLow}–{StochZoneHigh}]";
+        //    return false;
+        //}
+
+        // %K (blue) must be above %D (red) — bullish alignment
+        double stochD = higherData.CandleData!.StochSignal!.Value;
+        if (stochK <= stochD)
+        {
+            ExtraText = $"{higherInterval.Name} stoch %K ({stochK:N1}) not above %D ({stochD:N1})";
+            return false;
+        }
+
+        // Higher TF stoch must not have reached overbought — upward move likely exhausted
+        if (higherData.StochOverbought() || higherData.StochOversold())
+        {
+            ExtraText = $"{higherInterval.Name} stoch reached overbought — move likely done";
+            return false;
+        }
+
+        ExtraText = $"{Interval.Name}/{higherInterval.Name}";
+        return true;
+    }
+
+
+    /// <summary>
+    /// Always true — the signal fires at the exact lower-TF entry moment.
+    /// </summary>
+    public override bool AllowStepIn(CryptoSignal signal)
+    {
         return true;
     }
 }

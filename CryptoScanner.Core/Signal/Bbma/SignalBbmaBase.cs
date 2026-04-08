@@ -261,28 +261,29 @@ public class SignalBbmaBase : SignalCreateBase
     /// </summary>
     internal static BbmaState BbmaStateLong(MyData data, bool allowWickDetection = true)
     {
-        decimal wma5 = (decimal)data.CandleData!.Wma05Low!.Value;
-        decimal wma10 = (decimal)data.CandleData!.Wma10Low!.Value;
-        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
+        decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
+        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
+        decimal lowerBand = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
 
-        if (wma5 < bbLower)
+        if (wma5Low < lowerBand)
         {
             // MagicExtreme (EE): both MAs below BB.Lower
-            if (wma10 < bbLower)
+            if (wma10Low < lowerBand)
                 return BbmaState.MagicExtreme;
 
             // Extreme (Type A): LWMA5(low) below BB.Lower
             return BbmaState.Extreme;
         }
 
-        decimal low = data.Candle.Low;
-        decimal close = data.Candle.Close;
-        decimal open = data.Candle.Open;
 
         if (allowWickDetection)
         {
+            decimal low = data.Candle.Low;
+            decimal close = data.Candle.Close;
+            decimal open = data.Candle.Open;
+
             // Extreme (Type B): wick rejection of BB.Lower
-            if (low < bbLower && close > bbLower && open > bbLower)
+            if (low < lowerBand && close > lowerBand && open > lowerBand)
                 return BbmaState.Extreme;
 
             // Extreme (Advance): wick rejection of EMA50
@@ -294,17 +295,20 @@ public class SignalBbmaBase : SignalCreateBase
         // Reentry: bullish CSD active + price reached the 510 buy zone
         //   Standard : close within the zone — between LWMA10(low) and LWMA5(low)
         //   MA Retest: wick dipped below LWMA5(low), close recovered above LWMA10(low)
-        if (wma5 > wma10)
+        //if (wma5High > wma10High)
         {
-            bool priceInZone = close <= wma5 && close >= wma10;
-            //bool maRetest = allowWickDetection && low < wma5 && close > wma10;
-            bool maRetest = allowWickDetection && low < wma5;
-            if (priceInZone || maRetest)
+            decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
+            decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;
+            bool priceInZone = data.Candle.High >= wma5High || data.Candle.High >= wma10High;
+            //bool maRetest = allowWickDetection && low < wma5High && close > wma10High;
+            //bool maRetest = allowWickDetection && low < wma5High;
+            if (priceInZone) //|| maRetest
                 return BbmaState.Reentry;
         }
 
+        // TODO: could be correct, but imho more an assumption?
         // Mlv (Market Loss Volume): LWMA5(low) above BB.Lower but below LWMA10(low) — pre-CSD
-        if (wma5 >= bbLower && wma5 < wma10)
+        if (wma5Low >= lowerBand && wma5Low < wma10Low)
             return BbmaState.Mlv;
 
         return BbmaState.None;
@@ -355,7 +359,7 @@ public class SignalBbmaBase : SignalCreateBase
         if (wma5 < wma10)
         {
             bool priceInZone = close >= wma5 && close <= wma10;
-            //bool maRetest = allowWickDetection && high > wma5 && close < wma10;
+            //bool maRetest = allowWickDetection && high > wma5High && close < wma10High;
             bool maRetest = allowWickDetection && high > wma5;
             if (priceInZone || maRetest)
                 return BbmaState.Reentry;
