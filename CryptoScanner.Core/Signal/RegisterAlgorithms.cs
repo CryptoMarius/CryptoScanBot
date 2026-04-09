@@ -198,17 +198,6 @@ public static class RegisterAlgorithms
         });
 #endif
 
-#if DEBUG
-        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-        // Confirmations from higher timeframe(s)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bbma.new1",
-            Strategy = CryptoSignalStrategy.BbmaReentryNew1,
-            AnalyzeLongType = typeof(SignalBbmaReentryNew1Long),
-            AnalyzeShortType = typeof(SignalBbmaReentryNew1Short),
-        });
-#endif
 
 #if DEBUG
         // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
