@@ -35,23 +35,28 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
     /// Exacte check op HTF voor Short Re-entry na CSM (Oma Ally BBMA)
     /// Gebruikt uitsluitend de reeds berekende data in candle.CandleData
     /// </summary>
-    private bool CheckHtf(CryptoInterval interval, MyData current)
+    /// <param name="interval">The HTF interval (used for walking back through candles)</param>
+    /// <param name="current">The HTF candle (provides indicator levels: WMA5High, WMA10High)</param>
+    /// <param name="ltfCandle">The current LTF candle (provides real-time price for the wick check)</param>
+    private bool CheckHtf(CryptoInterval interval, MyData current, MyData ltfCandle)
     {
-        //decimal sma20 = (decimal)current.CandleData.Sma20!.Value;
+        decimal ema50 = (decimal)current.CandleData.Ema50!.Value;
+        decimal sma20 = (decimal)current.CandleData.Sma20!.Value; 
         decimal wma5High = (decimal)current.CandleData.Wma05High!.Value;
         decimal wma10High = (decimal)current.CandleData.Wma10High!.Value;
 
-        //// Not a ranging chart
-        //if (wma10High > sma20)
-        //{
-        //    ExtraText = $"HTF Wma10Low not below mid-BB - ranging";
-        //    GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {interval.Name} {SignalSide} {ExtraText}");
-        //    return false;
-        //}
+        // BB is expanding, not a ranging chart https://youtu.be/tOQb6RRhbLA?t=102
+        if (wma10High > sma20 || wma10High > ema50)
+        {
+            ExtraText = $"HTF Wma10Low not below mid-BB - ranging";
+            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {interval.Name} {SignalSide} {ExtraText}");
+            return false;
+        }
 
-        // TODO: Not sure if this the right way (i see different approaches)
+        // Use LTF candle price against HTF MA levels: more real-time than checking the HTF candle's own wick,
+        // which can be hours stale on higher intervals (e.g. 4h/1d).
         // Reentry after csm, wick should pierce through one of the wma's
-        if (!(current.Candle.High > wma5High || current.Candle.High > wma10High))
+        if (!(ltfCandle.Candle.Close > wma5High || ltfCandle.Candle.Close > wma10High)) // Was high, replaced with Close
             return false;
 
 
@@ -120,13 +125,13 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
 
             // Not the band-crossing moment yet (e.g. None) — keep walking back
             if (stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme
-                || stateLtf == BbmaState.Csm || stateLtf == BbmaState.Mlv)
+                || stateLtf == BbmaState.Mlv) //|| stateLtf == BbmaState.Csm 
                 break;
         }
         string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
 
-        if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme ||
-            stateLtf == BbmaState.Csm || stateLtf == BbmaState.Mlv))
+        if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme 
+            || stateLtf == BbmaState.Mlv)) //|| stateLtf == BbmaState.Csm 
         {
             ExtraText = $"LTF unexpected state";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
@@ -190,7 +195,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
 
 
         stateHtf = BbmaState.Reentry; // Assume..
-        if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle))
+        if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, CandleLast))
         {
             ExtraText = $"HTF not in reentry state";
             GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");

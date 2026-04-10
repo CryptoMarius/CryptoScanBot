@@ -1,5 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Bbma;
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -113,6 +115,33 @@ public class Bbma
             MarkerType = MarkerType.Triangle,
             Tag = group,
         };
+        
+        var seriesBbmaExtreme = new ScatterSeries
+        {
+            Title = "extreme",
+            MarkerSize = 4,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Triangle,
+            Tag = group,
+        };
+        var seriesBbmaMlv = new ScatterSeries
+        {
+            Title = "bbma mlv",
+            MarkerSize = 4,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Cross,
+            Tag = group,
+        };
+        var seriesBbmaReentry = new ScatterSeries
+        {
+            Title = "bbma reentry",
+            MarkerSize = 4,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Square,
+            Tag = group,
+        };
+
+
 
         foreach (var (wma5, wma10, bb) in Enumerable.Zip(wmaList05High, wmaList10High, bollingerBandsList))
         {
@@ -128,15 +157,15 @@ public class Bbma
                 {
                     seriesWma5High.Points.Add(new DataPoint(openTime.Minutes, wma5.Wma.Value));
                     // Extreme-A: wma5 high above BB upper band
-                    if (bb.UpperBand.HasValue && wma5.Wma.Value > bb.UpperBand.Value)
-                        seriesExtremeAHigh.Points.Add(new ScatterPoint(openTime.Minutes, 1.005 * wma5.Wma.Value));
+                    //if (bb.UpperBand.HasValue && wma5.Wma.Value > bb.UpperBand.Value)
+                    //    seriesExtremeAHigh.Points.Add(new ScatterPoint(openTime.Minutes, 1.005 * wma5.Wma.Value));
                 }
                 if (wma10.Wma.HasValue)
                 {
                     seriesWma10High.Points.Add(new DataPoint(openTime.Minutes, wma10.Wma.Value));
                     // Magic extreme: wma10 high also above BB upper band
-                    if (bb.UpperBand.HasValue && wma10.Wma.Value > bb.UpperBand.Value)
-                        seriesMagicExtremeHigh.Points.Add(new ScatterPoint(openTime.Minutes, 1.005 * wma10.Wma.Value));
+                    //if (bb.UpperBand.HasValue && wma10.Wma.Value > bb.UpperBand.Value)
+                    //    seriesMagicExtremeHigh.Points.Add(new ScatterPoint(openTime.Minutes, 1.005 * wma10.Wma.Value));
                 }
             }
         }
@@ -155,18 +184,80 @@ public class Bbma
                 {
                     seriesWma5Low.Points.Add(new DataPoint(openTime.Minutes, wma5.Wma.Value));
                     // Extreme-A: wma5 low below BB lower band
-                    if (bb.LowerBand.HasValue && wma5.Wma.Value < bb.LowerBand.Value)
-                        seriesExtremeALow.Points.Add(new ScatterPoint(openTime.Minutes, 0.995 * wma5.Wma.Value));
+                    //if (bb.LowerBand.HasValue && wma5.Wma.Value < bb.LowerBand.Value)
+                    //    seriesExtremeALow.Points.Add(new ScatterPoint(openTime.Minutes, 0.995 * wma5.Wma.Value));
                 }
                 if (wma10.Wma.HasValue)
                 {
                     seriesWma10Low.Points.Add(new DataPoint(openTime.Minutes, wma10.Wma.Value));
                     // Magic extreme: wma10 low also below BB lower band
-                    if (bb.LowerBand.HasValue && wma10.Wma.Value < bb.LowerBand.Value)
-                        seriesMagicExtremeLow.Points.Add(new ScatterPoint(openTime.Minutes, 0.995 * wma10.Wma.Value));
+                    //if (bb.LowerBand.HasValue && wma10.Wma.Value < bb.LowerBand.Value)
+                    //    seriesMagicExtremeLow.Points.Add(new ScatterPoint(openTime.Minutes, 0.995 * wma10.Wma.Value));
                 }
             }
         }
+
+
+        // Pass maxDate so CollectCandles builds a history window ending at the last visible candle,
+        // ensuring TryGetCandle hits for every candle in the minDate..maxDate range.
+        CryptoIndicatorDataList indicatorDataList = [];
+        int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
+        indicatorDataList.PrepareIndicators(symbol, interval, maxDate, count);
+
+        foreach (var candle in candles)
+        {
+            CandleTime openTime = candle.OpenTime;
+            if (openTime >= minDate && openTime <= maxDate)
+            {
+                try
+                {
+                    if (indicatorDataList.TryGetCandle(interval, candle.OpenTime, out MyData? newData))
+                    {
+                        if (newData == null || newData.CandleData == null || newData.CandleData.Sma200 == null)
+                            continue;
+
+
+                        var band = newData.CandleData.BollingerBandsLowerBand.Value;
+                        var state = SignalBbmaBase.BbmaStateLong(newData!);
+                        switch (state)
+                        {
+                            case SignalBbmaBase.BbmaState.Extreme:
+                            case SignalBbmaBase.BbmaState.MagicExtreme:
+                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                break;
+                            case SignalBbmaBase.BbmaState.Mlv:
+                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                break;
+                            case SignalBbmaBase.BbmaState.Reentry:
+                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                break;
+                        }
+
+                        band = newData.CandleData.BollingerBandsUpperBand.Value;
+                        state = SignalBbmaBase.BbmaStateShort(newData!);
+                        switch (state)
+                        {
+                            case SignalBbmaBase.BbmaState.Extreme:
+                            case SignalBbmaBase.BbmaState.MagicExtreme:
+                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                break;
+                            case SignalBbmaBase.BbmaState.Mlv:
+                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                break;
+                            case SignalBbmaBase.BbmaState.Reentry:
+                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                break;
+                        }
+                    }
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error, "");
+                    GlobalData.AddTextToLogTab($"error showing chart {error.Message}");
+                }
+            }
+        }
+
 
         chart.Series.Insert(0, seriesBandLow);
         chart.Series.Insert(0, seriesBandHigh);
@@ -179,6 +270,10 @@ public class Bbma
         chart.Series.Add(seriesExtremeALow);
         chart.Series.Add(seriesMagicExtremeLow);
 
+        chart.Series.Add(seriesBbmaExtreme);
+        chart.Series.Add(seriesBbmaMlv);
+        chart.Series.Add(seriesBbmaReentry);
+        
 
         var seriesEma50 = new LineSeries
         {
@@ -202,4 +297,5 @@ public class Bbma
         }
         chart.Series.Add(seriesEma50);
     }
+
 }

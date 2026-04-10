@@ -6,13 +6,13 @@ namespace CryptoScanner.Core.Signal.Bbma;
 #if DEBUG
 public class SignalBbmaBase : SignalCreateBase
 {
-    internal enum BbmaState
+    public enum BbmaState
     {
         None,
         Extreme,
         MagicExtreme,
         Mlv,
-        Csm,
+        //Csm,
         Reentry
     }
 
@@ -259,7 +259,7 @@ public class SignalBbmaBase : SignalCreateBase
     /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
     /// wick levels are not yet final, but MA positions are reliable.
     /// </summary>
-    internal static BbmaState BbmaStateLong(MyData data, bool allowWickDetection = true)
+    public static BbmaState BbmaStateLong(MyData data, bool allowWickDetection = true)
     {
         decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
         decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
@@ -321,7 +321,7 @@ public class SignalBbmaBase : SignalCreateBase
     /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
     /// wick levels are not yet final, but MA positions are reliable.
     /// </summary>
-    internal static BbmaState BbmaStateShort(MyData data, bool allowWickDetection = true)
+    public static BbmaState BbmaStateShort(MyData data, bool allowWickDetection = true)
     {
         decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
         decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;

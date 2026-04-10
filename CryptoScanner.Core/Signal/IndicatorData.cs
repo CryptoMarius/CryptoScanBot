@@ -76,11 +76,12 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     }
 
 
-    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval, CandleTime candleOpenTime, int fillMax = 61)
+    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval, 
+        CandleTime candleOpenTime, int calculateCandles = -1)
     {
         if (!TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? _))
         {
-            List<CryptoCandle>? History = CollectCandles(symbol, interval, candleOpenTime, out string response);
+            List<CryptoCandle>? History = CollectCandles(symbol, interval, candleOpenTime, out string response, calculateCandles);
             if (History == null)
             {
                 GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
@@ -88,14 +89,14 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 return false;
             }
 
-            CryptoIndicatorData? indicatorData = CalculateIndicators(symbol, interval, History, fillMax);
+            CryptoIndicatorData? indicatorData = CalculateIndicators(symbol, interval, History, calculateCandles);
             TryAdd(interval.IntervalPeriod, indicatorData);
         }
         return true;
     }
 
     // Get the candle and indicator data from a DIFFERENT interval
-    internal bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
+    public bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
     {
         // indicatorData can be null: PrepareIndicators stores null when candle collection fails (line 87).
         // TryGetValue returns true (key exists) but the value is null — guard explicitly.
@@ -108,19 +109,21 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     }
 
     // For the SMA 200 we want at least 200 + 60 (we calculate the last 60 entries)
-    private const int maxCandles = 260;
+    //private const int maxCandles = 260;
 
     /// <summary>
     /// Make a list of candles up to openTime with at least maxCandles(260) candles
     /// </summary>
     public static List<CryptoCandle>? CollectCandles(
         CryptoSymbol symbol, CryptoInterval interval,
-        CandleTime openTime, out string errorstr)
+        CandleTime openTime, out string errorstr, int calculateCandles = -1)
     {
         // Retrieve the last candle in the requested interval
         CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList intervalCandles = symbolPeriod.CandleList;
-        if (intervalCandles.Count < maxCandles)
+
+        int maxCandles = calculateCandles > 0 ? calculateCandles : 260;
+        if (intervalCandles.Count < maxCandles || intervalCandles.Count < 260)
         {
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={intervalCandles.Count} requested={maxCandles}";
             return null;
@@ -197,10 +200,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     /// Calculate all the indicators, we want to have data for the last 60 candles
     /// </summary>
     private static CryptoIndicatorData? CalculateIndicators(CryptoSymbol symbol,
-        CryptoInterval interval, List<CryptoCandle> history, int fillMax = 61)
+        CryptoInterval interval, List<CryptoCandle> history, int calculateCandles = -1)
     {
         CryptoCandle candle = history[^1];
         CryptoIndicatorData? indicatorData = null;
+        int fillMax = calculateCandles > 0 ? calculateCandles : 61;
 
         List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
         List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
