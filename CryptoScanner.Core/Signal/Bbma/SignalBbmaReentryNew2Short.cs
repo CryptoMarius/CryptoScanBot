@@ -82,6 +82,36 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
     }
 
 
+    /// <summary>
+    /// Entry timing filter: WMA05Low must have crossed above WMA10Low on the current candle.
+    /// This indicates the pullback has just entered the MA zone — the optimal Short re-entry moment.
+    /// </summary>
+    private bool AllowStepIn()
+    {
+        if (!GetPrevCandle(CandleLast, out MyData? prev) || prev?.CandleData.Wma05Low == null || prev.CandleData.Wma10Low == null)
+            return false;
+
+        decimal wma05LowNow  = (decimal)CandleLast.CandleData.Wma05Low!.Value;
+        decimal wma10LowNow  = (decimal)CandleLast.CandleData.Wma10Low!.Value;
+        decimal wma05LowPrev = (decimal)prev.CandleData.Wma05Low.Value;
+        decimal wma10LowPrev = (decimal)prev.CandleData.Wma10Low.Value;
+
+        // Crossover: this candle WMA05Low rose above WMA10Low, previous candle it was still below/equal
+        return wma05LowNow > wma10LowNow && wma05LowPrev <= wma10LowPrev;
+    }
+
+
+    /// <summary>
+    /// Invalidates the setup when the current candle is a Long Extreme.
+    /// A bullish extreme after a bearish CSM means the setup has been overridden — give up.
+    /// </summary>
+    private bool GiveUp()
+    {
+        BbmaState state = BbmaStateLong(CandleLast);
+        return state == BbmaState.Extreme || state == BbmaState.MagicExtreme;
+    }
+
+
     public override bool IsSignal()
     {
         ExtraText = "";
