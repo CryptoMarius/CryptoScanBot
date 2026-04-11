@@ -15,13 +15,13 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Jump percentage:" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <TextBox Grid.Row="0" Grid.Column="1" 
                          Text="{Binding CandlePercentage, Mode=TwoWay, TargetNullValue='3', FallbackValue='3'}" 
-                         Width="60" Height="22" MinHeight="24" Watermark="30"
+                         Width="60" Height="22" MinHeight="24" PlaceholderText="30"
                          FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
                 <!-- Lookback candles -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Candle lookback:" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <TextBox Grid.Row="1" Grid.Column="1"  Text="{Binding CandlesLookbackCount, Mode=TwoWay, TargetNullValue='14', FallbackValue='14'}" 
-                         Width="60" Height="22" MinHeight="24" Watermark="14"
+                         Width="60" Height="22" MinHeight="24" PlaceholderText="14"
                          FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
                 <!-- Use High/Low instead of Open/Close -->
