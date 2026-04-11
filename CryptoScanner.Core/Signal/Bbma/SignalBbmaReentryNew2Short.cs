@@ -83,20 +83,36 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
 
 
     /// <summary>
-    /// Entry timing filter: WMA05Low must have crossed above WMA10Low on the current candle.
-    /// This indicates the pullback has just entered the MA zone — the optimal Short re-entry moment.
+    /// Entry timing filter: checks the 5m chart for WMA05Low crossing above WMA10Low.
+    /// This indicates the pullback has just entered the MA zone on the 5m — the optimal Short re-entry moment.
     /// </summary>
-    public override bool AllowStepIn()
+    public override bool AllowStepIn(CryptoSignal signal)
     {
-        if (!GetPrevCandle(CandleLast, out MyData? prev) || prev?.CandleData.Wma05Low == null || prev.CandleData.Wma10Low == null)
+        CryptoInterval interval5m = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
+
+        // Ensure 5m indicator data is available in IndicatorDataList
+        if (!IndicatorDataList.PrepareIndicators(Symbol, interval5m, CandleLast.Candle.OpenTime))
             return false;
 
-        decimal wma05LowNow  = (decimal)CandleLast.CandleData.Wma05Low!.Value;
-        decimal wma10LowNow  = (decimal)CandleLast.CandleData.Wma10Low!.Value;
-        decimal wma05LowPrev = (decimal)prev.CandleData.Wma05Low.Value;
-        decimal wma10LowPrev = (decimal)prev.CandleData.Wma10Low.Value;
+        // Align current time down to the nearest 5m boundary
+        CandleTime time5m = CandleLast.Candle.OpenTime - (CandleLast.Candle.OpenTime % interval5m.Duration);
 
-        // Crossover: this candle WMA05Low rose above WMA10Low, previous candle it was still below/equal
+        if (!IndicatorDataList.TryGetCandle(interval5m, time5m, out MyData? current5m) || current5m == null)
+            return false;
+
+        if (!GetPrevCandle(interval5m, current5m, out MyData? prev5m) || prev5m == null)
+            return false;
+
+        if (current5m.CandleData.Wma05Low == null || current5m.CandleData.Wma10Low == null ||
+            prev5m.CandleData.Wma05Low == null || prev5m.CandleData.Wma10Low == null)
+            return false;
+
+        decimal wma05LowNow  = (decimal)current5m.CandleData.Wma05Low.Value;
+        decimal wma10LowNow  = (decimal)current5m.CandleData.Wma10Low.Value;
+        decimal wma05LowPrev = (decimal)prev5m.CandleData.Wma05Low.Value;
+        decimal wma10LowPrev = (decimal)prev5m.CandleData.Wma10Low.Value;
+
+        // Crossover on 5m: WMA05Low just rose above WMA10Low
         return wma05LowNow > wma10LowNow && wma05LowPrev <= wma10LowPrev;
     }
 
@@ -105,7 +121,7 @@ public class SignalBbmaReentryNew2Short : SignalBbmaBase
     /// Invalidates the setup when the current candle is a Long Extreme.
     /// A bullish extreme after a bearish CSM means the setup has been overridden — give up.
     /// </summary>
-    public override bool GiveUp()
+    public override bool GiveUp(CryptoSignal signal)
     {
         BbmaState state = BbmaStateLong(CandleLast);
         return state == BbmaState.Extreme || state == BbmaState.MagicExtreme;
