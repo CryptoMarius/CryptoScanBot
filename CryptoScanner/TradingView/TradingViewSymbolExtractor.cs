@@ -216,6 +216,10 @@ public class TradingViewSymbolExtractor
     {
         if (jDocument.RootElement.TryGetProperty("lp", out JsonElement lpValue) && lpValue.TryGetDecimal(out decimal lp))
             _tickerData.Lp = lp;
+        else
+            // Log when no "lp" field is present so we can diagnose symbols like TVC:DXY that may be
+            // closed (forex weekend) or require special permissions.
+            ScannerLog.Logger.Info($"TradingView {_tickerData.Ticker}: no 'lp' in payload: {jDocument.RootElement}");
 
         if (jDocument.RootElement.TryGetProperty("volume", out JsonElement volumeValue) && volumeValue.TryGetDecimal(out decimal volume))
             _tickerData.Volume = (double)volume;

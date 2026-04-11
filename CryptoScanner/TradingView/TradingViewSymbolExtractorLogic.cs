@@ -44,6 +44,14 @@ public static class TradingViewJsonParser
 
             var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, options);
 
+            // S="ok" means TradingView has price data; S="error" or any other status means no usable data.
+            // Without this check we would try to parse an error response as price data and find no "lp".
+            if (branch?.S != "ok")
+            {
+                ScannerLog.Logger.Info($"TradingView qsd status={branch?.S} for {branch?.N}: {branch?.V}");
+                return null;
+            }
+
             return JsonDocument.Parse(branch?.V?.ToString() ?? "");
         }
         catch (Exception e)
@@ -176,17 +184,21 @@ public class TradingViewSymbolWebSocket(string tickerName)
             //https://www.tradingview.com/chart/C0G0Mzob/?symbol=TVC%3ADXY&interval=60
             await ClientWebSocket.ConnectAsync(uri, CancellationTokenSource.Token);
 
-            //string request = ConstructRequest("chart_create_session", ["my_chartsession", ""], []);
-            //await SendData(request);
-
-            string request = ConstructRequest("quote_create_session", ["my_session", ""], []);
+            // 1. Auth token MUST be sent first, before any session command (per TradingView WebSocket protocol)
+            string request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
             await SendData(request);
 
-            request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
+            // 2. Create the quote session (only the session ID as parameter, no trailing empty string)
+            request = ConstructRequest("quote_create_session", ["my_session"], []);
             await SendData(request);
 
-            //request = ConstructRequest("set_data_quality", ["low"], []);
-            //await SendData(request);
+            // 3. Declare which fields we want — required for TVC: symbols (e.g. TVC:DXY).
+            // Without this, TradingView does not send "lp" for CFD/index symbols.
+            request = ConstructRequest("quote_set_fields", [
+                "my_session", "lp", "lp_time", "ch", "chp", "volume",
+                "current_session", "description", "exchange", "is_tradable",
+                "short_name", "type", "update_mode", "currency_code"], []);
+            await SendData(request);
         }
         catch (Exception)
         {
@@ -198,7 +210,13 @@ public class TradingViewSymbolWebSocket(string tickerName)
 
     public async Task RequestData()
     {
-        string request = ConstructRequest("quote_add_symbols", ["my_session", TickerName], []); // "force_permission"
+        // TVC: symbols (CFD/index, e.g. TVC:DXY) require "force_permission" to receive lp data
+        // because they are not broker-tradeable. Other types (CRYPTOCAP:, SP:, etc.) work without it.
+        List<string> flags = TickerName.StartsWith("TVC:", StringComparison.OrdinalIgnoreCase)
+            ? ["force_permission"]
+            : [];
+
+        string request = ConstructRequest("quote_add_symbols", ["my_session", TickerName], flags);
         await SendData(request);
     }
 
