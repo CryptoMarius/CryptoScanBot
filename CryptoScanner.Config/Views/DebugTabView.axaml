@@ -20,7 +20,7 @@
                 <Grid ColumnDefinitions="120,*" RowDefinitions="Auto">
                     <TextBox Grid.Column="0" Text="{Binding DebugSymbol, Mode=TwoWay}" 
                              Height="28" FontSize="12" Padding="6,2" 
-                             CornerRadius="4" PlaceholderText="SYMBOL"/>
+                             CornerRadius="4" Watermark="SYMBOL"/>
                     <TextBlock Grid.Column="1"  VerticalAlignment="Center"
                                Text="Limit Debug stuff to this symbol (less information)" 
                                Margin="12,0,0,0" FontSize="12"/>

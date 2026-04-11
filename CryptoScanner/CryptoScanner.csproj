@@ -34,14 +34,15 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="12.0.0" />
-		<PackageReference Include="Avalonia.Desktop" Version="12.0.0" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.0" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="12.0.0" />
-		<PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.0" />
+		<PackageReference Include="Avalonia" Version="11.3.13" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.13" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.512801" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+		<PackageReference Include="Oxyplot.Avalonia" Version="2.2.0" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-avalonia11" />
 		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.5" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />

@@ -11,21 +11,21 @@
         <!-- Length -->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Length:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding Length, Mode=TwoWay , TargetNullValue='14', FallbackValue='14'}" 
-                 Width="60" Height="22" MinHeight="24" PlaceholderText="14"
+                 Width="60" Height="22" MinHeight="24" Watermark="14"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
         <!-- Oversold -->
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Oversold:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="1" Grid.Column="1" 
                  Text="{Binding Oversold, Mode=TwoWay, TargetNullValue='30', FallbackValue='30'}" 
-                 Width="60" Height="22" MinHeight="24" PlaceholderText="30"
+                 Width="60" Height="22" MinHeight="24" Watermark="30"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
         <!-- Overbought -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Overbought:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="2" Grid.Column="1" 
                  Text="{Binding Overbought, Mode=TwoWay , TargetNullValue='70', FallbackValue='70'}" 
-                 Width="60" Height="22" MinHeight="24" PlaceholderText="70"
+                 Width="60" Height="22" MinHeight="24" Watermark="70"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
     </Grid>

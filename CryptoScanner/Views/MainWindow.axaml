@@ -2,7 +2,7 @@
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="{Binding Title}" Width="1500" Height="800" FontSize="10"
 		ExtendClientAreaToDecorationsHint="True"
-		WindowDecorations="Full"
+		ExtendClientAreaChromeHints="PreferSystemChrome"
 		ExtendClientAreaTitleBarHeightHint="-1"
 		xmlns:views="using:CryptoScanner.Views"
 		xmlns:vm="using:CryptoScanner.ViewModels"

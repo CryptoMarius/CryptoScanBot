@@ -13,7 +13,7 @@
                     Margin="10,10,10,0"/>
             
             <TextBox Grid.Row="1" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True"
-                    PlaceholderText="COINUSDT Put your comments behind it if needed" CornerRadius="4"
+                    Watermark="COINUSDT Put your comments behind it if needed" CornerRadius="4"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="0" MinWidth="0" 
                     VerticalContentAlignment="Top" Margin="10"/>
             

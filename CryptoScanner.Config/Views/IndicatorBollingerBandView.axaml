@@ -11,14 +11,14 @@
         <!-- Length -->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="Length:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding Length, Mode=TwoWay, TargetNullValue='14', FallbackValue='14'}" 
-                 Width="60" Height="22" MinHeight="24" PlaceholderText="14"
+                 Width="60" Height="22" MinHeight="24" Watermark="14"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
         <!-- Deviation -->
         <TextBlock Grid.Row="1" Grid.Column="0" Text="Deviation:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="1" Grid.Column="1" 
                  Text="{Binding Deviation, Mode=TwoWay, TargetNullValue='2.0', FallbackValue='2.0'}" 
-                 Width="60" Height="22" MinHeight="24" PlaceholderText="70"
+                 Width="60" Height="22" MinHeight="24" Watermark="70"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
     </Grid>
