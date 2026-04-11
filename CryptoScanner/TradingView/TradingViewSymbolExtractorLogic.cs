@@ -44,13 +44,12 @@ public static class TradingViewJsonParser
 
             var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, options);
 
-            // S="ok" means TradingView has price data; S="error" or any other status means no usable data.
-            // Without this check we would try to parse an error response as price data and find no "lp".
+            // S="ok" means TradingView has price data. Log non-ok status (e.g. "error" for closed market)
+            // but still try to parse V — TradingView sends the last known price even when S != "ok",
+            // which is exactly what 2.1.8 relied on. Returning null here would cause DXY to show 0
+            // during weekends/closed market hours.
             if (branch?.S != "ok")
-            {
                 ScannerLog.Logger.Info($"TradingView qsd status={branch?.S} for {branch?.N}: {branch?.V}");
-                return null;
-            }
 
             return JsonDocument.Parse(branch?.V?.ToString() ?? "");
         }
@@ -161,16 +160,17 @@ public class TradingViewSymbolWebSocket(string tickerName)
     {
         request = $"~m~{request.Length}~m~{request}";
         //GlobalData.AddTextToLogTab(request);
+        GlobalData.AddTextToLogTab($"TradingView {TickerName} send: {request}");
         var bytes = Encoding.UTF8.GetBytes(request);
         ArraySegment<byte> data = new(bytes, 0, bytes.Length);
         try
         {
             await ClientWebSocket.SendAsync(data, WebSocketMessageType.Text, true, CancellationTokenSource.Token);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            //ScannerLog.Logger.Error(e, "");
+            GlobalData.AddTextToLogTab($@"Exception {e.Message}");
+            ScannerLog.Logger.Error(e, e.Message);
         }
     }
 
@@ -182,41 +182,38 @@ public class TradingViewSymbolWebSocket(string tickerName)
         {
             Uri uri = new("wss://data.tradingview.com/socket.io/websocket");
             //https://www.tradingview.com/chart/C0G0Mzob/?symbol=TVC%3ADXY&interval=60
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} connecting...");
             await ClientWebSocket.ConnectAsync(uri, CancellationTokenSource.Token);
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} connected, state={ClientWebSocket.State}");
 
-            // 1. Auth token MUST be sent first, before any session command (per TradingView WebSocket protocol)
-            string request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
+            //string request = ConstructRequest("chart_create_session", ["my_chartsession", ""], []);
+            //await SendData(request);
+
+            // Reverted to the 2.1.8 working setup: quote_create_session with trailing empty string,
+            // no set_auth_token, no quote_set_fields.
+            // set_auth_token with "unauthorized_user_token" blocks TVC: and SP: symbols.
+            string request = ConstructRequest("quote_create_session", ["my_session", ""], []);
             await SendData(request);
 
-            // 2. Create the quote session (only the session ID as parameter, no trailing empty string)
-            request = ConstructRequest("quote_create_session", ["my_session"], []);
-            await SendData(request);
+            //request = ConstructRequest("set_auth_token", ["unauthorized_user_token"], []);
+            //await SendData(request);
 
-            // 3. Declare which fields we want — required for TVC: symbols (e.g. TVC:DXY).
-            // Without this, TradingView does not send "lp" for CFD/index symbols.
-            request = ConstructRequest("quote_set_fields", [
-                "my_session", "lp", "lp_time", "ch", "chp", "volume",
-                "current_session", "description", "exchange", "is_tradable",
-                "short_name", "type", "update_mode", "currency_code"], []);
-            await SendData(request);
+            //request = ConstructRequest("set_data_quality", ["low"], []);
+            //await SendData(request);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
-            //ScannerLog.Logger.Error(e, "");
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} connect exception: {e.Message}");
+            ScannerLog.Logger.Error(e, e.Message);
         }
     }
 
 
     public async Task RequestData()
     {
-        // TVC: symbols (CFD/index, e.g. TVC:DXY) require "force_permission" to receive lp data
-        // because they are not broker-tradeable. Other types (CRYPTOCAP:, SP:, etc.) work without it.
-        List<string> flags = TickerName.StartsWith("TVC:", StringComparison.OrdinalIgnoreCase)
-            ? ["force_permission"]
-            : [];
-
-        string request = ConstructRequest("quote_add_symbols", ["my_session", TickerName], flags);
+        // TVC:DXY and similar public index symbols do not need any flags.
+        // Passing {"flags":["force_permission"]} causes a critical_error: invalid_parameters.
+        string request = ConstructRequest("quote_add_symbols", ["my_session", TickerName], []);
         await SendData(request);
     }
 
@@ -234,16 +231,27 @@ public class TradingViewSymbolWebSocket(string tickerName)
             if (arraySegment.Array != null && (result.Count != 0 || result.CloseStatus == WebSocketCloseStatus.Empty))
             {
                 string message = Encoding.ASCII.GetString(arraySegment.Array, arraySegment.Offset, result.Count);
+                GlobalData.AddTextToLogTab($"TradingView {TickerName} received ({result.Count} bytes): {message}");
                 _remainsOfMessage = ParseSocketData(_remainsOfMessage + message, out List<string> jsonList);
+                GlobalData.AddTextToLogTab($"TradingView {TickerName} parsed {jsonList.Count} parts, remains={_remainsOfMessage.Length} chars");
                 OnCrossRateFetched(jsonList);
             }
+            else
+            {
+                GlobalData.AddTextToLogTab($"TradingView {TickerName} receive: count={result.Count} closeStatus={result.CloseStatus} state={ClientWebSocket.State}");
+            }
+
+            if (ClientWebSocket.State == WebSocketState.CloseReceived)
+                GlobalData.AddTextToLogTab($"TradingView {TickerName} websocket closed by server: {result.CloseStatusDescription}");
 
             return ClientWebSocket.State != WebSocketState.CloseReceived;
         }
-        catch (Exception)
+        catch (Exception e)
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
             //ScannerLog.Logger.Error(e, "");
+            GlobalData.AddTextToLogTab($"TradingView {TickerName} receive exception: {e.Message}");
+            ScannerLog.Logger.Error(e, "");
             return false;
         }
     }
@@ -288,9 +296,9 @@ public class TradingViewSymbolWebSocket(string tickerName)
             }
             return message;
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            //ScannerLog.Logger.Error(e, "");
+            ScannerLog.Logger.Error(e, e.Message);
             return "";
         }
     }

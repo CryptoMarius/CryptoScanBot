@@ -245,6 +245,9 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             foreach (var ticker in tickerGroup.TickerList)
             {
                 Interlocked.Exchange(ref ticker.TickerCount, 0);
+                // Also reset TickerCountLast so NeedsRestart() doesn't false-trigger
+                // when the new count reaches the same value as before the reset.
+                ticker.TickerCountLast = 0;
             }
         }
     }
@@ -275,7 +278,15 @@ public class Ticker(ExchangeOptions exchangeOptions, Type userTickerItemType, Cr
             foreach (var ticker in tickerGroup.TickerList)
             {
                 count++;
-                // Is deze ooit gestart?
+
+                // Also restart tickers that lost their connection (flag set by TickerConnectionLost/TickerException)
+                if (ticker.NeedsRestart)
+                {
+                    restart = true;
+                    continue;
+                }
+
+                // Is this ticker already receiving data?
                 if (ticker.TickerCount != 0)
                 {
                     // Is there still activity (otherwise restart it)

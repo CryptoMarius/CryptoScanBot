@@ -110,11 +110,72 @@ public class Symbol() : SymbolBase(), ISymbol
 
             exchange.LastTimeFetched = DateTime.UtcNow;
             database.Connection.Update(exchange);
+
+            // Run in the background so symbol loading does not block startup.
+            // Volume will populate gradually while the scanner is already running.
+            _ = Task.Run(async () => await FetchSnapshotsAsync(activeSymbols));
         }
         catch (Exception error)
         {
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab(error.ToString());
         }
+    }
+
+
+    /// <summary>
+    /// Fetch snapshots in batches to populate initial Volume (quote) and LastPrice for each symbol.
+    /// Uses IAlpacaDataClient.ListSnapshotsAsync with LatestMarketDataListRequest.
+    /// </summary>
+    private static async Task FetchSnapshotsAsync(SortedList<string, CryptoSymbol> symbols)
+    {
+        if (symbols.Count == 0)
+            return;
+
+        GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} fetching volume snapshots for {symbols.Count} symbols");
+
+        using IAlpacaDataClient dataClient = Environments.Paper.GetAlpacaDataClient(
+            new SecretKey(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret));
+
+        var symbolNames = symbols.Keys.ToList();
+        const int batchSize = 100;
+        int fetched = 0;
+
+        for (int i = 0; i < symbolNames.Count; i += batchSize)
+        {
+            var batch = symbolNames.GetRange(i, Math.Min(batchSize, symbolNames.Count - i));
+            LimitRate.WaitForFairWeight(1);
+            try
+            {
+                var request = new LatestMarketDataListRequest(batch);
+                var snapshots = await dataClient.ListSnapshotsAsync(request, ExchangeBase.CancellationToken);
+                foreach (var (name, snapshot) in snapshots)
+                {
+                    if (!symbols.TryGetValue(name, out CryptoSymbol? symbol))
+                        continue;
+
+                    // Use the latest trade price; fall back to daily bar close when the
+                    // market is closed and no recent trade is available.
+                    IBar? bar = snapshot.CurrentDailyBar ?? snapshot.PreviousDailyBar;
+                    symbol.LastPrice = snapshot.Trade?.Price ?? bar?.Close;
+
+                    if (bar != null)
+                    {
+                        // Prefer last price; fall back to VWAP so volume is never zero
+                        // just because the market happens to be closed right now.
+                        decimal price = symbol.LastPrice ?? bar.Vwap;
+                        if (price > 0)
+                            symbol.Volume = (double)(bar.Volume * price);
+                    }
+                    fetched++;
+                }
+            }
+            catch (Exception ex)
+            {
+                GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} snapshot batch {i / batchSize + 1} error: {ex.Message}");
+            }
+        }
+
+        GlobalData.AddTextToLogTab($"{ExchangeBase.ExchangeOptions.ExchangeName} volume snapshots received for {fetched} symbols");
     }
 }

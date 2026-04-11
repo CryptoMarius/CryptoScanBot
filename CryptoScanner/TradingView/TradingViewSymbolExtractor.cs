@@ -50,12 +50,14 @@ public class TradingViewSymbolExtractor
         _tickerData.Ticker = tickerName;
 
 
+        GlobalData.AddTextToLogTab($"TradingView {tickerName} starting");
         TradingViewSymbolWebSocket socket = new(tickerName); // TODO: implement dispose
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);
 
         //bool displayNext = false;
+        int reconnectCount = 0;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -74,6 +76,8 @@ public class TradingViewSymbolExtractor
                 else
                 {
                     // Failed, connect again..
+                    reconnectCount++;
+                    GlobalData.AddTextToLogTab($"TradingView {tickerName} reconnecting (attempt {reconnectCount})");
                     await Task.Delay(250, cancellationToken);
                     socket = new TradingViewSymbolWebSocket(tickerName);
                     socket.DataFetched += OnValueFetched;
@@ -113,11 +117,8 @@ public class TradingViewSymbolExtractor
     {
         try
         {
-            //// Debug displayNext
-            //foreach (string s in e)
-            //{
-            //    GlobalData.AddTextToLogTab(" ? " + s);
-            //}
+            foreach (string s in values)
+                GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} json: {s}");
             ApplyRates(values);
         }
         catch (Exception e)
@@ -135,11 +136,10 @@ public class TradingViewSymbolExtractor
         {
             var res = TradingViewJsonParser.TryParse(json);
             if (res == null)
+            {
+                GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} TryParse=null for: {json}");
                 continue;
-            //if (_tickerData.Name == "Bitcoin")
-            //{
-            //    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {json}");
-            //}
+            }
 
             flag += ApplyTickerCurrentValues(res);
             //flag += ApplyMarketStatus(res);
