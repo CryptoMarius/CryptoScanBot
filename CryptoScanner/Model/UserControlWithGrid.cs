@@ -100,7 +100,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
     /// </summary>
     internal async void ShowColumnVisibilityWindow(DataGrid dataGrid)
     {
-        if (this.GetVisualRoot() is not Window parentWindow)
+        if (TopLevel.GetTopLevel(this) is not Window parentWindow)
             return;
 
         var columnVisibilityWindow = new ColumnWindow

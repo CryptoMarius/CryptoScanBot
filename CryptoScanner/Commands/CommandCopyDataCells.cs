@@ -1,4 +1,6 @@
-﻿namespace CryptoScanner.Commands;
+﻿using Avalonia.Input.Platform;
+
+namespace CryptoScanner.Commands;
 
 public class CommandCopyDataCells : CommandBase
 {
