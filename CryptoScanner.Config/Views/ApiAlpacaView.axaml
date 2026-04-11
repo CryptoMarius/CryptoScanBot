@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="150"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:ApiAlpacaViewModel"
+             x:Class="CryptoScanner.Config.Views.ApiAlpacaView">
+
+    <StackPanel Spacing="16" Margin="8">
+
+        <HeaderedContentControl Classes="groupbox" Header="Alpaca API key (paper trading)">
+            <StackPanel Margin="8" Spacing="8">
+
+                <!-- API Key -->
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="API key:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12" Width="80"/>
+                    <TextBox Grid.Column="1" Text="{Binding Key, Mode=TwoWay}" PasswordChar="*" Height="26" Width="230"
+                             FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
+                    <TextBlock Grid.Column="2" Text="{Binding KeyDisplay}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
+                </Grid>
+
+                <!-- API Secret -->
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
+                    <TextBlock Grid.Column="0" Text="API secret:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12" Width="80"/>
+                    <TextBox Grid.Column="1" Text="{Binding Secret, Mode=TwoWay}" PasswordChar="*"
+                             Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Width="230" HorizontalAlignment="Left"/>
+                    <TextBlock Grid.Column="2" Text="{Binding SecretDisplay}" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                   Text="Register a free paper-trading account at alpaca.markets to get your API key and secret. Both are required to fetch symbols and receive real-time market data." />
+
+    </StackPanel>
+
+</UserControl>

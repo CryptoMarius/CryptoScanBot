@@ -562,20 +562,13 @@ public static class GlobalData
             string fullName = Path.Combine(AppDataFolder, fileName);
             if (File.Exists(fullName))
             {
-                File.Delete(fullName);
-                //        string text = File.ReadAllText(fullName);
-                //        var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
-                //        if (value != null)
-                //            TradingApi = value;
-                //        else
-                //            TradingApi = new();
+                string text = File.ReadAllText(fullName);
+                var value = JsonSerializer.Deserialize<SettingsExchangeApi>(text, JsonTools.DeSerializerOptions);
+                if (value != null)
+                    TradingApi = value;
+                else
+                    TradingApi = new();
             }
-
-            //    // Exchange API no longer supported, clear it just in case
-            //    // (Better to remove it but i'm still hesitating about this)
-            //    TradingApi.Key = "";
-            //    TradingApi.Secret = "";
-            //    TradingApi.PassPhrase = "";
         }
         catch (Exception error)
         {
@@ -666,9 +659,9 @@ public static class GlobalData
         text = JsonSerializer.Serialize(Telegram, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
 
-        //fileName = Path.Combine(baseFolder, $"{AppName}-exchange.json");
-        //text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
-        //File.WriteAllText(fileName, text);
+        filename = Path.Combine(baseFolder, $"{Constants.AppName}-exchange.json");
+        text = JsonSerializer.Serialize(TradingApi, JsonTools.JsonSerializerIndented);
+        File.WriteAllText(filename, text);
 
         filename = Path.Combine(baseFolder, $"{Constants.AppName}-altrady.json");
         text = JsonSerializer.Serialize(AltradyApi, JsonTools.JsonSerializerIndented);
