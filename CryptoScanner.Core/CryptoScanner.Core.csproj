@@ -14,7 +14,11 @@
     <DefineConstants>$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
+	<PropertyGroup>
+		<AcceptNPOIOSMFLicense>true</AcceptNPOIOSMFLicense>
+	</PropertyGroup>
+	
+	<ItemGroup>
     <AvaloniaXaml Remove="Exchange\BloFin\Spot\**" />
     <Compile Remove="Exchange\BloFin\Spot\**" />
     <EmbeddedResource Remove="Exchange\BloFin\Spot\**" />

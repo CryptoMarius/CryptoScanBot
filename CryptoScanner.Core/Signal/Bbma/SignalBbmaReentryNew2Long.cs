@@ -25,7 +25,6 @@ en biedt daartussen verschillende instapmomenten.
     Re-entry(na CSM) : Na een momentum - uitbraak keert de prijs vaak terug naar de MA5/10 voor een tweede instapkans.
 */
 
-#if DEBUG
 public class SignalBbmaReentryNew2Long : SignalBbmaBase
 {
     // Maximum TF1 candles to wait for a Reentry before giving up
@@ -271,4 +270,3 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
         return false;
     }
 }
-#endif

@@ -77,7 +77,6 @@ public class CryptoData
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
-#if DEBUG
     // Now outside the if debug
     public double? Ema50 { get; set; }
     [Computed]
@@ -88,7 +87,6 @@ public class CryptoData
     public double? Wma10Low { get; set; }
     [Computed]
     public double? Wma10High { get; set; }
-#endif
 
     // RSI indicator
     public double? Rsi { get; set; }
@@ -159,13 +157,12 @@ public class CryptoData
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
 
-#if debug
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;
         Wma10High = source.Wma10High;
-#endif
+
         // Parabolic SAR indicator value
         PSar = source.PSar;
 

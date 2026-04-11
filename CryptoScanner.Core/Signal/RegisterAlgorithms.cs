@@ -199,7 +199,6 @@ public static class RegisterAlgorithms
 #endif
 
 
-#if DEBUG
         // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
         // Confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
@@ -209,7 +208,6 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalBbmaReentryNew2Long),
             AnalyzeShortType = typeof(SignalBbmaReentryNew2Short),
         });
-#endif
 
 #if DEBUG
         // Trend reversal

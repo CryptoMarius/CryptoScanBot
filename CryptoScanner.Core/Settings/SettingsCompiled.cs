@@ -14,26 +14,26 @@ public enum MatchBlackAndWhiteList
     NotPresent
 }
 
-/// <summary>Compiled relative volume filter settings — grouped for readability.</summary>
-public class SettingsCompiledVolume
-{
-    public bool Active = false;
-    public decimal MinRelative = 0m;
-    public decimal MaxRelative = 999m;
-    public int Lookback = 20;
-    public bool Log = false;
-}
+///// <summary>Compiled relative volume filter settings — grouped for readability.</summary>
+//public class SettingsCompiledVolume
+//{
+//    public bool Active = false;
+//    public decimal MinRelative = 0m;
+//    public decimal MaxRelative = 999m;
+//    public int Lookback = 20;
+//    public bool Log = false;
+//}
 
-/// <summary>Compiled adaptive feedback filter settings — grouped for readability.</summary>
-public class SettingsCompiledFeedback
-{
-    public bool Active = false;
-    public int MaxDays = 7;
-    public int MinSignals = 5;
-    public decimal BlockThreshold = 40m;
-    public int ReEnableHours = 24;
-    public bool Log = false;
-}
+///// <summary>Compiled adaptive feedback filter settings — grouped for readability.</summary>
+//public class SettingsCompiledFeedback
+//{
+//    public bool Active = false;
+//    public int MaxDays = 7;
+//    public int MinSignals = 5;
+//    public decimal BlockThreshold = 40m;
+//    public int ReEnableHours = 24;
+//    public bool Log = false;
+//}
 
 
 // Compiled version of the SettingsTextual for signal (long/short) and trading (long/short)
@@ -68,11 +68,11 @@ public class SettingsCompiled
     // Minimum number of higher-timeframe barometers that must align with the signal direction (0 = disabled)
     public int BarometerMinConsensus = 0;
 
-    // Relative volume filter
-    public SettingsCompiledVolume Volume = new();
+    //// Relative volume filter
+    //public SettingsCompiledVolume Volume = new();
 
-    // Adaptive feedback filter
-    public SettingsCompiledFeedback Feedback = new();
+    //// Adaptive feedback filter
+    //public SettingsCompiledFeedback Feedback = new();
 
 
     // The black- and whitelist
@@ -117,18 +117,18 @@ public class SettingsCompiled
         BarometerConsensusActive = settings.Barometer.ConsensusActive;
         BarometerMinConsensus = settings.Barometer.MinConsensus;
 
-        Volume.Active = settings.Volume.IsActive;
-        Volume.MinRelative = settings.Volume.MinRelVol;
-        Volume.MaxRelative = settings.Volume.MaxRelVol;
-        Volume.Lookback = settings.Volume.Lookback;
-        Volume.Log = settings.Volume.Log;
+        //Volume.Active = settings.Volume.IsActive;
+        //Volume.MinRelative = settings.Volume.MinRelVol;
+        //Volume.MaxRelative = settings.Volume.MaxRelVol;
+        //Volume.Lookback = settings.Volume.Lookback;
+        //Volume.Log = settings.Volume.Log;
 
-        Feedback.Active = settings.Feedback.IsActive;
-        Feedback.MaxDays = settings.Feedback.MaxLookbackDays;
-        Feedback.MinSignals = settings.Feedback.MinSignals;
-        Feedback.BlockThreshold = settings.Feedback.BlockThresholdPercent;
-        Feedback.ReEnableHours = settings.Feedback.ReEnableHours;
-        Feedback.Log = settings.Feedback.Log;
+        //Feedback.Active = settings.Feedback.IsActive;
+        //Feedback.MaxDays = settings.Feedback.MaxLookbackDays;
+        //Feedback.MinSignals = settings.Feedback.MinSignals;
+        //Feedback.BlockThreshold = settings.Feedback.BlockThresholdPercent;
+        //Feedback.ReEnableHours = settings.Feedback.ReEnableHours;
+        //Feedback.Log = settings.Feedback.Log;
 
 
         // Market trend% (min..max), er is maar 1 aanwezig

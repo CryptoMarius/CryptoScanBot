@@ -41,9 +41,9 @@ public enum CryptoSignalStrategy
 #if DEBUG
     BbmaReentryOld = 42, // No confirmations from higher timeframe(s)
 #endif
-#if DEBUG
-    BbmaReentryNew2 = 44, // Confirmations from higher timeframe(s)
-#endif
+
+    BbmaReentryNew2 = 44,
+
 
 #if DEBUG
     StochDir = 46,

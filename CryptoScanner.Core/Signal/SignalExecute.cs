@@ -132,17 +132,17 @@ public class SignalExecute
                         {
                             if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
                             {
-                                // Relative volume check: skip for informational strategies
-                                if (entry.Key.checkBarometer)
-                                {
-                                    var volume = TradingConfig.Signals[side].Volume;
-                                    if (!VolumeHelper.CheckRelativeVolume(indicatorData, volume, out string volReaction))
-                                    {
-                                        if (volume.Log)
-                                            GlobalData.AddTextToLogTab($"{symbol.Name} {side} {volReaction}");
-                                        continue;
-                                    }
-                                }
+                                //// Relative volume check: skip for informational strategies
+                                //if (entry.Key.checkBarometer)
+                                //{
+                                //    var volume = TradingConfig.Signals[side].Volume;
+                                //    if (!VolumeHelper.CheckRelativeVolume(indicatorData, volume, out string volReaction))
+                                //    {
+                                //        if (volume.Log)
+                                //            GlobalData.AddTextToLogTab($"{symbol.Name} {side} {volReaction}");
+                                //        continue;
+                                //    }
+                                //}
 
                                 SignalCreate createSignal = new()
                                 {
