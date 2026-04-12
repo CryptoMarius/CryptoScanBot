@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+using Avalonia.Threading;
 
 using CryptoScanner.Core.Core;
 
@@ -39,25 +39,27 @@ public class TickerData
 public class TradingViewSymbolExtractor
 {
     private readonly TickerData _tickerData = new();
+    //private Action<decimal, double> OnDataReceived = null!;
 
     public async void StartAsync(string tickerName, string displayName,
         Action<decimal, double> onDataReceived,
-        int startDelayMs = 250, int loopDelayMs = 1000,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int startDelayMs = 250, int loopDelayMs = 1000
+        )
     {
         await Task.Delay(startDelayMs, cancellationToken);
         //_tickerData.Name = displayName;
         _tickerData.Ticker = tickerName;
+        //OnDataReceived = onDataReceived;
 
-
-        GlobalData.AddTextToLogTab($"TradingView {tickerName} starting");
-        TradingViewSymbolWebSocket socket = new(tickerName); // TODO: implement dispose
+        //GlobalData.AddTextToLogTab($"TradingView {tickerName} starting");
+        TradingViewSymbolWebSocket socket = new(tickerName);
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);
 
         //bool displayNext = false;
-        int reconnectCount = 0;
+        //int reconnectCount = 0;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -76,8 +78,8 @@ public class TradingViewSymbolExtractor
                 else
                 {
                     // Failed, connect again..
-                    reconnectCount++;
-                    GlobalData.AddTextToLogTab($"TradingView {tickerName} reconnecting (attempt {reconnectCount})");
+                    //reconnectCount++;
+                    //GlobalData.AddTextToLogTab($"TradingView {tickerName} reconnecting (attempt {reconnectCount})");
                     await Task.Delay(250, cancellationToken);
                     socket = new TradingViewSymbolWebSocket(tickerName);
                     socket.DataFetched += OnValueFetched;
@@ -117,8 +119,8 @@ public class TradingViewSymbolExtractor
     {
         try
         {
-            foreach (string s in values)
-                GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} json: {s}");
+            //foreach (string s in values)
+            //    GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} json: {s}");
             ApplyRates(values);
         }
         catch (Exception e)
@@ -136,10 +138,14 @@ public class TradingViewSymbolExtractor
         {
             var res = TradingViewJsonParser.TryParse(json);
             if (res == null)
-            {
-                GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} TryParse=null for: {json}");
+            //{
+                //GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} TryParse=null for: {json}");
                 continue;
-            }
+            //}
+            //if (_tickerData.Name == "Bitcoin")
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"{_tickerData.Name} error {json}");
+            //}
 
             flag += ApplyTickerCurrentValues(res);
             //flag += ApplyMarketStatus(res);
@@ -149,11 +155,12 @@ public class TradingViewSymbolExtractor
 
         //if (flag > 0)
         //{
-        //_tickerData.LastCheck = DateTime.UtcNow;
-        //if (lastValue != value.Lp)
-        //    ValueFetched?.Invoke(this, value);
-        //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
-        //GlobalData.AddTextToLogTab(value.Name + " value=" + value.Lp);
+        //    _tickerData.LastCheck = DateTime.UtcNow;
+        //    //if (lastValue != value.Lp)
+        //    //    ValueFetched?.Invoke(this, value);
+        //    //_vm.ForecastVm.CalculateNewRates(_vm.TradingViewVm.Rates);
+        //    //GlobalData.AddTextToLogTab(value.Name + " value=" + value.Lp);
+        //    Dispatcher.UIThread.Post(() => OnDataReceived(_tickerData.Lp, _tickerData.Volume));
         //}
     }
 
@@ -216,10 +223,10 @@ public class TradingViewSymbolExtractor
     {
         if (jDocument.RootElement.TryGetProperty("lp", out JsonElement lpValue) && lpValue.TryGetDecimal(out decimal lp))
             _tickerData.Lp = lp;
-        else
-            // Log when no "lp" field is present so we can diagnose symbols like TVC:DXY that may be
-            // closed (forex weekend) or require special permissions.
-            ScannerLog.Logger.Info($"TradingView {_tickerData.Ticker}: no 'lp' in payload: {jDocument.RootElement}");
+        //else
+        //    // Log when no "lp" field is present so we can diagnose symbols like TVC:DXY that may be
+        //    // closed (forex weekend) or require special permissions.
+        //    ScannerLog.Logger.Info($"TradingView {_tickerData.Ticker}: no 'lp' in payload: {jDocument.RootElement}");
 
         if (jDocument.RootElement.TryGetProperty("volume", out JsonElement volumeValue) && volumeValue.TryGetDecimal(out decimal volume))
             _tickerData.Volume = (double)volume;

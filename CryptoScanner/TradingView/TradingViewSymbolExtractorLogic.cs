@@ -44,13 +44,6 @@ public static class TradingViewJsonParser
 
             var branch = JsonSerializer.Deserialize<TradingViewJsonPayloadObject>(p, options);
 
-            // S="ok" means TradingView has price data. Log non-ok status (e.g. "error" for closed market)
-            // but still try to parse V — TradingView sends the last known price even when S != "ok",
-            // which is exactly what 2.1.8 relied on. Returning null here would cause DXY to show 0
-            // during weekends/closed market hours.
-            if (branch?.S != "ok")
-                ScannerLog.Logger.Info($"TradingView qsd status={branch?.S} for {branch?.N}: {branch?.V}");
-
             return JsonDocument.Parse(branch?.V?.ToString() ?? "");
         }
         catch (Exception e)
