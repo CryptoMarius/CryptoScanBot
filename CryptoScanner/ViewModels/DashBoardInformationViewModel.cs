@@ -173,7 +173,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         ChartImage = null;
         GlobalData.CreatedSignalCount = 0;
         SignalExecute.ResetAnalyseCount();
-        ExchangeBase.KLineTicker!.Reset();
+        ExchangeBase.KLineTicker?.Reset();
 
         // Reinitialize barometer with the quotes of the new exchange
         InitializeBarometer();
@@ -296,6 +296,24 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 }
             }
         }
+
+        // Did something change?
+        if (TopSymbols != null && list.Count == TopSymbols.Count)
+        {
+            bool equal = true;
+            for (int i = 0; i < list.Count; i ++)
+            {
+                if (list[i].Type != TopSymbols[i].Type)
+                    equal = false;
+                if (list[i].Symbol != TopSymbols[i].Symbol)
+                    equal = false;
+                if (list[i].Name != TopSymbols[i].Name)
+                    equal = false;
+            }
+            if (equal)
+                return;
+        }
+        
         TopSymbols = [.. list];
     }
 
