@@ -11,9 +11,9 @@
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
 		<!-- Assembly Version Info -->
-		<AssemblyVersion>2.5.0.0</AssemblyVersion>
-		<FileVersion>2.5.0.0</FileVersion>
-		<Version>2.5.0</Version>
+		<AssemblyVersion>2.5.1.0</AssemblyVersion>
+		<FileVersion>2.5.1.0</FileVersion>
+		<Version>2.5.1</Version>
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
