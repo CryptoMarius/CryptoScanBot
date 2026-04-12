@@ -104,13 +104,17 @@ public class ScannerSession : IScannerSession
         System.Diagnostics.Debug.WriteLine($"ScannerSession.ApplySettings");
 
         // Initialize the active exchange
+        var currentExchange = GlobalData.ActiveExchange;
         if (GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out Model.CryptoExchange? activeExchange))
             GlobalData.ActiveExchange = activeExchange;
         else
             throw new Exception($"Exchange {GlobalData.Settings.General.ExchangeName} does not exist");
 
-        // Initialize the exchange defaults
-        GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
+        // Initialize the exchange defaults (once), or when it has changed
+        if (currentExchange != GlobalData.ActiveExchange)
+        {
+            GlobalData.ActiveExchange!.GetApiInstance().ExchangeDefaults();
+        }
 
 
         // Add a default quote if needed
