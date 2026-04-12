@@ -217,7 +217,7 @@ public class Bbma
                             continue;
 
 
-                        var band = newData.CandleData.BollingerBandsLowerBand.Value;
+                        var band = newData.CandleData.BollingerBandsLowerBand!.Value;
                         var state = SignalBbmaBase.BbmaStateLong(newData!);
                         switch (state)
                         {
@@ -233,7 +233,7 @@ public class Bbma
                                 break;
                         }
 
-                        band = newData.CandleData.BollingerBandsUpperBand.Value;
+                        band = newData.CandleData.BollingerBandsUpperBand!.Value;
                         state = SignalBbmaBase.BbmaStateShort(newData!);
                         switch (state)
                         {
