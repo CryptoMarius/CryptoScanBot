@@ -146,19 +146,19 @@
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[0]}"/>
                 
                 <!-- Dollar Index -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="{Binding TvSymbols[1].Name}" 
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="label" Text="{Binding TvSymbols[1].Name}"
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[1]}"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="value"
                            Foreground="{Binding TvSymbols[1].Color}"
-                           Text="{Binding TvSymbols[1].VolumeText}" 
+                           Text="{Binding TvSymbols[1].PriceText}"
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[1]}"/>
 
                 <!-- S&P 500 -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="{Binding TvSymbols[2].Name}" 
+                <TextBlock Grid.Row="2" Grid.Column="0" Classes="label" Text="{Binding TvSymbols[2].Name}"
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[2]}"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Classes="value"
                            Foreground="{Binding TvSymbols[2].Color}"
-                           Text="{Binding TvSymbols[2].VolumeText}" 
+                           Text="{Binding TvSymbols[2].PriceText}"
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[2]}"/>
 
                 <!-- Bitcoin Dominance -->
