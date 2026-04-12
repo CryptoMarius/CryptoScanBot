@@ -30,6 +30,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<PositionIsCreatedMessage>(this, OnPositionIsCreated);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
+        WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
 
         _timerRefreshFields.Tick += TimerRefreshFieldsTick;
         _timerRefreshFields.Start();
@@ -43,6 +44,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
         WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
 
 
         _timerRefreshFields.Stop();
@@ -89,6 +91,13 @@ public partial class PositionOpenGridViewModel : ObservableObject
             position.ResetColors();
     }
 
+    private void OnExchangeSwitched(object recipient, ExchangeSwitchedMessage message)
+    {
+        // After an exchange switch the old positions reference symbols from the previous exchange
+        // which may have been cleared. Reload from the database for the new active exchange.
+        Dispatcher.UIThread.Post(LoadOpenPositions);
+    }
+
     private void LoadOpenPositions()
     {
         // GlobalData.AddTextToLogTab("Reading open positions");
@@ -128,22 +137,29 @@ public partial class PositionOpenGridViewModel : ObservableObject
     {
         foreach (var position in Positions)
         {
-            // "Distance" from current price
-            position.Status = string.Empty;
-            position.Invested = string.Empty;
-            position.Returned = string.Empty;
-            position.Commission = string.Empty;
-            position.Open = string.Empty;
+            try
+            {
+                // "Distance" from current price
+                position.Status = string.Empty;
+                position.Invested = string.Empty;
+                position.Returned = string.Empty;
+                position.Commission = string.Empty;
+                position.Open = string.Empty;
 
-            position.Duration = string.Empty;
+                position.Duration = string.Empty;
 
-            position.CurrentProfit = string.Empty;
-            position.BreakEvenPercent = string.Empty;
-            position.CurrentProfitPercentage = string.Empty;
+                position.CurrentProfit = string.Empty;
+                position.BreakEvenPercent = string.Empty;
+                position.CurrentProfitPercentage = string.Empty;
 
-            // Statistics (not visible at this moment?)
-            //position.PriceMinPerc = string.Empty;
-            //position.PriceMaxPerc = string.Empty;
+                // Statistics (not visible at this moment?)
+                //position.PriceMinPerc = string.Empty;
+                //position.PriceMaxPerc = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ScannerLog.Logger.Error(ex, "");
+            }
         }
     }
 
