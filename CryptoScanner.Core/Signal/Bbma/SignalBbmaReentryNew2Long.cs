@@ -52,6 +52,13 @@ public class SignalBbmaReentryNew2Long : SignalBbmaBase
             return false;
         }
 
+        // If the current HTF candle itself closes above the upper BB, it IS a new CSM — not a re-entry.
+        // Without this check the CSM history loop finds an older CSM and incorrectly fires a re-entry
+        // while the HTF is actually mid-momentum (breaking up through the BB right now).
+        decimal bbUpperCurrent = (decimal)current.CandleData.BollingerBandsUpperBand!.Value;
+        if (current.Candle.Close > bbUpperCurrent)
+            return false;
+
         // Use LTF candle price against HTF MA levels: more real-time than checking the HTF candle's own wick,
         // which can be hours stale on higher intervals (e.g. 4h/1d).
         // Reentry after csm, wick should pierce through one of the wma's
