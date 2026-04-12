@@ -16,6 +16,12 @@ public class CryptoTrendData
     public CryptoTrendIndicator LastTrend { get; set; } = CryptoTrendIndicator.Unknown;
     public CryptoTrendIndicator PrevTrend { get; set; }
 
+    // Last BOS/CHoCH structure event detected by TrendIntervalBos
+    public CryptoStructureEvent LastStructureEvent { get; set; }
+    public CandleTime? LastStructureEventTime { get; set; }
+    // Tracks the event time of the last fired signal — prevents re-firing on the same event
+    public CandleTime? LastFiredStructureEventTime { get; set; }
+
 
     public void Reset()
     {
@@ -27,5 +33,9 @@ public class CryptoTrendData
         PrevPercentage = null;
         LastTrend = CryptoTrendIndicator.Unknown;
         PrevTrend = CryptoTrendIndicator.Unknown;
+
+        LastStructureEvent = CryptoStructureEvent.None;
+        LastStructureEventTime = null;
+        LastFiredStructureEventTime = null;
     }
 }

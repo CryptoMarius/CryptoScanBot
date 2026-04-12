@@ -10,7 +10,7 @@ public enum CryptoSignalStrategy
     Stobb = 6,
     StobbMulti = 7,
 
-    Sma20Sma50 = 4,
+    //Sma20Sma50 = 4,
     //SlopeSma20 = 8,
 
     IchimokuKumoBreakout = 9, // nazoeken, in de juiste positieve of negatieve trend doet ie het prima
@@ -19,30 +19,15 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
     NadarayaWatsonEnvelope = 25,
-#if DEBUG
-    NadarayaWatsonEnvelopePull = 28,
-#endif
 
-#if DEBUG
-    BbMaGrok = 30, // still studying, its complicated // Confirmations from higher timeframe(s)
-#endif
 
 #if DEBUG
     Trend = 31,
 #endif
 
-#if DEBUG
-    RollingFft = 37,
-#endif
-#if DEBUG
-    RsiDivergence = 38,
-#endif
+    TrendBosChoch = 32,
 
-#if DEBUG
-    BbmaReentryOld = 42, // No confirmations from higher timeframe(s)
-#endif
-
-    BbmaReentryNew2 = 44,
+    Bbma = 44,
 
 
 #if DEBUG

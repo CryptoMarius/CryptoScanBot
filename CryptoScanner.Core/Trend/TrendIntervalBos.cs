@@ -63,9 +63,14 @@ public class TrendIntervalBos
     /// <summary>
     /// Interpret zigzag swing points using BOS/CHoCH logic.
     /// Returns the resulting trend (Bullish/Bearish/Unknown).
+    /// Also returns the last structure event (BOS/CHoCH) and its candle time via out parameters.
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log)
+    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log,
+        out CryptoStructureEvent lastEvent, out CandleTime? lastEventTime)
     {
+        lastEvent = CryptoStructureEvent.None;
+        lastEventTime = null;
+
         var zigZagList = indicator.ZigZagList;
         CryptoTrendIndicator trend = CryptoTrendIndicator.Unknown;
 
@@ -80,6 +85,7 @@ public class TrendIntervalBos
             log?.AppendLine($"Not enough zigzag points, trend={trend}");
             return trend;
         }
+
 
         // Determine initial trend and seed the last known high/low from the first two points
         decimal lastHigh;
@@ -139,6 +145,12 @@ public class TrendIntervalBos
                 lastLow = zigZag.Value;
             }
 
+            if (structureEvent != CryptoStructureEvent.None)
+            {
+                lastEvent = structureEvent;
+                lastEventTime = zigZag.Candle!.OpenTime;
+            }
+
             if (log != null)
             {
                 if (structureEvent != CryptoStructureEvent.None)
@@ -175,12 +187,15 @@ public class TrendIntervalBos
         ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
 
-        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(indicator, log);
+        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(indicator, log,
+            out CryptoStructureEvent lastEvent, out CandleTime? lastEventTime);
 
         intervalTrend.PrevTrend = intervalTrend.Trend;
         intervalTrend.PrevTime = intervalTrend.Time;
         intervalTrend.Trend = trendIndicator;
         intervalTrend.Time = maxDate;
+        intervalTrend.LastStructureEvent = lastEvent;
+        intervalTrend.LastStructureEventTime = lastEventTime;
 
         if (GlobalData.Settings.General.DebugTrendCalculation)
         {
