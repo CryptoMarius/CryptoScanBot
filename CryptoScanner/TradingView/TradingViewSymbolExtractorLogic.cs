@@ -153,7 +153,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
     {
         request = $"~m~{request.Length}~m~{request}";
         //GlobalData.AddTextToLogTab(request);
-        GlobalData.AddTextToLogTab($"TradingView {TickerName} send: {request}");
+        //GlobalData.AddTextToLogTab($"TradingView {TickerName} send: {request}");
         var bytes = Encoding.UTF8.GetBytes(request);
         ArraySegment<byte> data = new(bytes, 0, bytes.Length);
         try
@@ -175,9 +175,9 @@ public class TradingViewSymbolWebSocket(string tickerName)
         {
             Uri uri = new("wss://data.tradingview.com/socket.io/websocket");
             //https://www.tradingview.com/chart/C0G0Mzob/?symbol=TVC%3ADXY&interval=60
-            GlobalData.AddTextToLogTab($"TradingView {TickerName} connecting...");
+            //GlobalData.AddTextToLogTab($"TradingView {TickerName} connecting...");
             await ClientWebSocket.ConnectAsync(uri, CancellationTokenSource.Token);
-            GlobalData.AddTextToLogTab($"TradingView {TickerName} connected, state={ClientWebSocket.State}");
+            //GlobalData.AddTextToLogTab($"TradingView {TickerName} connected, state={ClientWebSocket.State}");
 
             //string request = ConstructRequest("chart_create_session", ["my_chartsession", ""], []);
             //await SendData(request);
@@ -224,14 +224,14 @@ public class TradingViewSymbolWebSocket(string tickerName)
             if (arraySegment.Array != null && (result.Count != 0 || result.CloseStatus == WebSocketCloseStatus.Empty))
             {
                 string message = Encoding.ASCII.GetString(arraySegment.Array, arraySegment.Offset, result.Count);
-                GlobalData.AddTextToLogTab($"TradingView {TickerName} received ({result.Count} bytes): {message}");
+                //GlobalData.AddTextToLogTab($"TradingView {TickerName} received ({result.Count} bytes): {message}");
                 _remainsOfMessage = ParseSocketData(_remainsOfMessage + message, out List<string> jsonList);
-                GlobalData.AddTextToLogTab($"TradingView {TickerName} parsed {jsonList.Count} parts, remains={_remainsOfMessage.Length} chars");
+                //GlobalData.AddTextToLogTab($"TradingView {TickerName} parsed {jsonList.Count} parts, remains={_remainsOfMessage.Length} chars");
                 OnCrossRateFetched(jsonList);
             }
             else
             {
-                GlobalData.AddTextToLogTab($"TradingView {TickerName} receive: count={result.Count} closeStatus={result.CloseStatus} state={ClientWebSocket.State}");
+                //GlobalData.AddTextToLogTab($"TradingView {TickerName} receive: count={result.Count} closeStatus={result.CloseStatus} state={ClientWebSocket.State}");
             }
 
             if (ClientWebSocket.State == WebSocketState.CloseReceived)
