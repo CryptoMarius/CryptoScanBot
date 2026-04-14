@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Bbma;
@@ -276,9 +277,9 @@ public class SignalBbmaBase : SignalCreateBase
 
 
         decimal low = data.Candle.Low;
+        decimal close = data.Candle.Close;
         if (allowWickDetection)
         {
-            decimal close = data.Candle.Close;
             decimal open = data.Candle.Open;
 
             // Extreme (Type B): wick rejection of BB.Lower
@@ -298,10 +299,11 @@ public class SignalBbmaBase : SignalCreateBase
         {
             //decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
             //decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;
-            bool priceInZone = low <= wma5Low || low <= wma10Low;
+            bool openBelow = data.Candle.Open < wma5Low;
+            bool priceInZone = low <= wma5Low || low <= wma10Low && close > wma10Low;
             //bool maRetest = allowWickDetection && low < wma5Low && close > wma10Low;
             //bool maRetest = allowWickDetection && low < wma5Low;
-            if (priceInZone) //|| maRetest
+            if (openBelow && priceInZone) //|| maRetest
                 return BbmaState.Reentry;
         }
 
@@ -337,9 +339,9 @@ public class SignalBbmaBase : SignalCreateBase
         }
 
         decimal high = data.Candle.High;
+        decimal close = data.Candle.Close;
         if (allowWickDetection)
         {
-            decimal close = data.Candle.Close;
             decimal open = data.Candle.Open;
 
             // Extreme (Type B): wick rejection of BB.Upper
@@ -357,10 +359,12 @@ public class SignalBbmaBase : SignalCreateBase
         //   MA Retest: wick spiked above WMA5(high), close recovered below WMA10(high)
         //if (wma5High < wma10High)
         {
-            bool priceInZone = high >= wma5High || high >= wma10High;
+            bool openAbove = data.Candle.Open > wma5High;
+            bool priceInZone = (high >= wma5High || high >= wma10High) && close < wma10High;
+            //bool priceInZone = high.IsBetween(wma5High, wma10High);
             //bool maRetest = allowWickDetection && high > wma5High && close < wma10High;
             //bool maRetest = allowWickDetection && high > wma5High;
-            if (priceInZone) //|| maRetest
+            if (openAbove && priceInZone) //|| maRetest
                 return BbmaState.Reentry;
         }
 

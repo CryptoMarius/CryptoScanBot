@@ -6,13 +6,13 @@ using CryptoScanner.Core.Trend;
 namespace CryptoScanner.Core.Signal.Trend;
 
 /// <summary>
-/// Fires a Short signal on a bearish BOS (Break of Structure) or bearish CHoCH (Change of Character).
+/// Fires a Short signal on a bearish CHoCH (Change of Character): a Lower Low that breaks
+/// the previous bullish structure, switching the BOS/CHoCH trend to Bearish.
 ///
-/// CHoCH Short: a Lower Low in a bullish trend → trend reversal to bearish.
-/// BOS Short:   a Lower Low in an already bearish trend → continuation confirmed.
+/// Uses TrendBos which reacts faster than Dow Theory (single structural break is sufficient).
 ///
-/// Uses TrendBos (BOS/CHoCH algorithm), which reacts faster than Dow Theory
-/// at the cost of potentially more reversals.
+/// Startup safety: the PrevTime + Duration == Time check ensures the transition was detected
+/// on consecutive candles, preventing signals from firing on historical data at startup.
 /// </summary>
 public class SignalBosChochShort : SignalCreateBase
 {
@@ -24,25 +24,21 @@ public class SignalBosChochShort : SignalCreateBase
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 
         CryptoTrendData data = SymbolInterval.TrendBos;
-
-        // Only fire on a CHoCH (reversal to bearish), not on a BOS (continuation)
-        if (data.LastStructureEvent != CryptoStructureEvent.ChoCh
-            || data.LastStructureEventTime == null
-            || data.Trend != CryptoTrendIndicator.Bearish)
+        if (data.PrevTime != null && data.PrevTime > 0 &&
+            data.PrevTime + Interval.Duration == data.Time &&
+            data.PrevTrend == CryptoTrendIndicator.Bullish && data.Trend == CryptoTrendIndicator.Bearish)
         {
-            ExtraText = "no bearish CHoCH";
-            return false;
+            // Prevent duplicate signals: only fire once per trend change.
+            // LastTrend is reset when the opposite signal fires (SignalBosChochLong).
+            if (data.LastTrend != CryptoTrendIndicator.Bearish)
+            {
+                ExtraText = "CHoCH Short";
+                data.LastTrend = data.Trend;
+                return true;
+            }
         }
 
-        // Don't fire again on the same structural event
-        if (data.LastFiredStructureEventTime == data.LastStructureEventTime)
-        {
-            ExtraText = "already fired for this event";
-            return false;
-        }
-
-        data.LastFiredStructureEventTime = data.LastStructureEventTime;
-        ExtraText = "CHoCH Short (reversal)";
-        return true;
+        ExtraText = "no CHoCH";
+        return false;
     }
 }

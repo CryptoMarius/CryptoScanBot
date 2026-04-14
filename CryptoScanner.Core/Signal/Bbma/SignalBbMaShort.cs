@@ -59,10 +59,8 @@ public class SignalBbmaShort : SignalBbmaBase
         if (current.Candle.Close < bbLowerCurrent)
             return false;
 
-        // Use LTF candle price against HTF MA levels: more real-time than checking the HTF candle's own wick,
-        // which can be hours stale on higher intervals (e.g. 4h/1d).
         // Reentry after csm, wick should pierce through one of the wma's
-        if (!(ltfCandle.Candle.Close > wma5High || ltfCandle.Candle.Close > wma10High)) // Was high, replaced with Close
+        if (!(current.Candle.High >= wma5High || current.Candle.High >= wma10High)) // Was high, replaced with Close
             return false;
 
 

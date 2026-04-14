@@ -6,13 +6,13 @@ using CryptoScanner.Core.Trend;
 namespace CryptoScanner.Core.Signal.Trend;
 
 /// <summary>
-/// Fires a Long signal on a bullish BOS (Break of Structure) or bullish CHoCH (Change of Character).
+/// Fires a Long signal on a bullish CHoCH (Change of Character): a Higher High that breaks
+/// the previous bearish structure, switching the BOS/CHoCH trend to Bullish.
 ///
-/// CHoCH Long: a Higher High in a bearish trend → trend reversal to bullish.
-/// BOS Long:   a Higher High in an already bullish trend → continuation confirmed.
+/// Uses TrendBos which reacts faster than Dow Theory (single structural break is sufficient).
 ///
-/// Uses TrendBos (BOS/CHoCH algorithm), which reacts faster than Dow Theory
-/// at the cost of potentially more reversals.
+/// Startup safety: the PrevTime + Duration == Time check ensures the transition was detected
+/// on consecutive candles, preventing signals from firing on historical data at startup.
 /// </summary>
 public class SignalBosChochLong : SignalCreateBase
 {
@@ -24,25 +24,21 @@ public class SignalBosChochLong : SignalCreateBase
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 
         CryptoTrendData data = SymbolInterval.TrendBos;
-
-        // Only fire on a CHoCH (reversal to bullish), not on a BOS (continuation)
-        if (data.LastStructureEvent != CryptoStructureEvent.ChoCh
-            || data.LastStructureEventTime == null
-            || data.Trend != CryptoTrendIndicator.Bullish)
+        if (data.PrevTime != null && data.PrevTime > 0 &&
+            data.PrevTime + Interval.Duration == data.Time &&
+            data.PrevTrend == CryptoTrendIndicator.Bearish && data.Trend == CryptoTrendIndicator.Bullish)
         {
-            ExtraText = "no bullish CHoCH";
-            return false;
+            // Prevent duplicate signals: only fire once per trend change.
+            // LastTrend is reset when the opposite signal fires (SignalBosChochShort).
+            if (data.LastTrend != CryptoTrendIndicator.Bullish)
+            {
+                ExtraText = "CHoCH Long";
+                data.LastTrend = data.Trend;
+                return true;
+            }
         }
 
-        // Don't fire again on the same structural event
-        if (data.LastFiredStructureEventTime == data.LastStructureEventTime)
-        {
-            ExtraText = "already fired for this event";
-            return false;
-        }
-
-        data.LastFiredStructureEventTime = data.LastStructureEventTime;
-        ExtraText = "CHoCH Long (reversal)";
-        return true;
+        ExtraText = "no CHoCH";
+        return false;
     }
 }

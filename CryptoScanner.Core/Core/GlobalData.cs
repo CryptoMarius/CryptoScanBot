@@ -778,12 +778,13 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.StobbMulti, (Settings.Signal.Stobb, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Now));
-        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Now));
+        StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
     }
 }

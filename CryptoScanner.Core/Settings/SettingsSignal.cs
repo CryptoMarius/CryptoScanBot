@@ -52,6 +52,9 @@ public class SettingsSignal
     // Nadaraya Watson Envelope
     public SettingsSignalStrategyNwe Nwe = new();
 
+    // BBMA (Oma Ally)
+    public SettingsSignalStrategyBbma Bbma = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

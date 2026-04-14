@@ -20,6 +20,8 @@ public partial class StrategyTabViewModel : ObservableObject
     private StrategyFvgTabViewModel _strategyFvgTabViewModel;
     [ObservableProperty]
     private StrategyNweTabViewModel _strategyNweTabViewModel;
+    [ObservableProperty]
+    private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
 
 
     public StrategyTabViewModel()
@@ -31,6 +33,7 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategyDlzTabViewModel = new();
         _strategyFvgTabViewModel = new();
         _strategyNweTabViewModel = new();
+        _strategyBbmaTabViewModel = new();
     }
 
     internal void LoadConfig(SettingsSignal settings)
@@ -42,6 +45,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyDlzTabViewModel.LoadConfig("Dlz", settings.ZonesDlz);
         StrategyFvgTabViewModel.LoadConfig("Fvg", settings.ZonesFvg);
         StrategyNweTabViewModel.LoadConfig("Nwe", settings.Nwe);
+        StrategyBbmaTabViewModel.LoadConfig("BBMA", settings.Bbma);
     }
 
     internal void SaveConfig(SettingsSignal settings)
@@ -53,5 +57,6 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyDlzTabViewModel.SaveConfig(settings.ZonesDlz);
         StrategyFvgTabViewModel.SaveConfig(settings.ZonesFvg);
         StrategyNweTabViewModel.SaveConfig(settings.Nwe);
+        StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
     }
 }
