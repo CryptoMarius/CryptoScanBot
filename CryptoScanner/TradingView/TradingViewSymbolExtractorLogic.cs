@@ -234,8 +234,8 @@ public class TradingViewSymbolWebSocket(string tickerName)
                 //GlobalData.AddTextToLogTab($"TradingView {TickerName} receive: count={result.Count} closeStatus={result.CloseStatus} state={ClientWebSocket.State}");
             }
 
-            if (ClientWebSocket.State == WebSocketState.CloseReceived)
-                GlobalData.AddTextToLogTab($"TradingView {TickerName} websocket closed by server: {result.CloseStatusDescription}");
+            //if (ClientWebSocket.State == WebSocketState.CloseReceived)
+            //    GlobalData.AddTextToLogTab($"TradingView {TickerName} websocket closed by server: {result.CloseStatusDescription}");
 
             return ClientWebSocket.State != WebSocketState.CloseReceived;
         }
@@ -243,8 +243,8 @@ public class TradingViewSymbolWebSocket(string tickerName)
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
             //ScannerLog.Logger.Error(e, "");
-            GlobalData.AddTextToLogTab($"TradingView {TickerName} receive exception: {e.Message}");
-            ScannerLog.Logger.Error(e, "");
+            //GlobalData.AddTextToLogTab($"TradingView {TickerName} receive exception: {e.Message}");
+            //ScannerLog.Logger.Error(e, "");
             return false;
         }
     }

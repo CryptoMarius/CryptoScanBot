@@ -84,7 +84,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             List<CryptoCandle>? History = CollectCandles(symbol, interval, candleOpenTime, out string response, calculateCandles);
             if (History == null)
             {
-                GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
+                //GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
                 TryAdd(interval.IntervalPeriod, null);
                 return false;
             }

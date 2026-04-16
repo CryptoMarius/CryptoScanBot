@@ -37,7 +37,7 @@ public class SignalBbmaLong : SignalBbmaBase
     /// <param name="interval">The HTF interval (used for walking back through candles)</param>
     /// <param name="current">The HTF candle (provides indicator levels: WMA5Low, WMA10Low)</param>
     /// <param name="ltfCandle">The current LTF candle (provides real-time price for the wick check)</param>
-    private bool CheckHtf(CryptoInterval interval, MyData current, MyData ltfCandle)
+    private bool CheckHtf(CryptoInterval interval, MyData current)
     {
         decimal ema50 = (decimal)current.CandleData.Ema50!.Value;
         decimal sma20 = (decimal)current.CandleData.Sma20!.Value;
@@ -45,18 +45,18 @@ public class SignalBbmaLong : SignalBbmaBase
         decimal wma10Low = (decimal)current.CandleData.Wma10Low!.Value;
 
         // BB is expanding, not a ranging chart https://youtu.be/tOQb6RRhbLA?t=102
-        if (wma10Low < sma20 || wma10Low < ema50)
-        {
-            ExtraText = $"HTF Wma10Low not above mid-BB - ranging?";
-            GlobalData.AddTextToLogTab($"BBMA {Symbol.Name} {interval.Name} {SignalSide} {ExtraText}");
-            return false;
-        }
+        //if (wma10Low < sma20 || wma10Low < ema50)
+        //{
+        //    ExtraText = $"HTF Wma10Low not above mid-BB - ranging?";
+        //    ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {interval.Name} {SignalSide} {ExtraText}");
+        //    return false;
+        //}
 
         // If the current HTF candle itself closes above the upper BB, it IS a new CSM — not a re-entry.
         // Without this check the CSM history loop finds an older CSM and incorrectly fires a re-entry
         // while the HTF is actually mid-momentum (breaking up through the BB right now).
-        decimal bbUpperCurrent = (decimal)current.CandleData.BollingerBandsUpperBand!.Value;
-        if (current.Candle.Close > bbUpperCurrent)
+        decimal bbUpper = (decimal)current.CandleData.BollingerBandsUpperBand!.Value;
+        if (current.Candle.Close > bbUpper)
             return false;
 
         // Reentry after csm, wick should pierce through one of the wma's
@@ -64,15 +64,30 @@ public class SignalBbmaLong : SignalBbmaBase
             return false;
 
 
-        // Did we have a CSM x candles back
+        // Did we have a CSM (close above upper BB) within the last 30 HTF bars
+        // Pine alternative (extComboBuy): looks for EXT/MHV on the lower band instead —
+        // *    bool hadExtOrMhv = false;
+        // *    for (int i = 0; i < 6; i++) // Pine lookbackSig = 6
+        // *    {
+        // *        if (!GetPrevCandle(interval, prev, out prev))
+        //              return false;
+        // *        decimal bbLower = (decimal)prev!.CandleData.BollingerBandsLowerBand!.Value;
+        // *        if (prev.Candle.Low < bbLower && prev.Candle.Close > bbLower)
+        //          {
+        //              hadExtOrMhv = true;
+        //              break;
+        //          }
+        // *    }
+        // *    if (!hadExtOrMhv)
+        //          return false;
         bool hadCsm = false;
         MyData? prev = current;
-        for (int i = 0; i < 30 && i >= 0; i++)
+        for (int i = 0; i < 30; i++)
         {
             if (!GetPrevCandle(interval, prev, out prev))
                 return false;
 
-            decimal bbUpper = (decimal)prev!.CandleData.BollingerBandsUpperBand!.Value;
+            bbUpper = (decimal)prev!.CandleData.BollingerBandsUpperBand!.Value;
             if (prev.Candle.Close > bbUpper)
             {
                 hadCsm = true;
@@ -144,12 +159,14 @@ public class SignalBbmaLong : SignalBbmaBase
         }
 
         MyData? candleLtf = CandleLast;
+        BbmaState stateLtf = BbmaStateLong(candleLtf);
+        BbmaState stateMtf = BbmaState.None;
+        BbmaState stateHtf = BbmaState.None;
 
         // LTF must be in Reentry state - entry
-        BbmaState stateLtfNow = BbmaStateLong(candleLtf);
-        if (stateLtfNow != BbmaState.Reentry)
+        if (stateLtf != BbmaState.Reentry)
         {
-            ExtraText = $"LTF not in Reentry ({TfStateCode(stateLtfNow)})";
+            ExtraText = $"LTF not in Reentry ({TfStateCode(stateLtf)})";
             return false;
         }
 
@@ -158,10 +175,6 @@ public class SignalBbmaLong : SignalBbmaBase
             return false;
 
         // Walk back through LTF candles to find the preceding extreme (or otherwise)
-        BbmaState stateLtf = BbmaState.Reentry;
-        BbmaState stateMtf = BbmaState.None;
-        BbmaState stateHtf = BbmaState.None;
-
         for (int i = 0; i < MaxWaitCandles; i++)
         {
             if (!GetPrevCandle(candleLtf, out candleLtf))
@@ -170,33 +183,34 @@ public class SignalBbmaLong : SignalBbmaBase
                 return false;
             }
 
-
-            stateLtf = BbmaStateLong(candleLtf!);
-
             // Not the band-crossing moment yet (e.g. None) — keep walking back
+            stateLtf = BbmaStateLong(candleLtf!);
             if (stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme
-                || stateLtf == BbmaState.Mlv) //|| stateLtf == BbmaState.Csm 
+                || stateLtf == BbmaState.Mlv | stateLtf == BbmaState.Csm)
                 break;
         }
         string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
 
         if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme 
-            || stateLtf == BbmaState.Mlv)) //stateLtf == BbmaState.Csm
+            || stateLtf == BbmaState.Mlv || stateLtf == BbmaState.Csm)) 
         {
             ExtraText = $"LTF unexpected state";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
 
         // --------------------------
         // Middle timeframe (MTF)
+        // Use the current reentry candle time (CandleLast), not the extreme candle time (candleLtf).
+        // When the 5m reentry candle at e.g. 17:55 closes at 18:00, the 15m candle 17:45→18:00
+        // and the 1h candle 17:00→18:00 also close simultaneously — those are the correct MTF/HTF candles.
         var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
-            Symbol, Interval, candleLtf!.Candle.OpenTime, mtf);
+            Symbol, Interval, CandleLast.Candle.OpenTime, mtf);
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
             ExtraText = $"no data for MTF ({resultMtf.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
         stateMtf = BbmaStateLong(resultMtf.candle);
@@ -207,22 +221,22 @@ public class SignalBbmaLong : SignalBbmaBase
         // --------------------------
         // Highest timeframe (HTF)
         var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
-            Symbol, Interval, candleLtf.Candle.OpenTime, htf);
+            Symbol, Interval, CandleLast.Candle.OpenTime, htf);
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {
             ExtraText = $"no data for HTF";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
         stateHtf = BbmaStateLong(resultHtf.candle); // just to show something
         code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
 
 
-        // Extreme on the MTF?
-        if (stateMtf != BbmaState.Extreme)
+        // MTF must have a relevant BBMA state (Extreme, MagicExtreme or MHV)
+        if (stateMtf == BbmaState.None || stateMtf == BbmaState.Reentry)
         {
-            ExtraText = $"MTF not an extreme";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            ExtraText = $"MTF state not valid ({TfStateCode(stateMtf)})";
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -239,16 +253,16 @@ public class SignalBbmaLong : SignalBbmaBase
         if (ema50Htf >= midBbHtf || wma05LowHtf >= midBbHtf)
         {
             ExtraText = $"HTF ema50 not below mid-BB - bearish bias";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
 
         stateHtf = BbmaState.Reentry; // Assume..
-        if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, CandleLast))
+        if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle))
         {
             ExtraText = $"HTF not in reentry state";
-            GlobalData.AddTextToLogTab($"BBMA2 {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -268,6 +282,11 @@ public class SignalBbmaLong : SignalBbmaBase
         if (code == "RRE" || code == "REM" || code == "REE" || code == "RMEE")
         {
             ExtraText = $"{code} {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
+
+            // Debug to see if the right candles are selected
+            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {code} {SignalSide} HTF {resultHtf.candle.Candle.OpenTime.ToLocalTime()} {resultHtf.candle.Candle.Close} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {code} {SignalSide} MTF {resultMtf.candle.Candle.OpenTime.ToLocalTime()} {resultMtf.candle.Candle.Close} {ExtraText}");
+            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {Interval.Name} {code} {SignalSide} LTF {CandleLast.Candle.OpenTime.ToLocalTime()} {CandleLast.Candle.Close} {ExtraText}");
             return true;
         }
 

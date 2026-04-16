@@ -11,8 +11,9 @@ public class SignalBbmaBase : SignalCreateBase
         None,
         Extreme,
         MagicExtreme,
-        Mlv,
-        //Csm,
+        Mlv, // Mhv
+        Csm,
+        //CSD
         Reentry
     }
 
@@ -234,16 +235,16 @@ public class SignalBbmaBase : SignalCreateBase
     //    }
     //    else if (isExtremeLow)
     //    {
-    //        decimal lowerBand = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
+    //        decimal bbLower = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
 
     //        // KRITISCH: Als de huidige candle BUITEN de BB sluit, is het Momentum (CSM),
     //        // en dat heft de MLV onmiddellijk op!
-    //        if (candle.Candle.Close < lowerBand)
+    //        if (candle.Candle.Close < bbLower)
     //            return BbmaStateX.None;
 
     //        // Detectie: De prijs probeert de uiterste BB te testen maar faalt (Close blijft binnen)
     //        // We kijken of de wick (High/Low) dichtbij de BB komt voor de 'rejection' look
-    //        bool isLowerMLV = candle.Candle.Low <= lowerBand * 1.002m && candle.Candle.Close > lowerBand;
+    //        bool isLowerMLV = candle.Candle.Low <= bbLower * 1.002m && candle.Candle.Close > bbLower;
     //        return (isLowerMLV) ? BbmaStateX.ValidMLV : BbmaStateX.FoundTPW;
     //    }
 
@@ -254,78 +255,77 @@ public class SignalBbmaBase : SignalCreateBase
 
     /// <summary>
     /// Classifies the BBMA state of a candle for Long setups (uses WMA5/10 on lows).
-    /// Priority: MagicExtreme → Extreme(TypeA) → Extreme(TypeB) → Extreme(Advance) → Reentry → Mlv → None
+    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
     ///
-    /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
-    /// wick levels are not yet final, but MA positions are reliable.
+    /// Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection —
+    /// low pierced the band, close recovered inside.
+    /// MHV (Pine-aligned): same wick condition as Extreme, but MA5 is inside the band —
+    /// a failed second breakout attempt after a previous Extreme.
     /// </summary>
-    public static BbmaState BbmaStateLong(MyData data, bool allowWickDetection = true)
+    public static BbmaState BbmaStateLong(MyData data)
     {
-        decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
-        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
-        decimal lowerBand = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
-
-        if (wma5Low < lowerBand)
-        {
-            // MagicExtreme (EE): both MAs below BB.Lower
-            if (wma10Low < lowerBand)
-                return BbmaState.MagicExtreme;
-
-            // Extreme (Type A): WMA5(low) below BB.Lower
-            return BbmaState.Extreme;
-        }
-
-
+        decimal open = data.Candle.Open;
         decimal low = data.Candle.Low;
         decimal close = data.Candle.Close;
-        if (allowWickDetection)
+        decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
+        decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
+        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
+        decimal middleBand = (decimal)data.CandleData!.Sma20!.Value;
+        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
+
+        if (wma5Low < bbLower)
         {
-            decimal open = data.Candle.Open;
+            // MagicExtreme (EE): both MAs below BB.Lower
+            if (wma10Low < bbLower)
+                return BbmaState.MagicExtreme;
 
-            // Extreme (Type B): wick rejection of BB.Lower
-            if (low < lowerBand && close > lowerBand && open > lowerBand)
-                return BbmaState.Extreme;
-
-            // Extreme (Advance): wick rejection of EMA50
-            decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
-            if (low < ema50 && close > ema50 && open > ema50)
+            // Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection
+            if (low < bbLower && close > bbLower)
                 return BbmaState.Extreme;
         }
 
-        // Reentry: bullish CSD active + price reached the 510 buy zone
-        //   Standard : close within the zone — between WMA10(low) and WMA5(low)
-        //   MA Retest: wick dipped below WMA5(low), close recovered above WMA10(low)
-        //if (wma5High > wma10High)
-        {
-            //decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
-            //decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;
-            bool openBelow = data.Candle.Open < wma5Low;
-            bool priceInZone = low <= wma5Low || low <= wma10Low && close > wma10Low;
-            //bool maRetest = allowWickDetection && low < wma5Low && close > wma10Low;
-            //bool maRetest = allowWickDetection && low < wma5Low;
-            if (openBelow && priceInZone) //|| maRetest
-                return BbmaState.Reentry;
-        }
+        // Extreme type B wick rejection of upper bb
+        if (low < bbLower && close > bbLower)
+            return BbmaState.Extreme;
 
-        // TODO: could be correct, but imho more an assumption?
-        // Mlv (Market Loss Volume): WMA5(low) above BB.Lower but below WMA10(low) — pre-CSD
-        if (wma5Low >= lowerBand && wma5Low < wma10Low)
+        // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
+        if (low < ema50 && close > ema50 && open > ema50)
+            return BbmaState.Extreme;
+
+        // MHV (Market Has No Volume): wick pierced lower band, close recovered, MA5 still inside band
+        // Priority above Reentry per Pine: EXT > MHV > RE
+        if (low < bbLower && close > bbLower)
             return BbmaState.Mlv;
+
+        if (open > bbLower && close < bbLower)
+            return BbmaState.Csm;
+
+        // Reentry: local uptrend, close above mid, low touched the MA5/10 zone
+        var upTrend = close > ema50;
+        if (upTrend && close >= middleBand && low <= Math.Max(wma5Low, wma10Low))
+            return BbmaState.Reentry;
 
         return BbmaState.None;
     }
 
     /// <summary>
     /// Classifies the BBMA state of a candle for Short setups (uses WMA5/10 on highs).
-    /// Priority: MagicExtreme → Extreme(TypeA) → Extreme(TypeB) → Extreme(Advance) → Reentry → Mlv → None
+    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
     ///
-    /// allowWickDetection: disable for TF2/TF3 because their candles are still forming —
-    /// wick levels are not yet final, but MA positions are reliable.
+    /// Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection —
+    /// high pierced the band, close recovered inside.
+    /// MHV (Pine-aligned): same wick condition as Extreme, but MA5 is inside the band —
+    /// a failed second breakout attempt after a previous Extreme.
     /// </summary>
-    public static BbmaState BbmaStateShort(MyData data, bool allowWickDetection = true)
+    public static BbmaState BbmaStateShort(MyData data)
     {
+        decimal open = data.Candle.Open;
+        decimal high = data.Candle.High;
+        decimal close = data.Candle.Close;
+        decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
         decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
         decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;
+        decimal middleBand = (decimal)data.CandleData!.Sma20!.Value;
         decimal bbUpper = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
 
         if (wma5High > bbUpper)
@@ -334,43 +334,31 @@ public class SignalBbmaBase : SignalCreateBase
             if (wma10High > bbUpper)
                 return BbmaState.MagicExtreme;
 
-            // Extreme (Type A): WMA5(high) above BB.Upper
+            // Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection
+            if (high > bbUpper && close < bbUpper)
+                return BbmaState.Extreme;
+        }
+
+        // Extreme type B wick rejection of upper bb
+        if (high > bbUpper && close < bbUpper)
             return BbmaState.Extreme;
-        }
 
-        decimal high = data.Candle.High;
-        decimal close = data.Candle.Close;
-        if (allowWickDetection)
-        {
-            decimal open = data.Candle.Open;
+        // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
+        if (high > ema50 && close < ema50 && open < ema50)
+            return BbmaState.Extreme;
 
-            // Extreme (Type B): wick rejection of BB.Upper
-            if (high > bbUpper && close < bbUpper && open < bbUpper)
-                return BbmaState.Extreme;
-
-            // Extreme (Advance): wick rejection of EMA50
-            decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
-            if (high > ema50 && close < ema50 && open < ema50)
-                return BbmaState.Extreme;
-        }
-
-        // Reentry: bearish CSD active + price reached the 510 sell zone
-        //   Standard : close within the zone — between WMA5(high) and WMA10(high)
-        //   MA Retest: wick spiked above WMA5(high), close recovered below WMA10(high)
-        //if (wma5High < wma10High)
-        {
-            bool openAbove = data.Candle.Open > wma5High;
-            bool priceInZone = (high >= wma5High || high >= wma10High) && close < wma10High;
-            //bool priceInZone = high.IsBetween(wma5High, wma10High);
-            //bool maRetest = allowWickDetection && high > wma5High && close < wma10High;
-            //bool maRetest = allowWickDetection && high > wma5High;
-            if (openAbove && priceInZone) //|| maRetest
-                return BbmaState.Reentry;
-        }
-
-        // Mlv (MHV phase): WMA5(high) below BB.Upper but above WMA10(high) — pre-CSD
-        if (wma5High <= bbUpper && wma5High > wma10High)
+        // MHV (Market Has No Volume): wick pierced upper band, close recovered, MA5 still inside band
+        // Priority above Reentry per Pine: EXT > MHV > RE
+        if (high > bbUpper && close < bbUpper)
             return BbmaState.Mlv;
+
+        if (open < bbUpper && close > bbUpper)
+            return BbmaState.Csm;
+
+        // Reentry: local downtrend, close below mid, high touched the MA5/10 zone
+        var downTrend = close < ema50;
+        if (downTrend && close <= middleBand && high >= Math.Min(wma5High, wma10High))
+            return BbmaState.Reentry;
 
         return BbmaState.None;
     }

@@ -413,7 +413,7 @@ public static class CandleTools
                 if (synchronizedTime > fetchFrom[interval.IntervalPeriod])
                     fetchFrom[interval.IntervalPeriod] = synchronizedTime;
             }
-            ScannerLog.Logger.Debug($"DEBUG {symbol.Name} {interval.Name} LastCandleSynchronized={symbolInterval.LastCandleSynchronized?.ToDateTime().ToLocalTime()} NEW={fetchFrom[interval.IntervalPeriod].ToDateTime().ToLocalTime()}");
+            //ScannerLog.Logger.Debug($"DEBUG {symbol.Name} {interval.Name} LastCandleSynchronized={symbolInterval.LastCandleSynchronized?.ToDateTime().ToLocalTime()} NEW={fetchFrom[interval.IntervalPeriod].ToDateTime().ToLocalTime()}");
             symbolInterval.LastCandleSynchronized = fetchFrom[interval.IntervalPeriod];
         }
     }
