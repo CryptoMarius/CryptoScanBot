@@ -44,6 +44,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showPoints = false;
 
     [ObservableProperty]
+    private bool _showCandles = false;
+    
+    [ObservableProperty]
     private bool _transparent = false;
 
     public void LoadFromSession(ZoneSession session)
@@ -61,6 +64,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowSignals = session.ShowSignals;
         ShowPositions = session.ShowPositions;
         ShowPoints = session.ShowPoints;
+        ShowCandles = session.ShowCandles;
 
         // misc
         Transparent = session.Transparent;
@@ -81,6 +85,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowSignals = ShowSignals;
         session.ShowPositions = ShowPositions;
         session.ShowPoints = ShowPoints;
+        session.ShowCandles = ShowCandles;
 
         // misc
         session.Transparent = Transparent;

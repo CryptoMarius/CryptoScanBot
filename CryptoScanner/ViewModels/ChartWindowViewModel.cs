@@ -672,8 +672,8 @@ public partial class ChartWindowViewModel : ObservableObject
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
         group = "candles";
-        if (Toggle(model, group, true, Session.IntervalName + lastCandleTime.Minutes.ToString()))
-            lastCandleTime = Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate);
+        if (Toggle(model, group, Session.ShowCandles, Session.IntervalName + lastCandleTime.Minutes.ToString()))
+            lastCandleTime = Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Draw pivots
         group = "pivots";

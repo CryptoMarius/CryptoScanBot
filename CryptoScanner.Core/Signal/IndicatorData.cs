@@ -222,14 +222,15 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
-#if DEBUG
         // https://dotnet.stockindicators.dev/utilities/#content
+        // Weighted Moving Average is the linear weighted average of price over a lookback window.
+        // This also called Linear Weighted Moving Average(LWMA).
+        // https://dotnet.stockindicators.dev/indicators/Wma/#content
         List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
-#endif
 
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
@@ -346,14 +347,12 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
-#if DEBUG
-                // BbMaGrok
                 candleData.Ema50 = emaList50[index].Ema;
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
-#endif
+
 #if DEBUG
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
                 candleData.KeltnerCenterLine = keltnerList[index].Centerline;

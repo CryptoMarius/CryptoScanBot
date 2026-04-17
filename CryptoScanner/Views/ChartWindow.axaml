@@ -98,7 +98,8 @@
                         <!--
                         <CheckBox IsChecked="{Binding DisplayOptions.Transparent, Mode=TwoWay}" Content="Transparent" FontSize="12"/>
                         -->
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowCandles, Mode=TwoWay}" Content="Candles" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowPoints, Mode=TwoWay}" Content="Pivot points" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSignals, Mode=TwoWay}" Content="Signals" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>

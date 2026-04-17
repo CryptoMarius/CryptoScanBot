@@ -239,7 +239,7 @@ public class TradingViewSymbolWebSocket(string tickerName)
 
             return ClientWebSocket.State != WebSocketState.CloseReceived;
         }
-        catch (Exception e)
+        catch (Exception )
         {
             //GlobalData.AddTextToLogTab($@"Exception {e.Message}");
             //ScannerLog.Logger.Error(e, "");

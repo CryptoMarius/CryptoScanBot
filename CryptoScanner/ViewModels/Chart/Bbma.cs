@@ -12,7 +12,8 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Bbma
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+        CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesWma5High = new LineSeries
         {
@@ -86,7 +87,7 @@ public class Bbma
         var seriesExtremeAHigh = new ScatterSeries
         {
             Title = "extreme-A high",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -94,7 +95,7 @@ public class Bbma
         var seriesMagicExtremeHigh = new ScatterSeries
         {
             Title = "magic extreme high",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.OrangeRed,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -102,7 +103,7 @@ public class Bbma
         var seriesExtremeALow = new ScatterSeries
         {
             Title = "extreme-A low",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -110,7 +111,7 @@ public class Bbma
         var seriesMagicExtremeLow = new ScatterSeries
         {
             Title = "magic extreme low",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -119,7 +120,7 @@ public class Bbma
         var seriesBbmaExtreme = new ScatterSeries
         {
             Title = "extreme",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -127,17 +128,26 @@ public class Bbma
         var seriesBbmaMlv = new ScatterSeries
         {
             Title = "bbma mlv",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Cross,
+            Tag = group,
+        };
+        
+        var seriesBbmaCsm = new ScatterSeries
+        {
+            Title = "bbma csm",
+            MarkerSize = 3,
+            MarkerFill = OxyColors.White,
+            MarkerType = MarkerType.Square,
             Tag = group,
         };
         var seriesBbmaReentry = new ScatterSeries
         {
             Title = "bbma reentry",
-            MarkerSize = 4,
+            MarkerSize = 3,
             MarkerFill = OxyColors.Yellow,
-            MarkerType = MarkerType.Square,
+            MarkerType = MarkerType.Diamond,
             Tag = group,
         };
 
@@ -202,6 +212,7 @@ public class Bbma
         // ensuring TryGetCandle hits for every candle in the minDate..maxDate range.
         CryptoIndicatorDataList indicatorDataList = [];
         int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
+        // TODO: Indicators are still not always properly calculated, why???????????
         indicatorDataList.PrepareIndicators(symbol, interval, maxDate, count);
 
         foreach (var candle in candles)
@@ -218,7 +229,7 @@ public class Bbma
 
 
                         var band = newData.CandleData.BollingerBandsLowerBand!.Value;
-                        var state = SignalBbmaBase.BbmaStateLong(newData!);
+                        var state = SignalBbmaLong.BbmaStateLong(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
@@ -228,13 +239,17 @@ public class Bbma
                             case SignalBbmaBase.BbmaState.Mlv:
                                 seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
                                 break;
+                            case SignalBbmaBase.BbmaState.Csm:
+                                double close = (double)newData.Candle.Close;
+                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * close));
+                                break;
                             case SignalBbmaBase.BbmaState.Reentry:
                                 seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
                                 break;
                         }
 
                         band = newData.CandleData.BollingerBandsUpperBand!.Value;
-                        state = SignalBbmaBase.BbmaStateShort(newData!);
+                        state = SignalBbmaShort.BbmaStateShort(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
@@ -243,6 +258,10 @@ public class Bbma
                                 break;
                             case SignalBbmaBase.BbmaState.Mlv:
                                 seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                break;
+                            case SignalBbmaBase.BbmaState.Csm:
+                                double close = (double)newData.Candle.Close;
+                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * close));
                                 break;
                             case SignalBbmaBase.BbmaState.Reentry:
                                 seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
@@ -272,8 +291,9 @@ public class Bbma
 
         chart.Series.Add(seriesBbmaExtreme);
         chart.Series.Add(seriesBbmaMlv);
-        chart.Series.Add(seriesBbmaReentry);
-        
+        chart.Series.Add(seriesBbmaCsm);
+        chart.Series.Add(seriesBbmaReentry);        
+
 
         var seriesEma50 = new LineSeries
         {

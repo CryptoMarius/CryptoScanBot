@@ -49,9 +49,9 @@ public class ZoneSession
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
-    
 
     // options
+    public bool ShowCandles { get; set; } = true; // focus on other stuff then candles
     public bool ShowPoints { get; set; } = false; // Pivot points (debug)
     public bool ShowSignals { get; set; } = false; // Signals from the analyzer
     public bool ShowPositions { get; set; } = false; // Positions from the trader

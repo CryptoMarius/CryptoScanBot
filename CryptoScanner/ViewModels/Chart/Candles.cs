@@ -10,7 +10,8 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Candles
 {
 
-    public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate)
+    public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+        CandleTime minDate, CandleTime maxDate, string group)
     {
         CandleTime lastCandleTime = CandleTime.MinValue;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -27,7 +28,8 @@ public class Candles
             //The default format string for CandleStickSeries is "{0}\n{1}: {2}\nHigh: {3:0.###}\nLow: {4:0.###}\nOpen: {5:0.###}\nClose: {6:0.###}"
             //TrackerFormatString = "{0}\n {1}\n {2}\nOpen: {5:0.###}\nHigh: {3:0.###}\nLow: {4:0.###}\nClose: {6:0.###} {DateX}"
             //TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}\n{Description}"
-            TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}"
+            TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}",
+            Tag = group,
         };
 
         if (symbolInterval.CandleList.Count > 0)
