@@ -229,7 +229,7 @@ public class Bbma
 
 
                         var band = newData.CandleData.BollingerBandsLowerBand!.Value;
-                        var state = SignalBbmaLong.BbmaStateLong(newData!);
+                        var state = SignalBbmaLong.GetBbmaState(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
@@ -249,7 +249,7 @@ public class Bbma
                         }
 
                         band = newData.CandleData.BollingerBandsUpperBand!.Value;
-                        state = SignalBbmaShort.BbmaStateShort(newData!);
+                        state = SignalBbmaShort.GetBbmaState(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
