@@ -2,7 +2,10 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Bbma;
 
+// BbmaState enum lives in SignalBbmaBase; BbmaStateLong/Short are in the derived classes.
 using static CryptoScanner.Core.Signal.Bbma.SignalBbmaBase;
+using static CryptoScanner.Core.Signal.Bbma.SignalBbmaLong;
+using static CryptoScanner.Core.Signal.Bbma.SignalBbmaShort;
 
 namespace CryptoScanner.CoreTests.Signal.Bbma;
 
