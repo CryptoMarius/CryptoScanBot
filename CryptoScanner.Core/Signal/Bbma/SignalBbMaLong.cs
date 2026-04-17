@@ -31,6 +31,62 @@ public class SignalBbmaLong : SignalBbmaBase
     private const int MaxWaitCandles = 20;
 
     /// <summary>
+    /// Classifies the BBMA state of a candle for Long setups (uses WMA5/10 on lows).
+    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
+    ///
+    /// Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection —
+    /// low pierced the band, close recovered inside.
+    /// MHV (Pine-aligned): same wick condition as Extreme, but MA5 is inside the band —
+    /// a failed second breakout attempt after a previous Extreme.
+    /// </summary>
+    public static BbmaState BbmaStateLong(MyData data)
+    {
+        decimal open = data.Candle.Open;
+        decimal low = data.Candle.Low;
+        decimal close = data.Candle.Close;
+        decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
+        decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
+        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
+        decimal middleBand = (decimal)data.CandleData!.Sma20!.Value;
+        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
+
+        if (wma5Low < bbLower)
+        {
+            // MagicExtreme (EE): both MAs below BB.Lower
+            if (wma10Low < bbLower)
+                return BbmaState.MagicExtreme;
+
+            // Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection
+            if (low < bbLower && close > bbLower)
+                return BbmaState.Extreme;
+        }
+
+        // Extreme type B wick rejection of upper bb
+        if (low < bbLower && close > bbLower)
+            return BbmaState.Extreme;
+
+        // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
+        if (low < ema50 && close > ema50 && open > ema50)
+            return BbmaState.Extreme;
+
+        // MHV (Market Has No Volume): wick pierced lower band, close recovered, MA5 still inside band
+        // Priority above Reentry per Pine: EXT > MHV > RE
+        if (low < bbLower && close > bbLower)
+            return BbmaState.Mlv;
+
+        if (open > bbLower && close < bbLower)
+            return BbmaState.Csm;
+
+        // Reentry: local uptrend, close above mid, low touched the MA5/10 zone
+        var upTrend = close > ema50;
+        if (upTrend && close >= middleBand && low <= Math.Max(wma5Low, wma10Low) && close >= Math.Min(wma5Low, wma10Low))
+            return BbmaState.Reentry;
+
+        return BbmaState.None;
+    }
+
+
+    /// <summary>
     /// Exacte check op HTF voor Long Re-entry na CSM (Oma Ally BBMA)
     /// Gebruikt uitsluitend de reeds berekende data in candle.CandleData
     /// </summary>
@@ -60,10 +116,14 @@ public class SignalBbmaLong : SignalBbmaBase
             return false;
 
         // Reentry after csm, wick should pierce through one of the wma's
-        if (!(current.Candle.Low <= wma5Low || current.Candle.Low <= wma10Low))
-            return false;
+        //if (!(current.Candle.Low <= wma5Low || current.Candle.Low <= wma10Low))
+        //    return false;
+        //BbmaState stateHtf = BbmaStateLong(current);
+        //if (stateHtf != BbmaState.Reentry)
+        //    return false;
 
 
+        // Dit is de MHV / Reentry en dat is iets anders dan de CSM / Reentry
         // Did we have a CSM (close above upper BB) within the last 30 HTF bars
         // Pine alternative (extComboBuy): looks for EXT/MHV on the lower band instead —
         // *    bool hadExtOrMhv = false;
@@ -142,7 +202,7 @@ public class SignalBbmaLong : SignalBbmaBase
     /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
-        BbmaState state = BbmaStateShort(CandleLast);
+        BbmaState state = BbmaStateLong(CandleLast);
         return state == BbmaState.Extreme || state == BbmaState.MagicExtreme;
     }
 
@@ -191,8 +251,8 @@ public class SignalBbmaLong : SignalBbmaBase
         }
         string code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
 
-        if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme 
-            || stateLtf == BbmaState.Mlv || stateLtf == BbmaState.Csm)) 
+        if (!(stateLtf == BbmaState.Extreme || stateLtf == BbmaState.MagicExtreme
+            || stateLtf == BbmaState.Mlv || stateLtf == BbmaState.Csm))
         {
             ExtraText = $"LTF unexpected state";
             ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
@@ -233,10 +293,10 @@ public class SignalBbmaLong : SignalBbmaBase
 
 
         // MTF must have a relevant BBMA state (Extreme, MagicExtreme or MHV)
-        if (stateMtf == BbmaState.None || stateMtf == BbmaState.Reentry)
+        if (!(stateMtf == BbmaState.Extreme || stateMtf == BbmaState.MagicExtreme || stateMtf == BbmaState.Mlv))
         {
             ExtraText = $"MTF state not valid ({TfStateCode(stateMtf)})";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -258,10 +318,17 @@ public class SignalBbmaLong : SignalBbmaBase
         }
 
 
-        stateHtf = BbmaState.Reentry; // Assume..
+        stateHtf = BbmaStateLong(resultHtf.candle);
+        if (stateHtf != BbmaState.Reentry)
+        {
+            ExtraText = $"HTF not in Reentry ({TfStateCode(stateHtf)})";
+            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            return false;
+        }
+
         if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle))
         {
-            ExtraText = $"HTF not in reentry state";
+            ExtraText = $"HTF not in CSM/reentry state";
             ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }

@@ -125,39 +125,39 @@ public class SignalBbmaBase : SignalCreateBase
     }
 
 
-    // Is there a previous CSM
-    internal bool CheckCsmLong(CryptoInterval interval, MyData? candle, int lookback = 15)
-    {
-        for (int i = 0; i < lookback; i++)
-        {
-            if (!GetPrevCandle(interval, candle, out candle))
-                return false;
+    //// Is there a previous CSM
+    //internal bool CheckCsmLong(CryptoInterval interval, MyData? candle, int lookback = 15)
+    //{
+    //    for (int i = 0; i < lookback; i++)
+    //    {
+    //        if (!GetPrevCandle(interval, candle, out candle))
+    //            return false;
 
-            decimal band = (decimal)candle!.CandleData!.BollingerBandsUpperBand!.Value;
+    //        decimal band = (decimal)candle!.CandleData!.BollingerBandsUpperBand!.Value;
 
-            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
-            if (candle.Candle.Close > band && candle.Candle.Open < band)
-                return true;
-        }
-        return false;
-    }
+    //        // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
+    //        if (candle.Candle.Close > band && candle.Candle.Open < band)
+    //            return true;
+    //    }
+    //    return false;
+    //}
 
-    // Is there a previous CSM
-    internal bool CheckCsmShort(CryptoInterval interval, MyData? candle, int lookback = 15)
-    {
-        for (int i = 0; i < lookback; i++)
-        {
-            if (!GetPrevCandle(interval, candle, out candle))
-                return false;
+    //// Is there a previous CSM
+    //internal bool CheckCsmShort(CryptoInterval interval, MyData? candle, int lookback = 15)
+    //{
+    //    for (int i = 0; i < lookback; i++)
+    //    {
+    //        if (!GetPrevCandle(interval, candle, out candle))
+    //            return false;
 
-            decimal band = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
+    //        decimal band = (decimal)candle!.CandleData!.BollingerBandsLowerBand!.Value;
 
-            // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
-            if (candle.Candle.Close < band && candle.Candle.Open > band)
-                return true;
-        }
-        return false;
-    }
+    //        // Price still reaching BB.Lower → not a genuine MLV phase per PDF.
+    //        if (candle.Candle.Close < band && candle.Candle.Open > band)
+    //            return true;
+    //    }
+    //    return false;
+    //}
 
     // internal enum BbmaStateX { None, FoundExtreme, FoundTPW, ValidMLV }
     //// We use MLV for the abbreviation MHV internally
@@ -250,119 +250,5 @@ public class SignalBbmaBase : SignalCreateBase
 
     //    return BbmaStateX.None;
     //}
-
-
-
-    /// <summary>
-    /// Classifies the BBMA state of a candle for Long setups (uses WMA5/10 on lows).
-    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
-    ///
-    /// Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection —
-    /// low pierced the band, close recovered inside.
-    /// MHV (Pine-aligned): same wick condition as Extreme, but MA5 is inside the band —
-    /// a failed second breakout attempt after a previous Extreme.
-    /// </summary>
-    public static BbmaState BbmaStateLong(MyData data)
-    {
-        decimal open = data.Candle.Open;
-        decimal low = data.Candle.Low;
-        decimal close = data.Candle.Close;
-        decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
-        decimal wma5Low = (decimal)data.CandleData!.Wma05Low!.Value;
-        decimal wma10Low = (decimal)data.CandleData!.Wma10Low!.Value;
-        decimal middleBand = (decimal)data.CandleData!.Sma20!.Value;
-        decimal bbLower = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
-
-        if (wma5Low < bbLower)
-        {
-            // MagicExtreme (EE): both MAs below BB.Lower
-            if (wma10Low < bbLower)
-                return BbmaState.MagicExtreme;
-
-            // Extreme (Pine-aligned): MA5(low) below BB.Lower AND wick rejection
-            if (low < bbLower && close > bbLower)
-                return BbmaState.Extreme;
-        }
-
-        // Extreme type B wick rejection of upper bb
-        if (low < bbLower && close > bbLower)
-            return BbmaState.Extreme;
-
-        // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
-        if (low < ema50 && close > ema50 && open > ema50)
-            return BbmaState.Extreme;
-
-        // MHV (Market Has No Volume): wick pierced lower band, close recovered, MA5 still inside band
-        // Priority above Reentry per Pine: EXT > MHV > RE
-        if (low < bbLower && close > bbLower)
-            return BbmaState.Mlv;
-
-        if (open > bbLower && close < bbLower)
-            return BbmaState.Csm;
-
-        // Reentry: local uptrend, close above mid, low touched the MA5/10 zone
-        var upTrend = close > ema50;
-        if (upTrend && close >= middleBand && low <= Math.Max(wma5Low, wma10Low))
-            return BbmaState.Reentry;
-
-        return BbmaState.None;
-    }
-
-    /// <summary>
-    /// Classifies the BBMA state of a candle for Short setups (uses WMA5/10 on highs).
-    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
-    ///
-    /// Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection —
-    /// high pierced the band, close recovered inside.
-    /// MHV (Pine-aligned): same wick condition as Extreme, but MA5 is inside the band —
-    /// a failed second breakout attempt after a previous Extreme.
-    /// </summary>
-    public static BbmaState BbmaStateShort(MyData data)
-    {
-        decimal open = data.Candle.Open;
-        decimal high = data.Candle.High;
-        decimal close = data.Candle.Close;
-        decimal ema50 = (decimal)data.CandleData!.Ema50!.Value;
-        decimal wma5High = (decimal)data.CandleData!.Wma05High!.Value;
-        decimal wma10High = (decimal)data.CandleData!.Wma10High!.Value;
-        decimal middleBand = (decimal)data.CandleData!.Sma20!.Value;
-        decimal bbUpper = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
-
-        if (wma5High > bbUpper)
-        {
-            // MagicExtreme (EE): both MAs above BB.Upper
-            if (wma10High > bbUpper)
-                return BbmaState.MagicExtreme;
-
-            // Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection
-            if (high > bbUpper && close < bbUpper)
-                return BbmaState.Extreme;
-        }
-
-        // Extreme type B wick rejection of upper bb
-        if (high > bbUpper && close < bbUpper)
-            return BbmaState.Extreme;
-
-        // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
-        if (high > ema50 && close < ema50 && open < ema50)
-            return BbmaState.Extreme;
-
-        // MHV (Market Has No Volume): wick pierced upper band, close recovered, MA5 still inside band
-        // Priority above Reentry per Pine: EXT > MHV > RE
-        if (high > bbUpper && close < bbUpper)
-            return BbmaState.Mlv;
-
-        if (open < bbUpper && close > bbUpper)
-            return BbmaState.Csm;
-
-        // Reentry: local downtrend, close below mid, high touched the MA5/10 zone
-        var downTrend = close < ema50;
-        if (downTrend && close <= middleBand && high >= Math.Min(wma5High, wma10High))
-            return BbmaState.Reentry;
-
-        return BbmaState.None;
-    }
-
-
 
 }
