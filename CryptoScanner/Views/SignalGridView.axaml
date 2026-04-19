@@ -80,8 +80,17 @@
                 </DataGridTemplateColumn>
 
                 <!-- Text -->
-                <DataGridTextColumn Header="Text" Binding="{Binding EventText}" Width="150" MinWidth="90" 
-                                     SortMemberPath="EventText" IsVisible="False"/>
+                <DataGridTemplateColumn Header="Text" Width="150" MinWidth="90" SortMemberPath="EventText" IsVisible="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding EventText}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       ToolTip.Tip="{Binding EventText}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Signal Price -->
                 <DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" >
