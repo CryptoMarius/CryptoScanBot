@@ -29,7 +29,7 @@ public class SignalBbmaShort : SignalBbmaBase
 {
     /// <summary>
     /// Classifies the BBMA state of a candle for Short setups (uses WMA5/10 on highs).
-    /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
+    /// Priority: MagicExtreme → Extreme → MHV → Extreme(Advance) → Reentry → None
     ///
     /// Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection —
     /// high pierced the band, close recovered inside.
@@ -58,18 +58,13 @@ public class SignalBbmaShort : SignalBbmaBase
                 return BbmaState.Extreme;
         }
 
-        // Extreme type B wick rejection of upper bb
+        // MHV (Mlv): wick pierced upper band, close recovered
         if (high > bbUpper && close < bbUpper)
-            return BbmaState.Extreme;
+            return BbmaState.Mlv;
 
         // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
         if (high > ema50 && close < ema50 && open < ema50)
             return BbmaState.Extreme;
-
-        // MHV (Market Has No Volume): wick pierced upper band, close recovered, MA5 still inside band
-        // Priority above Reentry per Pine: EXT > MHV > RE
-        if (high > bbUpper && close < bbUpper)
-            return BbmaState.Mlv;
 
         if (open < bbUpper && close > bbUpper)
             return BbmaState.Csm;
@@ -141,14 +136,13 @@ public class SignalBbmaShort : SignalBbmaBase
                 csmIndex = i;
 
             // Track most recent MHV within the MHV lookback window.
-            // Mlv  = wick pierced upper BB, close recovered inside (pure MHV candle).
-            // MagicExtreme = both MAs above upper BB (valid extreme anchor).
-            // Extreme is intentionally excluded: it can originate from the EMA50 advance check
-            // (wick vs EMA50, not BB), which is not a genuine MHV signal on the HTF.
+            // Only Mlv qualifies: wick pierced upper BB, close recovered, MA5 still inside band.
+            // MagicExtreme and Extreme are intentionally excluded: they belong to the Extreme phase
+            // (first step in the BBMA cycle), not the MHV phase (third step / failed second attempt).
             if (i < 10 && mhvIndex < 0)
             {
                 BbmaState state = GetBbmaState(prev!);
-                if (state == BbmaState.Mlv || state == BbmaState.MagicExtreme)
+                if (state == BbmaState.Mlv)
                     mhvIndex = i;
             }
         }

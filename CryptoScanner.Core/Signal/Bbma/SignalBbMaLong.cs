@@ -58,18 +58,13 @@ public class SignalBbmaLong : SignalBbmaBase
                 return BbmaState.Extreme;
         }
 
-        // Extreme type B wick rejection of upper bb
+        // MHV (Mlv): wick pierced lower band, close recovered
         if (low < bbLower && close > bbLower)
-            return BbmaState.Extreme;
+            return BbmaState.Mlv;
 
         // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
         if (low < ema50 && close > ema50 && open > ema50)
             return BbmaState.Extreme;
-
-        // MHV (Market Has No Volume): wick pierced lower band, close recovered, MA5 still inside band
-        // Priority above Reentry per Pine: EXT > MHV > RE
-        if (low < bbLower && close > bbLower)
-            return BbmaState.Mlv;
 
         if (open > bbLower && close < bbLower)
             return BbmaState.Csm;
@@ -141,14 +136,13 @@ public class SignalBbmaLong : SignalBbmaBase
                 csmIndex = i;
 
             // Track most recent MHV within the MHV lookback window.
-            // Mlv  = wick pierced lower BB, close recovered inside (pure MHV candle).
-            // MagicExtreme = both MAs below lower BB (valid extreme anchor).
-            // Extreme is intentionally excluded: it can originate from the EMA50 advance check
-            // (wick vs EMA50, not BB), which is not a genuine MHV signal on the HTF.
+            // Only Mlv qualifies: wick pierced lower BB, close recovered, MA5 still inside band.
+            // MagicExtreme and Extreme are intentionally excluded: they belong to the Extreme phase
+            // (first step in the BBMA cycle), not the MHV phase (third step / failed second attempt).
             if (i < 10 && mhvIndex < 0)
             {
                 BbmaState state = GetBbmaState(prev!);
-                if (state == BbmaState.Mlv || state == BbmaState.MagicExtreme)
+                if (state == BbmaState.Mlv)
                     mhvIndex = i;
             }
         }
