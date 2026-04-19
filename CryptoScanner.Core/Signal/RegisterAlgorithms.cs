@@ -32,8 +32,8 @@ public static class RegisterAlgorithms
         {
             Name = "jump",
             Strategy = CryptoSignalStrategy.Jump,
-            AnalyzeLongType = typeof(SignalCandleJumpShort),
-            AnalyzeShortType = typeof(SignalCandleJumpLong),
+            AnalyzeLongType = typeof(SignalCandleJumpLong),
+            AnalyzeShortType = typeof(SignalCandleJumpShort),
         });
 
         //***************************************************

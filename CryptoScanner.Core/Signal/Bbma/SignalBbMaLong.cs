@@ -115,52 +115,83 @@ public class SignalBbmaLong : SignalBbmaBase
         //}
 
 
-        // ── Path 1: CSM/Reentry ──────────────────────────────────────────────────────
-        // Did we have a bullish CSM (open inside band, close above upper BB) within the last 20 HTF bars?
-        // SignalBbmaShort.GetBbmaState classifies exactly this condition as Csm (open < bbUpper && close > bbUpper).
+        // Walk back through HTF history in one pass, tracking the most recent CSM and MHV positions.
+        // Positions are expressed as bars-back-from-current (larger = further in the past).
+        //
+        // MHV/Reentry requires:
+        //   1. An MHV/EXT within the last 10 bars (failed second downside breakout attempt)
+        //   2. A prior bullish CSM further back, with at least MinGap bars between them
+        //      — that gap represents the TPW phase that must occur between CSM and MHV.
+        //      Without it the "MHV" is just noise immediately after the CSM breakout candle.
+        // CSM/Reentry requires: a bullish CSM within the last 20 bars (and no valid MHV setup).
+        const int MinGap = 3;
+        int csmIndex = -1; // bars back where the most recent bullish CSM was found
+        int mhvIndex = -1; // bars back where the most recent MHV/EXT was found
         MyData? prev = current;
+
         for (int i = 0; i < 20; i++)
         {
             if (!GetPrevCandle(interval, prev, out prev))
                 break;
 
-            // We cannot use this class's own GetBbmaState here because its Csm = bearish CSM (opposite direction).
-            if (SignalBbmaShort.GetBbmaState(prev!) == BbmaState.Csm)
-            {
-                htfSetup = "CSM";
-                return true;
-            }
+            // Track most recent bullish CSM.
+            // SignalBbmaShort.GetBbmaState classifies this as Csm (open < bbUpper && close > bbUpper).
+            // We cannot use this class's own GetBbmaState: its Csm = bearish CSM (opposite direction).
+            if (csmIndex < 0 && SignalBbmaShort.GetBbmaState(prev!) == BbmaState.Csm)
+                csmIndex = i;
 
-            // ── Path 2: MHV/Reentry (Pine extComboBuy) ───────────────────────────────────
-            // Did we have an EXT or MHV candle (wick rejection of the lower BB) within the last 10 HTF bars?
-            // Use GetBbmaState so all classification logic lives in one place (easier for unit tests).
-            if (i < 10) // Pine used only 6 candles
+            // Track most recent MHV within the MHV lookback window.
+            // Mlv  = wick pierced lower BB, close recovered inside (pure MHV candle).
+            // MagicExtreme = both MAs below lower BB (valid extreme anchor).
+            // Extreme is intentionally excluded: it can originate from the EMA50 advance check
+            // (wick vs EMA50, not BB), which is not a genuine MHV signal on the HTF.
+            if (i < 10 && mhvIndex < 0)
             {
                 BbmaState state = GetBbmaState(prev!);
-                if (state == BbmaState.Mlv || state == BbmaState.Extreme || state == BbmaState.MagicExtreme)
-                {
-                    htfSetup = "MHV";
-                    return true;
-                }
+                if (state == BbmaState.Mlv || state == BbmaState.MagicExtreme)
+                    mhvIndex = i;
             }
         }
 
-        //// ── Path 2: MHV/Reentry (Pine extComboBuy) ───────────────────────────────────
-        //// Did we have an EXT or MHV candle (wick rejection of the lower BB) within the last 6 HTF bars?
-        //// Use GetBbmaState so all classification logic lives in one place (easier for unit tests).
-        //prev = current;
-        //for (int i = 0; i < 10; i++)
-        //{
-        //    if (!GetPrevCandle(interval, prev, out prev))
-        //        break;
+        // Path 2: MHV/Reentry
+        // Conditions: MHV found, preceded by a bullish CSM (csmIndex > mhvIndex),
+        // with at least MinGap bars between them, AND a proven TPW candle in that gap.
+        // TPW for Long (after bullish breakout above upper BB): price must have pulled back
+        // far enough to touch the mid-BB (SMA20) before attempting the MHV.
+        if (mhvIndex >= 0 && csmIndex > mhvIndex && csmIndex - mhvIndex >= MinGap)
+        {
+            bool hadTpw = false;
+            prev = current;
+            for (int i = 0; i <= csmIndex; i++)
+            {
+                if (!GetPrevCandle(interval, prev, out prev))
+                    break;
 
-        //    BbmaState state = GetBbmaState(prev!);
-        //    if (state == BbmaState.Mlv || state == BbmaState.Extreme || state == BbmaState.MagicExtreme)
-        //    {
-        //        htfSetup = "MHV";
-        //        return true;
-        //    }
-        //}
+                // Only inspect candles strictly between MHV and CSM
+                if (i > mhvIndex && i < csmIndex)
+                {
+                    decimal midBb = (decimal)prev!.CandleData.Sma20!.Value;
+                    if (prev.Candle.Low <= midBb)
+                    {
+                        hadTpw = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hadTpw)
+            {
+                htfSetup = "MHV";
+                return true;
+            }
+        }
+
+        // Path 1: CSM/Reentry — bullish CSM found but MHV/Reentry did not qualify
+        if (csmIndex >= 0)
+        {
+            htfSetup = "CSM";
+            return true;
+        }
 
         return false;
     }
