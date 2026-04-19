@@ -27,9 +27,6 @@ en biedt daartussen verschillende instapmomenten.
 
 public class SignalBbmaLong : SignalBbmaBase
 {
-    // Maximum TF1 candles to wait for a Reentry before giving up
-    private const int MaxWaitCandles = 20;
-
     /// <summary>
     /// Classifies the BBMA state of a candle for Long setups (uses WMA5/10 on lows).
     /// Priority: MagicExtreme → Extreme → Extreme(Advance) → MHV → Reentry → None
@@ -89,12 +86,14 @@ public class SignalBbmaLong : SignalBbmaBase
     /// <summary>
     /// HTF validation for Long Re-entry. Checks for two setups (in priority order):
     ///
-    ///   Path 1 — CSM/Reentry:  a CSM candle (close above upper BB) within the last 30 HTF bars.
+    ///   Path 1 — CSM/Reentry:  a bullish CSM candle (open inside band, close above upper BB) within the last 20 HTF bars.
     ///            The classic momentum breakout followed by a pullback to the MA zone.
     ///
     ///   Path 2 — MHV/Reentry:  an EXT or MHV candle (wick below lower BB, close back above)
-    ///            within the last 6 HTF bars. The market failed to resume the downtrend,
+    ///            within the last 10 HTF bars. The market failed to resume the downtrend,
     ///            now pulling back to the MA zone for a safe re-entry.
+    ///
+    /// Both paths are checked in a single pass (most recent event wins).
     ///
     /// Sets <paramref name="htfSetup"/> to "CSM" or "MHV" so the caller can show which path fired.
     /// </summary>
@@ -106,7 +105,8 @@ public class SignalBbmaLong : SignalBbmaBase
         //decimal wma5Low = (decimal)current.CandleData.Wma05Low!.Value;
         //decimal wma10Low = (decimal)current.CandleData.Wma10Low!.Value;
 
-        // BB is expanding, not a ranging chart https://youtu.be/tOQb6RRhbLA?t=102
+
+        // Check if BB is expanding, not a ranging chart https://youtu.be/tOQb6RRhbLA?t=102
         //if (wma10Low < sma20 || wma10Low < ema50)
         //{
         //    ExtraText = $"HTF Wma10Low not above mid-BB - ranging?";
@@ -114,48 +114,53 @@ public class SignalBbmaLong : SignalBbmaBase
         //    return false;
         //}
 
-        // If the current HTF candle itself IS a new bullish CSM, it is momentum not a re-entry yet.
-        decimal bbUpper = (decimal)current.CandleData.BollingerBandsUpperBand!.Value;
-        if (current.Candle.Close > bbUpper)
-            return false;
 
         // ── Path 1: CSM/Reentry ──────────────────────────────────────────────────────
-        // Did we have a bullish CSM (close above upper BB) within the last 30 HTF bars?
-        // Raw BB check: GetBbmaState does not classify bullish CSM — in this class Csm means
-        // a bearish candle closing below the lower BB (opposite direction). Use the raw price check.
+        // Did we have a bullish CSM (open inside band, close above upper BB) within the last 20 HTF bars?
+        // SignalBbmaShort.GetBbmaState classifies exactly this condition as Csm (open < bbUpper && close > bbUpper).
         MyData? prev = current;
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 20; i++)
         {
             if (!GetPrevCandle(interval, prev, out prev))
                 break;
 
-            bbUpper = (decimal)prev!.CandleData.BollingerBandsUpperBand!.Value;
-            if (prev.Candle.Close > bbUpper && prev.Candle.Open < bbUpper)
+            // We cannot use this class's own GetBbmaState here because its Csm = bearish CSM (opposite direction).
+            if (SignalBbmaShort.GetBbmaState(prev!) == BbmaState.Csm)
             {
                 htfSetup = "CSM";
                 return true;
             }
-        }
 
-        // ── Path 2: MHV/Reentry (Pine extComboBuy) ───────────────────────────────────
-        // Did we have an EXT or MHV candle (wick rejection of the lower BB) within the last 6 HTF bars?
-        // Use GetBbmaState so all classification logic lives in one place (easier for unit tests).
-        prev = current;
-        for (int i = 0; i < 6; i++)
-        {
-            if (!GetPrevCandle(interval, prev, out prev))
-                break;
-
-            if (!IndicatorsOkay(prev!))
-                continue;
-
-            BbmaState state = GetBbmaState(prev!);
-            if (state == BbmaState.Mlv || state == BbmaState.Extreme || state == BbmaState.MagicExtreme)
+            // ── Path 2: MHV/Reentry (Pine extComboBuy) ───────────────────────────────────
+            // Did we have an EXT or MHV candle (wick rejection of the lower BB) within the last 10 HTF bars?
+            // Use GetBbmaState so all classification logic lives in one place (easier for unit tests).
+            if (i < 10) // Pine used only 6 candles
             {
-                htfSetup = "MHV";
-                return true;
+                BbmaState state = GetBbmaState(prev!);
+                if (state == BbmaState.Mlv || state == BbmaState.Extreme || state == BbmaState.MagicExtreme)
+                {
+                    htfSetup = "MHV";
+                    return true;
+                }
             }
         }
+
+        //// ── Path 2: MHV/Reentry (Pine extComboBuy) ───────────────────────────────────
+        //// Did we have an EXT or MHV candle (wick rejection of the lower BB) within the last 6 HTF bars?
+        //// Use GetBbmaState so all classification logic lives in one place (easier for unit tests).
+        //prev = current;
+        //for (int i = 0; i < 10; i++)
+        //{
+        //    if (!GetPrevCandle(interval, prev, out prev))
+        //        break;
+
+        //    BbmaState state = GetBbmaState(prev!);
+        //    if (state == BbmaState.Mlv || state == BbmaState.Extreme || state == BbmaState.MagicExtreme)
+        //    {
+        //        htfSetup = "MHV";
+        //        return true;
+        //    }
+        //}
 
         return false;
     }
@@ -234,8 +239,9 @@ public class SignalBbmaLong : SignalBbmaBase
         if (!GetIntervals(out CryptoIntervalPeriod mtf, out CryptoIntervalPeriod htf))
             return false;
 
+
         // Walk back through LTF candles to find the preceding extreme (or otherwise)
-        for (int i = 0; i < MaxWaitCandles; i++)
+        for (int i = 0; i < 30; i++)
         {
             if (!GetPrevCandle(candleLtf, out candleLtf))
             {
@@ -295,7 +301,7 @@ public class SignalBbmaLong : SignalBbmaBase
         // MTF must have a relevant BBMA state (Extreme, MagicExtreme or MHV)
         if (!(stateMtf == BbmaState.Extreme || stateMtf == BbmaState.MagicExtreme || stateMtf == BbmaState.Mlv))
         {
-            ExtraText = $"MTF state not valid ({TfStateCode(stateMtf)})";
+            ExtraText = $"MTF state not valid";
             //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }

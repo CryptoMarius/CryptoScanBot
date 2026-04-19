@@ -87,7 +87,7 @@ public class Bbma
         var seriesExtremeAHigh = new ScatterSeries
         {
             Title = "extreme-A high",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -95,7 +95,7 @@ public class Bbma
         var seriesMagicExtremeHigh = new ScatterSeries
         {
             Title = "magic extreme high",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.OrangeRed,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -103,7 +103,7 @@ public class Bbma
         var seriesExtremeALow = new ScatterSeries
         {
             Title = "extreme-A low",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -111,7 +111,7 @@ public class Bbma
         var seriesMagicExtremeLow = new ScatterSeries
         {
             Title = "magic extreme low",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -120,7 +120,7 @@ public class Bbma
         var seriesBbmaExtreme = new ScatterSeries
         {
             Title = "extreme",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Triangle,
             Tag = group,
@@ -128,7 +128,7 @@ public class Bbma
         var seriesBbmaMlv = new ScatterSeries
         {
             Title = "bbma mlv",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Cross,
             Tag = group,
@@ -137,7 +137,7 @@ public class Bbma
         var seriesBbmaCsm = new ScatterSeries
         {
             Title = "bbma csm",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Square,
             Tag = group,
@@ -145,7 +145,7 @@ public class Bbma
         var seriesBbmaReentry = new ScatterSeries
         {
             Title = "bbma reentry",
-            MarkerSize = 3,
+            MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Diamond,
             Tag = group,
@@ -228,43 +228,45 @@ public class Bbma
                             continue;
 
 
+                        double low = (double)newData.Candle.Low;
                         var band = newData.CandleData.BollingerBandsLowerBand!.Value;
+                        double minY = Math.Min(band, low);
                         var state = SignalBbmaLong.GetBbmaState(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
                             case SignalBbmaBase.BbmaState.MagicExtreme:
-                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
                                 break;
                             case SignalBbmaBase.BbmaState.Mlv:
-                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
                                 break;
                             case SignalBbmaBase.BbmaState.Csm:
-                                double close = (double)newData.Candle.Close;
-                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * close));
+                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
                                 break;
                             case SignalBbmaBase.BbmaState.Reentry:
-                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * band));
+                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 0.993 * minY));
                                 break;
                         }
 
+                        double high = (double)newData.Candle.High;
                         band = newData.CandleData.BollingerBandsUpperBand!.Value;
+                        double maxY = Math.Max(band, high);
                         state = SignalBbmaShort.GetBbmaState(newData!);
                         switch (state)
                         {
                             case SignalBbmaBase.BbmaState.Extreme:
                             case SignalBbmaBase.BbmaState.MagicExtreme:
-                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                seriesBbmaExtreme.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
                                 break;
                             case SignalBbmaBase.BbmaState.Mlv:
-                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                seriesBbmaMlv.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
                                 break;
                             case SignalBbmaBase.BbmaState.Csm:
-                                double close = (double)newData.Candle.Close;
-                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * close));
+                                seriesBbmaCsm.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
                                 break;
                             case SignalBbmaBase.BbmaState.Reentry:
-                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * band));
+                                seriesBbmaReentry.Points.Add(new ScatterPoint(openTime.Minutes, 1.007 * maxY));
                                 break;
                         }
                     }
