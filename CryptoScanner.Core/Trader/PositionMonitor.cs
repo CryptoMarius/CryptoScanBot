@@ -227,7 +227,6 @@ public class PositionMonitor //: IDisposable
         {
             reaction = "is in cooldown";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            SignalBlockStats.Increment(SignalBlockStats.Cooldown);
             ClearSignals();
             return;
         }
@@ -237,7 +236,6 @@ public class PositionMonitor //: IDisposable
         {
             reaction = $"the bot is paused because {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            SignalBlockStats.Increment(SignalBlockStats.TradingRulesPause);
             ClearSignals();
             return;
         }
@@ -271,7 +269,6 @@ public class PositionMonitor //: IDisposable
                     if (!TradingConfig.Trading[tradeSide].IntervalPeriod.ContainsKey(interval.IntervalPeriod))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
-                        SignalBlockStats.Increment(SignalBlockStats.IntervalNotConfig);
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -280,7 +277,6 @@ public class PositionMonitor //: IDisposable
                     if (!TradingConfig.Trading[tradeSide].Strategy.ContainsKey(signal.Strategy))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
-                        SignalBlockStats.Increment(SignalBlockStats.StrategyNotConfig);
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -289,7 +285,6 @@ public class PositionMonitor //: IDisposable
                     if (symbolInterval.CandleList.Count == 0)
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " no candles on this interval (removed)");
-                        SignalBlockStats.Increment(SignalBlockStats.NoCandles);
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -300,7 +295,6 @@ public class PositionMonitor //: IDisposable
                     if (!result.success)
                     {
                         GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} unable to prepare indicators for interval {interval.Name} (removed)");
-                        SignalBlockStats.Increment(SignalBlockStats.IndicatorsFailed);
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -325,7 +319,6 @@ public class PositionMonitor //: IDisposable
                     if (algorithm.GiveUp(signal))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " " + algorithm.ExtraText + " giveup (removed)");
-                        SignalBlockStats.Increment(SignalBlockStats.GiveUp);
                         symbolInterval.SignalList.Remove(signal);
                         continue;
                     }
@@ -333,7 +326,6 @@ public class PositionMonitor //: IDisposable
                     if (!algorithm.AllowStepIn(signal))
                     {
                         GlobalData.AddTextToLogTab(text + " " + algorithm.ExtraText + "  (not allowed yet, waiting)");
-                        SignalBlockStats.Increment(SignalBlockStats.NotAllowedYet);
                         continue;
                     }
 
@@ -351,7 +343,6 @@ public class PositionMonitor //: IDisposable
                             {
                                 reaction = "openen van nieuwe posities niet toegestaan";
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.NewPositionsOff);
                                 ClearSignals();
                                 return;
                             }
@@ -361,7 +352,6 @@ public class PositionMonitor //: IDisposable
                             //if (StrategyPerformanceMonitor.IsBlocked(signal.Strategy, tradeSide))
                             //{
                             //    GlobalData.AddTextToLogTab(text + " strategy blocked by performance feedback (skipped)");
-                            //    SignalBlockStats.Increment(SignalBlockStats.PerformanceFeedback);
                             //    //ClearSignals(); ... keep them please
                             //    continue;
                             //}
@@ -374,7 +364,6 @@ public class PositionMonitor //: IDisposable
                             if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, tradeSide, LastCandle1m.OpenTime, 60, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.Barometer);
                                 ClearSignals();
                                 return;
                             }
@@ -383,7 +372,6 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, tradeSide, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.Whitelist);
                                 ClearSignals();
                                 return;
                             }
@@ -392,7 +380,6 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, tradeSide, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.Blacklist);
                                 ClearSignals();
                                 return;
                             }
@@ -401,7 +388,6 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 1, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.MinVolume);
                                 ClearSignals();
                                 return;
                             }
@@ -410,7 +396,6 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.MinPrice);
                                 ClearSignals();
                                 return;
                             }
@@ -419,7 +404,6 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.TickPercentage);
                                 ClearSignals();
                                 return;
                             }
@@ -429,7 +413,6 @@ public class PositionMonitor //: IDisposable
                             {
                                 if (TradingConfig.Trading[tradeSide].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.TrendConditions);
                                 ClearSignals();
                                 continue;
                             }
@@ -438,7 +421,6 @@ public class PositionMonitor //: IDisposable
                             if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[tradeSide].MarketTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.MarketTrend);
                                 ClearSignals();
                                 continue;
                             }
@@ -448,7 +430,6 @@ public class PositionMonitor //: IDisposable
                             if (!GlobalData.ActiveExchange!.IsSupported)
                             {
                                 GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {GlobalData.ActiveExchange.Name} (removed)");
-                                SignalBlockStats.Increment(SignalBlockStats.ExchangeNotSupported);
                                 ClearSignals();
                                 return;
                             }
@@ -463,7 +444,6 @@ public class PositionMonitor //: IDisposable
                                 if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, tradeSide, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-                                    SignalBlockStats.Increment(SignalBlockStats.SlotsFull);
                                     ClearSignals();
                                     return;
                                 }
@@ -474,7 +454,6 @@ public class PositionMonitor //: IDisposable
                                 if (!resultFetchAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
-                                    SignalBlockStats.Increment(SignalBlockStats.FetchAssetsFailed);
                                     ClearSignals();
                                     return;
                                 }
@@ -484,7 +463,6 @@ public class PositionMonitor //: IDisposable
                                 if (!resultAvailableAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
-                                    SignalBlockStats.Increment(SignalBlockStats.InsufficientAssets);
                                     ClearSignals();
                                     return;
                                 }
@@ -503,7 +481,6 @@ public class PositionMonitor //: IDisposable
                                 if (entryBase <= 0)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
-                                    SignalBlockStats.Increment(SignalBlockStats.EntryQtyZero);
                                     ClearSignals();
                                     return;
                                 }
@@ -512,7 +489,6 @@ public class PositionMonitor //: IDisposable
                                 if (entryBase == Symbol.QuantityMinimum)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
-                                    SignalBlockStats.Increment(SignalBlockStats.EntryQtyMinimum);
                                     ClearSignals();
                                     return;
                                 }
@@ -521,7 +497,6 @@ public class PositionMonitor //: IDisposable
                                 if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
-                                    SignalBlockStats.Increment(SignalBlockStats.EntryValueMinimum);
                                     ClearSignals();
                                     return;
                                 }
@@ -531,7 +506,6 @@ public class PositionMonitor //: IDisposable
                                     if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
                                     {
                                         GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
-                                        SignalBlockStats.Increment(SignalBlockStats.InsufficientBalance);
                                         ClearSignals();
                                         return;
                                     }
@@ -539,15 +513,14 @@ public class PositionMonitor //: IDisposable
 
 
                                 // Create position + entry part
-                                SignalBlockStats.Increment(SignalBlockStats.PositionCreated);
                                 position = PositionTools.CreatePosition(Symbol, signal.Strategy, tradeSide, 
                                     symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, 
-                                    signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy, 
-                                    signal.SignalPrice, LastCandle1mCloseTimeDate);
+                                    signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy,
+                                    entryPrice, LastCandle1mCloseTimeDate);
                             }
                             finally
                             {
@@ -573,7 +546,6 @@ public class PositionMonitor //: IDisposable
                                     if (reaction != "")
                                     {
                                         GlobalData.AddTextToLogTab($"{text} {symbolInterval.Interval.Name} {reaction} (removed)");
-                                        SignalBlockStats.Increment(SignalBlockStats.DcaGiveUp);
                                     }
                                     ClearSignals();
                                     return;
@@ -584,7 +556,6 @@ public class PositionMonitor //: IDisposable
                                 if (!success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + reaction2);
-                                    SignalBlockStats.Increment(SignalBlockStats.FetchAssetsFailed);
                                     ClearSignals();
                                     return;
                                 }
@@ -593,13 +564,11 @@ public class PositionMonitor //: IDisposable
                                 if (!resultCheckAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                                    SignalBlockStats.Increment(SignalBlockStats.InsufficientAssets);
                                     ClearSignals();
                                     return;
                                 }
 
                                 // Extend the position with a new DCA part using the configured DCA strategy.
-                                SignalBlockStats.Increment(SignalBlockStats.DcaCreated);
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, signal.Interval, signal.Strategy,
                                     GlobalData.Settings.Trading.DcaStrategy, dcaPrice, LastCandle1mCloseTimeDate);
                                 return;
