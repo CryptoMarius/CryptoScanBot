@@ -29,6 +29,8 @@ public enum CryptoSignalStrategy
 
     Bbma = 44,
 
+    GaussianScalp = 45,
+
 
 #if DEBUG
     StochDir = 46,

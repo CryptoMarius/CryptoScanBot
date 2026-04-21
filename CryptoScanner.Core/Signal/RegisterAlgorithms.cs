@@ -210,6 +210,15 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalBbmaShort),
         });
 
+        // Gaussian Scalp: 3-layer scalping strategy (Gaussian filter + RSI30 + MACD 24/52/9)
+        Register(new AlgorithmDefinition()
+        {
+            Name = "gscalp",
+            Strategy = CryptoSignalStrategy.GaussianScalp,
+            AnalyzeLongType = typeof(SignalGaussianScalpLong),
+            AnalyzeShortType = typeof(SignalGaussianScalpShort),
+        });
+
 #if DEBUG
         // Trend reversal (Dow Theory)
         Register(new AlgorithmDefinition()

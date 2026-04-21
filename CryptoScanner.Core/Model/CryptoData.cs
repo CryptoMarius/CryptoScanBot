@@ -94,6 +94,18 @@ public class CryptoData
     //public float RsiSurface { get; set; }
     //public float RsiSurface2 { get; set; }
 
+    // RSI (period 30) — used by GaussianScalp strategy
+    [Computed]
+    public double? Rsi30 { get; set; }
+
+    // MACD (24/52/9) — used by GaussianScalp strategy
+    [Computed]
+    public double? MacdValue24 { get; set; }
+    [Computed]
+    public double? MacdSignal24 { get; set; }
+    [Computed]
+    public double? MacdHistogram24 { get; set; }
+
     // Parabolic Sar indicator
     public double? PSar { get; set; }
 
@@ -128,6 +140,12 @@ public class CryptoData
         Rsi = source.Rsi;
         //SlopeRsi = source.SlopeRsi;
         //RsiSurface = source.RsiSurface;
+        Rsi30 = source.Rsi30;
+
+        // MACD (24/52/9) indicator values
+        MacdValue24 = source.MacdValue24;
+        MacdSignal24 = source.MacdSignal24;
+        MacdHistogram24 = source.MacdHistogram24;
 
 #if DEBUG
         // EMA indicator values
