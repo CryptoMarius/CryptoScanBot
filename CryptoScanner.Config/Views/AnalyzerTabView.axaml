@@ -35,7 +35,7 @@
                         <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterLongViewModel}" />
                     </StackPanel>
                     <!-- Col 3: Volume + Feedback -->
-                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top">
+                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top" IsVisible="false">
                         <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterLongViewModel}" />
                         <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterLongViewModel}" />
                     </StackPanel>
@@ -60,7 +60,7 @@
                         <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterShortViewModel}" />
                     </StackPanel>
                     <!-- Col 3: Volume + Feedback -->
-                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top">
+                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top" IsVisible="false">
                         <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterShortViewModel}" />
                         <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterShortViewModel}" />
                     </StackPanel>
