@@ -85,10 +85,10 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Spacing="4">
-                    <Button Content="Refresh screen" Command="{Binding RefreshCommand}" HorizontalAlignment="Stretch"/>
-                    <Button Content="Calculate zones"  Command="{Binding CalculateCommand}" HorizontalAlignment="Stretch"/>
+                    <Button Content="Refresh screen" Command="{Binding RefreshCommand}" HorizontalAlignment="Center"/>
+                    <Button Content="Calculate zones"  Command="{Binding CalculateCommand}" HorizontalAlignment="Center"/>
                     <!-- not working, turned off -->
-                    <Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Stretch" IsEnabled="false" IsVisible="false"/>
+                    <Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
                 </StackPanel>
 
                 <!-- Display Options -->
@@ -115,7 +115,7 @@
                 </HeaderedContentControl>
 
                 <!-- Open Trading App -->
-                <Button Content="Open trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Stretch"/>
+                <Button Content="Open trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Center"/>
 
             </StackPanel>
         </ScrollViewer>
