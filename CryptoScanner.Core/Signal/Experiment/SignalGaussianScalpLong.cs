@@ -1,117 +1,128 @@
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 namespace CryptoScanner.Core.Signal.Experiment;
 
 /// <summary>
-/// GaussianScalp Long — based on the 3-layer scalping strategy:
-///   Layer 1 — Trend:     2-pole Gaussian filter (inline calculation, period 40)
-///                        Bullish when current filter value > previous filter value
-///   Layer 2 — Momentum:  RSI(30) above 50
-///   Layer 3 — Validation: MACD histogram (24/52/9) above 0
-///   Entry:               Bullish confirmation candle (close > open)
+/// GaussianScalp Long — uses the STD-Filtered N-Pole Gaussian Filter [Loxx] for trend detection.
 ///
-/// The Gaussian filter is a low-pass recursive filter that smooths price while
-/// reducing lag compared to a simple EMA. Formula for 2-pole:
-///   a = exp(-sqrt(2) * π / period)
-///   b = 2 * a * cos(sqrt(2) * π / period)
-///   c = a^2
-///   f[i] = b*f[i-1] - c*f[i-2] + (1 - b + c) * close[i]
+/// Signal fires when the filtered Gaussian output just flipped bullish (goLong),
+/// meaning the current bar rose while the previous bar was a local trough,
+/// AND the previously confirmed direction was bearish (contsw == -1).
+///
+/// Additional filters (applied before the Gaussian calculation):
+///   - RSI(30) > 50 (momentum confirmation)
+///   - MACD(24/52/9) histogram > 0 (trend validation)
 /// </summary>
-public class SignalGaussianScalpLong : SignalCreateBase
+public class SignalGaussianScalpLong : SignalGaussianScalpBase
 {
-    // Number of candles used for the Gaussian filter warm-up
-    private const int GaussianPeriod = 40;
-    private const int GaussianLookback = GaussianPeriod * 3;
+    public override bool IndicatorsOkay(MyData data)
+    {
+        if ((data == null)
+           || data.Candle.OpenTime == 0
+           || (data.CandleData == null)
+            || (data.CandleData.Rsi30 == null)
+            || (data.CandleData.MacdHistogram24 == null)
+            )
+            return false;
+
+        return true;
+    }
+
 
     public override bool IsSignal()
     {
         ExtraText = "";
 
-        // --- Layer 2: RSI(30) > 50 ---
-        if (CandleLast.CandleData!.Rsi30 == null)
-        {
-            ExtraText = "no RSI30 data";
-            return false;
-        }
-        double rsi30 = CandleLast.CandleData.Rsi30.Value;
+        // --- RSI(30) > 50: momentum confirmation ---
+        double rsi30 = CandleLast.CandleData.Rsi30!.Value;
         if (rsi30 <= 50)
         {
             ExtraText = $"RSI30 {rsi30:N1} <= 50";
             return false;
         }
 
-        // --- Layer 3: MACD(24/52/9) histogram > 0 ---
-        if (CandleLast.CandleData.MacdHistogram24 == null)
-        {
-            ExtraText = "no MACD24 data";
-            return false;
-        }
-        double macdHist = CandleLast.CandleData.MacdHistogram24.Value;
+        // --- MACD(24/52/9) histogram > 0: trend validation ---
+        double macdHist = CandleLast.CandleData.MacdHistogram24!.Value;
         if (macdHist <= 0)
         {
             ExtraText = $"MACD24 hist {macdHist:N6} <= 0";
             return false;
         }
 
-        // --- Entry: bullish confirmation candle ---
+        // --- Gaussian filter: goLong signal ---
+        if (!ComputeSignal(out bool goLong, out _))
+        {
+            ExtraText = "insufficient history for Gaussian filter";
+            return false;
+        }
+
+        if (!goLong)
+        {
+            ExtraText = "no Gaussian goLong signal";
+            return false;
+        }
+
+        ExtraText = $"G↑ RSI30={rsi30:N1}";
+        return true;
+    }
+
+
+    /// <summary>
+    /// Allow step-in only when the candle that follows the signal is convincingly bullish:
+    /// close must be above the signal candle's close (price actually moved up).
+    /// </summary>
+    public override bool AllowStepIn(CryptoSignal signal)
+    {
+        if (!GetPrevCandle(CandleLast, out MyData? signalCandle))
+            return false;
+
+        // Current candle close must be above the signal candle's close
+        if (CandleLast.Candle.Close <= signalCandle!.Candle.Close)
+        {
+            ExtraText = $"price not moving up: {CandleLast.Candle.Close:N8} <= {signalCandle.Candle.Close:N8}";
+            return false;
+        }
+
+        // Current candle must be a bullish candle (close > open)
         if (CandleLast.Candle.Close <= CandleLast.Candle.Open)
         {
             ExtraText = "no bullish confirmation candle";
             return false;
         }
 
-        // --- Layer 1: 2-pole Gaussian filter — collect candles oldest → newest ---
-        var closes = new List<double>(GaussianLookback);
-        MyData? candle = CandleLast;
-        for (int i = 0; i < GaussianLookback; i++)
-        {
-            closes.Add((double)candle!.Candle.Close);
-            if (!GetPrevCandle(candle, out candle))
-                break;
-        }
-
-        if (closes.Count < GaussianPeriod + 2)
-        {
-            ExtraText = "insufficient history for Gaussian filter";
-            return false;
-        }
-
-        closes.Reverse(); // oldest first
-        double[] f = ComputeGaussian(closes, GaussianPeriod);
-
-        // Bullish: current filter value > previous filter value
-        double filterNow = f[^1];
-        double filterPrev = f[^2];
-        if (filterNow <= filterPrev)
-        {
-            ExtraText = $"Gaussian bearish ({filterNow:N6} <= {filterPrev:N6})";
-            return false;
-        }
-
-        ExtraText = $"G↑ RSI30={rsi30:N1} MACD={macdHist:N6}";
         return true;
     }
 
 
     /// <summary>
-    /// Computes a 2-pole Gaussian low-pass filter over the given close prices.
-    /// Returns an array of the same length.
+    /// Give up when the setup has not triggered within 2 candles after the signal,
+    /// or when RSI(30) has dropped back below 50 (momentum invalidated).
     /// </summary>
-    private static double[] ComputeGaussian(List<double> closes, int period)
+    public override bool GiveUp(CryptoSignal signal)
     {
-        double sqrt2Pi = Math.Sqrt(2.0) * Math.PI;
-        double a = Math.Exp(-sqrt2Pi / period);
-        double b = 2.0 * a * Math.Cos(sqrt2Pi / period);
-        double c = a * a;
-        double coeff = 1.0 - b + c;
+        // Abandon after 2 candles without entry
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + 2 * Interval.Duration < CandleLast.Candle.OpenTime.Minutes)
+        {
+            ExtraText = "give up after 2 candles";
+            return true;
+        }
 
-        double[] f = new double[closes.Count];
-        f[0] = closes[0];
-        f[1] = closes[1];
-        for (int i = 2; i < closes.Count; i++)
-            f[i] = b * f[i - 1] - c * f[i - 2] + coeff * closes[i];
+        // RSI(30) dropped below 50 — momentum lost
+        double? rsi30 = CandleLast.CandleData.Rsi30;
+        if (rsi30 <= 50)
+        {
+            ExtraText = $"RSI30 {rsi30:N1} dropped below 50";
+            return true;
+        }
 
-        return f;
+        // MACD histogram went negative — trend reversed
+        double? macdHist = CandleLast.CandleData.MacdHistogram24;
+        if (macdHist <= 0)
+        {
+            ExtraText = $"MACD24 hist {macdHist:N6} turned negative";
+            return true;
+        }
+
+        return false;
     }
 }
