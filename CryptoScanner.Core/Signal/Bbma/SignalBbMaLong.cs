@@ -63,7 +63,9 @@ public class SignalBbmaLong : SignalBbmaBase
             return BbmaState.Mlv;
 
         // Extreme (Advance): wick rejection of EMA50 (not in Pine, but valid extension)
-        if (low < ema50 && close > ema50 && open > ema50)
+        // This is only present in the PDF from str8v4lu3, not in the pine script
+        // Disabled it for not, not sure what todo with it
+        if (false && low < ema50 && close > ema50 && open > ema50)
             return BbmaState.Extreme;
 
         if (open > bbLower && close < bbLower)
