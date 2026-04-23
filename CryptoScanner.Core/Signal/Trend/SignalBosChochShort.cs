@@ -25,7 +25,10 @@ public class SignalBosChochShort : SignalCreateBase
     // Startup safety: only fire if the break happened within this many intervals of the
     // current candle. Prevents signalling historical CHoCHs that the engine first sees
     // after a restart.
-    private const int MaxEventAgeCandles = 2;
+    // Must absorb the ZigZag pivot-confirmation delay (5 candles lookback in
+    // ZigZagLanceBeggs.CheckNewHigh/CheckNewLow) plus a few bars of slack, otherwise every
+    // freshly confirmed CHoCH would already be "too old" by the time this signal sees it.
+    private const int MaxEventAgeCandles = 10;
 
 
     public override bool IsSignal()
