@@ -50,6 +50,15 @@ public class SignalCreateBase
     public virtual bool IsSignal() => false;
 
 
+    /// <summary>
+    /// Optional override for the price stored on the signal. Return null to use
+    /// the default (last candle close). Use this when the signal references an
+    /// earlier candle than CandleLast — for example BOS/CHoCH breaks, which
+    /// happen at a swing pivot, not at the candle the check is running on.
+    /// </summary>
+    public virtual decimal? OverrideSignalPrice => null;
+
+
     public virtual bool AdditionalChecks(MyData candle, out string response)
     {
         response = "";

@@ -234,6 +234,12 @@ public class SignalCreate
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
 
+        // Algorithms that detect events on an earlier candle (e.g. BOS/CHoCH swing break)
+        // can report the actual event price here so SignalPrice reflects the break, not
+        // the close of the candle on which the check happened to run.
+        if (algorithm.OverrideSignalPrice is decimal overridePrice)
+            signal.SignalPrice = overridePrice;
+
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
             eventText.Add(algorithm.ExtraText);

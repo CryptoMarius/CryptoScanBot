@@ -219,6 +219,16 @@ public class TrendInterval
         intervalTrend.Trend = trendIndicator;
         intervalTrend.Time = maxDate;
 
+        // Store the last confirmed ZigZag pivot so AllowStepIn can detect pullbacks after a signal.
+        // The last entry in ZigZagList is the most recent confirmed swing point.
+        if (bestIndicator.ZigZagList.Count > 0)
+        {
+            var lastPivot = bestIndicator.ZigZagList[^1];
+            intervalTrend.LastPivotType = lastPivot.PointType;
+            intervalTrend.LastPivotValue = lastPivot.Value;
+            intervalTrend.LastPivotTime = lastPivot.Candle.OpenTime;
+        }
+
         // Note: We could also do something like take the average trend over the last x zigzag indicators??
         // We still need to choose a proper indicator to do our analysis though on s/r & s/d and liquidity zones
 

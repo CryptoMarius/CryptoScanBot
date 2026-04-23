@@ -1,4 +1,4 @@
-﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trend;
@@ -7,6 +7,8 @@ namespace CryptoScanner.Core.Signal.Trend;
 
 public class SignalTrendShort : SignalCreateBase
 {
+    // Maximum number of candles to wait for pullback + resumption before giving up
+    private const int GiveUpCandles = 5;
 
 
     public override bool IsSignal()
@@ -36,4 +38,64 @@ public class SignalTrendShort : SignalCreateBase
         return false;
     }
 
+
+    /// <summary>
+    /// Allow step-in once a pullback pivot (ZigZag High) has formed after the signal
+    /// and the current candle closes below that pivot — confirming the resumption downward.
+    /// </summary>
+    public override bool AllowStepIn(CryptoSignal signal)
+    {
+        // Recalculate so LastPivot reflects the current bar
+        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+
+        CryptoTrendData trend = SymbolInterval.TrendPrimary;
+        CandleTime signalTime = CandleTime.FromDateTime(signal.CloseDate);
+
+        // Wait for a ZigZag High to form after the signal (= the pullback pivot)
+        if (trend.LastPivotType != 'H' || trend.LastPivotTime <= signalTime)
+        {
+            ExtraText = "waiting for pullback pivot (ZigZag High)";
+            return false;
+        }
+
+        // Current candle must close below the pullback pivot (resuming downward)
+        if (CandleLast.Candle.Close >= trend.LastPivotValue)
+        {
+            ExtraText = $"price {CandleLast.Candle.Close:N8} not below pivot high {trend.LastPivotValue:N8}";
+            return false;
+        }
+
+        // Current candle must be bearish (close < open)
+        if (CandleLast.Candle.Close >= CandleLast.Candle.Open)
+        {
+            ExtraText = "no bearish candle";
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// Give up when the primary trend has reverted to Bullish, or when GiveUpCandles have passed
+    /// without a valid pullback + resumption entry.
+    /// </summary>
+    public override bool GiveUp(CryptoSignal signal)
+    {
+        // Trend has already flipped back — setup is invalidated
+        if (SymbolInterval.TrendPrimary.Trend == CryptoTrendIndicator.Bullish)
+        {
+            ExtraText = "primary trend reverted to bullish";
+            return true;
+        }
+
+        // Time limit exceeded
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GiveUpCandles * Interval.Duration < CandleLast.Candle.OpenTime.Minutes)
+        {
+            ExtraText = $"give up after {GiveUpCandles} candles";
+            return true;
+        }
+
+        return false;
+    }
 }

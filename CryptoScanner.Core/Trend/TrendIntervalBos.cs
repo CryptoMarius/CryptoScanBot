@@ -62,12 +62,19 @@ public class TrendIntervalBos
 
     /// <summary>
     /// Interpret zigzag swing points using BOS/CHoCH logic.
-    /// Returns the resulting trend (Bullish/Bearish/Unknown).
+    /// Returns the resulting trend (Bullish/Bearish/Unknown) and reports the most
+    /// recent structural event (its swing-point candle and price) via out parameters.
+    /// Callers use that event info so downstream signals can report the actual
+    /// break-candle price instead of the close of the latest candle.
     /// </summary>
-    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log)
+    public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log,
+        out CryptoStructureEvent lastEvent, out CandleTime? lastEventTime, out decimal? lastEventPrice)
     {
         var zigZagList = indicator.ZigZagList;
         CryptoTrendIndicator trend = CryptoTrendIndicator.Unknown;
+        lastEvent = CryptoStructureEvent.None;
+        lastEventTime = null;
+        lastEventPrice = null;
 
         if (log != null)
         {
@@ -140,6 +147,15 @@ public class TrendIntervalBos
                 lastLow = zigZag.Value;
             }
 
+            if (structureEvent != CryptoStructureEvent.None)
+            {
+                // Remember the most recent structural event — the break occurred at this pivot,
+                // not at the candle on which this calculation happens to run.
+                lastEvent = structureEvent;
+                lastEventTime = zigZag.Candle!.OpenTime;
+                lastEventPrice = zigZag.Value;
+            }
+
             if (log != null)
             {
                 if (structureEvent != CryptoStructureEvent.None)
@@ -176,12 +192,29 @@ public class TrendIntervalBos
         ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
 
-        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(indicator, log);
+        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(indicator, log,
+            out var lastEvent, out var lastEventTime, out var lastEventPrice);
 
         intervalTrend.PrevTrend = intervalTrend.Trend;
         intervalTrend.PrevTime = intervalTrend.Time;
         intervalTrend.Trend = trendIndicator;
         intervalTrend.Time = maxDate;
+
+        // Record the swing-point candle where the last BOS/CHoCH actually occurred,
+        // so signals can surface that price instead of the latest candle close.
+        intervalTrend.LastStructureEvent = lastEvent;
+        intervalTrend.LastStructureEventTime = lastEventTime;
+        intervalTrend.LastStructureEventPrice = lastEventPrice;
+
+        // Store the last confirmed ZigZag pivot so AllowStepIn can detect pullbacks after a signal.
+        // The last entry in ZigZagList is the most recent confirmed swing point.
+        if (indicator.ZigZagList.Count > 0)
+        {
+            var lastPivot = indicator.ZigZagList[^1];
+            intervalTrend.LastPivotType = lastPivot.PointType;
+            intervalTrend.LastPivotValue = lastPivot.Value;
+            intervalTrend.LastPivotTime = lastPivot.Candle.OpenTime;
+        }
 
         if (GlobalData.Settings.General.DebugTrendCalculation)
         {

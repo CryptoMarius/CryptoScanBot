@@ -16,11 +16,20 @@ public class CryptoTrendData
     public CryptoTrendIndicator LastTrend { get; set; } = CryptoTrendIndicator.Unknown;
     public CryptoTrendIndicator PrevTrend { get; set; }
 
-    // Last BOS/CHoCH structure event detected by TrendIntervalBos
-    //public CryptoStructureEvent LastStructureEvent { get; set; }
-    //public CandleTime? LastStructureEventTime { get; set; }
+    // Last BOS/CHoCH structure event detected by TrendIntervalBos.
+    // Time and Price refer to the swing-point candle at which the break occurred,
+    // NOT the candle on which the calculation was last run.
+    public CryptoStructureEvent LastStructureEvent { get; set; }
+    public CandleTime? LastStructureEventTime { get; set; }
+    public decimal? LastStructureEventPrice { get; set; }
     // Tracks the event time of the last fired signal — prevents re-firing on the same event
-    //public CandleTime? LastFiredStructureEventTime { get; set; }
+    public CandleTime? LastFiredStructureEventTime { get; set; }
+
+    // Last confirmed ZigZag pivot — used by AllowStepIn to detect pullbacks after a signal.
+    // 'H' = swing high, 'L' = swing low.
+    public char? LastPivotType { get; set; }
+    public decimal? LastPivotValue { get; set; }
+    public CandleTime? LastPivotTime { get; set; }
 
 
     public void Reset()
@@ -34,8 +43,13 @@ public class CryptoTrendData
         LastTrend = CryptoTrendIndicator.Unknown;
         PrevTrend = CryptoTrendIndicator.Unknown;
 
-        //LastStructureEvent = CryptoStructureEvent.None;
-        //LastStructureEventTime = null;
-        //LastFiredStructureEventTime = null;
+        LastStructureEvent = CryptoStructureEvent.None;
+        LastStructureEventTime = null;
+        LastStructureEventPrice = null;
+        LastFiredStructureEventTime = null;
+
+        LastPivotType = null;
+        LastPivotValue = null;
+        LastPivotTime = null;
     }
 }
