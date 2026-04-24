@@ -49,9 +49,11 @@ public class SignalBbmaShort : SignalBbmaBase
 
         if (wma5High > bbUpper)
         {
-            // MagicExtreme (EE): both MAs above BB.Upper
+            // MagicExtreme (both MAs above BB.Upper) — merged into Extreme.
+            // No downstream code uses the distinction, and keeping a distinct state
+            // only complicated the TF-code matching (TfStateCode returns "EE" for it).
             if (wma10High > bbUpper)
-                return BbmaState.MagicExtreme;
+                return BbmaState.Extreme;
 
             // Extreme (Pine-aligned): MA5(high) above BB.Upper AND wick rejection
             if (high > bbUpper && close < bbUpper)
@@ -325,13 +327,9 @@ public class SignalBbmaShort : SignalBbmaBase
         code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
 
 
-        // MTF must have a relevant BBMA state (Extreme, MagicExtreme or MHV)
-        if (!(stateMtf == BbmaState.Extreme || stateMtf == BbmaState.MagicExtreme || stateMtf == BbmaState.Mlv))
-        {
-            ExtraText = $"MTF state not valid";
-            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
-            return false;
-        }
+        // MTF-state validation is no longer a pre-filter here — the final code-match below
+        // is the authoritative gate. A separate pre-filter rejected MTF=Reentry before the
+        // match could evaluate, which made code "RRE" unreachable.
 
 
 
@@ -377,9 +375,9 @@ public class SignalBbmaShort : SignalBbmaBase
         //   PDF alert RRE  → entry code RRR  (TF2=Reentry)
         //   PDF alert REM  → entry code RER  (TF2=Extreme, from M alert)
         //   PDF alert REE  → entry code RER  (TF2=Extreme, from E alert)
-        //   PDF alert RMEE → entry code RMR  (TF2=MLV, from MagicExtreme alert)
+        //   PDF alert RMEE → entry code RMR  (TF2=MLV, from MagicExtreme alert — MagicExtreme merged into Extreme, so match string is "RME")
         code = TfStateCode(stateHtf) + TfStateCode(stateMtf) + TfStateCode(stateLtf);
-        if (code == "RRE" || code == "REM" || code == "REE" || code == "RMEE")
+        if (code == "RRE" || code == "REM" || code == "REE" || code == "RME")
         {
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
 

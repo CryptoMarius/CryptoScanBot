@@ -147,10 +147,12 @@ public class TrendIntervalBos
                 lastLow = zigZag.Value;
             }
 
-            if (structureEvent != CryptoStructureEvent.None)
+            // Only record CHoCH events. A later BOS (continuation in the same direction) must NOT
+            // overwrite the CHoCH, otherwise the SignalBosChoch filter
+            // "LastStructureEvent == ChoCh" will fail to see the reversal that just happened.
+            // The break occurred at this pivot, not at the candle on which this calculation runs.
+            if (structureEvent == CryptoStructureEvent.ChoCh)
             {
-                // Remember the most recent structural event — the break occurred at this pivot,
-                // not at the candle on which this calculation happens to run.
                 lastEvent = structureEvent;
                 lastEventTime = zigZag.Candle!.OpenTime;
                 lastEventPrice = zigZag.Value;

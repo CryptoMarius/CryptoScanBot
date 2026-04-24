@@ -55,7 +55,7 @@ public class SettingsCompiled
     public Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> Trend { get; set; } = [];
     public bool TrendLog = false;
 
-    // Markt trend + Value (percentage)
+    // Primary market trend + Value (percentages)
     public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = [];
     public bool MarketTrendLog = false;
 

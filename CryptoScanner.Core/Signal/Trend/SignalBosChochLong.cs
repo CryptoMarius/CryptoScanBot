@@ -19,8 +19,11 @@ namespace CryptoScanner.Core.Signal.Trend;
 /// </summary>
 public class SignalBosChochLong : SignalCreateBase
 {
-    // Maximum number of candles to wait for pullback + resumption before giving up
-    private const int GiveUpCandles = 10;
+    // Maximum number of candles to wait for pullback + resumption before giving up.
+    // Must be large enough to cover the ZigZag pivot-confirmation delay (5 candles) after
+    // the pullback forms, otherwise the signal expires before the pullback-L can be
+    // confirmed and the step-in check ever succeeds.
+    private const int GiveUpCandles = 25;
 
     // Startup safety: only fire if the break happened within this many intervals of the
     // current candle. Prevents signalling historical CHoCHs that the engine first sees
@@ -98,17 +101,13 @@ public class SignalBosChochLong : SignalCreateBase
             return false;
         }
 
-        // Current candle must close above the pullback pivot (resuming upward)
+        // Current candle must close above the pullback pivot (resuming upward).
+        // An explicit "candle must be bullish" (close > open) check used to be added here,
+        // but it was a redundant second filter that often blocked valid re-entries: close
+        // above the pullback-L after a confirmed pivot already proves the resumption.
         if (CandleLast.Candle.Close <= trend.LastPivotValue)
         {
             ExtraText = $"price {CandleLast.Candle.Close:N8} not above pivot low {trend.LastPivotValue:N8}";
-            return false;
-        }
-
-        // Current candle must be bullish (close > open)
-        if (CandleLast.Candle.Close <= CandleLast.Candle.Open)
-        {
-            ExtraText = "no bullish candle";
             return false;
         }
 
