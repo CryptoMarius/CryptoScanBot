@@ -14,28 +14,6 @@ public enum MatchBlackAndWhiteList
     NotPresent
 }
 
-///// <summary>Compiled relative volume filter settings — grouped for readability.</summary>
-//public class SettingsCompiledVolume
-//{
-//    public bool Active = false;
-//    public decimal MinRelative = 0m;
-//    public decimal MaxRelative = 999m;
-//    public int Lookback = 20;
-//    public bool Log = false;
-//}
-
-///// <summary>Compiled adaptive feedback filter settings — grouped for readability.</summary>
-//public class SettingsCompiledFeedback
-//{
-//    public bool Active = false;
-//    public int MaxDays = 7;
-//    public int MinSignals = 5;
-//    public decimal BlockThreshold = 40m;
-//    public int ReEnableHours = 24;
-//    public bool Log = false;
-//}
-
-
 // Compiled version of the SettingsTextual for signal (long/short) and trading (long/short)
 
 [Serializable]
@@ -58,6 +36,11 @@ public class SettingsCompiled
     // Primary market trend + Value (percentages)
     public List<(decimal minValue, decimal maxValue)> MarketTrend { get; set; } = [];
     public bool MarketTrendLog = false;
+
+    // Secondary market trend + Value (percentages). Evaluated as an additional INTERSECT filter
+    // (both Primary and Secondary ranges must contain the current trend value).
+    public List<(decimal minValue, decimal maxValue)> MarketTrendSecondary { get; set; } = [];
+    public bool MarketTrendSecondaryLog = false;
 
     // Via interval + Value (ranged)
     // Minimale barometer om de meldingen te genereren
@@ -139,6 +122,15 @@ public class SettingsCompiled
                 MarketTrend.Add((minValue, maxValue));
         }
         MarketTrendLog = settings.MarketTrend.Log;
+
+        // Secondary market trend% (min..max) — optional extra INTERSECT filter
+        MarketTrendSecondary.Clear();
+        if (settings.MarketTrendSecondary.List.Count != 0)
+        {
+            foreach (var (minValue, maxValue) in settings.MarketTrendSecondary.List)
+                MarketTrendSecondary.Add((minValue, maxValue));
+        }
+        MarketTrendSecondaryLog = settings.MarketTrendSecondary.Log;
 
 
         Strategy.Clear();

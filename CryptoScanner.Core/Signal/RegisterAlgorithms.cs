@@ -166,40 +166,41 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
-//#if DEBUG
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "nwe.pull",
-//            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopePull,
-//            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
-//            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
-//        });
-//#endif
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "nwe.pull",
+        //            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopePull,
+        //            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
+        //            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
+        //        });
+        //#endif
 
-//#if DEBUG
-//        // BBMA - Oma Ally
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "bbma.grok",
-//            Strategy = CryptoSignalStrategy.BbMaGrok,
-//            AnalyzeLongType = typeof(SignalBbMaGrokLong),
-//            AnalyzeShortType = typeof(SignalBbMaShort),
-//        });
-//#endif
+        //#if DEBUG
+        //        // BBMA - Oma Ally
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "bbma.grok",
+        //            Strategy = CryptoSignalStrategy.BbMaGrok,
+        //            AnalyzeLongType = typeof(SignalBbMaGrokLong),
+        //            AnalyzeShortType = typeof(SignalBbMaShort),
+        //        });
+        //#endif
 
-//#if DEBUG
-//        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-//        // No confirmations from higher timeframe(s)
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "bbma.old",
-//            Strategy = CryptoSignalStrategy.BbmaReentryOld,
-//            AnalyzeLongType = typeof(SignalBbmaReentryOldLong),
-//            AnalyzeShortType = typeof(SignalBbmaReentryOldShort),
-//        });
-//#endif
+        //#if DEBUG
+        //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
+        //        // No confirmations from higher timeframe(s)
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "bbma.old",
+        //            Strategy = CryptoSignalStrategy.BbmaReentryOld,
+        //            AnalyzeLongType = typeof(SignalBbmaReentryOldLong),
+        //            AnalyzeShortType = typeof(SignalBbmaReentryOldShort),
+        //        });
+        //#endif
 
 
+#if DEBUG
         // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
         // Confirmations from higher timeframe(s)
         Register(new AlgorithmDefinition()
@@ -209,7 +210,9 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalBbmaLong),
             AnalyzeShortType = typeof(SignalBbmaShort),
         });
+#endif
 
+#if DEBUG
         // Gaussian Scalp: 3-layer scalping strategy (Gaussian filter + RSI30 + MACD 24/52/9)
         Register(new AlgorithmDefinition()
         {
@@ -218,6 +221,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalGaussianScalpLong),
             AnalyzeShortType = typeof(SignalGaussianScalpShort),
         });
+#endif
 
 #if DEBUG
         // Trend reversal (Dow Theory)
@@ -230,6 +234,7 @@ public static class RegisterAlgorithms
         });
 #endif
 
+#if DEBUG
         // BOS/CHoCH: Break of Structure and Change of Character signals
         Register(new AlgorithmDefinition()
         {
@@ -238,17 +243,29 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalBosChochLong),
             AnalyzeShortType = typeof(SignalBosChochShort),
         });
+#endif
+
+#if DEBUG
+        // Box Theory (Darvas-style): breakout from a consolidation box
+        Register(new AlgorithmDefinition()
+        {
+            Name = "box",
+            Strategy = CryptoSignalStrategy.Box,
+            AnalyzeLongType = typeof(SignalBoxLong),
+            AnalyzeShortType = typeof(SignalBoxShort),
+        });
+#endif
 
 
-//#if DEBUG
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "rsi divergence",
-//            Strategy = CryptoSignalStrategy.RsiDivergence,
-//            AnalyzeLongType = typeof(SignalRsiDivergence),
-//            AnalyzeShortType = typeof(SignalRsiDivergence),
-//        });
-//#endif
+        //#if DEBUG
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "rsi divergence",
+        //            Strategy = CryptoSignalStrategy.RsiDivergence,
+        //            AnalyzeLongType = typeof(SignalRsiDivergence),
+        //            AnalyzeShortType = typeof(SignalRsiDivergence),
+        //        });
+        //#endif
 
 
     }
