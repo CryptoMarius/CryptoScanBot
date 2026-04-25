@@ -24,20 +24,19 @@
                     <!-- Col 0: Strategies -->
                     <settings:StrategyView Grid.Column="0"
                         DataContext="{Binding AnalyzerStrategyLongViewModel}" />
-                    <!-- Col 1: Trend interval filter + Market trend filter -->
-                    <StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Top">
+                    <!-- Col 1: Trend interval filter + Market trend filter (primary + secondary) -->
+                    <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterLongViewModel}" />
                         <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterLongViewModel}" />
+                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterSecondaryLongViewModel}" />
                     </StackPanel>
-                    <!-- Col 2: Intervals + Barometer -->
-                    <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
+                    <!-- Col 2: Intervals -->
+                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
                         <settings:IntervalView DataContext="{Binding AnalyzerIntervalLongViewModel}" />
-                        <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterLongViewModel}" />
                     </StackPanel>
-                    <!-- Col 3: Volume + Feedback -->
-                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top" IsVisible="false">
-                        <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterLongViewModel}" />
-                        <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterLongViewModel}" />
+                    <!-- Col 3: Barometer -->
+                    <StackPanel Grid.Column="3" Spacing="8" VerticalAlignment="Top">
+                        <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterLongViewModel}" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
@@ -49,20 +48,19 @@
                     <!-- Col 0: Strategies -->
                     <settings:StrategyView Grid.Column="0"
                         DataContext="{Binding AnalyzerStrategyShortViewModel}" />
-                    <!-- Col 1: Trend interval filter + Market trend filter -->
-                    <StackPanel Grid.Column="1" Spacing="16" VerticalAlignment="Top">
+                    <!-- Col 1: Trend interval filter + Market trend filter (primary + secondary) -->
+                    <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
                         <settings:TrendIntervalFilterView DataContext="{Binding AnalyzerTrendIntervalFilterShortViewModel}" />
                         <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterShortViewModel}" />
+                        <settings:MarketTrendFilterView DataContext="{Binding AnalyzerMarketTrendFilterSecondaryShortViewModel}" />
                     </StackPanel>
-                    <!-- Col 2: Intervals + Barometer -->
-                    <StackPanel Grid.Column="2" Spacing="16" VerticalAlignment="Top">
+                    <!-- Col 2: Intervals -->
+                    <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Top">
                         <settings:IntervalView DataContext="{Binding AnalyzerIntervalShortViewModel}" />
-                        <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterShortViewModel}" />
                     </StackPanel>
-                    <!-- Col 3: Volume + Feedback -->
-                    <StackPanel Grid.Column="3" Spacing="16" VerticalAlignment="Top" IsVisible="false">
-                        <settings:VolumeFilterView DataContext="{Binding AnalyzerVolumeFilterShortViewModel}" />
-                        <settings:FeedbackFilterView DataContext="{Binding AnalyzerFeedbackFilterShortViewModel}" />
+                    <!-- Col 3: Barometer -->
+                    <StackPanel Grid.Column="3" Spacing="8" VerticalAlignment="Top">
+                        <settings:BarometerFilterView DataContext="{Binding AnalyzerBarometerFilterShortViewModel}" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>

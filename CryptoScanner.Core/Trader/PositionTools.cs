@@ -321,10 +321,11 @@ public static class PositionTools
         if (marketTrend.Count != 0)
         {
             CryptoTrendData symbolTrend = trendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
+            string trendLabel = trendType == TrendType.Primary ? "Markettrend(P)" : "Markettrend(S)";
 
             if (!symbolTrend.Percentage.HasValue)
             {
-                reaction = $"Markettrend {symbol.Name} is not calculated";
+                reaction = $"{trendLabel} {symbol.Name} is not calculated";
                 return false;
             }
 
@@ -339,7 +340,7 @@ public static class PositionTools
                     string maxValueStr = maxValue.ToString0("N2");
                     if (maxValue == decimal.MaxValue)
                         maxValueStr = "+maxint";
-                    reaction = $"Markettrend {symbol.Name} {symbolTrend.Percentage?.ToString("N2")} not between {minValueStr} and {maxValueStr}";
+                    reaction = $"{trendLabel} {symbol.Name} {symbolTrend.Percentage?.ToString("N2")} not between {minValueStr} and {maxValueStr}";
                     return false;
                 }
             }

@@ -425,6 +425,16 @@ public class PositionMonitor //: IDisposable
                                 continue;
                             }
 
+                            // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
+                            // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
+                            // timeframe has already rolled over.
+                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[tradeSide].MarketTrendSecondary, out reaction))
+                            {
+                                GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
+                                ClearSignals();
+                                continue;
+                            }
+
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
                             // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
                             if (!GlobalData.ActiveExchange!.IsSupported)

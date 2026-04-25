@@ -401,6 +401,15 @@ public class SignalCreate
             signal.IsInvalid = true;
         }
 
+        // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
+        // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
+        // timeframe has already rolled over.
+        if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Signals[signal.Side].MarketTrendSecondary, out reaction))
+        {
+            eventText.Add(reaction);
+            signal.IsInvalid = true;
+        }
+
 
         if (!GlobalData.Settings.General.ShowInvalidSignals && signal.IsInvalid)
             return false;

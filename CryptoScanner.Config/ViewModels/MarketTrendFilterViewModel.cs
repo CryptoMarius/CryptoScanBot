@@ -12,6 +12,10 @@ public partial class MarketTrendFilterViewModel : ObservableObject
     [ObservableProperty]
     private bool _log = true;
 
+    // Header shown in the group box (e.g. "Market trend filter (primary)" vs "(secondary)")
+    [ObservableProperty]
+    private string _header = "Market trend filter";
+
     public MarketTrendFilterViewModel()
     {
         _trendRange = new BarometerFilterRangeViewModel

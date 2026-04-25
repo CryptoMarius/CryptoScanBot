@@ -121,10 +121,12 @@ public class Positions
                             DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
                             break;
                         case CryptoPartPurpose.Dca:
-                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
+                            double xEndDca = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
+                            DrawHorizontalLine(chart, xStart, xEndDca, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
                             break;
                         case CryptoPartPurpose.TakeProfit:
-                            DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "take profit", xLabelOffset, group);
+                            double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
+                            DrawHorizontalLine(chart, xStart, xEndTp, step.Price, stepColor, "take profit", xLabelOffset, group);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
@@ -139,7 +141,7 @@ public class Positions
                     if (step.CloseTime.HasValue)
                     {
                         ScatterSeries scatter = step.Side == CryptoOrderSide.Buy ? seriesBuy : seriesSell;
-                        double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes - interval.Duration;
+                        double x = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
                         scatter?.Points.Add(new ScatterPoint(x, (double)step.AveragePrice));
                     }
 

@@ -6,32 +6,34 @@ using CryptoScanner.Core.Trend;
 namespace CryptoScanner.Core.Signal.Trend;
 
 /// <summary>
-/// Fires a Long signal on a bullish CHoCH (Change of Character): a Higher High that breaks
-/// the previous bearish structure, switching the BOS/CHoCH trend to Bullish.
+/// Fires a Long signal at the moment the pullback after a bullish CHoCH is broken upward
+/// (= the actual step-in moment). A bullish CHoCH is a Higher High that flips the BOS/CHoCH
+/// trend from Bearish to Bullish.
 ///
 /// Uses TrendBos which reacts faster than Dow Theory (single structural break is sufficient).
 ///
-/// The signal is tied to the swing-point candle at which the break occurred
-/// (LastStructureEventTime / LastStructureEventPrice), not to the candle on which the
-/// trend calculation happens to run. This keeps SignalPrice aligned with the break
-/// that is visible on the chart. LastFiredStructureEventTime prevents re-firing on the
-/// same event across consecutive calculations.
+/// Flow (all four conditions must be true on the same bar for IsSignal to return true):
+///   1. The last recorded structural event is a bullish CHoCH that has not fired yet.
+///   2. The CHoCH is fresh enough (MaxEventAgeCandles from now).
+///   3. A ZigZag Low pivot has formed *after* the CHoCH candle — that is the pullback.
+///   4. The current candle closes above that pullback Low — confirming the upward resumption.
+///
+/// Earlier implementations fired on step 1 already and used AllowStepIn to wait for 3+4.
+/// That caused signal statistics (entry price, time-in-trade, win rate) to be measured from
+/// the CHoCH candle instead of the actual entry, skewing results. Moving the step-3+4 checks
+/// into IsSignal means SignalPrice equals the breakout candle close, so statistics reflect
+/// the real entry.
 /// </summary>
 public class SignalBosChochLong : SignalCreateBase
 {
-    // Maximum number of candles to wait for pullback + resumption before giving up.
-    // Must be large enough to cover the ZigZag pivot-confirmation delay (5 candles) after
-    // the pullback forms, otherwise the signal expires before the pullback-L can be
-    // confirmed and the step-in check ever succeeds.
-    private const int GiveUpCandles = 25;
+    // Maximum age (in candles) of the CHoCH event that can still trigger a signal when the
+    // pullback break finally happens. Covers the typical CHoCH → pullback → break sequence
+    // plus some slack; anything older is treated as stale (e.g. after a bot restart).
+    private const int MaxEventAgeCandles = 35;
 
-    // Startup safety: only fire if the break happened within this many intervals of the
-    // current candle. Prevents signalling historical CHoCHs that the engine first sees
-    // after a restart.
-    // Must absorb the ZigZag pivot-confirmation delay (5 candles lookback in
-    // ZigZagLanceBeggs.CheckNewHigh/CheckNewLow) plus a few bars of slack, otherwise every
-    // freshly confirmed CHoCH would already be "too old" by the time this signal sees it.
-    private const int MaxEventAgeCandles = 10;
+    // After this signal fires, the trader has this many candles to actually open a position
+    // before we give up (for example when no slot is free).
+    private const int GiveUpCandles = 10;
 
 
     public override bool IsSignal()
@@ -61,8 +63,8 @@ public class SignalBosChochLong : SignalCreateBase
             return false;
         }
 
-        // Reject stale events (e.g. when the bot has just started and the last CHoCH
-        // is already many candles old).
+        // Reject ancient CHoCHs (e.g. when the bot has just started and the last CHoCH
+        // is already many candles old with its pullback long gone).
         CandleTime cutoff = CandleLast.Candle.OpenTime - MaxEventAgeCandles * Interval.Duration;
         if (data.LastStructureEventTime < cutoff)
         {
@@ -70,54 +72,31 @@ public class SignalBosChochLong : SignalCreateBase
             return false;
         }
 
-        ExtraText = $"CHoCH Long @ {data.LastStructureEventPrice}";
+        // A pullback pivot (ZigZag Low) must have formed after the CHoCH candle.
+        if (data.LastPivotType != 'L' || data.LastPivotTime <= data.LastStructureEventTime)
+        {
+            ExtraText = "waiting for pullback pivot (ZigZag Low)";
+            return false;
+        }
+
+        // The current candle must close above the pullback Low — this is the breakout that
+        // confirms the upward resumption and becomes the actual step-in moment.
+        if (CandleLast.Candle.Close <= data.LastPivotValue)
+        {
+            ExtraText = $"waiting for break above pullback low {data.LastPivotValue:N8}";
+            return false;
+        }
+
+        ExtraText = $"CHoCH Long break @ {CandleLast.Candle.Close:N8} (pullback L {data.LastPivotValue:N8})";
         data.LastFiredStructureEventTime = data.LastStructureEventTime;
         data.LastTrend = data.Trend;
         return true;
     }
 
 
-    // Report the break-candle price (HH that broke the prior structure) so the signal
-    // row matches what is visible on the chart.
-    public override decimal? OverrideSignalPrice => SymbolInterval.TrendBos.LastStructureEventPrice;
-
-
     /// <summary>
-    /// Allow step-in once a pullback pivot (ZigZag Low) has formed after the signal
-    /// and the current candle closes above that pivot — confirming the resumption upward.
-    /// </summary>
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        // Recalculate so LastPivot reflects the current bar
-        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-
-        CryptoTrendData trend = SymbolInterval.TrendBos;
-        CandleTime signalTime = CandleTime.FromDateTime(signal.CloseDate);
-
-        // Wait for a ZigZag Low to form after the signal (= the pullback pivot)
-        if (trend.LastPivotType != 'L' || trend.LastPivotTime <= signalTime)
-        {
-            ExtraText = "waiting for pullback pivot (ZigZag Low)";
-            return false;
-        }
-
-        // Current candle must close above the pullback pivot (resuming upward).
-        // An explicit "candle must be bullish" (close > open) check used to be added here,
-        // but it was a redundant second filter that often blocked valid re-entries: close
-        // above the pullback-L after a confirmed pivot already proves the resumption.
-        if (CandleLast.Candle.Close <= trend.LastPivotValue)
-        {
-            ExtraText = $"price {CandleLast.Candle.Close:N8} not above pivot low {trend.LastPivotValue:N8}";
-            return false;
-        }
-
-        return true;
-    }
-
-
-    /// <summary>
-    /// Give up when the BOS/CHoCH structure has reverted to Bearish, or when GiveUpCandles
-    /// have passed without a valid pullback + resumption entry.
+    /// Give up when the BOS/CHoCH structure has reverted to Bearish, or when the trader fails
+    /// to pick up the signal within GiveUpCandles bars after it fired.
     /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
