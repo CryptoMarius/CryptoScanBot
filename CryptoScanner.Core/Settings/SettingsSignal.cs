@@ -55,6 +55,9 @@ public class SettingsSignal
     // BBMA (Oma Ally)
     public SettingsSignalStrategyBbma Bbma = new();
 
+    // Darvas-style Box Theory
+    public SettingsSignalStrategyBox Box = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

@@ -23,13 +23,16 @@ public enum CryptoSignalStrategy
 
 #if DEBUG
     Trend = 31,
-#endif
 
     TrendBosChoch = 32,
+
+    Box = 33,
 
     Bbma = 44,
 
     GaussianScalp = 45,
+#endif
+
 
 
 #if DEBUG
