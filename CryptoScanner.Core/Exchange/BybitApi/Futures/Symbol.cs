@@ -1,5 +1,6 @@
 ﻿using Bybit.Net.Clients;
 using Bybit.Net.Enums;
+using Bybit.Net.Objects.Models.V5;
 
 using CryptoExchange.Net.SharedApis;
 
@@ -29,7 +30,8 @@ public class Symbol() : SymbolBase(), ISymbol
                 // Tickers for the 24h volume
                 GlobalData.AddTextToLogTab($"Reading symbol ticker information from {ExchangeBase.ExchangeOptions.ExchangeName}");
                 LimitRate.WaitForFairWeight(1);
-                var tickerInfo = await api.ExchangeData.GetLinearInverseTickersAsync(Category.Linear) ?? throw new ExchangeException("No ticker data received");
+                var tickerInfo = await api.ExchangeData.GetLinearInverseTickersAsync(Category.Linear) ??
+                    throw new ExchangeException("No ticker data received");
                 if (!tickerInfo.Success)
                     GlobalData.AddTextToLogTab("error getting symbol ticker {tickersInfos.Error}");
                 if (tickerInfo == null)
@@ -46,13 +48,27 @@ public class Symbol() : SymbolBase(), ISymbol
 
 
                 GlobalData.AddTextToLogTab($"Reading symbol information from {ExchangeBase.ExchangeOptions.ExchangeName}");
-                LimitRate.WaitForFairWeight(1);
-                var symbolInfo = await api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear) ?? throw new ExchangeException("No symbol data received");
-                if (!symbolInfo.Success)
-                    GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
-                if (symbolInfo.Data == null)
-                    throw new ExchangeException("Geen exchange data ontvangen (2)");
-                SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
+
+                int page = 1;
+                string? pageCursor = null;
+                List<BybitLinearInverseSymbol> symbols = [];
+                while (true)
+                {
+                    LimitRate.WaitForFairWeight(1);
+                    var symbolInfo = await api.ExchangeData.GetLinearInverseSymbolsAsync(Category.Linear, cursor: pageCursor) ??
+                        throw new ExchangeException("No symbol data received");
+                    if (!symbolInfo.Success)
+                        GlobalData.AddTextToLogTab("error getting exchangeinfo " + symbolInfo.Error);
+                    if (symbolInfo.Data == null)
+                        throw new ExchangeException("no exchange data received (2)");
+                    SaveExchangeInfo(symbolInfo.OriginalData, $"symbols{page++}.json");
+
+                    symbols.AddRange(symbolInfo.Data.List);
+
+                    pageCursor = symbolInfo.Data.NextPageCursor;
+                    if (symbolInfo.Data.List.Length == 0 || string.IsNullOrEmpty(symbolInfo.Data.NextPageCursor))
+                        break;
+                }
 
 
                 // Om achteraf de niet aangeboden munten te deactiveren
@@ -64,7 +80,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         //BybitSpotSymbol
                         //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
-                        foreach (var symbolData in symbolInfo.Data.List)
+                        foreach (var symbolData in symbols)
                         {
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
