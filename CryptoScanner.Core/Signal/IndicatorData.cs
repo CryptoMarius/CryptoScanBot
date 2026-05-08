@@ -76,7 +76,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     }
 
 
-    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval, 
+    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime candleOpenTime, int calculateCandles = -1)
     {
         if (!TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? _))

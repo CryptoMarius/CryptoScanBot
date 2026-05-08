@@ -208,8 +208,8 @@ public class SignalCreateBase
 
         return true;
     }
-    
-    
+
+
     protected MyData? HadStobbInThelastXCandles(CryptoTradeSide side, int skipCandleCount, int candleCount)
     {
         // Is de prijs onlangs dicht bij de onderste bb geweest?

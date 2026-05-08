@@ -51,12 +51,12 @@ public static class StochHelper
 
 
 
-    public static bool StochOversold(this MyData candle)
+    public static bool StochOversold(this MyData candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten kleiner zijn dan 20% (oversold)
-        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold)
+        if (candle.CandleData?.StochSignal > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
             return false;
-        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold)
+        if (candle.CandleData?.StochOscillator > GlobalData.Settings.General.SettingsStoch.Oversold - correction)
             return false;
         return true;
     }
@@ -96,12 +96,12 @@ public static class StochHelper
     //}
 
 
-    public static bool StochOverbought(this MyData candle)
+    public static bool StochOverbought(this MyData candle, int correction = 0)
     {
         // Stochastic Oscillator: K en D (langzaam) moeten groter zijn dan 80% (overbought)
-        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought)
+        if (candle.CandleData?.StochSignal < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
             return false;
-        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought)
+        if (candle.CandleData?.StochOscillator < GlobalData.Settings.General.SettingsStoch.Overbought + correction)
             return false;
         return true;
     }

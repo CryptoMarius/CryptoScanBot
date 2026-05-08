@@ -523,12 +523,12 @@ public class PositionMonitor //: IDisposable
 
 
                                 // Create position + entry part
-                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, tradeSide, 
+                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, tradeSide,
                                     symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);
-                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry, 
+                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
                                     signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy,
                                     entryPrice, LastCandle1mCloseTimeDate);
                             }
