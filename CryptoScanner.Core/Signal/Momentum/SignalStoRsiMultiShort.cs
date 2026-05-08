@@ -52,6 +52,8 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
         // a price condition that persists longer across timeframes, so that variant fires more often.
         int okay = 4;
         ExtraText = "";
+        int addRsiAmount = 0;
+        int addStochAmount = 0;
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
@@ -59,8 +61,8 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
             if (!result.success)
                 return false;
 
-            if (IndicatorsOkay(result.candle!) && result.candle!.StochOverbought()
-                && result.candle!.RsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+            if (IndicatorsOkay(result.candle!) && result.candle!.StochOverbought(addStochAmount)
+                && result.candle!.RsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount + addRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -80,6 +82,8 @@ public class SignalStoRsiMultiShort : SignalSbmBaseShort
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
+            addRsiAmount -= 5;
+            addStochAmount -= 5;
         }
 
 
