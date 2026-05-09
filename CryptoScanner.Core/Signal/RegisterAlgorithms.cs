@@ -1,5 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
+#if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
+#endif
 using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.Momentum;
 using CryptoScanner.Core.Signal.Other;

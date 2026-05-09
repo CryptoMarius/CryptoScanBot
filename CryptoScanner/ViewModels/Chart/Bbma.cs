@@ -1,7 +1,9 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
+#if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
+#endif
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -208,6 +210,7 @@ public class Bbma
         }
 
 
+#if DEBUG
         // Pass maxDate so CollectCandles builds a history window ending at the last visible candle,
         // ensuring TryGetCandle hits for every candle in the minDate..maxDate range.
         CryptoIndicatorDataList indicatorDataList = [];
@@ -278,6 +281,7 @@ public class Bbma
                 }
             }
         }
+#endif
 
 
         chart.Series.Insert(0, seriesBandLow);
