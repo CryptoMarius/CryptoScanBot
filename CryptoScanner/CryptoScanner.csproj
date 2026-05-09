@@ -30,6 +30,7 @@
 	
 	<PropertyGroup>
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+		<AssemblyName>CryptoScanBot</AssemblyName>
 	</PropertyGroup>
 
 
