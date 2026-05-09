@@ -12,6 +12,15 @@ public partial class SignalViewModel : BaseConvertersViewModel
 
     public required CryptoSignal Object { get; set; }
 
+    public bool IsInvalid
+    {
+        get 
+        {
+            return Object.IsInvalid;
+        }
+    }
+    
+
     //public int Id => Object.Id;
     private string? _IdText;
     public string Id

@@ -8,8 +8,8 @@
              xmlns:vm="using:CryptoScanner.ViewModels"
              x:DataType="vm:SignalGridViewModel">
 
-
-        <DataGrid x:Name="SignalDataGrid"
+	
+	<DataGrid x:Name="SignalDataGrid"
                   ItemsSource="{Binding Signals}"
                   IsReadOnly="True" 
                   AutoGenerateColumns="False"
@@ -21,7 +21,23 @@
                   BorderThickness="0" BorderBrush="Transparent"
 				  ColumnHeaderHeight="32" RowHeight="22">
 
-            <DataGrid.Columns>
+		<DataGrid.Styles>
+			<Style Selector="TextBlock.strikethrough">
+				<Setter Property="TextDecorations" Value="Strikethrough" />
+			</Style>
+
+			<!-- Grijs maken wanneer invalid -->
+			<Style Selector="TextBlock.invalid">
+				<Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+				<!-- Fluent theme -->
+				<!-- Alternatieven die vaak werken: -->
+				<!-- Value="{DynamicResource TextFillColorDisabledBrush}" (aanbevolen) -->
+				<!-- Value="{DynamicResource ThemeControlMidBrush}" -->
+				<!-- Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" -->
+			</Style>
+		</DataGrid.Styles>
+
+		<DataGrid.Columns>
                 <!-- Id (Hidden by default) -->
                 <DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False" >
                     <DataGridTemplateColumn.CellTemplate>
@@ -38,12 +54,13 @@
                 <DataGridTextColumn Header="Exchange" Width="110" MinWidth="100" SortMemberPath="Exchange" 
                                     IsVisible="False" Binding="{Binding Exchange}" />
 
-                <!-- Symbol -->
+                <!-- Symbol Classes.strikethrough="{Binding IsInvalid}" -->
                 <DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
 	                <DataGridTemplateColumn.CellTemplate>
 		                <DataTemplate>
 			                <Border Background="{Binding SymbolBackground}">
-				                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
+				                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}"
+										   Classes.invalid="{Binding IsInvalid}"/>
 			                </Border >
 		                </DataTemplate>
 	                </DataGridTemplateColumn.CellTemplate>
@@ -63,7 +80,8 @@
                 <DataGridTemplateColumn Header="Interval" Width="60" MinWidth="50" SortMemberPath="Interval" >
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Interval}"/>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Interval}"
+									   Classes.invalid="{Binding IsInvalid}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -73,7 +91,8 @@
 	                <DataGridTemplateColumn.CellTemplate>
 		                <DataTemplate>
 			                <Border Background="{Binding StrategyBackground}">
-				                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Strategy}" />
+				                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Strategy}"
+										   Classes.invalid="{Binding IsInvalid}"/>
 			                </Border >
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
