@@ -13,6 +13,7 @@ namespace CryptoScanner.Core.Signal.Experiment;
 ///   - RSI(30) &lt; 50 (momentum confirmation)
 ///   - MACD(24/52/9) histogram &lt; 0 (trend validation)
 /// </summary>
+#if DEBUG
 public class SignalGaussianScalpShort : SignalGaussianScalpBase
 {
     public override bool IndicatorsOkay(MyData data)
@@ -126,3 +127,4 @@ public class SignalGaussianScalpShort : SignalGaussianScalpBase
         return false;
     }
 }
+#endif

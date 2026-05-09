@@ -25,6 +25,7 @@ en biedt daartussen verschillende instapmomenten.
     Re-entry(na CSM) : Na een momentum - uitbraak keert de prijs vaak terug naar de MA5/10 voor een tweede instapkans.
 */
 
+#if DEBUG
 public class SignalBbmaLong : SignalBbmaBase
 {
     /// <summary>
@@ -392,3 +393,4 @@ public class SignalBbmaLong : SignalBbmaBase
         return false;
     }
 }
+#endif

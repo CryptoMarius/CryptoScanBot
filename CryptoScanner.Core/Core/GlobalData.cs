@@ -785,6 +785,8 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
+#if DEBUG
         StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
+#endif
     }
 }

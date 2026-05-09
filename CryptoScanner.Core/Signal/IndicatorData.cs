@@ -222,6 +222,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
+#if DEBUG
         // https://dotnet.stockindicators.dev/utilities/#content
         // Weighted Moving Average is the linear weighted average of price over a lookback window.
         // This also called Linear Weighted Moving Average(LWMA).
@@ -231,6 +232,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
+#endif
 
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
@@ -276,9 +278,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             lookbackPeriods: GlobalData.Settings.General.SettingsRsi.Length);
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
 
+#if DEBUG
         // GaussianScalp strategy: RSI(30) and MACD(24/52/9)
         List<RsiResult> rsiList30 = (List<RsiResult>)history.GetRsi(lookbackPeriods: 30);
         List<MacdResult> macdList24 = (List<MacdResult>)history.GetMacd(fastPeriods: 24, slowPeriods: 52, signalPeriods: 9);
+#endif
         //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
 #if EXTRASTRATEGIES
@@ -351,11 +355,13 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 //if (slopeSma200List != null && index < slopeSma200List.Count)
                 //    candleData.SlopeSma200 = slopeSma200List[index].Slope;
 
+#if DEBUG
                 candleData.Ema50 = emaList50[index].Ema;
                 candleData.Wma05Low = wmaList05Low[index].Wma;
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
+#endif
 
 #if DEBUG
                 candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
@@ -372,12 +378,14 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
 
+#if DEBUG
                 // GaussianScalp indicators
                 candleData.Rsi30 = rsiList30[index].Rsi;
                 candleData.MacdValue24 = macdList24[index].Macd;
                 candleData.MacdSignal24 = macdList24[index].Signal;
                 candleData.MacdHistogram24 = macdList24[index].Histogram;
                 //candleData.SlopeMacd = slopeMacdList[index].Slope;
+#endif
 
 #if DEBUG
                 // Test

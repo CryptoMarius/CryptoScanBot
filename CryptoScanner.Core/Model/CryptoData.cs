@@ -18,6 +18,7 @@ public class CryptoData
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
 
+#if DEBUG
     [Computed]
     public double? KeltnerUpperBand { get; set; }
     [Computed]
@@ -25,6 +26,7 @@ public class CryptoData
     [Computed]
     public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
+#endif
 
     // MACD indicator values
     public double? MacdValue { get; set; } // blue - Oscillator
@@ -77,6 +79,7 @@ public class CryptoData
     public double? Sma200 { get; set; }
     //public double? SlopeSma200 { get; set; }
 
+#if DEBUG
     // Now outside the if debug
     public double? Ema50 { get; set; }
     [Computed]
@@ -87,6 +90,7 @@ public class CryptoData
     public double? Wma10Low { get; set; }
     [Computed]
     public double? Wma10High { get; set; }
+#endif
 
     // RSI indicator
     public double? Rsi { get; set; }
@@ -94,6 +98,7 @@ public class CryptoData
     //public float RsiSurface { get; set; }
     //public float RsiSurface2 { get; set; }
 
+#if DEBUG
     // RSI (period 30) — used by GaussianScalp strategy
     [Computed]
     public double? Rsi30 { get; set; }
@@ -105,6 +110,7 @@ public class CryptoData
     public double? MacdSignal24 { get; set; }
     [Computed]
     public double? MacdHistogram24 { get; set; }
+#endif
 
     // Parabolic Sar indicator
     public double? PSar { get; set; }
@@ -121,9 +127,11 @@ public class CryptoData
         BollingerBandsDeviation = source.BollingerBandsDeviation;
         BollingerBandsPercentage = source.BollingerBandsPercentage;
 
+#if DEBUG
         KeltnerUpperBand = source.KeltnerUpperBand;
         KeltnerCenterLine = source.KeltnerCenterLine;
         KeltnerLowerBand = source.KeltnerLowerBand;
+#endif
 
         // MACD indicator values
         MacdValue = source.MacdValue;
@@ -140,12 +148,14 @@ public class CryptoData
         Rsi = source.Rsi;
         //SlopeRsi = source.SlopeRsi;
         //RsiSurface = source.RsiSurface;
+#if DEBUG
         Rsi30 = source.Rsi30;
 
         // MACD (24/52/9) indicator values
         MacdValue24 = source.MacdValue24;
         MacdSignal24 = source.MacdSignal24;
         MacdHistogram24 = source.MacdHistogram24;
+#endif
 
 #if DEBUG
         // EMA indicator values
@@ -175,11 +185,13 @@ public class CryptoData
         Sma200 = source.Sma200;
         //SlopeSma200 = source.SlopeSma200;
 
+#if DEBUG
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;
         Wma10High = source.Wma10High;
+#endif
 
         // Parabolic SAR indicator value
         PSar = source.PSar;

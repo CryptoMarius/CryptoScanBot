@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
+#if DEBUG
 namespace CryptoScanner.Core.Signal.Bbma;
 
 public class SignalBbmaBase : SignalCreateBase
@@ -252,3 +253,4 @@ public class SignalBbmaBase : SignalCreateBase
     //}
 
 }
+#endif
