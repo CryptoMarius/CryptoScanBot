@@ -66,67 +66,144 @@ public class SignalCreateBase
     }
 
 
-    public virtual string DisplayText()
-        => $"stoch={CandleLast.CandleData?.StochOscillator:N8} signal={CandleLast.CandleData?.StochSignal:N8}";
-
-
     /// <summary>
-    /// Ophouden met positie nemen
+    /// Give up when the trader fails to pick up the signal within GiveUpCandles bars
+    /// after it fired (for example when no trading slot is free).
     /// </summary>
     public virtual bool GiveUp(CryptoSignal signal)
     {
-        ExtraText = "";
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
+        {
+            ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            return true;
+        }
+
         return false;
     }
-
 
     /// <summary>
     /// Extra controles nadat we het accepteren
     /// </summary>
-    public virtual bool AllowStepIn(CryptoSignal signal) => true;
+    public virtual bool AllowStepIn(CryptoSignal signal)
+    {
+        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
+            return false;
 
 
-    //// Get the candle and indicator data from the signal interval
-    //internal bool TryGetCandle(CandleTime time, out MyData? myData)
-    //{
-    //    if (SymbolInterval.CandleList.TryGetValue(time, out CryptoCandle? candle) &&
-    //        IndicatorData.Data.TryGetValue(time, out CandleIndicatorData? indicator))
-    //    {
-    //        myData = new()
-    //        {
-    //            Candle = candle!,
-    //            CandleData = indicator!
-    //        };
-    //        return true;
-    //    }
-    //    else
-    //    {
-    //        myData = null;
-    //        return false;
-    //    }
-    //}
 
-    //// Get the candle and indicator data from a DIFFERENT interval
-    //internal bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
-    //{
-    //    var symbolInterval = Symbol.GetSymbolInterval(interval.IntervalPeriod);
-    //    if (symbolInterval.CandleList.TryGetValue(time, out CryptoCandle? candle) &&
-    //        IndicatorDataList.TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData) &&
-    //        indicatorData!.Data.TryGetValue(time, out CandleIndicatorData? indicator))
-    //    {
-    //        myData = new()
-    //        {
-    //            Candle = candle!,
-    //            CandleData = indicator!
-    //        };
-    //        return true;
-    //    }
-    //    else
-    //    {
-    //        myData = null;
-    //        return false;
-    //    }
-    //}
+        // ********************************************************************
+        // Price going into the right direction
+        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
+        {
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (CandleLast.Candle.Close < candlePrev!.Candle.Close)
+                    {
+                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes down even more {CandleLast.Candle.Close:N8}";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (CandleLast.Candle.Close > candlePrev!.Candle.Close)
+                    {
+                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} goes up even more {CandleLast.Candle.Close:N8}";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        // ********************************************************************
+        // MACD recovering
+        if (GlobalData.Settings.Trading.CheckIncreasingMacd)
+        {
+            int barCount = 1;
+            if (SignalStrategy == CryptoSignalStrategy.Sbm1 || 
+                SignalStrategy == CryptoSignalStrategy.Sbm2 ||
+                SignalStrategy == CryptoSignalStrategy.Sbm3)
+                barCount = GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery;
+
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (!this.IsMacdRecoveryOversold(barCount))
+                        return false;
+                    break;
+                case CryptoTradeSide.Short:
+                    if (!this.IsMacdRecoveryOverbought(barCount))
+                        return false;
+                    break;
+            }
+        }
+
+        // ********************************************************************
+        // RSI recovering
+        if (GlobalData.Settings.Trading.CheckIncreasingRsi)
+        {
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (CandleLast?.CandleData?.Rsi < candlePrev?.CandleData?.Rsi)
+                    {
+                        ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (CandleLast?.CandleData?.Rsi > candlePrev?.CandleData?.Rsi)
+                    {
+                        ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering >= {CandleLast.CandleData.Rsi:N8}";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        // ********************************************************************
+        // STOCH recovering (Stochastic)
+        // Red %D = signal, average from the last 3 %K values
+        // Blue %K = Oscilator calculated from the last 14 candles
+        if (GlobalData.Settings.Trading.CheckIncreasingStoch)
+        {
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    // %K should recover
+                    if (CandleLast?.CandleData?.StochOscillator < candlePrev?.CandleData?.StochOscillator)
+                    {
+                        ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
+                        return false;
+                    }
+
+                    // %D and %K should have crossed, %K(quick/blue) > %D(slow/red)
+                    if (CandleLast?.CandleData?.StochOscillator < CandleLast?.CandleData?.StochSignal)
+                    {
+                        ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    // %K should recover
+                    if (CandleLast?.CandleData!.StochOscillator > candlePrev?.CandleData?.StochOscillator)
+                    {
+                        ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering > {CandleLast.CandleData?.StochOscillator:N8}";
+                        return false;
+                    }
+
+                    // %D and %K should have crossed, %K(quick/blue) < %D(slow/red)
+                    if (CandleLast?.CandleData?.StochSignal > CandleLast?.CandleData?.StochOscillator)
+                    {
+                        ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not below %K {candlePrev?.CandleData?.StochOscillator:N8}";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        return true;
+    }
+
 
 
     // Get the candle and indicator data from the signal interval
@@ -452,6 +529,7 @@ public class SignalCreateBase
         return false;
     }
 
+    
     public bool CheckMaCrossings(out string response)
     {
         if (GlobalData.Settings.Signal.Sbm.Ma200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Lookback, out int candlesAgo))

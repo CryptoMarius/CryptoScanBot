@@ -3,7 +3,7 @@ using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
-public class SignalSbm1Long : SignalSbmBaseLong
+public class SignalSbm1Long : SignalSbmBase
 {
 
     // TODO: Stoch cross over %K/%D (in AllowStepIn)

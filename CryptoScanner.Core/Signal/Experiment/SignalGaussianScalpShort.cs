@@ -68,32 +68,6 @@ public class SignalGaussianScalpShort : SignalGaussianScalpBase
     }
 
 
-    /// <summary>
-    /// Allow step-in only when the candle that follows the signal is convincingly bearish:
-    /// close must be below the signal candle's close (price actually moved down).
-    /// </summary>
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        if (!GetPrevCandle(CandleLast, out MyData? signalCandle))
-            return false;
-
-        // Current candle close must be below the signal candle's close
-        if (CandleLast.Candle.Close >= signalCandle!.Candle.Close)
-        {
-            ExtraText = $"price not moving down: {CandleLast.Candle.Close:N8} >= {signalCandle.Candle.Close:N8}";
-            return false;
-        }
-
-        // Current candle must be a bearish candle (close < open)
-        if (CandleLast.Candle.Close >= CandleLast.Candle.Open)
-        {
-            ExtraText = "no bearish confirmation candle";
-            return false;
-        }
-
-        return true;
-    }
-
 
     /// <summary>
     /// Give up when the setup has not triggered within 2 candles after the signal,

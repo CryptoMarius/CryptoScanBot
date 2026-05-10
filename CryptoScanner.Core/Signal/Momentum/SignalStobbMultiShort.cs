@@ -5,7 +5,7 @@ using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
-public class SignalStobbMultiShort : SignalSbmBaseShort
+public class SignalStobbMultiShort : SignalSbmBase
 {
 
 
@@ -22,15 +22,6 @@ public class SignalStobbMultiShort : SignalSbmBaseShort
             return false;
 
         return true;
-    }
-
-
-    public override string DisplayText()
-    {
-        return string.Format("stoch.oscillator={0:N8} stoch.signal={1:N8}",
-            CandleLast!.CandleData!.StochOscillator,
-            CandleLast!.CandleData.StochSignal
-        );
     }
 
 

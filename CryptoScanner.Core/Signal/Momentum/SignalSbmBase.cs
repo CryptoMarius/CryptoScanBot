@@ -1,4 +1,8 @@
-﻿namespace CryptoScanner.Core.Signal.Momentum;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
+
+namespace CryptoScanner.Core.Signal.Momentum;
 
 public class SignalSbmBase : SignalCreateBase
 {
@@ -22,5 +26,81 @@ public class SignalSbmBase : SignalCreateBase
 
         return true;
     }
+
+    public override bool AdditionalChecks(MyData candle, out string response)
+    {
+        switch (SignalSide)
+        {
+            case Enums.CryptoTradeSide.Long:
+                if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+                {
+                    response = "no macd recovery";
+                    return false;
+                }
+
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
+                    !candle.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
+                    !candle.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
+                    !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    return false;
+                
+                break;
+            case Enums.CryptoTradeSide.Short:
+                if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+                {
+                    response = "no macd recovery";
+                    return false;
+                }
+                
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
+                    !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
+                    !candle.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                    return false;
+                if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
+                    !candle.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                    return false;
+                break;
+        }
+
+        if (!CheckMaCrossings(out response))
+            return false;
+
+        return true;
+    }
+
+
+    public override bool GiveUp(CryptoSignal signal)
+    {
+        if (!base.GiveUp(signal))
+            return false;
+
+        switch (SignalSide)
+        {
+            case Enums.CryptoTradeSide.Long:
+                if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
+                {
+                    ExtraText = "Close of LastPrice above bb.upper";
+                    return true;
+                }
+                break;
+            case Enums.CryptoTradeSide.Short:
+                if (CandleLast!.Candle.Close < (decimal)CandleLast!.CandleData?.BollingerBandsLowerBand! || Symbol.LastPrice < (decimal)CandleLast.CandleData?.BollingerBandsLowerBand!)
+                {
+                    ExtraText = "Close of LastPrice below bb.lower";
+                    return true;
+                }
+                break;
+        }
+
+        ExtraText = "";
+        return false;
+    }
+
 }
 

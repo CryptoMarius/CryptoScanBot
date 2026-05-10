@@ -106,11 +106,4 @@ public class SignalDominantLevelShort : SignalCreateBase
         return result;
     }
 
-
-
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        // Is just an alarm that the zone is becoming closeby
-        return false;
-    }
 }

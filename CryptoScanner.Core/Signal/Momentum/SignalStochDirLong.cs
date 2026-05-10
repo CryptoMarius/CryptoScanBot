@@ -31,7 +31,7 @@ namespace CryptoScanner.Core.Signal.Momentum;
 /// Higher-interval mapping (~12x ratio, same convention as BBMA):
 ///   5m → 1h,  15m → 4h,  1h → 1d,  etc.
 /// </summary>
-public class SignalStochDirLong : SignalSbmBaseLong
+public class SignalStochDirLong : SignalSbmBase
 {
     // Stoch %K zone boundaries on the higher TF (bullish momentum range)
     private const double StochZoneLow = 30.0;
@@ -58,12 +58,6 @@ public class SignalStochDirLong : SignalSbmBaseLong
         return true;
     }
 
-
-    public override bool AdditionalChecks(MyData data, out string response)
-    {
-        response = "";
-        return true;
-    }
 
 
     /// <summary>
@@ -201,12 +195,4 @@ public class SignalStochDirLong : SignalSbmBaseLong
         return true;
     }
 
-
-    /// <summary>
-    /// Always true — the signal fires at the exact lower-TF entry moment.
-    /// </summary>
-    public override bool AllowStepIn(CryptoSignal signal)
-    {
-        return true;
-    }
 }

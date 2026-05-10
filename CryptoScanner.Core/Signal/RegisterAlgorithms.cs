@@ -168,6 +168,14 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe.np",
+            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeNp,
+            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
+            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
+        });
+
         //#if DEBUG
         //        Register(new AlgorithmDefinition()
         //        {

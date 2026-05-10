@@ -10,7 +10,7 @@ namespace CryptoScanner.Core.Signal.Momentum;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalStoRsiMultiLong : SignalSbmBaseLong
+public class SignalStoRsiMultiLong : SignalSbmBase
 {
 
 
@@ -29,12 +29,6 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
         return true;
     }
 
-    public override bool AdditionalChecks(MyData data, out string response)
-    {
-        // disable sbm conditions
-        response = "";
-        return true;
-    }
 
     public override bool IsSignal()
     {
@@ -82,8 +76,8 @@ public class SignalStoRsiMultiLong : SignalSbmBaseLong
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
-            addRsiAmount += 5;
-            addStochAmount += 5;
+            addRsiAmount += 2;
+            addStochAmount += 2;
         }
 
 

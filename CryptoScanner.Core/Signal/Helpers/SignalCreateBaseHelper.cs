@@ -16,6 +16,8 @@ public static class SignalCreateBaseHelper
             if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
                 return false;
 
+            // No check for negative macd?
+
             last = prev;
         }
 
@@ -35,6 +37,8 @@ public static class SignalCreateBaseHelper
 
             if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)
                 return false;
+
+            // No check for positive macd?
 
             last = prev;
         }

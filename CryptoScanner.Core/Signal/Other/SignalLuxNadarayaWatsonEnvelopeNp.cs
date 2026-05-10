@@ -6,7 +6,7 @@ using CryptoScanner.Core.Signal.Indicator;
 
 namespace CryptoScanner.Core.Signal.Other;
 
-public class SignalLuxNadarayaWatsonEnvelope : SignalCreateBase
+public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
 {
 
     public override bool IndicatorsOkay(MyData data)
@@ -182,7 +182,7 @@ public class SignalLuxNadarayaWatsonEnvelope : SignalCreateBase
         NweIndicator indicator = new(
             bandwidth: (double)GlobalData.Settings.Signal.Nwe.BandWidth,
             multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
-            smoothRepainting: true
+            smoothRepainting: false
            );
         var candles = SymbolInterval.CandleList;
         var nwe = indicator.Calculate(candles);

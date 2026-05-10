@@ -3,7 +3,7 @@ using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Momentum;
 
-public class SignalSbm2Short : SignalSbmBaseShort
+public class SignalSbm2Short : SignalSbmBase
 {
 
     public override bool IsSignal()
