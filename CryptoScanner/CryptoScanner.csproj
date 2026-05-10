@@ -171,8 +171,6 @@
 	<ItemGroup>
 	  <None Remove="Help\CryptoScanBot.pdf" />
 	  <None Remove="Help\Release Changes.txt" />
-	  <None Remove="Help\Roadmap.txt" />
-	  <None Remove="Help\Weblinks example.json" />
 	</ItemGroup>
 
 
@@ -181,12 +179,6 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="Help\Release Changes.txt">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	  <Content Include="Help\Roadmap.txt">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	  <Content Include="Help\Weblinks example.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	</ItemGroup>
@@ -200,6 +192,9 @@
 
 	<ItemGroup>
 	  <None Update="Help\CryptoScanBot.docx">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Help\Roadmap.txt">
 	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

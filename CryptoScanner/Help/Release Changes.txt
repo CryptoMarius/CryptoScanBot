@@ -1,12 +1,14 @@
 CryptoScanBot release historie:
 
 xx-05-2025 2.5.2
-- TODO: Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
-- TODO: Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
-- De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardoro er wel meldingen ontstaan
+- TODO: Testen: Aangepaste strategien ivm refactoring
+- TODO: Testen: Aangepaste NWE en NWE.NP strategie
+- TODO: Uitzoeken: Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
+- Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
+- De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardooor er meer meldingen ontstaan
+- Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values" opgelost
 - Binance futures - Uitsluiten van de Chinese munten
-- Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values"
-  Resten: NaNDoubleHandler
+- Roadmap.txt verwijderd, allemaal nogal gedateerde todo's
 
 09-05-2025 2.5.1
 - Bybit Futures - De symbolen werden niet goed opgehaald, de ehange gebruikt tegenwoordig paginatie

@@ -4,7 +4,7 @@ Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep
 
 
 BUGS:
-Bug Bitvavo, haalt iedere keer alle candles op? (weet niet wat Claude aan het knoeien is/was), het beweegt wel, maar is niet stabiel?
+Bug Bitvavo, haalt iedere keer alle candles op? (weet niet wat Claude aan het knoeien is/was), het beweegt wel, maar verre van stabiel?
 Bug Als je nieuwe exchanges toevoeg wordt het url-bestand niet opnieuw aangemaakt (zou eigenlijk default de geregistreerde dan moeten pakken?), 
     en er is ook nog een onhandige InitializeUrls()! Onhandig zoals ik het aangepakt heb
 
@@ -18,7 +18,7 @@ BUG:
 
 
 
-Scanner (outdated):
+Scanner (nogal outdated, daarom nu uit de release):
 - Scanner - Je kunt de geluiden niet testen vanuit het instellingenscherm als je hebt ingesteld dat geluiden uit moeten staan (via vinkje hoofdscherm)
 - Scanner - Testen (over eigenlijk alle exchanges): Volume munten op alle exchanges (bybit spot is okay)
 - Scanner - Waarom mist de btcusdt op Kucoin Futures en mexc? Is waarschijnlijk onder een andere naam bekend..
