@@ -25,32 +25,32 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
     }
 
 
-    private static bool EnoughMomentum(List<decimal> nwe, int max, out decimal perc)
-    {
-        //// We noticed weak turn's
-        //int count = 15;
-        //decimal diff = 0;
-        //decimal value = nwe[max - 1];
-        //for (int i = max - 2; i > 0; i--)
-        //{
-        //    var o2 = nwe[i];
-        //    decimal d = Math.Abs(o2 - value);
-        //    if (d > diff)
-        //        diff = d;
+    //private static bool EnoughMomentum(List<decimal> nwe, int max, out decimal perc)
+    //{
+    //    //// We noticed weak turn's
+    //    //int count = 15;
+    //    //decimal diff = 0;
+    //    //decimal value = nwe[max - 1];
+    //    //for (int i = max - 2; i > 0; i--)
+    //    //{
+    //    //    var o2 = nwe[i];
+    //    //    decimal d = Math.Abs(o2 - value);
+    //    //    if (d > diff)
+    //    //        diff = d;
 
-        //    count--;
-        //    if (count == 0)
-        //        break;
-        //}
+    //    //    count--;
+    //    //    if (count == 0)
+    //    //        break;
+    //    //}
 
-        //// less than x% change is not enough
-        //perc = 100 * diff / value;
-        //if (perc < 0.25m)
-        //    return false
+    //    //// less than x% change is not enough
+    //    //perc = 100 * diff / value;
+    //    //if (perc < 0.25m)
+    //    //    return false
 
-        perc = 0;
-        return true;
-    }
+    //    perc = 0;
+    //    return true;
+    //}
 
 
     public override bool AdditionalChecks(MyData data, out string response)
@@ -175,8 +175,8 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
         }
 
         ExtraText = "";
-        if (!GetPrevCandle(CandleLast, out MyData? candlePrev))
-            return false;
+        //if (!GetPrevCandle(CandleLast, out MyData? candlePrev))
+        //    return false;
 
 
         NweIndicator indicator = new(
@@ -198,7 +198,7 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
             if (CandleLast!.Candle.Close < lowerband && CandleLast!.Candle.Open < lowerband
                 && CandleLast.Candle.Close > CandleLast!.Candle.Open)
             {
-                //ExtraText = $"{angle_degrees2:N2}�, {perc1:N2}%";
+                ExtraText = $"{nweLast.OpenTime.ToLocalTime():ddd yyyy-MM-dd HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={lowerband?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }
@@ -211,7 +211,7 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
             if (CandleLast!.Candle.Close > upperband && CandleLast!.Candle.Open > upperband
                 && CandleLast.Candle.Close < CandleLast!.Candle.Open)
             {
-                //ExtraText = $"{angle_degrees2:N2}�, {perc3:N2}%";
+                ExtraText = $"{nweLast.OpenTime.ToLocalTime():ddd yyyy-MM-dd HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={upperband?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }
