@@ -20,11 +20,11 @@
                       FontSize="12"/>
 
             <CheckBox IsChecked="{Binding CheckIncreasingStoch, Mode=TwoWay}"
-                      Content="Stoch not overbought/oversold"
+                      Content="Stoch must be increasing/decreasing"
                       FontSize="12"/>
 
             <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
-                      Content="Check price decrease/increase"
+                      Content="Check must be increasing/decreasing"
                       FontSize="12"/>
 
             <!-- Slot Limits -->
