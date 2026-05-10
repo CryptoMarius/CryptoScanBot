@@ -45,6 +45,7 @@ public class ZoneSession
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
     public bool ShowNadarayaWatsonEnvelope { get; set; } = true; // NWE non repainting?
     public bool ShowNadarayaWatsonEnvelopeRepainting { get; set; } = false;
+    public bool ShowGaussianFilter { get; set; } = false;
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowSmaLinesSbm { get; set; } = false;

@@ -475,7 +475,13 @@ public partial class ChartWindowViewModel : ObservableObject
         if (e.PropertyName == nameof(ChartSymbolSelectorViewModel.SelectedSymbol) ||
             e.PropertyName == nameof(ChartSymbolSelectorViewModel.SelectedInterval))
         {
-            // Symbol or interval changed - reload PlotModel
+            if (IsCalculating)
+            {
+                // A refresh is already running; remember to retry once it finishes.
+                // The retry picks up the latest ViewModel state via PickupUserInput().
+                _pendingRefresh = true;
+                return;
+            }
             RefreshCommand.ExecuteAsync(null);
         }
     }
@@ -510,6 +516,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
     private bool _refreshChart = false;
+    private bool _pendingRefresh = false; // set when a symbol/interval change arrived while IsCalculating
     private readonly Dictionary<string, string> optionsInChart = [];
     private bool Toggle(PlotModel model, string group, bool currentValue, string prefix = "")
     {
@@ -607,7 +614,7 @@ public partial class ChartWindowViewModel : ObservableObject
         }
     }
 
-    private static CandleTime lastCandleTime = CandleTime.MinValue;
+    private CandleTime lastCandleTime = CandleTime.MinValue;
     private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
@@ -643,6 +650,11 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "nwe.repainting";
         if (Toggle(model, group, Session.ShowNadarayaWatsonEnvelopeRepainting))
             NadarayaWatsonEnvelope.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
+
+        // Draw STD-Filtered N-Pole Gaussian Filter [Loxx]
+        group = "gaussian";
+        if (Toggle(model, group, Session.ShowGaussianFilter))
+            GaussianFilter.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Draw Bollinger Bands
         group = "bb";
@@ -1122,6 +1134,13 @@ public partial class ChartWindowViewModel : ObservableObject
         finally
         {
             IsCalculating = false;
+
+            // If the user changed symbol/interval while we were busy, process it now.
+            if (_pendingRefresh)
+            {
+                _pendingRefresh = false;
+                RefreshCommand.ExecuteAsync(null);
+            }
         }
     }
 
