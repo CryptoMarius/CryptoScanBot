@@ -116,19 +116,18 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
 
         // Precompute binomial coefficients and powers
         double[] binomial = new double[GaussianOrder + 1];
-        double[] powA     = new double[GaussianOrder + 1];
         double[] pow1mA   = new double[GaussianOrder + 1];
+        double   powAN    = Math.Pow(a, GaussianOrder);
         for (int r = 0; r <= GaussianOrder; r++)
         {
             binomial[r] = BinomialCoefficient(GaussianOrder, r);
-            powA[r]     = Math.Pow(a, r);
             pow1mA[r]   = Math.Pow(1.0 - a, r);
         }
 
         double[] filt = new double[src.Count];
         for (int i = 0; i < src.Count; i++)
         {
-            filt[i] = src[i] * powA[GaussianOrder];
+            filt[i] = src[i] * powAN;
             int sign = 1;
             for (int r = 1; r <= GaussianOrder; r++)
             {
@@ -163,7 +162,7 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
             // Rolling stdev (sample)
             double variance = 0;
             for (int j = start; j <= i; j++) variance += (src[j] - mean) * (src[j] - mean);
-            double stdev = count > 1 ? Math.Sqrt(variance / (count - 1)) : 0.0;
+            double stdev = count > 0 ? Math.Sqrt(variance / count) : 0.0; // population stdev (n), matching Pine ta.stdev biased=true default
 
             double filtdev = filterDev * stdev;
             price[i] = Math.Abs(src[i] - price[i - 1]) < filtdev ? price[i - 1] : src[i];
