@@ -73,17 +73,6 @@ public override void OnFrameworkInitializationCompleted()
     {
         System.Diagnostics.Debug.WriteLine($"App.InitializeGlobalData");
 
-        // Already done?
-
-        //// Initialize app variables
-        //GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
-
-        //var assembly = Assembly.GetExecutingAssembly().GetName();
-        //string appVersion = assembly.Version!.ToString();
-        //while (appVersion.EndsWith(".0.0"))
-        //    appVersion = appVersion[0..^2];
-        //GlobalData.AppVersion = appVersion;
-
         if (!Design.IsDesignMode)
         {
             // Subscribe the global event handler

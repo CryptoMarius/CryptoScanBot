@@ -8,6 +8,7 @@ namespace CryptoScanner.Commands;
 
 public class CommandShowChart : CommandBase
 {
+    private const string defaultInterval = "15m";
     private static ChartWindow? ChartWindow = null;
 
     public override void Execute(object? parameter)
@@ -36,6 +37,8 @@ public class CommandShowChart : CommandBase
                         vm2.SymbolSelector.SelectedQuote = dto.symbol.Quote;
                         if (dto.interval != null)
                             vm2.SymbolSelector.SelectedInterval = dto.interval.Name;
+                        else
+                            vm2.SymbolSelector.SelectedInterval = defaultInterval;
                     }
                     else throw new Exception("Problem chart viewmodel");
 
@@ -49,6 +52,8 @@ public class CommandShowChart : CommandBase
                         vm1.SymbolSelector.SelectedQuote = dto.symbol.Quote;
                         if (dto.interval != null)
                             vm1.SymbolSelector.SelectedInterval = dto.interval.Name;
+                        else
+                            vm1.SymbolSelector.SelectedInterval = defaultInterval;
                     }
 
                     // Restore if minimized
