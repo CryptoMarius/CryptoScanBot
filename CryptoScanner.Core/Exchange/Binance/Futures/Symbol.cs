@@ -75,6 +75,15 @@ public class Symbol() : SymbolBase(), ISymbol
 #endif
                                     continue;
                                 }
+
+                                if (symbolData.UnderlyingSubType.Contains("Chinese"))
+                                {
+#if DEBUG
+                                    //GlobalData.AddTextToLogTab($"{info.ExchangeName} UnderlyingSubType != {symbolData.UnderlyingSubType}");
+#endif
+                                    continue;
+                                }
+
                                 //Tijdelijk alles overnemen (vanwege into nieuwe velden)
                                 //De te gebruiken precisie in prijzen
                                 //symbol.BaseAssetPrecision = binanceSymbol.BaseAssetPrecision;
