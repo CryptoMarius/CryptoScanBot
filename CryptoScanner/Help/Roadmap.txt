@@ -2,33 +2,31 @@ Openstaande punten zijn de bevindingen, ideeën, diverse todo's tot dusver.
 Als je iets mist, geef het dat dan AUB even aan in een private PM of in de groep.
 (groot kans dat datgene we besproken hebben tussen wal en schip is beland)
 
+
+BUGS:
+Bug Bitvavo, haalt iedere keer alle candles op? (weet niet wat Claude aan het knoeien is/was), het beweegt wel, maar is niet stabiel?
+Bug Als je nieuwe exchanges toevoeg wordt het url-bestand niet opnieuw aangemaakt (zou eigenlijk default de geregistreerde dan moeten pakken?), 
+    en er is ook nog een onhandige InitializeUrls()! Onhandig zoals ik het aangepakt heb
+
 BUG: 
-- De week candles kloppen niet (het lijken bijna 2 intervallen te zijn die door elkaar lopen?)
-- (opgelost?)De barometer voor de 1d werkt niet meer goed (het gevolg van het reduceren van de symbols??) of was deze altijd al kapot?
 - (weinig impact?) De barometer berekening lijkt ook meerdere keren per interval aangeroepen te worden (jammer van de cpu)
-- (opgelost?)De excel dump laat zien dat de barometer op de 1d niet goed bwaard is, hersteld wordt, of berekend wordt (slechts de laatste waarden zijn zichtbaar, die net berekend zijn)
-(en oppassen, de barometer symbols zijn nu zichtbaar in de symbol grid om het te kunnen controleren)
 - ****** We halen nu alleen candles op voro de munten die boven het minimale volume zitten. Maar als een munt plotseling eronder of boven zit dan wordt de munt niet toegevoegd of verwijderd 
   aan de kline stream. Dus op basis van de volumes die we ophalen (momenteel default ieder uur) moeten we ook de kline stream soms bijwerken.
   Idee is om alleen de munten toe te voegen in een aparte kline ticker groep als het boven de minimale volume uitkomt (enn og niet mee deed)
 - De SBM 3 is echt helemaal kapot? long en short lijken niet goed (of komen te laat)
   Heb 1 conditie ook laten vervallen, wellicht is dat het? de prijs en psar vergelijking
-- TODO: PSAR inzichtelijk maken in de visualisatie (om het te kunnen vergelijken met TV)
 
-Scanner:
+
+
+Scanner (outdated):
 - Scanner - Je kunt de geluiden niet testen vanuit het instellingenscherm als je hebt ingesteld dat geluiden uit moeten staan (via vinkje hoofdscherm)
 - Scanner - Testen (over eigenlijk alle exchanges): Volume munten op alle exchanges (bybit spot is okay)
 - Scanner - Waarom mist de btcusdt op Kucoin Futures en mexc? Is waarschijnlijk onder een andere naam bekend..
 - Scanner - Documentatie Luxalgo Nadaraya-Watson envelope (zie voorlopig de indicator in Tradingview)
 - Scanner - Een beslissing maken over de Average min/max rechtsboven (een experimenteel item waar ontevreden over ben)
 - Scanner - De Pivots folder in de datamap bevat na verloop van tijd wel erg veel data (hier richting de 10 Gb!!)
-- Scanner - Mexc verliest wel erg vaak de candle stream verbinding (gemiddeld 1x per 30m, tijden varieeren sterk)
 - Scanner - Bij een initialisatie van een nieuwe exchange/database staat de op te starten exchange op een verkeerd item
 - Scanner - Controle of de max tijd die bij het ophalen van candles ervoor zorgt dat we te weinig candles maken (zie GetCandlesForInterval)?
-- Scanner - URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 
-            (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
-- Scanner - Fix nieuwe week interval in de chart formulier (geeft ergens een foutmelding)
-- Scanner - Wisselen van basismunt veroorzaak dubbele symbols in de database
 - Scanner - Visualisatie: Studie van orderblock, supply en demand en wat de verschillen tussen die twee eigenlijk zijn en of we ze kunnen visualiseren
 - Scanner - Visualisatie: Aspect ratio in het chart formulier proberen toe te passen (en ook in de formules daaronder)
 - Scanner - Visualisatie: x-as in het chart formulier is vaak niet zichtbaar (ligt eronder vreemd genoeg)
@@ -108,8 +106,10 @@ Scanner:
 - Scanner - (low priority) De laatst bekende Rsi, Stoch, enzovoort bij de munt opnemen zodat je ook een pair scanner oid van kunt maken.
             Dan moeten alle coins continue berekend worden en dat betekend heel veel meer cpu en geheugen (voorlopig niet, wel leuke gedachte..)
 
-Scanner:
+Exchanges:
 - Exchange Coinbase - Alleen maar fouten, problemen en crashes. De kline en price subscription werken niet dus dat gaat hem niet worden denk ik. Volgens documentatie is er ook geen 1m kline beschikbaar wel 1000 updates p/min
+- URL's van Bitmart, Blofin, HyperLiquid, Kraken en Kucoin futures controleren 
+  (lang niet alle exchanges zijn voor iedereen zichtbaar omdat het een soort van experimentele status heeft)
 
 
 Emulator:

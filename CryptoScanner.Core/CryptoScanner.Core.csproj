@@ -98,6 +98,217 @@
     <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker - Copy original.cs.txt" />
     <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old not okay.cs.txt" />
     <None Remove="Exchange\Mexc\Spot\SubscriptionKLineTicker.old okay.cs.txt" />
+    <None Remove="Sounds\Old\sound-jump-down.wav" />
+    <None Remove="Sounds\Old\sound-jump-up.wav" />
+    <None Remove="Sounds\Old\sound-sbm-overbought.wav" />
+    <None Remove="Sounds\Old\sound-sbm-oversold.wav" />
+    <None Remove="Sounds\Old\sound-stobb-overbought.wav" />
+    <None Remove="Sounds\Old\sound-stobb-oversold.wav" />
+    <None Remove="Sounds\Old\sound-storsi-overbought.wav" />
+    <None Remove="Sounds\Old\sound-storsi-oversold.wav" />
+    <None Remove="Sounds\Other\aksu.wav" />
+    <None Remove="Sounds\Other\ball_bearing.wav" />
+    <None Remove="Sounds\Other\bell_sound.wav" />
+    <None Remove="Sounds\Other\boing_sound_effect.wav" />
+    <None Remove="Sounds\Other\boxing_bell.wav" />
+    <None Remove="Sounds\Other\cool.wav" />
+    <None Remove="Sounds\Other\discord_halloween.wav" />
+    <None Remove="Sounds\Other\email_entact.wav" />
+    <None Remove="Sounds\Other\fade_in.wav" />
+    <None Remove="Sounds\Other\huawei.wav" />
+    <None Remove="Sounds\Other\la_cucaracha.wav" />
+    <None Remove="Sounds\Other\luana.wav" />
+    <None Remove="Sounds\Other\mind_transfer_no_jutsu.wav" />
+    <None Remove="Sounds\Other\notification.wav" />
+    <None Remove="Sounds\Other\popup.wav" />
+    <None Remove="Sounds\Other\proxima.wav" />
+    <None Remove="Sounds\Other\star_trek_energize.wav" />
+    <None Remove="Sounds\Other\suffocation.wav" />
+    <None Remove="Sounds\Other\xiaomi_fress.wav" />
+    <None Remove="Sounds\sound-dlz-overbought.wav" />
+    <None Remove="Sounds\sound-dlz-oversold.wav" />
+    <None Remove="Sounds\sound-domnear-overbought.wav" />
+    <None Remove="Sounds\sound-domnear-oversold.wav" />
+    <None Remove="Sounds\sound-domnearby-overbought.wav" />
+    <None Remove="Sounds\sound-domnearby-oversold.wav" />
+    <None Remove="Sounds\sound-fvg-overbought.wav" />
+    <None Remove="Sounds\sound-fvg-oversold.wav" />
+    <None Remove="Sounds\sound-heartbeat.wav" />
+    <None Remove="Sounds\sound-jump-down.wav" />
+    <None Remove="Sounds\sound-jump-up.wav" />
+    <None Remove="Sounds\sound-nwe-overbought.wav" />
+    <None Remove="Sounds\sound-nwe-oversold.wav" />
+    <None Remove="Sounds\sound-sbm-overbought.wav" />
+    <None Remove="Sounds\sound-sbm-oversold.wav" />
+    <None Remove="Sounds\sound-stobb-overbought.wav" />
+    <None Remove="Sounds\sound-stobb-overbought2.wav" />
+    <None Remove="Sounds\sound-stobb-oversold.wav" />
+    <None Remove="Sounds\sound-stobb-oversold2.wav" />
+    <None Remove="Sounds\sound-storsi-overbought.wav" />
+    <None Remove="Sounds\sound-storsi-oversold.wav" />
+    <None Remove="Sounds\sound-trade-notification.wav" />
+    <None Remove="Sounds\sound-trade-notification2.wav" />
+    <None Remove="Sounds\sound-uuh-overbought.wav" />
+    <None Remove="Sounds\sound-uuh-oversold.wav" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Sounds\Old\sound-jump-down.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-jump-up.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-sbm-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-sbm-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-stobb-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-stobb-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-storsi-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Old\sound-storsi-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\aksu.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\ball_bearing.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\bell_sound.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\boing_sound_effect.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\boxing_bell.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\cool.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\discord_halloween.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\email_entact.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\fade_in.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\huawei.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\la_cucaracha.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\luana.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\mind_transfer_no_jutsu.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\notification.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\popup.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\proxima.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\star_trek_energize.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\suffocation.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\Other\xiaomi_fress.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-dlz-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-dlz-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-domnear-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-domnear-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-domnearby-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-domnearby-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-fvg-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-fvg-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-heartbeat.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-jump-down.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-jump-up.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-nwe-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-nwe-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-sbm-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-sbm-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-stobb-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-stobb-overbought2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-stobb-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-stobb-oversold2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-storsi-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-storsi-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-trade-notification.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-trade-notification2.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-uuh-overbought.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Sounds\sound-uuh-oversold.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 
@@ -135,175 +346,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Sounds\Old\sound-jump-down.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-jump-up.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-sbm-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-sbm-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-stobb-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-stobb-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-storsi-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Old\sound-storsi-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\aksu.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\ball_bearing.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\bell_sound.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\boing_sound_effect.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\boxing_bell.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\cool.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\discord_halloween.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\email_entact.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\fade_in.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\huawei.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\la_cucaracha.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\luana.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\mind_transfer_no_jutsu.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\notification.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\popup.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\proxima.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\star_trek_energize.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\suffocation.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\Other\xiaomi_fress.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Sounds\sound-dlz-overbought .wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-dlz-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-dlz-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-domnear-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-domnear-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-domnearby-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-domnearby-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Sounds\sound-fvg-overbought .wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Sounds\sound-fvg-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-fvg-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-heartbeat.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-jump-down.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-jump-up.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-nwe-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-nwe-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-sbm-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Sounds\sound-sbm-overbought2.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-sbm-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Sounds\sound-sbm-oversold2.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Sounds\sound-stobb-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-stobb-overbought2.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-stobb-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-stobb-oversold2.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-storsi-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-storsi-oversold.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Sounds\sound-trade-notification-ka-ching.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-trade-notification.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-trade-notification2.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-uuh-overbought.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sounds\sound-uuh-oversold.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

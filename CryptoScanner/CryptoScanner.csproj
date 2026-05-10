@@ -10,10 +10,17 @@
 		<ApplicationManifest Condition="$([MSBuild]::IsOSPlatform('Windows'))">app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
+		<!-- Single file basis -->
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>true</SelfContained>
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+		<!-- Belangrijk: schakel default content uit om duplicaten te voorkomen -->
+		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+		
 		<!-- Assembly Version Info -->
-		<AssemblyVersion>2.5.1.0</AssemblyVersion>
-		<FileVersion>2.5.1.0</FileVersion>
-		<Version>2.5.1</Version>
+		<AssemblyVersion>2.5.2.0</AssemblyVersion>
+		<FileVersion>2.5.2.0</FileVersion>
+		<Version>2.5.2</Version>
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
@@ -27,6 +34,19 @@
 		<Configurations>Debug;Release</Configurations>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<!-- Alles wat je als "Content" hebt ingesteld in VS komt naast de .exe te staan -->
+		<!-- We specificeren expliciet de mappen die je wilt -->
+		<Content Update="Help\**\*.*">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+
+		<Content Update="Sounds\**\*.*">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+	</ItemGroup>
 	
 	<PropertyGroup>
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
@@ -149,8 +169,39 @@
 
 
 	<ItemGroup>
+	  <None Remove="Help\CryptoScanBot.pdf" />
+	  <None Remove="Help\Release Changes.txt" />
+	  <None Remove="Help\Roadmap.txt" />
+	  <None Remove="Help\Weblinks example.json" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <Content Include="Help\CryptoScanBot.pdf">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Help\Release Changes.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Help\Roadmap.txt">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Help\Weblinks example.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+
+	<ItemGroup>
 	  <ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 	  <ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <None Update="Help\CryptoScanBot.docx">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 

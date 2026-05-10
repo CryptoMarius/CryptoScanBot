@@ -46,7 +46,10 @@ class Program
         //System.Diagnostics.Debug.WriteLine($"GlobalData.AppVersion =  {GlobalData.AppVersion}");
 
         // We need a folder for accessing the Sounds
-        GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+        // Correct voor single-file = false
+        //GlobalData.AppPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!;
+        // Correct voor single-file = true
+        GlobalData.AppPath = Path.GetDirectoryName(AppContext.BaseDirectory)!;
         //System.Diagnostics.Debug.WriteLine($"GlobalData.AppPath =  {GlobalData.AppPath}");
 
         // We need a data folder to store our data (temporary dependency injection to hide details)

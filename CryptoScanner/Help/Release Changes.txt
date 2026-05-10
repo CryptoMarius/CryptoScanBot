@@ -1,15 +1,50 @@
 CryptoScanBot release historie:
 
-xx-xx-2025 2.1.9
-- Scanner - Optimalisatie van de trend waardoor niet bij elke aanroep de trend voor alle intervallen berekend hoeft te worden
-- Scanner - Verkeerd aantal decimalen in de display van de sma*, rsi, macd*, bb%, avgbb gecorrigeerd
-- Scanner - Reductie van de opstarttijd door enkel de munten te verversen die boven het ingestelde minimale volume ligt bij te werken
-- Scanner - Reductie van de benodigde hoeveelheid geheugen door enkel de munten te monitoren die boven het ingestelde minimale volume liggen.
-            Dit heeft lichte impact op de barometer aangezien die munten ook niet meer kunnen worden meegenomen in de barometer berekening.
-- Scanner - De bestanden van de niet actieve munten worden verwijderd wat een stukje scheelt qua gebruikte bestanden
-- Scanner - De interne opslag voor kleuren aangepast (alvast unverseel voor zowel Mac als Windows)
-- Scanner - De default naamgeving van de geluidsbestanden voor dlz en fvg waren afwijkend.
-            (nomaal gebruuikt de scanner oversold/overbought ipv long/short en die geluiden waren niet bijgeleverd)
+xx-05-2025 2.5.2
+- TODO: Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
+- TODO: Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
+- De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardoro er wel meldingen ontstaan
+- Binance futures - Uitsluiten van de Chinese munten
+- Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values"
+  Resten: NaNDoubleHandler
+
+09-05-2025 2.5.1
+- Bybit Futures - De symbolen werden niet goed opgehaald, de ehange gebruikt tegenwoordig paginatie
+- Signalen, ongeldige signalen hadden geen aparte kleur waardoor je het verschil tussen geldige en ongeldige niet ziet
+- De US Dollar index gefixed (stond altijd op 0)
+- De KLine ticker getal rechts boven bleef na een configuratie aanpassing altijd op 0 staan (de scanner werkte wel gewoon)
+- Diverse bugs opgelost die optraden na het switchen naar een andere exchange
+- All package geupdates naar de laatste standaarden (afgezien van Telegram)
+- De symbol grid kan nu worden verborgen met het pijltje rechtsboven
+- De symbol grid heeft nu een beter bruikbare splitter zodat je het geheel kan resizen
+- De scrollbars zijn nu altijd zichtbaar en beter te gebruiken (vorige waren moeilijk "te pakken" te krijgen)
+- Als kleuren zijn gewijzigd wordt dat nu opgepakt (basecoins/strategie)
+- Diverse kleine bugfixes nalv error bestanden
+
+03-04-2025 2.5.0
+- Nieuwe volume filter om in te stappen als het volume hoger wordt (gerelateerd aan x candles).
+- Nieuwe barometer filter om te zorgen dat tenminste 1 of meer bm's positief of negatief zijn
+- Voortgang tonen tijdens het opstarten van de scanner (want dat kan best lang duren)
+- Door enige truuks wordt het geheugengebruik van de candles kleiner gemaakt.
+- De opstart snelheid verbeterd door gebruik te maken van lz4 compressie en parallellisme
+- De bestanden van de "pivots" folder zijn exchange specifiek en worden vanaf nu in de exchange data folder bewaard (gecomprimeerd)
+- De bestanden met candles worden nu gecomprimeerd (dat scheelt 75% van de ruimte), ook het (interne) opslag systeem is aangepast
+- Nieuwe user interface via Avalonia (geschikt voor multiplatform, Windows, Mac en Linux)
+- Extra interval voor week (maar deze is nog niet overal inzetbaar)
+- PSar, Posities en BBMA toegevoegd en wat lijnen met de tp's en stop/limit (de bbma is een experiment waar ik mee bezig ben)
+- De Trade.TradeTime was niet correct ingevuld
+
+
+xx-xx-2025 2.1.9 --> naar 2.5
+- Optimalisatie van de trend waardoor niet bij elke aanroep de trend voor alle intervallen berekend hoeft te worden
+- Verkeerd aantal decimalen in de display van de sma*, rsi, macd*, bb%, avgbb gecorrigeerd
+- Reductie van de opstarttijd door enkel de munten te verversen die boven het ingestelde minimale volume ligt bij te werken
+- Reductie van de benodigde hoeveelheid geheugen door enkel de munten te monitoren die boven het ingestelde minimale volume liggen.
+  Dit heeft lichte impact op de barometer aangezien die munten ook niet meer kunnen worden meegenomen in de barometer berekening.
+- De bestanden van de niet actieve munten worden verwijderd wat een stukje scheelt qua gebruikte bestanden
+- De interne opslag voor kleuren aangepast (alvast unverseel voor zowel Mac als Windows)
+- De default naamgeving van de geluidsbestanden voor dlz en fvg waren afwijkend.
+  (nomaal gebruuikt de scanner oversold/overbought ipv long/short en die geluiden waren niet bijgeleverd)
 
 21-11-2025 2.1.8
 - Scanner - Kraken spot verwijderd aangezien deze niet goed functioneert

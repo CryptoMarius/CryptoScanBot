@@ -1,0 +1,57 @@
+
+// This is the right commandline for help, sound and a single file (afaict)
+dotnet publish -c Release -r win-x64 --self-contained true -o E:\CryptoScanBot\bin\Avalonia.DataGrid.Release /p:PublishSingleFile=true
+
+// This one forces everything into the executable
+dotnet publish -c Release -r win-x64 --self-contained true -o E:\CryptoScanBot\bin\Avalonia.DataGrid.Release /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true
+
+// Platforms
+dotnet publish -c Debug -r osx-x64 --self-contained true
+dotnet publish -c Debug -r osx-arm64 --self-contained true
+dotnet publish -c Debug -r linux-x64 --self-contained true
+dotnet publish -c Debug -r win-x64 --self-contained true
+dotnet publish -c Debug -r osx-x64 --self-contained true
+dotnet publish -c Release -r win-x64 --self-contained true -o E:\CryptoScanBot\bin\Avalonia.DataGrid.Release
+
+
+// Additional rights for Mac (and Linux?)
+chmod +x CryptoScanner
+./CryptoScanner -e "Binance Futures" -f "CryptoScanBot\Binance\Futures"
+
+// Starting the scanner
+#!/bin/bash
+cd "Documents/Scanner
+./CryptoScanner -e "Binance Futures" -f "CryptoScanBot\Binance\Futures"
+
+// Browser stuff (not sure if this is still valid)
+brew install dotnet@8 (weet niet of het exact zo was)
+sudo rm -rf /usr/local/share/dotnet/shared/Microsoft.NETCore.App/10.0.0*
+sudo installer -pkg dotnet8.pkg -target /
+sudo installer -pkg dotnet10.pkg -target /
+dotnet --list-runtimes
+
+Dependencies
+-Windows: Webview 2 installeren (nog eens doen op een kale pc)
+-Linux: Daar moest ook iets voor de browser (geen idee wat)
+
+Testen
+-(browser Aangepast)Compileren voor de osx-arm64 gaf problemen met de browser bestanden, werkt niet!
+ Moet nog verder getest worden
+
+-Styling van buttons zag er raar uit op de Mac (niet verticaal gcentreerd, lijkt gewoon een verschil te zijn)
+-Op de mac was de uitlijning, marges e.d. anders dan op Winows
+
+Algemeen:
+-(later)De speech proberen te installeren (maar wellicht only windows en de rest niet)
+-(later)Er wordt heel veel data verzameld, weggooien wordt momenteel niet gedaan, opruimen niet actieve symbols (bestanden)
+-(later)Er wordt heel veel data verzameld, weggooien wordt momenteel niet gedaan, opruimen niet actieve symbols (pivots)
+
+Telegram
+-Ik zie meldingen, maar het testen ging niet goed vanuit de configuratie...
+(ik kon geen copy/paste doen van het bestand, misschien een andere naam geven?) -> crashte namelijk tijdens het opstarten, geen signals, geen positions, geen duidelijke error
+Bestand wordt niet meer bewaard?
+
+Cleanup:
+-Traverse van de pivot folder op symbols die niet meer bestaan (verwijderen)
+-Traverse van de exchange folders op symbols die niet meer bestaan (verwijderen)
+
