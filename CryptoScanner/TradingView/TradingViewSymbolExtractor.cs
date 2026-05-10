@@ -50,7 +50,7 @@ public class TradingViewSymbolExtractor
         _tickerData.Ticker = tickerName;
 
 
-        TradingViewSymbolWebSocket socket = new(tickerName); // TODO: implement dispose
+        TradingViewSymbolWebSocket socket = new(tickerName);
         socket.DataFetched += OnValueFetched;
         socket.ConnectWebSocketAndRequestSession().Wait(cancellationToken);
         socket.RequestData().Wait(cancellationToken);

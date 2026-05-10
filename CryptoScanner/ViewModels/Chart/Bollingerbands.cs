@@ -17,7 +17,7 @@ public class Bollingerbands
             Title = "bb.upper",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
-            Color = OxyColors.Blue,
+            Color = OxyColors.DarkBlue,
             Tag = group,
         };
         var seriesMiddle = new LineSeries
@@ -33,7 +33,7 @@ public class Bollingerbands
             Title = "bb.lower",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
-            Color = OxyColors.Blue,
+            Color = OxyColors.DarkBlue,
             Tag = group,
         };
 
