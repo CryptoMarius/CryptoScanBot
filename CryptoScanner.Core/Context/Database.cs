@@ -877,6 +877,8 @@ public class CryptoDatabase : IDisposable
         SqlMapper.AddTypeHandler(new GuidHandler());
         SqlMapper.AddTypeHandler(new TimeSpanHandler());
         SqlMapper.AddTypeHandler(new CandleTimeTypeHandler());
+        SqlMapper.AddTypeHandler(new NaNDoubleHandler());
+
 
         using var connection = new CryptoDatabase();
         connection.Open();
