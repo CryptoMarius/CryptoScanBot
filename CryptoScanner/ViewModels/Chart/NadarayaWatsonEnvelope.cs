@@ -81,18 +81,14 @@ public class NadarayaWatsonEnvelope
            );
         var result = nwe.Calculate(candles);
 
-        CandleTime offsett = candles.Values.Last().OpenTime; // - max * interval.Duration;
-
-
-        for (int i = 0; i < candles.Count; i++)
+        foreach (var res in result)
         {
-            if (candles.TryGetValue(offsett - (i + 0) * interval.Duration, out CryptoCandle candleLast) &&
-                candles.TryGetValue(offsett - (i + 1) * interval.Duration, out CryptoCandle candlePrev))
+            if (candles.TryGetValue(res.OpenTime, out CryptoCandle candleLast) &&
+                candles.TryGetValue(res.OpenTime - interval.Duration, out CryptoCandle candlePrev))
             {
                 CandleTime openTime = CandleTime.AlignFromDateTime(candleLast.Date, interval.Duration);
                 if (openTime >= minDate && openTime <= maxDate)
                 {
-                    var res = result[i];
                     if (res.Lower == null || res.Center == null || res.Upper == null)
                         continue;
                     decimal lowerband = res.Lower.Value;
@@ -103,54 +99,21 @@ public class NadarayaWatsonEnvelope
                     seriesMiddle.Points.Add(new DataPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
                     seriesHigh.Points.Add(new DataPoint(candleLast.OpenTime.Minutes, (double)upperband));
 
-                    // buy alert
-                    // Candle outside the band
-                    //if (candleLast!.Open <= lowerband && candleLast.Close <= lowerband)
-                    //{
-                    //    nwevalue = candleLast.Low * 0.995m;
-                    //    seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
-                    //}
-                    // Candle sticking pearsing trough the band
+                    // buy alert, candle sticking pearsing trough the band
                     if (candlePrev.Close > lowerband && candleLast.Close <= lowerband)
                     {
                         nwevalue = candleLast.Low * 0.995m;
                         seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
                     }
 
-                    // sell alert
-                    // Candle outside the band
-                    //if (candleLast!.Open >= upperband && candleLast.Close >= upperband)
-                    //{
-                    //    nwevalue = candleLast.High * 1.005m;
-                    //    seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)nwevalue));
-                    //}
-                    // Candle sticking pearsing trough the band
+
+                    // sell alert, Candle sticking pearsing trough the band
                     if (candlePrev.Close < upperband && candleLast.Close >= upperband)
                     {
                         nwevalue = candleLast.High * 1.005m;
                         seriesSell.Points.Add(new ScatterPoint(candleLast.OpenTime.Minutes, (double)nwevalue));
                     }
 
-
-                    //if (i > 0)
-                    //{
-                    //    if (smaList20[i - 0].Sma != null && smaList20[i - 1].Sma != null)
-                    //    {
-                    //        double nweLast = (double)nwe[i - 0];
-                    //        double nwePrev = (double)nwe[i - 1];
-
-                    //        double smaLast = (double)smaList20[i - 0].Sma!.Value;
-                    //        double smaPrev = (double)smaList20[i - 1].Sma!.Value;
-
-                    //        if (// buy alert when the nwe.lower crosses the sma20 upwards
-                    //            (nwePrev - (double)sae < smaPrev! && nweLast - (double)sae >= smaLast) ||
-                    //            // sell alert when the nwe.upper crosses the sma20 downwards
-                    //            (nwePrev + (double)sae > smaPrev! && nweLast + (double)sae <= smaLast))
-                    //        {
-                    //            seriesBuy.Points.Add(new ScatterPoint(candleLast.OpenTime, (double)smaLast));
-                    //        }
-                    //    }
-                    //}
                 }
             }
         }
