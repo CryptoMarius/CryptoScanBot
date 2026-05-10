@@ -86,8 +86,7 @@ public class NweIndicator
             for (int i = 0; i < window; i++)
             {
                 var center = nwe[i];
-                //int idx = n - 1 - i;
-                int idx = i + (n - window);
+                int idx = n - 1 - i;
                 results[idx].Center = center;
                 results[idx].Upper = center + sae;
                 results[idx].Lower = center - sae;
@@ -132,7 +131,7 @@ public class NweIndicator
             }
 
             int available = residuals.Count;
-            int maeLen = Math.Min(499, available);
+            int maeLen = Math.Min(Length - 1, available);
             if (maeLen > 0)
             {
                 decimal sumAbs = 0m;
@@ -150,7 +149,6 @@ public class NweIndicator
                     }
                 }
             }
-            results.Reverse(); // avoid this stupid reversals, only eats cpu
         }
 
         return results;

@@ -191,10 +191,8 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
         // buy alert
         if (SignalSide == CryptoTradeSide.Long && nweLast.Lower != null)
         {
-            // Candle outside the band // && EnoughMomentum(nwe, max, out decimal _)
+            // Candle outside the band
             decimal? lowerband = nweLast.Lower;
-            //if (CandleLast!.Candle.Open <= lowerband && CandleLast.Candle.Close <= lowerband )
-            //if (candlePrev!.Candle.Close > lowerband && CandleLast.Candle.Close <= lowerband)
             if (CandleLast!.Candle.Close < lowerband && CandleLast!.Candle.Open < lowerband
                 && CandleLast.Candle.Close > CandleLast!.Candle.Open)
             {
@@ -206,7 +204,7 @@ public class SignalLuxNadarayaWatsonEnvelopeNp : SignalCreateBase
         // sell alert
         if (SignalSide == CryptoTradeSide.Short && nweLast.Upper != null)
         {
-            // Candle outside the band //&& EnoughMomentum(nwe, max, out decimal _)
+            // Candle outside the band
             decimal? upperband = nweLast.Upper;
             if (CandleLast!.Candle.Close > upperband && CandleLast!.Candle.Open > upperband
                 && CandleLast.Candle.Close < CandleLast!.Candle.Open)
