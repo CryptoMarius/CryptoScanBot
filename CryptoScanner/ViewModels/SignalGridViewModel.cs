@@ -146,7 +146,7 @@ public partial class SignalGridViewModel : ObservableObject
         {
             if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))
             {
-                if (signal.CloseDate > x.lastSignalTime)
+                if (x.strategySettings.PlaySound && signal.CloseDate > x.lastSignalTime)
                 {
                     // Stay silent for the next 20 seconds (for his strategy)
                     x.lastSignalTime = signal.CloseDate.AddSeconds(20);
