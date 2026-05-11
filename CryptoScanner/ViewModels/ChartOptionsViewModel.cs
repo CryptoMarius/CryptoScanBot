@@ -20,6 +20,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showNadarayaWatsonEnvelopeRepainting = false;
 
     [ObservableProperty]
+    private bool _showNweBb = false;
+
+    [ObservableProperty]
     private bool _showGaussianFilter = false;
 
     [ObservableProperty]
@@ -59,6 +62,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNadarayaWatsonEnvelope = session.ShowNadarayaWatsonEnvelope;
         ShowNadarayaWatsonEnvelopeRepainting = session.ShowNadarayaWatsonEnvelopeRepainting;
+        ShowNweBb = session.ShowNweBb;
         ShowGaussianFilter = session.ShowGaussianFilter;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
@@ -81,6 +85,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNadarayaWatsonEnvelope = ShowNadarayaWatsonEnvelope;
         session.ShowNadarayaWatsonEnvelopeRepainting = ShowNadarayaWatsonEnvelopeRepainting;
+        session.ShowNweBb = ShowNweBb;
         session.ShowGaussianFilter = ShowGaussianFilter;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;

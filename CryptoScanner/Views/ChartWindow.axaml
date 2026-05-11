@@ -109,6 +109,7 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowPSar, Mode=TwoWay}" Content="PSar" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelopeRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNadarayaWatsonEnvelope, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBb, Mode=TwoWay}" Content="NWE × BB signals" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowGaussianFilter, Mode=TwoWay}" Content="Gaussian Filter" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
