@@ -23,11 +23,13 @@
                 <settings:IndicatorBollingerBandView DataContext="{Binding IndicatorBollingerBandViewModel}" />
             </HeaderedContentControl>
 
-            <HeaderedContentControl Grid.Row="1" Grid.Column="0" Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+            <HeaderedContentControl Grid.Row="1" Grid.Column="0" Classes="groupbox" Header="Primary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16"
+									IsVisible="false">
                 <settings:IndicatorZigZagView DataContext="{Binding IndicatorPrimaryTrend}" />
             </HeaderedContentControl>
 
-            <HeaderedContentControl Grid.Row="1" Grid.Column="1" Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" >
+            <HeaderedContentControl Grid.Row="1" Grid.Column="1" Classes="groupbox" Header="Secondary trend parameters" HorizontalAlignment="Left" Margin="16,16,16,16" 
+									IsVisible="false">
                 <settings:IndicatorZigZagView DataContext="{Binding IndicatorSecondaryTrend}" />
             </HeaderedContentControl>
 		</Grid>

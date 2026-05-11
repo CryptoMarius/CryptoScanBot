@@ -11,7 +11,8 @@
     <StackPanel>
         <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto" RowSpacing="5">
            <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
-            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left">
+            <HeaderedContentControl Grid.Row="0" Grid.Column="1" Classes="groupbox" Header="Zone calculation" HorizontalAlignment="Left"
+									 IsVisible="false">
                 <settings:IndicatorZigZagView DataContext="{Binding IndicatorZigZagViewModel}" />
             </HeaderedContentControl>
         </Grid>
