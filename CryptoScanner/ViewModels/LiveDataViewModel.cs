@@ -247,7 +247,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochOscillatorText ??= Object.CandleData?.StochOscillator?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochOscillatorText ??= Object.CandleData?.StochOscillator?.ToString("N2");
             return _StochOscillatorText!;
         }
     }
@@ -268,7 +268,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochSignalText ??= Object.CandleData?.StochSignal?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochSignalText ??= Object.CandleData?.StochSignal?.ToString("N2");
             return _StochSignalText!;
         }
     }

@@ -421,7 +421,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochOscillatorText ??= Object.StochOscillator?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochOscillatorText ??= Object.StochOscillator?.ToString("N2");
             return _StochOscillatorText!;
         }
     }
@@ -442,7 +442,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _StochSignalText ??= Object.StochSignal?.ToString0(Object.Symbol.PriceDisplayFormat);
+            _StochSignalText ??= Object.StochSignal?.ToString("N2");
             return _StochSignalText!;
         }
     }
