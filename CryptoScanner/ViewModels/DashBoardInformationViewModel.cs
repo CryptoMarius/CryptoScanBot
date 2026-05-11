@@ -313,7 +313,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
             if (equal)
                 return;
         }
-        
+
         TopSymbols = [.. list];
     }
 
@@ -465,7 +465,14 @@ public partial class DashBoardInformationViewModel : ObservableObject
         float loY = float.MaxValue;
         float hiY = float.MinValue;
         int candleCount = blocks * 60; // minutes
-        CandleTime candleTime = candleList.Values.Last().OpenTime;
+        CandleTime candleTime;
+        try {
+          candleTime = candleList.Keys.Last();
+        }
+        catch (InvalidOperationException)
+        {
+          return;
+        }
         while (candleCount-- > 0)
         {
             if (candleList.TryGetValue(candleTime, out CryptoCandle candle))
@@ -647,7 +654,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 return false;
 
             string intervalName = SelectedInterval;
-            if (intervalName == "")
+            if (string.IsNullOrEmpty(intervalName))
                 return false;
 
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
@@ -681,10 +688,16 @@ public partial class DashBoardInformationViewModel : ObservableObject
 
 
             // Update the barometer time
-            if (symbolPeriod.CandleList.Values.Count > 0)
+            try
             {
-                CryptoCandle candle = symbolPeriod.CandleList.Values.Last();
-                _barometerCalculated = (candle.OpenTime + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
+                if (symbolPeriod.CandleList.Count > 0)
+                {
+                    CryptoCandle candle = symbolPeriod.CandleList.Values.Last();
+                    _barometerCalculated = (candle.OpenTime + 1).ToDateTime().ToLocalTime().ToString("HH:mm");
+                }
+            }
+            catch (InvalidOperationException)
+            {
             }
 
             GC.Collect();
