@@ -32,6 +32,7 @@ public enum CryptoSignalStrategy
     Bbma = 44,
 
     GaussianScalp = 45,
+    GaussianPullback = 47,
 #endif
 
 

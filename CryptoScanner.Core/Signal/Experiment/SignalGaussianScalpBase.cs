@@ -57,7 +57,72 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
         goLong = false;
         goShort = false;
 
-        // Collect closes oldest → newest
+        if (!TryComputeFiltered(out double[] filtered))
+            return false;
+
+        int contsw = 0;
+        for (int i = 2; i < filtered.Length; i++)
+        {
+            double out0 = filtered[i];
+            double out1 = filtered[i - 1];
+            double out2 = filtered[i - 2];
+
+            bool pregoLong  = out0 > out1 && out1 <= out2;
+            bool pregoShort = out0 < out1 && out1 >= out2;
+
+            int prevContsw = contsw;
+            if (pregoLong)  contsw = 1;
+            else if (pregoShort) contsw = -1;
+
+            if (i == filtered.Length - 1)
+            {
+                goLong  = pregoLong  && prevContsw == -1;
+                goShort = pregoShort && prevContsw == 1;
+            }
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// Returns the current Gaussian filter value, the previous value, and the running
+    /// contsw trend state (+1 uptrend / -1 downtrend / 0 undecided) at the current bar.
+    /// Used by pullback signals that trade bounces off the filter line.
+    /// </summary>
+    protected bool ComputeGaussianState(out double filteredLast, out double filteredPrev, out int contswLast)
+    {
+        filteredLast = 0;
+        filteredPrev = 0;
+        contswLast   = 0;
+
+        if (!TryComputeFiltered(out double[] filtered))
+            return false;
+
+        filteredLast = filtered[^1];
+        filteredPrev = filtered[^2];
+
+        int contsw = 0;
+        for (int i = 2; i < filtered.Length; i++)
+        {
+            double out0 = filtered[i];
+            double out1 = filtered[i - 1];
+            double out2 = filtered[i - 2];
+            bool pregoLong  = out0 > out1 && out1 <= out2;
+            bool pregoShort = out0 < out1 && out1 >= out2;
+            if (pregoLong)       contsw = 1;
+            else if (pregoShort) contsw = -1;
+        }
+        contswLast = contsw;
+
+        return true;
+    }
+
+
+    private bool TryComputeFiltered(out double[] filtered)
+    {
+        filtered = [];
+
         var closes = new List<double>(Lookback);
         MyData? candle = CandleLast;
         for (int i = 0; i < Lookback; i++)
@@ -72,36 +137,8 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
 
         closes.Reverse(); // oldest first
 
-        // Step 1: N-pole Gaussian filter
         double[] raw = ComputeNPoleGaussian(closes);
-
-        // Step 2: STD filter applied to Gaussian output
-        double[] filtered = ApplyStdFilter(raw, FilterPeriod, FilterDeviations);
-
-        // Step 3: Simulate contsw and detect crossover signals on current bar
-        int contsw = 0;
-        for (int i = 2; i < filtered.Length; i++)
-        {
-            double out0 = filtered[i];
-            double out1 = filtered[i - 1];
-            double out2 = filtered[i - 2];
-
-            // Crossover conditions: just flipped direction
-            bool pregoLong  = out0 > out1 && out1 <= out2;
-            bool pregoShort = out0 < out1 && out1 >= out2;
-
-            int prevContsw = contsw;
-            if (pregoLong)  contsw = 1;
-            else if (pregoShort) contsw = -1;
-
-            // Only report signals for the very last bar (= current candle)
-            if (i == filtered.Length - 1)
-            {
-                goLong  = pregoLong  && prevContsw == -1;
-                goShort = pregoShort && prevContsw == 1;
-            }
-        }
-
+        filtered     = ApplyStdFilter(raw, FilterPeriod, FilterDeviations);
         return true;
     }
 

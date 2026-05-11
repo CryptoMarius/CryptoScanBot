@@ -234,6 +234,17 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
+        // Gaussian Pullback: wick-touch + close-above/below the Gaussian filter line during confirmed trend
+        Register(new AlgorithmDefinition()
+        {
+            Name = "gpullback",
+            Strategy = CryptoSignalStrategy.GaussianPullback,
+            AnalyzeLongType = typeof(SignalGaussianPullbackLong),
+            AnalyzeShortType = typeof(SignalGaussianPullbackShort),
+        });
+#endif
+
+#if DEBUG
         // Trend reversal (Dow Theory)
         Register(new AlgorithmDefinition()
         {
