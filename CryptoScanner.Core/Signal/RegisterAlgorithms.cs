@@ -176,6 +176,15 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
         });
 
+        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe.bb",
+            Strategy = CryptoSignalStrategy.NweBb,
+            AnalyzeLongType = typeof(SignalNweBbLong),
+            AnalyzeShortType = typeof(SignalNweBbShort),
+        });
+
         //#if DEBUG
         //        Register(new AlgorithmDefinition()
         //        {
