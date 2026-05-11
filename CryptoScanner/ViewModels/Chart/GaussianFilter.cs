@@ -59,6 +59,24 @@ public class GaussianFilter
             Tag = group,
         };
 
+        var seriesPullbackLong = new ScatterSeries
+        {
+            Title = "G pullback ↑",
+            MarkerSize = 6,
+            MarkerFill = OxyColor.FromArgb(220, 0, 220, 220),
+            MarkerType = MarkerType.Circle,
+            Tag = group,
+        };
+
+        var seriesPullbackShort = new ScatterSeries
+        {
+            Title = "G pullback ↓",
+            MarkerSize = 6,
+            MarkerFill = OxyColor.FromArgb(220, 255, 140, 0),
+            MarkerType = MarkerType.Circle,
+            Tag = group,
+        };
+
         // Simulate contsw across all bars, emit visible points
         int contsw = 0;
         for (int i = 2; i < filtered.Length; i++)
@@ -85,11 +103,25 @@ public class GaussianFilter
 
             if (pregoShort && prevContsw == 1)
                 seriesShort.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, (double)candle.High * 1.003));
+
+            // Pullback long: confirmed uptrend, filter rising, wick touched line, close above
+            if (contsw == 1 && out0 > out1
+                && (double)candle.Low <= out0
+                && (double)candle.Close > out0)
+                seriesPullbackLong.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, out0));
+
+            // Pullback short: confirmed downtrend, filter falling, wick touched line, close below
+            if (contsw == -1 && out0 < out1
+                && (double)candle.High >= out0
+                && (double)candle.Close < out0)
+                seriesPullbackShort.Points.Add(new ScatterPoint(candle.OpenTime.Minutes, out0));
         }
 
         chart.Series.Add(seriesLine);
         chart.Series.Add(seriesLong);
         chart.Series.Add(seriesShort);
+        chart.Series.Add(seriesPullbackLong);
+        chart.Series.Add(seriesPullbackShort);
     }
 
 
