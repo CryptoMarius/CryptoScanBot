@@ -2,13 +2,18 @@ CryptoScanBot release historie:
 
 xx-05-2025 2.5.2
 - TODO: Testen: Aangepaste strategien ivm refactoring
-- TODO: Testen: Aangepaste NWE en NWE.NP strategie
-- TODO: Uitzoeken: Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
+- TODO: De market cap en de BTC dominance zijn afwijkend tov de 2.1.8
+- TODO: Commando voor het clearen van de signals (en live view?)
+
+- De display van de stochastic gebruikt (veel) meer dan de gebruikelijke 2 decimalen
+- Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
+- De instellingen voor de primary en secondary trend + high/low vinkjes zijn overbodig (ook verwarrend)
+- De NWE en NWE.NP strategie aangepast (het is niet een winstgevende strategie en zal het ook niet worden denk ik)
 - Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
 - De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardooor er meer meldingen ontstaan
 - Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values" opgelost
 - Binance futures - Uitsluiten van de Chinese munten
-- Roadmap.txt verwijderd, allemaal nogal gedateerde todo's
+- Roadmap.txt verwijderd, waren toch allemaal gedateerde todo's en opmerkingen
 
 09-05-2025 2.5.1
 - Bybit Futures - De symbolen werden niet goed opgehaald, de ehange gebruikt tegenwoordig paginatie
@@ -35,9 +40,6 @@ xx-05-2025 2.5.2
 - Extra interval voor week (maar deze is nog niet overal inzetbaar)
 - PSar, Posities en BBMA toegevoegd en wat lijnen met de tp's en stop/limit (de bbma is een experiment waar ik mee bezig ben)
 - De Trade.TradeTime was niet correct ingevuld
-
-
-xx-xx-2025 2.1.9 --> naar 2.5
 - Optimalisatie van de trend waardoor niet bij elke aanroep de trend voor alle intervallen berekend hoeft te worden
 - Verkeerd aantal decimalen in de display van de sma*, rsi, macd*, bb%, avgbb gecorrigeerd
 - Reductie van de opstarttijd door enkel de munten te verversen die boven het ingestelde minimale volume ligt bij te werken
