@@ -142,7 +142,7 @@
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[0]}"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="value"
                            Foreground="{Binding TvSymbols[0].Color}"
-                           Text="{Binding TvSymbols[0].VolumeText}" 
+                           Text="{Binding TvSymbols[0].PriceText}" 
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[0]}"/>
                 
                 <!-- Dollar Index -->
@@ -166,7 +166,7 @@
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[3]}"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Classes="value"
                            Foreground="{Binding TvSymbols[3].Color}"
-                           Text="{Binding TvSymbols[3].VolumeText}" 
+                           Text="{Binding TvSymbols[3].PriceText}"
                            Tapped="OnSymbolTapped" Tag="{Binding TvSymbols[3]}"/>
 
                 <!-- Fear and Greed Index -->

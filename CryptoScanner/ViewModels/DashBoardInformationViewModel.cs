@@ -321,11 +321,11 @@ public partial class DashBoardInformationViewModel : ObservableObject
     private void RegisterTradingViewSymbols()
     {
         List<DashboardSymbolViewModel> list = [];
-        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:TOTAL3", "Market Cap Total"));
-        list.Add(new(IndicatorType.TradingView, "TVC:DXY", "US Dollar Index"));
-        list.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500"));
-        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance"));
-        list.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index"));
+        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:TOTAL3", "Market Cap Total", "N2", true));
+        list.Add(new(IndicatorType.TradingView, "TVC:DXY", "US Dollar Index", "N2", true));
+        list.Add(new(IndicatorType.TradingView, "SP:SPX", "S&P 500", "N2", true));
+        list.Add(new(IndicatorType.TradingView, "CRYPTOCAP:BTC.D", "BTC Dominance", "N2", false));
+        list.Add(new(IndicatorType.FearAndGreed, "https://alternative.me/crypto/fear-and-greed-index/", "Fear and Greed index", "N2", false));
         TvSymbols = [.. list];
 
         _tradingViewService.TvSymbols = TvSymbols; // forward symbols

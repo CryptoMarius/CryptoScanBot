@@ -31,6 +31,7 @@ public partial class DashboardSymbolViewModel : ObservableObject
     [ObservableProperty]
     private string _priceText = string.Empty;
     private readonly string PriceFormat = "N2";
+    private readonly bool BigPrice = false;
     private decimal? _previousPrice;
     private decimal? _price;
     public decimal? Price
@@ -46,7 +47,10 @@ public partial class DashboardSymbolViewModel : ObservableObject
                 Color = GetColorForChange(_previousPrice, value.Value);
                 _previousPrice = _price;
                 _price = value;
-                PriceText = value.ToString0(PriceFormat);
+                if (BigPrice)
+                    PriceText = GetLargeVolumeText((double)value);
+                else 
+                    PriceText = value.ToString0(PriceFormat);
                 OnPropertyChanged(nameof(Price));
             }
         }
@@ -91,11 +95,12 @@ public partial class DashboardSymbolViewModel : ObservableObject
     }
 
 
-    public DashboardSymbolViewModel(IndicatorType type, string symbol, string name, string priceFormat = "")
+    public DashboardSymbolViewModel(IndicatorType type, string symbol, string name, string priceFormat = "N2", bool bigPrice = false)
     {
         Type = type;
         Symbol = symbol;
         Name = name;
+        BigPrice = bigPrice;
         PriceFormat = priceFormat;
     }
 
