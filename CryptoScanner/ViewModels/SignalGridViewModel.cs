@@ -30,6 +30,7 @@ public partial class SignalGridViewModel : ObservableObject
 
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
         WeakReferenceMessenger.Default.Register<ExchangeSwitchedMessage>(this, OnExchangeSwitched);
+        WeakReferenceMessenger.Default.Register<SignalsDeletedMessage>(this, OnSignalsDeleted);
 
         _timerAddSignalsFromQueue.Tick += TimerAddSignalsFromQueueTick;
         _timerAddSignalsFromQueue.Start();
@@ -47,12 +48,23 @@ public partial class SignalGridViewModel : ObservableObject
     {
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ExchangeSwitchedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<SignalsDeletedMessage>(this);
 
         _timerAddSignalsFromQueue.Stop();
         _timerAddSignalsFromQueue.Tick -= TimerAddSignalsFromQueueTick;
 
         _timerClearAndUpdateSignals.Stop();
         _timerClearAndUpdateSignals.Tick -= TimerClearAndUpdateSignalsTick;
+    }
+
+    private void OnSignalsDeleted(object recipient, SignalsDeletedMessage message)
+    {
+        if (Monitor.TryEnter(GlobalData.SignalQueue))
+        {
+            try { GlobalData.SignalQueue.Clear(); }
+            finally { Monitor.Exit(GlobalData.SignalQueue); }
+        }
+        Signals.Clear();
     }
 
     private void OnConfigurationChanged(object recipient, ConfigurationChangedMessage message)

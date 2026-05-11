@@ -1,0 +1,16 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CryptoScanner.Views.ConfirmDialog"
+        SizeToContent="Height" Width="360"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False" ShowInTaskbar="False">
+
+    <StackPanel Margin="20" Spacing="20">
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Content="Yes" Click="OnYesClick" Width="80"/>
+            <Button Content="No"  Click="OnNoClick"  Width="80"/>
+        </StackPanel>
+    </StackPanel>
+
+</Window>
