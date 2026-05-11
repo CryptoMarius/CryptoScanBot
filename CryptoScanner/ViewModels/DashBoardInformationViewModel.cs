@@ -647,6 +647,9 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 return false;
 
             string intervalName = SelectedInterval;
+            if (intervalName == "")
+                return false;
+
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                 return false;
 
