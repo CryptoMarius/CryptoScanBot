@@ -1186,7 +1186,7 @@ public class Migration
 
 
         //***********************************************************
-        // 03-04-2026 Added Bitvavvo (experiment) and Alpaca
+        // 03-04-2026 Added Bitvavo (experiment) and Alpaca
         // There are no field changes, only version number for UpdateExchanges
         if (CurrentVersion > version.Version && version.Version == 57)
         {
@@ -1200,16 +1200,18 @@ public class Migration
 
 
 
-        // Apply the exchange defaults with each update
-        if (updateExchanges)
-            UpdateExchanges(database);
-
         //***********************************************************
         //
         //
+        // The position.Data can be removed (unused)
+        // Please also remove from db definition
 
         //
 
+
+        // Apply the exchange defaults with each update
+        if (updateExchanges)
+            UpdateExchanges(database);
     }
 }
 

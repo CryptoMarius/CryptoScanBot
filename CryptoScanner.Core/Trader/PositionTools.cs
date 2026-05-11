@@ -73,7 +73,6 @@ public static class PositionTools
         {
             CreateTime = currentDate,
             UpdateTime = currentDate,
-            Data = symbol.Name, // mag vervallen (maar is ook best handig)
             Symbol = symbol,
             SymbolId = symbol.Id,
             Exchange = symbol.Exchange,

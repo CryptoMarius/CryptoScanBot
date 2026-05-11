@@ -60,9 +60,6 @@ public partial class CryptoPosition : CryptoData2
     public decimal? EntryAmount { get; set; }
     public decimal? ProfitPrice { get; set; }
 
-    // Een experiment (die weg kan, we zetten er nu even de naam van de munt in, handig)
-    public string Data { get; set; } = "";
-
     // Number of DCA parts that have actually been filled (Invested > 0).
     // A pending (open but unfilled) DCA part is NOT counted here — see ActiveDca.
     // Use PartList.Count for the total number of parts including pending and TP parts.
