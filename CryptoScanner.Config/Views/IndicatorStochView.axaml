@@ -9,26 +9,26 @@
 <Grid ColumnDefinitions="Auto,60,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="5" RowSpacing="5">
         
         <!-- Length -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Length:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="%K Length:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding Length, Mode=TwoWay, TargetNullValue='14', FallbackValue='14'}" 
                  Width="60" Height="22" MinHeight="24" Watermark="14"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
-        <!-- %D -->
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="Oversold:" VerticalAlignment="Center" Margin="0,0,12,0"/>
-        <TextBox Grid.Row="1" Grid.Column="1" 
-                 Text="{Binding D, Mode=TwoWay, TargetNullValue='3', FallbackValue='3'}" 
-                 Width="60" Height="22" MinHeight="24" Watermark="30"
-                 FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
-
-            <!-- $K -->
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Oversold:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <!-- $K -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="%K smoothing:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="2" Grid.Column="1" 
                  Text="{Binding K, Mode=TwoWay, TargetNullValue='3', FallbackValue='3'}" 
                  Width="60" Height="22" MinHeight="24" Watermark="30"
                  FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
 
-            <!-- Oversold -->
+	    <!-- %D -->
+	    <TextBlock Grid.Row="1" Grid.Column="0" Text="%D smoothing:" VerticalAlignment="Center" Margin="0,0,12,0"/>
+	    <TextBox Grid.Row="1" Grid.Column="1"
+			     Text="{Binding D, Mode=TwoWay, TargetNullValue='3', FallbackValue='3'}"
+			     Width="60" Height="22" MinHeight="24" Watermark="30"
+			     FontSize="12" Padding="6,2" CornerRadius="4" HorizontalAlignment="Left"/>
+
+	    <!-- Oversold -->
         <TextBlock Grid.Row="3" Grid.Column="0" Text="Oversold:" VerticalAlignment="Center" Margin="0,0,12,0"/>
         <TextBox Grid.Row="3" Grid.Column="1" 
                  Text="{Binding Oversold, Mode=TwoWay, TargetNullValue='20', FallbackValue='20'}" 
