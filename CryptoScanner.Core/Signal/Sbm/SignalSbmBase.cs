@@ -15,6 +15,7 @@ public class SignalSbmBase : SignalCreateBase
            || data.CandleData.Sma50 == null
            || data.CandleData.Sma200 == null
            || data.CandleData.PSar == null
+           || data.CandleData.MacdHistogram == null
            || data.CandleData.StochSignal == null
            || data.CandleData.StochOscillator == null
            || data.CandleData.BollingerBandsDeviation == null
