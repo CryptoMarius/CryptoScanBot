@@ -19,7 +19,7 @@
 			  CanUserSortColumns="True"
 			  GridLinesVisibility="None"
 			  BorderThickness="0" BorderBrush="Transparent"
-			  ColumnHeaderHeight="32" RowHeight="22">
+			  ColumnHeaderHeight="32" RowHeight="23">
 
 		<DataGrid.Columns >
 			<!-- Id (Hidden by default) -->
