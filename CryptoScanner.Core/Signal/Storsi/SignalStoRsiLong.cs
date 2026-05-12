@@ -2,7 +2,7 @@
 using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Sbm;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Storsi;
 
 // WGHM - Wave Generation High Momentum
 

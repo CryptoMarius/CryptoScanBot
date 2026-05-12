@@ -2,9 +2,9 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Dlz;
 
-public class SignalDominantLevelNearShort : SignalCreateBase
+public class SignalDominantLevelShort : SignalCreateBase
 {
 
 
@@ -29,12 +29,11 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                 decimal distance = 100m;
                 while (index < shortOpen.Count) // sorted on Zone.Bottom (ascending)
                 {
-                    decimal? alarmPrice = null;
                     var zone = shortOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
                         // Close old invalid zone without notifications..
-                        if (CandleLast.Candle.Low >= zone.Top)
+                        if (CandleLast.Candle.Low > zone.Top)
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -42,34 +41,22 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                         }
                         else
                         {
-                            // If it is within a certain percentage signal it..
-                            alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
-                            if (CandleLast.Candle.High >= alarmPrice)
-                            {
-                                if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
-                                {
-                                    if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
-                                    {
-                                        // nothing
-                                    }
-                                    else
-                                    {
-                                        result = true;
-                                        zone.AlarmDate = CandleLast.Candle.OpenTime;
-                                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                        decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
-                                        ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
-                                    }
-                                }
-                            }
-
-
                             // Close if the candle touched the zone..
                             if (CandleLast.Candle.High >= zone.Bottom)
                             {
                                 zone.CloseTime = CandleLast.Candle.OpenTime;
+                                if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                {
+                                    // nothing
+                                }
+                                else
+                                {
+                                    result = true;
+                                    zone.AlarmDate = CandleLast.Candle.OpenTime;
+                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
+                                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
+                                }
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                             }
 
 
@@ -100,7 +87,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
 
 
                     // The list is sorted on zone.bottom (ascending) and break if there are no more reachable zones (save some looping time)
-                    if (alarmPrice != null && alarmPrice < zone.Bottom)
+                    if (CandleLast.Candle.High < zone.Bottom)
                         break;
                 }
 

@@ -1,6 +1,6 @@
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Experiment;
 
 /// <summary>
 /// Base class for the BbWickSma strategy.

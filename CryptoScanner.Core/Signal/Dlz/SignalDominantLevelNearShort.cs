@@ -2,9 +2,9 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Dlz;
 
-public class SignalDominantLevelNearLong : SignalCreateBase
+public class SignalDominantLevelNearShort : SignalCreateBase
 {
 
 
@@ -12,11 +12,11 @@ public class SignalDominantLevelNearLong : SignalCreateBase
     {
         ExtraText = "";
         bool result = false;
+
         decimal closestZone = 100;
         CryptoSymbolData symbolData = Symbol.Data;
 
-
-        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListLong.Count}");
+        //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} zones {symbolData.ZoneListShort.Count}");
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
@@ -24,17 +24,17 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
 
                 // Capture reference so a concurrent DlzZones swap mid-loop does not cause IndexOutOfRangeException
-                var longOpen = symbolIntervalData.DlzZones.LongOpen;
+                var shortOpen = symbolIntervalData.DlzZones.ShortOpen;
                 int index = 0;
                 decimal distance = 100m;
-                while (index < longOpen.Count) // sorted on Zone.Top (descending)
+                while (index < shortOpen.Count) // sorted on Zone.Bottom (ascending)
                 {
                     decimal? alarmPrice = null;
-                    var zone = longOpen[index];
+                    var zone = shortOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
                         // Close old invalid zone without notifications..
-                        if (CandleLast.Candle.High <= zone.Bottom)
+                        if (CandleLast.Candle.Low >= zone.Top)
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -43,8 +43,8 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                         else
                         {
                             // If it is within a certain percentage signal it..
-                            alarmPrice = zone.Top * (100 + GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
-                            if (CandleLast.Candle.Low <= alarmPrice)
+                            alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
+                            if (CandleLast.Candle.High >= alarmPrice)
                             {
                                 if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                                 {
@@ -57,7 +57,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                                         result = true;
                                         zone.AlarmDate = CandleLast.Candle.OpenTime;
                                         GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                        decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
+                                        decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
                                         ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                                     }
                                 }
@@ -65,7 +65,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
 
 
                             // Close if the candle touched the zone..
-                            if (CandleLast.Candle.Low <= zone.Top)
+                            if (CandleLast.Candle.High >= zone.Bottom)
                             {
                                 zone.CloseTime = CandleLast.Candle.OpenTime;
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -82,8 +82,7 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                                 }
                                 else
                                 {
-
-                                    decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
+                                    decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
                                     if (dist < distance)
                                         distance = dist;
                                 }
@@ -91,30 +90,31 @@ public class SignalDominantLevelNearLong : SignalCreateBase
                         }
                     }
 
+                    // Remove closed zones
                     if (zone.CloseTime != null)
                     {
-                        longOpen.RemoveAt(index);
+                        shortOpen.RemoveAt(index);
                         GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
                     }
                     else index++;
 
 
-                    // The list is sorted on zone.top (descending) and break if there are no more reachable zones (save some looping time)
-                    if (alarmPrice != null && alarmPrice > zone.Top)
+                    // The list is sorted on zone.bottom (ascending) and break if there are no more reachable zones (save some looping time)
+                    if (alarmPrice != null && alarmPrice < zone.Bottom)
                         break;
                 }
 
-                symbolIntervalData.DlzZoneDistance.BestLongZone = distance;
+                symbolIntervalData.DlzZoneDistance.BestShortZone = distance;
                 if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.LongOpen.Count} long zones, closest {distance}");
+                    ScannerLog.Logger.Info($"{Symbol.Name} {intervalName} {symbolIntervalData.DlzZones.ShortOpen.Count} short zones, closest {distance}");
                 if (distance < closestZone)
                     closestZone = distance;
             }
         }
 
-        symbolData.DlzZoneDistance.BestLongZone = closestZone;
+        symbolData.DlzZoneDistance.BestShortZone = closestZone;
         if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-            ScannerLog.Logger.Info($"{Symbol.Name} closest long zone {closestZone}");
+            ScannerLog.Logger.Info($"{Symbol.Name} closest short zone {closestZone}");
 
         return result;
     }

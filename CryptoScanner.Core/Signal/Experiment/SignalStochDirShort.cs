@@ -4,7 +4,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Sbm;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Experiment;
 
 /// <summary>
 /// Stochastic Directional Short strategy — fires at the actual lower-TF entry candle.

@@ -1,20 +1,20 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Experiment;
 
 /// <summary>
-/// Short (bearish) variant of the BbWickSma strategy.
+/// Long (bullish) variant of the BbWickSma strategy.
 /// All five conditions must be met:
 ///   0. The Bollinger Band width is within the configured range (not too narrow, not too wide).
 ///   1. The high-low price range over the last LookbackCandles candles is at least MinPriceRangePercentage.
-///   2. Within the last LookbackCandles candles: a wick poked above the upper Bollinger Band
-///      (price was rejected at the top, signalling bearish pressure).
-///   3. The SMA20 slope is currently negative (declining momentum).
-///   4. Within the last LookbackCandles candles: the close crossed from above to below the SMA50
-///      (bearish SMA50 breakout confirms the trend shift).
+///   2. Within the last LookbackCandles candles: a wick poked below the lower Bollinger Band
+///      (price bounced off the bottom, signalling bullish pressure).
+///   3. The SMA20 slope is currently positive (rising momentum).
+///   4. Within the last LookbackCandles candles: the close crossed from below to above the SMA50
+///      (bullish SMA50 breakout confirms the trend shift).
 /// </summary>
-public class SignalBbWickSmaShort : SignalBbWickSmaBase
+public class SignalBbWickSmaLong : SignalBbWickSmaBase
 {
     public override bool IsSignal()
     {
@@ -35,21 +35,21 @@ public class SignalBbWickSmaShort : SignalBbWickSmaBase
             return false;
         }
 
-        if (!HadWickAboveBb(LookbackCandles))
+        if (!HadWickBelowBb(LookbackCandles))
         {
-            ExtraText = $"no wick above upper BB in last {LookbackCandles} candles";
+            ExtraText = $"no wick below lower BB in last {LookbackCandles} candles";
             return false;
         }
 
-        if (!IsSma20SlopeNegative())
+        if (!IsSma20SlopePositive())
         {
-            ExtraText = "SMA20 slope is not negative";
+            ExtraText = "SMA20 slope is not positive";
             return false;
         }
 
-        if (!HadCrossBelowSma50(LookbackCandles))
+        if (!HadCrossAboveSma50(LookbackCandles))
         {
-            ExtraText = $"no cross below SMA50 in last {LookbackCandles} candles";
+            ExtraText = $"no cross above SMA50 in last {LookbackCandles} candles";
             return false;
         }
 

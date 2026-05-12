@@ -1,9 +1,9 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Jump;
 
-public class SignalCandleJumpShort : SignalCreateBase
+public class SignalCandleJumpLong : SignalCreateBase
 {
 
 
@@ -18,7 +18,7 @@ public class SignalCandleJumpShort : SignalCreateBase
         if (candleCount > 0)
         {
             // Wat is het laagste en hoogste punt in de laatste x candles
-            CandleTime minDate = CandleLast!.Candle.OpenTime;
+            CandleTime minDate = CandleLast.Candle.OpenTime;
             decimal minValue = decimal.MaxValue;
             CandleTime maxDate = CandleLast.Candle.OpenTime;
             decimal maxValue = decimal.MinValue;
@@ -47,13 +47,13 @@ public class SignalCandleJumpShort : SignalCreateBase
             }
 
 
-            // Is het gedaald? (maar pas op, het kan alweer gestegen zijn)
-            if (minDate > maxDate)
+            // Is het gestegen ? (maar pas op, het kan alweer gedaald zijn)
+            if (minDate < maxDate)
             {
                 decimal perc = 100m * (maxValue / minValue - 1);
                 if (perc >= GlobalData.Settings.Signal.Jump.CandlePercentage)
                 {
-                    ExtraText = "-" + perc.ToString("N2") + "%";
+                    ExtraText = "+" + perc.ToString("N2") + "%";
                     return true;
                 }
             }

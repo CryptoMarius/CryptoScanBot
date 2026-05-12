@@ -2,7 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Dlz;
 
 public class SignalDominantLevelLong : SignalCreateBase
 {
