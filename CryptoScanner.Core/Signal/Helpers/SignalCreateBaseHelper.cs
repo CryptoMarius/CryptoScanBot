@@ -6,20 +6,22 @@ public static class SignalCreateBaseHelper
 {
     public static bool IsMacdRecoveryOversold(this SignalCreateBase myBase, int candleCount)
     {
-        // Is there "recovery" (a lighter macd bar)
+        // Require candleCount strictly rising histogram bars AND the oldest bar in the chain
+        // below zero, so a continuation in positive territory is not counted as oversold recovery.
         MyData last = myBase.CandleLast!;
         while (candleCount-- > 0)
         {
             if (!myBase.GetPrevCandle(last, out MyData? prev))
                 return false;
 
-            if (last.CandleData?.MacdHistogram <= prev!.CandleData?.MacdHistogram)
+            if (last.CandleData!.MacdHistogram <= prev!.CandleData!.MacdHistogram)
                 return false;
-
-            // No check for negative macd?
 
             last = prev;
         }
+
+        if (last.CandleData!.MacdHistogram >= 0)
+            return false;
 
         return true;
     }
@@ -27,21 +29,22 @@ public static class SignalCreateBaseHelper
 
     public static bool IsMacdRecoveryOverbought(this SignalCreateBase myBase, int candleCount)
     {
-        // Is there "recovery" (a lighter macd bar)
-        MyData? last = myBase.CandleLast;
-
+        // Require candleCount strictly falling histogram bars AND the oldest bar in the chain
+        // above zero, so a continuation in negative territory is not counted as overbought recovery.
+        MyData last = myBase.CandleLast!;
         while (candleCount-- > 0)
         {
             if (!myBase.GetPrevCandle(last, out MyData? prev))
                 return false;
 
-            if (last.CandleData?.MacdHistogram >= prev!.CandleData?.MacdHistogram)
+            if (last.CandleData!.MacdHistogram >= prev!.CandleData!.MacdHistogram)
                 return false;
-
-            // No check for positive macd?
 
             last = prev;
         }
+
+        if (last.CandleData!.MacdHistogram <= 0)
+            return false;
 
         return true;
     }
