@@ -1,10 +1,9 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
-using CryptoScanner.Core.Signal.Dlz;
-
-#endif
 using CryptoScanner.Core.Signal.Experiment;
+#endif
+using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
 using CryptoScanner.Core.Signal.Gaussian;
 using CryptoScanner.Core.Signal.Jump;
@@ -192,6 +191,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
         });
 
+#if DEBUG
         // NWE × BB crossover: NWE curls through the BB band after extending beyond it
         Register(new AlgorithmDefinition()
         {
@@ -200,30 +200,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalNweBbLong),
             AnalyzeShortType = typeof(SignalNweBbShort),
         });
-
-        //#if DEBUG
-        //        // BBMA - Oma Ally
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "bbma.grok",
-        //            Strategy = CryptoSignalStrategy.BbMaGrok,
-        //            AnalyzeLongType = typeof(SignalBbMaGrokLong),
-        //            AnalyzeShortType = typeof(SignalBbMaShort),
-        //        });
-        //#endif
-
-        //#if DEBUG
-        //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-        //        // No confirmations from higher timeframe(s)
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "bbma.old",
-        //            Strategy = CryptoSignalStrategy.BbmaReentryOld,
-        //            AnalyzeLongType = typeof(SignalBbmaReentryOldLong),
-        //            AnalyzeShortType = typeof(SignalBbmaReentryOldShort),
-        //        });
-        //#endif
-
+#endif
 
 #if DEBUG
         // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
