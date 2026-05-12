@@ -1,6 +1,6 @@
-﻿namespace CryptoScanner.Core.Signal;
+﻿namespace CryptoScanner.Core.Signal.Helpers;
 
-public static class VolumeTools
+public static class VolumeHelper
 {
     // TODO: some deactivated routines with
 

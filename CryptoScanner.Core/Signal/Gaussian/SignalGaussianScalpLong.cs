@@ -1,20 +1,20 @@
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Gaussian;
 
 /// <summary>
-/// GaussianScalp Short — mirror of SignalGaussianScalpLong.
+/// GaussianScalp Long — uses the STD-Filtered N-Pole Gaussian Filter [Loxx] for trend detection.
 ///
-/// Signal fires when the filtered Gaussian output just flipped bearish (goShort),
-/// meaning the current bar fell while the previous bar was a local peak,
-/// AND the previously confirmed direction was bullish (contsw == +1).
+/// Signal fires when the filtered Gaussian output just flipped bullish (goLong),
+/// meaning the current bar rose while the previous bar was a local trough,
+/// AND the previously confirmed direction was bearish (contsw == -1).
 ///
 /// Additional filters (applied before the Gaussian calculation):
-///   - RSI(30) &lt; 50 (momentum confirmation)
-///   - MACD(24/52/9) histogram &lt; 0 (trend validation)
+///   - RSI(30) > 50 (momentum confirmation)
+///   - MACD(24/52/9) histogram > 0 (trend validation)
 /// </summary>
 #if DEBUG
-public class SignalGaussianScalpShort : SignalGaussianScalpBase
+public class SignalGaussianScalpLong : SignalGaussianScalpBase
 {
     public override bool IndicatorsOkay(MyData data)
     {
@@ -34,44 +34,43 @@ public class SignalGaussianScalpShort : SignalGaussianScalpBase
     {
         ExtraText = "";
 
-        // --- RSI(30) < 50: momentum confirmation ---
+        // --- RSI(30) > 50: momentum confirmation ---
         double rsi30 = CandleLast.CandleData.Rsi30!.Value;
-        if (rsi30 >= 50)
+        if (rsi30 <= 50)
         {
-            ExtraText = $"RSI30 {rsi30:N1} >= 50";
+            ExtraText = $"RSI30 {rsi30:N1} <= 50";
             return false;
         }
 
-        // --- MACD(24/52/9) histogram < 0: trend validation ---
+        // --- MACD(24/52/9) histogram > 0: trend validation ---
         double macdHist = CandleLast.CandleData.MacdHistogram24!.Value;
-        if (macdHist >= 0)
+        if (macdHist <= 0)
         {
-            ExtraText = $"MACD24 hist {macdHist:N6} >= 0";
+            ExtraText = $"MACD24 hist {macdHist:N6} <= 0";
             return false;
         }
 
-        // --- Gaussian filter: goShort signal ---
-        if (!ComputeSignal(out _, out bool goShort))
+        // --- Gaussian filter: goLong signal ---
+        if (!ComputeSignal(out bool goLong, out _))
         {
             ExtraText = "insufficient history for Gaussian filter";
             return false;
         }
 
-        if (!goShort)
+        if (!goLong)
         {
-            ExtraText = "no Gaussian goShort signal";
+            ExtraText = "no Gaussian goLong signal";
             return false;
         }
 
-        ExtraText = $"G↓ RSI30={rsi30:N1}";
+        ExtraText = $"G↑ RSI30={rsi30:N1}";
         return true;
     }
 
 
-
     /// <summary>
     /// Give up when the setup has not triggered within 2 candles after the signal,
-    /// or when RSI(30) has risen back above 50 (momentum invalidated).
+    /// or when RSI(30) has dropped back below 50 (momentum invalidated).
     /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
@@ -82,19 +81,19 @@ public class SignalGaussianScalpShort : SignalGaussianScalpBase
             return true;
         }
 
-        // RSI(30) rose above 50 — bearish momentum lost
+        // RSI(30) dropped below 50 — momentum lost
         double? rsi30 = CandleLast.CandleData.Rsi30;
-        if (rsi30 >= 50)
+        if (rsi30 <= 50)
         {
-            ExtraText = $"RSI30 {rsi30:N1} risen above 50";
+            ExtraText = $"RSI30 {rsi30:N1} dropped below 50";
             return true;
         }
 
-        // MACD histogram went positive — trend reversed
+        // MACD histogram went negative — trend reversed
         double? macdHist = CandleLast.CandleData.MacdHistogram24;
-        if (macdHist >= 0)
+        if (macdHist <= 0)
         {
-            ExtraText = $"MACD24 hist {macdHist:N6} turned positive";
+            ExtraText = $"MACD24 hist {macdHist:N6} turned negative";
             return true;
         }
 

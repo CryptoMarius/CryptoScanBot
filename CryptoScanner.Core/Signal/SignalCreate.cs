@@ -3,7 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
-using CryptoScanner.Core.Signal.Indicator;
+using CryptoScanner.Core.Signal.Indicators;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Trend;
 

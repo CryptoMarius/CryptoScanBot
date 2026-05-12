@@ -6,6 +6,7 @@ using CryptoScanner.Core.Signal.Dlz;
 #endif
 using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.Fvg;
+using CryptoScanner.Core.Signal.Gaussian;
 using CryptoScanner.Core.Signal.Jump;
 using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Sbm;
@@ -14,6 +15,15 @@ using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
 
 namespace CryptoScanner.Core.Signal;
+
+// Class for registering all algorithms
+public class AlgorithmDefinition
+{
+    public required string Name { get; set; }
+    public required CryptoSignalStrategy Strategy { get; set; }
+    public required Type? AnalyzeLongType { get; set; }
+    public required Type? AnalyzeShortType { get; set; }
+}
 
 public static class RegisterAlgorithms
 {

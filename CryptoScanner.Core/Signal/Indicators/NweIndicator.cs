@@ -1,6 +1,6 @@
 ﻿using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Indicator;
+namespace CryptoScanner.Core.Signal.Indicators;
 
 // Nadaraya-Watson Envelope [LuxAlgo]
 
@@ -10,16 +10,6 @@ public class NweIndicator
     public double Bandwidth { get; }
     public decimal Multiplier { get; }
     public bool SmoothRepainting { get; }
-
-    //public class CryptoCandle
-    //{
-    //    public long OpenTime { get; set; }
-    //    public decimal Open { get; set; }
-    //    public decimal High { get; set; }
-    //    public decimal Low { get; set; }
-    //    public decimal Close { get; set; }
-    //    public decimal Volume { get; set; }
-    //}
 
     public class NweResult
     {

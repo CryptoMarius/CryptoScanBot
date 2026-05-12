@@ -1,4 +1,4 @@
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Gaussian;
 
 /// <summary>
 /// Shared implementation of the STD-Filtered N-Pole Gaussian Filter [Loxx].

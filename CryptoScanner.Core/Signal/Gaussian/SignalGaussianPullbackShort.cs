@@ -1,6 +1,6 @@
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Core.Signal.Gaussian;
 
 /// <summary>
 /// Gaussian Pullback Short — fires during a confirmed downtrend when price wicks up
