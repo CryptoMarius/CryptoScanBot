@@ -1144,7 +1144,7 @@ public partial class ChartWindowViewModel : ObservableObject
             if (_pendingRefresh)
             {
                 _pendingRefresh = false;
-                RefreshCommand.ExecuteAsync(null);
+                _ = RefreshCommand.ExecuteAsync(null);
             }
         }
     }
