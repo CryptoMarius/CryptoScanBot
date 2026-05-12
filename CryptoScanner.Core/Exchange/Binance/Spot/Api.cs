@@ -3,7 +3,6 @@ using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Spot;
 
-using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;

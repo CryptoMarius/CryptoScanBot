@@ -2,7 +2,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Indicator;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Nwe;
 
 /// <summary>
 /// Shared computation for the NWE × BB crossover signals.
@@ -26,11 +26,11 @@ public abstract class SignalNweBbBase : SignalCreateBase
             decimal bbUpper, decimal bbLower)
         {
             OpenTime = openTime;
-            Close    = close;
+            Close = close;
             NweUpper = nweUpper;
             NweLower = nweLower;
-            BbUpper  = bbUpper;
-            BbLower  = bbLower;
+            BbUpper = bbUpper;
+            BbLower = bbLower;
         }
     }
 

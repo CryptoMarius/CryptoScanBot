@@ -6,8 +6,6 @@ using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
 
-using System.Text;
-
 namespace CryptoScanner.Core.Barometer;
 
 public class BarometerTools
@@ -255,7 +253,7 @@ public class BarometerTools
         // Herbereken de candles in de andere intervallen (voor de 15m, 30m, 1h, 4h en 1d)
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
-            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval10m || 
+            if (interval.IntervalPeriod == CryptoIntervalPeriod.interval10m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval15m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval30m ||
                 interval.IntervalPeriod == CryptoIntervalPeriod.interval1h ||

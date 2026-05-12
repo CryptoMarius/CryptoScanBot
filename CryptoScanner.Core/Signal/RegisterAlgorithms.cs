@@ -4,7 +4,10 @@ using CryptoScanner.Core.Signal.Bbma;
 #endif
 using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.Momentum;
+using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Other;
+using CryptoScanner.Core.Signal.Sbm;
+using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Trend;
 
 namespace CryptoScanner.Core.Signal;

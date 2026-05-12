@@ -1,7 +1,6 @@
 ﻿using BitMart.Net;
 using BitMart.Net.Clients;
 
-using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
 using CryptoScanner.Core.Context;

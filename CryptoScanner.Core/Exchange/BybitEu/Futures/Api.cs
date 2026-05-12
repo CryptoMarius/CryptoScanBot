@@ -4,7 +4,6 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects;
 using Bybit.Net.Objects.Models.V5;
 
-using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;
 
 

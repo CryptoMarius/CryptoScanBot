@@ -68,7 +68,7 @@ public class SignalGaussianScalpLong : SignalGaussianScalpBase
     }
 
 
-      /// <summary>
+    /// <summary>
     /// Give up when the setup has not triggered within 2 candles after the signal,
     /// or when RSI(30) has dropped back below 50 (momentum invalidated).
     /// </summary>

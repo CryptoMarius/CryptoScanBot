@@ -119,7 +119,7 @@ public class SignalCreateBase
         if (GlobalData.Settings.Trading.CheckIncreasingMacd)
         {
             int barCount = 1;
-            if (SignalStrategy == CryptoSignalStrategy.Sbm1 || 
+            if (SignalStrategy == CryptoSignalStrategy.Sbm1 ||
                 SignalStrategy == CryptoSignalStrategy.Sbm2 ||
                 SignalStrategy == CryptoSignalStrategy.Sbm3)
                 barCount = GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery;
@@ -529,7 +529,7 @@ public class SignalCreateBase
         return false;
     }
 
-    
+
     public bool CheckMaCrossings(out string response)
     {
         if (GlobalData.Settings.Signal.Sbm.Ma200AndMa20Crossing && HasCrossed200and20(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Lookback, out int candlesAgo))

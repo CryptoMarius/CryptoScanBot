@@ -48,7 +48,7 @@ public class SignalGaussianPullbackShort : SignalGaussianScalpBase
             return false;
         }
 
-        double high  = (double)CandleLast.Candle.High;
+        double high = (double)CandleLast.Candle.High;
         double close = (double)CandleLast.Candle.Close;
 
         if (high < filteredLast)

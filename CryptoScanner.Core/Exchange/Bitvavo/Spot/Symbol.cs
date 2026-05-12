@@ -1,5 +1,3 @@
-using System.Globalization;
-
 using CryptoExchange.Net.SharedApis;
 
 using CryptoScanner.Core.Context;
@@ -7,6 +5,8 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Dapper.Contrib.Extensions;
+
+using System.Globalization;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 

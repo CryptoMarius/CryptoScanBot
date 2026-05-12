@@ -1,11 +1,10 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Sbm;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Stobb;
 
-public class SignalStobbMultiLong : SignalSbmBase
+public class SignalStobbLong : SignalSbmBase
 {
 
 
@@ -15,7 +14,6 @@ public class SignalStobbMultiLong : SignalSbmBase
            || data.Candle.OpenTime == 0
            || data.CandleData == null
            || data.CandleData.Sma20 == null
-           || data.CandleData.MacdHistogram == null
            || data.CandleData.StochSignal == null
            || data.CandleData.StochOscillator == null
            || data.CandleData.BollingerBandsDeviation == null
@@ -26,13 +24,23 @@ public class SignalStobbMultiLong : SignalSbmBase
     }
 
 
+
     public override bool AdditionalChecks(MyData data, out string response)
     {
+        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        {
+            if (CandleLast.CandleData!.Lux5mValue > -50)
+            {
+                response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                return false;
+            }
+        }
+
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
             // Check ma lines
-            if (!CandleLast!.IsSbmConditionsOversold())
+            if (!CandleLast!.IsSbmConditionsOverbought())
             {
                 response = "no sbm conditions";
                 return false;
@@ -59,13 +67,13 @@ public class SignalStobbMultiLong : SignalSbmBase
         // Controle op de RSI
         if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOversold())
         {
-            response = "rsi niet oversold";
+            response = "rsi not oversold";
             return false;
         }
 
         if (GlobalData.Settings.Signal.Stobb.OnlyIfPreviousStobb && HadStobbInThelastXCandles(SignalSide, 5, 60) == null)
         {
-            response = "geen voorgaande stobb gevonden";
+            response = "no previous stobb found";
             return false;
         }
 
@@ -84,62 +92,21 @@ public class SignalStobbMultiLong : SignalSbmBase
             return false;
         }
 
-        //// Er een data onder de bb opent of sluit
-        //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
-        //{
-        //    ExtraText = "niet beneden de bb.lower";
-        //    return false;
-        //}
-
-        //// Sprake van een oversold situatie (beide moeten onder de 20 zitten)
-        //if (!CandleLast.StochOversold())
-        //{
-        //    ExtraText = "stoch niet oversold";
-        //    return false;
-        //}
-
-        CandleTime openTime = CandleLast.Candle.OpenTime;
-
-        // Is it a signal valid over 4 intervals (multistorsi)
-        int okay = 4;
-        ExtraText = "";
-        CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
-        for (int count = 6; count > 0; count--)
+        // Er een data onder de bb opent of sluit
+        if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         {
-            var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, Interval, openTime, intervalPeriod);
-            if (!result.success)
-                return false;
-
-            if (IndicatorsOkay(result.candle!) && result.candle!.StochOversold()
-                && result.candle!.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
-            {
-                if (ExtraText != "")
-                    ExtraText += ',';
-                ExtraText += result.higherInterval.Interval.Name;
-
-                okay--;
-                if (okay == 0)
-                    return true;
-            }
-            else
-            {
-                // first interval needs to be a signal
-                if (count == 6)
-                    return false;
-            }
-
-            if (intervalPeriod == CryptoIntervalPeriod.interval1w)
-                return false;
-            intervalPeriod++;
+            ExtraText = "not below bb.lower";
+            return false;
         }
 
+        // Sprake van een oversold situatie (beide moeten onder de 20 zitten)
+        if (!CandleLast.StochOversold())
+        {
+            ExtraText = "stoch not oversold";
+            return false;
+        }
 
-        //// close date shouw be in the lower part of the bb
-        //if (!InLowerPartOfBollingerBands(1, 10.0m))
-        //    return false;
-
-        ExtraText = "";
-        return false;
+        return true;
     }
 }
 

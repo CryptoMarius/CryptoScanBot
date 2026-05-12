@@ -221,8 +221,8 @@ public class SignalBbmaShort : SignalBbmaBase
             prev5m.CandleData.Wma05Low == null || prev5m.CandleData.Wma10Low == null)
             return false;
 
-        decimal wma05LowNow  = (decimal)current5m.CandleData.Wma05Low.Value;
-        decimal wma10LowNow  = (decimal)current5m.CandleData.Wma10Low.Value;
+        decimal wma05LowNow = (decimal)current5m.CandleData.Wma05Low.Value;
+        decimal wma10LowNow = (decimal)current5m.CandleData.Wma10Low.Value;
         decimal wma05LowPrev = (decimal)prev5m.CandleData.Wma05Low.Value;
         decimal wma10LowPrev = (decimal)prev5m.CandleData.Wma10Low.Value;
 

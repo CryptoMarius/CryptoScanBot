@@ -1,4 +1,4 @@
-﻿namespace CryptoScanner.Core.Signal.Other;
+﻿namespace CryptoScanner.Core.Signal.Nwe;
 
 public class SignalLuxNadarayaWatsonEnvelope : SignalLuxNadarayaWatsonEnvelopeBase
 {

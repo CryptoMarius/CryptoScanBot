@@ -1,10 +1,9 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Sbm;
 
-
-public class SignalSbm3Short : SignalSbmBase
+public class SignalSbm3Long : SignalSbmBase
 {
 
     public override bool IsSignal()
@@ -12,30 +11,30 @@ public class SignalSbm3Short : SignalSbmBase
         ExtraText = "";
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
+        if (!CandleLast!.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Sbm.BBMinPercentage, GlobalData.Settings.Signal.Sbm.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
         // Check ma lines
-        if (!CandleLast!.IsSbmConditionsOverbought())
+        if (!CandleLast!.IsSbmConditionsOversold())
         {
             ExtraText = "no sbm conditions";
             return false;
         }
 
-        // Check psar above sma20
-        if (!CandleLast!.IsSbmConditionsPSarOverbought())
+        // Check psar below sma20
+        if (!CandleLast!.IsSbmConditionsPSarOversold())
         {
-            ExtraText = "psar not above sma20";
+            ExtraText = "psar not below sma20";
             return false;
         }
 
         if (!this.IsBollingerBandsIncreased(GlobalData.Settings.Signal.Sbm.Sbm3CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm3CandlesBbRecoveryPercentage))
             return false;
 
-        if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
+        if (!this.IsMacdRecoveryOversold(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
         {
             ExtraText = "no macd recovery";
             return false;

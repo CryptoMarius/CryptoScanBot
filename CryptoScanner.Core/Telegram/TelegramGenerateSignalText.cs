@@ -20,10 +20,10 @@ internal class TelegramGenerateSignalText
             if (trend >= 0)
                 return "\U00002B06"; // Arrow up
             else
-            if (trend < 0)
-                return "\U00002B07"; // Arrown down
-            else
-                return "\U00002753"; // questionmark
+                if (trend < 0)
+                    return "\U00002B07"; // Arrown down
+                else
+                    return "\U00002753"; // questionmark
         }
         else
         {

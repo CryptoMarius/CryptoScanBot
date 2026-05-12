@@ -2,10 +2,11 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Sbm;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Stobb;
 
-public class SignalStobbMultiShort : SignalSbmBase
+public class SignalStobbMultiLong : SignalSbmBase
 {
 
 
@@ -15,6 +16,7 @@ public class SignalStobbMultiShort : SignalSbmBase
            || data.Candle.OpenTime == 0
            || data.CandleData == null
            || data.CandleData.Sma20 == null
+           || data.CandleData.MacdHistogram == null
            || data.CandleData.StochSignal == null
            || data.CandleData.StochOscillator == null
            || data.CandleData.BollingerBandsDeviation == null
@@ -31,7 +33,7 @@ public class SignalStobbMultiShort : SignalSbmBase
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
             // Check ma lines
-            if (!CandleLast!.IsSbmConditionsOverbought())
+            if (!CandleLast!.IsSbmConditionsOversold())
             {
                 response = "no sbm conditions";
                 return false;
@@ -42,13 +44,13 @@ public class SignalStobbMultiShort : SignalSbmBase
         if (GlobalData.Settings.Signal.Stobb.IncludeSbmPercAndCrossing)
         {
             if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
-                !data.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
+                !data.IsPercentageSma200AndSma50OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                 return false;
             if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&
-                !data.IsPercentageSma200AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
+                !data.IsPercentageSma200AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma200AndMa20Percentage, out response))
                 return false;
             if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
-                !data.IsPercentageSma50AndSma20OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
+                !data.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                 return false;
 
             if (!CheckMaCrossings(out response))
@@ -56,9 +58,9 @@ public class SignalStobbMultiShort : SignalSbmBase
         }
 
         // Controle op de RSI
-        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOverbought())
+        if (GlobalData.Settings.Signal.Stobb.IncludeRsi && !CandleLast.RsiOversold())
         {
-            response = "rsi niet overbought";
+            response = "rsi niet oversold";
             return false;
         }
 
@@ -72,7 +74,6 @@ public class SignalStobbMultiShort : SignalSbmBase
         return true;
     }
 
-
     public override bool IsSignal()
     {
         ExtraText = "";
@@ -84,6 +85,19 @@ public class SignalStobbMultiShort : SignalSbmBase
             return false;
         }
 
+        //// Er een data onder de bb opent of sluit
+        //if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
+        //{
+        //    ExtraText = "niet beneden de bb.lower";
+        //    return false;
+        //}
+
+        //// Sprake van een oversold situatie (beide moeten onder de 20 zitten)
+        //if (!CandleLast.StochOversold())
+        //{
+        //    ExtraText = "stoch niet oversold";
+        //    return false;
+        //}
 
         CandleTime openTime = CandleLast.Candle.OpenTime;
 
@@ -97,8 +111,8 @@ public class SignalStobbMultiShort : SignalSbmBase
             if (!result.success)
                 return false;
 
-            if (IndicatorsOkay(result.candle!) && result.candle!.StochOverbought()
-                && result.candle!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+            if (IndicatorsOkay(result.candle!) && result.candle!.StochOversold()
+                && result.candle!.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -128,7 +142,5 @@ public class SignalStobbMultiShort : SignalSbmBase
         ExtraText = "";
         return false;
     }
-
-
 }
 

@@ -1,6 +1,4 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
+﻿using CryptoScanner.Core.Enums;
 
 #if DEBUG
 namespace CryptoScanner.Core.Signal.Bbma;

@@ -41,7 +41,7 @@ public static class PositionTools
                     return step;
                 else
                     if (!closed && !step.CloseTime.HasValue)
-                    return step;
+                        return step;
             }
         }
         return null;

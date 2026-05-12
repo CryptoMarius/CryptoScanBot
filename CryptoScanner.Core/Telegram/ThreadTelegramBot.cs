@@ -256,52 +256,52 @@ public class ThreadTelegramBotInstance
                                             TelegramShowValue.ShowValue(command, stringBuilder);
                                         }
                                         else
-                                        if (command == "STATUS")
-                                            TelegramShowStatus.ShowStatus(command, stringBuilder);
-                                        else if (command == "VALUE")
-                                            TelegramShowValue.ShowValue(command, stringBuilder);
-                                        else if (command == "RESET")
-                                            TelegramResetScanner.Execute(command, stringBuilder);
-                                        else if (command == "CALCULATEZONES")
-                                            TelegramCalculateZones.Execute(command, stringBuilder);
-                                        else if (command == "ZONES")
-                                            showInHtml = TelegramShowZones.Execute(arguments, stringBuilder);
-                                        else if (command == "POSITIONS")
-                                            GlobalData.ActiveExchange!.Data.PositionList.ShowPositions(stringBuilder);
-                                        else if (command == "PROFITS")
-                                            CommandShowProfits(stringBuilder);
-                                        else if (command == "SLOTS")
-                                            TelegramBotSlots.Execute(arguments, stringBuilder);
-                                        else if (command == "START")
-                                            TelegramBotStart.Execute(arguments, stringBuilder);
-                                        else if (command == "SIGNALSTART")
-                                            TelegramBotStart.Execute("command signals", stringBuilder);
-                                        //else if (command == "ADVICESTARTS")
-                                        //    StopBot("command advice", stringBuilder);
-                                        //else if (command == "BALANCESTART")
-                                        //    TelegramBotStart.Execute("command balancing", stringBuilder);
-                                        else if (command == "STOP")
-                                            TelegramBotStop.Execute(arguments, stringBuilder);
-                                        else if (command == "SIGNALSTOP")
-                                            TelegramBotStop.Execute("command signals", stringBuilder);
-                                        //else if (command == "ADVICESTOP")
-                                        //    StopBot("command advice", stringBuilder);
-                                        //else if (command == "BALANCESTOP")
-                                        //    StopBot("command balancing", stringBuilder);
-                                        else if (command == "BAROMETER")
-                                            TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
-                                        else if (command == "ASSETS")
-                                        {
-                                            AssetTools.FetchAssets(GlobalData.ActiveExchange!);
-                                            Helper.ShowAssets(GlobalData.ActiveExchange!, stringBuilder, out decimal _, out decimal _);
-                                        }
-                                        else if (command == "TREND")
-                                            await TelegramShowTrend.ShowTrendAsync(arguments, GlobalData.Settings.Trend.Primary, stringBuilder);
-                                        else if (command == "HELP")
-                                            TelegramShowHelp.ShowHelp(stringBuilder);
-                                        else if (command == "CHATID")
-                                            stringBuilder.AppendLine("ChatId: " + update.Message.Chat.Id.ToString());
-                                        else stringBuilder.Append("Not a command..");
+                                            if (command == "STATUS")
+                                                TelegramShowStatus.ShowStatus(command, stringBuilder);
+                                            else if (command == "VALUE")
+                                                TelegramShowValue.ShowValue(command, stringBuilder);
+                                            else if (command == "RESET")
+                                                TelegramResetScanner.Execute(command, stringBuilder);
+                                            else if (command == "CALCULATEZONES")
+                                                TelegramCalculateZones.Execute(command, stringBuilder);
+                                            else if (command == "ZONES")
+                                                showInHtml = TelegramShowZones.Execute(arguments, stringBuilder);
+                                            else if (command == "POSITIONS")
+                                                GlobalData.ActiveExchange!.Data.PositionList.ShowPositions(stringBuilder);
+                                            else if (command == "PROFITS")
+                                                CommandShowProfits(stringBuilder);
+                                            else if (command == "SLOTS")
+                                                TelegramBotSlots.Execute(arguments, stringBuilder);
+                                            else if (command == "START")
+                                                TelegramBotStart.Execute(arguments, stringBuilder);
+                                            else if (command == "SIGNALSTART")
+                                                TelegramBotStart.Execute("command signals", stringBuilder);
+                                            //else if (command == "ADVICESTARTS")
+                                            //    StopBot("command advice", stringBuilder);
+                                            //else if (command == "BALANCESTART")
+                                            //    TelegramBotStart.Execute("command balancing", stringBuilder);
+                                            else if (command == "STOP")
+                                                TelegramBotStop.Execute(arguments, stringBuilder);
+                                            else if (command == "SIGNALSTOP")
+                                                TelegramBotStop.Execute("command signals", stringBuilder);
+                                            //else if (command == "ADVICESTOP")
+                                            //    StopBot("command advice", stringBuilder);
+                                            //else if (command == "BALANCESTOP")
+                                            //    StopBot("command balancing", stringBuilder);
+                                            else if (command == "BAROMETER")
+                                                TelegramShowBarometer.ShowBarometer(arguments, stringBuilder);
+                                            else if (command == "ASSETS")
+                                            {
+                                                AssetTools.FetchAssets(GlobalData.ActiveExchange!);
+                                                Helper.ShowAssets(GlobalData.ActiveExchange!, stringBuilder, out decimal _, out decimal _);
+                                            }
+                                            else if (command == "TREND")
+                                                await TelegramShowTrend.ShowTrendAsync(arguments, GlobalData.Settings.Trend.Primary, stringBuilder);
+                                            else if (command == "HELP")
+                                                TelegramShowHelp.ShowHelp(stringBuilder);
+                                            else if (command == "CHATID")
+                                                stringBuilder.AppendLine("ChatId: " + update.Message.Chat.Id.ToString());
+                                            else stringBuilder.Append("Not a command..");
 
 
                                         string s = stringBuilder.ToString();

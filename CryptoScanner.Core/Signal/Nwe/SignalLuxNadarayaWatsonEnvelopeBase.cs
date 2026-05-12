@@ -4,7 +4,7 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Indicator;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Nwe;
 
 public class SignalLuxNadarayaWatsonEnvelopeBase : SignalCreateBase
 {

@@ -1,7 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Sbm;
 
 public class SignalSbm2Long : SignalSbmBase
 {

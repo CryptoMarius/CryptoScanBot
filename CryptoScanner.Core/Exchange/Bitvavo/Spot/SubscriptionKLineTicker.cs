@@ -1,14 +1,14 @@
-using System.Globalization;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Globalization;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 
 namespace CryptoScanner.Core.Exchange.Bitvavo.Spot;
 
@@ -68,10 +68,10 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 return;
 
             DateTime openTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(candleArr[0].GetInt64()).UtcDateTime;
-            decimal open   = decimal.Parse(candleArr[1].GetString()!, CultureInfo.InvariantCulture);
-            decimal high   = decimal.Parse(candleArr[2].GetString()!, CultureInfo.InvariantCulture);
-            decimal low    = decimal.Parse(candleArr[3].GetString()!, CultureInfo.InvariantCulture);
-            decimal close  = decimal.Parse(candleArr[4].GetString()!, CultureInfo.InvariantCulture);
+            decimal open = decimal.Parse(candleArr[1].GetString()!, CultureInfo.InvariantCulture);
+            decimal high = decimal.Parse(candleArr[2].GetString()!, CultureInfo.InvariantCulture);
+            decimal low = decimal.Parse(candleArr[3].GetString()!, CultureInfo.InvariantCulture);
+            decimal close = decimal.Parse(candleArr[4].GetString()!, CultureInfo.InvariantCulture);
             decimal volume = decimal.Parse(candleArr[5].GetString()!, CultureInfo.InvariantCulture);
 
             if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
@@ -91,9 +91,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             candle = new() { OpenTime = candleOpenUnix };
                         }
                         candle.TickDecimals = symbol.PriceDecimals;
-                        candle.Open  = open;
-                        candle.High  = high;
-                        candle.Low   = low;
+                        candle.Open = open;
+                        candle.High = high;
+                        candle.Low = low;
                         candle.Close = close;
                         candle.Volume = volume;
                         if (addCandle)

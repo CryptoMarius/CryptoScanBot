@@ -2,7 +2,7 @@
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Sbm;
 
 public class SignalSbmBase : SignalCreateBase
 {
@@ -47,7 +47,7 @@ public class SignalSbmBase : SignalCreateBase
                 if (GlobalData.Settings.Signal.Sbm.CheckMa50AndMa20Percentage &&
                     !candle.IsPercentageSma50AndSma20OkayOversold(GlobalData.Settings.Signal.Sbm.Ma50AndMa20Percentage, out response))
                     return false;
-                
+
                 break;
             case Enums.CryptoTradeSide.Short:
                 if (!this.IsMacdRecoveryOverbought(GlobalData.Settings.Signal.Sbm.CandlesForMacdRecovery))
@@ -55,8 +55,8 @@ public class SignalSbmBase : SignalCreateBase
                     response = "no macd recovery";
                     return false;
                 }
-                
-                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage && 
+
+                if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa50Percentage &&
                     !candle.IsPercentageSma200AndSma50OkayOverbought(GlobalData.Settings.Signal.Sbm.Ma200AndMa50Percentage, out response))
                     return false;
                 if (GlobalData.Settings.Signal.Sbm.CheckMa200AndMa20Percentage &&

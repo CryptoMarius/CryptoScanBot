@@ -1,6 +1,6 @@
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Signal.Other;
+namespace CryptoScanner.Core.Signal.Nwe;
 
 /// <summary>
 /// Long signal: NWE lower crosses BB lower upward (from outside in).
@@ -36,8 +36,8 @@ public class SignalNweBbLong : SignalNweBbBase
         }
 
         var current = bars[^1];
-        var prev    = bars[^2];
-        var prev2   = bars[^3];
+        var prev = bars[^2];
+        var prev2 = bars[^3];
 
         // NWE lower was outside (below) BB lower
         if (prev.NweLower > prev.BbLower)

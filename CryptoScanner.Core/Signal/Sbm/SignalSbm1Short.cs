@@ -1,10 +1,12 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Sbm;
 
-public class SignalSbm2Short : SignalSbmBase
+public class SignalSbm1Short : SignalSbmBase
 {
+
+    // TODO: Stoch cross over %K/%D (in AllowStepIn)
 
     public override bool IsSignal()
     {
@@ -31,9 +33,9 @@ public class SignalSbm2Short : SignalSbmBase
             return false;
         }
 
-        if (!InUpperPartOfBollingerBands(GlobalData.Settings.Signal.Sbm.Sbm2CandlesLookbackCount, GlobalData.Settings.Signal.Sbm.Sbm2BbPercentage))
+        if (!this.IsStobbInThelastXCandlesOverbought(GlobalData.Settings.Signal.Sbm.Sbm1CandlesLookbackCount))
         {
-            ExtraText = "no high price in the last x candles";
+            ExtraText = "no stob in the last x candles";
             return false;
         }
 

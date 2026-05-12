@@ -1,8 +1,6 @@
 ﻿using BloFin.Net;
 using BloFin.Net.Clients;
 
-using CryptoExchange.Net.Authentication;
-
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;

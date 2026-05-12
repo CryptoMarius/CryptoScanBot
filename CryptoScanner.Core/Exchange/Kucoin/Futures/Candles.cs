@@ -39,7 +39,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         CandleTime maxTime = fetchFrom + (limit - 1) * interval.Duration;
 
     Again:
-        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval, 
+        var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (FuturesKlineInterval)exchangeInterval,
             startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime());
         if (!result.Success)
         {

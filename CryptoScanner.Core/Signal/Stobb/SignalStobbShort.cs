@@ -1,7 +1,8 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Sbm;
 
-namespace CryptoScanner.Core.Signal.Momentum;
+namespace CryptoScanner.Core.Signal.Stobb;
 
 public class SignalStobbShort : SignalSbmBase
 {
@@ -80,7 +81,7 @@ public class SignalStobbShort : SignalSbmBase
         return true;
     }
 
-    
+
     public override bool IsSignal()
     {
         ExtraText = "";

@@ -1,6 +1,3 @@
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
-
 namespace CryptoScanner.Core.Signal.Experiment;
 
 /// <summary>
@@ -67,16 +64,16 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
             double out1 = filtered[i - 1];
             double out2 = filtered[i - 2];
 
-            bool pregoLong  = out0 > out1 && out1 <= out2;
+            bool pregoLong = out0 > out1 && out1 <= out2;
             bool pregoShort = out0 < out1 && out1 >= out2;
 
             int prevContsw = contsw;
-            if (pregoLong)  contsw = 1;
+            if (pregoLong) contsw = 1;
             else if (pregoShort) contsw = -1;
 
             if (i == filtered.Length - 1)
             {
-                goLong  = pregoLong  && prevContsw == -1;
+                goLong = pregoLong && prevContsw == -1;
                 goShort = pregoShort && prevContsw == 1;
             }
         }
@@ -94,7 +91,7 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
     {
         filteredLast = 0;
         filteredPrev = 0;
-        contswLast   = 0;
+        contswLast = 0;
 
         if (!TryComputeFiltered(out double[] filtered))
             return false;
@@ -108,9 +105,9 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
             double out0 = filtered[i];
             double out1 = filtered[i - 1];
             double out2 = filtered[i - 2];
-            bool pregoLong  = out0 > out1 && out1 <= out2;
+            bool pregoLong = out0 > out1 && out1 <= out2;
             bool pregoShort = out0 < out1 && out1 >= out2;
-            if (pregoLong)       contsw = 1;
+            if (pregoLong) contsw = 1;
             else if (pregoShort) contsw = -1;
         }
         contswLast = contsw;
@@ -138,7 +135,7 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
         closes.Reverse(); // oldest first
 
         double[] raw = ComputeNPoleGaussian(closes);
-        filtered     = ApplyStdFilter(raw, FilterPeriod, FilterDeviations);
+        filtered = ApplyStdFilter(raw, FilterPeriod, FilterDeviations);
         return true;
     }
 
@@ -153,12 +150,12 @@ public abstract class SignalGaussianScalpBase : SignalCreateBase
 
         // Precompute binomial coefficients and powers
         double[] binomial = new double[GaussianOrder + 1];
-        double[] pow1mA   = new double[GaussianOrder + 1];
-        double   powAN    = Math.Pow(a, GaussianOrder);
+        double[] pow1mA = new double[GaussianOrder + 1];
+        double powAN = Math.Pow(a, GaussianOrder);
         for (int r = 0; r <= GaussianOrder; r++)
         {
             binomial[r] = BinomialCoefficient(GaussianOrder, r);
-            pow1mA[r]   = Math.Pow(1.0 - a, r);
+            pow1mA[r] = Math.Pow(1.0 - a, r);
         }
 
         double[] filt = new double[src.Count];
