@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="190"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="280"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              x:DataType="vm:StrategyNweSettingsViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyNweSettingsView">
@@ -25,6 +25,34 @@
             <!-- Only if lux 5m at 100% -->
             <CheckBox IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
                       Content="Only if lux 5m at 100%" FontSize="12"/>
+
+            <!-- Require volume climax on the signal candle -->
+            <CheckBox IsChecked="{Binding RequireVolumeClimax, Mode=TwoWay}"
+                      Content="Require volume climax on signal candle" FontSize="12"/>
+
+            <Grid ColumnDefinitions="*,110" RowDefinitions="Auto,Auto" RowSpacing="2" ColumnSpacing="8" Margin="20,0,0,0">
+                <!-- Lookback -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Lookback (candles):"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <NumericUpDown Grid.Row="0" Grid.Column="1"
+                               Value="{Binding VolumeClimaxLookback, Mode=TwoWay}"
+                               IsEnabled="{Binding RequireVolumeClimax}"
+                               Minimum="1" Maximum="200" Increment="1"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4"
+                               FormatString="0"/>
+
+                <!-- Multiplier -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Multiplier (x avg):"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <NumericUpDown Grid.Row="1" Grid.Column="1"
+                               Value="{Binding VolumeClimaxMultiplier, Mode=TwoWay}"
+                               IsEnabled="{Binding RequireVolumeClimax}"
+                               Minimum="1" Maximum="10" Increment="0.1"
+                               Height="26" FontSize="12" Padding="4,2"
+                               CornerRadius="4"
+                               FormatString="0.00"/>
+            </Grid>
 
         </StackPanel>
     </HeaderedContentControl>
