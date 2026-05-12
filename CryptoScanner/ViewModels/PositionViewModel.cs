@@ -442,7 +442,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _ProfitPriceText ??= Object.Percentage.ToString0();
+            _ProfitPriceText ??= Object.ProfitPrice.ToString0(Object.Symbol.PriceDisplayFormat);
             return _ProfitPriceText!;
         }
     }
