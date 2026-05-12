@@ -347,14 +347,6 @@ public class PositionMonitor //: IDisposable
                                 return;
                             }
 
-                            //// Performance feedback: don't open positions for underperforming strategies,
-                            //// but keep the signal alive so statistics (PriceMin/Max, SignalStatus) keep updating.
-                            //if (StrategyPerformanceMonitor.IsBlocked(signal.Strategy, tradeSide))
-                            //{
-                            //    GlobalData.AddTextToLogTab(text + " strategy blocked by performance feedback (skipped)");
-                            //    //ClearSignals(); ... keep them please
-                            //    continue;
-                            //}
 
                             // Controles die noodzakelijk zijn voor een entry
                             // (inclusief de overhead van controles van de analyser)

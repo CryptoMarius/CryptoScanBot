@@ -142,9 +142,6 @@ public class ScannerSession : IScannerSession
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();
 
-        // Initial performance refresh so the monitor is up-to-date immediately after (re)configuration
-        //await StrategyPerformanceMonitor.RefreshAsync();
-
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
 
@@ -345,13 +342,6 @@ public class ScannerSession : IScannerSession
         // Save the candles each x hours..
         await DataStore.SaveCandlesAsync();
     }
-
-    //private async void TimerCheckStrategyPerformance_Tick(object? sender, EventArgs? e)
-    //{
-    //    await StrategyPerformanceMonitor.RefreshAsync();
-    //}
-
-
 
     public void SetTimerDefaults()
     {
