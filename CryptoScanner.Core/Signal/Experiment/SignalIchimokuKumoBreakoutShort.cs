@@ -1,8 +1,8 @@
-﻿namespace CryptoScanner.Core.Signal.Other;
+﻿namespace CryptoScanner.Core.Signal.Experiment;
 
 #if EXTRASTRATEGIES
 
-public class SignalIchimokuKumoBreakoutLong : SignalCreateBase
+public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
 {
 
     public override bool IndicatorsOkay(CryptoCandle candle)
@@ -67,19 +67,19 @@ public class SignalIchimokuKumoBreakoutLong : SignalCreateBase
 
         // 1: De voorlaatste candle moet onder de bovenste cloud lijn zitten
         IchimokuResult last = results.Last();
-        if (candlePrev.Close > last.SenkouSpanA)
+        if (candlePrev.Close < last.SenkouSpanA)
             return false;
-        if (candlePrev.Close > last.SenkouSpanB)
+        if (candlePrev.Close < last.SenkouSpanB)
             return false;
 
         // 1: De laatste candle moet boven de bovenste cloud lijn zitten
-        if (CandleLast.Close <= last.SenkouSpanA)
+        if (CandleLast.Close >= last.SenkouSpanA)
             return false;
-        if (CandleLast.Close <= last.SenkouSpanB)
+        if (CandleLast.Close >= last.SenkouSpanB)
             return false;
 
         // 2: Price sluit boven de Kijun Sen
-        if (CandleLast.Close <= last.KijunSen)
+        if (CandleLast.Close >= last.KijunSen)
             return false;
         
 

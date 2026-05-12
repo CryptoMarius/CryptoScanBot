@@ -365,8 +365,6 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="Signal\Momentum\" />
-    <Folder Include="Signal\Nwe\" />
   </ItemGroup>
 
 </Project>
