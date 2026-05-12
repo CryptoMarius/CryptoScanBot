@@ -1,5 +1,5 @@
 namespace CryptoScanner.Core.Messages;
 
-public class SignalsDeletedMessage
+public class SignalDeleteAllMessage
 {
 }

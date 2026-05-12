@@ -315,7 +315,9 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
         flyout.Items.Add(new MenuItem { Header = "-" });
         if (_targetMenu == TargetMenu.Signal)
-            flyout.Items.Add(new MenuItem { Header = "Delete all signals", Command = new CommandSignalsDelete(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Delete all signals", Command = new CommandSignalDeleteAll(), CommandParameter = parameter });
+        if (_targetMenu == TargetMenu.Position)
+            flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
     }
 

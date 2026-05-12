@@ -25,6 +25,7 @@ public partial class PositionClosedGridViewModel : ObservableObject
 
         //_timerUpdatePositions.Tick += TimerUpdatePositionsTick;
         //_timerUpdatePositions.Start();
+        WeakReferenceMessenger.Default.Register<PositionDeleteAllMessage>(this, OnPositionDeleteAll);
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
         WeakReferenceMessenger.Default.Register<ConfigurationChangedMessage>(this, OnConfigurationChanged);
@@ -32,9 +33,9 @@ public partial class PositionClosedGridViewModel : ObservableObject
         LoadClosedPositions();
     }
 
-
     public void Dispose()
     {
+        WeakReferenceMessenger.Default.Unregister<PositionDeleteAllMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<ConfigurationChangedMessage>(this);
@@ -121,5 +122,10 @@ public partial class PositionClosedGridViewModel : ObservableObject
         var viewModel = Positions.FirstOrDefault(p => p.Object.Id == message.Position.Id);
         if (viewModel != null)
             Positions.Remove(viewModel);
+    }
+
+    private void OnPositionDeleteAll(object recipient, PositionDeleteAllMessage message)
+    {
+        Positions.Clear();
     }
 }

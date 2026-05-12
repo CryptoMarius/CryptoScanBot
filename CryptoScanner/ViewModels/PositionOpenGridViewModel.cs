@@ -12,7 +12,6 @@ using CryptoScanner.Core.Trader;
 
 using Dapper;
 
-
 namespace CryptoScanner.ViewModels;
 
 public partial class PositionOpenGridViewModel : ObservableObject
@@ -26,6 +25,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("PositionOpenGridViewModel constructor called");
 
+        WeakReferenceMessenger.Default.Register<PositionDeleteAllMessage>(this, OnPositionDeleteAll);
         WeakReferenceMessenger.Default.Register<PositionIsClosedMessage>(this, OnPositionIsClosed);
         WeakReferenceMessenger.Default.Register<PositionIsCreatedMessage>(this, OnPositionIsCreated);
         WeakReferenceMessenger.Default.Register<PositionIsDeletedMessage>(this, OnPositionIsDeleted);
@@ -40,6 +40,7 @@ public partial class PositionOpenGridViewModel : ObservableObject
 
     public void Dispose()
     {
+        WeakReferenceMessenger.Default.Unregister<PositionDeleteAllMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsClosedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsCreatedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PositionIsDeletedMessage>(this);
@@ -131,6 +132,11 @@ public partial class PositionOpenGridViewModel : ObservableObject
         var viewModel = Positions.FirstOrDefault(p => p.Object.Id == message.Position.Id);
         if (viewModel != null)
             Positions.Remove(viewModel);
+    }
+
+    private void OnPositionDeleteAll(object recipient, PositionDeleteAllMessage message)
+    {
+        Positions.Clear();
     }
 
     private void TimerRefreshFieldsTick(object? sender, EventArgs e)

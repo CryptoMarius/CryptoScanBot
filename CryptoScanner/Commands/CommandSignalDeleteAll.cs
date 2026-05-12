@@ -10,7 +10,7 @@ using Dapper;
 
 namespace CryptoScanner.Commands;
 
-public class CommandSignalsDelete : CommandBase
+public class CommandSignalDeleteAll : CommandBase
 {
     public override void Execute(object? parameter)
     {
@@ -20,7 +20,7 @@ public class CommandSignalsDelete : CommandBase
 
     public async Task ExecuteAsync(object? parameter)
     {
-        System.Diagnostics.Debug.WriteLine($"CommandSignalsDelete");
+        System.Diagnostics.Debug.WriteLine($"CommandSignalDeleteAll");
         if (!GetObjectInformation(parameter, out ParameterObjects dto) || dto.parentWindow == null)
             return;
 
@@ -49,7 +49,7 @@ public class CommandSignalsDelete : CommandBase
                 }
             }
 
-            GlobalData.SendMvvmMessage(new SignalsDeletedMessage());
+            GlobalData.SendMvvmMessage(new SignalDeleteAllMessage());
             GlobalData.AddTextToLogTab("Manually deleted all signals from the database");
         }
         catch (Exception error)
