@@ -2,7 +2,7 @@
 // This is the right commandline for help, sound and a single file (afaict)
 dotnet publish -c Release -r win-x64 --self-contained true -o E:\CryptoScanBot\bin\Release\Bin /p:PublishSingleFile=true
 
-// This one forces everything into the executable
+// This one forces everything into the executable (we need sound and help files seperately)
 dotnet publish -c Release -r win-x64 --self-contained true -o E:\CryptoScanBot\bin\Release\Bin /p:PublishSingleFile=true /p:IncludeAllContentForSelfExtract=true
 
 // Platforms

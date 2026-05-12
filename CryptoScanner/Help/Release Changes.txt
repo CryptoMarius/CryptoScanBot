@@ -13,8 +13,9 @@ CryptoScanBot release historie:
 - De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardooor er meer meldingen ontstaan
 - Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values" opgelost
 - Binance futures - Uitsluiten van de munten met een Chinese naam (Altrady ondersteund deze niet)
+- Commando voor het clearen van de positions (na een bevestiging dialoog)
 - Commando voor het clearen van de signals (na een bevestiging dialoog)
-- Roadmap.txt verwijderd, waren toch allemaal gedateerde todo's en opmerkingen
+- Roadmap.txt verwijderd, waren toch allemaal gedateerde opmerkingen
 
 09-05-2025 2.5.1
 - Bybit Futures - De symbolen werden niet goed opgehaald, de ehange gebruikt tegenwoordig paginatie
