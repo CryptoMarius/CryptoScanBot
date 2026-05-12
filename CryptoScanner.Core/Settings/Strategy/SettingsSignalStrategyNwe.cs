@@ -12,6 +12,11 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
 
+    // Volume-klimax op de signaalcandle: filter losse "stille drift door de band"-tikken weg.
+    public bool RequireVolumeClimax { get; set; } = false;
+    public int VolumeClimaxLookback { get; set; } = 20;
+    public decimal VolumeClimaxMultiplier { get; set; } = 1.5m;
+
     public SettingsSignalStrategyNwe() : base()
     {
         SoundFileLong = "sound-nwe-oversold.wav";
