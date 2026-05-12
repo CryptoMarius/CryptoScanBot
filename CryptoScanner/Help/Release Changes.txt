@@ -1,18 +1,19 @@
 CryptoScanBot release historie:
 
-xx-05-2025 2.5.2
-- TODO: Testen: Aangepaste strategien ivm refactoring
-- TODO: De market cap en de BTC dominance zijn afwijkend tov de 2.1.8
-- TODO: Commando voor het clearen van de signals (en live view?)
-
-- De display van de stochastic gebruikt (veel) meer dan de gebruikelijke 2 decimalen
+11-05-2025 2.5.2
+- De caption van de Stochastic instellingen is incorrect (3x de caption oversold)
+- Bij de posities is de kolom ProfitPrice het winst percentage ipv de tp price
+- De waarden market cap total en de BTC dominance zijn verkeerd (volume ipv prijs)
+- De display van de stochastic gebruikt niet de gebruikelijke formaat met 2 decimalen
+- Sound instellingen worden nu correct toegepast (er werd spontaan een geluid afgespeeld ondanks dat alles uit staat)
 - Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
 - De instellingen voor de primary en secondary trend + high/low vinkjes zijn overbodig (ook verwarrend)
 - De NWE en NWE.NP strategie aangepast (het is niet een winstgevende strategie en zal het ook niet worden denk ik)
 - Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
 - De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardooor er meer meldingen ontstaan
 - Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values" opgelost
-- Binance futures - Uitsluiten van de Chinese munten
+- Binance futures - Uitsluiten van de munten met een Chinese naam (Altrady ondersteund deze niet)
+- Commando voor het clearen van de signals (na een bevestiging dialoog)
 - Roadmap.txt verwijderd, waren toch allemaal gedateerde todo's en opmerkingen
 
 09-05-2025 2.5.1
