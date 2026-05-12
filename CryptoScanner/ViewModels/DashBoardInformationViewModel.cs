@@ -728,7 +728,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
                 if (!string.IsNullOrEmpty(symbolViewModel.Symbol) &&
                     GlobalData.ActiveExchange!.SymbolListName.TryGetValue(symbolViewModel.Symbol, out CryptoSymbol? symbol))
                 {
-                    var interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval5m];
+                    var interval = GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m];
                     CommandHelper.ActivateTradingApp(GlobalData.Settings.General.TradingApp, symbol, interval, tradingAppInternExtern);
                 }
                 break;
