@@ -20,10 +20,10 @@ public enum CryptoSignalStrategy
 
     NadarayaWatsonEnvelope = 25,
     NadarayaWatsonEnvelopeNp = 26,
-    NweBb = 27,
 
 
 #if DEBUG
+    NweBb = 27,
     Trend = 31,
 
     TrendBosChoch = 32,
@@ -34,11 +34,7 @@ public enum CryptoSignalStrategy
 
     GaussianScalp = 45,
     GaussianPullback = 47,
-#endif
 
-
-
-#if DEBUG
     StochDir = 46,
 #endif
 
