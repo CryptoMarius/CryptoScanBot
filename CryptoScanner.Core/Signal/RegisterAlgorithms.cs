@@ -186,16 +186,6 @@ public static class RegisterAlgorithms
         });
 
         //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "nwe.pull",
-        //            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopePull,
-        //            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
-        //            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopePull),
-        //        });
-        //#endif
-
-        //#if DEBUG
         //        // BBMA - Oma Ally
         //        Register(new AlgorithmDefinition()
         //        {
