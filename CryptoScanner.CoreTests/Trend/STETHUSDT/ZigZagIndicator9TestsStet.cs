@@ -1,5 +1,3 @@
-using CryptoScanner.CoreTests;
-
 namespace CryptoScanner.CoreTests.Trend;
 
 [TestClass()]

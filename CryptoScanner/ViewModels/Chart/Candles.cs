@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Candles
 {
 
-    public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+    public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
         CandleTime lastCandleTime = CandleTime.MinValue;

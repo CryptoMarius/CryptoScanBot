@@ -20,12 +20,13 @@ public class Positions
     private static void DrawVerticalLine(PlotModel chart, DateTime time,
         decimal atPrice, decimal yAxisTop, OxyColor color, string group)
     {
-        var series = new LineSeries { 
-            Color = color, 
-            LineStyle = LineStyle.Dot, 
-            StrokeThickness = 0.8, 
-            Font = Const.OxyFontName, 
-            Tag = group 
+        var series = new LineSeries
+        {
+            Color = color,
+            LineStyle = LineStyle.Dot,
+            StrokeThickness = 0.8,
+            Font = Const.OxyFontName,
+            Tag = group
         };
         double x = CandleTime.FromDateTime(time).Minutes;
         series.Points.Add(new DataPoint(x, (double)yAxisTop));
@@ -38,12 +39,13 @@ public class Positions
     private static void DrawHorizontalLine(PlotModel chart, double xStart, double xEnd,
         decimal atPrice, OxyColor color, string caption, double xLabelOffset, string group)
     {
-        var series = new LineSeries { 
-            Color = color, 
-            LineStyle = LineStyle.DashDashDot, 
-            StrokeThickness = 0.8, 
-            Font = Const.OxyFontName, 
-            Tag = group 
+        var series = new LineSeries
+        {
+            Color = color,
+            LineStyle = LineStyle.DashDashDot,
+            StrokeThickness = 0.8,
+            Font = Const.OxyFontName,
+            Tag = group
         };
         series.Points.Add(new DataPoint(xStart, (double)atPrice));
         series.Points.Add(new DataPoint(xEnd, (double)atPrice));
@@ -71,19 +73,22 @@ public class Positions
         // Label offset: 1.5 candle-widths to the right of the line start
         double xLabelOffset = interval.Duration * 1.5;
 
-        var seriesBuy = new ScatterSeries { 
-            Title = "buy", 
-            MarkerSize = 4, 
-            MarkerFill = OxyColors.Yellow, 
-            MarkerType = MarkerType.Diamond, 
+        var seriesBuy = new ScatterSeries
+        {
+            Title = "buy",
+            MarkerSize = 4,
+            MarkerFill = OxyColors.Yellow,
+            MarkerType = MarkerType.Diamond,
             Tag = group,
         };
-        var seriesSell = new ScatterSeries {
-            Title = "sell", 
-            MarkerSize = 4, 
-            MarkerFill = OxyColors.White, 
-            MarkerType = MarkerType.Diamond, 
-            Tag = group };
+        var seriesSell = new ScatterSeries
+        {
+            Title = "sell",
+            MarkerSize = 4,
+            MarkerFill = OxyColors.White,
+            MarkerType = MarkerType.Diamond,
+            Tag = group
+        };
 
         foreach (CryptoPosition position in positionList)
         {
@@ -113,7 +118,7 @@ public class Positions
                     //bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
                     //OxyColor stepColor = isStopTriggered ? OxyColors.Orange : StepColor(step);
                     //OxyColor StepColor(CryptoPositionStep step) =>
-                    OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.DarkGreen: OxyColors.DarkRed;
+                    OxyColor stepColor = step.Side == CryptoOrderSide.Buy ? OxyColors.DarkGreen : OxyColors.DarkRed;
 
                     switch (positionPart.Purpose)
                     {

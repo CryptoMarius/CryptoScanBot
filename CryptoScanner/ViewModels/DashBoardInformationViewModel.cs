@@ -301,7 +301,7 @@ public partial class DashBoardInformationViewModel : ObservableObject
         if (TopSymbols != null && list.Count == TopSymbols.Count)
         {
             bool equal = true;
-            for (int i = 0; i < list.Count; i ++)
+            for (int i = 0; i < list.Count; i++)
             {
                 if (list[i].Type != TopSymbols[i].Type)
                     equal = false;
@@ -466,12 +466,13 @@ public partial class DashBoardInformationViewModel : ObservableObject
         float hiY = float.MinValue;
         int candleCount = blocks * 60; // minutes
         CandleTime candleTime;
-        try {
-          candleTime = candleList.Keys.Last();
+        try
+        {
+            candleTime = candleList.Keys.Last();
         }
         catch (InvalidOperationException)
         {
-          return;
+            return;
         }
         while (candleCount-- > 0)
         {

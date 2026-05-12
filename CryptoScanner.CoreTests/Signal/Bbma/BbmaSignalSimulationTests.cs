@@ -225,11 +225,11 @@ public class BbmaSignalSimulationTests : TestBase
                 || cd.Wma05Low == null || cd.Wma10Low == null || cd.Wma05High == null || cd.Wma10High == null)
                 continue;
 
-            BbmaState longState  = SignalBbmaLong.GetBbmaState(myData);
+            BbmaState longState = SignalBbmaLong.GetBbmaState(myData);
             BbmaState shortState = SignalBbmaShort.GetBbmaState(myData);
 
-            decimal bbMid   = (decimal)cd.Sma20!.Value;
-            decimal bbDev   = (decimal)cd.BollingerBandsDeviation!.Value;
+            decimal bbMid = (decimal)cd.Sma20!.Value;
+            decimal bbDev = (decimal)cd.BollingerBandsDeviation!.Value;
             decimal bbLower = bbMid - bbDev;
             decimal bbUpper = bbMid + bbDev;
 

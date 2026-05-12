@@ -138,7 +138,7 @@ public class TradingViewSymbolExtractor
         {
             var res = TradingViewJsonParser.TryParse(json);
             if (res == null)
-            //{
+                //{
                 //GlobalData.AddTextToLogTab($"TradingView {_tickerData.Ticker} TryParse=null for: {json}");
                 continue;
             //}

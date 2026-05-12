@@ -14,12 +14,12 @@ public partial class SignalViewModel : BaseConvertersViewModel
 
     public bool IsInvalid
     {
-        get 
+        get
         {
             return Object.IsInvalid;
         }
     }
-    
+
 
     //public int Id => Object.Id;
     private string? _IdText;

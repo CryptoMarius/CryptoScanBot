@@ -49,7 +49,7 @@ public partial class DashboardSymbolViewModel : ObservableObject
                 _price = value;
                 if (BigPrice)
                     PriceText = GetLargeVolumeText((double)value);
-                else 
+                else
                     PriceText = value.ToString0(PriceFormat);
                 OnPropertyChanged(nameof(Price));
             }

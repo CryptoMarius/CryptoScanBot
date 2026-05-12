@@ -14,7 +14,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Bbma
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesWma5High = new LineSeries
@@ -118,7 +118,7 @@ public class Bbma
             MarkerType = MarkerType.Triangle,
             Tag = group,
         };
-        
+
         var seriesBbmaExtreme = new ScatterSeries
         {
             Title = "extreme",
@@ -135,7 +135,7 @@ public class Bbma
             MarkerType = MarkerType.Cross,
             Tag = group,
         };
-        
+
         var seriesBbmaCsm = new ScatterSeries
         {
             Title = "bbma csm",
@@ -298,7 +298,7 @@ public class Bbma
         chart.Series.Add(seriesBbmaExtreme);
         chart.Series.Add(seriesBbmaMlv);
         chart.Series.Add(seriesBbmaCsm);
-        chart.Series.Add(seriesBbmaReentry);        
+        chart.Series.Add(seriesBbmaReentry);
 
 
         var seriesEma50 = new LineSeries

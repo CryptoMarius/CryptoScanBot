@@ -30,7 +30,7 @@ public class GaussianFilter
             return;
 
         double[] closes = allCandles.Select(c => (double)c.Close).ToArray();
-        double[] raw      = ComputeNPoleGaussian(closes);
+        double[] raw = ComputeNPoleGaussian(closes);
         double[] filtered = ApplyStdFilter(raw);
 
         var seriesLine = new LineSeries
@@ -86,11 +86,11 @@ public class GaussianFilter
             double out2 = filtered[i - 2];
             var candle = allCandles[i];
 
-            bool pregoLong  = out0 > out1 && out1 <= out2;
+            bool pregoLong = out0 > out1 && out1 <= out2;
             bool pregoShort = out0 < out1 && out1 >= out2;
 
             int prevContsw = contsw;
-            if (pregoLong)       contsw = 1;
+            if (pregoLong) contsw = 1;
             else if (pregoShort) contsw = -1;
 
             if (candle.OpenTime < minDate || candle.OpenTime > maxDate)
@@ -127,15 +127,15 @@ public class GaussianFilter
 
     private static double[] ComputeNPoleGaussian(double[] src)
     {
-        double a    = CalculateAlpha(Period, Order);
+        double a = CalculateAlpha(Period, Order);
         double powAN = Math.Pow(a, Order);
 
         double[] binomial = new double[Order + 1];
-        double[] pow1mA   = new double[Order + 1];
+        double[] pow1mA = new double[Order + 1];
         for (int r = 0; r <= Order; r++)
         {
             binomial[r] = BinomialCoefficient(Order, r);
-            pow1mA[r]   = Math.Pow(1.0 - a, r);
+            pow1mA[r] = Math.Pow(1.0 - a, r);
         }
 
         double[] filt = new double[src.Length];

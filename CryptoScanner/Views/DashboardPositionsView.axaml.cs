@@ -1,7 +1,5 @@
 using Avalonia.Controls;
 
-using OxyPlot;
-
 namespace CryptoScanner.Views;
 
 public partial class DashboardPositionsView : UserControl

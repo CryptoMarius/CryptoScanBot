@@ -28,7 +28,7 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _reverseTrading = false; // bool (EXACT match)
-    
+
     [ObservableProperty]
     private int _globalBuyCooldownTime = 30; // int (EXACT match, in minutes)
 

@@ -13,5 +13,5 @@ public partial class ConfirmDialog : Window
     }
 
     private void OnYesClick(object? sender, RoutedEventArgs e) => Close(true);
-    private void OnNoClick(object? sender, RoutedEventArgs e)  => Close(false);
+    private void OnNoClick(object? sender, RoutedEventArgs e) => Close(false);
 }

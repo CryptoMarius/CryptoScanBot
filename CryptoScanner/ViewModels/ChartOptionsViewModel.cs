@@ -6,7 +6,7 @@ namespace CryptoScanner.ViewModels;
 
 public partial class ChartOptionsViewModel : ObservableObject
 {
-    
+
     [ObservableProperty]
     private bool _showBbma = false;
 
@@ -51,7 +51,7 @@ public partial class ChartOptionsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showCandles = false;
-    
+
     [ObservableProperty]
     private bool _transparent = false;
 

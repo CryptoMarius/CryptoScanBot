@@ -1,6 +1,4 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;

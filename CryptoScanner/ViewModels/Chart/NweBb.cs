@@ -62,7 +62,7 @@ public class NweBb
         // Iterate the NWE results (oldest first), detect crossings, emit visible markers
         for (int i = 2; i < nweResults.Count; i++)
         {
-            var cur  = nweResults[i];
+            var cur = nweResults[i];
             var prev = nweResults[i - 1];
             var prev2 = nweResults[i - 2];
 
@@ -82,15 +82,15 @@ public class NweBb
             if (!symbolInterval.CandleList.TryGetValue(cur.OpenTime, out var curCandle))
                 continue;
 
-            double curNweUp  = (double)cur.Upper.Value;
+            double curNweUp = (double)cur.Upper.Value;
             double curNweLow = (double)cur.Lower.Value;
             double prevNweUp = (double)prev.Upper.Value;
             double prevNweLow = (double)prev.Lower.Value;
-            double curBbUp   = curBb.UpperBand.Value;
-            double curBbLow  = curBb.LowerBand.Value;
-            double prevBbUp  = prevBb.UpperBand.Value;
+            double curBbUp = curBb.UpperBand.Value;
+            double curBbLow = curBb.LowerBand.Value;
+            double prevBbUp = prevBb.UpperBand.Value;
             double prevBbLow = prevBb.LowerBand.Value;
-            double prev2BbUp  = prev2Bb.UpperBand.Value;
+            double prev2BbUp = prev2Bb.UpperBand.Value;
             double prev2BbLow = prev2Bb.LowerBand.Value;
 
             // Only emit markers for visible bars
