@@ -5,9 +5,15 @@ namespace CryptoScanner.Views;
 
 public partial class ConfirmDialog : Window
 {
-    public ConfirmDialog(string message, string title = "Confirm")
+    // Required by the Avalonia XAML runtime loader (designer / hot-reload).
+    // Production code uses the message-taking constructor below.
+    public ConfirmDialog()
     {
         InitializeComponent();
+    }
+
+    public ConfirmDialog(string message, string title = "Confirm") : this()
+    {
         Title = title;
         MessageText.Text = message;
     }
