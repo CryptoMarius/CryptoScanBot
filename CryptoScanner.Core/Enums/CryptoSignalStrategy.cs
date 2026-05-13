@@ -30,6 +30,7 @@ public enum CryptoSignalStrategy
 
     Box = 33,
 
+    BbmaOmni = 43,
     Bbma = 44,
 
     GaussianScalp = 45,

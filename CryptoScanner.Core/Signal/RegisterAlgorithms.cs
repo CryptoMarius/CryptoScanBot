@@ -226,6 +226,18 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
+        // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
+        // (Extreme / CSD / CSM / MLV / Reentry). Reuses the multi-TF setup from SignalBbma.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma.omni",
+            Strategy = CryptoSignalStrategy.BbmaOmni,
+            AnalyzeLongType = typeof(SignalBbmaOmniLong),
+            AnalyzeShortType = typeof(SignalBbmaOmniShort),
+        });
+#endif
+
+#if DEBUG
         // Gaussian Pullback: wick-touch + close-above/below the Gaussian filter line during confirmed trend
         Register(new AlgorithmDefinition()
         {
