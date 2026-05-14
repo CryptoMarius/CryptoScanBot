@@ -206,8 +206,8 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         CryptoIndicatorData? indicatorData = null;
         int fillMax = calculateCandles > 0 ? calculateCandles : 61;
 
-        List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
-        List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
+        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
@@ -268,10 +268,10 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 
         //List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
 
-#if DEBUG
-        // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Skender.Stock.Indicators.Indicator.GetKeltner(history, 20, 1);
-#endif
+//#if DEBUG
+//        // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
+//        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Skender.Stock.Indicators.Indicator.GetKeltner(history, 20, 1);
+//#endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi(
@@ -280,9 +280,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 
         //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
-#if EXTRASTRATEGIES
-        List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
-#endif
+//#if EXTRASTRATEGIES
+//        List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
+//#endif
 
         //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
 
@@ -358,11 +358,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.Wma10High = wmaList10High[index].Wma;
 #endif
 
-#if DEBUG
-                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-#endif
+//#if DEBUG
+//                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+//                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+//                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+//#endif
 
 
                 candleData.Rsi = rsiList[index].Rsi;
@@ -373,19 +373,19 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
 
-#if DEBUG
-                // Test
-                candleData.Ema9 = emaList9[index].Ema;
-                candleData.Tema = temaList[index].Tema;
-                //candleData.Wma30 = wmaList30[index].Wma;
-                //candleData.Vwap = vwapList[index].Vwap;
-#endif
+//#if DEBUG
+//                // Test
+//                //candleData.Ema9 = emaList9[index].Ema;
+//                //candleData.Tema = temaList[index].Tema;
+//                //candleData.Wma30 = wmaList30[index].Wma;
+//                //candleData.Vwap = vwapList[index].Vwap;
+//#endif
 
-#if EXTRASTRATEGIES
-                //candleData.MacdLtValue = macdLtList[index].Macd;
-                //candleData.MacdLtSignal = macdLtList[index].Signal;
-                candleData.MacdTestHistogram = macdLtList[index].Histogram;
-#endif
+//#if EXTRASTRATEGIES
+//                //candleData.MacdLtValue = macdLtList[index].Macd;
+//                //candleData.MacdLtSignal = macdLtList[index].Signal;
+//                candleData.MacdTestHistogram = macdLtList[index].Histogram;
+//#endif
 
                 candleData.StochSignal = stochList[index].Signal;
                 candleData.StochOscillator = stochList[index].Oscillator;
