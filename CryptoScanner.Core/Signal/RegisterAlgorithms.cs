@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
+using CryptoScanner.Core.Signal.BbReclaim;
 using CryptoScanner.Core.Signal.Experiment;
 #endif
 using CryptoScanner.Core.Signal.Dlz;
@@ -234,6 +235,18 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.BbmaOmni,
             AnalyzeLongType = typeof(SignalBbmaOmniLong),
             AnalyzeShortType = typeof(SignalBbmaOmniShort),
+        });
+#endif
+
+#if DEBUG
+        // BB extreme + EMA9/SMA20 reclaim: a recent candle poked outside BB with close on the wrong
+        // side of both MAs; current candle has close on the right side of EMA9 with the MAs stacked.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bb.reclaim",
+            Strategy = CryptoSignalStrategy.BbReclaim,
+            AnalyzeLongType = typeof(SignalBbReclaimLong),
+            AnalyzeShortType = typeof(SignalBbReclaimShort),
         });
 #endif
 
