@@ -24,12 +24,12 @@
                       FontSize="12"/>
 
             <CheckBox IsChecked="{Binding CheckFurtherPriceMove, Mode=TwoWay}"
-                      Content="Check must be increasing/decreasing"
+                      Content="Price must be increasing/decreasing"
                       FontSize="12"/>
 
 			<CheckBox IsChecked="{Binding CheckSma200Direction, Mode=TwoWay}"
                       Content="Check price above/below sma200"
-                      FontSize="12"/>
+                      FontSize="12" IsVisible ="false"/>
 
 			<!-- Slot Limits -->
             <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">

@@ -36,7 +36,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckIncreasingMacd = settings.CheckIncreasingMacd;
         CheckIncreasingStoch = settings.CheckIncreasingStoch;
         CheckFurtherPriceMove = settings.CheckFurtherPriceMove;
-        CheckSma200Direction = settings.CheckSma200Direction;
+        //CheckSma200Direction = settings.CheckSma200Direction;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
@@ -48,7 +48,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.CheckIncreasingMacd = CheckIncreasingMacd;
         settings.CheckIncreasingStoch = CheckIncreasingStoch;
         settings.CheckFurtherPriceMove = CheckFurtherPriceMove;
-        settings.CheckSma200Direction = CheckSma200Direction;
+        //settings.CheckSma200Direction = CheckSma200Direction;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;

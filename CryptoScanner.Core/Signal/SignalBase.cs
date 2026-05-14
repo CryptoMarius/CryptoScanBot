@@ -90,28 +90,28 @@ public class SignalCreateBase
             return false;
 
 
-        // ********************************************************************
-        // Price above or below sma200
-        if (GlobalData.Settings.Trading.CheckSma200Direction)
-        {
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    if (CandleLast.Candle.Close < (decimal)CandleLast.CandleData.Sma200!.Value)
-                    {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} below sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (CandleLast.Candle.Close > (decimal)CandleLast.CandleData.Sma200!.Value)
-                    {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} above sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
-                        return false;
-                    }
-                    break;
-            }
-        }
+        //// ********************************************************************
+        //// Price above or below sma200
+        //if (GlobalData.Settings.Trading.CheckSma200Direction)
+        //{
+        //    switch (SignalSide)
+        //    {
+        //        case CryptoTradeSide.Long:
+        //            if (CandleLast.Candle.Close < (decimal)CandleLast.CandleData.Sma200!.Value)
+        //            {
+        //                ExtraText = $"Price {candlePrev!.Candle.Close:N8} below sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+        //                return false;
+        //            }
+        //            break;
+        //        case CryptoTradeSide.Short:
+        //            if (CandleLast.Candle.Close > (decimal)CandleLast.CandleData.Sma200!.Value)
+        //            {
+        //                ExtraText = $"Price {candlePrev!.Candle.Close:N8} above sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+        //                return false;
+        //            }
+        //            break;
+        //    }
+        //}
 
         // ********************************************************************
         // Price going into the right direction
