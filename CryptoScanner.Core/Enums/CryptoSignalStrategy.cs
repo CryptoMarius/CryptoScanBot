@@ -33,12 +33,7 @@ public enum CryptoSignalStrategy
     BbmaOmni = 43,
     Bbma = 44,
 
-    GaussianScalp = 45,
-    GaussianPullback = 47,
-
     StochDir = 46,
-
-    BbReclaim = 49,
 #endif
 
     DominantLevel = 1000,
