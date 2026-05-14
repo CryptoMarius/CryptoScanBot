@@ -278,11 +278,6 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             lookbackPeriods: GlobalData.Settings.General.SettingsRsi.Length);
         List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
 
-#if DEBUG
-        // GaussianScalp strategy: RSI(30) and MACD(24/52/9)
-        List<RsiResult> rsiList30 = (List<RsiResult>)history.GetRsi(lookbackPeriods: 30);
-        List<MacdResult> macdList24 = (List<MacdResult>)history.GetMacd(fastPeriods: 24, slowPeriods: 52, signalPeriods: 9);
-#endif
         //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
         //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
 #if EXTRASTRATEGIES
@@ -377,15 +372,6 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.MacdValue = macdList[index].Macd;
                 candleData.MacdSignal = macdList[index].Signal;
                 candleData.MacdHistogram = macdList[index].Histogram;
-
-#if DEBUG
-                // GaussianScalp indicators
-                candleData.Rsi30 = rsiList30[index].Rsi;
-                candleData.MacdValue24 = macdList24[index].Macd;
-                candleData.MacdSignal24 = macdList24[index].Signal;
-                candleData.MacdHistogram24 = macdList24[index].Histogram;
-                //candleData.SlopeMacd = slopeMacdList[index].Slope;
-#endif
 
 #if DEBUG
                 // Test

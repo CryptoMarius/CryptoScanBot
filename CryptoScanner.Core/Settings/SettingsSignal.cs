@@ -58,9 +58,6 @@ public class SettingsSignal
     // Darvas-style Box Theory
     public SettingsSignalStrategyBox Box = new();
 
-    // BB extreme + EMA9/SMA20 reclaim
-    public SettingsSignalStrategyBbReclaim BbReclaim = new();
-
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

@@ -656,11 +656,6 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweBb))
             NweBb.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
-        // Draw STD-Filtered N-Pole Gaussian Filter [Loxx]
-        group = "gaussian";
-        if (Toggle(model, group, Session.ShowGaussianFilter))
-            GaussianFilter.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
-
         // Draw Bollinger Bands
         group = "bb";
         if (Toggle(model, group, Session.ShowBollingerBand))

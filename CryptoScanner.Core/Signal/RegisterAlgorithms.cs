@@ -1,12 +1,10 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
-using CryptoScanner.Core.Signal.BbReclaim;
 using CryptoScanner.Core.Signal.Experiment;
 #endif
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
-using CryptoScanner.Core.Signal.Gaussian;
 using CryptoScanner.Core.Signal.Jump;
 using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Sbm;
@@ -216,17 +214,6 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
-        // Gaussian Scalp: 3-layer scalping strategy (Gaussian filter + RSI30 + MACD 24/52/9)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "gscalp",
-            Strategy = CryptoSignalStrategy.GaussianScalp,
-            AnalyzeLongType = typeof(SignalGaussianScalpLong),
-            AnalyzeShortType = typeof(SignalGaussianScalpShort),
-        });
-#endif
-
-#if DEBUG
         // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
         // (Extreme / CSD / CSM / MLV / Reentry). Reuses the multi-TF setup from SignalBbma.
         Register(new AlgorithmDefinition()
@@ -235,29 +222,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.BbmaOmni,
             AnalyzeLongType = typeof(SignalBbmaOmniLong),
             AnalyzeShortType = typeof(SignalBbmaOmniShort),
-        });
-#endif
-
-#if DEBUG
-        // BB extreme + EMA9/SMA20 reclaim: a recent candle poked outside BB with close on the wrong
-        // side of both MAs; current candle has close on the right side of EMA9 with the MAs stacked.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bb.reclaim",
-            Strategy = CryptoSignalStrategy.BbReclaim,
-            AnalyzeLongType = typeof(SignalBbReclaimLong),
-            AnalyzeShortType = typeof(SignalBbReclaimShort),
-        });
-#endif
-
-#if DEBUG
-        // Gaussian Pullback: wick-touch + close-above/below the Gaussian filter line during confirmed trend
-        Register(new AlgorithmDefinition()
-        {
-            Name = "gpullback",
-            Strategy = CryptoSignalStrategy.GaussianPullback,
-            AnalyzeLongType = typeof(SignalGaussianPullbackLong),
-            AnalyzeShortType = typeof(SignalGaussianPullbackShort),
         });
 #endif
 

@@ -46,7 +46,6 @@ public class ZoneSession
     public bool ShowNadarayaWatsonEnvelope { get; set; } = true; // NWE non repainting?
     public bool ShowNadarayaWatsonEnvelopeRepainting { get; set; } = false;
     public bool ShowNweBb { get; set; } = false; // NWE × BB crossover markers
-    public bool ShowGaussianFilter { get; set; } = false;
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowSmaLinesSbm { get; set; } = false;
