@@ -27,11 +27,20 @@ public class NweIndicator
         SmoothRepainting = smoothRepainting;
     }
 
-    public List<NweResult> Calculate(SortedDictionary<CandleTime, CryptoCandle> candles)
+    public List<NweResult> Calculate(CryptoCandleList candles)
     {
-        var openTimes = candles.Keys.ToList(); // sorted oldest to newest (ascending)
-        var closes = openTimes.Select(t => candles[t].Close).ToList();
-        int n = closes.Count;
+        // Take a thread-safe snapshot first — enumerating SortedDictionary.Keys directly while
+        // the kline ticker is adding candles concurrently throws ArgumentException / IndexOutOfRangeException
+        // (see the note on CryptoCandleList.GetSnapshot for why .ToList() on the base type is unsafe).
+        var snapshot = candles.GetSnapshot();
+        int n = snapshot.Count;
+        var openTimes = new List<CandleTime>(n);
+        var closes = new List<decimal>(n);
+        for (int i = 0; i < n; i++)
+        {
+            openTimes.Add(snapshot[i].Key);
+            closes.Add(snapshot[i].Value.Close);
+        }
 
         var results = new List<NweResult>(n);
         for (int k = 0; k < n; k++)
