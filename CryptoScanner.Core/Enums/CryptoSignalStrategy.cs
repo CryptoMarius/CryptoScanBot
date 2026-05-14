@@ -37,6 +37,8 @@ public enum CryptoSignalStrategy
     GaussianPullback = 47,
 
     StochDir = 46,
+
+    BbReclaim = 49,
 #endif
 
     DominantLevel = 1000,
