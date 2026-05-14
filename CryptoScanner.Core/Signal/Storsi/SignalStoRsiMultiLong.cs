@@ -2,7 +2,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Sbm;
 
 namespace CryptoScanner.Core.Signal.Storsi;
 
@@ -11,22 +10,41 @@ namespace CryptoScanner.Core.Signal.Storsi;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalStoRsiMultiLong : SignalSbmBase
+public class SignalStoRsiMultiLong : SignalStoRsiBase
 {
-
-
-    public override bool IndicatorsOkay(MyData data)
+    public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (data == null
-           || data.Candle.OpenTime == 0
-           || data.CandleData == null
-           || data.CandleData.Rsi == null
-           || data.CandleData.StochSignal == null
-           || data.CandleData.StochOscillator == null
-           || data.CandleData.BollingerBandsDeviation == null
-           )
-            return false;
+        // Mirror of SignalStoRsiLong.AdditionalChecks — must override here too, otherwise the
+        // SignalSbmBase implementation kicks in and applies MACD-recovery / MA-percentage /
+        // CheckMaCrossings filters that do not belong to the StoRsi family.
+        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        {
+            if (CandleLast.CandleData!.Lux5mValue > -50)
+            {
+                response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                return false;
+            }
+        }
 
+        if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
+        {
+            if (!InLowerPartOfBollingerBands(3, 5.0m))
+            {
+                response = "not in lower part of bb";
+                return false;
+            }
+        }
+
+        if (GlobalData.Settings.Signal.StoRsi.SkipFirstSignal)
+        {
+            if (HadStorsiInThelastXCandles(SignalSide, 1, 3) == null)
+            {
+                response = "skip first storsi";
+                return false;
+            }
+        }
+
+        response = "";
         return true;
     }
 

@@ -1,6 +1,5 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Sbm;
 
 namespace CryptoScanner.Core.Signal.Storsi;
 
@@ -9,26 +8,8 @@ namespace CryptoScanner.Core.Signal.Storsi;
 // https://www.tradingview.com/script/0F1sNM49-WGHBM/
 // Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
 
-public class SignalStoRsiLong : SignalSbmBase
+public class SignalStoRsiLong : SignalStoRsiBase
 {
-
-
-    public override bool IndicatorsOkay(MyData data)
-    {
-        if (data == null
-           || data.Candle.OpenTime == 0
-           || data.CandleData == default
-           || data.CandleData.Rsi == null
-           || data.CandleData.StochSignal == null
-           || data.CandleData.StochOscillator == null
-           || data.CandleData.BollingerBandsDeviation == null
-           )
-            return false;
-
-        return true;
-    }
-
-
     public override bool AdditionalChecks(MyData data, out string response)
     {
         if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
@@ -61,7 +42,6 @@ public class SignalStoRsiLong : SignalSbmBase
             }
         }
 
-        // disable sbm conditions (inheritance)
         response = "";
         return true;
     }
