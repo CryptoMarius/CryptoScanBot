@@ -19,4 +19,22 @@ public partial class DashBoardInformationView : UserControl
             vm.OnSymbolTapped(symbol);
         }
     }
+
+    private void OnScannerTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is DashBoardInformationViewModel vm)
+            vm.ToggleScanner();
+    }
+
+    private void OnTraderTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is DashBoardInformationViewModel vm)
+            vm.ToggleTrader();
+    }
+
+    private void OnSoundTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is DashBoardInformationViewModel vm)
+            vm.ToggleSounds();
+    }
 }

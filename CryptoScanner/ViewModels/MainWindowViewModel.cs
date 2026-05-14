@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
@@ -122,6 +123,17 @@ public partial class MainWindowViewModel : ObservableObject
         FilterTextChanged += SignalGridViewModel.OnFilterTextChanged;
 
         App.EventOpenInInternalBrowser += OnOpenInInternalBrowserRequested;
+
+        // Keep the menu checkboxes in sync when the dashboard icons toggle a setting.
+        WeakReferenceMessenger.Default.Register<StatusesHaveChangedMessage>(this, OnStatusesHaveChanged);
+    }
+
+
+    private void OnStatusesHaveChanged(object recipient, StatusesHaveChangedMessage message)
+    {
+        OnPropertyChanged(nameof(AnalyzerActive));
+        OnPropertyChanged(nameof(TraderActive));
+        OnPropertyChanged(nameof(SoundsActive));
     }
 
     private void OnOpenInInternalBrowserRequested(string url, bool switchTab)

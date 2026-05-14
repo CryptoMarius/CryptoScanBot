@@ -219,6 +219,28 @@ public partial class DashBoardInformationViewModel : ObservableObject
     }
 
 
+    // Click handlers for the dashboard status icons — mirror the menu checkboxes.
+    // Each one flips the underlying setting and broadcasts StatusesHaveChangedMessage so
+    // both the dashboard brushes and the menu checkbox stay in sync.
+    public void ToggleScanner()
+    {
+        GlobalData.Settings.Signal.Active = !GlobalData.Settings.Signal.Active;
+        GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
+    }
+
+    public void ToggleTrader()
+    {
+        GlobalData.Settings.Trading.Active = !GlobalData.Settings.Trading.Active;
+        GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
+    }
+
+    public void ToggleSounds()
+    {
+        GlobalData.Settings.Signal.SoundsActive = !GlobalData.Settings.Signal.SoundsActive;
+        GlobalData.SendMvvmMessage(new StatusesHaveChangedMessage());
+    }
+
+
 
     public void InitializeBarometer()
     {
