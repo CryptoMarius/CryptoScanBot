@@ -2,6 +2,8 @@
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.Experiment;
+using CryptoScanner.Core.Signal.StochMacd;
+using CryptoScanner.Core.Signal.WaveTrend;
 #endif
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
@@ -222,6 +224,30 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.BbmaOmni,
             AnalyzeLongType = typeof(SignalBbmaOmniLong),
             AnalyzeShortType = typeof(SignalBbmaOmniShort),
+        });
+#endif
+
+#if DEBUG
+        // WaveTrend Oscillator [LazyBear] — WT_LB. WT1 crosses WT2 inside the OS/OB zone,
+        // with an optional SMA200 trend filter.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "wt.lb",
+            Strategy = CryptoSignalStrategy.WaveTrend,
+            AnalyzeLongType = typeof(SignalWaveTrendLong),
+            AnalyzeShortType = typeof(SignalWaveTrendShort),
+        });
+#endif
+
+#if DEBUG
+        // Stoch + MACD crossover: trend filter (SMA200) + Stoch OS/OB + MACD histogram zero-cross.
+        // Source video: https://www.youtube.com/watch?v=vLbLZWi_Ypc
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stoch.macd",
+            Strategy = CryptoSignalStrategy.StochMacd,
+            AnalyzeLongType = typeof(SignalStochMacdLong),
+            AnalyzeShortType = typeof(SignalStochMacdShort),
         });
 #endif
 

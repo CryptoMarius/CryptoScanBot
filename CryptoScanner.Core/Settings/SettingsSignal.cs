@@ -58,6 +58,12 @@ public class SettingsSignal
     // Darvas-style Box Theory
     public SettingsSignalStrategyBox Box = new();
 
+    // WaveTrend [LazyBear] — WT_LB cross in OS/OB zone with optional trend filter
+    public SettingsSignalStrategyWaveTrend WaveTrend = new();
+
+    // Stoch + MACD crossover
+    public SettingsSignalStrategyStochMacd StochMacd = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

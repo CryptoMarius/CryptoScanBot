@@ -34,6 +34,10 @@ public enum CryptoSignalStrategy
     Bbma = 44,
 
     StochDir = 46,
+
+    WaveTrend = 50,
+
+    StochMacd = 51,
 #endif
 
     DominantLevel = 1000,
