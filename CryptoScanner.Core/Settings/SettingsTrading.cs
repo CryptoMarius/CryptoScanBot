@@ -101,7 +101,7 @@ public class SettingsTrading
     public bool CheckIncreasingMacd { get; set; } = false;
     public bool CheckIncreasingStoch { get; set; } = false;
     public bool CheckFurtherPriceMove { get; set; } = false;
-    public bool CheckTrendDirectionSma200 { get; set; } = false;
+    public bool CheckTrendDirection { get; set; } = false;
 
 
     //***************************

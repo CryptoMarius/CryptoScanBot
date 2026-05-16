@@ -27,6 +27,8 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _bbMaxPercentage = 100.0;
 
+    [ObservableProperty]
+    private bool _checkTrendDirection = false;
 
     public void LoadConfig(string caption, SettingsSignalStrategyStoRsi settings)
     {
@@ -37,6 +39,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         CheckMacdRecovery = settings.CheckMacdRecovery;
         CheckBollingerBandsCondition = settings.CheckBollingerBandsCondition;
         OnlyIfLux5m = settings.OnlyIfLux5m;
+        CheckTrendDirection = settings.CheckTrendDirection;
     }
 
     public void SaveConfig(SettingsSignalStrategyStoRsi settings)
@@ -48,5 +51,6 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.CheckMacdRecovery = CheckMacdRecovery;
         settings.CheckBollingerBandsCondition = CheckBollingerBandsCondition;
         settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.CheckTrendDirection = CheckTrendDirection;
     }
 }

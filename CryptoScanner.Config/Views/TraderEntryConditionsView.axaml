@@ -27,8 +27,8 @@
                       Content="Price must be increasing/decreasing"
                       FontSize="12"/>
 
-			<CheckBox IsChecked="{Binding CheckTrendDirectionSma200, Mode=TwoWay}"
-                      Content="Trade with the trend (based on sma200)"
+			<CheckBox IsChecked="{Binding CheckTrendDirection, Mode=TwoWay}"
+                      Content="Trade with the trend (based on primary trend)"
                       FontSize="12"/>
 
 			<!-- Slot Limits -->

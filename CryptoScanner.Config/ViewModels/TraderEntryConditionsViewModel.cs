@@ -20,7 +20,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private bool _checkFurtherPriceMove = false;
 
     [ObservableProperty]
-    private bool _checkTrendDirectionSma200 = false;
+    private bool _checkTrendDirection = false;
     
 
     // Slot limits (all int - EXACT match)
@@ -36,7 +36,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckIncreasingMacd = settings.CheckIncreasingMacd;
         CheckIncreasingStoch = settings.CheckIncreasingStoch;
         CheckFurtherPriceMove = settings.CheckFurtherPriceMove;
-        CheckTrendDirectionSma200 = settings.CheckTrendDirectionSma200;
+        CheckTrendDirection = settings.CheckTrendDirection;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
@@ -48,7 +48,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.CheckIncreasingMacd = CheckIncreasingMacd;
         settings.CheckIncreasingStoch = CheckIncreasingStoch;
         settings.CheckFurtherPriceMove = CheckFurtherPriceMove;
-        settings.CheckTrendDirectionSma200 = CheckTrendDirectionSma200;
+        settings.CheckTrendDirection = CheckTrendDirection;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;

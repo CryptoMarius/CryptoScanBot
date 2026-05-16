@@ -12,6 +12,7 @@ public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
     public bool CheckMacdRecovery { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
     public bool SkipFirstSignal { get; set; } = false;
+    public bool CheckTrendDirection { get; set; } = true;
 
     public SettingsSignalStrategyStoRsi() : base()
     {

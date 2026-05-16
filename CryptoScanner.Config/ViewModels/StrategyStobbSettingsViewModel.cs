@@ -30,6 +30,9 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlyIfLux5m = false;
 
+    [ObservableProperty]
+    private bool _checkTrendDirection = false;
+    
 
     public void LoadConfig(string caption, SettingsSignalStrategyStobb settings)
     {
@@ -41,6 +44,7 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         IncludeSbmPercAndCrossing = settings.IncludeSbmPercAndCrossing;
         OnlyIfPreviousStobb = settings.OnlyIfPreviousStobb;
         OnlyIfLux5m = settings.OnlyIfLux5m;
+        CheckTrendDirection = settings.CheckTrendDirection;
     }
 
     public void SaveConfig(SettingsSignalStrategyStobb settings)
@@ -53,5 +57,6 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
         settings.OnlyIfPreviousStobb = OnlyIfPreviousStobb;
         settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.CheckTrendDirection = CheckTrendDirection;
     }
 }

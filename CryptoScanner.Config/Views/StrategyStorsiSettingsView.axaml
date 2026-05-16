@@ -38,7 +38,11 @@
                       Content="Only if lux 5m at 100%"
                       FontSize="12"/>
 
-            <!-- Filter on BB% -->
+			<CheckBox IsChecked="{Binding CheckTrendDirection, Mode=TwoWay}"
+		              Content="Trade with the trend (based on primary trend)"
+		              FontSize="12"/>
+
+			<!-- Filter on BB% -->
             <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Filter on BB%:" VerticalAlignment="Center" 
                            Margin="0,0,12,0" FontSize="12"/>

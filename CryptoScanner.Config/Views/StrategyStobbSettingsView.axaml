@@ -62,6 +62,10 @@
                       Content="Only if lux 5m at 100%"
                       FontSize="12"/>
 
+			<CheckBox IsChecked="{Binding CheckTrendDirection, Mode=TwoWay}"
+		              Content="Trade with the trend (based on primary trend)"
+		              FontSize="12"/>
+			
         </StackPanel>
     </HeaderedContentControl>
 

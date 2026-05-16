@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -105,22 +106,29 @@ public class SignalCreateBase
 
 
         // ********************************************************************
-        // Price above or below sma200
-        if (GlobalData.Settings.Trading.CheckTrendDirectionSma200)
+        // Dont trade against the trend (only check current interval)
+        if (GlobalData.Settings.Trading.CheckTrendDirection)
         {
+            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+
+            // Guard against the noise on the low timeframes
+            var period = Interval.IntervalPeriod;
+            if (period < CryptoIntervalPeriod.interval5m)
+                period = CryptoIntervalPeriod.interval5m;
+            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
             switch (SignalSide)
             {
                 case CryptoTradeSide.Long: // Only take long positions if price is above the sma200
-                    if (CandleLast.Candle.Close < (decimal)CandleLast.CandleData.Sma200!.Value)
+                    if (primary != CryptoTrendIndicator.Bullish)
                     {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} below sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+                        ExtraText = $"TrendPrimary {primary}, need Bullish";
                         return false;
                     }
                     break;
                 case CryptoTradeSide.Short: // Only take long posotions if price is below the sma200
-                    if (CandleLast.Candle.Close > (decimal)CandleLast.CandleData.Sma200!.Value)
+                    if (primary != CryptoTrendIndicator.Bearish)
                     {
-                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} above sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+                        ExtraText = $"TrendPrimary {primary}, need Bearish";
                         return false;
                     }
                     break;

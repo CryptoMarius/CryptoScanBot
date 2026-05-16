@@ -30,6 +30,12 @@ public class SignalStochMacdLong : SignalStochMacdBase
 
     public override bool IsSignal()
     {
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
         _proposedSl = null;
         _proposedTp = null;
         ExtraText = "";
@@ -41,7 +47,10 @@ public class SignalStochMacdLong : SignalStochMacdBase
         if (settings.RequireTrendFilter)
         {
             _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-            var primary = SymbolInterval.TrendPrimary.Trend;
+            var period = Interval.IntervalPeriod;
+            if (period < CryptoIntervalPeriod.interval5m)
+                period = CryptoIntervalPeriod.interval5m;
+            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
             if (primary != CryptoTrendIndicator.Bullish)
             {
                 ExtraText = $"TrendPrimary {primary}, need Bullish";

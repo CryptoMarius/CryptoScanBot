@@ -1,5 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal.Storsi;
 
@@ -66,6 +68,19 @@ public class SignalStoRsiShort : SignalStoRsiBase
             return false;
         }
 
+        if (GlobalData.Settings.Signal.StoRsi.CheckTrendDirection)
+        {
+            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+            var period = Interval.IntervalPeriod;
+            if (period < CryptoIntervalPeriod.interval5m)
+                period = CryptoIntervalPeriod.interval5m;
+            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
+            if (primary != CryptoTrendIndicator.Bearish)
+            {
+                ExtraText = $"TrendPrimary {primary}, need Bearish";
+                return false;
+            }
+        }
         ExtraText = "";
         return true;
     }

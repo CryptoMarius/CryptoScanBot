@@ -1,6 +1,8 @@
 ﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Sbm;
+using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal.Stobb;
 
@@ -105,6 +107,20 @@ public class SignalStobbShort : SignalSbmBase
         {
             ExtraText = "stoch not overbought";
             return false;
+        }
+
+        if (GlobalData.Settings.Signal.Stobb.CheckTrendDirection)
+        {
+            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+            var period = Interval.IntervalPeriod;
+            if (period < CryptoIntervalPeriod.interval5m)
+                period = CryptoIntervalPeriod.interval5m;
+            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
+            if (primary != CryptoTrendIndicator.Bearish)
+            {
+                ExtraText = $"TrendPrimary {primary}, need Bearish";
+                return false;
+            }
         }
 
         return true;
