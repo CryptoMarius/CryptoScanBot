@@ -40,6 +40,14 @@ public partial class CryptoSignal : CryptoData2
     // This is a not null field which is not used anymore
     public string? EventText { get; set; }
 
+    // Optional per-signal SL/TP price set by strategies that compute their own levels
+    // (e.g. swing-anchored). Not persisted: when set, copied to the resulting position
+    // at creation time via PositionTools.AddSignalProperties.
+    [Computed]
+    public decimal? SlPrice { get; set; }
+    [Computed]
+    public decimal? TpPrice { get; set; }
+
     [Computed]
     public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * (Symbol.LastPrice / SignalPrice - 1)); else return 0; } }
 

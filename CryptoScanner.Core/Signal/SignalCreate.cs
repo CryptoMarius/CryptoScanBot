@@ -240,6 +240,12 @@ public class SignalCreate
         if (algorithm.OverrideSignalPrice is decimal overridePrice)
             signal.SignalPrice = overridePrice;
 
+        // Strategies that anchor SL/TP on structural levels (swing high/low, BB band, RRR target)
+        // report their proposed prices here. PositionTools.AddSignalProperties copies them onto
+        // the resulting position, where PositionMonitor.CalculateTpPrices picks them up.
+        signal.SlPrice = algorithm.OverrideSlPrice;
+        signal.TpPrice = algorithm.OverrideTpPrice;
+
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
             eventText.Add(algorithm.ExtraText);

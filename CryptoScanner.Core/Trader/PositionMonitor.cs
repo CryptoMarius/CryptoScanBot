@@ -794,13 +794,31 @@ public class PositionMonitor //: IDisposable
 
 
 
-        // We nemen hiervoor de BreakEvenPrice van de gehele positie en de sell price ligt standaard X% hoger
+        // Take-profit: use the per-signal override when set, otherwise fall back to the
+        // percentage-based default (or the TrailViaKcPsar wide initial value).
         decimal price;
-        if (GlobalData.Settings.Trading.TakeProfitStrategy == CryptoTakeProfitStrategy.TrailViaKcPsar)
+        if (position.TpPrice is decimal tpOverride)
+        {
+            price = tpOverride;
+        }
+        else if (GlobalData.Settings.Trading.TakeProfitStrategy == CryptoTakeProfitStrategy.TrailViaKcPsar)
             price = breakEven + (multiplier * breakEven * (2.0m / 100)); // In eerste instantie flink hoog!
         else
             price = breakEven + (multiplier * breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
         price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+
+        // Stop-loss override (paper-trade only path, same as the default below).
+        // Limit is offset slightly beyond the stop so the stop triggers first (same direction
+        // ratio as the default StopLossPercentage vs StopLossLimitPercentage).
+        if (position.SlPrice is decimal slOverride
+            && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade)
+        {
+            decimal slStop = slOverride.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            decimal stopToLimitGap = Math.Abs(slStop * 0.001m); // 0.1% buffer for the limit beyond the stop
+            decimal slLimit = (slStop - multiplier * stopToLimitGap)
+                .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            return (price, slStop, slLimit);
+        }
 
 
         // Stop-loss is only supported in paper/backtest mode.
