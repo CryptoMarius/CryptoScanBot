@@ -29,6 +29,8 @@ public class FvgZones
                 dateOpen = zone.OpenTime;
             else
                 dateOpen = minDate;
+            if (zone.OpenTime < minDate)
+                dateOpen = minDate;
             if (zone.Kind == CryptoZoneKind.FairValueGap)
                 dateOpen -= 3 * zone.Interval.Duration; // this looks better
 

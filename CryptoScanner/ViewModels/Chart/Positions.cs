@@ -112,7 +112,7 @@ public class Positions
                         ? CandleTime.FromDateTime(step.CloseTime.Value)
                         : CandleTime.FromDateTime(step.CreateTime);
 
-                    if (stepTime < minDate || stepTime > maxDate)
+                    if (stepTime < minDate) // || stepTime > maxDate
                         continue;
 
                     //bool isStopTriggered = isFilled && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice;
