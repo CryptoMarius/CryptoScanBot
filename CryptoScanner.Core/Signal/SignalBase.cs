@@ -58,6 +58,20 @@ public class SignalCreateBase
     /// </summary>
     public virtual decimal? OverrideSignalPrice => null;
 
+    /// <summary>
+    /// Optional per-signal stop-loss price. When non-null the trader uses this value
+    /// instead of the default percentage-based SL from Settings.Trading. Strategies that
+    /// anchor their SL on a structural level (swing high/low, BB band, etc.) populate this.
+    /// </summary>
+    public virtual decimal? OverrideSlPrice => null;
+
+    /// <summary>
+    /// Optional per-signal take-profit price. When non-null the trader uses this value
+    /// instead of the default percentage-based TP. Typically derived from <see cref="OverrideSlPrice"/>
+    /// via a risk:reward multiple.
+    /// </summary>
+    public virtual decimal? OverrideTpPrice => null;
+
 
     public virtual bool AdditionalChecks(MyData candle, out string response)
     {
@@ -90,28 +104,28 @@ public class SignalCreateBase
             return false;
 
 
-        //// ********************************************************************
-        //// Price above or below sma200
-        //if (GlobalData.Settings.Trading.CheckSma200Direction)
-        //{
-        //    switch (SignalSide)
-        //    {
-        //        case CryptoTradeSide.Long:
-        //            if (CandleLast.Candle.Close < (decimal)CandleLast.CandleData.Sma200!.Value)
-        //            {
-        //                ExtraText = $"Price {candlePrev!.Candle.Close:N8} below sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
-        //                return false;
-        //            }
-        //            break;
-        //        case CryptoTradeSide.Short:
-        //            if (CandleLast.Candle.Close > (decimal)CandleLast.CandleData.Sma200!.Value)
-        //            {
-        //                ExtraText = $"Price {candlePrev!.Candle.Close:N8} above sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
-        //                return false;
-        //            }
-        //            break;
-        //    }
-        //}
+        // ********************************************************************
+        // Price above or below sma200
+        if (GlobalData.Settings.Trading.CheckTrendDirectionSma200)
+        {
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long: // Only take long positions if price is above the sma200
+                    if (CandleLast.Candle.Close < (decimal)CandleLast.CandleData.Sma200!.Value)
+                    {
+                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} below sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short: // Only take long posotions if price is below the sma200
+                    if (CandleLast.Candle.Close > (decimal)CandleLast.CandleData.Sma200!.Value)
+                    {
+                        ExtraText = $"Price {candlePrev!.Candle.Close:N8} above sma200 {CandleLast.CandleData.Sma200!.Value:N8}";
+                        return false;
+                    }
+                    break;
+            }
+        }
 
         // ********************************************************************
         // Price going into the right direction

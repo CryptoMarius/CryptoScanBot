@@ -27,9 +27,9 @@
                       Content="Price must be increasing/decreasing"
                       FontSize="12"/>
 
-			<CheckBox IsChecked="{Binding CheckSma200Direction, Mode=TwoWay}"
-                      Content="Check price above/below sma200"
-                      FontSize="12" IsVisible ="false"/>
+			<CheckBox IsChecked="{Binding CheckTrendDirectionSma200, Mode=TwoWay}"
+                      Content="Trade with the trend (based on sma200)"
+                      FontSize="12"/>
 
 			<!-- Slot Limits -->
             <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
