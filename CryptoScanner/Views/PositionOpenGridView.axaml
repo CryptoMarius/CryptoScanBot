@@ -253,10 +253,10 @@
 			</DataGridTemplateColumn>
 
 			<!-- Signal Price -->
-			<DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" >
+			<DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" IsVisible="False">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalPrice}"  IsVisible="False" />
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalPrice}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
