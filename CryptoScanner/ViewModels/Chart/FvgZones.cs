@@ -17,7 +17,7 @@ public class FvgZones
         //if (zone.Kind == CryptoZoneKind.FairValueGap && !session.ShowFvgZones)
         //    return;
 
-        if (zone.OpenTime >= minDate && zone.OpenTime <= maxDate)
+        if (zone.OpenTime <= maxDate) //zone.OpenTime >= minDate && 
         {
             var colors = Const.ColorList[(zone.Kind, zone.Side, zone.CloseTime.HasValue)];
             OxyColor boxColor = colors.boxColor;
