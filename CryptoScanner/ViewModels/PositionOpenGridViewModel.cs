@@ -154,7 +154,9 @@ public partial class PositionOpenGridViewModel : ObservableObject
 
                 position.Duration = string.Empty;
 
+                position.Quantity = string.Empty;
                 position.CurrentProfit = string.Empty;
+                position.BreakEvenPrice = string.Empty;
                 position.BreakEvenPercent = string.Empty;
                 position.CurrentProfitPercentage = string.Empty;
 

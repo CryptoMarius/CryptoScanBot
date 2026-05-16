@@ -341,6 +341,11 @@ public partial class PositionViewModel : BaseConvertersViewModel
             }
             return _QuantityText!;
         }
+        set
+        {
+            _QuantityText = null;
+            OnPropertyChanged(nameof(Quantity));
+        }
     }
 
     //public decimal Open => Object.Invested - Object.Returned - Object.Commission;
@@ -373,6 +378,11 @@ public partial class PositionViewModel : BaseConvertersViewModel
         {
             _BreakEvenPriceText ??= Object.BreakEvenPrice.ToString0(Object.Symbol.PriceDisplayFormat);
             return _BreakEvenPriceText!;
+        }
+        set
+        {
+            _BreakEvenPriceText = null;
+            OnPropertyChanged(nameof(BreakEvenPrice));
         }
     }
 
@@ -431,6 +441,8 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
+            if (Object.EntryPrice == null)
+                return "";
             _EntryPriceText ??= Object.EntryPrice.ToString0(Object.Symbol.PriceDisplayFormat);
             return _EntryPriceText!;
         }
@@ -442,6 +454,8 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
+            if (Object.ProfitPrice == null)
+                return "";
             _ProfitPriceText ??= Object.ProfitPrice.ToString0(Object.Symbol.PriceDisplayFormat);
             return _ProfitPriceText!;
         }
