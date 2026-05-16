@@ -22,6 +22,11 @@ public class SettingsSignalStrategyStochMacd : SettingsSignalStrategyBase
     // Risk:Reward ratio used to compute the proposed take-profit price.
     public decimal RiskRewardRatio { get; set; } = 2.0m;
 
+    // When true, shift the take-profit price so that the desired RRR is achieved *after* paying
+    // both the entry and exit fees (using Symbol.Exchange.FeeRate, which is in percent — e.g.
+    // 0.1 means 0.1%). At a typical 0.1% spot fee on a 2R target this widens the TP by ~0.2%.
+    public bool IncludeFeesInTp { get; set; } = true;
+
     public SettingsSignalStrategyStochMacd() : base()
     {
     }

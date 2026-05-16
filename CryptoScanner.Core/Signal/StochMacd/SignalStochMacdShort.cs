@@ -59,14 +59,17 @@ public class SignalStochMacdShort : SignalStochMacdBase
         }
 
         // Compute proposed SL (swing high above entry) and TP, exposed via the override hooks.
-        if (TryFindSwingHigh(settings.SwingLookback, settings.SwingPivotBars, out decimal swingHigh)
-            && swingHigh > close)
+        if (TryFindSwingHigh(settings.SwingLookback, settings.SwingPivotBars, out decimal swingHigh) && swingHigh > close)
         {
             decimal risk = swingHigh - close;
-            decimal tp = close - settings.RiskRewardRatio * risk;
+            decimal rawTp = close - settings.RiskRewardRatio * risk;
+            decimal tp = AdjustTpForFees(close, rawTp);
             _proposedSl = swingHigh;
             _proposedTp = tp;
-            ExtraText = $"macd cross down @ {close} | sl={swingHigh:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio})";
+            string feeNote = settings.IncludeFeesInTp && Symbol.Exchange.FeeRate > 0
+                ? $", fee {Symbol.Exchange.FeeRate:N3}% → rawTp={rawTp:N6}"
+                : "";
+            ExtraText = $"macd cross down @ {close} | sl={swingHigh:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio}{feeNote})";
         }
         else
         {

@@ -69,10 +69,14 @@ public class SignalStochMacdLong : SignalStochMacdBase
             && swingLow < close)
         {
             decimal risk = close - swingLow;
-            decimal tp = close + settings.RiskRewardRatio * risk;
+            decimal rawTp = close + settings.RiskRewardRatio * risk;
+            decimal tp = AdjustTpForFees(close, rawTp);
             _proposedSl = swingLow;
             _proposedTp = tp;
-            ExtraText = $"macd cross up @ {close} | sl={swingLow:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio})";
+            string feeNote = settings.IncludeFeesInTp && Symbol.Exchange.FeeRate > 0
+                ? $", fee {Symbol.Exchange.FeeRate:N3}% → rawTp={rawTp:N6}"
+                : "";
+            ExtraText = $"macd cross up @ {close} | sl={swingLow:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio}{feeNote})";
         }
         else
         {

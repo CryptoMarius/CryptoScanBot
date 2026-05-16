@@ -1,3 +1,5 @@
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 #if DEBUG
@@ -5,6 +7,36 @@ namespace CryptoScanner.Core.Signal.StochMacd;
 
 public class SignalStochMacdBase : SignalCreateBase
 {
+    /// <summary>
+    /// Adjust the raw take-profit so that the desired RRR is achieved *after* paying both the
+    /// entry fee and the exit fee. Pass-through when fees are disabled in settings or when the
+    /// exchange has FeeRate == 0.
+    ///
+    /// FeeRate convention (matches PaperTrading.cs / TradeTools.cs): stored as percent —
+    /// 0.1 = 0.1%, so the fractional rate is FeeRate / 100.
+    ///
+    /// Derivation:
+    ///   Long  net  = TP - entry - (entry + TP) * fee = (TP_raw - entry)
+    ///              ⇒ TP = (TP_raw + entry * fee) / (1 - fee)
+    ///   Short net  = entry - TP - (entry + TP) * fee = (entry - TP_raw)
+    ///              ⇒ TP = (TP_raw - entry * fee) / (1 + fee)
+    ///
+    /// Uses SignalSide from the base class so subclasses don't need to pass the side explicitly.
+    /// </summary>
+    protected decimal AdjustTpForFees(decimal entry, decimal rawTp)
+    {
+        if (!GlobalData.Settings.Signal.StochMacd.IncludeFeesInTp)
+            return rawTp;
+
+        decimal fee = Symbol.Exchange.FeeRate / 100m;
+        if (fee <= 0m)
+            return rawTp;
+
+        return SignalSide == CryptoTradeSide.Long
+            ? (rawTp + entry * fee) / (1m - fee)
+            : (rawTp - entry * fee) / (1m + fee);
+    }
+
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null
