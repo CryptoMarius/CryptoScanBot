@@ -42,7 +42,6 @@ public class SignalStochMacdBase : SignalCreateBase
         if (data == null
            || data.Candle.OpenTime == 0
            || data.CandleData == null
-           || data.CandleData.Sma200 == null
            || data.CandleData.StochOscillator == null
            || data.CandleData.StochSignal == null
            || data.CandleData.MacdHistogram == null

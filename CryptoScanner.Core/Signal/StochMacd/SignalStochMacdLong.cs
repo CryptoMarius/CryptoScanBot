@@ -1,6 +1,8 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Trend;
 
 #if DEBUG
 namespace CryptoScanner.Core.Signal.StochMacd;
@@ -9,7 +11,7 @@ namespace CryptoScanner.Core.Signal.StochMacd;
 /// Long variant of the Stoch + MACD crossover strategy.
 ///
 /// Trigger (in evaluation order — cheapest first):
-///   1. Optional trend filter : close > SMA200.
+///   1. Optional trend filter : TrendPrimary on the active interval must be Bullish.
 ///   2. Stochastic oversold.
 ///   3. MACD histogram cross UP through zero (equivalent to MacdValue crossing above MacdSignal —
 ///      histogram = MacdValue - MacdSignal, so a zero-cross of one ⇔ a line-cross of the other).
@@ -33,14 +35,20 @@ public class SignalStochMacdLong : SignalStochMacdBase
         ExtraText = "";
         var settings = GlobalData.Settings.Signal.StochMacd;
 
-        // 1. Trend filter
-        decimal close = CandleLast.Candle.Close;
-        decimal sma200 = (decimal)CandleLast.CandleData!.Sma200!.Value;
-        if (settings.RequireTrendFilter && close <= sma200)
+        // 1. Trend filter — TrendPrimary (Dow-theory ZigZag) on the active interval must be Bullish.
+        //    Replaces the older "close > SMA200" check, aligning this strategy with the rest of the
+        //    trend infrastructure (same source as SignalTrend / SignalTrendHtf).
+        if (settings.RequireTrendFilter)
         {
-            ExtraText = $"close {close} not above sma200 {sma200:N4}";
-            return false;
+            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+            var primary = SymbolInterval.TrendPrimary.Trend;
+            if (primary != CryptoTrendIndicator.Bullish)
+            {
+                ExtraText = $"TrendPrimary {primary}, need Bullish";
+                return false;
+            }
         }
+        decimal close = CandleLast.Candle.Close;
 
         // 2. Stoch oversold
         if (!CandleLast.StochOversold())
