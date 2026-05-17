@@ -1,6 +1,3 @@
-using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
-
 #if DEBUG
 namespace CryptoScanner.Core.Signal.Bbma;
 
@@ -42,7 +39,7 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     internal static string OmniStateCode(OmniState state) => state switch
     {
         OmniState.Extreme => "E",
-        OmniState.Mlv     => "M",
+        OmniState.Mlv => "M",
         OmniState.Reentry => "R",
         _ => "-"
     };

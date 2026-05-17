@@ -21,9 +21,9 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     public OmniState GetOmniState(MyData data)
     {
         if (IsExtreme(data)) return OmniState.Extreme;
-        if (IsCsm(data))     return OmniState.Csm;
-        if (IsCsd(data))     return OmniState.Csd;
-        if (IsMlv(data))     return OmniState.Mlv;
+        if (IsCsm(data)) return OmniState.Csm;
+        if (IsCsd(data)) return OmniState.Csd;
+        if (IsMlv(data)) return OmniState.Mlv;
         if (IsReentry(data)) return OmniState.Reentry;
         return OmniState.None;
     }
@@ -37,11 +37,11 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsCsd(MyData data)
     {
-        decimal open    = data.Candle.Open;
-        decimal close   = data.Candle.Close;
-        decimal mid     = (decimal)data.CandleData!.Sma20!.Value;
-        decimal malo5   = (decimal)data.CandleData!.Wma05Low!.Value;
-        decimal malo10  = (decimal)data.CandleData!.Wma10Low!.Value;
+        decimal open = data.Candle.Open;
+        decimal close = data.Candle.Close;
+        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
+        decimal malo5 = (decimal)data.CandleData!.Wma05Low!.Value;
+        decimal malo10 = (decimal)data.CandleData!.Wma10Low!.Value;
 
         // single-bar form
         if (open > mid && close < mid && close < malo5 && close < malo10)
@@ -50,9 +50,9 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         // two-bar form
         if (!GetPrevCandle(data, out MyData? prev) || prev == null)
             return false;
-        decimal openPrev  = prev.Candle.Open;
+        decimal openPrev = prev.Candle.Open;
         decimal closePrev = prev.Candle.Close;
-        decimal midPrev   = (decimal)prev.CandleData!.Sma20!.Value;
+        decimal midPrev = (decimal)prev.CandleData!.Sma20!.Value;
         return openPrev > midPrev && closePrev > midPrev
             && close < mid && open < mid && close < malo5 && close < malo10;
     }
@@ -66,22 +66,22 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsExtreme(MyData data)
     {
-        decimal open    = data.Candle.Open;
-        decimal close   = data.Candle.Close;
-        decimal high    = data.Candle.High;
-        decimal upperB  = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
-        decimal mahi5   = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal open = data.Candle.Open;
+        decimal close = data.Candle.Close;
+        decimal high = data.Candle.High;
+        decimal upperB = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
+        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
 
         if (!GetPrevCandle(data, out MyData? prev) || prev == null) return false;
         if (!GetPrevCandle(prev, out MyData? prev2) || prev2 == null) return false;
 
-        decimal closePrev   = prev.Candle.Close;
-        decimal openPrev    = prev.Candle.Open;
-        decimal highPrev    = prev.Candle.High;
-        decimal upperBPrev  = (decimal)prev.CandleData!.BollingerBandsUpperBand!.Value;
+        decimal closePrev = prev.Candle.Close;
+        decimal openPrev = prev.Candle.Open;
+        decimal highPrev = prev.Candle.High;
+        decimal upperBPrev = (decimal)prev.CandleData!.BollingerBandsUpperBand!.Value;
         decimal upperBPrev2 = (decimal)prev2.CandleData!.BollingerBandsUpperBand!.Value;
-        decimal mahi5Prev   = (decimal)prev.CandleData!.Wma05High!.Value;
-        decimal mahi5Prev2  = (decimal)prev2.CandleData!.Wma05High!.Value;
+        decimal mahi5Prev = (decimal)prev.CandleData!.Wma05High!.Value;
+        decimal mahi5Prev2 = (decimal)prev2.CandleData!.Wma05High!.Value;
 
         bool maPoked = mahi5 >= upperB || mahi5Prev >= upperBPrev || mahi5Prev2 >= upperBPrev2;
         if (!maPoked) return false;
@@ -104,8 +104,8 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsCsm(MyData data)
     {
-        decimal close   = data.Candle.Close;
-        decimal lowerB  = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
+        decimal close = data.Candle.Close;
+        decimal lowerB = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
         return close <= lowerB;
     }
 
@@ -116,10 +116,10 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsMlv(MyData data)
     {
-        decimal close   = data.Candle.Close;
-        decimal high    = data.Candle.High;
-        decimal upperB  = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
-        decimal mahi5   = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal close = data.Candle.Close;
+        decimal high = data.Candle.High;
+        decimal upperB = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
+        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
 
         return high >= upperB && close < upperB && mahi5 < upperB;
     }
@@ -133,13 +133,13 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     /// </summary>
     private bool IsReentry(MyData data)
     {
-        decimal close   = data.Candle.Close;
-        decimal high    = data.Candle.High;
-        decimal mid     = (decimal)data.CandleData!.Sma20!.Value;
-        decimal mahi5   = (decimal)data.CandleData!.Wma05High!.Value;
-        decimal mahi10  = (decimal)data.CandleData!.Wma10High!.Value;
+        decimal close = data.Candle.Close;
+        decimal high = data.Candle.High;
+        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
+        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal mahi10 = (decimal)data.CandleData!.Wma10High!.Value;
 
-        bool touchedMa  = high >= mahi5  || high >= mahi10;
+        bool touchedMa = high >= mahi5 || high >= mahi10;
         bool closedBack = close <= mahi5 || close <= mahi10;
         return touchedMa && closedBack && close <= mid;
     }
@@ -239,7 +239,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         }
 
         if (!(stateLtfBack == OmniState.Extreme || stateLtfBack == OmniState.Mlv
-              || stateLtfBack == OmniState.Csm  || stateLtfBack == OmniState.Csd))
+              || stateLtfBack == OmniState.Csm || stateLtfBack == OmniState.Csd))
         {
             ExtraText = $"LTF no preceding Extreme/MLV/CSM/CSD found";
             return false;
@@ -264,9 +264,9 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         OmniState stateHtf = GetOmniState(resultHtf.candle);
 
         // HTF trend filter: EMA50 above mid-BB AND Wma05High above mid-BB → bearish bias
-        double ema50Htf      = resultHtf.candle.CandleData!.Ema50!.Value;
-        double midBbHtf      = resultHtf.candle.CandleData!.Sma20!.Value;
-        double wma05HighHtf  = resultHtf.candle.CandleData!.Wma05High!.Value;
+        double ema50Htf = resultHtf.candle.CandleData!.Ema50!.Value;
+        double midBbHtf = resultHtf.candle.CandleData!.Sma20!.Value;
+        double wma05HighHtf = resultHtf.candle.CandleData!.Wma05High!.Value;
         if (ema50Htf <= midBbHtf || wma05HighHtf <= midBbHtf)
         {
             ExtraText = $"HTF ema50 not above mid-BB — bullish bias";

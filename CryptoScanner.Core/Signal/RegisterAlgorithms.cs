@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
-using CryptoScanner.Core.Signal.Experiment;
 using CryptoScanner.Core.Signal.StochMacd;
 using CryptoScanner.Core.Signal.WaveTrend;
 #endif

@@ -50,6 +50,7 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
     }
 
 
+
     public override bool IsSignal()
     {
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))

@@ -1,8 +1,6 @@
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Trend;
 
 #if DEBUG
 namespace CryptoScanner.Core.Signal.StochMacd;
@@ -21,7 +19,7 @@ public class SignalStochMacdShort : SignalStochMacdBase
     public override decimal? OverrideSlPrice => _proposedSl;
     public override decimal? OverrideTpPrice => _proposedTp;
 
-    public virtual bool GiveUp(CryptoSignal signal)
+    public override bool GiveUp(CryptoSignal signal)
     {
         if (CandleTime.FromDateTime(signal.CloseDate).Minutes + 30 * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {

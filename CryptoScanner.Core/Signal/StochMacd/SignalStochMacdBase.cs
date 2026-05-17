@@ -1,6 +1,5 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
 
 #if DEBUG
 namespace CryptoScanner.Core.Signal.StochMacd;

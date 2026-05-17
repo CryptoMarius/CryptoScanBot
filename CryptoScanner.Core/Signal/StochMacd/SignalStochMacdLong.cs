@@ -33,7 +33,7 @@ public class SignalStochMacdLong : SignalStochMacdBase
     public override decimal? OverrideSlPrice => _proposedSl;
     public override decimal? OverrideTpPrice => _proposedTp;
 
-    public virtual bool GiveUp(CryptoSignal signal)
+    public override bool GiveUp(CryptoSignal signal)
     {
         if (CandleTime.FromDateTime(signal.CloseDate).Minutes + 30 * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {

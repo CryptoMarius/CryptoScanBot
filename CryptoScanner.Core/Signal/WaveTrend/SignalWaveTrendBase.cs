@@ -1,5 +1,3 @@
-using CryptoScanner.Core.Model;
-
 #if DEBUG
 namespace CryptoScanner.Core.Signal.WaveTrend;
 
