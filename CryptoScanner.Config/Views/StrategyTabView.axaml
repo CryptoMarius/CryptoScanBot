@@ -10,7 +10,7 @@
              x:Class="CryptoScanner.Config.Views.StrategyTabView">
 
     <TabControl Grid.Row="2" Margin="0" >
-		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="false">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
 		<TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
