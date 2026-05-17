@@ -72,6 +72,6 @@ public partial class ApiTelegramViewModel : ObservableObject
     private void TestTelegram()
     {
         ThreadTelegramBot.ChatId = ChatId;
-        GlobalData.AddTextToTelegram("Dit is een test bericht");
+        GlobalData.AddTextToTelegram("This is a test message");
     }
 }
