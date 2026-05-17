@@ -393,7 +393,7 @@ public class SignalCreate
 
         // Extra controles toepassen en het signaal "afkeuren" (maar toch laten zien)
         // Filter op bepaalde intervallen waarvan je wil dat die bullisch of bearisch zijn
-        if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Signals[signal.Side].Trend, out string reaction))
+        if (!PositionTools.ValidTrendConditions(signal.Symbol, signal.Interval, TrendType.Primary, TradingConfig.Signals[signal.Side].Trend, out string reaction))
         {
             eventText.Add(reaction);
             signal.IsInvalid = true;
