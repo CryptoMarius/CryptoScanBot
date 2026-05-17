@@ -160,6 +160,7 @@ public class AltradyWebhook
 
             // DCA body (multiple)
             // Is going to be expensive with my 5 dca setup... ;-)
+            decimal stopLossPercentage = 0;
             if (GlobalData.Settings.Trading.DcaList.Count > 0)
             {
                 dynamic dca_orders = new JArray();
@@ -172,6 +173,9 @@ public class AltradyWebhook
 
                     dca.price_percentage = dcaItem.Percentage;
                     dca.quantity_percentage = 100 * dcaItem.Factor;
+
+                    if (dcaItem.Percentage > stopLossPercentage)
+                        stopLossPercentage = dcaItem.Percentage;
                 }
             }
 
@@ -183,8 +187,7 @@ public class AltradyWebhook
                 //stop_loss.stop_percentage = GlobalData.Settings.Trading.StopLossPercentage;
                 //stop_loss.cool_down_amount = 0;
                 //stop_loss.cool_down_time_frame = "minute";
-
-                request.stop_loss_percentage = GlobalData.Settings.Trading.StopLossPercentage;
+                request.stop_loss_percentage = stopLossPercentage + GlobalData.Settings.Trading.StopLossPercentage;
             }
 
 
