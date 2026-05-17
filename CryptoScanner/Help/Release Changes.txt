@@ -1,8 +1,15 @@
 CryptoScanBot release historie:
 
 11-05-2025 2.5.2
+Probleempje: Bij meerdere dca's is de caption in het chart formulier niet goed. dca1, 2, 4 ? Vaag (ik begrijp het niet), maar ook niet heel belangrijk
+
+- Extra instelling in de trader om met de trend mee te traden
+- Extra instelling in de Stobb en Storsi strategie om met de trend mee te traden
+- Chart window laten de DLZ en FVG zones niet zien op de lagere intervallen (
+- Storsi.multi paste onterecht een aantal controles van de SBM toe
 - De caption van de Stochastic instellingen is incorrect (3x de caption oversold)
-- Bij de posities is de kolom ProfitPrice het winst percentage ipv de tp price
+- Bij de open posities is de kolom prijs niet zichtbaar
+- Bij de open posities is de kolom ProfitPrice het winst percentage ipv de tp price
 - De waarden market cap total en de BTC dominance zijn verkeerd (volume ipv prijs)
 - De display van de stochastic gebruikt niet de gebruikelijke formaat met 2 decimalen
 - Sound instellingen worden nu correct toegepast (er werd spontaan een geluid afgespeeld ondanks dat alles uit staat)
