@@ -69,19 +69,12 @@ public class SignalStoRsiLong : SignalStoRsiBase
             return false;
         }
 
-        if (GlobalData.Settings.Signal.StoRsi.CheckTrendDirection)
-        {
-            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-            var period = Interval.IntervalPeriod;
-            if (period < CryptoIntervalPeriod.interval5m)
-                period = CryptoIntervalPeriod.interval5m;
-            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
-            if (primary != CryptoTrendIndicator.Bullish)
-            {
-                ExtraText = $"TrendPrimary {primary}, need Bullish";
-                return false;
-            }
-        }
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
+        if (GlobalData.Settings.Signal.StoRsi.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+            return false;
+        if (GlobalData.Settings.Signal.StoRsi.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+            return false;
 
         ExtraText = "";
         return true;

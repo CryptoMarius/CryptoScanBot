@@ -101,7 +101,8 @@ public class SettingsTrading
     public bool CheckIncreasingMacd { get; set; } = false;
     public bool CheckIncreasingStoch { get; set; } = false;
     public bool CheckFurtherPriceMove { get; set; } = false;
-    public bool CheckTrendDirection { get; set; } = false;
+    public bool CheckTrendPrimaryDirection { get; set; } = false;
+    public bool CheckTrendSecondaryDirection { get; set; } = false;
 
 
     //***************************
@@ -123,10 +124,6 @@ public class SettingsTrading
 
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;
-
-    // Experimental, reverse the trading direction
-    // (long signal=trade short, short signal = trade long)
-    public bool ReverseTrading { get; set; } = false;
 
     //***************************
     // Take profit

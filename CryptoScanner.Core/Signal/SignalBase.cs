@@ -107,33 +107,10 @@ public class SignalCreateBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (GlobalData.Settings.Trading.CheckTrendDirection)
-        {
-            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-
-            // Guard against the noise on the low timeframes
-            var period = Interval.IntervalPeriod;
-            if (period < CryptoIntervalPeriod.interval5m)
-                period = CryptoIntervalPeriod.interval5m;
-            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long: // Only take long positions if price is above the sma200
-                    if (primary != CryptoTrendIndicator.Bullish)
-                    {
-                        ExtraText = $"TrendPrimary {primary}, need Bullish";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short: // Only take long posotions if price is below the sma200
-                    if (primary != CryptoTrendIndicator.Bearish)
-                    {
-                        ExtraText = $"TrendPrimary {primary}, need Bearish";
-                        return false;
-                    }
-                    break;
-            }
-        }
+        if (GlobalData.Settings.Trading.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+            return false;
+        if (GlobalData.Settings.Trading.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+            return false;
 
         // ********************************************************************
         // Price going into the right direction
@@ -594,6 +571,112 @@ public class SignalCreateBase
 
         response = "";
         return true;
+    }
+
+
+    private bool CheckTrend(bool primaryTrend, string captionTrend, int intervalCount)
+    {
+        var trendType = primaryTrend ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
+        _ = MarketTrend.CalculateMarketTrendAsync(Symbol, trendType).Result;
+
+        // Guard against the noise on the lower timeframes
+        var period = Interval.IntervalPeriod;
+        if (period < CryptoIntervalPeriod.interval5m)
+            period = CryptoIntervalPeriod.interval5m;
+
+        while (intervalCount-- > 0)
+        {
+            var symbolPeriod = Symbol.GetSymbolInterval(period);
+            var trend = primaryTrend ? symbolPeriod.TrendPrimary.Trend : symbolPeriod.TrendSecondary.Trend;
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (trend != CryptoTrendIndicator.Bullish)
+                    {
+                        ExtraText = $"Trend{captionTrend} {trend}, need Bullish";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (trend != CryptoTrendIndicator.Bearish)
+                    {
+                        ExtraText = $"Trend{captionTrend} {trend}, need Bearish";
+                        return false;
+                    }
+                    break;
+            }
+            period++;
+        }
+
+        return true;
+    }
+
+    public bool CheckTrendPrimary(int intervalCount = 2)
+    {
+        return CheckTrend(true, "primary", intervalCount);
+        //_ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
+
+        //// Guard against the noise on the low timeframes
+        //var period = Interval.IntervalPeriod;
+        //if (period < CryptoIntervalPeriod.interval5m)
+        //    period = CryptoIntervalPeriod.interval5m;
+        //var trend = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
+
+        //switch (SignalSide)
+        //{
+        //    case CryptoTradeSide.Long:
+        //        if (trend != CryptoTrendIndicator.Bullish)
+        //        {
+        //            ExtraText = $"TrendPrimary {trend}, need Bullish";
+        //            return false;
+        //        }
+        //        break;
+        //    case CryptoTradeSide.Short:
+        //        if (trend != CryptoTrendIndicator.Bearish)
+        //        {
+        //            ExtraText = $"TrendPrimary {trend}, need Bearish";
+        //            return false;
+        //        }
+        //        break;
+        //}
+        //return true;
+    }
+
+
+    public bool CheckTrendSecondary(int intervalCount = 2)
+    {
+        return CheckTrend(false, "primary", intervalCount);
+        //_ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Secondary).Result;
+
+        //// Guard against the noise on the low timeframes
+        //var period = Interval.IntervalPeriod;
+        //if (period < CryptoIntervalPeriod.interval5m)
+        //    period = CryptoIntervalPeriod.interval5m;
+
+        //while (intervalCount-- > 0)
+        //{
+        //    var trend = Symbol.GetSymbolInterval(period).TrendSecondary.Trend;
+        //    switch (SignalSide)
+        //    {
+        //        case CryptoTradeSide.Long:
+        //            if (trend != CryptoTrendIndicator.Bullish)
+        //            {
+        //                ExtraText = $"TrendSecondary {trend}, need Bullish";
+        //                return false;
+        //            }
+        //            break;
+        //        case CryptoTradeSide.Short:
+        //            if (trend != CryptoTrendIndicator.Bearish)
+        //            {
+        //                ExtraText = $"TrendSecondary {trend}, need Bearish";
+        //                return false;
+        //            }
+        //            break;
+        //    }
+        //    period++;
+        //}
+
+        //return true;
     }
 
 }

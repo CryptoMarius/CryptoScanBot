@@ -109,19 +109,13 @@ public class SignalStobbShort : SignalSbmBase
             return false;
         }
 
-        if (GlobalData.Settings.Signal.Stobb.CheckTrendDirection)
-        {
-            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-            var period = Interval.IntervalPeriod;
-            if (period < CryptoIntervalPeriod.interval5m)
-                period = CryptoIntervalPeriod.interval5m;
-            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
-            if (primary != CryptoTrendIndicator.Bearish)
-            {
-                ExtraText = $"TrendPrimary {primary}, need Bearish";
-                return false;
-            }
-        }
+
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
+        if (GlobalData.Settings.Signal.Stobb.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+            return false;
+        if (GlobalData.Settings.Signal.Stobb.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+            return false;
 
         return true;
     }

@@ -122,6 +122,12 @@ public class SignalStobbMultiShort : SignalSbmBase
         }
 
 
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
+        if (GlobalData.Settings.Signal.Stobb.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+            return false;
+        if (GlobalData.Settings.Signal.Stobb.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+            return false;
         //// close date shouw be in the lower part of the bb
         //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;

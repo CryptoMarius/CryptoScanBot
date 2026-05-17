@@ -27,9 +27,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     private bool _logCanceledOrders = true; // bool (EXACT match)
 
     [ObservableProperty]
-    private bool _reverseTrading = false; // bool (EXACT match)
-
-    [ObservableProperty]
     private int _globalBuyCooldownTime = 30; // int (EXACT match, in minutes)
 
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
@@ -40,7 +37,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         DisableNewPositions = settings.DisableNewPositions;
         LogCanceledOrders = settings.LogCanceledOrders;
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
-        ReverseTrading = settings.ReverseTrading;
         SoundTradeNotification = GlobalData.Settings.General.SoundTradeNotification;
     }
 
@@ -50,7 +46,6 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.DisableNewPositions = DisableNewPositions;
         settings.LogCanceledOrders = LogCanceledOrders;
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
-        settings.ReverseTrading = ReverseTrading;
         GlobalData.Settings.General.SoundTradeNotification = SoundTradeNotification;
     }
 }

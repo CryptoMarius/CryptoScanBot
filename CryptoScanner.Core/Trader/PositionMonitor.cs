@@ -257,16 +257,9 @@ public class PositionMonitor //: IDisposable
                 {
                     text = "Monitor " + signal.DisplayText + " price=" + lastPrice;
 
-                    // Sometime i'm wundering why the sacanner takes such idiotic entry points
-                    // So lets try something complete different and turn things upside down ;-)
-                    // This should not lead to any profits, but i'm very curious, and suprise, it works.. weird
-                    CryptoTradeSide tradeSide = signal.Side;
-                    if (GlobalData.Settings.Trading.ReverseTrading)
-                        tradeSide = signal.Side == CryptoTradeSide.Long ? CryptoTradeSide.Short : CryptoTradeSide.Long;
-
 
                     // Does the user want to trade on this interval
-                    if (!TradingConfig.Trading[tradeSide].IntervalPeriod.ContainsKey(interval.IntervalPeriod))
+                    if (!TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(interval.IntervalPeriod))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this interval (removed)");
                         symbolInterval.SignalList.Remove(signal);
@@ -274,7 +267,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // Does the user want to trade with this strategy
-                    if (!TradingConfig.Trading[tradeSide].Strategy.ContainsKey(signal.Strategy))
+                    if (!TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " not trading on this strategy (removed)");
                         symbolInterval.SignalList.Remove(signal);
@@ -300,7 +293,7 @@ public class PositionMonitor //: IDisposable
                     }
 
                     // Create the strategy and fill all the properties (todo: not a neat solution)
-                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(tradeSide, signal.Strategy);
+                    SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(signal.Side, signal.Strategy);
                     if (algorithm == null)
                     {
                         GlobalData.AddTextToLogTab("Monitor " + signal.DisplayText + " unknown algorithm (removed)");
@@ -353,7 +346,7 @@ public class PositionMonitor //: IDisposable
                             // Deze code alleen uitvoeren voor de entry (niet een dca bijkoop)
 
                             // Is de barometer goed genoeg dat we willen traden?
-                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, tradeSide, LastCandle1m.OpenTime, 60, out reaction))
+                            if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -361,7 +354,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Staat op de whitelist (kan leeg zijn)
-                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, tradeSide, out reaction))
+                            if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -369,7 +362,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Staat niet in de blacklist
-                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, tradeSide, out reaction))
+                            if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -401,16 +394,16 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[tradeSide].Trend, out reaction))
+                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
                             {
-                                if (TradingConfig.Trading[tradeSide].TrendLog)
+                                if (TradingConfig.Trading[signal.Side].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
                                 continue;
                             }
 
                             // Filter op de markettrend waarvan je wil dat die qua perc bullisch of bearisch zijn
-                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[tradeSide].MarketTrend, out reaction))
+                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -420,7 +413,7 @@ public class PositionMonitor //: IDisposable
                             // Additional INTERSECT filter on the secondary market trend (lower-timeframe scope).
                             // Allows catching divergences such as Primary +100 / Secondary -63 where the lower
                             // timeframe has already rolled over.
-                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[tradeSide].MarketTrendSecondary, out reaction))
+                            if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].MarketTrendSecondary, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
                                 ClearSignals();
@@ -443,7 +436,7 @@ public class PositionMonitor //: IDisposable
                             try
                             {
                                 // We willen 1 slot per symbol en x slots voor de long en shorts
-                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, tradeSide, out reaction))
+                                if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
                                     ClearSignals();
@@ -515,7 +508,7 @@ public class PositionMonitor //: IDisposable
 
 
                                 // Create position + entry part
-                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, tradeSide,
+                                position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
                                     symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
