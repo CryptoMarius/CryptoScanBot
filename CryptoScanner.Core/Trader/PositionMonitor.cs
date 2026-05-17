@@ -394,7 +394,7 @@ public class PositionMonitor //: IDisposable
                             }
 
                             // Controle of bepaalde intervallen in een uptrend of in een downtrend zijn
-                            if (!PositionTools.ValidTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
+                            if (!PositionTools.ValidTrendConditions(signal.Symbol, signal.Interval, TrendType.Primary, TradingConfig.Trading[signal.Side].Trend, out reaction))
                             {
                                 if (TradingConfig.Trading[signal.Side].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");

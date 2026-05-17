@@ -294,7 +294,7 @@ public static class PositionTools
     /// <summary>
     /// Zijn de aangevinkte intervallen UP?
     /// </summary>
-    public static bool ValidTrendConditions(CryptoSymbol symbol, TrendType trendType,
+    public static bool ValidTrendConditions(CryptoSymbol symbol, CryptoInterval intervalBase, TrendType trendType,
         Dictionary<CryptoIntervalPeriod, CryptoTrendIndicator> trend, out string reaction)
     {
         CryptoTrendData symbolTrend = trendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
@@ -302,13 +302,16 @@ public static class PositionTools
         foreach (KeyValuePair<CryptoIntervalPeriod, CryptoTrendIndicator> entry in trend)
         {
             var interval = GlobalData.IntervalListPeriod[entry.Key];
-            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(entry.Key);
-            CryptoTrendData intervalTrend = trendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
-
-            if (intervalTrend.Trend != entry.Value)
+            if (interval.IntervalPeriod >= intervalBase.IntervalPeriod)
             {
-                reaction = $"trend op de {interval.Name} niet gelijk aan {entry.Value}";
-                return false;
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(entry.Key);
+                CryptoTrendData intervalTrend = trendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
+
+                if (intervalTrend.Trend != entry.Value)
+                {
+                    reaction = $"trend op de {interval.Name} niet gelijk aan {entry.Value}";
+                    return false;
+                }
             }
         }
 
