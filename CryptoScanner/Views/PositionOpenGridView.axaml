@@ -26,7 +26,7 @@
 			<DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -34,63 +34,72 @@
 			<DataGridTextColumn Header="AltradyId" Width="180" MinWidth="90" SortMemberPath="AltradyId" Binding="{Binding AltradyPositionId}" />
 
 			<!-- CreateTime -->
-            		<DataGridTextColumn Header="Created" Width="105" MinWidth="105" SortMemberPath="CreateTime" Binding="{Binding CreateTime}" />
+			<DataGridTextColumn Header="Created" Width="105" MinWidth="105" SortMemberPath="CreateTime" Binding="{Binding CreateTime}" />
 
 			<!-- UpdateTime -->
-           		 <DataGridTextColumn Header="Updated" Width="105" MinWidth="105" SortMemberPath="UpdateTime" Binding="{Binding UpdateTime}" />
+			<DataGridTextColumn Header="Updated" Width="105" MinWidth="105" SortMemberPath="UpdateTime" Binding="{Binding UpdateTime}" />
 
 			<!-- Duration -->
-            		<DataGridTextColumn Header="Duration" Width="90" MinWidth="80" SortMemberPath="Duration" Binding="{Binding Duration}" />
+			<DataGridTextColumn Header="Duration" Width="90" MinWidth="80" SortMemberPath="Duration" Binding="{Binding Duration}" />
 
 			<!-- Exchange -->
 			<DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="110" MinWidth="90" SortMemberPath="Exchange" IsVisible="False"/>
 
-            <!-- Symbol -->
-            <DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
-	            <DataGridTemplateColumn.CellTemplate>
-		            <DataTemplate>
-			            <Border Background="{Binding SymbolBackground}">
-				            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
-			            </Border >
-		            </DataTemplate>
-	            </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
+			<!-- Symbol -->
+			<DataGridTemplateColumn Header="Symbol" Width="100" MinWidth="90" SortMemberPath="Symbol">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<Border Background="{Binding SymbolBackground}">
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Symbol}" />
+						</Border >
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-            <!-- Side -->
-            <DataGridTemplateColumn Header="Side" Width="50" MinWidth="50" SortMemberPath="Side" >
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" 
+			<!-- Volume -->
+			<DataGridTemplateColumn Header="Volume" Width="75" SortMemberPath="SignalVolume" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalVolume}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- Side -->
+			<DataGridTemplateColumn Header="Side" Width="50" MinWidth="50" SortMemberPath="Side" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
                                     Text="{Binding Side}" Foreground="{Binding SideForeground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
 			<!-- Interval -->
-            <DataGridTemplateColumn Header="Interval" Width="60" MinWidth="50" SortMemberPath="Interval" >
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Interval}"/>
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
+			<DataGridTemplateColumn Header="Interval" Width="60" MinWidth="50" SortMemberPath="Interval" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding Interval}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-            <!-- Strategy -->
-            <DataGridTemplateColumn Header="Strategy" Width="60" MinWidth="50" SortMemberPath="Strategy">
-	            <DataGridTemplateColumn.CellTemplate>
-		            <DataTemplate>
-			            <Border Background="{Binding StrategyBackground}">
-				            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Strategy}" />
-			            </Border >
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
+			<!-- Strategy -->
+			<DataGridTemplateColumn Header="Strategy" Width="60" MinWidth="50" SortMemberPath="Strategy">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<Border Background="{Binding StrategyBackground}">
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding Strategy}" />
+						</Border >
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
 			<!-- Status -->
 			<DataGridTemplateColumn Header="Status" Width="60" MinWidth="50" SortMemberPath="Status" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
                                     Text="{Binding Status}" Foreground="{Binding StatusForeground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -100,7 +109,7 @@
 			<DataGridTemplateColumn Header="Invested" Width="75" SortMemberPath="Invested" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Invested}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Invested}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -109,7 +118,7 @@
 			<DataGridTemplateColumn Header="Returned" Width="75" SortMemberPath="Returned" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Returned}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Returned}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -118,7 +127,7 @@
 			<DataGridTemplateColumn Header="Commission" Width="75" SortMemberPath="Commission" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Commission}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Commission}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -136,7 +145,7 @@
 			<DataGridTemplateColumn Header="Quantity" Width="75" SortMemberPath="Quantity" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Quantity}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Quantity}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -145,7 +154,7 @@
 			<DataGridTemplateColumn Header="Open" Width="75" SortMemberPath="Open"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Open}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Open}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -154,7 +163,7 @@
 			<DataGridTemplateColumn Header="Profit" Width="75" SortMemberPath="CurrentProfit" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding CurrentProfit}" Foreground="{Binding CurrentProfitForeground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -193,7 +202,7 @@
 			<DataGridTemplateColumn Header="EntryPrice" Width="75" SortMemberPath="EntryPrice" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding EntryPrice}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding EntryPrice}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -202,7 +211,7 @@
 			<DataGridTemplateColumn Header="ProfitPrice" Width="75" SortMemberPath="ProfitPrice" IsVisible="False"  >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-			            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitPrice}" />
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitPrice}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -256,65 +265,56 @@
 			<DataGridTemplateColumn Header="Price" Width="75" SortMemberPath="SignalPrice" IsVisible="False">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalPrice}"/>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalPrice}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- Volume -->
-                <DataGridTemplateColumn Header="Volume" Width="75" SortMemberPath="SignalVolume" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalVolume}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- TfTrend -->
+			<DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TrendInterval" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding TrendInterval}" Foreground="{Binding TrendIntervalForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- TfTrend -->
-                <DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TrendInterval" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding TrendInterval}" Foreground="{Binding TrendIntervalForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- primary market trend -->
+			<DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="TrendPercentagePrimary"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding TrendPercentagePrimary}" Foreground="{Binding TrendPercentagePrimaryForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- primary market trend -->
-                <DataGridTemplateColumn Header="Marketprimtrend" Width="75" SortMemberPath="TrendPercentagePrimary"  IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding TrendPercentagePrimary}" Foreground="{Binding TrendPercentagePrimaryForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- secondary market trend -->
+			<DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="TrendPercentageSecondary" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding TrendPercentageSecondary}" Foreground="{Binding TrendPercentageSecondaryForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- secondary market trend -->
-                <DataGridTemplateColumn Header="Marketsectrend" Width="75" SortMemberPath="TrendPercentageSecondary" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding TrendPercentageSecondary}" Foreground="{Binding TrendPercentageSecondaryForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Change24h -->
+			<DataGridTemplateColumn Header="24h Change" Width="75" SortMemberPath="Last24HoursChange" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding Last24HoursChange}" Foreground="{Binding Last24HoursChangeForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Change24h -->
-                <DataGridTemplateColumn Header="24h Change" Width="75" SortMemberPath="Last24HoursChange" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding Last24HoursChange}" Foreground="{Binding Last24HoursChangeForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-
-            <!-- secondary market trend -->
-            <DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="LastXDaysEffective" IsVisible="False" >
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding LastXDaysEffective}"/>
+			<!-- secondary market trend -->
+			<DataGridTemplateColumn Header="X day's move" Width="75" SortMemberPath="LastXDaysEffective" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding LastXDaysEffective}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -322,18 +322,18 @@
 
 			<!-- BB% -->
 			<DataGridTemplateColumn Header="BB%" Width="75" SortMemberPath="BB"  IsVisible="False" >
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Bb}"/>
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-            </DataGridTemplateColumn>
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Bb}"/>
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
 			<!-- BB.Lower -->
 			<DataGridTemplateColumn Header="BbLower" Width="60" SortMemberPath="BbLower" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbLower}"/>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbLower}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -342,7 +342,7 @@
 			<DataGridTemplateColumn Header="BbUpper" Width="60" SortMemberPath="BbUpper" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbUpper}"/>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding BbUpper}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -351,7 +351,7 @@
 			<DataGridTemplateColumn Header="Avg BB%" Width="75" SortMemberPath="AvgBB"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding AvgBB}"/>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding AvgBB}"/>
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
@@ -367,70 +367,70 @@
 			</DataGridTemplateColumn>
 
 			<!-- LuxIndicator5m -->
-                <DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="LuxIndicator5m" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding LuxIndicator5m}" Foreground="{Binding LuxIndicator5mForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<DataGridTemplateColumn Header="Lux 5m" Width="75" SortMemberPath="LuxIndicator5m" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding LuxIndicator5m}" Foreground="{Binding LuxIndicator5mForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- MacdValue -->
-				<DataGridTemplateColumn Header="Macd Value" Width="75" SortMemberPath="MacdValue"  IsVisible="False" >
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding MacdValue}" Foreground="{Binding MacdValueForeground}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- MacdValue -->
+			<DataGridTemplateColumn Header="Macd Value" Width="75" SortMemberPath="MacdValue"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding MacdValue}" Foreground="{Binding MacdValueForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- MacdSignal -->
-				<DataGridTemplateColumn Header="Macd Signal" Width="75" SortMemberPath="MacdSignal"  IsVisible="False" >
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding MacdSignal}" Foreground="{Binding MacdSignalForeground}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- MacdSignal -->
+			<DataGridTemplateColumn Header="Macd Signal" Width="75" SortMemberPath="MacdSignal"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding MacdSignal}" Foreground="{Binding MacdSignalForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- MacdHistogram -->
-				<DataGridTemplateColumn Header="Macd Histo" Width="75" SortMemberPath="MacdHistogram"  IsVisible="False" >
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                       Text="{Binding MacdHistogram}" Foreground="{Binding MacdHistogramForeground}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- MacdHistogram -->
+			<DataGridTemplateColumn Header="Macd Histo" Width="75" SortMemberPath="MacdHistogram"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding MacdHistogram}" Foreground="{Binding MacdHistogramForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- Stoch Oscillator -->
-				<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="StochOscillator"  IsVisible="False" >
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding StochOscillator}" Foreground="{Binding StochOscillatorForeground}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
-				</DataGridTemplateColumn>
+			<!-- Stoch Oscillator -->
+			<DataGridTemplateColumn Header="Stoch Oscillator" Width="75" SortMemberPath="StochOscillator"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding StochOscillator}" Foreground="{Binding StochOscillatorForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-				<!-- Stoch signal -->
-				<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal"  IsVisible="False" >
-					<DataGridTemplateColumn.CellTemplate>
-						<DataTemplate>
-							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
-                                       Text="{Binding StochSignal}" Foreground="{Binding StochSignalForeground}" />
-						</DataTemplate>
-					</DataGridTemplateColumn.CellTemplate>
+			<!-- Stoch signal -->
+			<DataGridTemplateColumn Header="Stoch Signal" Width="75" SortMemberPath="StochSignal"  IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
+								   Text="{Binding StochSignal}" Foreground="{Binding StochSignalForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
 			<!-- Sma200 -->
 			<DataGridTemplateColumn Header="Sma200" Width="75" SortMemberPath="Sma200"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma200}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -440,7 +440,7 @@
 			<DataGridTemplateColumn Header="Sma50" Width="75" SortMemberPath="Sma50"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma50}" Foreground="{Binding Sma50Foreground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -450,7 +450,7 @@
 			<DataGridTemplateColumn Header="Sma20" Width="75" SortMemberPath="Sma20"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding Sma20}" Foreground="{Binding Sma20Foreground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
@@ -460,120 +460,120 @@
 			<DataGridTemplateColumn Header="PSar" Width="75" SortMemberPath="PSar"  IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" 
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right"
                                     Text="{Binding PSar}" Foreground="{Binding PSarForeground}" />
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
 
-				<!-- Trend15m -->
-                <DataGridTemplateColumn Header="Trend 15m" Width="60" SortMemberPath="Trend15m" IsVisible="False">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Trend15m}" Foreground="{Binding Trend15mForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Trend15m -->
+			<DataGridTemplateColumn Header="Trend 15m" Width="60" SortMemberPath="Trend15m" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Trend15m}" Foreground="{Binding Trend15mForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Trend30m -->
-                <DataGridTemplateColumn Header="Trend 30m" Width="60" SortMemberPath="Trend30m" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Trend30m}" Foreground="{Binding Trend30mForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Trend30m -->
+			<DataGridTemplateColumn Header="Trend 30m" Width="60" SortMemberPath="Trend30m" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Trend30m}" Foreground="{Binding Trend30mForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Trend1h -->
-                <DataGridTemplateColumn Header="Trend 1h" Width="60" SortMemberPath="Trend1h" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Trend1h}" Foreground="{Binding Trend1hForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Trend1h -->
+			<DataGridTemplateColumn Header="Trend 1h" Width="60" SortMemberPath="Trend1h" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Trend1h}" Foreground="{Binding Trend1hForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Trend4h -->
-                <DataGridTemplateColumn Header="Trend 4h" Width="60" SortMemberPath="Trend4h" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Trend4h}" Foreground="{Binding Trend4hForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                                
-                <!-- Trend1d -->
-                <DataGridTemplateColumn Header="Trend 1d" Width="60" SortMemberPath="Trend1d" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Trend1d}" Foreground="{Binding Trend1dForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Trend4h -->
+			<DataGridTemplateColumn Header="Trend 4h" Width="60" SortMemberPath="Trend4h" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Trend4h}" Foreground="{Binding Trend4hForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- Trend1d -->
+			<DataGridTemplateColumn Header="Trend 1d" Width="60" SortMemberPath="Trend1d" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Trend1d}" Foreground="{Binding Trend1dForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
 
-                <!-- Barometer15m -->
-                <DataGridTemplateColumn Header="Bm 15m" Width="60" SortMemberPath="Barometer15m" IsVisible="False">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Barometer15m}" Foreground="{Binding Barometer15mForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Barometer15m -->
+			<DataGridTemplateColumn Header="Bm 15m" Width="60" SortMemberPath="Barometer15m" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Barometer15m}" Foreground="{Binding Barometer15mForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Barometer30m -->
-                <DataGridTemplateColumn Header="Bm 30m" Width="60" SortMemberPath="Barometer30m" IsVisible="False">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Barometer30m}" Foreground="{Binding Barometer30mForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Barometer30m -->
+			<DataGridTemplateColumn Header="Bm 30m" Width="60" SortMemberPath="Barometer30m" IsVisible="False">
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Barometer30m}" Foreground="{Binding Barometer30mForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Barometer1h -->
-                <DataGridTemplateColumn Header="Bm 1h" Width="60" SortMemberPath="Barometer1h" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Barometer1h}" Foreground="{Binding Barometer1hForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Barometer1h -->
+			<DataGridTemplateColumn Header="Bm 1h" Width="60" SortMemberPath="Barometer1h" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Barometer1h}" Foreground="{Binding Barometer1hForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
-                <!-- Barometer4h -->
-                <DataGridTemplateColumn Header="Bm 4h" Width="60" SortMemberPath="Barometer4h" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Barometer4h}" Foreground="{Binding Barometer4hForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                                
-                <!-- Barometer1d -->
-                <DataGridTemplateColumn Header="Bm 1d" Width="60" SortMemberPath="Barometer1d" IsVisible="False" >
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Text="{Binding Barometer1d}" Foreground="{Binding Barometer1dForeground}" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+			<!-- Barometer4h -->
+			<DataGridTemplateColumn Header="Bm 4h" Width="60" SortMemberPath="Barometer4h" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Barometer4h}" Foreground="{Binding Barometer4hForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
+			<!-- Barometer1d -->
+			<DataGridTemplateColumn Header="Bm 1d" Width="60" SortMemberPath="Barometer1d" IsVisible="False" >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+								Text="{Binding Barometer1d}" Foreground="{Binding Barometer1dForeground}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
 
 			<!-- MinimumEntry -->
 			<DataGridTemplateColumn Header="Min Entry" Width="60" SortMemberPath="MinimumEntry" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
-                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding MinimumEntry}"/>
-				</DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding MinimumEntry}"/>
+					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
