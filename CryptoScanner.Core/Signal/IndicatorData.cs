@@ -212,26 +212,36 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
         //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
         List<EmaResult> emaList26 = (List<EmaResult>)history.GetEma(26);
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
         //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
 #endif
-#if EXTRASTRATEGIESSLOPEEMA
+
+#if DEBUG
+        // EMA 20 / 50 — required by the trend filter and several strategies (was conditional, now standard).
         List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+#endif
+
+#if EXTRASTRATEGIESSLOPEEMA
         List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
         List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
 #endif
 
 #if DEBUG
-        // https://dotnet.stockindicators.dev/utilities/#content
-        // Weighted Moving Average is the linear weighted average of price over a lookback window.
-        // This also called Linear Weighted Moving Average(LWMA).
+        // Linear Weighted Moving Average — used by BBMA experiments.
         // https://dotnet.stockindicators.dev/indicators/Wma/#content
         List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
         List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
+#endif
+
+#if DEBUG
+        // ATR (Wilder, 14): volatility measure used for regime detection and structural stops.
+        List<AtrResult> atrList = (List<AtrResult>)history.GetAtr(lookbackPeriods: 14);
+
+        // ADX (Wilder, 14): trend strength regardless of direction. >25 = trending, <20 = ranging.
+        List<AdxResult> adxList = (List<AdxResult>)history.GetAdx(lookbackPeriods: 14);
 #endif
 
         // or collect items first (is this faster/better?), a lot more coding)
@@ -319,12 +329,13 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             CryptoData candleData = new();
             try
             {
+#if DEBUG
                 // EMA's
+                candleData.Ema20 = emaList20[index].Ema;
+#endif
 #if EXTRASTRATEGIES
                 ////candleData.Ema8 = emaList8[index].Ema;
                 candleData.Ema26 = emaList26[index].Ema;
-                candleData.Ema20 = emaList20[index].Ema;
-                candleData.Ema50 = emaList50[index].Ema; --> see wma / bbma
                 //candleData.Ema100 = emaList100[index].Ema;
                 //candleData.Ema200 = emaList200[index].Ema;
 #endif
@@ -358,11 +369,19 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.Wma10High = wmaList10High[index].Wma;
 #endif
 
-//#if DEBUG
-//                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-//                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-//                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-//#endif
+#if DEBUG
+                // ATR + ADX (foundation for the trend filter / regime detection).
+                candleData.Atr = atrList[index].Atr;
+                candleData.Adx = adxList[index].Adx;
+                candleData.AdxPdi = adxList[index].Pdi;
+                candleData.AdxMdi = adxList[index].Mdi;
+#endif
+
+                //#if DEBUG
+                //                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                //                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+                //                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+                //#endif
 
 
                 candleData.Rsi = rsiList[index].Rsi;

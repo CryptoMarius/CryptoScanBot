@@ -64,6 +64,9 @@ public class SettingsSignal
     // Stoch + MACD crossover
     public SettingsSignalStrategyStochMacd StochMacd = new();
 
+    // Combined trend strategy: HTF bias + ADX regime + Dow/BOS trigger + pullback entry
+    public SettingsSignalStrategyTrendHtf TrendHtf = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

@@ -56,16 +56,15 @@ public class CryptoData
     //public double? Ema8 { get; set; }
     [Computed]
     public double? Ema9 { get; set; }
-    //public double? Ema20 { get; set; }
+    public double? Ema20 { get; set; }
     //public double? SlopeEma20 { get; set; }
-    //public double? Ema50 { get; set; }
     //public double? SlopeEma50 { get; set; }
     //public double? Ema100 { get; set; }
     //public double? SlopeEma100 { get; set; }
     //public double? Ema200 { get; set; }
     //public double? SlopeEma200 { get; set; }
-    [Computed]
-    public double? Tema { get; set; }
+    //[Computed]
+    //public double? Tema { get; set; }
 #endif
 
     // SMA (Simple Moving Average) indicator values
@@ -80,7 +79,6 @@ public class CryptoData
     //public double? SlopeSma200 { get; set; }
 
 #if DEBUG
-    // Now outside the if debug
     public double? Ema50 { get; set; }
     [Computed]
     public double? Wma05Low { get; set; }
@@ -90,6 +88,22 @@ public class CryptoData
     public double? Wma10Low { get; set; }
     [Computed]
     public double? Wma10High { get; set; }
+#endif
+
+#if DEBUG
+    // Average True Range (Wilder, 14-period). Volatility measure for stops/regime detection.
+    // Computed = not persisted; the Signal table has no Atr/Adx columns.
+    [Computed]
+    public double? Atr { get; set; }
+
+    // Average Directional Index (Wilder, 14-period). Trend strength regardless of direction.
+    // Pdi/Mdi expose the +DI / -DI directional movement components that ADX is built on.
+    [Computed]
+    public double? Adx { get; set; }
+    [Computed]
+    public double? AdxPdi { get; set; }
+    [Computed]
+    public double? AdxMdi { get; set; }
 #endif
 
     // RSI indicator
@@ -134,14 +148,22 @@ public class CryptoData
         Rsi = source.Rsi;
         //SlopeRsi = source.SlopeRsi;
         //RsiSurface = source.RsiSurface;
-#if DEBUG
+
         // EMA indicator values
+#if DEBUG
+        Ema20 = source.Ema20;
         //Ema9 = source.Ema9;
-        //Ema50 = source.Ema50;
         //public double? Ema8 { get; set; }
-        //public double? Ema20 { get; set; }
         //public double? SlopeEma20 { get; set; }
         //Tema = source.Tema;
+#endif
+
+#if DEBUG
+        // Volatility and trend strength
+        Atr = source.Atr;
+        Adx = source.Adx;
+        AdxPdi = source.AdxPdi;
+        AdxMdi = source.AdxMdi;
 #endif
 
 

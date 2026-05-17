@@ -125,18 +125,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
-#if DEBUG
-        // 5m + 1h directional: 1h was in extreme zone and is on its way to the other side,
-        // 5m confirms the same direction
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stoch.dir",
-            Strategy = CryptoSignalStrategy.StochDir,
-            AnalyzeLongType = typeof(SignalStochDirLong),
-            AnalyzeShortType = typeof(SignalStochDirShort),
-        });
-
-#endif
 
         //***************************************************
         // Level approaching
@@ -176,6 +164,7 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalFairValueGapShort),
         });
 
+        // NWE Repaining
         Register(new AlgorithmDefinition()
         {
             Name = "nwe",
@@ -184,6 +173,8 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
         });
 
+#if DEBUG
+        // NWE not repainting
         Register(new AlgorithmDefinition()
         {
             Name = "nwe.np",
@@ -191,6 +182,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
             AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
         });
+#endif
 
 #if DEBUG
         // NWE × BB crossover: NWE curls through the BB band after extending beyond it
@@ -240,7 +232,7 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
-        // Stoch + MACD crossover: trend filter (SMA200) + Stoch OS/OB + MACD histogram zero-cross.
+        // Stoch + MACD crossover: trend filter (TrendPrimary) + Stoch OS/OB + MACD histogram zero-cross.
         // Source video: https://www.youtube.com/watch?v=vLbLZWi_Ypc
         Register(new AlgorithmDefinition()
         {
@@ -284,17 +276,18 @@ public static class RegisterAlgorithms
         });
 #endif
 
-
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "rsi divergence",
-        //            Strategy = CryptoSignalStrategy.RsiDivergence,
-        //            AnalyzeLongType = typeof(SignalRsiDivergence),
-        //            AnalyzeShortType = typeof(SignalRsiDivergence),
-        //        });
-        //#endif
-
+#if DEBUG
+        // TrendHtf: trend CONTINUATION entry. HTF bias + ADX regime + established
+        // TrendBos direction + pullback pivot + fresh break-of-pivot. Goes WITH the
+        // established trend (unlike SignalBosChoch which is a reversal hunter).
+        Register(new AlgorithmDefinition()
+        {
+            Name = "trend.htf",
+            Strategy = CryptoSignalStrategy.TrendHtf,
+            AnalyzeLongType = typeof(SignalTrendHtfLong),
+            AnalyzeShortType = typeof(SignalTrendHtfShort),
+        });
+#endif
 
     }
 

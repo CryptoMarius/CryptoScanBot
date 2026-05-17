@@ -19,16 +19,18 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
     NadarayaWatsonEnvelope = 25,
-    NadarayaWatsonEnvelopeNp = 26,
 
 
 #if DEBUG
+    NadarayaWatsonEnvelopeNp = 26,
     NweBb = 27,
     Trend = 31,
 
     TrendBosChoch = 32,
 
     Box = 33,
+
+    TrendHtf = 34, // Combined: HTF bias + ADX regime + BOS/CHoCH trigger + pullback entry
 
     BbmaOmni = 43,
     Bbma = 44,
