@@ -10,10 +10,8 @@ namespace CryptoScanner.Core.Signal.StochMacd;
 /// <summary>
 /// Short variant — mirror of <see cref="SignalStochMacdLong"/>.
 ///
-/// Trigger (in evaluation order — cheapest first):
-///   1. Optional trend filter : TrendPrimary on the active interval must be Bearish.
-///   2. Stochastic overbought.
-///   3. MACD histogram cross DOWN through zero.
+/// IsSignal opens the entry window (BB width, Stoch OB, Trend bearish); AllowStepIn waits
+/// for the MACD histogram to cross DOWN through zero on a subsequent candle.
 /// </summary>
 public class SignalStochMacdShort : SignalStochMacdBase
 {
@@ -23,36 +21,52 @@ public class SignalStochMacdShort : SignalStochMacdBase
     public override decimal? OverrideSlPrice => _proposedSl;
     public override decimal? OverrideTpPrice => _proposedTp;
 
+    public virtual bool GiveUp(CryptoSignal signal)
+    {
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + 30 * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
+        {
+            ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// Actual entry trigger: MACD histogram crosses down through zero on the current candle.
+    /// IsSignal only opened the window (BB + stoch OB + trend); this is where the trade actually
+    /// gets the green light. Re-evaluated on every candle while the signal is in TryStepIn state.
+    /// </summary>
+    public override bool AllowStepIn(CryptoSignal signal)
+    {
+        if (!TryGetMacdHistogram(out double prevH, out double currH))
+        {
+            ExtraText = "no prev candle for macd cross check";
+            return false;
+        }
+        if (!(prevH >= 0 && currH < 0))
+        {
+            ExtraText = $"waiting for macd cross down (prev={prevH:N4}, curr={currH:N4})";
+            return false;
+        }
+
+        ExtraText = $"macd cross down (prev={prevH:N4}, curr={currH:N4})";
+        return true;
+    }
+
+
     public override bool IsSignal()
     {
+        _proposedSl = null;
+        _proposedTp = null;
+        ExtraText = "";
+
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
-
-        _proposedSl = null;
-        _proposedTp = null;
-        ExtraText = "";
-        var settings = GlobalData.Settings.Signal.StochMacd;
-
-        // 1. Trend filter — TrendPrimary (Dow-theory ZigZag) on the active interval must be Bearish.
-        //    Replaces the older "close < SMA200" check, aligning this strategy with the rest of the
-        //    trend infrastructure (same source as SignalTrend / SignalTrendHtf).
-        if (settings.RequireTrendFilter)
-        {
-            _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-            var period = Interval.IntervalPeriod;
-            if (period < CryptoIntervalPeriod.interval5m)
-                period = CryptoIntervalPeriod.interval5m;
-            var primary = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
-            if (primary != CryptoTrendIndicator.Bearish)
-            {
-                ExtraText = $"TrendPrimary {primary}, need Bearish";
-                return false;
-            }
-        }
-        decimal close = CandleLast.Candle.Close;
 
         // 2. Stoch overbought
         if (!CandleLast.StochOverbought())
@@ -61,21 +75,26 @@ public class SignalStochMacdShort : SignalStochMacdBase
             return false;
         }
 
-        // 3. MACD histogram cross down — previous bar at-or-above zero, current bar below zero
-        if (!GetPrevCandle(CandleLast, out MyData? prev) || prev == null)
-        {
-            ExtraText = "no prev candle for macd cross check";
+
+        var settings = GlobalData.Settings.Signal.StochMacd;
+
+        // ********************************************************************
+        // 1. Trend filter — TrendPrimary (Dow-theory ZigZag) on the active interval must be Bearish.
+        //    Replaces the older "close < SMA200" check, aligning this strategy with the rest of the
+        //    trend infrastructure (same source as SignalTrend / SignalTrendHtf).
+        // Dont trade against the trend (only check current interval)
+        if (settings.RequireTrendFilter && !CheckTrendPrimary())
             return false;
-        }
-        double prevH = prev.CandleData!.MacdHistogram!.Value;
-        double currH = CandleLast.CandleData!.MacdHistogram!.Value;
-        if (!(prevH >= 0 && currH < 0))
-        {
-            ExtraText = $"no macd cross down (prev={prevH:N4}, curr={currH:N4})";
+        if (settings.RequireTrendFilter && !CheckTrendSecondary())
             return false;
-        }
+
+
+        // The MACD-cross trigger that *fires* the actual entry happens in AllowStepIn —
+        // this method only opens the window.
+
 
         // Compute proposed SL (swing high above entry) and TP, exposed via the override hooks.
+        decimal close = CandleLast.Candle.Close;
         if (TryFindSwingHigh(settings.SwingLookback, settings.SwingPivotBars, out decimal swingHigh) && swingHigh > close)
         {
             decimal risk = swingHigh - close;
@@ -86,13 +105,15 @@ public class SignalStochMacdShort : SignalStochMacdBase
             string feeNote = settings.IncludeFeesInTp && Symbol.Exchange.FeeRate > 0
                 ? $", fee {Symbol.Exchange.FeeRate:N3}% → rawTp={rawTp:N6}"
                 : "";
-            ExtraText = $"macd cross down @ {close} | sl={swingHigh:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio}{feeNote})";
+            ExtraText = $"window open @ {close} | sl={swingHigh:N6} (risk {risk:N6}) | tp={tp:N6} (rrr={settings.RiskRewardRatio}{feeNote}) — waiting for macd cross down";
         }
         else
         {
-            ExtraText = $"macd cross down @ {close} | no valid swing-high in last {settings.SwingLookback} bars";
+            ExtraText = $"window open @ {close} | no valid swing-high in last {settings.SwingLookback} bars — waiting for macd cross down";
         }
         return true;
     }
+
+
 }
 #endif

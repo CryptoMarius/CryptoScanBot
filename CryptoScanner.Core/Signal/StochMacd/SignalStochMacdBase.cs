@@ -37,6 +37,26 @@ public class SignalStochMacdBase : SignalCreateBase
             : (rawTp - entry * fee) / (1m + fee);
     }
 
+    /// <summary>
+    /// Reads the MACD histogram on the previous and current candle. Used by the AllowStepIn
+    /// cross-check (the histogram zero-crossing is the actual entry trigger; the IsSignal
+    /// preconditions only open the window). Returns false when the previous candle or its
+    /// indicator data is unavailable.
+    /// </summary>
+    protected bool TryGetMacdHistogram(out double prevH, out double currH)
+    {
+        prevH = 0;
+        currH = 0;
+        if (!GetPrevCandle(CandleLast, out MyData? prev) || prev == null)
+            return false;
+        if (prev.CandleData?.MacdHistogram == null || CandleLast.CandleData?.MacdHistogram == null)
+            return false;
+        prevH = prev.CandleData.MacdHistogram.Value;
+        currH = CandleLast.CandleData.MacdHistogram.Value;
+        return true;
+    }
+
+
     public override bool IndicatorsOkay(MyData data)
     {
         if (data == null
