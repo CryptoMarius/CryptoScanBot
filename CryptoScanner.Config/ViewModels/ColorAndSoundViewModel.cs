@@ -22,13 +22,6 @@ public partial class ColorAndSoundViewModel : ObservableObject
     {
     }
 
-    //public ColorAndSoundViewModel(string caption, Color color, string soundFile)
-    //{
-    //    _caption = caption;
-    //    _selectedColor = color;
-    //    _soundFile = soundFile;
-    //}
-
     public void LoadConfig(string caption, Color color, string soundFile)
     {
         Caption = caption;

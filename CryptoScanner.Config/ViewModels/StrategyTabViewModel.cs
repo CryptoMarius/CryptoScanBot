@@ -40,7 +40,7 @@ public partial class StrategyTabViewModel : ObservableObject
     {
         StrategyStobbTabViewModel.LoadConfig("Stobb", settings.Stobb);
         StrategySbmTabViewModel.LoadConfig("Sbm", settings.Sbm);
-        StrategyStorsiTabViewModel.LoadConfig("Sbm", settings.StoRsi);
+        StrategyStorsiTabViewModel.LoadConfig("Storsi", settings.StoRsi);
         StrategyJumpTabViewModel.LoadConfig("Jump", settings.Jump);
         StrategyDlzTabViewModel.LoadConfig("Dlz", settings.ZonesDlz);
         StrategyFvgTabViewModel.LoadConfig("Fvg", settings.ZonesFvg);
