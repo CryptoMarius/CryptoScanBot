@@ -3,7 +3,6 @@
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Messages;
-using CryptoScanner.Core.Trader;
 using CryptoScanner.Views;
 
 using Dapper;
@@ -42,6 +41,8 @@ public class CommandPositionDeleteAll : CommandBase
             databaseThread.Connection.Execute($"delete from positionpart", transaction);
             databaseThread.Connection.Execute($"delete from position", transaction);
             transaction.Commit();
+
+            GlobalData.ActiveExchange!.Data.PositionList.Clear();
 
             // Remove the position from open or closed positions
             GlobalData.SendMvvmMessage(new PositionDeleteAllMessage());
