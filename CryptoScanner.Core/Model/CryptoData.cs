@@ -18,15 +18,15 @@ public class CryptoData
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
 
-//#if DEBUG
-//    [Computed]
-//    public double? KeltnerUpperBand { get; set; }
-//    [Computed]
-//    public double? KeltnerLowerBand { get; set; }
-//    [Computed]
-//    public double? KeltnerCenterLine { get; set; }
-//    //public double? KeltnerCenterLineSlope { get; set; }
-//#endif
+    //#if DEBUG
+    //    [Computed]
+    //    public double? KeltnerUpperBand { get; set; }
+    //    [Computed]
+    //    public double? KeltnerLowerBand { get; set; }
+    //    [Computed]
+    //    public double? KeltnerCenterLine { get; set; }
+    //    //public double? KeltnerCenterLineSlope { get; set; }
+    //#endif
 
     // MACD indicator values
     public double? MacdValue { get; set; } // blue - Oscillator
@@ -127,11 +127,11 @@ public class CryptoData
         BollingerBandsDeviation = source.BollingerBandsDeviation;
         BollingerBandsPercentage = source.BollingerBandsPercentage;
 
-//#if DEBUG
-//        KeltnerUpperBand = source.KeltnerUpperBand;
-//        KeltnerCenterLine = source.KeltnerCenterLine;
-//        KeltnerLowerBand = source.KeltnerLowerBand;
-//#endif
+        //#if DEBUG
+        //        KeltnerUpperBand = source.KeltnerUpperBand;
+        //        KeltnerCenterLine = source.KeltnerCenterLine;
+        //        KeltnerLowerBand = source.KeltnerLowerBand;
+        //#endif
 
         // MACD indicator values
         MacdValue = source.MacdValue;
