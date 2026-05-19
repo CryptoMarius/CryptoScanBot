@@ -2,31 +2,11 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Sbm;
 
 namespace CryptoScanner.Core.Signal.Stobb;
 
-public class SignalStobbMultiLong : SignalSbmBase
+public class SignalStobbMultiLong : SignalStobbBase
 {
-
-
-    public override bool IndicatorsOkay(MyData data)
-    {
-        if (data == null
-           || data.Candle.OpenTime == 0
-           || data.CandleData == null
-           || data.CandleData.Sma20 == null
-           || data.CandleData.MacdHistogram == null
-           || data.CandleData.StochSignal == null
-           || data.CandleData.StochOscillator == null
-           || data.CandleData.BollingerBandsDeviation == null
-           )
-            return false;
-
-        return true;
-    }
-
-
     public override bool AdditionalChecks(MyData data, out string response)
     {
         // Controle op de ma-lijnen
@@ -74,9 +54,11 @@ public class SignalStobbMultiLong : SignalSbmBase
         return true;
     }
 
+
     public override bool IsSignal()
     {
         ExtraText = "";
+        var settings = GlobalData.Settings.Signal.Stobb;
 
         // De breedte van de bb is ten minste 1.5%
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
@@ -103,7 +85,6 @@ public class SignalStobbMultiLong : SignalSbmBase
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
-        ExtraText = "";
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
@@ -137,11 +118,12 @@ public class SignalStobbMultiLong : SignalSbmBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (GlobalData.Settings.Signal.Stobb.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
             return false;
-        if (GlobalData.Settings.Signal.Stobb.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
-        
+
+
         //// close date shouw be in the lower part of the bb
         //if (!InLowerPartOfBollingerBands(1, 10.0m))
         //    return false;

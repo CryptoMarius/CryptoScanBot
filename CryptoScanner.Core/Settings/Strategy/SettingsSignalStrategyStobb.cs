@@ -13,8 +13,11 @@ public class SettingsSignalStrategyStobb : SettingsSignalStrategyBase
     public bool OnlyIfPreviousStobb { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
+
     public bool CheckTrendPrimaryDirection { get; set; } = false;
+    public int TrendPrimaryDirectionCount { get; set; } = 2;
     public bool CheckTrendSecondaryDirection { get; set; } = false;
+    public int TrendSecondaryDirectionCount { get; set; } = 2;
 
     public SettingsSignalStrategyStobb() : base()
     {

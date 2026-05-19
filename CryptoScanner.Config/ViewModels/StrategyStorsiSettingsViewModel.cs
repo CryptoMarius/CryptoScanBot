@@ -31,7 +31,14 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     private bool _checkTrendPrimaryDirection = false;
 
     [ObservableProperty]
+    private int _TrendPrimaryDirectionCount = 2;
+
+    [ObservableProperty]
     private bool _checkTrendSecondaryDirection = false;
+
+    [ObservableProperty]
+    private int _trendSecondaryDirectionCount = 2;
+
 
     public void LoadConfig(string caption, SettingsSignalStrategyStoRsi settings)
     {
@@ -43,7 +50,9 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         CheckBollingerBandsCondition = settings.CheckBollingerBandsCondition;
         OnlyIfLux5m = settings.OnlyIfLux5m;
         CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
+        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
+        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
     }
 
     public void SaveConfig(SettingsSignalStrategyStoRsi settings)
@@ -56,6 +65,8 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.CheckBollingerBandsCondition = CheckBollingerBandsCondition;
         settings.OnlyIfLux5m = OnlyIfLux5m;
         settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
+        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
+        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
     }
 }

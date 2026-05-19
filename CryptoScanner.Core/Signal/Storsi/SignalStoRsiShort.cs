@@ -1,7 +1,5 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal.Storsi;
 
@@ -26,7 +24,6 @@ public class SignalStoRsiShort : SignalStoRsiBase
         // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
-            //if (!CandleLast.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseHighLow))
             if (!InUpperPartOfBollingerBands(3, 5.0m))
             {
                 response = "not in upper part of bb";
@@ -47,10 +44,11 @@ public class SignalStoRsiShort : SignalStoRsiBase
         return true;
     }
 
-
     public override bool IsSignal()
     {
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
+        var settings = GlobalData.Settings.Signal.StoRsi;
+
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -62,7 +60,7 @@ public class SignalStoRsiShort : SignalStoRsiBase
             return false;
         }
 
-        if (!CandleLast.RsiOverbought(GlobalData.Settings.Signal.StoRsi.AddRsiAmount))
+        if (!CandleLast.RsiOverbought(settings.AddRsiAmount))
         {
             ExtraText = "rsi not overbought";
             return false;
@@ -70,9 +68,9 @@ public class SignalStoRsiShort : SignalStoRsiBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (GlobalData.Settings.Signal.StoRsi.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary())
             return false;
-        if (GlobalData.Settings.Signal.StoRsi.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary())
             return false;
 
         ExtraText = "";

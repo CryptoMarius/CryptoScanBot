@@ -23,8 +23,17 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private bool _checkTrendPrimaryDirection = false;
 
     [ObservableProperty]
-    private bool _checkTrendSecondaryDirection = false;
+    private int _TrendPrimaryDirectionCount = 2;
     
+    [ObservableProperty]
+    private bool _checkTrendSecondaryDirection = false;
+
+    [ObservableProperty]
+    private int _trendSecondaryDirectionCount = 2;
+
+    //[ObservableProperty]
+    //private bool _waitForStochKRecovery = false;
+
 
     // Slot limits (all int - EXACT match)
     [ObservableProperty]
@@ -40,7 +49,10 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckIncreasingStoch = settings.CheckIncreasingStoch;
         CheckFurtherPriceMove = settings.CheckFurtherPriceMove;
         CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
+        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
+        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
+        //WaitForStochKRecovery = settings.WaitForStochKRecovery;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
@@ -53,7 +65,10 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.CheckIncreasingStoch = CheckIncreasingStoch;
         settings.CheckFurtherPriceMove = CheckFurtherPriceMove;
         settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
+        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
+        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        //settings.WaitForStochKRecovery = WaitForStochKRecovery;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;

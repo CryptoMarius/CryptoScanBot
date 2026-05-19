@@ -1,35 +1,14 @@
 ﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
-using CryptoScanner.Core.Signal.Sbm;
-using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal.Stobb;
 
-public class SignalStobbLong : SignalSbmBase
+public class SignalStobbLong : SignalStobbBase
 {
-
-
-    public override bool IndicatorsOkay(MyData data)
-    {
-        if (data == null
-           || data.Candle.OpenTime == 0
-           || data.CandleData == null
-           || data.CandleData.Sma20 == null
-           || data.CandleData.StochSignal == null
-           || data.CandleData.StochOscillator == null
-           || data.CandleData.BollingerBandsDeviation == null
-           )
-            return false;
-
-        return true;
-    }
-
-
 
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        if (GlobalData.Settings.Signal.Stobb.OnlyIfLux5m)
         {
             if (CandleLast.CandleData!.Lux5mValue > -50)
             {
@@ -86,16 +65,17 @@ public class SignalStobbLong : SignalSbmBase
     public override bool IsSignal()
     {
         ExtraText = "";
+        var settings = GlobalData.Settings.Signal.Stobb;
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
 
         // Er een data onder de bb opent of sluit
-        if (!CandleLast.IsBelowBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
+        if (!CandleLast.IsBelowBollingerBands(settings.UseLowHigh))
         {
             ExtraText = "not below bb.lower";
             return false;
@@ -110,9 +90,9 @@ public class SignalStobbLong : SignalSbmBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (GlobalData.Settings.Signal.Stobb.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
             return false;
-        if (GlobalData.Settings.Signal.Stobb.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
         return true;

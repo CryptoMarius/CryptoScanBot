@@ -1,5 +1,3 @@
-using CryptoScanner.Core.Model;
-
 namespace CryptoScanner.Core.Signal.Storsi;
 
 // WGHM - Wave Generation High Momentum
@@ -25,4 +23,5 @@ public class SignalStoRsiBase : SignalCreateBase
 
         return true;
     }
+
 }

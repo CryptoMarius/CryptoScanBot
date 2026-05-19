@@ -62,13 +62,25 @@
                       Content="Only if lux 5m at 100%"
                       FontSize="12"/>
 
-			<CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
-		              Content="Trade with the trend (based on primary trend)"
-		              FontSize="12"/>
+			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+				<CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
+						  Content="Trade with the primary trend"
+						  FontSize="12"/>
+				<TextBox Grid.Column="2"
+						 Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
+						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+						 IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
+			</Grid>
 
-			<CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
-		              Content="Trade with the trend (based on secondary trend)"
-		              FontSize="12"/>
+			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+				<CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
+						  Content="Trade with the secondary trend"
+						  FontSize="12"/>
+				<TextBox Grid.Column="2"
+						 Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
+						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
+			</Grid>
 
 		</StackPanel>
     </HeaderedContentControl>

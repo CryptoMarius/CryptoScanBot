@@ -51,6 +51,9 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
 
     public override bool IsSignal()
     {
+        ExtraText = "";
+        var settings = GlobalData.Settings.Signal.StoRsi;
+
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
@@ -64,7 +67,6 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
         // Compare with stobb.multi which uses IsBelowBollingerBands instead of RsiOversold —
         // a price condition that persists longer across timeframes, so that variant fires more often.
         int okay = 4;
-        ExtraText = "";
         int addRsiAmount = 0;
         int addStochAmount = 0;
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
@@ -99,6 +101,13 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
             addStochAmount += 2;
         }
 
+
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+            return false;
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+            return false;
 
         //// close date shouw be in the lower part of the bb
         //if (!InLowerPartOfBollingerBands(1, 10.0m))
