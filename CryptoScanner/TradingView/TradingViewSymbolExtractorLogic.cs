@@ -156,9 +156,26 @@ public class TradingViewSymbolWebSocket(string tickerName)
         //GlobalData.AddTextToLogTab($"TradingView {TickerName} send: {request}");
         var bytes = Encoding.UTF8.GetBytes(request);
         ArraySegment<byte> data = new(bytes, 0, bytes.Length);
+
+        // Guard: the underlying ClientWebSocket may already be Aborted / Closed / disposed —
+        // happens when the connection dropped, ConnectAsync timed out, or the extractor
+        // abandoned this instance for a reconnect. Sending on it throws ObjectDisposedException
+        // and pollutes the log. State == Open is the only state in which SendAsync is valid.
+        if (ClientWebSocket.State != WebSocketState.Open)
+            return;
+
         try
         {
             await ClientWebSocket.SendAsync(data, WebSocketMessageType.Text, true, CancellationTokenSource.Token);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Race: socket transitioned to disposed between the State check above and SendAsync.
+            // Not worth logging as ERROR — the next reconnect cycle will pick it up.
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal shutdown path — token signaled while SendAsync was in flight.
         }
         catch (Exception e)
         {
