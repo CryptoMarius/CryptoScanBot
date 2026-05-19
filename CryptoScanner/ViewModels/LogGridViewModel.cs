@@ -86,22 +86,19 @@ public partial class LogGridViewModel : ObservableObject
                     while (LogQueue.Count > MaxLogLines)
                         LogQueue.Clear();
 
-                    // Add items one by one
-                    List<LogViewModel> list = [];
+                    // Add items one at a time — NOT via AddRange. AvaloniaList.AddRange fires a
+                    // single CollectionChanged event with Action = Reset, which causes the DataGrid
+                    // to invalidate everything: selection, scroll position and keyboard focus are
+                    // lost. Individual Add() calls fire fine-grained Add events that the view
+                    // handles in-place, preserving the user's reading position.
                     while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
-                        list.Add(LogQueue.Dequeue());
-                    LogLines.AddRange(list);
+                        LogLines.Add(LogQueue.Dequeue());
 
-                    // Keep only last MaxLogLines entries.
-                    // RemoveRange causes DataGridCollectionView index desync (ArgumentOutOfRangeException),
-                    // so use Clear + AddRange instead — Clear fires a Reset event which the view handles correctly.
-                    int excess = LogLines.Count - MaxLogLines;
-                    if (excess > 0)
-                    {
-                        var keep = LogLines.Skip(excess).ToList();
-                        LogLines.Clear();
-                        LogLines.AddRange(keep);
-                    }
+                    // Prune oldest entries one at a time for the same reason. Clear() also fires
+                    // Reset — we cannot use it here. RemoveAt(0) fires individual Remove events
+                    // and avoids the index-desync that RemoveRange used to cause.
+                    while (LogLines.Count > MaxLogLines && !GlobalData.ApplicationIsClosing)
+                        LogLines.RemoveAt(0);
 
 
                     //// Restore selection
