@@ -104,17 +104,18 @@ public class SignalCreateBase
         if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
             return false;
 
+        var settings = GlobalData.Settings.Trading;
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (GlobalData.Settings.Trading.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
             return false;
-        if (GlobalData.Settings.Trading.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
         // ********************************************************************
         // Price going into the right direction
-        if (GlobalData.Settings.Trading.CheckFurtherPriceMove)
+        if (settings.CheckFurtherPriceMove)
         {
             switch (SignalSide)
             {
@@ -137,7 +138,7 @@ public class SignalCreateBase
 
         // ********************************************************************
         // MACD recovering
-        if (GlobalData.Settings.Trading.CheckIncreasingMacd)
+        if (settings.CheckIncreasingMacd)
         {
             int barCount = 1;
             if (SignalStrategy == CryptoSignalStrategy.Sbm1 ||
@@ -160,7 +161,7 @@ public class SignalCreateBase
 
         // ********************************************************************
         // RSI recovering
-        if (GlobalData.Settings.Trading.CheckIncreasingRsi)
+        if (settings.CheckIncreasingRsi)
         {
             switch (SignalSide)
             {
@@ -185,7 +186,7 @@ public class SignalCreateBase
         // STOCH recovering (Stochastic)
         // Red %D = signal, average from the last 3 %K values
         // Blue %K = Oscilator calculated from the last 14 candles
-        if (GlobalData.Settings.Trading.CheckIncreasingStoch)
+        if (settings.CheckIncreasingStoch)
         {
             switch (SignalSide)
             {
@@ -221,6 +222,16 @@ public class SignalCreateBase
                     break;
             }
         }
+
+        //// ********************************************************************
+        //// Wait for stoch %K (blue line) to exit the OS/OB zone before stepping in.
+        //// Catches the actual bounce/fade candle instead of an extended oscillator extreme.
+        //if (settings.WaitForStochKRecovery
+        //    && !CandleLast!.HasStochKRecovered(SignalSide))
+        //{
+        //    ExtraText = "waiting for stoch %K to exit os/ob zone";
+        //    return false;
+        //}
 
         return true;
     }
@@ -614,69 +625,12 @@ public class SignalCreateBase
     public bool CheckTrendPrimary(int intervalCount = 2)
     {
         return CheckTrend(true, "primary", intervalCount);
-        //_ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
-
-        //// Guard against the noise on the low timeframes
-        //var period = Interval.IntervalPeriod;
-        //if (period < CryptoIntervalPeriod.interval5m)
-        //    period = CryptoIntervalPeriod.interval5m;
-        //var trend = Symbol.GetSymbolInterval(period).TrendPrimary.Trend;
-
-        //switch (SignalSide)
-        //{
-        //    case CryptoTradeSide.Long:
-        //        if (trend != CryptoTrendIndicator.Bullish)
-        //        {
-        //            ExtraText = $"TrendPrimary {trend}, need Bullish";
-        //            return false;
-        //        }
-        //        break;
-        //    case CryptoTradeSide.Short:
-        //        if (trend != CryptoTrendIndicator.Bearish)
-        //        {
-        //            ExtraText = $"TrendPrimary {trend}, need Bearish";
-        //            return false;
-        //        }
-        //        break;
-        //}
-        //return true;
     }
 
 
     public bool CheckTrendSecondary(int intervalCount = 2)
     {
         return CheckTrend(false, "primary", intervalCount);
-        //_ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Secondary).Result;
-
-        //// Guard against the noise on the low timeframes
-        //var period = Interval.IntervalPeriod;
-        //if (period < CryptoIntervalPeriod.interval5m)
-        //    period = CryptoIntervalPeriod.interval5m;
-
-        //while (intervalCount-- > 0)
-        //{
-        //    var trend = Symbol.GetSymbolInterval(period).TrendSecondary.Trend;
-        //    switch (SignalSide)
-        //    {
-        //        case CryptoTradeSide.Long:
-        //            if (trend != CryptoTrendIndicator.Bullish)
-        //            {
-        //                ExtraText = $"TrendSecondary {trend}, need Bullish";
-        //                return false;
-        //            }
-        //            break;
-        //        case CryptoTradeSide.Short:
-        //            if (trend != CryptoTrendIndicator.Bearish)
-        //            {
-        //                ExtraText = $"TrendSecondary {trend}, need Bearish";
-        //                return false;
-        //            }
-        //            break;
-        //    }
-        //    period++;
-        //}
-
-        //return true;
     }
 
 }
