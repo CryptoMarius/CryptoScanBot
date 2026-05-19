@@ -297,6 +297,7 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
             flyout.Items.Add(new MenuItem { Header = "Position cancel open DCA", Command = new CommandPositionRemoveAdditionalDca(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export position information to Excel", Command = new CommandExcelPositionInformation(), CommandParameter = parameter });
             flyout.Items.Add(new MenuItem { Header = "Export all position information to Excel", Command = new CommandExcelPositionsInformation(), CommandParameter = parameter });
+            flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });
         }
 
 
@@ -312,12 +313,10 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Export all signal information to Excel", Command = new CommandExcelSignalsInformation(), CommandParameter = parameter });
         flyout.Items.Add(new MenuItem { Header = "Export barometer information to Excel", Command = new CommandExcelBarometerInformation(), CommandParameter = parameter });
-
-        flyout.Items.Add(new MenuItem { Header = "-" });
         if (_targetMenu == TargetMenu.Signal)
             flyout.Items.Add(new MenuItem { Header = "Delete all signals", Command = new CommandSignalDeleteAll(), CommandParameter = parameter });
-        if (_targetMenu == TargetMenu.Position)
-            flyout.Items.Add(new MenuItem { Header = "Delete all positions", Command = new CommandPositionDeleteAll(), CommandParameter = parameter });
+
+        flyout.Items.Add(new MenuItem { Header = "-" });
         flyout.Items.Add(new MenuItem { Header = "Hide grid selection", Command = new CommandDatagridHideSelection(), CommandParameter = parameter });
     }
 
