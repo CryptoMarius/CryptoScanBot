@@ -18,6 +18,25 @@ public class SettingsGeneralBB
 
 
 [Serializable]
+/// Settings Keltner Channel indicator
+public class SettingsGeneralKeltner
+{
+    /// <summary>
+    /// EMA lookback for the Keltner Channel centerline
+    /// </summary>
+    public int EmaPeriods { get; set; } = 20;
+    /// <summary>
+    /// ATR lookback for the Keltner Channel band width
+    /// </summary>
+    public int AtrPeriods { get; set; } = 10;
+    /// <summary>
+    /// ATR multiplier for the Keltner Channel upper/lower band
+    /// </summary>
+    public double Multiplier { get; set; } = 2.0;
+}
+
+
+[Serializable]
 /// Settings RSI indicator
 public class SettingsGeneralRsi
 {
@@ -102,6 +121,7 @@ public class SettingsGeneral
     public string SoundHeartBeat { get; set; } = "sound-heart-beat.wav";
 
     public SettingsGeneralBB SettingsBb { get; set; } = new();
+    public SettingsGeneralKeltner SettingsKeltner { get; set; } = new();
     public SettingsGeneralRsi SettingsRsi { get; set; } = new();
     public SettingsGeneralStoch SettingsStoch { get; set; } = new();
 
