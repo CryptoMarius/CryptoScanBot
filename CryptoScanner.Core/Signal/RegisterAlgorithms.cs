@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
+using CryptoScanner.Core.Signal.Squeeze;
 using CryptoScanner.Core.Signal.StochMacd;
 using CryptoScanner.Core.Signal.WaveTrend;
 #endif
@@ -239,6 +240,27 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.StochMacd,
             AnalyzeLongType = typeof(SignalStochMacdLong),
             AnalyzeShortType = typeof(SignalStochMacdShort),
+        });
+#endif
+
+#if DEBUG
+        // TTM Squeeze (fade): counter-trend reversal after a recent squeeze.
+        // Price wicks beyond BB at a Stoch extreme, Stoch crosses back.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "squeeze.fade",
+            Strategy = CryptoSignalStrategy.SqueezeFade,
+            AnalyzeLongType = typeof(SignalSqueezeFadeLong),
+            AnalyzeShortType = typeof(SignalSqueezeFadeShort),
+        });
+
+        // TTM Squeeze (breakout): squeeze just released, momentum kicks in via Stoch cross.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "squeeze.brk",
+            Strategy = CryptoSignalStrategy.SqueezeBrk,
+            AnalyzeLongType = typeof(SignalSqueezeBrkLong),
+            AnalyzeShortType = typeof(SignalSqueezeBrkShort),
         });
 #endif
 

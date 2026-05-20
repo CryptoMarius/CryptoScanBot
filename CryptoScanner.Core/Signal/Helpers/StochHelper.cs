@@ -226,34 +226,4 @@ public static class StochHelper
         return surface;
     }
 
-
-    /// <summary>
-    /// True when Stoch %K (blue line) on the given candle has exited the extreme zone
-    /// (> Oversold threshold for long, &lt; Overbought threshold for short).
-    /// Commented-out RSI checks below are intentional — kept as an easy toggle to also
-    /// require RSI recovery alongside %K.
-    /// </summary>
-    public static bool HasStochKRecovered(this MyData candle, CryptoTradeSide side)
-    {
-        var k = candle.CandleData?.StochOscillator;
-        var rsi = candle.CandleData?.Rsi;
-        if (k == null || rsi == null)
-            return false;
-
-        switch (side)
-        {
-            case CryptoTradeSide.Long:
-                if (k > GlobalData.Settings.General.SettingsStoch.Oversold //||rsi > GlobalData.Settings.General.SettingsRsi.Oversold
-                    )
-                    return true;
-                break;
-            case CryptoTradeSide.Short:
-                if (k < GlobalData.Settings.General.SettingsStoch.Overbought //rsi < GlobalData.Settings.General.SettingsRsi.Overbought
-                    )
-                    return true;
-                break;
-        }
-        return false;
-    }
-
 }

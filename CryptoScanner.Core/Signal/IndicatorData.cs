@@ -278,10 +278,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 
         //List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
 
-        //#if DEBUG
-        //        // Berekend vanuit de EMA 20 en de upper en lowerband ontstaat uit 2x de ATR
-        //        List<KeltnerResult> keltnerList = (List<KeltnerResult>)Skender.Stock.Indicators.Indicator.GetKeltner(history, 20, 1);
-        //#endif
+#if DEBUG
+        // Keltner Channel: EMA20 centerline +/- ATR(10) * 2 (Skender defaults). Used by
+        // the TTM Squeeze family (BB inside KC = squeeze). Matches the chart drawer.
+        List<KeltnerResult> keltnerList = (List<KeltnerResult>)history.GetKeltner();
+#endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
         List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi(
@@ -377,11 +378,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.AdxMdi = adxList[index].Mdi;
 #endif
 
-                //#if DEBUG
-                //                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                //                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-                //                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
-                //#endif
+#if DEBUG
+                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+#endif
 
 
                 candleData.Rsi = rsiList[index].Rsi;

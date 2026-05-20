@@ -40,6 +40,9 @@ public enum CryptoSignalStrategy
     WaveTrend = 50,
 
     StochMacd = 51,
+
+    SqueezeFade = 52, // TTM Squeeze: counter-trend fade after a recent squeeze (Stobb-like + squeeze context)
+    SqueezeBrk = 53,  // TTM Squeeze: classic breakout when the squeeze just released (momentum direction)
 #endif
 
     DominantLevel = 1000,

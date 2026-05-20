@@ -41,10 +41,7 @@ public class KeltnerChannel
         if (symbolInterval.CandleList.Count == 0)
             return;
 
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)symbolInterval.CandleList.Values.GetKeltner(
-            emaPeriods: GlobalData.Settings.General.SettingsKeltner.EmaPeriods,
-            multiplier: GlobalData.Settings.General.SettingsKeltner.Multiplier,
-            atrPeriods: GlobalData.Settings.General.SettingsKeltner.AtrPeriods);
+        List<KeltnerResult> keltnerList = (List<KeltnerResult>)symbolInterval.CandleList.Values.GetKeltner();
 
 
         foreach (var kc in keltnerList)
