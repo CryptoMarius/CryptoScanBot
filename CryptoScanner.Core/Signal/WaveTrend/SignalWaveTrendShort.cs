@@ -9,11 +9,18 @@ namespace CryptoScanner.Core.Signal.WaveTrend;
 /// Short variant — mirror of <see cref="SignalWaveTrendLong"/>.
 ///
 /// Setup (in evaluation order — cheapest first):
-///   1. Optional trend filter: close &lt; SMA200.
-///   2. WT1 crosses down through the overbought level between the previous and the current candle.
-///   3. WT1 must have remained at-or-above the overbought level for at least
-///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinBarsInZone"/>
-///      consecutive bars ending at the candle before the cross.
+///   1. Bollinger band width inside the configured range.
+///   2. Optional trend filter: close &lt; SMA200.
+///   3. WT1 crosses down through the overbought level between the previous and the current candle.
+///   4. Excursion check over the last
+///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.LookbackBars"/> bars
+///      ending at the candle before the cross:
+///        a) area above the OB line ≥
+///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinAreaInZone"/>
+///           — filters out WT1 wiggling around the OB line.
+///        b) max(WT1) ≥ ObLevel +
+///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.DeepLevelOffset"/>
+///           — guarantees the excursion actually reached an extreme.
 /// </summary>
 public class SignalWaveTrendShort : SignalWaveTrendBase
 {
@@ -70,23 +77,34 @@ public class SignalWaveTrendShort : SignalWaveTrendBase
             return false;
         }
 
-        // 4. Dwell — count consecutive bars ending at `prev` where wt1 stayed at-or-above OB.
-        int dwell = 0;
-        for (int i = results.Count - 2; i >= 0; i--)
+        // 4. Excursion measured over the last LookbackBars ending at `prev`:
+        //    area  = Σ max(0, wt1 − obLevel) — how much overbought "mass" was accumulated.
+        //    maxWt = highest WT1 reached      — was the excursion actually extreme?
+        double area = 0.0;
+        double maxWt = double.NegativeInfinity;
+        int from = Math.Max(0, results.Count - 1 - settings.LookbackBars);
+        for (int i = from; i <= results.Count - 2; i++)
         {
-            if (results[i].Wt1 is double v && v >= obLevel)
-                dwell++;
-            else
-                break;
+            if (results[i].Wt1 is not double v) continue;
+            if (v > obLevel) area += v - obLevel;
+            if (v > maxWt) maxWt = v;
         }
 
-        if (dwell < settings.MinBarsInZone)
+        double minArea = (double)settings.MinAreaInZone;
+        if (area < minArea)
         {
-            //ExtraText = $"wt1 only {dwell} consecutive bars in ob zone (need {settings.MinBarsInZone})";
+            ExtraText = $"wt1 ob-area {area:N1} below required {minArea:N1}";
             return false;
         }
 
-        ExtraText = $"wt cross-down over ob after {dwell} bars in zone";
+        double deepLevel = obLevel + (double)settings.DeepLevelOffset;
+        if (maxWt < deepLevel)
+        {
+            ExtraText = $"wt1 only reached {maxWt:N1}, needs ≥ {deepLevel:N1}";
+            return false;
+        }
+
+        ExtraText = $"wt cross-down over ob (area {area:N1}, max {maxWt:N1})";
         return true;
     }
 }

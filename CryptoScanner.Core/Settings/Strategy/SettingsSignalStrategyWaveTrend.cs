@@ -1,8 +1,8 @@
 namespace CryptoScanner.Core.Settings.Strategy;
 
 // WaveTrend Oscillator [LazyBear] — WT_LB.
-// Long  : WT1 crosses above WT2 while WT was in the oversold zone, plus an optional trend filter.
-// Short : mirror — cross down in the overbought zone.
+// Long  : WT1 crosses up through the OS level after a sufficient excursion below it.
+// Short : mirror — cross down through OB after a sufficient excursion above it.
 [Serializable]
 public class SettingsSignalStrategyWaveTrend : SettingsSignalStrategyBase
 {
@@ -21,10 +21,21 @@ public class SettingsSignalStrategyWaveTrend : SettingsSignalStrategyBase
     // (LazyBear's recipe specifies EMA200; SMA200 is a close-enough substitute for our purposes.)
     public bool RequireTrendFilter { get; set; } = true;
 
-    // Minimum number of consecutive bars (ending at the candle before the cross) on which
-    // WT1 must have remained inside the OS/OB zone. Filters out signals where WT1 just
-    // wiggles around the OS/OB line on every candle. 1 = no dwell, 3 = sane default.
-    public int MinBarsInZone { get; set; } = 3;
+    // Excursion window — number of bars ending at the candle before the cross over which
+    // both area and peak depth are evaluated.
+    public int LookbackBars { get; set; } = 10;
+
+    // Minimum total area below OS (long) or above OB (short) inside the lookback window.
+    // Units: WT1-points · bars. E.g. 30 = average depth of 3 over 10 bars, or depth of 10
+    // over 3 bars. Filters out WT1 wiggling around the OS/OB line where dwell would pass
+    // but the excursion has almost no substance.
+    public decimal MinAreaInZone { get; set; } = 30m;
+
+    // How far past OS/OB the WT1 extreme must have reached inside the lookback window.
+    // Long  : min(WT1) must be ≤ (OsLevel - DeepLevelOffset).
+    // Short : max(WT1) must be ≥ (ObLevel + DeepLevelOffset).
+    // Guarantees the excursion was genuinely extreme, not just prolonged at marginal depth.
+    public decimal DeepLevelOffset { get; set; } = 15m;
 
     public SettingsSignalStrategyWaveTrend() : base()
     {
