@@ -48,7 +48,7 @@ public class SettingsGeneralStoch
     /// <summary>
     /// Stoch Oscillator Smoothing %K (1) Blue (3?)
     /// </summary>
-    public int SmoothingK { get; set; } = 1;
+    public int SmoothingK { get; set; } = 3;
     /// <summary>
     /// Stoch Signal Smoothing %D (3) Orange
     /// </summary>

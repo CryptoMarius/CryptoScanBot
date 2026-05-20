@@ -106,6 +106,10 @@ public class SettingsTrading
     public bool CheckTrendSecondaryDirection { get; set; } = false;
     public int TrendSecondaryDirectionCount { get; set; } = 2;
     public bool CheckForMacdCrossover { get; set; } = false;
+    // Look back this many bars (including the current candle) when scanning for a MACD-histogram
+    // zero-crossing. 1 = strict bar-to-bar cross (prev → curr). Higher values give the trade a
+    // wider window to catch the crossover, useful when AllowStepIn is polled across multiple bars.
+    public int MacdCrossoverLookbackBars { get; set; } = 3;
 
     // When true, AllowStepIn refuses entries until Stoch %K (blue line) on the current
     // candle has exited the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,

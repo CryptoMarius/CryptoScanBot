@@ -130,7 +130,7 @@ public class SignalCreateBase
             }
         }
 
-        
+
         // ********************************************************************
         // MACD recovering
         if (settings.CheckIncreasingMacd)
@@ -155,26 +155,22 @@ public class SignalCreateBase
         }
 
         // ********************************************************************
-        // MACD crossover
+        // MACD crossover — scan the last MacdCrossoverLookbackBars adjacent pairs for a
+        // histogram zero-crossing in the trade direction. A wider lookback lets AllowStepIn
+        // pick up the cross even when it didn't happen on the exact bar AllowStepIn is polled.
         if (settings.CheckForMacdCrossover)
         {
-            // Experimental, wait on a crossover, might also check for some volume / surface
-            switch (SignalSide)
+            int lookback = Math.Max(1, settings.MacdCrossoverLookbackBars);
+            bool? crossed = HasMacdHistogramCrossover(lookback, SignalSide);
+            if (crossed == null)
             {
-                case CryptoTradeSide.Long:
-                    if (!(candlePrev.CandleData.MacdHistogram < 0 && CandleLast.CandleData.MacdHistogram >= 0))
-                    {
-                        ExtraText = "No Macd crossover";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (!(candlePrev.CandleData.MacdHistogram > 0 && CandleLast.CandleData.MacdHistogram <= 0))
-                    {
-                        ExtraText = "No Macd crossover";
-                        return false;
-                    }
-                    break;
+                ExtraText = "macd histogram not available";
+                return false;
+            }
+            if (!crossed.Value)
+            {
+                ExtraText = $"no macd cross in last {lookback} bars";
+                return false;
             }
         }
 
@@ -606,6 +602,45 @@ public class SignalCreateBase
             candleCount--;
             prevCandle = lastCandle;
             time -= Interval.Duration;
+        }
+        return false;
+    }
+
+
+    /// <summary>
+    /// Scans the last <paramref name="lookbackBars"/> adjacent candle pairs ending at CandleLast
+    /// for a MACD-histogram zero-crossing in the requested direction:
+    ///   Long  — older &lt; 0 and newer ≥ 0
+    ///   Short — older &gt; 0 and newer ≤ 0
+    /// Returns true on the first match, false when none of the pairs cross, and null when
+    /// histogram data is missing anywhere along the inspected range. Uses raw IndicatorData
+    /// lookups so a strict <see cref="IndicatorsOkay"/> on an older bar doesn't mask the cross.
+    /// </summary>
+    private bool? HasMacdHistogramCrossover(int lookbackBars, CryptoTradeSide side)
+    {
+        if (CandleLast?.CandleData?.MacdHistogram == null)
+            return null;
+        double newerH = CandleLast.CandleData.MacdHistogram.Value;
+
+        CandleTime time = CandleLast.Candle.OpenTime;
+        for (int i = 0; i < lookbackBars; i++)
+        {
+            time -= Interval.Duration;
+            if (!IndicatorData.TryGetCandle(time, out MyData? older)
+                || older?.CandleData?.MacdHistogram == null)
+                return null;
+
+            double olderH = older.CandleData.MacdHistogram.Value;
+            bool cross = side switch
+            {
+                CryptoTradeSide.Long => olderH < 0 && newerH >= 0,
+                CryptoTradeSide.Short => olderH > 0 && newerH <= 0,
+                _ => false,
+            };
+            if (cross)
+                return true;
+
+            newerH = olderH;
         }
         return false;
     }

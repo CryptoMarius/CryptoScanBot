@@ -85,9 +85,12 @@ public class SignalWaveTrendShort : SignalWaveTrendBase
         int from = Math.Max(0, results.Count - 1 - settings.LookbackBars);
         for (int i = from; i <= results.Count - 2; i++)
         {
-            if (results[i].Wt1 is not double v) continue;
-            if (v > obLevel) area += v - obLevel;
-            if (v > maxWt) maxWt = v;
+            if (results[i].Wt1 is not double v)
+                continue;
+            if (v > obLevel)
+                area += v - obLevel;
+            if (v > maxWt)
+                maxWt = v;
         }
 
         double minArea = (double)settings.MinAreaInZone;
