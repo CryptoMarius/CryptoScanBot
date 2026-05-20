@@ -48,6 +48,7 @@ public class ZoneSession
     public bool ShowNweBb { get; set; } = false; // NWE × BB crossover markers
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
+    public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
 

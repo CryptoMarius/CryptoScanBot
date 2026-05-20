@@ -661,6 +661,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowBollingerBand))
             Bollingerbands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
+        // Draw Keltner Channel
+        group = "kc";
+        if (Toggle(model, group, Session.ShowKeltnerChannel))
+            KeltnerChannel.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
         // Draw PSar
         group = "psar";
         if (Toggle(model, group, Session.ShowPSar))

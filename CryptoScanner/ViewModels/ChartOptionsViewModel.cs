@@ -26,6 +26,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showBollingerBand = false;
 
     [ObservableProperty]
+    private bool _showKeltnerChannel = false;
+
+    [ObservableProperty]
     private bool _showPSar = false;
 
     [ObservableProperty]
@@ -62,6 +65,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowNweBb = session.ShowNweBb;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
+        ShowKeltnerChannel = session.ShowKeltnerChannel;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
         ShowDtb = session.ShowDtb;
@@ -84,6 +88,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowNweBb = ShowNweBb;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
+        session.ShowKeltnerChannel = ShowKeltnerChannel;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
         session.ShowDtb = ShowDtb;
