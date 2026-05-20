@@ -101,17 +101,11 @@ public class SignalCreateBase
     /// </summary>
     public virtual bool AllowStepIn(CryptoSignal signal)
     {
-        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev))
+        if (!GetPrevCandle(CandleLast!, out MyData? candlePrev) || candlePrev == null)
             return false;
 
         var settings = GlobalData.Settings.Trading;
 
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
 
         // ********************************************************************
         // Price going into the right direction
@@ -136,6 +130,7 @@ public class SignalCreateBase
             }
         }
 
+        
         // ********************************************************************
         // MACD recovering
         if (settings.CheckIncreasingMacd)
@@ -155,6 +150,30 @@ public class SignalCreateBase
                 case CryptoTradeSide.Short:
                     if (!this.IsMacdRecoveryOverbought(barCount))
                         return false;
+                    break;
+            }
+        }
+
+        // ********************************************************************
+        // MACD crossover
+        if (settings.CheckForMacdCrossover)
+        {
+            // Experimental, wait on a crossover, might also check for some volume / surface
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (!(candlePrev.CandleData.MacdHistogram < 0 && CandleLast.CandleData.MacdHistogram >= 0))
+                    {
+                        ExtraText = "No Macd crossover";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (!(candlePrev.CandleData.MacdHistogram > 0 && CandleLast.CandleData.MacdHistogram <= 0))
+                    {
+                        ExtraText = "No Macd crossover";
+                        return false;
+                    }
                     break;
             }
         }
@@ -223,15 +242,43 @@ public class SignalCreateBase
             }
         }
 
-        //// ********************************************************************
-        //// Wait for stoch %K (blue line) to exit the OS/OB zone before stepping in.
-        //// Catches the actual bounce/fade candle instead of an extended oscillator extreme.
-        //if (settings.WaitForStochKRecovery
-        //    && !CandleLast!.HasStochKRecovered(SignalSide))
-        //{
-        //    ExtraText = "waiting for stoch %K to exit os/ob zone";
-        //    return false;
-        //}
+
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+            return false;
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+            return false;
+
+
+        // ********************************************************************
+        // Wait for stoch %K (blue line) to exit the OS/OB zone before stepping in.
+        // Catches the actual bounce/fade candle instead of an extended oscillator extreme.
+        if (settings.WaitForRecovery)
+        {
+            var k = CandleLast!.CandleData?.StochOscillator;
+            var rsi = CandleLast!.CandleData?.Rsi;
+            if (k == null || rsi == null)
+                return false;
+
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (k < GlobalData.Settings.General.SettingsStoch.Oversold || rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
+                    {
+                        ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (k > GlobalData.Settings.General.SettingsStoch.Overbought || rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
+                    {
+                        ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
+                        return false;
+                    }
+                    break;
+            }
+        }
 
         return true;
     }
@@ -243,6 +290,7 @@ public class SignalCreateBase
     {
         if (oldCandle == null)
         {
+            ExtraText = $"Candle = null";
             newCandle = null;
             return false;
         }
@@ -270,6 +318,7 @@ public class SignalCreateBase
     {
         if (oldData == null)
         {
+            ExtraText = $"Candle = null";
             newData = null;
             return false;
         }
@@ -592,13 +641,15 @@ public class SignalCreateBase
 
         // Guard against the noise on the lower timeframes
         var period = Interval.IntervalPeriod;
-        if (period < CryptoIntervalPeriod.interval5m)
-            period = CryptoIntervalPeriod.interval5m;
+        //if (period < CryptoIntervalPeriod.interval5m)
+        //    period = CryptoIntervalPeriod.interval5m;
 
         while (intervalCount-- > 0)
         {
             var symbolPeriod = Symbol.GetSymbolInterval(period);
-            var trend = primaryTrend ? symbolPeriod.TrendPrimary.Trend : symbolPeriod.TrendSecondary.Trend;
+            var trendData = primaryTrend ? symbolPeriod.TrendPrimary : symbolPeriod.TrendSecondary;
+            var trend = trendData.Trend;
+
             switch (SignalSide)
             {
                 case CryptoTradeSide.Long:
@@ -607,11 +658,35 @@ public class SignalCreateBase
                         ExtraText = $"Trend{captionTrend} {trend}, need Bullish";
                         return false;
                     }
+                    // Structure check: if current price has broken below the most recent swing-low,
+                    // the bullish structure is invalidated even though Trend still reports Bullish.
+                    // The most recent Low is either LastPivot (when type='L') or PrevPivot (when
+                    // LastPivot is the High that followed the Low). When there are <2 pivots yet,
+                    // both lookups return null and we skip the check.
+                    decimal? lastLow = trendData.LastPivotType == 'L' ? trendData.LastPivotValue
+                                     : trendData.PrevPivotType == 'L' ? trendData.PrevPivotValue
+                                     : null;
+                    if (lastLow.HasValue && CandleLast.Candle.Close < lastLow.Value)
+                    {
+                        ExtraText = $"Trend{captionTrend} {period} price {CandleLast.Candle.Close:N8} below last low {lastLow.Value:N8}";
+                        return false;
+                    }
                     break;
                 case CryptoTradeSide.Short:
                     if (trend != CryptoTrendIndicator.Bearish)
                     {
                         ExtraText = $"Trend{captionTrend} {trend}, need Bearish";
+                        return false;
+                    }
+
+                    // Mirror: if current price has broken above the most recent swing-high, the
+                    // bearish structure is invalidated.
+                    decimal? lastHigh = trendData.LastPivotType == 'H' ? trendData.LastPivotValue
+                                      : trendData.PrevPivotType == 'H' ? trendData.PrevPivotValue
+                                      : null;
+                    if (lastHigh.HasValue && CandleLast.Candle.Close > lastHigh.Value)
+                    {
+                        ExtraText = $"Trend{captionTrend} {period} price {CandleLast.Candle.Close:N8} above last high {lastHigh.Value:N8}";
                         return false;
                     }
                     break;

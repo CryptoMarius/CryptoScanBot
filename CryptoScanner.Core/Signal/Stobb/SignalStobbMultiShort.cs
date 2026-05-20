@@ -7,8 +7,18 @@ namespace CryptoScanner.Core.Signal.Stobb;
 
 public class SignalStobbMultiShort : SignalStobbBase
 {
+
     public override bool AdditionalChecks(MyData data, out string response)
     {
+        if (GlobalData.Settings.Signal.Stobb.OnlyIfLux5m)
+        {
+            if (CandleLast.CandleData!.Lux5mValue < 50)
+            {
+                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                return false;
+            }
+        }
+
         // Controle op de ma-lijnen
         if (GlobalData.Settings.Signal.Stobb.IncludeSoftSbm)
         {
@@ -54,14 +64,13 @@ public class SignalStobbMultiShort : SignalStobbBase
         return true;
     }
 
-
     public override bool IsSignal()
     {
         ExtraText = "";
         var settings = GlobalData.Settings.Signal.Stobb;
 
         // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -72,7 +81,6 @@ public class SignalStobbMultiShort : SignalStobbBase
 
         // Is it a signal valid over 4 intervals (multistorsi)
         int okay = 4;
-        ExtraText = "";
         CryptoIntervalPeriod intervalPeriod = Interval.IntervalPeriod;
         for (int count = 6; count > 0; count--)
         {
@@ -89,7 +97,16 @@ public class SignalStobbMultiShort : SignalStobbBase
 
                 okay--;
                 if (okay == 0)
+                {
+                    // ********************************************************************
+                    // Dont trade against the trend (only check current interval)
+                    if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+                        return false;
+                    if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+                        return false;
+
                     return true;
+                }
             }
             else
             {
@@ -103,22 +120,6 @@ public class SignalStobbMultiShort : SignalStobbBase
             intervalPeriod++;
         }
 
-
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-        //// close date shouw be in the lower part of the bb
-        //if (!InLowerPartOfBollingerBands(1, 10.0m))
-        //    return false;
-
-        ExtraText = "";
         return false;
     }
-
-
 }
-

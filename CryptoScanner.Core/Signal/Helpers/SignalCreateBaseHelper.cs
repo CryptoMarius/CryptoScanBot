@@ -15,7 +15,10 @@ public static class SignalCreateBaseHelper
                 return false;
 
             if (last.CandleData!.MacdHistogram <= prev!.CandleData!.MacdHistogram)
+            {
+                myBase.ExtraText = "No Macd recovery";
                 return false;
+            }
 
             last = prev;
         }
@@ -35,7 +38,10 @@ public static class SignalCreateBaseHelper
                 return false;
 
             if (last.CandleData!.MacdHistogram >= prev!.CandleData!.MacdHistogram)
+            {
+                myBase.ExtraText = "No Macd recovery";
                 return false;
+            }
 
             last = prev;
         }

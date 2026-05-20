@@ -210,12 +210,28 @@ public class TrendIntervalBos
 
         // Store the last confirmed ZigZag pivot so AllowStepIn can detect pullbacks after a signal.
         // The last entry in ZigZagList is the most recent confirmed swing point.
+        // Also store the pivot before it (opposite type) so callers can reach BOTH last low and
+        // last high in one shot.
         if (indicator.ZigZagList.Count > 0)
         {
             var lastPivot = indicator.ZigZagList[^1];
             intervalTrend.LastPivotType = lastPivot.PointType;
             intervalTrend.LastPivotValue = lastPivot.Value;
             intervalTrend.LastPivotTime = lastPivot.Candle.OpenTime;
+
+            if (indicator.ZigZagList.Count > 1)
+            {
+                var prevPivot = indicator.ZigZagList[^2];
+                intervalTrend.PrevPivotType = prevPivot.PointType;
+                intervalTrend.PrevPivotValue = prevPivot.Value;
+                intervalTrend.PrevPivotTime = prevPivot.Candle.OpenTime;
+            }
+            else
+            {
+                intervalTrend.PrevPivotType = null;
+                intervalTrend.PrevPivotValue = null;
+                intervalTrend.PrevPivotTime = null;
+            }
         }
 
         if (GlobalData.Settings.General.DebugTrendCalculation)

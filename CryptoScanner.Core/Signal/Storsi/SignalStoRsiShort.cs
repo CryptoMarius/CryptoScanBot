@@ -21,7 +21,6 @@ public class SignalStoRsiShort : SignalStoRsiBase
             }
         }
 
-        // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
             if (!InUpperPartOfBollingerBands(3, 5.0m))
@@ -44,8 +43,10 @@ public class SignalStoRsiShort : SignalStoRsiBase
         return true;
     }
 
+
     public override bool IsSignal()
     {
+        ExtraText = "";
         var settings = GlobalData.Settings.Signal.StoRsi;
 
         if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
@@ -68,12 +69,11 @@ public class SignalStoRsiShort : SignalStoRsiBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary())
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
             return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary())
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
-        ExtraText = "";
         return true;
     }
 

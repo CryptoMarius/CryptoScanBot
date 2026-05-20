@@ -21,8 +21,6 @@ public class SignalStoRsiLong : SignalStoRsiBase
             }
         }
 
-
-        // Check above/below STOBB BB bands
         if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
         {
             if (!InLowerPartOfBollingerBands(3, 5.0m))

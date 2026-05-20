@@ -5,6 +5,7 @@ namespace CryptoScanner.Core.Signal.Stobb;
 
 public class SignalStobbShort : SignalStobbBase
 {
+
     public override bool AdditionalChecks(MyData data, out string response)
     {
         if (GlobalData.Settings.Signal.Stobb.OnlyIfLux5m)
@@ -98,6 +99,4 @@ public class SignalStobbShort : SignalStobbBase
 
         return true;
     }
-
-
 }

@@ -31,9 +31,11 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private int _trendSecondaryDirectionCount = 2;
 
-    //[ObservableProperty]
-    //private bool _waitForStochKRecovery = false;
+    [ObservableProperty]
+    private bool _waitForRecovery = false;
 
+    [ObservableProperty]
+    private bool _checkForMacdCrossover = false;
 
     // Slot limits (all int - EXACT match)
     [ObservableProperty]
@@ -52,7 +54,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
-        //WaitForStochKRecovery = settings.WaitForStochKRecovery;
+        WaitForRecovery = settings.WaitForRecovery;
+        CheckForMacdCrossover = settings.CheckForMacdCrossover;
 
         SlotsMaximalLong = settings.SlotsMaximalLong;
         SlotsMaximalShort = settings.SlotsMaximalShort;
@@ -68,7 +71,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
-        //settings.WaitForStochKRecovery = WaitForStochKRecovery;
+        settings.WaitForRecovery = WaitForRecovery;
+        settings.CheckForMacdCrossover = CheckForMacdCrossover;
 
         settings.SlotsMaximalLong = SlotsMaximalLong;
         settings.SlotsMaximalShort = SlotsMaximalShort;

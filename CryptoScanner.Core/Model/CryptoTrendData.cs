@@ -31,6 +31,14 @@ public class CryptoTrendData
     public decimal? LastPivotValue { get; set; }
     public CandleTime? LastPivotTime { get; set; }
 
+    // Pivot one before LastPivot — opposite type by ZigZag construction (a high is always
+    // preceded by a low and vice versa). Lets consumers reach BOTH the most recent low and
+    // the most recent high in one lookup, without walking the ZigZag list. Filled from
+    // ZigZagList[^2] when at least two pivots exist; null until the second pivot forms.
+    public char? PrevPivotType { get; set; }
+    public decimal? PrevPivotValue { get; set; }
+    public CandleTime? PrevPivotTime { get; set; }
+
 
     public void Reset()
     {
@@ -51,5 +59,9 @@ public class CryptoTrendData
         LastPivotType = null;
         LastPivotValue = null;
         LastPivotTime = null;
+
+        PrevPivotType = null;
+        PrevPivotValue = null;
+        PrevPivotTime = null;
     }
 }

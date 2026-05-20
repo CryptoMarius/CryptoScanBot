@@ -62,6 +62,7 @@ public class SignalStobbLong : SignalStobbBase
         return true;
     }
 
+
     public override bool IsSignal()
     {
         ExtraText = "";
@@ -88,6 +89,7 @@ public class SignalStobbLong : SignalStobbBase
             return false;
         }
 
+
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
         if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
@@ -98,4 +100,3 @@ public class SignalStobbLong : SignalStobbBase
         return true;
     }
 }
-

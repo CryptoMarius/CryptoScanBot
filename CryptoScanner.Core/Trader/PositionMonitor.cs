@@ -424,7 +424,7 @@ public class PositionMonitor //: IDisposable
                             // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
                             if (!GlobalData.ActiveExchange!.IsSupported)
                             {
-                                GlobalData.AddTextToLogTab(text + $" trader niet ondersteund op {GlobalData.ActiveExchange.Name} (removed)");
+                                GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
                                 ClearSignals();
                                 return;
                             }
@@ -475,7 +475,7 @@ public class PositionMonitor //: IDisposable
                                 // Its rounded towards zero
                                 if (entryBase <= 0)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
                                     ClearSignals();
                                     return;
                                 }
@@ -483,7 +483,7 @@ public class PositionMonitor //: IDisposable
                                 // Below the minimum allowed quantity
                                 if (entryBase == Symbol.QuantityMinimum)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
                                     ClearSignals();
                                     return;
                                 }
@@ -491,7 +491,7 @@ public class PositionMonitor //: IDisposable
                                 // Below the minimum allowed value
                                 if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
                                 {
-                                    GlobalData.AddTextToLogTab(text + $" vanwege de minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
+                                    GlobalData.AddTextToLogTab(text + $" because of minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
                                     ClearSignals();
                                     return;
                                 }

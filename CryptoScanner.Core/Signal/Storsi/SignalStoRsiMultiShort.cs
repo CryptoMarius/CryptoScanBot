@@ -14,9 +14,6 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
 {
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        // Mirror of SignalStoRsiShort.AdditionalChecks — must override here too, otherwise the
-        // SignalSbmBase implementation kicks in and applies MACD-recovery / MA-percentage /
-        // CheckMaCrossings filters that do not belong to the StoRsi family.
         if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
         {
             if (CandleLast.CandleData!.Lux5mValue < 50)
@@ -44,11 +41,9 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
             }
         }
 
-        // disable sbm conditions (inheritance)
         response = "";
         return true;
     }
-
 
 
     public override bool IsSignal()
@@ -56,7 +51,7 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
         ExtraText = "";
         var settings = GlobalData.Settings.Signal.StoRsi;
 
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.StoRsi.BBMinPercentage, GlobalData.Settings.Signal.StoRsi.BBMaxPercentage))
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -87,7 +82,16 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
 
                 okay--;
                 if (okay == 0)
+                {
+                    // ********************************************************************
+                    // Dont trade against the trend (only check current interval)
+                    if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+                        return false;
+                    if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+                        return false;
+
                     return true;
+                }
             }
             else
             {
@@ -104,18 +108,6 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
         }
 
 
-        // ********************************************************************
-        // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
-            return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
-
-        //// close date shouw be in the lower part of the bb
-        //if (!InLowerPartOfBollingerBands(1, 10.0m))
-        //    return false;
-
-        ExtraText = "";
         return false;
     }
 

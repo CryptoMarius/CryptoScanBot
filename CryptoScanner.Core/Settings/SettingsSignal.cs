@@ -67,6 +67,9 @@ public class SettingsSignal
     // Combined trend strategy: HTF bias + ADX regime + Dow/BOS trigger + pullback entry
     public SettingsSignalStrategyTrendHtf TrendHtf = new();
 
+    // TTM Squeeze family (squeeze.fade + squeeze.brk)
+    public SettingsSignalStrategySqueeze Squeeze = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

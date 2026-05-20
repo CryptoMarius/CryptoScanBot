@@ -48,12 +48,15 @@
 						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
 			</Grid>
 
+			<!-- Wait when stoch %K or rsi are in extreme zone -->
+			<CheckBox IsChecked="{Binding WaitForRecovery, Mode=TwoWay}"
+					  Content="Wait if stoch %K or RSI are OS/OB"
+					  FontSize="12"/>
 
-			<!-- Wait for stoch %K to exit the extreme zone before stepping in 
-			<CheckBox IsChecked="{Binding WaitForStochKRecovery, Mode=TwoWay}"
-					  Content="Only step in after stoch %K has exited OS/OB"
-					  FontSize="12" IsVisible ="false"/>
-					  -->
+			<CheckBox IsChecked="{Binding CheckForMacdCrossover, Mode=TwoWay}"
+					  Content="Wait until MACD crossover"
+					  FontSize="12"/>
+			
 
 			<!-- Slot Limits -->
             <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
