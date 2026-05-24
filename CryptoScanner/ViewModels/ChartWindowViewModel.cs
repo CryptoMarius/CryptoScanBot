@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trend;
@@ -1111,6 +1112,9 @@ public partial class ChartWindowViewModel : ObservableObject
                             await ZoneFvg.CalculateZonesAsync(ShowProgress, Symbol, intervalX, loadedCandlesInMemory);
                         }
                     }
+
+                    // Refresh the Distance column for this symbol in the symbol grid.
+                    GlobalData.SendMvvmMessage(new ZonesCalculatedForSymbolMessage(Symbol));
                 }
 
                 // Draw the indicator layers and candles

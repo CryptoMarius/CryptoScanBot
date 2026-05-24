@@ -26,6 +26,7 @@ public partial class SymbolGridViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("SymbolGridViewModel constructor called");
 
         WeakReferenceMessenger.Default.Register<SymbolsHaveChangedMessage>(this, OnSymbolsHaveChanged);
+        WeakReferenceMessenger.Default.Register<ZonesCalculatedForSymbolMessage>(this, OnZonesCalculatedForSymbol);
 
         _timerRefreshZones.Tick += TimerRefreshZonesTick;
         _timerRefreshZones.Start();
@@ -36,6 +37,7 @@ public partial class SymbolGridViewModel : ObservableObject
     public void Dispose()
     {
         WeakReferenceMessenger.Default.Unregister<SymbolsHaveChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<ZonesCalculatedForSymbolMessage>(this);
 
         _timerRefreshZones.Stop();
         _timerRefreshZones.Tick -= TimerRefreshZonesTick;
@@ -77,6 +79,23 @@ public partial class SymbolGridViewModel : ObservableObject
         foreach (var symbol in Symbols)
         {
             symbol.Distance = string.Empty; // Just reset it
+        }
+    }
+
+
+    // Targeted refresh: after ZoneDlz/ZoneFvg.CalculateZonesAsync finishes for a single
+    // symbol, clear that row's cached Distance text. The setter on SymbolViewModel.Distance
+    // raises PropertyChanged, which forces the DataGrid cell to re-read the value via
+    // ZoneTools.ZoneDistance(symbol). Cheaper than the 15-second timer that resets every row.
+    private void OnZonesCalculatedForSymbol(object recipient, ZonesCalculatedForSymbolMessage message)
+    {
+        foreach (var symbol in Symbols)
+        {
+            if (symbol.Object == message.Symbol)
+            {
+                symbol.Distance = string.Empty;
+                break;
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 
 using System.Collections.Concurrent;
@@ -34,6 +35,18 @@ public class ZoneThreadCalculate
             {
                 //GlobalData.AddTextToLogTab($"Calculation zones for {symbol.Name} {interval.Name}");
 
+                // Per-kind gate: only run a calculation if this interval is actually configured
+                // for that zone kind. Earlier this method blindly ran both ZoneDlz and ZoneFvg
+                // for every queued (symbol, interval), which wasted work on intervals only
+                // present in one of the two lists.
+                // NOTE: zones that were created earlier on an interval that has since been
+                // REMOVED from the IntervalList are NOT cleaned up here — that is a separate
+                // concern (stale zones stay in memory/DB until manually purged).
+                bool runDlz = GlobalData.Settings.Signal.ZonesDlz.IntervalList.Contains(interval.Name);
+                bool runFvg = GlobalData.Settings.Signal.ZonesFvg.IntervalList.Contains(interval.Name);
+                if (!runDlz && !runFvg)
+                    return;
+
                 var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                 var symbolDataInterval = symbol.Data.Get(interval.IntervalPeriod);
 
@@ -56,8 +69,16 @@ public class ZoneThreadCalculate
                     CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
                     //await ZoneDlz.LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
 
-                    await ZoneDlz.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
-                    await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+                    if (runDlz)
+                        await ZoneDlz.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+                    if (runFvg)
+                        await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
+
+                    // Notify the symbol grid so the Distance column for this row is re-read
+                    // immediately, instead of waiting for the 15-second refresh tick.
+                    // SendMvvmMessage posts to the UI thread internally, so calling it from
+                    // this background worker is safe.
+                    GlobalData.SendMvvmMessage(new ZonesCalculatedForSymbolMessage(symbol));
                 }
                 finally
                 {
@@ -111,9 +132,20 @@ public class ZoneThreadCalculate
     {
         if (GlobalData.ActiveExchange != null)
         {
+            // Union of DLZ + FVG intervals. The queue carries (symbol, interval) without a
+            // per-kind flag — the worker (CalculateZones) decides which of ZoneDlz / ZoneFvg
+            // to run based on which IntervalList contains the interval. Earlier this loop
+            // only iterated FVG.IntervalList, which meant DLZ-only intervals were never
+            // queued by the "Calculate DLZ for all" command. Concat+Distinct keeps the
+            // DLZ-configured intervals first (stable, easy to follow in the log).
+            var intervalNames = GlobalData.Settings.Signal.ZonesDlz.IntervalList
+                .Concat(GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                .Distinct()
+                .ToList();
+
             foreach (var symbol in GlobalData.ActiveExchange.SymbolListName.Values)
             {
-                foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList.ToList())
+                foreach (var intervalName in intervalNames)
                 {
                     if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                     {
