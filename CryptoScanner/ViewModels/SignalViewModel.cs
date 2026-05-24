@@ -339,7 +339,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mText ??= Object.LuxIndicator5m.ToString("N0");
+            _LuxIndicator5mText ??= Object.LuxIndicator5m?.ToString("N0");
             return _LuxIndicator5mText!;
         }
     }
@@ -348,7 +348,7 @@ public partial class SignalViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)Object.LuxIndicator5m);
+            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)(Object.LuxIndicator5m ?? 0));
             return _LuxIndicator5mForeground!;
         }
     }

@@ -166,7 +166,7 @@ public class LiveDataViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mText ??= Object.CandleData?.Lux5mValue.ToString("N0");
+            _LuxIndicator5mText ??= Object.CandleData?.Lux5mValue?.ToString("N0");
             return _LuxIndicator5mText!;
         }
     }

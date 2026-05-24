@@ -395,9 +395,9 @@ public partial class PositionViewModel : BaseConvertersViewModel
             if (_BreakEvenPercentText == null)
             {
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
-                    _BreakEvenPercentText = "-";
+                    _BreakEvenPercentText = "";
                 else
-                    _BreakEvenPercentText = Object.CurrentBreakEvenPercentage().ToString0("N2");
+                    _BreakEvenPercentText = (Object.CurrentBreakEvenPercentage() - 100).ToString0("N2");
             }
             return _BreakEvenPercentText!;
         }
@@ -472,7 +472,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
                 if (Object.Status == CryptoPositionStatus.Timeout || Object.Status == CryptoPositionStatus.Waiting)
                     _CurrentProfitPercentage = "-";
                 else
-                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString(Object.Symbol.QuoteData.DisplayFormat);
+                    _CurrentProfitPercentage = Object.CurrentProfitPercentage().ToString("N2");
             }
             return _CurrentProfitPercentage!;
         }
@@ -500,7 +500,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _TotalPercentageText ??= Object.Percentage.ToString0();
+            _TotalPercentageText ??= Object.Percentage.ToString("N2");
             return _TotalPercentageText!;
         }
     }
@@ -744,7 +744,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mText ??= Object.LuxIndicator5m.ToString("N0");
+            _LuxIndicator5mText ??= Object.LuxIndicator5m?.ToString("N0");
             return _LuxIndicator5mText!;
         }
     }
@@ -754,7 +754,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
     {
         get
         {
-            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)Object.LuxIndicator5m);
+            _LuxIndicator5mForeground ??= GetBrushColorViaSign((double)(Object.LuxIndicator5m ?? 0));
             return _LuxIndicator5mForeground!;
         }
     }

@@ -55,6 +55,8 @@ public class CryptoData
 
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG
+    [Computed]
+    public double? Ema5 { get; set; }
     //public double? Ema8 { get; set; }
     [Computed]
     public double? Ema9 { get; set; }
@@ -118,7 +120,13 @@ public class CryptoData
     public double? PSar { get; set; }
 
     [Computed]
-    public short Lux5mValue { get; set; }
+    public short? Lux5mValue { get; set; }
+
+    // Multi-length RSI [LuxAlgo] computed on the candle's own interval (signed −100..+100).
+    // Filled for every cached candle by CalculateIndicators. Strategies that need per-interval
+    // Lux history (e.g. SignalLux) read this; Lux5mValue stays the cross-interval 5m label.
+    [Computed]
+    public short? LuxValue { get; set; }
 
     /// <summary>
     /// Copy common indicator values
@@ -187,6 +195,7 @@ public class CryptoData
         //SlopeSma200 = source.SlopeSma200;
 
 #if DEBUG
+        Ema5 = source.Ema5;
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
@@ -198,6 +207,7 @@ public class CryptoData
         PSar = source.PSar;
 
         Lux5mValue = source.Lux5mValue;
+        LuxValue = source.LuxValue;
     }
 }
 
@@ -218,7 +228,7 @@ public class CryptoData2 : CryptoData
     public float Last24HoursChange { get; set; }
     public float LastXDaysEffective { get; set; }
 
-    public int LuxIndicator5m { get; set; }
+    public int? LuxIndicator5m { get; set; }
 
     // Wellicht introduceren en weghalen uit de "Alarm"?
     public short CandlesWithZeroVolume { get; set; } // Candles zonder volume
