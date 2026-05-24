@@ -97,8 +97,24 @@ public partial class LogGridViewModel : ObservableObject
                     // Prune oldest entries one at a time for the same reason. Clear() also fires
                     // Reset — we cannot use it here. RemoveAt(0) fires individual Remove events
                     // and avoids the index-desync that RemoveRange used to cause.
+                    // NOTE: Avalonia's DataGridCollectionView (wrapped around LogLines because the
+                    // DataGrid has CanUserSortColumns=True) can throw ArgumentOutOfRangeException
+                    // from its internal selection/index tracking while processing the Remove event.
+                    // The item itself IS removed from LogLines before the event fires, so the data
+                    // stays consistent — only the view's currency tracking gets briefly confused.
+                    // We swallow that specific exception per-item so the prune loop keeps going
+                    // and the log doesn't get flooded with identical stack traces every tick.
                     while (LogLines.Count > MaxLogLines && !GlobalData.ApplicationIsClosing)
-                        LogLines.RemoveAt(0);
+                    {
+                        try
+                        {
+                            LogLines.RemoveAt(0);
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            // Known Avalonia DataGridCollectionView quirk — ignore, item is gone.
+                        }
+                    }
 
 
                     //// Restore selection
