@@ -644,13 +644,13 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Draw Nadaraya Watson Envelope (non repainting)
         group = "nwe.notrepainting";
-        if (Toggle(model, group, Session.ShowNadarayaWatsonEnvelope))
-            NadarayaWatsonEnvelope.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, false, group);
+        if (Toggle(model, group, Session.ShowNwe))
+            Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, false, group);
 
         // Draw Nadaraya Watson Envelope (repainting)
         group = "nwe.repainting";
-        if (Toggle(model, group, Session.ShowNadarayaWatsonEnvelopeRepainting))
-            NadarayaWatsonEnvelope.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
+        if (Toggle(model, group, Session.ShowNweRepainting))
+            Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
 
         // Draw NWE × BB crossover markers
         group = "nwe.bb";

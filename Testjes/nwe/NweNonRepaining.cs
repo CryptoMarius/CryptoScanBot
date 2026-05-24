@@ -11,7 +11,7 @@ Ik heb de beschikking over dictionaries voor alle timeframes met daarin de OHLC 
 Gebruik de Dave Skender Indicators van Github voor eventuele berekeningen
 */
 
-public class NadarayaWatsonEnvelopeX
+public class NweX
 {
     private readonly int _lookback;      // hoeveel bars terug je meeneemt
     private readonly double _bandWidth;          // bandwidth voor Gaussian kernel
@@ -21,7 +21,7 @@ public class NadarayaWatsonEnvelopeX
     public List<decimal> UpperBand { get; private set; }
     public List<decimal> LowerBand { get; private set; }
 
-    public NadarayaWatsonEnvelopeX(int lookBack, double bandWidth, double multiplier)
+    public NweX(int lookBack, double bandWidth, double multiplier)
     {
         _lookback = lookBack;
         _bandWidth = bandWidth;

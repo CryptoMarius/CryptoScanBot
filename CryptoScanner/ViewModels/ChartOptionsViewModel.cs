@@ -14,10 +14,10 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showSmaLinesSbm = false;
 
     [ObservableProperty]
-    private bool _showNadarayaWatsonEnvelope = false;
+    private bool _showNwe = false;
 
     [ObservableProperty]
-    private bool _showNadarayaWatsonEnvelopeRepainting = false;
+    private bool _showNweRepainting = false;
 
     [ObservableProperty]
     private bool _showNweBb = false;
@@ -60,8 +60,8 @@ public partial class ChartOptionsViewModel : ObservableObject
         // Options
         ShowBbma = session.ShowBbma;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
-        ShowNadarayaWatsonEnvelope = session.ShowNadarayaWatsonEnvelope;
-        ShowNadarayaWatsonEnvelopeRepainting = session.ShowNadarayaWatsonEnvelopeRepainting;
+        ShowNwe = session.ShowNwe;
+        ShowNweRepainting = session.ShowNweRepainting;
         ShowNweBb = session.ShowNweBb;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
@@ -83,8 +83,8 @@ public partial class ChartOptionsViewModel : ObservableObject
         // Options
         session.ShowBbma = ShowBbma;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
-        session.ShowNadarayaWatsonEnvelope = ShowNadarayaWatsonEnvelope;
-        session.ShowNadarayaWatsonEnvelopeRepainting = ShowNadarayaWatsonEnvelopeRepainting;
+        session.ShowNwe = ShowNwe;
+        session.ShowNweRepainting = ShowNweRepainting;
         session.ShowNweBb = ShowNweBb;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
