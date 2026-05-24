@@ -7,7 +7,7 @@ using OxyPlot.Series;
 
 namespace CryptoScanner.ViewModels.Chart;
 
-public class NadarayaWatsonEnvelope
+public class Nwe
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, bool smoothRepainting, string group)

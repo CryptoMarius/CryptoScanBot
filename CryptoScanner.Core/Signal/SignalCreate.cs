@@ -364,11 +364,14 @@ public class SignalCreate
 
 
         // Iets wat ik wel eens gebruikt als ik trade
-        LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, Candle!.OpenTime + Interval.Duration);
-        if (signal.Side == CryptoTradeSide.Long)
-            signal.LuxIndicator5m = luxOverSold;
-        else
-            signal.LuxIndicator5m = luxOverBought;
+        if (signal.LuxIndicator5m == null)
+        {
+            LuxIndicator.Calculate(Symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, Candle!.OpenTime + 5);
+            if (signal.Side == CryptoTradeSide.Long)
+                signal.LuxIndicator5m = luxOverSold;
+            else
+                signal.LuxIndicator5m = luxOverBought;
+        }
 
 
 

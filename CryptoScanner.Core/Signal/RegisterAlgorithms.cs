@@ -11,7 +11,11 @@ using CryptoScanner.Core.Signal.Jump;
 using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Sbm;
 using CryptoScanner.Core.Signal.Stobb;
+using CryptoScanner.Core.Signal.StobbDlz;
+using CryptoScanner.Core.Signal.StobbFvg;
 using CryptoScanner.Core.Signal.Storsi;
+using CryptoScanner.Core.Signal.StorsiDlz;
+using CryptoScanner.Core.Signal.StorsiFvg;
 using CryptoScanner.Core.Signal.Trend;
 
 namespace CryptoScanner.Core.Signal;
@@ -127,6 +131,45 @@ public static class RegisterAlgorithms
 
 
         //***************************************************
+        // Combined zone + momentum signals
+        // STORSI / STOBB firing while price is at/near a precomputed DLZ or FVG zone.
+        // These reuse the full STORSI/STOBB pipeline (settings, AdditionalChecks, trend filters)
+        // and only ADD a cheap zone-proximity gate. Zone lifecycle stays with dlz.near / fvg.
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "storsi.dlz",
+            Strategy = CryptoSignalStrategy.StoRsiDlz,
+            AnalyzeLongType = typeof(SignalStoRsiDlzLong),
+            AnalyzeShortType = typeof(SignalStoRsiDlzShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "storsi.fvg",
+            Strategy = CryptoSignalStrategy.StoRsiFvg,
+            AnalyzeLongType = typeof(SignalStoRsiFvgLong),
+            AnalyzeShortType = typeof(SignalStoRsiFvgShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stobb.dlz",
+            Strategy = CryptoSignalStrategy.StobbDlz,
+            AnalyzeLongType = typeof(SignalStobbDlzLong),
+            AnalyzeShortType = typeof(SignalStobbDlzShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stobb.fvg",
+            Strategy = CryptoSignalStrategy.StobbFvg,
+            AnalyzeLongType = typeof(SignalStobbFvgLong),
+            AnalyzeShortType = typeof(SignalStobbFvgShort),
+        });
+
+
+        //***************************************************
         // Level approaching
         //***************************************************
         Register(new AlgorithmDefinition()
@@ -168,9 +211,9 @@ public static class RegisterAlgorithms
         Register(new AlgorithmDefinition()
         {
             Name = "nwe",
-            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelope,
-            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelope),
-            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelope),
+            Strategy = CryptoSignalStrategy.Nwe,
+            AnalyzeLongType = typeof(SignalNwe),
+            AnalyzeShortType = typeof(SignalNwe),
         });
 
 #if DEBUG
@@ -178,9 +221,9 @@ public static class RegisterAlgorithms
         Register(new AlgorithmDefinition()
         {
             Name = "nwe.np",
-            Strategy = CryptoSignalStrategy.NadarayaWatsonEnvelopeNp,
-            AnalyzeLongType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
-            AnalyzeShortType = typeof(SignalLuxNadarayaWatsonEnvelopeNp),
+            Strategy = CryptoSignalStrategy.NweNp,
+            AnalyzeLongType = typeof(SignalNweNp),
+            AnalyzeShortType = typeof(SignalNweNp),
         });
 #endif
 

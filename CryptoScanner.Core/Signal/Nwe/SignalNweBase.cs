@@ -6,7 +6,7 @@ using CryptoScanner.Core.Signal.Indicators;
 
 namespace CryptoScanner.Core.Signal.Nwe;
 
-public class SignalLuxNadarayaWatsonEnvelopeBase : SignalCreateBase
+public class SignalNweBase : SignalCreateBase
 {
     internal bool SmoothRepainting;
 
