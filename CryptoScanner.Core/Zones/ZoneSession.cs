@@ -51,6 +51,8 @@ public class ZoneSession
     public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
+    public bool ShowStoch { get; set; } = false;
+    public bool ShowRsi { get; set; } = false;
 
     // options
     public bool ShowCandles { get; set; } = true; // focus on other stuff then candles
