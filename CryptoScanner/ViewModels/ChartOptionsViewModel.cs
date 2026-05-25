@@ -11,6 +11,12 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showBbma = false;
 
     [ObservableProperty]
+    private bool _showStoch = false;
+
+    [ObservableProperty]
+    private bool _showRsi = false;
+
+    [ObservableProperty]
     private bool _showSmaLinesSbm = false;
 
     [ObservableProperty]
@@ -59,6 +65,8 @@ public partial class ChartOptionsViewModel : ObservableObject
     {
         // Options
         ShowBbma = session.ShowBbma;
+        ShowStoch = session.ShowStoch;
+        ShowRsi = session.ShowRsi;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNwe = session.ShowNwe;
         ShowNweRepainting = session.ShowNweRepainting;
@@ -82,6 +90,8 @@ public partial class ChartOptionsViewModel : ObservableObject
     {
         // Options
         session.ShowBbma = ShowBbma;
+        session.ShowStoch = ShowStoch;
+        session.ShowRsi = ShowRsi;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNwe = ShowNwe;
         session.ShowNweRepainting = ShowNweRepainting;

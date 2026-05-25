@@ -50,6 +50,8 @@ public partial class ChartWindowViewModel : ObservableObject
     // Chart crosshair annotations
     private LineAnnotation? CrossHairX;
     private LineAnnotation? CrossHairY;
+    // Second vertical crosshair for the stoch/RSI sub-panel; null when that panel is hidden.
+    private LineAnnotation? CrossHairXStoch;
 
     // Sub-ViewModels for modular UI
     [ObservableProperty]
@@ -319,9 +321,11 @@ public partial class ChartWindowViewModel : ObservableObject
         });
 
 
-        // Y-axis (Price)
+        // Y-axis (Price) — index 1; Key "price" allows AdjustPanels to find it by key.
+        // StartPosition/EndPosition are adjusted at runtime when the stoch panel is toggled.
         chart.Axes.Add(new LinearAxis
         {
+            Key = "price",
             Title = "Price",
             LabelFormatter = LabelFormatterY,
             Font = Const.OxyFontName,
@@ -329,6 +333,8 @@ public partial class ChartWindowViewModel : ObservableObject
             //Font = PlotModel.TitleFont,
             TextColor = OxyColors.White,
             Position = AxisPosition.Right,
+            StartPosition = 0.0,
+            EndPosition = 1.0,
 
             MajorTickSize = 15,
             MinorTickSize = 5,
@@ -342,6 +348,7 @@ public partial class ChartWindowViewModel : ObservableObject
             //MajorGridlineStyle = LineStyle.Solid,
             //MinorGridlineStyle = LineStyle.Dot
         });
+
 
         CrossHairX = new LineAnnotation
         {
@@ -516,6 +523,88 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
+    /// <summary>
+    /// Adds or removes the indicator sub-panel (Stoch / RSI) and adjusts the price panel height.
+    /// When showIndicator is true: the indicator Y-axis is added to the model (if not already present)
+    /// and the price axis shrinks to the top 78%.  When false: the indicator Y-axis is removed from
+    /// the model and the price axis is restored to full height.
+    /// Dynamically adding/removing the axis avoids OxyPlot rendering artefacts that occur when an
+    /// axis is "collapsed" by setting StartPosition == EndPosition == 0.
+    /// </summary>
+    private void AdjustPanels(bool showIndicator)
+    {
+        var priceAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "price");
+        if (priceAxis == null)
+            return;
+
+        if (showIndicator)
+        {
+            // Add the indicator axis only if it is not already present.
+            if (!PlotModel.Axes.Any(a => a.Key == "stoch"))
+            {
+                PlotModel.Axes.Add(new LinearAxis
+                {
+                    Key = "stoch",
+                    Title = "Stoch / RSI",
+                    Font = Const.OxyFontName,
+                    FontSize = Const.OxyFontSize,
+                    TextColor = OxyColors.White,
+                    Position = AxisPosition.Right,
+                    StartPosition = 0.0,
+                    EndPosition = 0.20,
+                    Minimum = 0,
+                    Maximum = 100,
+                    IsZoomEnabled = false,
+                    IsPanEnabled = false,
+                    MajorStep = 20,
+                    MinorStep = 10,
+                    TicklineColor = OxyColors.Gray,
+                    TickStyle = OxyPlot.Axes.TickStyle.Inside,
+                    AxislineStyle = LineStyle.Solid,
+                    AxislineColor = OxyColors.Gray,
+                    AxislineThickness = 1,
+                    MajorGridlineStyle = LineStyle.Dot,
+                    MajorGridlineColor = OxyColor.FromAColor(80, OxyColors.Gray),
+                });
+            }
+
+            // Add a vertical crosshair for the stoch panel if not yet present.
+            if (CrossHairXStoch == null)
+            {
+                CrossHairXStoch = new LineAnnotation
+                {
+                    Type = LineAnnotationType.Vertical,
+                    Color = OxyColors.White,
+                    LineStyle = LineStyle.None,
+                    StrokeThickness = 0.5,
+                    YAxisKey = "stoch",
+                    Tag = "crosshair",
+                };
+                PlotModel.Annotations.Add(CrossHairXStoch);
+            }
+
+            priceAxis.StartPosition = 0.22;
+            priceAxis.EndPosition = 1.0;
+        }
+        else
+        {
+            // Remove the indicator axis so it does not interfere with the price panel.
+            var stochAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "stoch");
+            if (stochAxis != null)
+                PlotModel.Axes.Remove(stochAxis);
+
+            // Remove the stoch-panel crosshair.
+            if (CrossHairXStoch != null)
+            {
+                PlotModel.Annotations.Remove(CrossHairXStoch);
+                CrossHairXStoch = null;
+            }
+
+            priceAxis.StartPosition = 0.0;
+            priceAxis.EndPosition = 1.0;
+        }
+    }
+
     private bool _refreshChart = false;
     private bool _pendingRefresh = false; // set when a symbol/interval change arrived while IsCalculating
     private readonly Dictionary<string, string> optionsInChart = [];
@@ -623,6 +712,9 @@ public partial class ChartWindowViewModel : ObservableObject
             return;
         PickupUserInput();
 
+        // Keep panel proportions in sync — panel is active when stoch OR rsi is enabled.
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi);
+
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
         var model = PlotModel;
@@ -686,6 +778,26 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowBbma))
             Bbma.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
+
+        // Draw Stochastic lines (%K / %D)
+        group = "stoch";
+        if (Toggle(model, group, Session.ShowStoch))
+            Stoch.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+        group = "stoch.tresholds";
+        if (Toggle(model, group, Session.ShowStoch))
+            Stoch.DrawLines(model, group);
+
+        
+        // Draw RSI(14) line
+        group = "rsi";
+        if (Toggle(model, group, Session.ShowRsi))
+            Rsi.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+        group = "rsi.tresholds";
+        if (Toggle(model, group, Session.ShowRsi))
+            Rsi.DrawLines(model, group);
+        
 
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
@@ -892,11 +1004,18 @@ public partial class ChartWindowViewModel : ObservableObject
             try
             {
 
-                // Update croshair coordinates
+                // Update crosshair coordinates
                 CrossHairX.X = unix.Minutes;
                 CrossHairY.Y = y;
                 CrossHairX.LineStyle = LineStyle.DashDot;
                 CrossHairY.LineStyle = LineStyle.DashDot;
+
+                // Keep the stoch-panel vertical crosshair in sync when the panel is visible.
+                if (CrossHairXStoch != null)
+                {
+                    CrossHairXStoch.X = unix.Minutes;
+                    CrossHairXStoch.LineStyle = LineStyle.DashDot;
+                }
 
                 string subtitle;
                 if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
@@ -1077,6 +1196,8 @@ public partial class ChartWindowViewModel : ObservableObject
                 CrossHairX.LineStyle = LineStyle.None;
                 CrossHairY.LineStyle = LineStyle.None;
             }
+            if (CrossHairXStoch != null)
+                CrossHairXStoch.LineStyle = LineStyle.None;
 
             SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
