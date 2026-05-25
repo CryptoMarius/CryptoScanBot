@@ -94,6 +94,11 @@ public class CryptoData
     public double? Wma10Low { get; set; }
     [Computed]
     public double? Wma10High { get; set; }
+    // ATR(14) — used by BBMA Omni: RejectedEMA50 big-body filter, MHV gap calculation.
+    // Not persisted to DB; computed in IndicatorData.CalculateIndicators.
+    // ATR 14 is the standard ATR, nothing special
+    [Computed]
+    public double? Atr14 { get; set; }
 #endif
 
     // RSI indicator
@@ -173,6 +178,7 @@ public class CryptoData
         Wma05High = source.Wma05High;
         Wma10Low = source.Wma10Low;
         Wma10High = source.Wma10High;
+        Atr14 = source.Atr14;
 #endif
 
         // Parabolic SAR indicator value
