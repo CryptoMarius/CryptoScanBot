@@ -83,14 +83,6 @@
                 </HeaderedContentControl>
 
 
-                <!-- Action Buttons -->
-                <StackPanel Spacing="4">
-                    <Button Content="Refresh screen" Command="{Binding RefreshCommand}" HorizontalAlignment="Center"/>
-                    <Button Content="Calculate zones"  Command="{Binding CalculateCommand}" HorizontalAlignment="Center"/>
-                    <!-- not working, turned off -->
-                    <Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
-                </StackPanel>
-
                 <!-- Display Options -->
                 <HeaderedContentControl Classes="groupbox" Header="Display">
                     <StackPanel Margin="4" Spacing="-7">
@@ -113,13 +105,24 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBb, Mode=TwoWay}" Content="NWE × BB signals" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
 					</StackPanel>
                 </HeaderedContentControl>
 
-                <!-- Open Trading App -->
-                <Button Content="Open trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Center"/>
+				<!-- Action Buttons -->
+				<StackPanel Spacing="4">
+					<Button Content="Refresh" Command="{Binding RefreshCommand}" HorizontalAlignment="Left"/>
+					<Button Content="Calculate"  Command="{Binding CalculateCommand}" HorizontalAlignment="Center"/>
+					<!-- Open Trading App -->
+					<Button Content="Trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Right"/>
+					<!-- not working, turned off -->
+					<Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
+				</StackPanel>
 
-            </StackPanel>
+
+
+			</StackPanel>
         </ScrollViewer>
 
         <!-- Right Panel - Chart -->
