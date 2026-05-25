@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
-using CryptoScanner.Core.Signal.Squeeze;
-using CryptoScanner.Core.Signal.StochMacd;
 using CryptoScanner.Core.Signal.WaveTrend;
 #endif
 using CryptoScanner.Core.Signal.Dlz;
@@ -275,39 +273,6 @@ public static class RegisterAlgorithms
 #endif
 
 #if DEBUG
-        // Stoch + MACD crossover: trend filter (TrendPrimary) + Stoch OS/OB + MACD histogram zero-cross.
-        // Source video: https://www.youtube.com/watch?v=vLbLZWi_Ypc
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stoch.macd",
-            Strategy = CryptoSignalStrategy.StochMacd,
-            AnalyzeLongType = typeof(SignalStochMacdLong),
-            AnalyzeShortType = typeof(SignalStochMacdShort),
-        });
-#endif
-
-#if DEBUG
-        // TTM Squeeze (fade): counter-trend reversal after a recent squeeze.
-        // Price wicks beyond BB at a Stoch extreme, Stoch crosses back.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "squeeze.fade",
-            Strategy = CryptoSignalStrategy.SqueezeFade,
-            AnalyzeLongType = typeof(SignalSqueezeFadeLong),
-            AnalyzeShortType = typeof(SignalSqueezeFadeShort),
-        });
-
-        // TTM Squeeze (breakout): squeeze just released, momentum kicks in via Stoch cross.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "squeeze.brk",
-            Strategy = CryptoSignalStrategy.SqueezeBrk,
-            AnalyzeLongType = typeof(SignalSqueezeBrkLong),
-            AnalyzeShortType = typeof(SignalSqueezeBrkShort),
-        });
-#endif
-
-#if DEBUG
         // Trend reversal (Dow Theory)
         Register(new AlgorithmDefinition()
         {
@@ -315,41 +280,6 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.Trend,
             AnalyzeLongType = typeof(SignalTrendLong),
             AnalyzeShortType = typeof(SignalTrendShort),
-        });
-#endif
-
-#if DEBUG
-        // BOS/CHoCH: Break of Structure and Change of Character signals
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bos",
-            Strategy = CryptoSignalStrategy.TrendBosChoch,
-            AnalyzeLongType = typeof(SignalBosChochLong),
-            AnalyzeShortType = typeof(SignalBosChochShort),
-        });
-#endif
-
-#if DEBUG
-        // Box Theory (Darvas-style): breakout from a consolidation box
-        Register(new AlgorithmDefinition()
-        {
-            Name = "box",
-            Strategy = CryptoSignalStrategy.Box,
-            AnalyzeLongType = typeof(SignalBoxLong),
-            AnalyzeShortType = typeof(SignalBoxShort),
-        });
-#endif
-
-#if DEBUG
-        // TrendHtf: trend CONTINUATION entry. HTF bias + ADX regime + established
-        // TrendBos direction + pullback pivot + fresh break-of-pivot. Goes WITH the
-        // established trend (unlike SignalBosChoch which is a reversal hunter).
-        Register(new AlgorithmDefinition()
-        {
-            Name = "trend.htf",
-            Strategy = CryptoSignalStrategy.TrendHtf,
-            AnalyzeLongType = typeof(SignalTrendHtfLong),
-            AnalyzeShortType = typeof(SignalTrendHtfShort),
         });
 #endif
 
