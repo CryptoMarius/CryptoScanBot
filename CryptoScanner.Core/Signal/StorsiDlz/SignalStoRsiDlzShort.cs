@@ -4,8 +4,8 @@ using CryptoScanner.Core.Signal.Storsi;
 namespace CryptoScanner.Core.Signal.StorsiDlz;
 
 /// <summary>
-/// Combined signal: STORSI (Stochastic + RSI overbought) firing while price is approaching
-/// or inside a short DLZ zone. See <see cref="SignalStoRsiDlzLong"/> for the design notes.
+/// Combined signal: STORSI (Stochastic + RSI overbought) firing while price is inside a short
+/// DLZ zone. See <see cref="SignalStoRsiDlzLong"/> for the design notes.
 /// </summary>
 public class SignalStoRsiDlzShort : SignalStoRsiShort
 {
@@ -13,9 +13,9 @@ public class SignalStoRsiDlzShort : SignalStoRsiShort
     {
         ExtraText = "";
 
-        if (!this.IsNearDlzZone(out string zoneInfo))
+        if (!this.IsInsideDlzZone(out string zoneInfo))
         {
-            ExtraText = "no nearby dlz zone";
+            ExtraText = "not inside dlz zone";
             return false;
         }
 

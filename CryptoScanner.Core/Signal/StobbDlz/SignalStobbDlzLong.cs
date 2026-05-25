@@ -5,13 +5,13 @@ namespace CryptoScanner.Core.Signal.StobbDlz;
 
 /// <summary>
 /// Combined signal: STOBB (oversold Bollinger Band tag with Stoch) firing while price is
-/// approaching or inside a long DLZ zone.
+/// inside a long DLZ zone. "Inside" means the candle's low has entered the zone and the
+/// close has not broken below the zone's floor.
 ///
 /// Inherits the full STOBB pipeline (BB width / BB position / Stoch / trend / AdditionalChecks)
 /// from <see cref="SignalStobbLong"/> so every existing STOBB setting (SoftSbm, MA percentages,
 /// MA crossings, RSI filter, OnlyIfPreviousStobb, Lux 5m, trend filters …) keeps applying.
-/// Only the zone-proximity gate is added; it runs first because it short-circuits cheaply
-/// when no zone is nearby.
+/// The zone gate runs first because it short-circuits cheaply when price is not inside any zone.
 ///
 /// Zones themselves are owned by <see cref="Dlz.SignalDominantLevelNearLong"/> — this class
 /// only reads the precomputed state, it never closes or alarm-flags a zone.
@@ -22,11 +22,10 @@ public class SignalStobbDlzLong : SignalStobbLong
     {
         ExtraText = "";
 
-        // Cheap gate first: most candles are nowhere near a zone, so this eliminates them
-        // before we run the indicator-heavy STOBB checks.
-        if (!this.IsNearDlzZone(out string zoneInfo))
+        // Cheap gate first: skip candles where price is not inside any DLZ zone.
+        if (!this.IsInsideDlzZone(out string zoneInfo))
         {
-            ExtraText = "no nearby dlz zone";
+            ExtraText = "not inside dlz zone";
             return false;
         }
 

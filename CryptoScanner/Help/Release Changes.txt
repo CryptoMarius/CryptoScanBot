@@ -1,10 +1,16 @@
 CryptoScanBot release historie:
 
-11-05-2025 2.5.2
-Probleempje: Bij meerdere dca's is de caption in het chart formulier niet goed. dca1, 2, 4 ? Vaag (ik begrijp het niet), maar ook niet heel belangrijk
+17-05-2025 2.5.2
+De Management van de position-parts is niet goed genoeg, als je een part annuleert (cancel open dca) dan blijft nummer en SL staan. Best verwarrend, weggooien ipv bewaren lijkt me
+  Tsja, das min of meer een rommel van de afgelopen x jaren: 
 
-- Extra instelling in de trader om met de trend mee te traden
-- Extra instelling in de Stobb en Storsi strategie om met de trend mee te traden
+Beslissing maken: Wil ik de statistieken zoals deze nu aanwezig zijn wel blijven hanteren? Vanwege delay's e.d. zijn de statistieken niet goed genoeg, wellicht gewoon onzichtbaar maken? (scheelt ook aardig wat cpu)
+Op zich zijn ze leuk, maar ik moet het ook allemaal weer uitleggen enzo, en het voegt qua echte trading helemaal niets toe
+
+- Extra instelling voor de stobb en storsi om de melding pas te geven op het moment dat het niet meer os/ob is en de rsi in het middengebied zit
+- De Altrady SL wordt onder de laatste dca gezet (geen absoluut percentage zoals voorheen)
+- Extra instelling in de trader om met de trend mee te traden (+aantal intervallen die het moet controleren)
+- Extra instelling in de Stobb en Storsi strategie om met de trend mee te traden (+aantal intervallen die het moet controleren)
 - Chart window laten de DLZ en FVG zones niet zien op de lagere intervallen (
 - Storsi.multi paste onterecht een aantal controles van de SBM toe
 - De caption van de Stochastic instellingen is incorrect (3x de caption oversold)
@@ -12,6 +18,7 @@ Probleempje: Bij meerdere dca's is de caption in het chart formulier niet goed. 
 - Bij de open posities is de kolom ProfitPrice het winst percentage ipv de tp price
 - De waarden market cap total en de BTC dominance zijn verkeerd (volume ipv prijs)
 - De display van de stochastic gebruikt niet de gebruikelijke formaat met 2 decimalen
+- Alleen de trend interval filters toepassen die >= het interval van het signaal is (lagere intervallen negeren)
 - Sound instellingen worden nu correct toegepast (er werd spontaan een geluid afgespeeld ondanks dat alles uit staat)
 - Het chart formulier wil niet altijd in de juiste interval getoond worden, bijft steken op een vorig gekozen interval
 - De instellingen voor de primary en secondary trend + high/low vinkjes zijn overbodig (ook verwarrend)
@@ -23,6 +30,8 @@ Probleempje: Bij meerdere dca's is de caption in het chart formulier niet goed. 
 - Commando voor het clearen van de positions (na een bevestiging dialoog)
 - Commando voor het clearen van de signals (na een bevestiging dialoog)
 - Roadmap.txt verwijderd, waren toch allemaal gedateerde opmerkingen
+- Bitvavo toegevoegd, deze is experimenteel en de vraag is of de candle stream 
+- Configuratie van de primary en secondary trend verwijderd, deze moeten fixed zijn en mogen niet aangepast worden
 
 09-05-2025 2.5.1
 - Bybit Futures - De symbolen werden niet goed opgehaald, de ehange gebruikt tegenwoordig paginatie
@@ -58,6 +67,7 @@ Probleempje: Bij meerdere dca's is de caption in het chart formulier niet goed. 
 - De interne opslag voor kleuren aangepast (alvast unverseel voor zowel Mac als Windows)
 - De default naamgeving van de geluidsbestanden voor dlz en fvg waren afwijkend.
   (nomaal gebruuikt de scanner oversold/overbought ipv long/short en die geluiden waren niet bijgeleverd)
+- Barometer consensus toegevoegd, er moeten tenminste x (hogere) barometers in orde zijn voor het signaal of de trader
 
 21-11-2025 2.1.8
 - Scanner - Kraken spot verwijderd aangezien deze niet goed functioneert

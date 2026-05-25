@@ -5,7 +5,7 @@ namespace CryptoScanner.Core.Signal.StobbDlz;
 
 /// <summary>
 /// Combined signal: STOBB (overbought Bollinger Band tag with Stoch) firing while price is
-/// approaching or inside a short DLZ zone. See <see cref="SignalStobbDlzLong"/> for the design notes.
+/// inside a short DLZ zone. See <see cref="SignalStobbDlzLong"/> for the design notes.
 /// </summary>
 public class SignalStobbDlzShort : SignalStobbShort
 {
@@ -13,9 +13,9 @@ public class SignalStobbDlzShort : SignalStobbShort
     {
         ExtraText = "";
 
-        if (!this.IsNearDlzZone(out string zoneInfo))
+        if (!this.IsInsideDlzZone(out string zoneInfo))
         {
-            ExtraText = "no nearby dlz zone";
+            ExtraText = "not inside dlz zone";
             return false;
         }
 

@@ -5,9 +5,8 @@ namespace CryptoScanner.Core.Signal.StobbFvg;
 
 /// <summary>
 /// Combined signal: STOBB (oversold Bollinger Band tag with Stoch) firing while price is
-/// approaching or inside a long FVG zone. See <see cref="StobbDlz.SignalStobbDlzLong"/> for
-/// the design notes. FVG zones are owned by <see cref="Fvg.SignalFairValueGapLong"/>; this
-/// class only reads them.
+/// inside a long FVG zone. See <see cref="StobbDlz.SignalStobbDlzLong"/> for the design notes.
+/// FVG zones are owned by <see cref="Fvg.SignalFairValueGapLong"/>; this class only reads them.
 /// </summary>
 public class SignalStobbFvgLong : SignalStobbLong
 {
@@ -15,9 +14,9 @@ public class SignalStobbFvgLong : SignalStobbLong
     {
         ExtraText = "";
 
-        if (!this.IsNearFvgZone(out string zoneInfo))
+        if (!this.IsInsideFvgZone(out string zoneInfo))
         {
-            ExtraText = "no nearby fvg zone";
+            ExtraText = "not inside fvg zone";
             return false;
         }
 

@@ -8,14 +8,17 @@ Bug Bitvavo, haalt iedere keer alle candles op? (weet niet wat Claude aan het kn
 Bug Als je nieuwe exchanges toevoeg wordt het url-bestand niet opnieuw aangemaakt (zou eigenlijk default de geregistreerde dan moeten pakken?), 
     en er is ook nog een onhandige InitializeUrls()! Onhandig zoals ik het aangepakt heb
 
+De afstand tot de eerste de beste zone wordt niet altijd correct getoond, na het opstarten staat overal 200% en even later is het wel weer correct
+Na de configuratie aanpassing (of candlee) schiet alles ook naar 100% en dan weer terug, lijkt een wat raar probleem?
+En dan is deze niet goed gesorteerd zo te zien...
+
+Nog een paar foutmeldingen in de kig
+
 BUG: 
-- (weinig impact?) De barometer berekening lijkt ook meerdere keren per interval aangeroepen te worden (jammer van de cpu)
+- (weinig impact?) De barometer berekening lijkt meerdere keren per interval aangeroepen te worden (jammer van de cpu)
 - ****** We halen nu alleen candles op voro de munten die boven het minimale volume zitten. Maar als een munt plotseling eronder of boven zit dan wordt de munt niet toegevoegd of verwijderd 
   aan de kline stream. Dus op basis van de volumes die we ophalen (momenteel default ieder uur) moeten we ook de kline stream soms bijwerken.
   Idee is om alleen de munten toe te voegen in een aparte kline ticker groep als het boven de minimale volume uitkomt (enn og niet mee deed)
-- De SBM 3 is echt helemaal kapot? long en short lijken niet goed (of komen te laat)
-  Heb 1 conditie ook laten vervallen, wellicht is dat het? de prijs en psar vergelijking
-
 
 
 Scanner (nogal outdated, daarom nu uit de release):

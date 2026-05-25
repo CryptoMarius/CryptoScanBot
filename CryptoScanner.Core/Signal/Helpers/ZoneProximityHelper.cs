@@ -4,30 +4,31 @@ using CryptoScanner.Core.Enums;
 namespace CryptoScanner.Core.Signal.Helpers;
 
 /// <summary>
-/// Read-only proximity checks against the precomputed DLZ and FVG zone lists.
+/// Read-only inside-zone checks against the precomputed DLZ and FVG zone lists.
+///
+/// A candle is considered "inside" a zone when its low (for long) or high (for short)
+/// has entered the zone price range AND the close has not broken through the far side:
+///   Long  : candle.Low  &lt;= zone.Top    AND candle.Close &gt;= zone.Bottom
+///   Short : candle.High &gt;= zone.Bottom AND candle.Close &lt;= zone.Top
 ///
 /// These helpers do NOT mutate zone state (no CloseTime, no AlarmDate, no removal from
 /// the OrderedList). Zone lifecycle stays the responsibility of SignalDominantLevelNearLong/Short
 /// and SignalFairValueGapLong/Short — the combined signals only piggy-back on the zone
 /// state those algorithms keep current.
-///
-/// Both checks iterate the configured zone intervals (Settings.Signal.ZonesDlz.IntervalList /
-/// ZonesFvg.IntervalList) and use the same proximity threshold (Settings.Signal.ZonesDlz.WarnPercentage)
-/// — sharing the threshold avoids adding a new setting just for FVG; a future split is trivial.
 /// </summary>
 public static class ZoneProximityHelper
 {
     /// <summary>
-    /// Returns true when the signal's last candle is within WarnPercentage of an open DLZ zone
-    /// (or already inside it) on the side that matches the signal direction.
+    /// Returns true when the signal's last candle is inside an open DLZ zone on the side
+    /// that matches the signal direction.
+    /// "Inside" means the candle has entered the zone (wick or body) without closing through it.
     /// </summary>
-    public static bool IsNearDlzZone(this SignalCreateBase myBase, out string zoneInfo)
+    public static bool IsInsideDlzZone(this SignalCreateBase myBase, out string zoneInfo)
     {
         zoneInfo = "";
         var settings = GlobalData.Settings.Signal.ZonesDlz;
         var candle = myBase.CandleLast.Candle;
         var symbolData = myBase.Symbol.Data;
-        decimal warnPercentage = settings.WarnPercentage;
 
         foreach (var intervalName in settings.IntervalList)
         {
@@ -63,29 +64,37 @@ public static class ZoneProximityHelper
                 {
                     // Long zones provide support from below.
                     // LongOpen is sorted on Zone.Top DESCENDING (highest top first).
-                    decimal alarmPrice = zone.Top * (100m + warnPercentage) / 100m;
-                    if (candle.Low <= alarmPrice)
+                    // Inside: candle entered the zone from above (low <= top) and close has
+                    // not broken below the zone's floor (close >= bottom).
+                    if (candle.Low > zone.Top)
+                        break; // All subsequent zones have lower tops — stop early
+
+                    if (candle.Close >= zone.Bottom)
                     {
-                        decimal dist = 100m * (candle.Low - zone.Top) / candle.Close;
+                        decimal dist = 100m * (candle.Close - zone.Top) / candle.Close;
                         zoneInfo = $"dlz {intervalName} {zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         return true;
                     }
-                    // Low above the warn-band — all subsequent zones have lower tops, so stop early
-                    break;
+                    // Close broke below the zone floor — zone may have failed; check next
+                    index++;
                 }
                 else
                 {
                     // Short zones provide resistance from above.
                     // ShortOpen is sorted on Zone.Bottom ASCENDING (lowest bottom first).
-                    decimal alarmPrice = zone.Bottom * (100m - warnPercentage) / 100m;
-                    if (candle.High >= alarmPrice)
+                    // Inside: candle entered the zone from below (high >= bottom) and close has
+                    // not broken above the zone's ceiling (close <= top).
+                    if (candle.High < zone.Bottom)
+                        break; // All subsequent zones have higher bottoms — stop early
+
+                    if (candle.Close <= zone.Top)
                     {
-                        decimal dist = 100m * (zone.Bottom - candle.High) / candle.Close;
+                        decimal dist = 100m * (zone.Bottom - candle.Close) / candle.Close;
                         zoneInfo = $"dlz {intervalName} {zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         return true;
                     }
-                    // High below the warn-band — all subsequent zones have higher bottoms, so stop early
-                    break;
+                    // Close broke above the zone ceiling — zone may have failed; check next
+                    index++;
                 }
             }
         }
@@ -94,17 +103,16 @@ public static class ZoneProximityHelper
 
 
     /// <summary>
-    /// Returns true when the signal's last candle is within WarnPercentage of an open FVG zone
-    /// (or already inside it) on the side that matches the signal direction.
-    /// Shares the DLZ WarnPercentage setting — keeps things consistent without a new config field.
+    /// Returns true when the signal's last candle is inside an open FVG zone on the side
+    /// that matches the signal direction. Uses the same inside-zone definition as
+    /// <see cref="IsInsideDlzZone"/>: entered (wick) without closing through the far side.
     /// </summary>
-    public static bool IsNearFvgZone(this SignalCreateBase myBase, out string zoneInfo)
+    public static bool IsInsideFvgZone(this SignalCreateBase myBase, out string zoneInfo)
     {
         zoneInfo = "";
         var settings = GlobalData.Settings.Signal.ZonesFvg;
         var candle = myBase.CandleLast.Candle;
         var symbolData = myBase.Symbol.Data;
-        decimal warnPercentage = GlobalData.Settings.Signal.ZonesDlz.WarnPercentage;
 
         foreach (var intervalName in settings.IntervalList)
         {
@@ -131,37 +139,34 @@ public static class ZoneProximityHelper
                 if (myBase.SignalSide == CryptoTradeSide.Long)
                 {
                     // FVG long: zone is below current price, sorted on Zone.Top DESCENDING.
-                    decimal alarmPrice = zone.Top * (100m + warnPercentage) / 100m;
-                    if (candle.Low <= alarmPrice)
+                    // Inside: low entered the zone AND close hasn't broken below the floor.
+                    if (candle.Low > zone.Top)
+                        break; // All subsequent zones have lower tops — stop early
+
+                    if (candle.Close >= zone.Bottom)
                     {
-                        // Guard: skip a stale zone that the candle has already fully passed through
-                        if (candle.High < zone.Bottom)
-                        {
-                            index++;
-                            continue;
-                        }
-                        decimal dist = 100m * (candle.Low - zone.Top) / candle.Close;
+                        decimal dist = 100m * (candle.Close - zone.Top) / candle.Close;
                         zoneInfo = $"fvg {intervalName} {zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         return true;
                     }
-                    break;
+                    // Close broke below the zone floor — skip this zone
+                    index++;
                 }
                 else
                 {
                     // FVG short: zone is above current price, sorted on Zone.Bottom ASCENDING.
-                    decimal alarmPrice = zone.Bottom * (100m - warnPercentage) / 100m;
-                    if (candle.High >= alarmPrice)
+                    // Inside: high entered the zone AND close hasn't broken above the ceiling.
+                    if (candle.High < zone.Bottom)
+                        break; // All subsequent zones have higher bottoms — stop early
+
+                    if (candle.Close <= zone.Top)
                     {
-                        if (candle.Low > zone.Top)
-                        {
-                            index++;
-                            continue;
-                        }
-                        decimal dist = 100m * (zone.Bottom - candle.High) / candle.Close;
+                        decimal dist = 100m * (zone.Bottom - candle.Close) / candle.Close;
                         zoneInfo = $"fvg {intervalName} {zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         return true;
                     }
-                    break;
+                    // Close broke above the zone ceiling — skip this zone
+                    index++;
                 }
             }
         }

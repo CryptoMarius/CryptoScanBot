@@ -300,6 +300,13 @@ public class ThreadLoadData
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
                 _ = Task.Run(async () => { await ZoneBroken.CalculateBrokenZonesForAllSymbols(); }).ConfigureAwait(false);
 
+                // Queue a full DLZ + FVG recalculation for every symbol at startup.
+                // LoadAllZones() above only populates zones that already exist in the DB — new
+                // listings and symbols added since the last manual "Calculate zones" run would
+                // have no zones otherwise. The worker thread just started, so the queue accepts
+                // items immediately; all work runs in the background without blocking startup.
+                ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
+
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)
                 //************************************************************************************
