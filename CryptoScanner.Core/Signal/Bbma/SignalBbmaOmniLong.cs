@@ -21,15 +21,19 @@ namespace CryptoScanner.Core.Signal.Bbma;
 public class SignalBbmaOmniLong : SignalBbmaOmniBase
 {
     /// <summary>
-    /// Classify a candle in OmniView terms. Priority follows the OmniView source order with
-    /// the two gates that the source applies: Momentum is gated by no-Extreme, MLV by no-CSM.
-    /// First match wins.
+    /// Classify a candle in OmniView terms. Priority (first match wins):
+    ///   Extreme → CSM → CSD → CSAK2 → Cross → CSAA → MLV → Reentry
+    /// The Extreme gate on CSM and the CSAK gate on CSAK2 are enforced implicitly
+    /// because a preceding match already returns before reaching the next check.
     /// </summary>
     public OmniState GetOmniState(MyData data)
     {
         if (IsExtreme(data)) return OmniState.Extreme;
         if (IsCsm(data)) return OmniState.Csm;
         if (IsCsd(data)) return OmniState.Csd;
+        if (IsCsak2(data)) return OmniState.Csak2;
+        if (IsCross(data)) return OmniState.Cross;
+        if (IsCsaa(data)) return OmniState.Csaa;
         if (IsMlv(data)) return OmniState.Mlv;
         if (IsReentry(data)) return OmniState.Reentry;
         return OmniState.None;
@@ -62,6 +66,84 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         decimal midPrev = (decimal)prev.CandleData!.Sma20!.Value;
         return openPrev < midPrev && closePrev < midPrev
             && close > mid && open > mid && close > mahi5 && close > mahi10;
+    }
+
+
+    /// <summary>
+    /// CSAK2 Buy — OmniView lines 804-808.
+    ///   Both open and close above mid, close beyond mahi5 AND mahi10, close still below UpperBand.
+    ///   Gated by "no CSAK on this bar" — enforced implicitly because IsCsd() is evaluated first in
+    ///   GetOmniState() and returns early when true.
+    /// </summary>
+    private bool IsCsak2(MyData data)
+    {
+        decimal open = data.Candle.Open;
+        decimal close = data.Candle.Close;
+        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
+        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal mahi10 = (decimal)data.CandleData!.Wma10High!.Value;
+        decimal upperB = (decimal)data.CandleData!.BollingerBandsUpperBand!.Value;
+
+        // Both open and close above mid, close beyond WMA(high) zone, but not yet at upper band
+        return open > mid && close > mid && close > mahi5 && close > mahi10 && close < upperB;
+    }
+
+
+    /// <summary>
+    /// CSAA Buy — OmniView lines 757-761.
+    ///   mahi10 &lt; mid AND mahi5 &lt; mid  (WMA-high zone is below mid — bearish context)
+    ///   AND bullish candle (open &lt; close)
+    ///   AND close &gt; mahi10 AND close &gt; mahi5  (closed above the WMA zone)
+    ///   AND close &lt; mid                          (but still below mid)
+    /// This fires when price bounces above the WMA(high) zone while still in a bearish
+    /// context (WMA below mid), signalling a potential reversal or accumulation.
+    /// </summary>
+    private bool IsCsaa(MyData data)
+    {
+        decimal open = data.Candle.Open;
+        decimal close = data.Candle.Close;
+        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
+        decimal mahi5 = (decimal)data.CandleData!.Wma05High!.Value;
+        decimal mahi10 = (decimal)data.CandleData!.Wma10High!.Value;
+
+        return mahi10 < mid && mahi5 < mid
+            && open < close
+            && close > mahi10 && close > mahi5
+            && close < mid;
+    }
+
+
+    /// <summary>
+    /// CrossEMA50mBB Buy — OmniView lines 769-772 ("MasterSig").
+    ///   BBmCross up   : close[i-1] &lt; mid[i-1] AND close[i] &gt; mid[i] AND close[i] &gt; EMA50[i]
+    ///   ema50Cross up : close[i-1] &lt; EMA50[i-1] AND close[i] &gt; EMA50[i] AND close[i] &gt; mid[i]
+    /// A breakout above BB-mid that is also above EMA50, or a breakout above EMA50 that is
+    /// also above BB-mid — both conditions require dual confirmation.
+    /// </summary>
+    private bool IsCross(MyData data)
+    {
+        if (data.CandleData!.Ema50 == null)
+            return false;
+
+        decimal close = data.Candle.Close;
+        decimal mid = (decimal)data.CandleData!.Sma20!.Value;
+        decimal ema50 = (decimal)data.CandleData!.Ema50.Value;
+
+        if (!GetPrevCandle(data, out MyData? prev) || prev == null)
+            return false;
+        if (prev.CandleData!.Ema50 == null)
+            return false;
+
+        decimal closePrev = prev.Candle.Close;
+        decimal midPrev = (decimal)prev.CandleData!.Sma20!.Value;
+        decimal ema50Prev = (decimal)prev.CandleData!.Ema50.Value;
+
+        // Crossed above BB-mid AND confirmed above EMA50
+        bool bbmCrossBuy = closePrev < midPrev && close > mid && close > ema50;
+        // Crossed above EMA50 AND confirmed above BB-mid
+        bool ema50CrossBuy = closePrev < ema50Prev && close > ema50 && close > mid;
+
+        return bbmCrossBuy || ema50CrossBuy;
     }
 
 
@@ -185,7 +267,9 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
 
             OmniState state = GetOmniState(cursor);
             if (csmIndex < 0 && i < CsmLookback && state == OmniState.Csm) csmIndex = i;
-            if (csdIndex < 0 && i < CsdLookback && state == OmniState.Csd) csdIndex = i;
+            // CSD, CSAK2, CSAA, and Cross are all treated as "CSD-class" setup signals for HTF validation
+            if (csdIndex < 0 && i < CsdLookback && (state == OmniState.Csd || state == OmniState.Csak2
+                    || state == OmniState.Csaa || state == OmniState.Cross)) csdIndex = i;
             if (mlvIndex < 0 && i < MlvLookback && state == OmniState.Mlv) mlvIndex = i;
         }
 
@@ -203,7 +287,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
             return true;
         }
 
-        // Priority 3 — CSD/Reentry: most recent Csd within window. New path vs. Pine-aligned SignalBbma.
+        // Priority 3 — CSD-class/Reentry: most recent Csd / CSAK2 / CSAA / Cross within window.
         if (csdIndex >= 0)
         {
             htfSetup = "CSD";
@@ -260,14 +344,15 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
 
             stateLtfBack = GetOmniState(candleLtf);
             if (stateLtfBack == OmniState.Extreme || stateLtfBack == OmniState.Mlv
-                || stateLtfBack == OmniState.Csm || stateLtfBack == OmniState.Csd)
+                || stateLtfBack == OmniState.Csm || stateLtfBack == OmniState.Csd
+                || stateLtfBack == OmniState.Csak2 || stateLtfBack == OmniState.Csaa
+                || stateLtfBack == OmniState.Cross)
                 break;
         }
 
-        if (!(stateLtfBack == OmniState.Extreme || stateLtfBack == OmniState.Mlv
-              || stateLtfBack == OmniState.Csm || stateLtfBack == OmniState.Csd))
+        if (stateLtfBack == OmniState.None || stateLtfBack == OmniState.Reentry)
         {
-            ExtraText = $"LTF no preceding Extreme/MLV/CSM/CSD found";
+            ExtraText = $"LTF no preceding setup found (last: {stateLtfBack})";
             return false;
         }
 
@@ -315,11 +400,14 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
             return false;
         }
 
-        // Code match — same alert codes as SignalBbma (PDF: RRE / REM / REE / RMEE,
-        // here RMEE collapses to RME because we don't distinguish MagicExtreme).
-        // Order in the string: HTF + MTF + LTF (highest TF first).
+        // Code match — order: HTF + MTF + LTF (highest TF first).
+        // Rule: HTF must be 'R' (Reentry) and LTF lookback must carry a meaningful preceding
+        // event (not '-' = CSD/CSM-unmapped, and not 'R' = another Reentry).
+        // This generalises the original hardcoded "RRE/REM/REE/RME" list and automatically
+        // extends to new state codes (2=CSAK2, A=CSAA, X=Cross) added later.
         string code = OmniStateCode(stateHtf) + OmniStateCode(stateMtf) + OmniStateCode(stateLtfBack);
-        if (code == "RRE" || code == "REM" || code == "REE" || code == "RME")
+        string ltfCode = OmniStateCode(stateLtfBack);
+        if (code[0] == 'R' && ltfCode != "-" && ltfCode != "R")
         {
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
             return true;
