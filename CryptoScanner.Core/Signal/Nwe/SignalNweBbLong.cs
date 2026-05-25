@@ -1,4 +1,6 @@
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Nwe;
 
@@ -28,6 +30,14 @@ public class SignalNweBbLong : SignalNweBbBase
     public override bool IsSignal()
     {
         ExtraText = "";
+
+        // De breedte van de bb is ten minste 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
+        {
+            ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
 
         if (!TryBuildHistory(out var bars))
         {
