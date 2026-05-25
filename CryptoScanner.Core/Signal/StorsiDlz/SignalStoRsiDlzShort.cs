@@ -13,14 +13,14 @@ public class SignalStoRsiDlzShort : SignalStoRsiShort
     {
         ExtraText = "";
 
+        if (!base.IsSignal())
+            return false;
+
         if (!this.IsInsideDlzZone(out string zoneInfo))
         {
             ExtraText = "not inside dlz zone";
             return false;
         }
-
-        if (!base.IsSignal())
-            return false;
 
         ExtraText = $"storsi+{zoneInfo}";
         return true;

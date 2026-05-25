@@ -13,14 +13,14 @@ public class SignalStobbFvgShort : SignalStobbShort
     {
         ExtraText = "";
 
+        if (!base.IsSignal())
+            return false;
+
         if (!this.IsInsideFvgZone(out string zoneInfo))
         {
             ExtraText = "not inside fvg zone";
             return false;
         }
-
-        if (!base.IsSignal())
-            return false;
 
         ExtraText = $"stobb+{zoneInfo}";
         return true;

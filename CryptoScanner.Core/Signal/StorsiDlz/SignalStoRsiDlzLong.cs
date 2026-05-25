@@ -22,16 +22,16 @@ public class SignalStoRsiDlzLong : SignalStoRsiLong
     {
         ExtraText = "";
 
+        // Full STORSI pipeline (BB width, Stoch oversold, RSI oversold, optional trend filters).
+        if (!base.IsSignal())
+            return false;
+
         // Cheap gate first: skip candles where price is not inside any DLZ zone.
         if (!this.IsInsideDlzZone(out string zoneInfo))
         {
             ExtraText = "not inside dlz zone";
             return false;
         }
-
-        // Full STORSI pipeline (BB width, Stoch oversold, RSI oversold, optional trend filters).
-        if (!base.IsSignal())
-            return false;
 
         ExtraText = $"storsi+{zoneInfo}";
         return true;
