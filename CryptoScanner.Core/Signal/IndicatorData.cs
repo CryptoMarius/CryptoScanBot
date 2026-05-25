@@ -234,6 +234,8 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
+        // ATR(14) — BBMA Omni: RejectedEMA50 big-body filter, MHV gap sizing.
+        List<AtrResult> atrList14 = (List<AtrResult>)history.GetAtr(14);
 #endif
 
         // or collect items first (is this faster/better?), a lot more coding)
@@ -355,6 +357,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 candleData.Wma05High = wmaList05High[index].Wma;
                 candleData.Wma10Low = wmaList10Low[index].Wma;
                 candleData.Wma10High = wmaList10High[index].Wma;
+                candleData.Atr14 = atrList14[index].Atr;
 #endif
 
 #if DEBUG
