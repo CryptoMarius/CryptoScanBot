@@ -1,8 +1,9 @@
 namespace CryptoScanner.Core.Settings.Strategy;
 
 // WaveTrend Oscillator [LazyBear] — WT_LB.
-// Long  : WT1 crosses up through the OS level after a sufficient excursion below it.
-// Short : mirror — cross down through OB after a sufficient excursion above it.
+// Long  : after WT1 has spent ≥ MinBarsBeyondOsOb bars below OsLevel inside the lookback,
+//         fire when WT1 crosses up through −RecoveryLevel (returning toward neutral).
+// Short : mirror — bars above ObLevel, cross down through +RecoveryLevel.
 [Serializable]
 public class SettingsSignalStrategyWaveTrend : SettingsSignalStrategyBase
 {
@@ -12,30 +13,29 @@ public class SettingsSignalStrategyWaveTrend : SettingsSignalStrategyBase
     // Average length (n2) — default 21 per LazyBear
     public int AverageLength { get; set; } = 21;
 
-    // Hard overbought / oversold levels (LazyBear: ±60).
-    // The softer ±53 levels from the original Pine script are not used.
+    // Deep overbought / oversold levels (LazyBear: ±60). WT1 must have been beyond these
+    // inside the lookback window for the qualifier to pass.
     public decimal OsLevel { get; set; } = -60m;
     public decimal ObLevel { get; set; } = 60m;
 
+    // Recovery levels — the actual cross trigger. The signal fires when WT1 crosses up
+    // through OsRecoveryLevel (long) or down through ObRecoveryLevel (short), i.e. when
+    // WT1 has recovered from the extreme back toward neutral.
+    public decimal OsRecoveryLevel { get; set; } = -50m;
+    public decimal ObRecoveryLevel { get; set; } = 50m;
+
     // Trend filter: long only when close > SMA200, short only when close < SMA200.
-    // (LazyBear's recipe specifies EMA200; SMA200 is a close-enough substitute for our purposes.)
+    // (LazyBear's recipe specifies EMA200; SMA200 is a close-enough substitute.)
     public bool RequireTrendFilter { get; set; } = true;
 
-    // Excursion window — number of bars ending at the candle before the cross over which
-    // both area and peak depth are evaluated.
+    // Lookback window — number of bars ending at the candle before the recovery cross over
+    // which the OS/OB-visit qualifier is evaluated.
     public int LookbackBars { get; set; } = 10;
 
-    // Minimum total area below OS (long) or above OB (short) inside the lookback window.
-    // Units: WT1-points · bars. E.g. 30 = average depth of 3 over 10 bars, or depth of 10
-    // over 3 bars. Filters out WT1 wiggling around the OS/OB line where dwell would pass
-    // but the excursion has almost no substance.
-    public decimal MinAreaInZone { get; set; } = 30m;
-
-    // How far past OS/OB the WT1 extreme must have reached inside the lookback window.
-    // Long  : min(WT1) must be ≤ (OsLevel - DeepLevelOffset).
-    // Short : max(WT1) must be ≥ (ObLevel + DeepLevelOffset).
-    // Guarantees the excursion was genuinely extreme, not just prolonged at marginal depth.
-    public decimal DeepLevelOffset { get; set; } = 15m;
+    // Minimum number of bars within the lookback where WT1 was beyond the OS/OB level.
+    // Need not be consecutive. Filters out "barely touched" or wiggling-around-the-line
+    // excursions that never genuinely committed to the extreme zone.
+    public int MinBarsBeyondOsOb { get; set; } = 3;
 
     public SettingsSignalStrategyWaveTrend() : base()
     {

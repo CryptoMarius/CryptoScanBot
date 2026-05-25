@@ -11,16 +11,14 @@ namespace CryptoScanner.Core.Signal.WaveTrend;
 /// Setup (in evaluation order — cheapest first):
 ///   1. Bollinger band width inside the configured range.
 ///   2. Optional trend filter: close > SMA200 (substitute for LazyBear's EMA200).
-///   3. WT1 crosses up through the oversold level between the previous and the current candle.
-///   4. Excursion check over the last
+///   3. WT1 crosses up through −RecoveryLevel (e.g. −50) between the previous and the
+///      current candle — the recovery from the oversold extreme.
+///   4. Qualifier: within the last
 ///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.LookbackBars"/> bars
-///      ending at the candle before the cross:
-///        a) area below the OS line ≥
-///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinAreaInZone"/>
-///           — filters out WT1 wiggling around the OS line.
-///        b) min(WT1) ≤ OsLevel −
-///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.DeepLevelOffset"/>
-///           — guarantees the excursion actually reached an extreme.
+///      ending at the candle before the cross, WT1 must have been below
+///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.OsLevel"/> on at least
+///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinBarsBeyondOsOb"/>
+///      bars. Filters out shallow excursions that never reached the deep OS zone.
 /// </summary>
 public class SignalWaveTrendLong : SignalWaveTrendBase
 {
@@ -34,6 +32,13 @@ public class SignalWaveTrendLong : SignalWaveTrendBase
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
         }
+
+        if (CandleLast.StochOverbought())
+        {
+            ExtraText = "stoch already overbought";
+            return false;
+        }
+
 
         var settings = GlobalData.Settings.Signal.WaveTrend;
 
@@ -69,45 +74,37 @@ public class SignalWaveTrendLong : SignalWaveTrendBase
         }
 
         double osLevel = (double)settings.OsLevel;
+        double recoveryLevel = (double)settings.OsRecoveryLevel;
 
-        // 3. Cross-up through OS level: prev was at or below OS, current is above.
-        if (!(prev.Wt1.Value <= osLevel && curr.Wt1.Value > osLevel))
+        // 3. Recovery cross — WT1 crosses up through −RecoveryLevel.
+        if (!(prev.Wt1.Value <= recoveryLevel && curr.Wt1.Value > recoveryLevel))
         {
-            ExtraText = "no wt1 cross up over os level";
+            ExtraText = $"no wt1 cross up over {recoveryLevel:N1}";
             return false;
         }
 
-        // 4. Excursion measured over the last LookbackBars ending at `prev`:
-        //    area  = Σ max(0, osLevel − wt1) — how much oversold "mass" was accumulated.
-        //    minWt = deepest WT1 reached       — was the excursion actually extreme?
-        double area = 0.0;
-        double minWt = double.PositiveInfinity;
+        // 4. Qualifier — count bars within the lookback (ending at prev) where WT1 was
+        //    genuinely beyond the OS level. Need not be consecutive.
+        int barsBeyond = 0;
         int from = Math.Max(0, results.Count - 1 - settings.LookbackBars);
         for (int i = from; i <= results.Count - 2; i++)
         {
-            if (results[i].Wt1 is not double v)
-                continue;
-            if (v < osLevel)
-                area += osLevel - v;
-            if (v < minWt)
-                minWt = v;
+            if (results[i].Wt1 is double v)
+            {
+                if (v < osLevel)
+                    barsBeyond++;
+                if (v > osLevel)
+                    break;
+            }
         }
 
-        double minArea = (double)settings.MinAreaInZone;
-        if (area < minArea)
+        if (barsBeyond < settings.MinBarsBeyondOsOb)
         {
-            ExtraText = $"wt1 os-area {area:N1} below required {minArea:N1}";
+            ExtraText = $"only {barsBeyond} bars below {osLevel:N1} (need {settings.MinBarsBeyondOsOb})";
             return false;
         }
 
-        double deepLevel = osLevel - (double)settings.DeepLevelOffset;
-        if (minWt > deepLevel)
-        {
-            ExtraText = $"wt1 only reached {minWt:N1}, needs ≤ {deepLevel:N1}";
-            return false;
-        }
-
-        ExtraText = $"wt cross-up over os (area {area:N1}, min {minWt:N1})";
+        ExtraText = $"wt recovery cross over {recoveryLevel:N1} after {barsBeyond} bars below {osLevel:N1}";
         return true;
     }
 }

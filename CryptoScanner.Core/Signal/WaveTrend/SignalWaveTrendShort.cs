@@ -11,16 +11,14 @@ namespace CryptoScanner.Core.Signal.WaveTrend;
 /// Setup (in evaluation order — cheapest first):
 ///   1. Bollinger band width inside the configured range.
 ///   2. Optional trend filter: close &lt; SMA200.
-///   3. WT1 crosses down through the overbought level between the previous and the current candle.
-///   4. Excursion check over the last
+///   3. WT1 crosses down through +RecoveryLevel (e.g. +50) between the previous and the
+///      current candle — the recovery from the overbought extreme.
+///   4. Qualifier: within the last
 ///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.LookbackBars"/> bars
-///      ending at the candle before the cross:
-///        a) area above the OB line ≥
-///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinAreaInZone"/>
-///           — filters out WT1 wiggling around the OB line.
-///        b) max(WT1) ≥ ObLevel +
-///           <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.DeepLevelOffset"/>
-///           — guarantees the excursion actually reached an extreme.
+///      ending at the candle before the cross, WT1 must have been above
+///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.ObLevel"/> on at least
+///      <see cref="Settings.Strategy.SettingsSignalStrategyWaveTrend.MinBarsBeyondOsOb"/>
+///      bars. Filters out shallow excursions that never reached the deep OB zone.
 /// </summary>
 public class SignalWaveTrendShort : SignalWaveTrendBase
 {
@@ -32,6 +30,12 @@ public class SignalWaveTrendShort : SignalWaveTrendBase
         if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
+        if (CandleLast.StochOversold())
+        {
+            ExtraText = "stoch already oversold";
             return false;
         }
 
@@ -69,45 +73,37 @@ public class SignalWaveTrendShort : SignalWaveTrendBase
         }
 
         double obLevel = (double)settings.ObLevel;
+        double recoveryLevel = (double)settings.ObRecoveryLevel;
 
-        // 3. Cross-down through OB level: prev was at or above OB, current is below.
-        if (!(prev.Wt1.Value >= obLevel && curr.Wt1.Value < obLevel))
+        // 3. Recovery cross — WT1 crosses down through +RecoveryLevel.
+        if (!(prev.Wt1.Value >= recoveryLevel && curr.Wt1.Value < recoveryLevel))
         {
-            ExtraText = "no wt1 cross down over ob level";
+            ExtraText = $"no wt1 cross down over {recoveryLevel:N1}";
             return false;
         }
 
-        // 4. Excursion measured over the last LookbackBars ending at `prev`:
-        //    area  = Σ max(0, wt1 − obLevel) — how much overbought "mass" was accumulated.
-        //    maxWt = highest WT1 reached      — was the excursion actually extreme?
-        double area = 0.0;
-        double maxWt = double.NegativeInfinity;
+        // 4. Qualifier — count bars within the lookback (ending at prev) where WT1 was
+        //    genuinely beyond the OB level. Need not be consecutive.
+        int barsBeyond = 0;
         int from = Math.Max(0, results.Count - 1 - settings.LookbackBars);
         for (int i = from; i <= results.Count - 2; i++)
         {
-            if (results[i].Wt1 is not double v)
-                continue;
-            if (v > obLevel)
-                area += v - obLevel;
-            if (v > maxWt)
-                maxWt = v;
+            if (results[i].Wt1 is double v)
+            {
+                if (v > obLevel)
+                    barsBeyond++;
+                if (v < obLevel)
+                    break;
+            }
         }
 
-        double minArea = (double)settings.MinAreaInZone;
-        if (area < minArea)
+        if (barsBeyond < settings.MinBarsBeyondOsOb)
         {
-            ExtraText = $"wt1 ob-area {area:N1} below required {minArea:N1}";
+            ExtraText = $"only {barsBeyond} bars above {obLevel:N1} (need {settings.MinBarsBeyondOsOb})";
             return false;
         }
 
-        double deepLevel = obLevel + (double)settings.DeepLevelOffset;
-        if (maxWt < deepLevel)
-        {
-            ExtraText = $"wt1 only reached {maxWt:N1}, needs ≥ {deepLevel:N1}";
-            return false;
-        }
-
-        ExtraText = $"wt cross-down over ob (area {area:N1}, max {maxWt:N1})";
+        ExtraText = $"wt recovery cross over {recoveryLevel:N1} after {barsBeyond} bars above {obLevel:N1}";
         return true;
     }
 }

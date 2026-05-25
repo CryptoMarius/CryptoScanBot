@@ -145,6 +145,83 @@ public class LuxIndicator
         luxOverBought = (int)(100m * overbuy / N);
     }
 
+    /// <summary>
+    /// Single-pass batch variant: computes the Lux value at each candle's own close for the
+    /// last <paramref name="count"/> candles ending at <paramref name="endOpenTime"/>.
+    /// Walks (99 + count − 1) candles once, sharing the RMA warmup across all output points.
+    /// Output arrays are indexed 0..count−1, where [count−1] corresponds to endOpenTime.
+    /// </summary>
+    public static void CalculateRange(CryptoSymbol symbol, CryptoIntervalPeriod cryptoIntervalPeriod,
+        CandleTime endOpenTime, int count, out int[] overSoldHistory, out int[] overBoughtHistory)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(cryptoIntervalPeriod);
+        uint duration = symbolInterval.Interval.Duration;
+
+        // Walk needs 99 warmup bars before the first recorded bar, plus (count − 1) extra to
+        // reach endOpenTime. Total span = (99 + count − 1) bars before endOpenTime.
+        CandleTime startOpenTime = endOpenTime - (uint)(99 + count - 1) * duration;
+
+        int min = 10;
+        int max = 20;
+        int N = max - min + 1;
+        decimal[] num = new decimal[N];
+        decimal[] den = new decimal[N];
+
+        overSoldHistory = new int[count];
+        overBoughtHistory = new int[count];
+
+        CryptoCandle candlePrev = default;
+        CryptoCandle candleLast = default;
+
+        // recordOffset = barIndex value at which we start writing into the output arrays.
+        // barIndex 99 (= 100th iteration, first with a fully-warmed RMA) maps to output[0].
+        const int recordOffset = 99;
+
+        CandleTime loop = startOpenTime;
+        int barIndex = 0;
+        while (loop <= endOpenTime)
+        {
+            candlePrev = candleLast;
+            if (symbolInterval.CandleList.TryGetValue(loop, out candleLast) && candlePrev.OpenTime != 0)
+            {
+                int k = 0;
+                int overbuy = 0;
+                int oversell = 0;
+                decimal diff = candleLast!.Close - candlePrev.Close;
+
+                for (int i = min; i <= max; i++)
+                {
+                    decimal alpha = 1.0m / i;
+                    decimal num_rma = alpha * diff + (1m - alpha) * num[k];
+                    decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
+
+                    decimal rsi;
+                    if (den_rma == 0)
+                        rsi = 50m;
+                    else
+                        rsi = 50m * num_rma / den_rma + 50m;
+
+                    if (rsi > 70) overbuy++;
+                    if (rsi < 30) oversell++;
+
+                    num[k] = num_rma;
+                    den[k] = den_rma;
+                    k++;
+                }
+
+                int outIdx = barIndex - recordOffset;
+                if (outIdx >= 0 && outIdx < count)
+                {
+                    overSoldHistory[outIdx] = (int)(100m * oversell / N);
+                    overBoughtHistory[outIdx] = (int)(100m * overbuy / N);
+                }
+            }
+            loop += duration;
+            barIndex++;
+        }
+    }
+
+
     public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought,
         CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {

@@ -18,19 +18,21 @@ public enum CryptoSignalStrategy
     StoRsi = 10, // WGHM - STOSCH en RSI momentum indicator
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
 
-    NadarayaWatsonEnvelope = 25,
+    // Combined zone + momentum signals.
+    // Trigger when a momentum (storsi/stobb) signal fires while price is at/near a precomputed
+    // DLZ or FVG zone. Zones are owned by the dlz.near / fvg algorithms; these classes only read.
+    StoRsiDlz = 12,
+    StoRsiFvg = 13,
+    StobbDlz = 14,
+    StobbFvg = 15,
+
+    Nwe = 25,
 
 
 #if DEBUG
-    NadarayaWatsonEnvelopeNp = 26,
+    NweNp = 26,
     NweBb = 27,
     Trend = 31,
-
-    TrendBosChoch = 32,
-
-    Box = 33,
-
-    TrendHtf = 34, // Combined: HTF bias + ADX regime + BOS/CHoCH trigger + pullback entry
 
     BbmaOmni = 43,
     Bbma = 44,
@@ -38,11 +40,6 @@ public enum CryptoSignalStrategy
     StochDir = 46,
 
     WaveTrend = 50,
-
-    StochMacd = 51,
-
-    SqueezeFade = 52, // TTM Squeeze: counter-trend fade after a recent squeeze (Stobb-like + squeeze context)
-    SqueezeBrk = 53,  // TTM Squeeze: classic breakout when the squeeze just released (momentum direction)
 #endif
 
     DominantLevel = 1000,

@@ -43,8 +43,8 @@ public class ZoneSession
     public bool ShowDlzZones { get; set; } = false; // Dominant Liquidity Zones
     public bool ShowFvgZones { get; set; } = false; // Fear Value Gaps
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
-    public bool ShowNadarayaWatsonEnvelope { get; set; } = true; // NWE non repainting?
-    public bool ShowNadarayaWatsonEnvelopeRepainting { get; set; } = false;
+    public bool ShowNwe { get; set; } = true; // NWE non repainting?
+    public bool ShowNweRepainting { get; set; } = false;
     public bool ShowNweBb { get; set; } = false; // NWE × BB crossover markers
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;

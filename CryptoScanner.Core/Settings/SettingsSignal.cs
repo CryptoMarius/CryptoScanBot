@@ -55,20 +55,8 @@ public class SettingsSignal
     // BBMA (Oma Ally)
     public SettingsSignalStrategyBbma Bbma = new();
 
-    // Darvas-style Box Theory
-    public SettingsSignalStrategyBox Box = new();
-
     // WaveTrend [LazyBear] — WT_LB cross in OS/OB zone with optional trend filter
     public SettingsSignalStrategyWaveTrend WaveTrend = new();
-
-    // Stoch + MACD crossover
-    public SettingsSignalStrategyStochMacd StochMacd = new();
-
-    // Combined trend strategy: HTF bias + ADX regime + Dow/BOS trigger + pullback entry
-    public SettingsSignalStrategyTrendHtf TrendHtf = new();
-
-    // TTM Squeeze family (squeeze.fade + squeeze.brk)
-    public SettingsSignalStrategySqueeze Squeeze = new();
 
 
     // Logging

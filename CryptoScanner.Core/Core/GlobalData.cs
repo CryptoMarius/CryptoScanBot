@@ -781,9 +781,9 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelope, (Settings.Signal.Nwe, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Nwe, (Settings.Signal.Nwe, DateTime.Today));
 #if DEBUG
-        StrategiesSettings.Add(CryptoSignalStrategy.NadarayaWatsonEnvelopeNp, (Settings.Signal.Nwe, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.NweNp, (Settings.Signal.Nwe, DateTime.Today));
 #endif
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
