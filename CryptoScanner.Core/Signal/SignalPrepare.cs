@@ -51,6 +51,30 @@ public class SignalPrepare
                     {
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }
+
+                    // Combined DLZ strategies: also schedule zone recalculation on the DLZ intervals.
+                    // Without this, StoRsiDlz / StobbDlz (values < DominantLevel) would fall through
+                    // the plain-indicator branch and the zone worker would never be queued per candle.
+                    if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiDlz ||
+                        strategyDef.Strategy == CryptoSignalStrategy.StobbDlz)
+                    {
+                        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                        {
+                            Add(SignalPrepareKind.Dlz, intervalName);
+                            Add(SignalPrepareKind.Indicator, "1m");
+                        }
+                    }
+
+                    // Combined FVG strategies: same reasoning as above for FVG zones.
+                    if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiFvg ||
+                        strategyDef.Strategy == CryptoSignalStrategy.StobbFvg)
+                    {
+                        foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                        {
+                            Add(SignalPrepareKind.Fvg, intervalName);
+                            Add(SignalPrepareKind.Indicator, "1m");
+                        }
+                    }
                 }
                 else if (strategyDef.Strategy == CryptoSignalStrategy.FairValueGap)
                 {
@@ -115,19 +139,19 @@ public class SignalPrepare
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
+                    //CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
 
                     // Scan for new zones if candle is outside of the previous primary trend
-                    decimal valueLow = lastCandle1m.GetLowValue(false);
-                    decimal valueHigh = lastCandle1m.GetHighValue(false);
-                    if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
-                       symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
-                    {
-                        // avoid duplicate calculation (kind of a weak attemp)
-                        symbolInterval.DlzAdmin.LastSwingLow = valueLow;
-                        symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
+                    //decimal valueLow = lastCandle1m.GetLowValue(false);
+                    //decimal valueHigh = lastCandle1m.GetHighValue(false);
+                    //if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
+                    //   symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
+                    //{
+                    //    // avoid duplicate calculation (kind of a weak attemp)
+                    //    symbolInterval.DlzAdmin.LastSwingLow = valueLow;
+                    //    symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
                         GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
-                    }
+                    //}
                 }
             }
         }

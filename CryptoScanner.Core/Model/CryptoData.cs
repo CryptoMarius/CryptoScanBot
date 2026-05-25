@@ -21,12 +21,14 @@ public class CryptoData
 #if DEBUG
     // Keltner Channel (EMA centerline +/- ATR * multiplier). Not persisted to DB; only used
     // by signal classes that combine BB with KC (TTM Squeeze family).
-    [Computed]
-    public double? KeltnerUpperBand { get; set; }
-    [Computed]
-    public double? KeltnerLowerBand { get; set; }
-    [Computed]
-    public double? KeltnerCenterLine { get; set; }
+    // To re-enable: uncomment these properties AND un-comment the keltnerList calculation
+    // in IndicatorData.cs (CollectCandles / CalculateIndicators).
+    //[Computed]
+    //public double? KeltnerUpperBand { get; set; }
+    //[Computed]
+    //public double? KeltnerLowerBand { get; set; }
+    //[Computed]
+    //public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
 #endif
 
@@ -55,12 +57,12 @@ public class CryptoData
 
     // EMA (Exponential Moving Average) indicator values
 #if DEBUG
-    [Computed]
-    public double? Ema5 { get; set; }
-    //public double? Ema8 { get; set; }
-    [Computed]
-    public double? Ema9 { get; set; }
-    public double? Ema20 { get; set; }
+    //[Computed]
+    //public double? Ema5 { get; set; }
+    ////public double? Ema8 { get; set; }
+    //[Computed]
+    //public double? Ema9 { get; set; }
+    //public double? Ema20 { get; set; }
     //public double? SlopeEma20 { get; set; }
     //public double? SlopeEma50 { get; set; }
     //public double? Ema100 { get; set; }
@@ -94,22 +96,6 @@ public class CryptoData
     public double? Wma10High { get; set; }
 #endif
 
-#if DEBUG
-    // Average True Range (Wilder, 14-period). Volatility measure for stops/regime detection.
-    // Computed = not persisted; the Signal table has no Atr/Adx columns.
-    [Computed]
-    public double? Atr { get; set; }
-
-    // Average Directional Index (Wilder, 14-period). Trend strength regardless of direction.
-    // Pdi/Mdi expose the +DI / -DI directional movement components that ADX is built on.
-    [Computed]
-    public double? Adx { get; set; }
-    [Computed]
-    public double? AdxPdi { get; set; }
-    [Computed]
-    public double? AdxMdi { get; set; }
-#endif
-
     // RSI indicator
     public double? Rsi { get; set; }
     //public double? SlopeRsi { get; set; }
@@ -122,12 +108,6 @@ public class CryptoData
     [Computed]
     public short? Lux5mValue { get; set; }
 
-    // Multi-length RSI [LuxAlgo] computed on the candle's own interval (signed −100..+100).
-    // Filled for every cached candle by CalculateIndicators. Strategies that need per-interval
-    // Lux history (e.g. SignalLux) read this; Lux5mValue stays the cross-interval 5m label.
-    [Computed]
-    public short? LuxValue { get; set; }
-
     /// <summary>
     /// Copy common indicator values
     /// </summary>
@@ -138,9 +118,9 @@ public class CryptoData
         BollingerBandsPercentage = source.BollingerBandsPercentage;
 
 #if DEBUG
-        KeltnerUpperBand = source.KeltnerUpperBand;
-        KeltnerCenterLine = source.KeltnerCenterLine;
-        KeltnerLowerBand = source.KeltnerLowerBand;
+        //KeltnerUpperBand = source.KeltnerUpperBand;
+        //KeltnerCenterLine = source.KeltnerCenterLine;
+        //KeltnerLowerBand = source.KeltnerLowerBand;
 #endif
 
         // MACD indicator values
@@ -161,27 +141,20 @@ public class CryptoData
 
         // EMA indicator values
 #if DEBUG
-        Ema20 = source.Ema20;
-        //Ema9 = source.Ema9;
+        //Ema5 = source.Ema5;
         //public double? Ema8 { get; set; }
+        //Ema9 = source.Ema9;
+        //Ema20 = source.Ema20;
         //public double? SlopeEma20 { get; set; }
         //Tema = source.Tema;
-#endif
-
-#if DEBUG
-        // Volatility and trend strength
-        Atr = source.Atr;
-        Adx = source.Adx;
-        AdxPdi = source.AdxPdi;
-        AdxMdi = source.AdxMdi;
-#endif
-
-
         //public double? SlopeEma50 { get; set; }
         //public double? Ema100 { get; set; }
         //public double? SlopeEma100 { get; set; }
         //public double? Ema200 { get; set; }
         //public double? SlopeEma200 { get; set; }
+#endif
+
+
 
         // SMA indicator values
         //public double? Sma8 { get; set; }
@@ -195,7 +168,6 @@ public class CryptoData
         //SlopeSma200 = source.SlopeSma200;
 
 #if DEBUG
-        Ema5 = source.Ema5;
         Ema50 = source.Ema50;
         Wma05Low = source.Wma05Low;
         Wma05High = source.Wma05High;
@@ -207,7 +179,6 @@ public class CryptoData
         PSar = source.PSar;
 
         Lux5mValue = source.Lux5mValue;
-        LuxValue = source.LuxValue;
     }
 }
 

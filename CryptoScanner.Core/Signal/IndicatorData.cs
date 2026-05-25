@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
@@ -204,7 +205,6 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     {
         CryptoCandle candle = history[^1];
         CryptoIndicatorData? indicatorData = null;
-        int fillMax = calculateCandles > 0 ? calculateCandles : 61;
 
         //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
         //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
@@ -234,14 +234,6 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
         List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
-#endif
-
-#if DEBUG
-        // ATR (Wilder, 14): volatility measure used for regime detection and structural stops.
-        List<AtrResult> atrList = (List<AtrResult>)history.GetAtr(lookbackPeriods: 14);
-
-        // ADX (Wilder, 14): trend strength regardless of direction. >25 = trending, <20 = ranging.
-        List<AdxResult> adxList = (List<AdxResult>)history.GetAdx(lookbackPeriods: 14);
 #endif
 
         // or collect items first (is this faster/better?), a lot more coding)
@@ -281,7 +273,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 #if DEBUG
         // Keltner Channel: EMA20 centerline +/- ATR(10) * 2 (Skender defaults). Used by
         // the TTM Squeeze family (BB inside KC = squeeze). Matches the chart drawer.
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)history.GetKeltner();
+        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)history.GetKeltner();
 #endif
 
         //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
@@ -321,21 +313,16 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         {
             // Maximaal 60 records aanvullen
             iteration++;
-            if (iteration > fillMax)
-                break;
-
-
             candle = history[index];
 
             CryptoData candleData = new();
             try
             {
-#if DEBUG
                 // EMA's
-                candleData.Ema20 = emaList20[index].Ema;
-#endif
 #if EXTRASTRATEGIES
-                ////candleData.Ema8 = emaList8[index].Ema;
+                //candleData.Ema5 = emaList5[index].Ema;
+                //candleData.Ema8 = emaList8[index].Ema;
+                //candleData.Ema20 = emaList20[index].Ema;
                 candleData.Ema26 = emaList26[index].Ema;
                 //candleData.Ema100 = emaList100[index].Ema;
                 //candleData.Ema200 = emaList200[index].Ema;
@@ -371,17 +358,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 #endif
 
 #if DEBUG
-                // ATR + ADX (foundation for the trend filter / regime detection).
-                candleData.Atr = atrList[index].Atr;
-                candleData.Adx = adxList[index].Adx;
-                candleData.AdxPdi = adxList[index].Pdi;
-                candleData.AdxMdi = adxList[index].Mdi;
-#endif
-
-#if DEBUG
-                candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
-                candleData.KeltnerCenterLine = keltnerList[index].Centerline;
-                candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
+                //candleData.KeltnerUpperBand = keltnerList[index].UpperBand;
+                //candleData.KeltnerCenterLine = keltnerList[index].Centerline;
+                //candleData.KeltnerLowerBand = keltnerList[index].LowerBand;
 #endif
 
 
@@ -426,7 +405,6 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                     CandleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList,
                 };
                 indicatorData.Data.Add(candle.OpenTime, candleData);
-                //candle.CandleData = candleData; // deprecated, but for now..
             }
             catch (Exception error)
             {
@@ -443,16 +421,17 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         }
 
 
-        //// I use the lux indicator frequently and combine its results in a single value
-        //CryptoCandle? lastCandle = history[^1];
-        //LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought, CryptoIntervalPeriod.interval5m, lastCandle!.OpenTime + interval.Duration);
+        // I use the lux indicator frequently and combine its results in a single value
+        CryptoCandle? lastCandle = history[^1];
+        LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
+            CryptoIntervalPeriod.interval5m, indicatorData!.LastCandle.OpenTime + 5); //interval.Duration
 
-        //int luxValue = 0;
-        //if (luxOverBought > 0)
-        //    luxValue += luxOverBought;
-        //if (luxOverSold > 0)
-        //    luxValue -= luxOverSold;
-        //lastCandle!.CandleData!.Lux5mValue = luxValue;
+        int luxValue = 0;
+        if (luxOverBought > 0)
+            luxValue += luxOverBought;
+        if (luxOverSold > 0)
+            luxValue -= luxOverSold;
+        indicatorData!.LastCandleData.Lux5mValue = (short)luxValue;
         return indicatorData;
     }
 }
