@@ -16,7 +16,7 @@ public class CryptoSymbolData
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
     // BOS/CHoCH trend data (Break of Structure / Change of Character)
-    public CryptoTrendData TrendBos = new();
+    //public CryptoTrendData TrendBos = new();
 
 
     /// <summary>
@@ -88,7 +88,7 @@ public class CryptoSymbolData
     {
         TrendPrimary.Reset();
         TrendSecondary.Reset();
-        TrendBos.Reset();
+        //TrendBos.Reset();
     }
 
 }
