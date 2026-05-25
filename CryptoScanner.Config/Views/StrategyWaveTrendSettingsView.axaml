@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="320"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:StrategyWaveTrendSettingsViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyWaveTrendSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- WT periods (Channel n1, Average n2) -->
+            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Channel / Average:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding ChannelLength, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding AverageLength, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- OS / OB deep levels -->
+            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="OS / OB level:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding OsLevel, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding ObLevel, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- OS / OB recovery level (cross trigger) -->
+            <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Recovery level:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding OsRecoveryLevel, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         Margin="0,0,8,0"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding ObRecoveryLevel, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Lookback bars -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Lookback bars:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding LookbackBars, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Min bars beyond OS/OB -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Min bars beyond OS/OB:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding MinBarsBeyondOsOb, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Trend filter -->
+            <CheckBox IsChecked="{Binding RequireTrendFilter, Mode=TwoWay}"
+                      Content="Require trend filter (close vs SMA200)"
+                      FontSize="12"/>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>
