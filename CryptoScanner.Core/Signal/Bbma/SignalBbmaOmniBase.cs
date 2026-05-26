@@ -1,3 +1,5 @@
+using CryptoScanner.Core.Model;
+
 #if DEBUG
 namespace CryptoScanner.Core.Signal.Bbma;
 
@@ -15,17 +17,67 @@ namespace CryptoScanner.Core.Signal.Bbma;
 ///   - CSAA                : WMA zone above/below mid, candle pulls back through WMA zone.
 ///   - CrossEMA50mBB (Cross): BB-mid or EMA50 crossover confirmed by the other level.
 ///   - Reentry (AllBBMA version): pullback to WMA zone, close correct side of mid.
-///   - MHV stateless approx (MLV): wick rejection with WMA still inside band.
+///   - TPW                 : first WMA-zone touch after an Extreme (state-machine approximated
+///                           via backward scan; no persistent counter needed).
+///   - MHV                 : fractal pivot confirmed at i-1 once bar i is known; requires a
+///                           (cursor, next) two-parameter call — see IsMhvBuy / IsMhvSell.
+///   - RejectedEMA50       : EMA50 wick rejection filtered by ATR body size + trend context.
+///   - GAPBBtoEMA50        : EMA50 outside BB in last 4 bars, price returns inside.
 ///
-/// Not ported from OmniView:
-///   - TPW    : requires persistent state between bars (tpwbuy/tpwsell flags).
-///   - MHV-as-fractal : the fractal pivot is plotted at i-1 once i is known;
-///                      we approximate MLV statelessly.
-///   - RejectedEMA50  : needs ATR + BarsSince helpers (complex, deferred).
-///   - GAPBBtoEMA50   : needs EMA50 + 3-bar lookback (deferred).
+/// TPW state machine — forward-pass cache (see BuildTpwCache in Long/Short subclasses):
+///   A Dictionary&lt;CandleTime, OmniBarState&gt; is built oldest→newest before any GetOmniState
+///   calls, matching the MQ5 tpwbuy/tpwsell integer counters exactly.
+///   IsTpw / IsTpwBuyPhaseActive / IsTpwSellPhaseActive use this cache first; they fall back
+///   to the backward-scan approximation only for HTF candles (CheckHtf) whose open times are
+///   not in the LTF cache.
 /// </summary>
 public class SignalBbmaOmniBase : SignalBbmaBase
 {
+    // -----------------------------------------------------------------------
+    // Forward-pass TPW state machine cache
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Per-bar state produced by BuildTpwCache, matching MQ5 tpwbuy/tpwsell integer counters.
+    /// Long subclass populates TpwBuyCount / IsTpwBuyFired.
+    /// Short subclass populates TpwSellCount / IsTpwSellFired.
+    /// </summary>
+    public struct OmniBarState
+    {
+        /// <summary>
+        /// Buy-side counter after processing this bar:
+        ///   0 = inactive, 1 = armed (Extreme Buy on prev bar),
+        ///   2 = TPW fired (WMA-high zone touched while armed).
+        /// Resets to 0 when high[i-1] &gt; UpperBand[i-1] while &ge;2 (MQ5 line 898).
+        /// Also resets to 0 when Sell Extreme fires on prev bar (cross-reset).
+        /// </summary>
+        public int TpwBuyCount;
+
+        /// <summary>True iff tpwbuy transitioned 1→2 on THIS bar (TPW Buy signal drawn here).</summary>
+        public bool IsTpwBuyFired;
+
+        /// <summary>
+        /// Sell-side counter after processing this bar:
+        ///   0 = inactive, 1 = armed, 2 = TPW fired.
+        /// (The MQ5 sell reset on low[i-1] &lt; LowerBand[i-1] is commented-out in the source.)
+        /// </summary>
+        public int TpwSellCount;
+
+        /// <summary>True iff tpwsell transitioned 1→2 on THIS bar (TPW Sell signal drawn here).</summary>
+        public bool IsTpwSellFired;
+    }
+
+    /// <summary>
+    /// Per-bar TPW state cache keyed by candle open time.
+    /// Built by BuildTpwCache in each Long/Short subclass before any GetOmniState calls.
+    /// </summary>
+    protected Dictionary<CandleTime, OmniBarState> TpwStateCache { get; } = [];
+
+
+    // -----------------------------------------------------------------------
+    // OmniState enum and helpers
+    // -----------------------------------------------------------------------
+
     /// <summary>
     /// BBMA Omni state — separate from <see cref="BbmaState"/> on purpose so the Omni port
     /// can evolve independently from the Pine-aligned SignalBbma classes.
@@ -33,14 +85,17 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     public enum OmniState
     {
         None,
-        Extreme,  // ext_buy / ext_sell      : WMA poke outside BB + wick rejection
-        Csd,      // csak_buy / csak_sell     : single- or two-bar BB-mid cross + beyond WMA5/10
-        Csak2,    // csak2_buy / csak2_sell   : continuation — both open & close beyond mid/WMA, not at outer band
-        Csm,      // mmt_buy / mmt_sell       : close beyond outer BB (gated: no Extreme on same bar)
-        Csaa,     // csaa_buy / csaa_sell     : WMA zone above/below mid, candle pulls back through WMA zone
-        Cross,    // CrossEMA50mBB buy/sell   : BB-mid or EMA50 cross confirmed by the other level
-        Mlv,      // MHV stateless approx     : wick rejection at outer BB with WMA still inside band
-        Reentry,  // ret_buy / ret_sell        : pullback to WMA zone, close correct side of mid
+        Extreme,       // ext_buy / ext_sell        : WMA poke outside BB + wick rejection
+        Csd,           // csak_buy / csak_sell       : single- or two-bar BB-mid cross + beyond WMA5/10
+        Csak2,         // csak2_buy / csak2_sell     : continuation — both open & close beyond mid/WMA, not at outer band
+        Csm,           // mmt_buy / mmt_sell         : close beyond outer BB (gated: no Extreme on same bar)
+        Csaa,          // csaa_buy / csaa_sell       : WMA zone above/below mid, candle pulls back through WMA zone
+        Cross,         // CrossEMA50mBB buy/sell     : BB-mid or EMA50 cross confirmed by the other level
+        Tpw,           // tpw_buy / tpw_sell         : first WMA-zone touch after an Extreme
+        Mhv,           // MHV_buy / MHV_sell         : fractal pivot in TPW phase (low[i-1] < mid, confirmed by i)
+        RejectedEma50, // rejectedEMA50_buy/sell     : EMA50 wick rejection with ATR body filter + trend context
+        GapBbEma50,    // GAPBBtoEMA50_buy/sell      : EMA50 outside BB in last 4 bars, price returns inside
+        Reentry,       // ret_buy / ret_sell          : pullback to WMA zone, close correct side of mid
     }
 
     /// <summary>
@@ -50,13 +105,91 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// </summary>
     internal static string OmniStateCode(OmniState state) => state switch
     {
-        OmniState.Extreme  => "E",
-        OmniState.Mlv      => "M",
-        OmniState.Reentry  => "R",
-        OmniState.Csak2    => "2",
-        OmniState.Csaa     => "A",
-        OmniState.Cross    => "X",
-        _                  => "-"   // Csd, Csm → "-": they are HTF setup states, not code-match components
+        OmniState.Extreme => "E",
+        OmniState.Tpw => "T",
+        OmniState.Mhv => "H",
+        OmniState.RejectedEma50 => "J",
+        OmniState.GapBbEma50 => "G",
+        OmniState.Reentry => "R",
+        OmniState.Csak2 => "2",
+        OmniState.Csaa => "A",
+        OmniState.Cross => "X",
+        _ => "-"   // Csd, Csm → "-": HTF setup states, not code-match components
     };
+
+
+    // -----------------------------------------------------------------------
+    // Shared helper methods (used by both Long and Short subclasses)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// OmniView BarsSinceBigBody (lines 1009-1020).
+    /// Walks backward from the bar BEFORE <paramref name="from"/>, counting candles until a
+    /// "big body" is found (|close-open| &gt; 0.5 * ATR14). Returns the zero-based distance
+    /// (0 = the immediately preceding bar is already a big body). Returns 9999 when ATR14 is
+    /// unavailable or the limit is reached without finding one.
+    /// </summary>
+    protected int BarsSinceBigBody(MyData from, int limit)
+    {
+        int count = 0;
+        MyData? cursor = from;
+        while (count < limit)
+        {
+            if (!GetPrevCandle(cursor, out cursor) || cursor == null)
+                return 9999;
+
+            double? atr = cursor.CandleData!.Atr14;
+            if (atr == null || atr.Value == 0)
+                return 9999;
+
+            double body = Math.Abs((double)(cursor.Candle.Close - cursor.Candle.Open));
+            if (body > 0.5 * atr.Value)
+                return count;
+
+            count++;
+        }
+        return 9999;
+    }
+
+
+    /// <summary>
+    /// OmniView BarsSinceTrend (lines 1026-1040).
+    /// Walks backward from the bar BEFORE <paramref name="from"/>, counting candles until the
+    /// two-bar trend condition is satisfied. When <paramref name="isDown"/> is true the condition
+    /// is high[j] &lt; ema50[j] AND high[j-1] &lt; ema50[j-1] (downtrend); otherwise it is
+    /// low[j] &gt; ema50[j] AND low[j-1] &gt; ema50[j-1] (uptrend).
+    /// Returns 9999 when the limit is reached or EMA50 data is unavailable.
+    /// </summary>
+    protected int BarsSinceTrend(MyData from, bool isDown, int limit)
+    {
+        int count = 0;
+        MyData? j = from;
+        while (count < limit)
+        {
+            if (!GetPrevCandle(j, out j) || j == null)
+                return 9999;
+            if (j.CandleData!.Ema50 == null)
+                return 9999;
+
+            // We need j-1 for the two-bar condition
+            if (!GetPrevCandle(j, out MyData? jPrev) || jPrev == null)
+                return 9999;
+            if (jPrev.CandleData!.Ema50 == null)
+                return 9999;
+
+            double ema50J = j.CandleData!.Ema50.Value;
+            double ema50JPrev = jPrev.CandleData!.Ema50.Value;
+
+            bool cond = isDown
+                ? ((double)j.Candle.High < ema50J && (double)jPrev.Candle.High < ema50JPrev)
+                : ((double)j.Candle.Low > ema50J && (double)jPrev.Candle.Low > ema50JPrev);
+
+            if (cond)
+                return count;
+
+            count++;
+        }
+        return 9999;
+    }
 }
 #endif
