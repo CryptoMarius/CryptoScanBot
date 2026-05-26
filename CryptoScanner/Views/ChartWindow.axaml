@@ -112,10 +112,10 @@
 
 				<!-- Action Buttons -->
 				<StackPanel Spacing="4">
-					<Button Content="Refresh" Command="{Binding RefreshCommand}" HorizontalAlignment="Left"/>
+					<Button Content="Refresh" Command="{Binding RefreshCommand}" HorizontalAlignment="Center"/>
 					<Button Content="Calculate"  Command="{Binding CalculateCommand}" HorizontalAlignment="Center"/>
 					<!-- Open Trading App -->
-					<Button Content="Trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Right"/>
+					<Button Content="Trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Center"/>
 					<!-- not working, turned off -->
 					<Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
 				</StackPanel>
