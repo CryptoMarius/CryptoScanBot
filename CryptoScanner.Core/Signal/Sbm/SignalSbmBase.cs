@@ -84,14 +84,16 @@ public class SignalSbmBase : SignalCreateBase
         switch (SignalSide)
         {
             case Enums.CryptoTradeSide.Long:
-                if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand || Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
+                if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand ||
+                    Symbol.LastPrice > (decimal?)CandleLast?.CandleData?.BollingerBandsUpperBand)
                 {
                     ExtraText = "Close of LastPrice above bb.upper";
                     return true;
                 }
                 break;
             case Enums.CryptoTradeSide.Short:
-                if (CandleLast!.Candle.Close < (decimal)CandleLast!.CandleData?.BollingerBandsLowerBand! || Symbol.LastPrice < (decimal)CandleLast.CandleData?.BollingerBandsLowerBand!)
+                if (CandleLast!.Candle.Close < (decimal)CandleLast!.CandleData?.BollingerBandsLowerBand! ||
+                    Symbol.LastPrice < (decimal)CandleLast.CandleData?.BollingerBandsLowerBand!)
                 {
                     ExtraText = "Close of LastPrice below bb.lower";
                     return true;
