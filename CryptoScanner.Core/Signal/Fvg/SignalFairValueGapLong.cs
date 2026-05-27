@@ -29,7 +29,11 @@ public class SignalFairValueGapLong : SignalCreateBase
 
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime)
                     {
-                        if (CandleLast.Candle.High < zone.Bottom) // Close without notifications..
+                        // Zone is invalid when the 1m candle is entirely below the zone bottom
+                        // (high < bottom means price has moved completely away from the zone).
+                        // A mere touch or wick into the zone keeps it open so the combined
+                        // Stobb+FVG / StoRsi+FVG signals can still find it at their interval close.
+                        if (CandleLast.Candle.High < zone.Bottom)
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
@@ -45,11 +49,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                                 decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
                                 ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                             }
-
-                            // Close if the candle touched the zone..
-                            zone.CloseTime = CandleLast.Candle.OpenTime;
-                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
+                            // Zone stays open — removed only when candle is entirely below zone.Bottom.
                         }
                     }
 

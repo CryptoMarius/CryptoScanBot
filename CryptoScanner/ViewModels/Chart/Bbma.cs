@@ -276,12 +276,13 @@ public class Bbma
 
 
 #if DEBUG
-        // Pass maxDate so CollectCandles builds a history window ending at the last visible candle,
-        // ensuring TryGetCandle hits for every candle in the minDate..maxDate range.
+        // Build indicator data ending at maxDate.
+        // Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
+        // fully warmed up for every displayed candle. Without the extra history, SMA200 is null
+        // for all displayed bars and the Sma200==null warmup gate skips all state calculations.
         CryptoIndicatorDataList indicatorDataList = [];
         int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
-        // TODO: Indicators are still not always properly calculated, why???????????
-        indicatorDataList.PrepareIndicators(symbol, interval, maxDate, count);
+        indicatorDataList.PrepareIndicators(symbol, interval, maxDate, count + 200);
 
         // Build OmniView classifiers for this symbol/interval.
         // GetPrevCandle uses IndicatorData (the base-interval CryptoIndicatorData) to walk back
@@ -291,10 +292,11 @@ public class Bbma
         SignalBbmaOmniShort? shortClassifier = null;
 
         if (indicatorDataList.TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData)
-            && indicatorData != null
-            && indicatorData.TryGetCandle(maxDate, out MyData? seedCandle)
-            && seedCandle != null)
+            && indicatorData != null)
         {
+            // Use the last calculated candle as the classifier seed (always valid).
+            MyData seedCandle = new() { Candle = indicatorData.LastCandle, CandleData = indicatorData.LastCandleData };
+
             longClassifier = new SignalBbmaOmniLong
             {
                 Symbol = symbol,
@@ -317,6 +319,11 @@ public class Bbma
                 IndicatorData = indicatorData,
                 IndicatorDataList = indicatorDataList,
             };
+
+            // Build the forward-pass TPW caches (matches MQ5 tpwbuy/tpwsell exactly).
+            // Both classifiers are available here, so cross-reset delegates are wired.
+            longClassifier.BuildTpwCache(indicatorData, d => shortClassifier.IsExtremeSellBar(d));
+            shortClassifier.BuildTpwCache(indicatorData, d => longClassifier.IsExtremeBuyBar(d));
         }
 
         if (longClassifier != null && shortClassifier != null)

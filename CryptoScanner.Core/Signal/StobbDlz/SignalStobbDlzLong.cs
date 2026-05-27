@@ -22,10 +22,11 @@ public class SignalStobbDlzLong : SignalStobbLong
     {
         ExtraText = "";
 
-        // Cheap gate first: skip candles where price is not inside any DLZ zone.
-        if (!this.IsInsideDlzZone(out string zoneInfo))
+        // Cheap gate first: skip candles that did not produce a rejection wick on any DLZ zone.
+        // See ZoneProximityHelper.WasRejectedAtDlzZone for the test+close-back-outside criteria.
+        if (!this.WasRejectedAtDlzZone(out string zoneInfo))
         {
-            ExtraText = "not inside dlz zone";
+            ExtraText = "no dlz rejection";
             return false;
         }
 

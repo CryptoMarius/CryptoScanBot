@@ -26,10 +26,11 @@ public class SignalStoRsiDlzLong : SignalStoRsiLong
         if (!base.IsSignal())
             return false;
 
-        // Cheap gate first: skip candles where price is not inside any DLZ zone.
-        if (!this.IsInsideDlzZone(out string zoneInfo))
+        // Require a rejection wick off the DLZ zone, not just "price inside". See
+        // ZoneProximityHelper.WasRejectedAtDlzZone for the test+close-back-outside criteria.
+        if (!this.WasRejectedAtDlzZone(out string zoneInfo))
         {
-            ExtraText = "not inside dlz zone";
+            ExtraText = "no dlz rejection";
             return false;
         }
 

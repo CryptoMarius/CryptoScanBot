@@ -16,9 +16,11 @@ public class SignalStobbFvgShort : SignalStobbShort
         if (!base.IsSignal())
             return false;
 
-        if (!this.IsInsideFvgZone(out string zoneInfo))
+        // Require a rejection wick off the FVG zone, not just "price inside". See
+        // ZoneProximityHelper.WasRejectedAtFvgZone for the test+close-back-outside criteria.
+        if (!this.WasRejectedAtFvgZone(out string zoneInfo))
         {
-            ExtraText = "not inside fvg zone";
+            ExtraText = "no fvg rejection";
             return false;
         }
 

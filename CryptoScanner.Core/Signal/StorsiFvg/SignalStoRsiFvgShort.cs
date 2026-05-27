@@ -13,9 +13,10 @@ public class SignalStoRsiFvgShort : SignalStoRsiShort
     {
         ExtraText = "";
 
-        if (!this.IsInsideFvgZone(out string zoneInfo))
+        // Require a rejection wick off the FVG zone, not just "price inside".
+        if (!this.WasRejectedAtFvgZone(out string zoneInfo))
         {
-            ExtraText = "not inside fvg zone";
+            ExtraText = "no fvg rejection";
             return false;
         }
 

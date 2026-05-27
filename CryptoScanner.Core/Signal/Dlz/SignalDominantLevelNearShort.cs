@@ -33,7 +33,10 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                     var zone = shortOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
-                        // Close old invalid zone without notifications..
+                        // Zone is invalid when the 1m candle is entirely above the zone top
+                        // (low >= top means price has moved completely away from the zone).
+                        // A mere touch or wick into the zone keeps it open so the combined
+                        // Stobb+DLZ / StoRsi+DLZ signals can still find it at their interval close.
                         if (CandleLast.Candle.Low >= zone.Top)
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
@@ -64,28 +67,16 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                             }
 
 
-                            // Close if the candle touched the zone..
-                            if (CandleLast.Candle.High >= zone.Bottom)
-                            {
-                                zone.CloseTime = CandleLast.Candle.OpenTime;
-                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
-                            }
-
-
                             // Show the distance to the next available zone (for the symbol grid)
-                            if (zone.CloseTime == null)
+                            if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
                             {
-                                if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
-                                {
-                                    // nothing
-                                }
-                                else
-                                {
-                                    decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
-                                    if (dist < distance)
-                                        distance = dist;
-                                }
+                                // nothing
+                            }
+                            else
+                            {
+                                decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
+                                if (dist < distance)
+                                    distance = dist;
                             }
                         }
                     }

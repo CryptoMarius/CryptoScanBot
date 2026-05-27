@@ -139,19 +139,20 @@ public class SignalPrepare
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    //CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
+                    CryptoSymbolInterval symbolInterval = symbol.Data.Get(interval.IntervalPeriod);
 
                     // Scan for new zones if candle is outside of the previous primary trend
-                    //decimal valueLow = lastCandle1m.GetLowValue(false);
-                    //decimal valueHigh = lastCandle1m.GetHighValue(false);
-                    //if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
-                    //   symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
-                    //{
-                    //    // avoid duplicate calculation (kind of a weak attemp)
-                    //    symbolInterval.DlzAdmin.LastSwingLow = valueLow;
-                    //    symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
+                    decimal valueLow = lastCandle1m.GetLowValue(false);
+                    decimal valueHigh = lastCandle1m.GetHighValue(false);
+                    if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
+                       symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
+                    {
+                        // avoid duplicate calculation (kind of a weak attemp)
+                        symbolInterval.DlzAdmin.LastSwingLow = valueLow;
+                        symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;
+                        // TODO: This is not 100% correct...
                         GlobalData.ThreadZoneCalculate?.AddToQueue(symbol, interval);
-                    //}
+                    }
                 }
             }
         }

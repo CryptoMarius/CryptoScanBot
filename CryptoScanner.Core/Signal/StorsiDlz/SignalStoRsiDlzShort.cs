@@ -16,9 +16,10 @@ public class SignalStoRsiDlzShort : SignalStoRsiShort
         if (!base.IsSignal())
             return false;
 
-        if (!this.IsInsideDlzZone(out string zoneInfo))
+        // Require a rejection wick off the DLZ zone, not just "price inside".
+        if (!this.WasRejectedAtDlzZone(out string zoneInfo))
         {
-            ExtraText = "not inside dlz zone";
+            ExtraText = "no dlz rejection";
             return false;
         }
 

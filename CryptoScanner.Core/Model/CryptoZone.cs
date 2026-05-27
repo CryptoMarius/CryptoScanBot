@@ -39,6 +39,19 @@ public class CryptoZone
 
     public bool IsValid { get; set; }
 
+    // Number of times a candle has wicked into this zone without breaking the body through it.
+    // Recomputed from scratch on every CalculateZonesAsync cycle (no DB persistence needed) and
+    // incremented incrementally by realtime invalidation in ZoneFvg.ScanForNew. Used together
+    // with MaxTouches to disqualify a zone once its liquidity is considered depleted
+    // (supply/demand-school: 0=fresh, 1=tested, 2=weakening, 3+=avoid).
+    [Computed]
+    public int TouchCount { get; set; }
+
+    // True once price has reached the 50% midpoint of the zone (ICT Consequent Encroachment).
+    // Combined signals can optionally disqualify mitigated zones via DisqualifyOnMitigation.
+    [Computed]
+    public bool IsMitigated { get; set; }
+
     public string ZoneText(string action)
     {
         return $"{Symbol.Name} {action} zone #{Id} {Kind} {Side} " +
