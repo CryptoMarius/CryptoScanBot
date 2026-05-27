@@ -124,10 +124,55 @@ public class ZoneFvg
                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                 }
             }
+
+            // Realtime invalidation: apply the just-closed candle to all open zones so that
+            // TouchCount, IsMitigated and CloseTime stay current between full recalc cycles.
+            // Without this the live LongOpen/ShortOpen lists would keep showing zones that
+            // have already been wicked or even body-broken, producing stale entry signals.
+            var symbolDataIntervalForInvalidate = symbol.Data.Get(interval.IntervalPeriod);
+            int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
+
+            InvalidateRealtime(symbolDataIntervalForInvalidate.FvgZones.LongOpen,
+                symbolDataIntervalForInvalidate.FvgZones.LongClosed,
+                candle, interval, maxTouches);
+            InvalidateRealtime(symbolDataIntervalForInvalidate.FvgZones.ShortOpen,
+                symbolDataIntervalForInvalidate.FvgZones.ShortClosed,
+                candle, interval, maxTouches);
         }
         finally
         {
             symbol.Data.ZoneLock.Release();
+        }
+    }
+
+
+    /// <summary>
+    /// Apply <see cref="ZoneInvalidation.ApplyToCandle"/> to every open zone for a single
+    /// just-closed candle. Zones that close are moved from <paramref name="openZones"/> to
+    /// <paramref name="closedZones"/> and queued for DB persistence.
+    /// </summary>
+    private static void InvalidateRealtime(OrderedList<CryptoZone> openZones,
+        OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval, int maxTouches)
+    {
+        if (openZones.Count == 0)
+            return;
+
+        // Iterate from the back so removals don't shift the items we still have to visit.
+        for (int i = openZones.Count - 1; i >= 0; i--)
+        {
+            var zone = openZones[i];
+            bool wasOpen = zone.CloseTime == null;
+            ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches);
+
+            if (wasOpen && zone.CloseTime != null)
+            {
+                openZones.RemoveAt(i);
+                closedZones.Add(zone);
+                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+            }
+            // TouchCount/IsMitigated are in-memory only (Computed in the DB schema). They are
+            // rebuilt deterministically by CalculateZonesAsync from candle history, so no DB
+            // persistence is needed for them between recalc cycles.
         }
     }
 
@@ -139,6 +184,7 @@ public class ZoneFvg
         if (count == 0)
             return;
 
+        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
         int index = 0;
         //if (count > 10)
         //{
@@ -176,21 +222,10 @@ public class ZoneFvg
             if (candle.Low > zone.Top)
                 break;
 
-            if (zone.CloseTime == null && candle.OpenTime >= zone.OpenTime) // emulator..
-            {
-                if (candle.High < zone.Bottom) // situation (C candle completely below zone) close without notifications..
-                {
-                    zone.CloseTime = candle.OpenTime + symbolIntervalData.Interval.Duration;
-                    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} Closed old zone {zone.Id} {zone.Side} {zone.Description}");
-                }
-                else if (candle.Low <= zone.Top) // situation (B candle sticks into zone) Close it
-                {
-                    zone.CloseTime = candle.OpenTime + symbolIntervalData.Interval.Duration;
-                    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-                }
-            }
+            // Loosened invalidation: only a body-close through the floor truly breaks a zone.
+            // Wicks into the zone are TESTS (TouchCount++) until MaxTouches exhausts it.
+            // See ZoneInvalidation for the rationale (supply/demand & ICT theory).
+            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, maxTouches);
 
             //if (zone.CloseTime != null) // remove all closed oldZones
             //{
@@ -212,6 +247,7 @@ public class ZoneFvg
         if (count == 0)
             return;
 
+        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
         int index = 0;
         //if (count > 10)
         //{
@@ -249,21 +285,9 @@ public class ZoneFvg
             if (candle.High < zone.Bottom)
                 break;
 
-            if (zone.CloseTime == null && candle.OpenTime >= zone.OpenTime)
-            {
-                if (candle.Low > zone.Top) // situation (C candle completely above zone) close without notifications..
-                {
-                    zone.CloseTime = candle.OpenTime + symbolIntervalData.Interval.Duration;
-                    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} Closed old fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-                }
-                else if (candle.High >= zone.Bottom) // situation (B candle sticks into zone) Close it
-                {
-                    zone.CloseTime = candle.OpenTime + symbolIntervalData.Interval.Duration;
-                    //GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                    //GlobalData.AddTextToLogTab($"{symbol.Name} Closed fvg zone #{zone.Id} {zone.Side} {zone.Description}");
-                }
-            }
+            // Loosened invalidation: only a body-close through the ceiling truly breaks a zone.
+            // Wicks into the zone are TESTS (TouchCount++) until MaxTouches exhausts it.
+            ZoneInvalidation.ApplyToCandle(zone, candle, symbolIntervalData.Interval, maxTouches);
 
             //if (zone.CloseTime != null) // remove all closed oldZones
             //{

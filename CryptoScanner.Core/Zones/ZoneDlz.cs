@@ -510,6 +510,11 @@ public class ZoneDlz
 
         if (startTime != null && candleList.Count > 0)
         {
+            // Loosened invalidation: a wick into the zone counts as a test (TouchCount++),
+            // only a body-close through the far side or reaching MaxTouches closes the zone.
+            // See ZoneInvalidation for the theoretical background.
+            int maxTouches = GlobalData.Settings.Signal.ZonesDlz.MaxTouches;
+
             CandleTime loop = startTime.Value;
             CandleTime loopEnd = candleList.Keys.Last();
 
@@ -517,7 +522,7 @@ public class ZoneDlz
             {
                 if (candleList.TryGetValue(loop, out CryptoCandle candle))
                 {
-                    List<CryptoZone> touched = [];
+                    List<CryptoZone> closed = [];
                     //CheckBrokenZones(zones, candle, touched);
 
                     // LongOpen sorted descending by Top. Stop as soon as candle.Low >= zone.Top
@@ -533,7 +538,11 @@ public class ZoneDlz
                                 //    touched.Add(zone);
                                 //if (candle.Low < zone.Top)
                                 //    touched.Add(zone);
-                                touched.Add(zone);
+                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
+                                    && zone.CloseTime == candle.OpenTime + interval.Duration)
+                                {
+                                    closed.Add(zone);
+                                }
                             }
                         }
                     }
@@ -553,17 +562,20 @@ public class ZoneDlz
                                 //    touched.Add(zone);
                                 //if (candle.High > zone.Bottom)
                                 //    touched.Add(zone);
-                                touched.Add(zone);
+                                if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
+                                    && zone.CloseTime == candle.OpenTime + interval.Duration)
+                                {
+                                    closed.Add(zone);
+                                }
                             }
                         }
                     }
 
 
-                    // Close and move to closed list; CloseTime is picked up by AddZonesToInternalLists for DB save
-                    foreach (var zone in touched)
+                    // Move newly closed zones to the closed list; CloseTime was set by ApplyToCandle
+                    // and is picked up by AddZonesToInternalLists for DB save.
+                    foreach (var zone in closed)
                     {
-                        zone.CloseTime = candle.OpenTime + interval.Duration;
-
                         if (zone.Side == CryptoTradeSide.Long)
                         {
                             zones.LongOpen.Remove(zone);
@@ -601,11 +613,11 @@ public class ZoneDlz
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
                 CryptoSymbolIntervalZones zones = symbolIntervalData.DlzZones;
 
-                if (symbol.Name == "1000PEPEUSDT")
-                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
-                        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
-                        $"dlz zones long = {zones.LongOpen.Count} " +
-                        $"dlz zones short = {zones.ShortOpen.Count} ");
+                //if (symbol.Name == "1000PEPEUSDT")
+                //    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                //        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                //        $"dlz zones long = {zones.LongOpen.Count} " +
+                //        $"dlz zones short = {zones.ShortOpen.Count} ");
 
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
                 TrendZigZagIndicatorList trendZigZagIndicatorList = [];
@@ -644,15 +656,18 @@ public class ZoneDlz
                 ZoneTools.DeleteRemainingZones(oldZones, statistics);
                 symbolIntervalData.DlzZones = finalZones;
 
-                var count = symbol.GetSymbolInterval(interval).CandleList.Count;
-                GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
-                    $"mindate = {minDate.ToLocalTime():yyyy-MM-dd HH:mm}, " +
-                    $"maxdate = {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
-                    $"Candles = {count}," +
-                    $"Zones calculated ({trend.TrendType}, {trend.UseHighLow}), " +
-                    $"inserted={statistics.Inserted} " +
-                    $"modified={statistics.Modified} deleted={statistics.Deleted} " +
-                    $"untouched={statistics.Untouched} total={statistics.Total}");
+                if (statistics.Untouched != statistics.Total)
+                {
+                    var count = symbol.GetSymbolInterval(interval).CandleList.Count;
+                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                        $"mindate = {minDate.ToLocalTime():yyyy-MM-dd HH:mm}, " +
+                        $"maxdate = {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                        $"Candles = {count}," +
+                        $"Zones calculated ({trend.TrendType}, {trend.UseHighLow}), " +
+                        $"inserted={statistics.Inserted} " +
+                        $"modified={statistics.Modified} deleted={statistics.Deleted} " +
+                        $"untouched={statistics.Untouched} total={statistics.Total}");
+                }
             }
 
 
