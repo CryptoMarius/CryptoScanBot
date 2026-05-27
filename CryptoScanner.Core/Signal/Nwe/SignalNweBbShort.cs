@@ -18,14 +18,6 @@ namespace CryptoScanner.Core.Signal.Nwe;
 /// </summary>
 public class SignalNweBbShort : SignalNweBbBase
 {
-    public override bool IndicatorsOkay(MyData data)
-    {
-        if (data == null || data.Candle.OpenTime == 0 || data.CandleData == null)
-            return false;
-        if (data.CandleData.Sma20 == null || data.CandleData.BollingerBandsDeviation == null)
-            return false;
-        return true;
-    }
 
     public override bool IsSignal()
     {

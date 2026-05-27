@@ -34,6 +34,19 @@ public abstract class SignalNweBbBase : SignalCreateBase
         }
     }
 
+    public override bool IndicatorsOkay(MyData data)
+    {
+        if (data == null
+           || data.Candle.OpenTime == 0
+           || data.CandleData == null
+           || data.CandleData.Sma20 == null
+           || data.CandleData.BollingerBandsDeviation == null
+           )
+            return false;
+
+        return true;
+    }
+
     /// <summary>
     /// Returns the last <see cref="Lookback"/> bars (oldest-first) with matched
     /// non-repainting NWE and BB values. Returns false when there is insufficient history.
