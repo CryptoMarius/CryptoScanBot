@@ -78,9 +78,62 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     // OmniState enum and helpers
     // -----------------------------------------------------------------------
 
+    // ===========================================================================
+    // BBMA Omni — code translation (OLD BBMA vs NEW Omni) and chart symbol legend
+    // ===========================================================================
+    //
+    // CODE TRANSLATION
+    // ----------------
+    // The OLD SignalBbMaLong/Short whitelist (RRE, REM, REE, RMEE) used different
+    // single-letter codes than this Omni implementation. The most relevant difference
+    // is that MLV/MHV is now 'H' instead of 'M'. MagicExtreme was already merged into
+    // Extreme in the old code (RMEE was matched as "RME" there).
+    //
+    //   OLD code   OLD meaning (HTF / MTF / LTF)                  NEW Omni code
+    //   --------   --------------------------------------------   -------------
+    //   RRE        Reentry / Reentry / Extreme                    RRE  (same)
+    //   REM        Reentry / Extreme / MHV                        REH
+    //   REE        Reentry / Extreme / Extreme                    REE  (same)
+    //   RMEE       Reentry / MHV / Extreme (after merge: RME)     RHE
+    //
+    // OLD letter codes (see SignalBbmaBase.TfStateCode):
+    //   E = Extreme, EE = MagicExtreme (merged into Extreme), M = MLV/MHV, R = Reentry
+    //
+    // NEW Omni letter codes (see OmniStateCode below):
+    //   E = Extreme, T = Tpw, H = Mhv, J = RejectedEma50, G = GapBbEma50,
+    //   R = Reentry, 2 = Csak2, A = Csaa, X = Cross, - = Csd / Csm
+    //
+    // The NEW path has no fixed whitelist — it fires whenever HTF code = 'R' AND
+    // the LTF lookback code is neither '-' nor 'R'. So in addition to the four
+    // old codes you also get setups starting with T / J / G / 2 / A / X at the
+    // LTF position. The "[htfSetup]" text in ExtraText shows the HTF precondition
+    // name (CSD / CSM / TPW / MHV), which is how CSD becomes visible in the
+    // notification text even though it never appears as an LTF code-letter.
+    //
+    //
+    // CHART WINDOW SYMBOL LEGEND  (drawn by CryptoScanner.ViewModels.Chart.Bbma)
+    // -------------------------------------------------------------------------
+    // Convention: COLOR encodes direction (LimeGreen = buy, Red = sell),
+    //             SHAPE encodes which state it is.
+    //
+    //   IMPORTANT states (large markers, just outside the candle body):
+    //     Extreme    → Triangle    (urgency / exhaustion)
+    //     Tpw        → Circle      (first WMA-touch after Extreme)
+    //     Mhv        → Diamond     (fractal pivot inside TPW phase)
+    //     Reentry    → Square      (the actual entry box)
+    //
+    //   INTERMEDIATE states (small semi-transparent gray dots, 1-bar offset):
+    //     Csd, Csak2, Csaa, Csm, Cross, GapBbEma50, RejectedEma50
+    //
+    //   Buy markers sit BELOW the candle, sell markers sit ABOVE — so the
+    //   color + position together always tell direction unambiguously.
+    // ===========================================================================
+
     /// <summary>
     /// BBMA Omni state — separate from <see cref="BbmaState"/> on purpose so the Omni port
     /// can evolve independently from the Pine-aligned SignalBbma classes.
+    /// See the doc-block above this enum for the OLD-vs-NEW code translation table and the
+    /// chart window symbol legend.
     /// </summary>
     public enum OmniState
     {

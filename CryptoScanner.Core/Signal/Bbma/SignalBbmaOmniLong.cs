@@ -548,17 +548,17 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
             return false;
 
         // Need prev and prev2 for the 4-bar EMA50-below-LB check and the 3-bar low-touch check
-        if (!GetPrevCandle(data, out MyData? prev) || prev == null) 
+        if (!GetPrevCandle(data, out MyData? prev) || prev == null)
             return false;
-        if (prev.CandleData!.Ema50 == null) 
+        if (prev.CandleData!.Ema50 == null)
             return false;
-        if (!GetPrevCandle(prev, out MyData? prev2) || prev2 == null) 
+        if (!GetPrevCandle(prev, out MyData? prev2) || prev2 == null)
             return false;
-        if (prev2.CandleData!.Ema50 == null) 
+        if (prev2.CandleData!.Ema50 == null)
             return false;
-        if (!GetPrevCandle(prev2, out MyData? prev3) || prev3 == null) 
+        if (!GetPrevCandle(prev2, out MyData? prev3) || prev3 == null)
             return false;
-        if (prev3.CandleData!.Ema50 == null) 
+        if (prev3.CandleData!.Ema50 == null)
             return false;
 
         decimal lowerBPrev = (decimal)prev.CandleData!.BollingerBandsLowerBand!.Value;
@@ -732,7 +732,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
             if (!GetPrevCandle(candleLtf, out candleLtf) || candleLtf == null)
             {
                 ExtraText = $"insufficient LTF history for lookback ({i} candles checked)";
-                GlobalData.AddTextToLogTab($"{logPrefix} insufficient LTF history after {i} bars");
+                //GlobalData.AddTextToLogTab($"{logPrefix} insufficient LTF history after {i} bars");
                 return false;
             }
 
@@ -755,10 +755,10 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (stateLtfBack == OmniState.None || stateLtfBack == OmniState.Reentry)
         {
             ExtraText = $"LTF no preceding setup found (last: {stateLtfBack})";
-            GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: no setup found (last={stateLtfBack})");
+            //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: no setup found (last={stateLtfBack})");
             return false;
         }
-        GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: found {stateLtfBack}");
+        //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: found {stateLtfBack}");
 
         // --- MTF state at the current candle time ---
         var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
@@ -766,11 +766,11 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
             ExtraText = $"no data for MTF ({resultMtf.higherInterval.Interval.Name})";
-            GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name}): no data (success={resultMtf.success})");
+            //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name}): no data (success={resultMtf.success})");
             return false;
         }
         OmniState stateMtf = GetOmniState(resultMtf.candle);
-        GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name})={stateMtf}");
+        //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name})={stateMtf}");
 
         // --- HTF state at the current candle time ---
         var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
@@ -778,11 +778,11 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {
             ExtraText = $"no data for HTF";
-            GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name}): no data (success={resultHtf.success})");
+            //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name}): no data (success={resultHtf.success})");
             return false;
         }
         OmniState stateHtf = GetOmniState(resultHtf.candle);
-        GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name})={stateHtf}");
+        //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name})={stateHtf}");
 
         // HTF trend filter: EMA50 below mid-BB AND Wma05Low below mid-BB → bullish bias
         double ema50Htf = resultHtf.candle.CandleData!.Ema50!.Value;
@@ -791,7 +791,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (ema50Htf >= midBbHtf || wma05LowHtf >= midBbHtf)
         {
             ExtraText = $"HTF ema50 not below mid-BB — bearish bias";
-            GlobalData.AddTextToLogTab($"{logPrefix} HTF trend filter failed: ema50={ema50Htf:F4} wma05Low={wma05LowHtf:F4} mid={midBbHtf:F4}");
+            //GlobalData.AddTextToLogTab($"{logPrefix} HTF trend filter failed: ema50={ema50Htf:F4} wma05Low={wma05LowHtf:F4} mid={midBbHtf:F4}");
             return false;
         }
 
@@ -799,7 +799,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (stateHtf != OmniState.Reentry)
         {
             ExtraText = $"HTF not in Reentry ({stateHtf})";
-            GlobalData.AddTextToLogTab($"{logPrefix} HTF not Reentry (={stateHtf})");
+            //GlobalData.AddTextToLogTab($"{logPrefix} HTF not Reentry (={stateHtf})");
             return false;
         }
 
@@ -807,10 +807,10 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, out string htfSetup))
         {
             ExtraText = $"HTF no CSM/CSD/TPW/MHV setup";
-            GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: no setup found");
+            //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: no setup found");
             return false;
         }
-        GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: found {htfSetup}");
+        //GlobalData.AddTextToLogTab($"{logPrefix} HTF CheckHtf: found {htfSetup}");
 
         // Code match — order: HTF + MTF + LTF (highest TF first).
         // Rule: HTF must be 'R' (Reentry) and LTF lookback must carry a meaningful preceding
@@ -820,12 +820,12 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         if (code[0] == 'R' && ltfCode != "-" && ltfCode != "R")
         {
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
-            GlobalData.AddTextToLogTab($"{logPrefix} SIGNAL code={code} [{htfSetup}]");
+            //GlobalData.AddTextToLogTab($"{logPrefix} SIGNAL code={code} [{htfSetup}]");
             return true;
         }
 
         ExtraText = $"code {code} not valid ({resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name})";
-        GlobalData.AddTextToLogTab($"{logPrefix} code {code} not valid (ltfCode={ltfCode})");
+        //GlobalData.AddTextToLogTab($"{logPrefix} code {code} not valid (ltfCode={ltfCode})");
         return false;
     }
 }
