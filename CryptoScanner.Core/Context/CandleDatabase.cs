@@ -659,8 +659,10 @@ public class CandleDatabase : IDisposable
     /// <summary>
     /// A pivot zone loaded from the main CryptoDatabase Zone table. Just enough info to
     /// build the candle keep-ranges — full CryptoZone hydration is unnecessary here.
+    /// CloseTime = null means the zone is still open and its zoom-window should run all
+    /// the way up to "now".
     /// </summary>
-    private readonly record struct PivotZone(int IntervalId, CandleTime OpenTime);
+    private readonly record struct PivotZone(int IntervalId, CandleTime OpenTime, CandleTime? CloseTime);
 
     /// <summary>
     /// Returns true when the symbol no longer needs its candles persisted. Mirrors the
@@ -742,7 +744,14 @@ public class CandleDatabase : IDisposable
         List<PivotZone> result = [];
 
         using var cmd = mainConn.CreateCommand();
-        cmd.CommandText = "SELECT IntervalId, CAST(OpenTime AS INTEGER) FROM Zone WHERE SymbolId = $SymbolId";
+        // CASE ... THEN NULL ELSE CAST AS INTEGER preserves NULL CloseTime (= open zone)
+        // while still forcing a numeric value for closed zones (CloseTime is TEXT affinity
+        // but CandleTimeTypeHandler writes integer values).
+        cmd.CommandText =
+            "SELECT IntervalId, " +
+            "       CAST(OpenTime  AS INTEGER), " +
+            "       CASE WHEN CloseTime IS NULL THEN NULL ELSE CAST(CloseTime AS INTEGER) END " +
+            "FROM Zone WHERE SymbolId = $SymbolId";
         var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
 
         using var reader = cmd.ExecuteReader();
@@ -751,8 +760,9 @@ public class CandleDatabase : IDisposable
             int intervalId = reader.GetInt32(0);
             if (reader.IsDBNull(1))
                 continue;
-            uint minutes = (uint)reader.GetInt64(1);
-            result.Add(new PivotZone(intervalId, new CandleTime(minutes)));
+            uint openMinutes = (uint)reader.GetInt64(1);
+            CandleTime? close = reader.IsDBNull(2) ? null : new CandleTime((uint)reader.GetInt64(2));
+            result.Add(new PivotZone(intervalId, new CandleTime(openMinutes), close));
         }
 
         return result;
@@ -761,9 +771,14 @@ public class CandleDatabase : IDisposable
     /// <summary>
     /// Build the keep-ranges per interval Id for one symbol — union of:
     ///   1) standard window per interval ([GetCandleFetchStart, now])
-    ///   2) per pivot zone (loaded from CryptoDatabase) the time-range [OpenTime,
-    ///      OpenTime+Z.Interval.Duration] for the zone interval itself and every interval
-    ///      with smaller-or-equal duration (those are the candles DLZ might zoom into).
+    ///   2) per pivot zone (loaded from CryptoDatabase) the time-range
+    ///      [OpenTime, CloseTime ?? now]  — the zone's "lifetime"
+    ///      for the zone interval itself AND every interval with smaller-or-equal duration.
+    ///
+    /// The full lifetime (not just one zone duration) is what the DLZ zoom-engine needs:
+    /// while a zone is alive the recalc may at any moment re-zoom into the lower-TF series
+    /// between OpenTime and the current price action to re-evaluate touches / mitigation,
+    /// just like the old per-interval .compressed files used to retain.
     /// </summary>
     private static Dictionary<int, List<(CandleTime start, CandleTime end)>> ComputeKeepRanges(
         CryptoSymbol symbol, List<PivotZone> pivots)
@@ -771,23 +786,48 @@ public class CandleDatabase : IDisposable
         Dictionary<int, List<(CandleTime, CandleTime)>> result = [];
         CandleTime now = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
 
-        // 1) Standard window per interval (today's GetCandleFetchStart bound)
+        // 1) Standard window per interval (today's GetCandleFetchStart bound).
+        //    GetCandleFetchStart works at minute precision (align(now, 1m) - 500*Duration),
+        //    but stored candles have OpenTime aligned to interval.Duration. For sub-day
+        //    intervals the difference is negligible, but for 1d the keep-range start can
+        //    sit in the middle of a day while the oldest stored 1d candle is on the day
+        //    boundary just before — it then falls outside the range and gets deleted
+        //    every cleanup pass, only to be re-fetched on the next cycle.
+        //
+        //    Align the start DOWN to the interval boundary so candle timestamps and the
+        //    keep-range boundary live on the same grid, and subtract one extra interval
+        //    of buffer: the exchange typically returns the candle whose period contains
+        //    fetcher startTime (one period before the floored boundary), so without the
+        //    buffer that candle still falls just outside on every midnight rollover.
         foreach (var si in symbol.Data.SymbolIntervalList)
         {
             CandleTime start = CandleTools.GetCandleFetchStart(symbol, si.Interval, DateTime.UtcNow);
+            uint duration = si.Interval.Duration;
+            if (duration > 1)
+            {
+                uint aligned = start.Minutes - (start.Minutes % duration);
+                if (aligned >= duration)
+                    aligned -= duration;
+                start = new CandleTime(aligned);
+            }
             AddRange(result, si.Interval.Id, start, now);
         }
 
-        // 2) Per pivot zone — keep its time-range on the zone interval itself + all
-        //    intervals with smaller-or-equal duration (those are the candles DLZ might
-        //    zoom into during recalc). Open OR closed-but-still-visible zones both count.
+        // 2) Per pivot zone — keep its entire LIFETIME on the zone interval itself + all
+        //    intervals with smaller-or-equal duration. Open zones run until "now"; closed
+        //    zones until their CloseTime. Open OR still-visible-closed zones both count.
         foreach (var pivot in pivots)
         {
             if (!GlobalData.IntervalListId.TryGetValue(pivot.IntervalId, out var zoneInterval))
                 continue;
 
             CandleTime zoneStart = pivot.OpenTime;
-            CandleTime zoneEnd = pivot.OpenTime + zoneInterval.Duration;
+            CandleTime zoneEnd = pivot.CloseTime ?? now;
+
+            // Sanity: if CloseTime is somehow before OpenTime (corrupt row) fall back to
+            // OpenTime+Duration so we still keep at least the zone's own candle.
+            if (zoneEnd.Minutes < zoneStart.Minutes)
+                zoneEnd = pivot.OpenTime + zoneInterval.Duration;
 
             foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
             {
