@@ -377,11 +377,11 @@ public class ZoneFvg
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
                 CryptoSymbolIntervalZones zones = symbolIntervalData.FvgZones;
 
-                if (symbol.Name == "1000PEPEUSDT")
-                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
-                        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
-                        $"fvg zones long = {zones.LongOpen.Count} " +
-                        $"fvg zones short = {zones.ShortOpen.Count} ");
+                //if (symbol.Name == "1000PEPEUSDT")
+                //    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                //        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                //        $"fvg zones long = {zones.LongOpen.Count} " +
+                //        $"fvg zones short = {zones.ShortOpen.Count} ");
 
                 // Index old zones for DB merge (must happen before Reset)
                 DatabaseStatistics statistics = new();

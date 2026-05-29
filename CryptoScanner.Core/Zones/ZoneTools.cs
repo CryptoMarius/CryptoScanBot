@@ -56,8 +56,8 @@ public class ZoneTools
                 {
                     oldZones.Remove((zone.Side, zone.OpenTime, zone.Bottom, zone.Top));
                     dbStats.Untouched++;
-                    if (zone.Symbol.Name == "1000PEPEUSDT")
-                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Reusing")}");
+                    //if (zone.Symbol.Name == "1000PEPEUSDT")
+                    //    GlobalData.AddTextToLogTab($"{zone.ZoneText("Reusing")}");
                     zoneData.Add(zone);
                     continue;
                 }
@@ -78,8 +78,8 @@ public class ZoneTools
             {
                 dbStats.Inserted++;
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                if (zone.Symbol.Name == "1000PEPEUSDT")
-                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Inserted")}");
+                //if (zone.Symbol.Name == "1000PEPEUSDT")
+                //    GlobalData.AddTextToLogTab($"{zone.ZoneText("Inserted")}");
             }
         }
 
@@ -99,8 +99,8 @@ public class ZoneTools
                 zone.Id *= -1;
                 dbStats.Deleted++;
                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                if (zone.Symbol.Name == "1000PEPEUSDT")
-                    GlobalData.AddTextToLogTab($"{zone.ZoneText("Deleting")}");
+                //if (zone.Symbol.Name == "1000PEPEUSDT")
+                //    GlobalData.AddTextToLogTab($"{zone.ZoneText("Deleting")}");
             }
         }
     }
