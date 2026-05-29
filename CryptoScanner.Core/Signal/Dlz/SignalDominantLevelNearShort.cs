@@ -33,62 +33,44 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                     var zone = shortOpen[index];
                     if (CandleLast.Candle.OpenTime >= zone.OpenTime) // emulator..
                     {
-                        // Zone is invalid when the 1m candle is entirely above the zone top
-                        // (low >= top means price has moved completely away from the zone).
-                        // A mere touch or wick into the zone keeps it open so the combined
-                        // Stobb+DLZ / StoRsi+DLZ signals can still find it at their interval close.
-                        if (CandleLast.Candle.Low >= zone.Top)
+                        // ALARM-only: zone closure is delegated to ZoneDlz.CheckAndMarkBrokenZones
+                        // and the realtime ZoneInvalidation path. The signal class only sets
+                        // AlarmDate for proximity alarms.
+                        alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
+                        if (CandleLast.Candle.High >= alarmPrice)
                         {
-                            zone.CloseTime = CandleLast.Candle.OpenTime;
-                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
+                            if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
+                            {
+                                if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                                {
+                                    // nothing
+                                }
+                                else
+                                {
+                                    result = true;
+                                    zone.AlarmDate = CandleLast.Candle.OpenTime;
+                                    GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                                    decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
+                                    ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
+                                }
+                            }
+                        }
+
+
+                        // Show the distance to the next available zone (for the symbol grid)
+                        if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
+                        {
+                            // nothing
                         }
                         else
                         {
-                            // If it is within a certain percentage signal it..
-                            alarmPrice = zone.Bottom * (100 - GlobalData.Settings.Signal.ZonesDlz.WarnPercentage) / 100;
-                            if (CandleLast.Candle.High >= alarmPrice)
-                            {
-                                if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
-                                {
-                                    if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
-                                    {
-                                        // nothing
-                                    }
-                                    else
-                                    {
-                                        result = true;
-                                        zone.AlarmDate = CandleLast.Candle.OpenTime;
-                                        GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                        decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
-                                        ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
-                                    }
-                                }
-                            }
-
-
-                            // Show the distance to the next available zone (for the symbol grid)
-                            if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
-                            {
-                                // nothing
-                            }
-                            else
-                            {
-                                decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
-                                if (dist < distance)
-                                    distance = dist;
-                            }
+                            decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
+                            if (dist < distance)
+                                distance = dist;
                         }
                     }
 
-                    // Remove closed zones
-                    if (zone.CloseTime != null)
-                    {
-                        shortOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed dlz zone")}");
-                    }
-                    else index++;
-
+                    index++;
 
                     // The list is sorted on zone.bottom (ascending) and break if there are no more reachable zones (save some looping time)
                     if (alarmPrice != null && alarmPrice < zone.Bottom)

@@ -14,6 +14,12 @@ public class SignalFairValueGapLong : SignalCreateBase
         CryptoSymbolData symbolData = Symbol.Data;
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
+        // ALARM-only: this method now exclusively handles alarm bookkeeping (zone.AlarmDate).
+        // Zone CLOSURE used to live here too — using the signal's 1m candle to invalidate
+        // higher-TF zones (1h/4h/1d/1w). That was wrong: a 1d zone should only close when
+        // the 1d candle itself breaks through it. Invalidation is now centralised in
+        // ZoneFvg.ScanForNew → InvalidateRealtime (per zone-interval candle close) and the
+        // full ZoneFvg.CalculateZonesAsync recalc, both using ZoneInvalidation.ApplyToCandle.
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
@@ -27,40 +33,23 @@ public class SignalFairValueGapLong : SignalCreateBase
                 {
                     var zone = longOpen[index];
 
-                    if (CandleLast.Candle.OpenTime >= zone.OpenTime)
+                    if (CandleLast.Candle.OpenTime >= zone.OpenTime
+                        && CandleLast.Candle.Low <= zone.Top
+                        && CandleLast.Candle.High >= zone.Bottom)
                     {
-                        // Zone is invalid when the 1m candle is entirely below the zone bottom
-                        // (high < bottom means price has moved completely away from the zone).
-                        // A mere touch or wick into the zone keeps it open so the combined
-                        // Stobb+FVG / StoRsi+FVG signals can still find it at their interval close.
-                        if (CandleLast.Candle.High < zone.Bottom)
+                        // 1m candle is touching the zone (wick inside the range) — fire an
+                        // alarm at most once per hour per zone.
+                        if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                         {
-                            zone.CloseTime = CandleLast.Candle.OpenTime;
+                            result = true;
+                            zone.AlarmDate = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{Symbol.Name} Closed old fvg zone {zone.Id} {zone.Side} {zone.Description}");
-                        }
-                        else if (CandleLast.Candle.Low <= zone.Top)
-                        {
-                            if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
-                            {
-                                result = true;
-                                zone.AlarmDate = CandleLast.Candle.OpenTime;
-                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
-                                ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
-                            }
-                            // Zone stays open — removed only when candle is entirely below zone.Bottom.
+                            decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;
+                            ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         }
                     }
 
-                    // Remove closed zones
-                    if (zone.CloseTime != null)
-                    {
-                        longOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
-                    }
-                    else index++;
-
+                    index++;
 
                     // The list is sorted on zone.top and break if there are no more reachable zones (save some looping time)
                     if (CandleLast.Candle.Low > zone.Top)

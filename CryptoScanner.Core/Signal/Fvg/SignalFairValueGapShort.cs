@@ -14,6 +14,9 @@ public class SignalFairValueGapShort : SignalCreateBase
         CryptoSymbolData symbolData = Symbol.Data;
         //GlobalData.AddTextToLogTab($"{Symbol.Name} Strategy {SignalSide} fvg zones {symbolData.FvgListLong.Count}");
 
+        // ALARM-only: see SignalFairValueGapLong.IsSignal for the rationale. Zone closure
+        // is the responsibility of ZoneFvg.ScanForNew / ZoneFvg.CalculateZonesAsync, not of
+        // this per-1m signal class.
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
         {
             if (GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
@@ -27,40 +30,23 @@ public class SignalFairValueGapShort : SignalCreateBase
                 {
                     var zone = shortOpen[index];
 
-                    if (CandleLast.Candle.OpenTime >= zone.OpenTime)
+                    if (CandleLast.Candle.OpenTime >= zone.OpenTime
+                        && CandleLast.Candle.High >= zone.Bottom
+                        && CandleLast.Candle.Low <= zone.Top)
                     {
-                        // Zone is invalid when the 1m candle is entirely above the zone top
-                        // (low > top means price has moved completely away from the zone).
-                        // A mere touch or wick into the zone keeps it open so the combined
-                        // Stobb+FVG / StoRsi+FVG signals can still find it at their interval close.
-                        if (CandleLast.Candle.Low > zone.Top)
+                        // 1m candle is touching the zone (wick inside the range) — fire an
+                        // alarm at most once per hour per zone.
+                        if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                         {
-                            zone.CloseTime = CandleLast.Candle.OpenTime;
+                            result = true;
+                            zone.AlarmDate = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                            GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed fvg zone")}");
-                        }
-                        else if (CandleLast.Candle.High >= zone.Bottom)
-                        {
-                            if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
-                            {
-                                result = true;
-                                zone.AlarmDate = CandleLast.Candle.OpenTime;
-                                GlobalData.ThreadSaveObjects!.AddToQueue(zone);
-                                decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
-                                ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
-                            }
-                            // Zone stays open — removed only when candle is entirely above zone.Top.
+                            decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;
+                            ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top} ({dist:N2}%)";
                         }
                     }
 
-                    // Remove closed zones
-                    if (zone.CloseTime != null)
-                    {
-                        shortOpen.RemoveAt(index);
-                        GlobalData.AddTextToLogTab($"{zone.ZoneText("Removed fvg zone")}");
-                    }
-                    else index++;
-
+                    index++;
 
                     // The list is sorted on zone.bottom and break if there are no more reachable zones (save some looping time)
                     if (CandleLast.Candle.High < zone.Bottom)
