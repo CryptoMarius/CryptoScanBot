@@ -42,6 +42,7 @@ public class ZoneSession
     // Indicators
     public bool ShowDlzZones { get; set; } = false; // Dominant Liquidity Zones
     public bool ShowFvgZones { get; set; } = false; // Fear Value Gaps
+    public bool ShowSmcZones { get; set; } = false; // SMC Order Blocks (skeleton implementation)
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
     public bool ShowNwe { get; set; } = true; // NWE non repainting?
     public bool ShowNweRepainting { get; set; } = false;
@@ -53,6 +54,7 @@ public class ZoneSession
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;
+    public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
 
     // options

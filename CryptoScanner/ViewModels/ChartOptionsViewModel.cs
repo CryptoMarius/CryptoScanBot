@@ -17,6 +17,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showRsi = false;
 
     [ObservableProperty]
+    private bool _showMacd = false;
+
+    [ObservableProperty]
     private bool _showVolume = false;
 
     [ObservableProperty]
@@ -47,6 +50,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showFvgZones = false;
 
     [ObservableProperty]
+    private bool _showSmcZones = false;
+
+    [ObservableProperty]
     private bool _showDtb = false;
 
     [ObservableProperty]
@@ -70,6 +76,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowBbma = session.ShowBbma;
         ShowStoch = session.ShowStoch;
         ShowRsi = session.ShowRsi;
+        ShowMacd = session.ShowMacd;
         ShowVolume = session.ShowVolume;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNwe = session.ShowNwe;
@@ -80,6 +87,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowKeltnerChannel = session.ShowKeltnerChannel;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
+        ShowSmcZones = session.ShowSmcZones;
         ShowDtb = session.ShowDtb;
         ShowSignals = session.ShowSignals;
         ShowPositions = session.ShowPositions;
@@ -96,6 +104,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowBbma = ShowBbma;
         session.ShowStoch = ShowStoch;
         session.ShowRsi = ShowRsi;
+        session.ShowMacd = ShowMacd;
         session.ShowVolume = ShowVolume;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNwe = ShowNwe;
@@ -106,6 +115,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowKeltnerChannel = ShowKeltnerChannel;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
+        session.ShowSmcZones = ShowSmcZones;
         session.ShowDtb = ShowDtb;
         session.ShowSignals = ShowSignals;
         session.ShowPositions = ShowPositions;

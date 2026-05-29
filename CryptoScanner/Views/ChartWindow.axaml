@@ -96,6 +96,7 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowPositions, Mode=TwoWay}" Content="Positions" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowDlzZones, Mode=TwoWay}" Content="DLZ Zones" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowFvgZones, Mode=TwoWay}" Content="FVG Zones" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSmcZones, Mode=TwoWay}" Content="SMC Zones" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowKeltnerChannel, Mode=TwoWay}" Content="Keltner Channel" FontSize="12"/>
@@ -107,6 +108,7 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
 					</StackPanel>
                 </HeaderedContentControl>

@@ -54,6 +54,8 @@ public partial class ChartWindowViewModel : ObservableObject
     private LineAnnotation? CrossHairY;
     // Second vertical crosshair for the stoch/RSI sub-panel; null when that panel is hidden.
     private LineAnnotation? CrossHairXStoch;
+    // Vertical crosshair for the MACD sub-panel; null when that panel is hidden.
+    private LineAnnotation? CrossHairXMacd;
     // Third vertical crosshair for the volume sub-panel; null when that panel is hidden.
     private LineAnnotation? CrossHairXVolume;
 
@@ -528,32 +530,61 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Adds or removes the indicator sub-panels (Stoch/RSI oscillator and/or Volume) and adjusts
-    /// the price panel height. Each requested panel gets its own Y-axis added to the model;
-    /// disabled panels have their axis (and crosshair) removed entirely. Dynamically
+    /// Adds or removes the indicator sub-panels (Stoch/RSI oscillator, MACD and/or Volume) and
+    /// adjusts the price panel height. Each requested panel gets its own Y-axis added to the
+    /// model; disabled panels have their axis (and crosshair) removed entirely. Dynamically
     /// adding/removing the axes avoids OxyPlot rendering artefacts that occur when an axis is
     /// "collapsed" by setting StartPosition == EndPosition == 0.
     ///
-    /// Layout (StartPosition .. EndPosition, 0 = bottom, 1 = top):
-    ///   neither            → price 0.00..1.00
-    ///   oscillator only    → price 0.22..1.00, stoch  0.00..0.20
-    ///   volume only        → price 0.22..1.00, volume 0.00..0.20
-    ///   both               → price 0.40..1.00, stoch  0.21..0.38, volume 0.00..0.19
+    /// Sub-panels stack from the bottom of the chart upwards in fixed order:
+    ///   volume (bottom) → MACD (middle) → Stoch/RSI (top sub-panel) → price.
+    /// Heights are fixed; positions are computed from which combination is active so that any
+    /// subset still leaves a sensible 1 % gap between sub-panels and a 2 % gap to the price
+    /// panel.
     /// </summary>
-    private void AdjustPanels(bool showOscillator, bool showVolume)
+    private void AdjustPanels(bool showOscillator, bool showMacd, bool showVolume)
     {
         var priceAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "price");
         if (priceAxis == null)
             return;
 
+        // Compute the panel slots from the bottom up. Heights and gaps mirror the previous
+        // hard-coded layout so the visuals stay close to what they were before MACD existed.
+        const double volumeHeight = 0.10;
+        const double macdHeight = 0.14;
+        const double subGap = 0.01; // gap between two sub-panels
+        const double priceGap = 0.02; // gap between the topmost sub-panel and the price panel
+
+        double cursor = 0.0;
+
+        double volStart = 0.0, volEnd = 0.0;
+        if (showVolume)
+        {
+            volStart = cursor;
+            volEnd = cursor + volumeHeight;
+            cursor = volEnd;
+        }
+
+        double macdStart = 0.0, macdEnd = 0.0;
+        if (showMacd)
+        {
+            if (cursor > 0)
+                cursor += subGap;
+            macdStart = cursor;
+            macdEnd = cursor + macdHeight;
+            cursor = macdEnd;
+        }
+
         // ---------- Oscillator (Stoch / RSI) sub-panel ----------
         if (showOscillator)
         {
-            // When both panels are shown, the oscillator sits directly above the (halved)
-            // volume panel: 0.11..0.30. When alone it occupies the full sub-panel slot
-            // 0.00..0.20.
-            double stochStart = showVolume ? 0.11 : 0.00;
-            double stochEnd = showVolume ? 0.30 : 0.20;
+            // When stacked on top of another sub-panel the oscillator shrinks by 1 % to leave
+            // room for the inter-panel gap; when alone it gets the full 0.20 slot.
+            if (cursor > 0)
+                cursor += subGap;
+            double stochStart = cursor;
+            double stochEnd = cursor + (cursor == 0.0 ? 0.20 : 0.19);
+            cursor = stochEnd;
 
             // Add the axis if missing, otherwise just keep its bounds in sync.
             var existingStoch = PlotModel.Axes.FirstOrDefault(a => a.Key == "stoch");
@@ -629,13 +660,79 @@ public partial class ChartWindowViewModel : ObservableObject
             CrossHairXStoch = null;
         }
 
+        // ---------- MACD sub-panel ----------
+        if (showMacd)
+        {
+            var existingMacd = PlotModel.Axes.FirstOrDefault(a => a.Key == "macd");
+            if (existingMacd is LinearAxis macdAxisLinear)
+            {
+                macdAxisLinear.StartPosition = macdStart;
+                macdAxisLinear.EndPosition = macdEnd;
+            }
+            else
+            {
+                PlotModel.Axes.Add(new LinearAxis
+                {
+                    Key = "macd",
+                    Title = "MACD",
+                    Font = Const.OxyFontName,
+                    FontSize = Const.OxyFontSize,
+                    TextColor = OxyColors.White,
+                    Position = AxisPosition.Right,
+                    StartPosition = macdStart,
+                    EndPosition = macdEnd,
+                    // Auto-range: MACD values can be positive or negative and depend on price
+                    // scale (BTC vs DOGE), so we let OxyPlot size the axis to the data.
+                    IsZoomEnabled = false,
+                    IsPanEnabled = false,
+                    TicklineColor = OxyColors.Gray,
+                    TickStyle = OxyPlot.Axes.TickStyle.Inside,
+                    AxislineStyle = LineStyle.Solid,
+                    AxislineColor = OxyColors.Gray,
+                    AxislineThickness = 1,
+                    MajorGridlineStyle = LineStyle.Dot,
+                    MajorGridlineColor = OxyColor.FromAColor(80, OxyColors.Gray),
+                });
+            }
+
+            if (CrossHairXMacd == null)
+            {
+                CrossHairXMacd = new LineAnnotation
+                {
+                    Type = LineAnnotationType.Vertical,
+                    Color = OxyColors.White,
+                    LineStyle = LineStyle.None,
+                    StrokeThickness = 0.5,
+                    YAxisKey = "macd",
+                    Tag = "crosshair",
+                };
+                PlotModel.Annotations.Add(CrossHairXMacd);
+            }
+        }
+        else
+        {
+            // Same defensive cleanup pattern as the stoch/volume branches: orphan every series
+            // and annotation pointing at the "macd" axis before the axis itself goes away.
+            foreach (var s in PlotModel.Series.OfType<LineSeries>().Where(x => x.YAxisKey == "macd").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var s in PlotModel.Series.OfType<RectangleBarSeries>().Where(x => x.YAxisKey == "macd").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var a in PlotModel.Annotations.OfType<LineAnnotation>().Where(x => x.YAxisKey == "macd").ToList())
+                PlotModel.Annotations.Remove(a);
+
+            var macdAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "macd");
+            if (macdAxis != null)
+                PlotModel.Axes.Remove(macdAxis);
+
+            CrossHairXMacd = null;
+        }
+
         // ---------- Volume sub-panel ----------
         if (showVolume)
         {
-            // Always at the very bottom — leaves the oscillator panel directly above it.
+            // Always at the very bottom — leaves the MACD/oscillator panels directly above it.
             // Half the height of the oscillator panel (10 % of the chart instead of 20 %).
-            const double volStart = 0.00;
-            const double volEnd = 0.10;
+            // volStart/volEnd are computed at the top of AdjustPanels.
 
             var existingVol = PlotModel.Axes.FirstOrDefault(a => a.Key == "volume");
             if (existingVol is LinearAxis volAxisLinear)
@@ -657,6 +754,10 @@ public partial class ChartWindowViewModel : ObservableObject
                     EndPosition = volEnd,
                     // Auto-range: volume scale varies wildly per symbol so we let OxyPlot pick.
                     Minimum = 0,
+                    // Trim the default 1 % maximum padding so the tallest bar (almost) touches
+                    // the top of the sub-panel instead of leaving a visibly empty band there.
+                    MinimumPadding = 0,
+                    MaximumPadding = 0,
                     IsZoomEnabled = false,
                     IsPanEnabled = false,
                     // Avoid OxyPlot's default scientific notation ("1E+06"). Format the tick
@@ -709,25 +810,18 @@ public partial class ChartWindowViewModel : ObservableObject
         }
 
         // ---------- Price panel height ----------
-        // Volume = 10 %, oscillator = 20 %. When both are shown the oscillator slides on top
-        // of the volume panel. With volume halved the layouts are:
-        //   neither            → price 0.00..1.00
-        //   oscillator only    → price 0.22..1.00, stoch  0.00..0.20
-        //   volume only        → price 0.12..1.00, volume 0.00..0.10
-        //   both               → price 0.32..1.00, stoch  0.11..0.30, volume 0.00..0.10
-        if (showOscillator && showVolume)
+        // Sub-panels stack from the bottom up; `cursor` holds the top edge of the topmost
+        // visible sub-panel. The price panel takes everything above that minus a 2 % gap.
+        // Example layouts (showOscillator, showMacd, showVolume):
+        //   none       → price 0.00..1.00
+        //   stoch only → price 0.22..1.00, stoch  0.00..0.20
+        //   vol only   → price 0.12..1.00, volume 0.00..0.10
+        //   stoch+vol  → price 0.32..1.00, stoch  0.11..0.30, volume 0.00..0.10
+        //   macd only  → price 0.16..1.00, macd   0.00..0.14
+        //   all three  → price 0.47..1.00, stoch  0.26..0.45, macd 0.11..0.25, volume 0.00..0.10
+        if (cursor > 0)
         {
-            priceAxis.StartPosition = 0.32;
-            priceAxis.EndPosition = 1.0;
-        }
-        else if (showOscillator)
-        {
-            priceAxis.StartPosition = 0.22;
-            priceAxis.EndPosition = 1.0;
-        }
-        else if (showVolume)
-        {
-            priceAxis.StartPosition = 0.12;
+            priceAxis.StartPosition = cursor + priceGap;
             priceAxis.EndPosition = 1.0;
         }
         else
@@ -865,8 +959,8 @@ public partial class ChartWindowViewModel : ObservableObject
         PickupUserInput();
 
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
-        // enabled, volume panel has its own toggle.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi, Session.ShowVolume);
+        // enabled, MACD and volume panels each have their own toggle.
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi, Session.ShowMacd, Session.ShowVolume);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -886,6 +980,20 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "fvg.zones";
         if (Toggle(model, group, Session.ShowFvgZones))
             FvgZones.Draw(model, Symbol, Session.MinDate, Session.MaxDate, group);
+
+        // Draw SMC zones (Order Blocks) — first-iteration: detector runs synchronously on
+        // toggle for every DLZ-enabled interval, results are kept in CryptoSymbolInterval.SmcZones
+        // and rendered directly. No DB persistence and no periodic recalc yet.
+        group = "smc.zones";
+        if (Toggle(model, group, Session.ShowSmcZones))
+        {
+            foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+            {
+                if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
+                    Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);
+            }
+            SmcZones.Draw(model, Symbol, Session.MinDate, Session.MaxDate, group);
+        }
 
         // Draw Nadaraya Watson Envelope (non repainting)
         group = "nwe.notrepainting";
@@ -950,6 +1058,15 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "rsi.tresholds";
         if (Toggle(model, group, Session.ShowRsi))
             Rsi.DrawLines(model, group);
+
+        // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
+        group = "macd";
+        if (Toggle(model, group, Session.ShowMacd))
+            Macd.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
+        group = "macd.tresholds";
+        if (Toggle(model, group, Session.ShowMacd))
+            Macd.DrawLines(model, group);
 
         // Draw Volume bars in dedicated sub-panel (auto-range "volume" Y axis)
         group = "volume";
@@ -1175,6 +1292,13 @@ public partial class ChartWindowViewModel : ObservableObject
                     CrossHairXStoch.LineStyle = LineStyle.DashDot;
                 }
 
+                // Same for the MACD-panel crosshair.
+                if (CrossHairXMacd != null)
+                {
+                    CrossHairXMacd.X = unix.Minutes;
+                    CrossHairXMacd.LineStyle = LineStyle.DashDot;
+                }
+
                 // Same for the volume-panel crosshair.
                 if (CrossHairXVolume != null)
                 {
@@ -1363,6 +1487,8 @@ public partial class ChartWindowViewModel : ObservableObject
             }
             if (CrossHairXStoch != null)
                 CrossHairXStoch.LineStyle = LineStyle.None;
+            if (CrossHairXMacd != null)
+                CrossHairXMacd.LineStyle = LineStyle.None;
             if (CrossHairXVolume != null)
                 CrossHairXVolume.LineStyle = LineStyle.None;
 

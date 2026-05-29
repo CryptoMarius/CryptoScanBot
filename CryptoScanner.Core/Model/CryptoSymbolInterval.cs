@@ -22,6 +22,11 @@ public class CryptoSymbolInterval
     public CryptoSymbolIntervalZones DlzZones { get; internal set; } = new();
     public CryptoSymbolIntervalZones FvgZones { get; internal set; } = new();
 
+    // SMC (Smart Money Concepts) Order Blocks — in-memory only for now (no DB persistence),
+    // rebuilt by ZoneSmc.Detect on demand. Long  = bullish OB (demand) below a swing low;
+    // Short = bearish OB (supply) above a swing high.
+    public List<CryptoZone> SmcZones { get; internal set; } = [];
+
     // Zone administration (calculation and distances)
     public CryptoSymbolIntervalZoneCalc DlzAdmin { get; internal set; } = new();
 
