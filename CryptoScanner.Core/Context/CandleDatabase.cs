@@ -473,6 +473,7 @@ public class CandleDatabase : IDisposable
             SaveSymbolInterval(connection, tx, symbol, symbolInterval);
 
         tx.Commit();
+
     }
 
 
@@ -629,18 +630,37 @@ public class CandleDatabase : IDisposable
 
 
     // -----------------------------------------------------------------------
-    // Cleanup — experimental, EXISTING file-based code paths are untouched.
+    // Cleanup — two-phase, respects the "zoom principle".
     //
-    // Retention model: per (symbol, interval) we keep the UNION of
-    //   1) the standard window  [GetCandleFetchStart(I), now]   (matches today's behaviour)
-    //   2) per OPEN zone Z on this symbol the time-range  [Z.OpenTime, Z.OpenTime+Z.Duration]
-    //      for the zone-interval itself AND every lower-duration interval (potential zoom source)
-    // Broken / closed zones do not contribute — their recent candles are still kept via the
-    // standard window, anything older simply falls out.
+    // The zone recalc rediscovers ALL pivots (open + closed) inside the scan-window and
+    // re-zooms them on every cycle. So "visible == within scan-window" — closed status by
+    // itself does NOT mean a zone can be discarded. Cleanup therefore proceeds in two
+    // phases against the AUTHORITATIVE state stored in CryptoDatabase.Zone:
+    //
+    //   Phase A: in CryptoDatabase, DELETE FROM Zone
+    //              WHERE SymbolId = ?
+    //                AND CloseTime IS NOT NULL
+    //                AND OpenTime  < scan-window-start
+    //            Closed-and-out-of-window zones are gone from the user's view and won't be
+    //            rediscovered, so their persistence has no value anymore.
+    //
+    //   Phase B: query the REMAINING zones (open + still-visible closed) from CryptoDatabase
+    //            and use each one's [OpenTime, OpenTime+Z.Interval.Duration] as a keep-window
+    //            for candles in lower-or-equal-duration intervals (the candles DLZ may zoom
+    //            into). Together with the standard per-interval window, this is the union
+    //            that must be kept in candles.db.
+    //
+    // scan-window-start = MIN over (DLZ + FVG enabled intervals) of GetCandleFetchStart(I).
     //
     // When the symbol is no longer relevant (status off, fetching disabled, below volume
     // threshold and not trading and not a barometer symbol) ALL its candles are deleted.
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// A pivot zone loaded from the main CryptoDatabase Zone table. Just enough info to
+    /// build the candle keep-ranges — full CryptoZone hydration is unnecessary here.
+    /// </summary>
+    private readonly record struct PivotZone(int IntervalId, CandleTime OpenTime);
 
     /// <summary>
     /// Returns true when the symbol no longer needs its candles persisted. Mirrors the
@@ -657,10 +677,96 @@ public class CandleDatabase : IDisposable
     }
 
     /// <summary>
-    /// Build the keep-ranges per interval Id for one symbol — union of the standard window
-    /// and every open-zone zoom window across DLZ + FVG.
+    /// Earliest CandleTime that is still "visible" for this symbol — the MIN of
+    /// GetCandleFetchStart over every interval enabled for DLZ or FVG. Used by Phase A
+    /// to decide which closed zones can be deleted from the main DB.
     /// </summary>
-    private static Dictionary<int, List<(CandleTime start, CandleTime end)>> ComputeKeepRanges(CryptoSymbol symbol)
+    private static CandleTime ComputeScanWindowStart(CryptoSymbol symbol)
+    {
+        CandleTime earliest = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+        bool any = false;
+
+        // Union of DLZ + FVG enabled intervals — these are the only ones the zone recalc
+        // scans, so anything that opened before the earliest of their windows can never be
+        // rediscovered as a pivot.
+        foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList
+            .Concat(GlobalData.Settings.Signal.ZonesFvg.IntervalList))
+        {
+            if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
+                continue;
+
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
+            if (!any || start.Minutes < earliest.Minutes)
+            {
+                earliest = start;
+                any = true;
+            }
+        }
+
+        return earliest;
+    }
+
+    /// <summary>
+    /// Phase A — delete from the main CryptoDatabase Zone table every zone for this symbol
+    /// that is both closed AND opened before the scan-window. Those zones are out of the
+    /// user's view and the recalc would not rediscover them, so retaining them serves no
+    /// purpose. Returns the number of zone rows actually removed.
+    /// </summary>
+    private static int CleanOldZonesFromMainDb(SqliteConnection mainConn, CryptoSymbol symbol,
+        CandleTime scanWindowStart)
+    {
+        // OpenTime column is TEXT affinity but the CandleTimeTypeHandler stores values as
+        // INTEGER (uint Minutes). CAST forces a numeric comparison regardless of how the
+        // value was inserted historically (older rows might have been written as text).
+        const string sql =
+            "DELETE FROM Zone " +
+            "WHERE SymbolId = @SymbolId " +
+            "  AND CloseTime IS NOT NULL " +
+            "  AND CAST(OpenTime AS INTEGER) < @Cutoff";
+
+        return mainConn.Execute(sql, new
+        {
+            SymbolId = symbol.Id,
+            Cutoff = (long)scanWindowStart.Minutes,
+        });
+    }
+
+    /// <summary>
+    /// Phase B preload — read every remaining (open + still-visible closed) zone for the
+    /// symbol from the main CryptoDatabase. Each pivot contributes a candle keep-window
+    /// equal to [OpenTime, OpenTime+Z.Interval.Duration] across all intervals with
+    /// duration ≤ zone.Interval.Duration.
+    /// </summary>
+    private static List<PivotZone> LoadPivotZonesFromMainDb(SqliteConnection mainConn, CryptoSymbol symbol)
+    {
+        List<PivotZone> result = [];
+
+        using var cmd = mainConn.CreateCommand();
+        cmd.CommandText = "SELECT IntervalId, CAST(OpenTime AS INTEGER) FROM Zone WHERE SymbolId = $SymbolId";
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            int intervalId = reader.GetInt32(0);
+            if (reader.IsDBNull(1))
+                continue;
+            uint minutes = (uint)reader.GetInt64(1);
+            result.Add(new PivotZone(intervalId, new CandleTime(minutes)));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Build the keep-ranges per interval Id for one symbol — union of:
+    ///   1) standard window per interval ([GetCandleFetchStart, now])
+    ///   2) per pivot zone (loaded from CryptoDatabase) the time-range [OpenTime,
+    ///      OpenTime+Z.Interval.Duration] for the zone interval itself and every interval
+    ///      with smaller-or-equal duration (those are the candles DLZ might zoom into).
+    /// </summary>
+    private static Dictionary<int, List<(CandleTime start, CandleTime end)>> ComputeKeepRanges(
+        CryptoSymbol symbol, List<PivotZone> pivots)
     {
         Dictionary<int, List<(CandleTime, CandleTime)>> result = [];
         CandleTime now = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
@@ -672,36 +778,25 @@ public class CandleDatabase : IDisposable
             AddRange(result, si.Interval.Id, start, now);
         }
 
-        // 2) Per open zone — keep its time-range on the zone interval itself + all
-        //    intervals with smaller duration (those are the candles DLZ might zoom into).
-        foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
+        // 2) Per pivot zone — keep its time-range on the zone interval itself + all
+        //    intervals with smaller-or-equal duration (those are the candles DLZ might
+        //    zoom into during recalc). Open OR closed-but-still-visible zones both count.
+        foreach (var pivot in pivots)
         {
-            AddOpenZoneRanges(symbolInterval.DlzZones.LongOpen, symbol, result);
-            AddOpenZoneRanges(symbolInterval.DlzZones.ShortOpen, symbol, result);
-            AddOpenZoneRanges(symbolInterval.FvgZones.LongOpen, symbol, result);
-            AddOpenZoneRanges(symbolInterval.FvgZones.ShortOpen, symbol, result);
-        }
-
-        return result;
-    }
-
-    private static void AddOpenZoneRanges(IEnumerable<CryptoZone> zones, CryptoSymbol symbol,
-        Dictionary<int, List<(CandleTime, CandleTime)>> result)
-    {
-        foreach (var zone in zones)
-        {
-            if (zone.CloseTime != null)
+            if (!GlobalData.IntervalListId.TryGetValue(pivot.IntervalId, out var zoneInterval))
                 continue;
 
-            CandleTime zoneStart = zone.OpenTime;
-            CandleTime zoneEnd = zone.OpenTime + zone.Interval.Duration;
+            CandleTime zoneStart = pivot.OpenTime;
+            CandleTime zoneEnd = pivot.OpenTime + zoneInterval.Duration;
 
             foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
             {
-                if (symbolInterval.Interval.Duration <= zone.Interval.Duration)
+                if (symbolInterval.Interval.Duration <= zoneInterval.Duration)
                     AddRange(result, symbolInterval.Interval.Id, zoneStart, zoneEnd);
             }
         }
+
+        return result;
     }
 
     private static void AddRange(Dictionary<int, List<(CandleTime, CandleTime)>> result,
@@ -716,14 +811,16 @@ public class CandleDatabase : IDisposable
     }
 
     /// <summary>
-    /// Cleanup for one symbol in one transaction. Either deletes ALL candles (symbol no
-    /// longer in use) or deletes everything outside the computed keep-ranges per interval.
-    /// Logs a per-symbol summary to LogTab when at least one row was actually deleted.
+    /// Two-phase cleanup for one symbol:
+    ///   Phase A (main DB): delete closed zones outside the scan-window from CryptoDatabase.
+    ///   Phase B (candles.db): delete candles outside the union of standard window per
+    ///   interval AND every remaining pivot zone's zoom window.
+    /// Either deletes ALL candles (symbol no longer in use) or deletes everything outside
+    /// the computed keep-ranges per interval. Logs a per-symbol summary to LogTab when at
+    /// least one row was actually deleted.
     /// </summary>
-    public static void CleanCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
+    public static void CleanCandlesForSymbol(SqliteConnection connection, SqliteConnection mainConn, CryptoSymbol symbol)
     {
-        //return; // There is a problem, it deletes to many candles leading to zone calculation reloads..
-
         using var tx = connection.BeginTransaction();
 
         if (SymbolHasNoUse(symbol))
@@ -748,7 +845,15 @@ public class CandleDatabase : IDisposable
             return;
         }
 
-        var keepRanges = ComputeKeepRanges(symbol);
+        // Phase A: drop closed-and-out-of-scan zones from the main DB. They can no longer
+        // be rediscovered as pivots, so their candle data also doesn't need to be kept.
+        CandleTime scanWindowStart = ComputeScanWindowStart(symbol);
+        int zonesDeleted = CleanOldZonesFromMainDb(mainConn, symbol, scanWindowStart);
+
+        // Phase B: read what's left (open + still-visible closed zones) and build the
+        // candle keep-ranges from that pivot list + the standard per-interval window.
+        var pivots = LoadPivotZonesFromMainDb(mainConn, symbol);
+        var keepRanges = ComputeKeepRanges(symbol, pivots);
         int totalDeleted = 0;
         int intervalsWithDeletes = 0;
 
@@ -793,9 +898,11 @@ public class CandleDatabase : IDisposable
 
         tx.Commit();
 
-        if (totalDeleted > 0)
+        if (totalDeleted > 0 || zonesDeleted > 0)
         {
-            GlobalData.AddTextToLogTab($"candles.db cleanup {symbol.Name}: deleted={totalDeleted} (across {intervalsWithDeletes} intervals)");
+            GlobalData.AddTextToLogTab(
+                $"candles.db cleanup {symbol.Name}: zonesPurged={zonesDeleted} pivotsKept={pivots.Count} " +
+                $"candlesDeleted={totalDeleted} (across {intervalsWithDeletes} intervals)");
         }
     }
 
@@ -811,6 +918,13 @@ public class CandleDatabase : IDisposable
         using var db = new CandleDatabase(exchange);
         db.Open();
 
+        // Phase A of cleanup runs against the main CryptoDatabase Zone table. Open one
+        // shared connection for the whole exchange pass so we don't pay the open/close
+        // cost per symbol. Both DBs are local SQLite files; opening two connections in
+        // the same thread is fine.
+        using var mainDb = new CryptoDatabase();
+        mainDb.Open();
+
         var symbols = exchange.SymbolListName.Values.ToList();
         GlobalData.AddTextToLogTab($"candles.db cleanup {exchange.Name}: scanning {symbols.Count} symbols");
 
@@ -822,7 +936,7 @@ public class CandleDatabase : IDisposable
         {
             try
             {
-                CleanCandlesForSymbol(db.Connection, symbol);
+                CleanCandlesForSymbol(db.Connection, mainDb.Connection, symbol);
                 processed++;
             }
             catch (Exception err)
