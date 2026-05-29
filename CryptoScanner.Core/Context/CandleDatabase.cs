@@ -718,94 +718,85 @@ public class CandleDatabase : IDisposable
     /// <summary>
     /// Cleanup for one symbol in one transaction. Either deletes ALL candles (symbol no
     /// longer in use) or deletes everything outside the computed keep-ranges per interval.
-    ///
-    /// DRY-RUN MODE: while the zone-candle loading logic is being stabilised, the actual
-    /// connection.Execute calls below are commented out and the SQL that WOULD have been
-    /// executed is logged instead. This lets us verify the cleanup queries by inspection
-    /// before letting them run. Re-enable by uncommenting the Execute lines + removing the
-    /// logging block.
+    /// Logs a per-symbol summary to LogTab when at least one row was actually deleted.
     /// </summary>
     public static void CleanCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
     {
-        // Connection / transaction are still opened so the surrounding code keeps the same
-        // shape; nothing actually mutates the DB while the Execute calls are commented out.
+        //return; // There is a problem, it deletes to many candles leading to zone calculation reloads..
+
         using var tx = connection.BeginTransaction();
 
         if (SymbolHasNoUse(symbol))
         {
-            string sqlCandle = "DELETE FROM Candle WHERE SymbolId = @SymbolId";
-            string sqlState = "DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId";
+            int candleRows = connection.Execute(
+                "DELETE FROM Candle WHERE SymbolId = @SymbolId",
+                new { SymbolId = symbol.Id }, transaction: tx);
 
-            ScannerLog.Logger.Trace($"candles.db dry-run [no-use] {symbol.Name}: {sqlCandle}  @SymbolId={symbol.Id}");
-            ScannerLog.Logger.Trace($"candles.db dry-run [no-use] {symbol.Name}: {sqlState}   @SymbolId={symbol.Id}");
-            GlobalData.AddTextToLogTab($"candles.db dry-run [no-use] {symbol.Name}: would drop ALL rows + SymbolInterval");
+            // Sync-bookkeeping has no value without candles either — drop it too so the next
+            // start treats the symbol as never-synced when it eventually comes back into use.
+            int stateRows = connection.Execute(
+                "DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId",
+                new { SymbolId = symbol.Id }, transaction: tx);
 
-            //connection.Execute(sqlCandle, new { SymbolId = symbol.Id }, transaction: tx);
-            //// Sync-bookkeeping has no value without candles either — drop it too so the next
-            //// start treats the symbol as never-synced when it eventually comes back into use.
-            //connection.Execute(sqlState,  new { SymbolId = symbol.Id }, transaction: tx);
             tx.Commit();
+
+            if (candleRows > 0)
+            {
+                GlobalData.AddTextToLogTab(
+                    $"candles.db cleanup [no-use] {symbol.Name}: deleted candles={candleRows}");
+            }
             return;
         }
 
         var keepRanges = ComputeKeepRanges(symbol);
-        int queriesPlanned = 0;
-        int intervalsDroppedWhole = 0;
+        int totalDeleted = 0;
+        int intervalsWithDeletes = 0;
 
         foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
             int intervalId = symbolInterval.Interval.Id;
+            int deleted;
 
             if (!keepRanges.TryGetValue(intervalId, out var ranges) || ranges.Count == 0)
             {
                 // No keep-range for this interval → drop everything for it
-                string sql = "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId";
-                ScannerLog.Logger.Trace(
-                    $"candles.db dry-run [drop-interval] {symbol.Name} {symbolInterval.Interval.Name}: " +
-                    $"{sql}  @SymbolId={symbol.Id} @IntervalId={intervalId}");
-                queriesPlanned++;
-                intervalsDroppedWhole++;
-                //connection.Execute(sql, new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
-                continue;
+                deleted = connection.Execute(
+                    "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId",
+                    new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
             }
-
-            // Build:  DELETE ... WHERE NOT ( (OpenTime BETWEEN @s0 AND @e0) OR (... @s1 ...) ... )
-            System.Text.StringBuilder sql2 = new(
-                "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId AND NOT (");
-            var p = new DynamicParameters();
-            p.Add("@SymbolId", symbol.Id);
-            p.Add("@IntervalId", intervalId);
-            for (int i = 0; i < ranges.Count; i++)
+            else
             {
-                if (i > 0) sql2.Append(" OR ");
-                sql2.Append($"(OpenTime BETWEEN @s{i} AND @e{i})");
-                p.Add($"@s{i}", (long)ranges[i].start.Minutes);
-                p.Add($"@e{i}", (long)ranges[i].end.Minutes);
-            }
-            sql2.Append(')');
+                // Build:  DELETE ... WHERE NOT ( (OpenTime BETWEEN @s0 AND @e0) OR (... @s1 ...) ... )
+                System.Text.StringBuilder sql = new(
+                    "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId AND NOT (");
+                var p = new DynamicParameters();
+                p.Add("@SymbolId", symbol.Id);
+                p.Add("@IntervalId", intervalId);
+                for (int i = 0; i < ranges.Count; i++)
+                {
+                    if (i > 0) sql.Append(" OR ");
+                    sql.Append($"(OpenTime BETWEEN @s{i} AND @e{i})");
+                    p.Add($"@s{i}", (long)ranges[i].start.Minutes);
+                    p.Add($"@e{i}", (long)ranges[i].end.Minutes);
+                }
+                sql.Append(')');
 
-            // Trace: full SQL + a human-readable version of each keep-range
-            System.Text.StringBuilder rangeText = new();
-            for (int i = 0; i < ranges.Count; i++)
+                deleted = connection.Execute(sql.ToString(), p, transaction: tx);
+            }
+
+            if (deleted > 0)
             {
-                if (i > 0) rangeText.Append(", ");
-                rangeText.Append($"[{ranges[i].start.ToDateTime():yyyy-MM-dd HH:mm} .. {ranges[i].end.ToDateTime():yyyy-MM-dd HH:mm}]");
+                totalDeleted += deleted;
+                intervalsWithDeletes++;
             }
-            ScannerLog.Logger.Trace(
-                $"candles.db dry-run [trim] {symbol.Name} {symbolInterval.Interval.Name}: " +
-                $"{sql2}  @SymbolId={symbol.Id} @IntervalId={intervalId} keep={rangeText}");
-            queriesPlanned++;
-            //connection.Execute(sql2.ToString(), p, transaction: tx);
-        }
-
-        if (queriesPlanned > 0)
-        {
-            GlobalData.AddTextToLogTab(
-                $"candles.db dry-run {symbol.Name}: queries={queriesPlanned} wholeDrops={intervalsDroppedWhole} " +
-                $"(rest=trim outside keep-ranges) — see Trace.log for SQL");
         }
 
         tx.Commit();
+
+        if (totalDeleted > 0)
+        {
+            GlobalData.AddTextToLogTab($"candles.db cleanup {symbol.Name}: deleted={totalDeleted} (across {intervalsWithDeletes} intervals)");
+        }
     }
 
     /// <summary>
