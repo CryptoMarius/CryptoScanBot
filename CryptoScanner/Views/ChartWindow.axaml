@@ -107,6 +107,7 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
 					</StackPanel>
                 </HeaderedContentControl>
 

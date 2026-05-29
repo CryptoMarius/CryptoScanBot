@@ -16,6 +16,7 @@ using CryptoScanner.ViewModels.Chart;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
+using OxyPlot.Series;
 
 using System.Diagnostics;
 using System.Globalization;
@@ -53,6 +54,8 @@ public partial class ChartWindowViewModel : ObservableObject
     private LineAnnotation? CrossHairY;
     // Second vertical crosshair for the stoch/RSI sub-panel; null when that panel is hidden.
     private LineAnnotation? CrossHairXStoch;
+    // Third vertical crosshair for the volume sub-panel; null when that panel is hidden.
+    private LineAnnotation? CrossHairXVolume;
 
     // Sub-ViewModels for modular UI
     [ObservableProperty]
@@ -525,23 +528,39 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Adds or removes the indicator sub-panel (Stoch / RSI) and adjusts the price panel height.
-    /// When showIndicator is true: the indicator Y-axis is added to the model (if not already present)
-    /// and the price axis shrinks to the top 78%.  When false: the indicator Y-axis is removed from
-    /// the model and the price axis is restored to full height.
-    /// Dynamically adding/removing the axis avoids OxyPlot rendering artefacts that occur when an
-    /// axis is "collapsed" by setting StartPosition == EndPosition == 0.
+    /// Adds or removes the indicator sub-panels (Stoch/RSI oscillator and/or Volume) and adjusts
+    /// the price panel height. Each requested panel gets its own Y-axis added to the model;
+    /// disabled panels have their axis (and crosshair) removed entirely. Dynamically
+    /// adding/removing the axes avoids OxyPlot rendering artefacts that occur when an axis is
+    /// "collapsed" by setting StartPosition == EndPosition == 0.
+    ///
+    /// Layout (StartPosition .. EndPosition, 0 = bottom, 1 = top):
+    ///   neither            → price 0.00..1.00
+    ///   oscillator only    → price 0.22..1.00, stoch  0.00..0.20
+    ///   volume only        → price 0.22..1.00, volume 0.00..0.20
+    ///   both               → price 0.40..1.00, stoch  0.21..0.38, volume 0.00..0.19
     /// </summary>
-    private void AdjustPanels(bool showIndicator)
+    private void AdjustPanels(bool showOscillator, bool showVolume)
     {
         var priceAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "price");
         if (priceAxis == null)
             return;
 
-        if (showIndicator)
+        // ---------- Oscillator (Stoch / RSI) sub-panel ----------
+        if (showOscillator)
         {
-            // Add the indicator axis only if it is not already present.
-            if (!PlotModel.Axes.Any(a => a.Key == "stoch"))
+            // Bottom slice when both, otherwise the only sub-panel.
+            double stochStart = showVolume ? 0.21 : 0.00;
+            double stochEnd = showVolume ? 0.38 : 0.20;
+
+            // Add the axis if missing, otherwise just keep its bounds in sync.
+            var existingStoch = PlotModel.Axes.FirstOrDefault(a => a.Key == "stoch");
+            if (existingStoch is LinearAxis stochAxisLinear)
+            {
+                stochAxisLinear.StartPosition = stochStart;
+                stochAxisLinear.EndPosition = stochEnd;
+            }
+            else
             {
                 PlotModel.Axes.Add(new LinearAxis
                 {
@@ -551,8 +570,8 @@ public partial class ChartWindowViewModel : ObservableObject
                     FontSize = Const.OxyFontSize,
                     TextColor = OxyColors.White,
                     Position = AxisPosition.Right,
-                    StartPosition = 0.0,
-                    EndPosition = 0.20,
+                    StartPosition = stochStart,
+                    EndPosition = stochEnd,
                     Minimum = 0,
                     Maximum = 100,
                     IsZoomEnabled = false,
@@ -583,24 +602,118 @@ public partial class ChartWindowViewModel : ObservableObject
                 };
                 PlotModel.Annotations.Add(CrossHairXStoch);
             }
-
-            priceAxis.StartPosition = 0.22;
-            priceAxis.EndPosition = 1.0;
         }
         else
         {
+            // Defensive cleanup: orphan every series + annotation that still references the
+            // "stoch" axis BEFORE removing it. Without this, OxyPlot can hit a
+            // NullReferenceException in PlotElementUtilities.GetClippingRect for the brief
+            // window between Axes.Remove and the subsequent Toggle → RemoveFromChart that
+            // would otherwise clean the series. Stricter series (RectangleBarSeries) surface
+            // it; tolerant LineSeries silently absorb the dangling axis reference.
+            foreach (var s in PlotModel.Series.OfType<LineSeries>().Where(x => x.YAxisKey == "stoch").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var s in PlotModel.Series.OfType<RectangleBarSeries>().Where(x => x.YAxisKey == "stoch").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var a in PlotModel.Annotations.OfType<LineAnnotation>().Where(x => x.YAxisKey == "stoch").ToList())
+                PlotModel.Annotations.Remove(a);
+
             // Remove the indicator axis so it does not interfere with the price panel.
             var stochAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "stoch");
             if (stochAxis != null)
                 PlotModel.Axes.Remove(stochAxis);
 
-            // Remove the stoch-panel crosshair.
-            if (CrossHairXStoch != null)
+            // The annotation cleanup above already removed the crosshair; just null the field.
+            CrossHairXStoch = null;
+        }
+
+        // ---------- Volume sub-panel ----------
+        if (showVolume)
+        {
+            // Always at the very bottom — leaves the oscillator panel directly above it.
+            const double volStart = 0.00;
+            double volEnd = showOscillator ? 0.19 : 0.20;
+
+            var existingVol = PlotModel.Axes.FirstOrDefault(a => a.Key == "volume");
+            if (existingVol is LinearAxis volAxisLinear)
             {
-                PlotModel.Annotations.Remove(CrossHairXStoch);
-                CrossHairXStoch = null;
+                volAxisLinear.StartPosition = volStart;
+                volAxisLinear.EndPosition = volEnd;
+            }
+            else
+            {
+                PlotModel.Axes.Add(new LinearAxis
+                {
+                    Key = "volume",
+                    Title = "Volume",
+                    Font = Const.OxyFontName,
+                    FontSize = Const.OxyFontSize,
+                    TextColor = OxyColors.White,
+                    Position = AxisPosition.Right,
+                    StartPosition = volStart,
+                    EndPosition = volEnd,
+                    // Auto-range: volume scale varies wildly per symbol so we let OxyPlot pick.
+                    Minimum = 0,
+                    IsZoomEnabled = false,
+                    IsPanEnabled = false,
+                    TicklineColor = OxyColors.Gray,
+                    TickStyle = OxyPlot.Axes.TickStyle.Inside,
+                    AxislineStyle = LineStyle.Solid,
+                    AxislineColor = OxyColors.Gray,
+                    AxislineThickness = 1,
+                    MajorGridlineStyle = LineStyle.Dot,
+                    MajorGridlineColor = OxyColor.FromAColor(80, OxyColors.Gray),
+                });
             }
 
+            if (CrossHairXVolume == null)
+            {
+                CrossHairXVolume = new LineAnnotation
+                {
+                    Type = LineAnnotationType.Vertical,
+                    Color = OxyColors.White,
+                    LineStyle = LineStyle.None,
+                    StrokeThickness = 0.5,
+                    YAxisKey = "volume",
+                    Tag = "crosshair",
+                };
+                PlotModel.Annotations.Add(CrossHairXVolume);
+            }
+        }
+        else
+        {
+            // Same defensive cleanup as the stoch branch — orphan every series + annotation
+            // pointing at the "volume" axis before the axis itself goes away, so render
+            // passes between this point and the trailing Toggle → RemoveFromChart cannot
+            // see a series with a dangling YAxis reference (NRE in GetClippingRect).
+            foreach (var s in PlotModel.Series.OfType<RectangleBarSeries>().Where(x => x.YAxisKey == "volume").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var s in PlotModel.Series.OfType<LineSeries>().Where(x => x.YAxisKey == "volume").ToList())
+                PlotModel.Series.Remove(s);
+            foreach (var a in PlotModel.Annotations.OfType<LineAnnotation>().Where(x => x.YAxisKey == "volume").ToList())
+                PlotModel.Annotations.Remove(a);
+
+            var volAxis = PlotModel.Axes.FirstOrDefault(a => a.Key == "volume");
+            if (volAxis != null)
+                PlotModel.Axes.Remove(volAxis);
+
+            // The annotation cleanup above already removed the crosshair; just null the field.
+            CrossHairXVolume = null;
+        }
+
+        // ---------- Price panel height ----------
+        if (showOscillator && showVolume)
+        {
+            priceAxis.StartPosition = 0.40;
+            priceAxis.EndPosition = 1.0;
+        }
+        else if (showOscillator || showVolume)
+        {
+            priceAxis.StartPosition = 0.22;
+            priceAxis.EndPosition = 1.0;
+        }
+        else
+        {
             priceAxis.StartPosition = 0.0;
             priceAxis.EndPosition = 1.0;
         }
@@ -713,8 +826,9 @@ public partial class ChartWindowViewModel : ObservableObject
             return;
         PickupUserInput();
 
-        // Keep panel proportions in sync — panel is active when stoch OR rsi is enabled.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi);
+        // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
+        // enabled, volume panel has its own toggle.
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi, Session.ShowVolume);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -798,7 +912,12 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "rsi.tresholds";
         if (Toggle(model, group, Session.ShowRsi))
             Rsi.DrawLines(model, group);
-        
+
+        // Draw Volume bars in dedicated sub-panel (auto-range "volume" Y axis)
+        group = "volume";
+        if (Toggle(model, group, Session.ShowVolume))
+            Volume.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
 
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
@@ -1018,6 +1137,13 @@ public partial class ChartWindowViewModel : ObservableObject
                     CrossHairXStoch.LineStyle = LineStyle.DashDot;
                 }
 
+                // Same for the volume-panel crosshair.
+                if (CrossHairXVolume != null)
+                {
+                    CrossHairXVolume.X = unix.Minutes;
+                    CrossHairXVolume.LineStyle = LineStyle.DashDot;
+                }
+
                 string subtitle;
                 if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
                 {
@@ -1199,6 +1325,8 @@ public partial class ChartWindowViewModel : ObservableObject
             }
             if (CrossHairXStoch != null)
                 CrossHairXStoch.LineStyle = LineStyle.None;
+            if (CrossHairXVolume != null)
+                CrossHairXVolume.LineStyle = LineStyle.None;
 
             SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
