@@ -228,7 +228,7 @@ public class ThreadLoadData
                 ZoneDlz.LoadAllZones();
 
                 GlobalData.AddTextToLogTab("Reading candle information");
-                await DataStore.LoadCandlesAsync();
+                await DataStore.LoadCandlesAsync(); // Only for migration to candles.db
                 await CandleDatabase.LoadCandlesAsync();
 
                 //************************************************************************************

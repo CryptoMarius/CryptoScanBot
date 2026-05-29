@@ -121,7 +121,7 @@ public class ZoneCandleEngine
         }
     }
 
-
+    /*
     private static async Task WriteCandlesToStreamAsync(BinaryWriter writer, CryptoSymbol symbol, CryptoInterval interval)
     {
         await symbol.Data.CandleLock.WaitAsync();
@@ -188,23 +188,51 @@ public class ZoneCandleEngine
         }
 
     }
+    */
 
 
     public static async Task SaveCandleDataToDiskAsync(CryptoSymbol symbol, SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
+        // Snapshot which intervals were touched so the DB work can run off-thread without
+        // enumerating the shared loadedCandlesInMemory dictionary from inside Task.Run.
+        List<CryptoSymbolInterval> changedIntervals = [];
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
         {
             if (loadedCandlesInMemory.TryGetValue(symbolInterval.IntervalPeriod, out bool changed) && changed)
-            {
-                await WriteCandlesToFileAsync(symbol, symbolInterval.Interval);
-
-                //log.AppendLine($"saving {filename}");
-                //ScannerLog.Logger.Info($"Saving {fileName}");
-                loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
-
-                //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Saving file {filename} {symbolInterval.CandleList.Count} candles");
-            }
+                changedIntervals.Add(symbolInterval);
         }
+        if (changedIntervals.Count == 0)
+            return;
+
+        if (symbol.Exchange == null)
+            return;
+
+        // Persist the changed intervals to the per-exchange candles.db. One shared DB
+        // connection per call amortises the open/close + PRAGMA cost over multiple intervals.
+        // Per-interval try/catch so one failing interval doesn't lose the "changed" flag on
+        // the others — failed intervals stay marked as changed and will retry on the next save.
+        // The legacy WriteCandlesToFileAsync is kept around (private) as a backup path but
+        // is no longer called from here; the database is now the authoritative store.
+        await Task.Run(() =>
+        {
+            using var candleDb = new Context.CandleDatabase(symbol.Exchange);
+            candleDb.Open();
+
+            foreach (var symbolInterval in changedIntervals)
+            {
+                try
+                {
+                    Context.CandleDatabase.SaveCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
+                    loadedCandlesInMemory[symbolInterval.IntervalPeriod] = false; // in memory, nothing changed
+                }
+                catch (Exception error)
+                {
+                    ScannerLog.Logger.Error(error, $"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}");
+                    GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name} {symbolInterval.Interval.Name}: {error.Message}");
+                    // Leave loadedCandlesInMemory[...] = true so the next save retries.
+                }
+            }
+        });
     }
 
 

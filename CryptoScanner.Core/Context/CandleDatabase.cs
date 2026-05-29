@@ -35,6 +35,14 @@ public class CandleDatabase : IDisposable
     // SQLite serializes writers on the file lock anyway, so a single in-process gate is plenty.
     private static readonly SemaphoreSlim Semaphore = new(1);
 
+    // Per-worker degree of parallelism. WAL-mode SQLite allows concurrent readers freely;
+    // concurrent writers serialise on the file lock but queue politely via busy_timeout, so
+    // parallel still pays off through overlapped connection-open + prepare + commit-fsync.
+    private static readonly ParallelOptions ParallelOptions = new()
+    {
+        MaxDegreeOfParallelism = Math.Min(8, Environment.ProcessorCount)
+    };
+
     public SqliteConnection Connection { get; private set; }
 
 
@@ -118,6 +126,75 @@ public class CandleDatabase : IDisposable
             "  Volume      REAL NOT NULL," +
             "  PRIMARY KEY (SymbolId, IntervalId, OpenTime)" +
             ") WITHOUT ROWID");
+
+        // Per (symbol, interval) sync-bookkeeping that the exchange fetcher uses to know
+        // where to continue. Used to live as a uint32 per interval inside the .compressed
+        // file header that DataStore wrote. Without persisting it here every restart would
+        // refetch the full GetCandleFetchStart window from the exchange.
+        //   LastSync = CandleTime.Minutes  →  null means "never synced"
+        // Table name matches the in-memory CryptoSymbolInterval model.
+        db.Connection.Execute(
+            "CREATE TABLE IF NOT EXISTS [SymbolInterval] (" +
+            "  SymbolId    INTEGER NOT NULL," +
+            "  IntervalId  INTEGER NOT NULL," +
+            "  LastSync    INTEGER NULL," +
+            "  PRIMARY KEY (SymbolId, IntervalId)" +
+            ") WITHOUT ROWID");
+    }
+
+
+    /// <summary>
+    /// Upsert <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for one (symbol,
+    /// interval) into the SymbolInterval table. Runs inside the caller's transaction
+    /// so it commits atomically together with the candle inserts.
+    /// </summary>
+    private static void SaveSymbolInterval(SqliteConnection connection, SqliteTransaction tx, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText =
+            "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
+            "VALUES ($SymbolId, $IntervalId, $LastSync)";
+
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = symbolInterval.Interval.Id; cmd.Parameters.Add(pInterval);
+        var pLastSync = cmd.CreateParameter(); pLastSync.ParameterName = "$LastSync";
+        pLastSync.Value = symbolInterval.LastCandleSynchronized.HasValue
+            ? (long)symbolInterval.LastCandleSynchronized.Value.Minutes
+            : (object)DBNull.Value;
+        cmd.Parameters.Add(pLastSync);
+
+        cmd.ExecuteNonQuery();
+    }
+
+
+    /// <summary>
+    /// Restore <see cref="CryptoSymbolInterval.LastCandleSynchronized"/> for every interval
+    /// of the symbol from the SymbolInterval table. Called by <see cref="LoadCandlesForSymbol"/>
+    /// after the candles themselves have been loaded.
+    /// </summary>
+    private static void LoadSymbolIntervals(SqliteConnection connection, CryptoSymbol symbol)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+
+        Dictionary<int, CryptoSymbolInterval> intervalsId = [];
+        foreach (CryptoSymbolInterval si in symbol.Data.SymbolIntervalList)
+            intervalsId[si.Interval.Id] = si;
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            int intervalId = reader.GetInt32(0);
+            if (!intervalsId.TryGetValue(intervalId, out CryptoSymbolInterval? symbolInterval))
+                continue;
+
+            if (reader.IsDBNull(1))
+                symbolInterval.LastCandleSynchronized = null;
+            else
+                symbolInterval.LastCandleSynchronized = new CandleTime((uint)reader.GetInt64(1));
+        }
     }
 
 
@@ -128,80 +205,83 @@ public class CandleDatabase : IDisposable
     /// per interval is updated to the highest OpenTime found.
     ///
     /// Mirrors DataStore.LoadCandlesForSymbol in behaviour but reads from SQLite instead of
-    /// the .compressed file. Intended for parallel verification — does NOT touch
-    /// LastCandleSynchronized (the DB has no separate column for that yet).
+    /// the .compressed file. Also restores LastCandleSynchronized per interval from the
+    /// SymbolIntervalState table so the exchange fetcher continues from where it left off.
     /// </summary>
     public static void LoadCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
     {
         // Reset the previous collected trend data (once a day is preferred)
         symbol.Data.ResetTrendData();
 
+        // Per-interval SELECT bounded by GetCandleFetchStart so we don't materialise the
+        // bulk DLZ-zoom candles at startup — those stay in the DB and only flow into memory
+        // when the zone calculation explicitly asks for them. The PK (SymbolId, IntervalId,
+        // OpenTime) makes each per-interval range scan a direct B-tree seek. One prepared
+        // statement, executed once per interval, parameters rebound between iterations.
         using var cmd = connection.CreateCommand();
         cmd.CommandText =
-            "SELECT IntervalId, OpenTime, Ticks, Open, High, Low, Close, Volume " +
-            "FROM Candle WHERE SymbolId = $SymbolId " +
-            "ORDER BY IntervalId, OpenTime";
-        var pSymbol = cmd.CreateParameter();
-        pSymbol.ParameterName = "$SymbolId";
-        pSymbol.Value = symbol.Id;
-        cmd.Parameters.Add(pSymbol);
+            "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
+            "FROM Candle " +
+            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId AND OpenTime >= $MinOpenTime " +
+            "ORDER BY OpenTime";
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; cmd.Parameters.Add(pInterval);
+        var pMinOpenTime = cmd.CreateParameter(); pMinOpenTime.ParameterName = "$MinOpenTime"; cmd.Parameters.Add(pMinOpenTime);
+        cmd.Prepare();
 
-        // Index intervals by Id so we can route candles to the right CryptoSymbolInterval
-        // without an O(N) lookup per row.
-        Dictionary<int, CryptoSymbolInterval> intervalsId = [];
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
-            intervalsId[symbolInterval.Interval.Id] = symbolInterval;
-
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
         {
-            int intervalId = reader.GetInt32(0);
-            if (!intervalsId.TryGetValue(intervalId, out CryptoSymbolInterval? symbolInterval))
-                continue; // interval not configured locally — skip silently
-
-            uint openTimeMinutes = (uint)reader.GetInt64(1);
-            byte ticks = (byte)reader.GetInt32(2);
-            decimal tickSize = TickSizeFor(ticks);
-
-            CryptoCandle candle = new()
-            {
-                OpenTime = new CandleTime(openTimeMinutes),
-                TickDecimals = ticks,
-                // Setting Open/High/Low/Close via decimal accessors round-trips through the
-                // tick reconstruction, identical to what LoadVersion3 does for the file path.
-                Open = reader.GetInt64(3) * tickSize,
-                High = reader.GetInt64(4) * tickSize,
-                Low = reader.GetInt64(5) * tickSize,
-                Close = reader.GetInt64(6) * tickSize,
-                Volume = (decimal)reader.GetDouble(7),
-            };
+            pInterval.Value = symbolInterval.Interval.Id;
+            // Same per-interval bound that the file-based DataStore applied during read.
+            CandleTime startFetch = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+            pMinOpenTime.Value = (long)startFetch.Minutes;
 
             symbolInterval.CandleList.Lock();
             try
             {
-                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-                    symbolInterval.LastCandle = candle;
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    uint openTimeMinutes = (uint)reader.GetInt64(0);
+                    byte ticks = (byte)reader.GetInt32(1);
+                    decimal tickSize = TickSizeFor(ticks);
+
+                    CryptoCandle candle = new()
+                    {
+                        OpenTime = new CandleTime(openTimeMinutes),
+                        TickDecimals = ticks,
+                        // Setting Open/High/Low/Close via decimal accessors round-trips through the
+                        // tick reconstruction, identical to what LoadVersion3 does for the file path.
+                        Open = reader.GetInt64(2) * tickSize,
+                        High = reader.GetInt64(3) * tickSize,
+                        Low = reader.GetInt64(4) * tickSize,
+                        Close = reader.GetInt64(5) * tickSize,
+                        Volume = (decimal)reader.GetDouble(6),
+                    };
+
+                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                    if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                        symbolInterval.LastCandle = candle;
+                }
             }
             finally
             {
                 symbolInterval.CandleList.Unlock();
             }
         }
+
+        // Restore LastCandleSynchronized per interval so the exchange fetcher continues
+        // from where it left off instead of refetching the full GetCandleFetchStart window.
+        LoadSymbolIntervals(connection, symbol);
     }
 
 
     /// <summary>
-    /// Load route that reads candles from the per-exchange candles.db (SQLite) instead of
-    /// the per-symbol .compressed file. Independent of DataStore.LoadCandlesAsync — both
-    /// can be called, the second one wins because TryAdd silently skips existing keys.
-    ///
-    /// Intended for observation / comparison: lets you verify that the SQLite store has
-    /// the same candle content as the file store. Reads only for the active exchange.
-    ///
-    /// Sequential on purpose: one shared connection per exchange amortises the open/close +
-    /// PRAGMA cost. SQLite reads under WAL are concurrency-safe, but the open-overhead per
-    /// symbol dominated when we had Parallel.ForEach with per-worker connections.
+    /// Parallel load route that reads candles from the per-exchange candles.db (SQLite).
+    /// Each worker opens its own connection — SqliteConnection is not thread-safe but
+    /// WAL allows multiple concurrent readers on the same DB file, so this scales nearly
+    /// linearly up to MaxDegreeOfParallelism. Mirrors the per-symbol gating that the
+    /// file-based DataStore.LoadCandlesAsync uses.
     /// </summary>
     public static async Task LoadCandlesAsync()
     {
@@ -216,27 +296,26 @@ public class CandleDatabase : IDisposable
 
             InitializeSchema(exchange);
 
-            using var db = new CandleDatabase(exchange);
-            db.Open();
-
-            // Snapshot to avoid enumerating a live collection while reading
+            // Snapshot to avoid enumerating a live collection from parallel workers
             var symbols = exchange.SymbolListName.Values.ToList();
 
-            foreach (var symbol in symbols)
+            Parallel.ForEach(symbols, ParallelOptions, symbol =>
             {
                 if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
-                    continue;
+                    return;
 
                 // Honour the same minimal-volume gating as the file loader.
                 if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                 {
                     if (symbol.ClearCandles())
                         ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
-                    continue;
+                    return;
                 }
 
                 try
                 {
+                    using var db = new CandleDatabase(exchange);
+                    db.Open();
                     LoadCandlesForSymbol(db.Connection, symbol);
                 }
                 catch (Exception sqliteError)
@@ -244,7 +323,7 @@ public class CandleDatabase : IDisposable
                     ScannerLog.Logger.Error(sqliteError, "candles.db read failed for " + symbol.Name);
                     GlobalData.AddTextToLogTab($"candles.db read failed for {symbol.Name}: {sqliteError.Message}");
                 }
-            }
+            });
         }
         finally
         {
@@ -313,16 +392,83 @@ public class CandleDatabase : IDisposable
             }
         }
 
+        // Persist LastCandleSynchronized for every interval in the same transaction so the
+        // exchange fetcher can continue from where it left off after a restart.
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+            SaveSymbolInterval(connection, tx, symbol, symbolInterval);
+
+        tx.Commit();
+    }
+
+
+    /// <summary>
+    /// Upsert candles for a single (symbol, interval) into the candle DB in one transaction
+    /// with a prepared statement. Used by ZoneCandleEngine.SaveCandleDataToDiskAsync and the
+    /// per-interval migration in ReadCandlesFromDiskAsync so we don't touch other intervals
+    /// while persisting the one whose CandleList was just modified.
+    /// </summary>
+    public static void SaveCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    {
+        using var tx = connection.BeginTransaction();
+        using var cmd = connection.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText =
+            "INSERT OR REPLACE INTO Candle " +
+            "  (SymbolId, IntervalId, OpenTime, Ticks, Open, High, Low, Close, Volume) " +
+            "VALUES " +
+            "  ($SymbolId, $IntervalId, $OpenTime, $Ticks, $Open, $High, $Low, $Close, $Volume)";
+
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; cmd.Parameters.Add(pSymbol);
+        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; cmd.Parameters.Add(pInterval);
+        var pOpenTime = cmd.CreateParameter(); pOpenTime.ParameterName = "$OpenTime"; cmd.Parameters.Add(pOpenTime);
+        var pTickDecimals = cmd.CreateParameter(); pTickDecimals.ParameterName = "$Ticks"; cmd.Parameters.Add(pTickDecimals);
+        var pOpen = cmd.CreateParameter(); pOpen.ParameterName = "$Open"; cmd.Parameters.Add(pOpen);
+        var pHigh = cmd.CreateParameter(); pHigh.ParameterName = "$High"; cmd.Parameters.Add(pHigh);
+        var pLow = cmd.CreateParameter(); pLow.ParameterName = "$Low"; cmd.Parameters.Add(pLow);
+        var pClose = cmd.CreateParameter(); pClose.ParameterName = "$Close"; cmd.Parameters.Add(pClose);
+        var pVolume = cmd.CreateParameter(); pVolume.ParameterName = "$Volume"; cmd.Parameters.Add(pVolume);
+
+        cmd.Prepare();
+
+        pSymbol.Value = symbol.Id;
+        pInterval.Value = symbolInterval.Interval.Id;
+
+        symbolInterval.CandleList.Lock();
+        try
+        {
+            foreach (CryptoCandle candle in symbolInterval.CandleList.Values)
+            {
+                pOpenTime.Value = (long)candle.OpenTime.Minutes;
+                pTickDecimals.Value = candle.TickDecimals;
+                decimal tickSize = TickSizeFor(candle.TickDecimals);
+                pOpen.Value = (long)Math.Round(candle.Open / tickSize);
+                pHigh.Value = (long)Math.Round(candle.High / tickSize);
+                pLow.Value = (long)Math.Round(candle.Low / tickSize);
+                pClose.Value = (long)Math.Round(candle.Close / tickSize);
+                pVolume.Value = (double)candle.Volume;
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+        finally
+        {
+            symbolInterval.CandleList.Unlock();
+        }
+
+        // Persist LastCandleSynchronized for this single interval in the same transaction.
+        SaveSymbolInterval(connection, tx, symbol, symbolInterval);
+
         tx.Commit();
     }
 
 
 
     /// <summary>
-    /// Save route mirroring DataStore.SaveCandlesAsync but writing to the per-exchange
-    /// candles.db instead of the per-symbol .compressed files. Sequential on purpose:
-    /// SQLite serializes writers at the file level anyway, so per-symbol parallelism only
-    /// added contention. One shared connection per exchange amortises the open/close cost.
+    /// Parallel save route mirroring DataStore.SaveCandlesAsync but writing to the
+    /// per-exchange candles.db. Each worker opens its own connection — writes still
+    /// serialise on the SQLite write-lock (one writer at a time, even in WAL), but
+    /// busy_timeout queues them politely and connection-open + prepare overlaps across
+    /// workers, giving a real if modest speed-up over fully sequential.
     /// </summary>
     public static async Task SaveCandlesAsync()
     {
@@ -335,13 +481,10 @@ public class CandleDatabase : IDisposable
             {
                 InitializeSchema(exchange);
 
-                using var db = new CandleDatabase(exchange);
-                db.Open();
-
-                // Snapshot to avoid enumerating a live collection while iterating
+                // Snapshot to avoid enumerating a live collection from parallel workers
                 var symbols = exchange.SymbolListName.Values.ToList();
 
-                foreach (var symbol in symbols)
+                await Parallel.ForEachAsync(symbols, ParallelOptions, (symbol, _) =>
                 {
                     try
                     {
@@ -351,6 +494,8 @@ public class CandleDatabase : IDisposable
                             symbol.ClearCandles();
                         }
 
+                        using var db = new CandleDatabase(exchange);
+                        db.Open();
                         SaveCandlesForSymbol(db.Connection, symbol);
                     }
                     catch (Exception sqliteError)
@@ -358,7 +503,8 @@ public class CandleDatabase : IDisposable
                         ScannerLog.Logger.Error(sqliteError, "candles.db write failed for " + symbol.Name);
                         GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name}: {sqliteError.Message}");
                     }
-                }
+                    return ValueTask.CompletedTask;
+                });
             }
 
             ScannerLog.Logger.Trace("candles.db saved");
@@ -390,8 +536,9 @@ public class CandleDatabase : IDisposable
     /// <summary>
     /// Returns true when the symbol no longer needs its candles persisted. Mirrors the
     /// "delete the file" gating that DataStore.SaveCandlesAsync already applies.
+    /// Internal so the file-based orphan cleanup in DataStore can reuse the same rule.
     /// </summary>
-    private static bool SymbolHasNoUse(CryptoSymbol symbol)
+    internal static bool SymbolHasNoUse(CryptoSymbol symbol)
     {
         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
             return true;
@@ -470,6 +617,10 @@ public class CandleDatabase : IDisposable
         if (SymbolHasNoUse(symbol))
         {
             connection.Execute("DELETE FROM Candle WHERE SymbolId = @SymbolId",
+                new { SymbolId = symbol.Id }, transaction: tx);
+            // Sync-bookkeeping has no value without candles either — drop it too so the next
+            // start treats the symbol as never-synced when it eventually comes back into use.
+            connection.Execute("DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId",
                 new { SymbolId = symbol.Id }, transaction: tx);
             tx.Commit();
             return;
