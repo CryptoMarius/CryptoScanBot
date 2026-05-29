@@ -29,7 +29,7 @@ namespace CryptoScanner.Core.Context;
 /// </summary>
 public class CandleDatabase : IDisposable
 {
-    private const string CandleDbFileName = "candles.db";
+    //private const string CandleDbFileName = "candles.db";
 
     // Prevent multiple save/load/clean sessions from running concurrently against the same DB.
     // SQLite serializes writers on the file lock anyway, so a single in-process gate is plenty.
@@ -54,10 +54,12 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public CandleDatabase(Model.CryptoExchange exchange)
     {
-        string folder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
-        Directory.CreateDirectory(folder);
-        string dbFile = Path.Combine(folder, CandleDbFileName);
+        string dbFile = Path.Combine(GlobalData.AppDataFolder, exchange.Name + ".db");
         Connection = new SqliteConnection($"Filename={dbFile};Mode=ReadWriteCreate;");
+        //string folder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
+        //Directory.CreateDirectory(folder);
+        //string dbFile = Path.Combine(folder, CandleDbFileName);
+        //Connection = new SqliteConnection($"Filename={dbFile};Mode=ReadWriteCreate;");
     }
 
     public void Open()
@@ -66,13 +68,14 @@ public class CandleDatabase : IDisposable
 
         // Per-connection PRAGMAs. journal_mode = WAL is actually file-level (persists)
         // but cheap to re-assert; synchronous and busy_timeout MUST be set per connection.
-        // busy_timeout: wait up to 5s for the write-lock instead of immediately failing
-        // with SQLITE_BUSY. Our DataStore writer already serializes via SemaphoreSlim;
-        // this catches edge cases (WAL checkpoint collisions, an external tool like
-        // DB Browser briefly holding a lock, etc.).
+        // busy_timeout: wait up to 30s for the write-lock instead of immediately failing
+        // with SQLITE_BUSY. SaveCandlesAsync already serialises writers via SemaphoreSlim;
+        // 30s is a generous safety net for edge cases (WAL checkpoint collisions, an
+        // external tool like DB Browser briefly holding a lock, exceptionally large
+        // INSERT transactions for symbols with tens of thousands of candles).
         Connection.Execute("PRAGMA journal_mode = WAL;");
         Connection.Execute("PRAGMA synchronous = NORMAL;");
-        Connection.Execute("PRAGMA busy_timeout = 5000;");
+        Connection.Execute("PRAGMA busy_timeout = 30000;");
     }
 
     public void Close() => Connection.Close();
@@ -277,6 +280,57 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
+    /// Read ALL candles for one (symbol, interval) from the candle DB into the in-memory
+    /// CandleList. No OpenTime filter — counterpart to the per-interval bulk file that
+    /// ZoneCandleEngine used to read on demand for DLZ zoom-refinement. Uses TryAdd so
+    /// candles that are already in memory (loaded earlier via the bounded startup path)
+    /// are silently skipped.
+    /// </summary>
+    public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText =
+            "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
+            "FROM Candle " +
+            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
+            "ORDER BY OpenTime";
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = symbolInterval.Interval.Id; cmd.Parameters.Add(pInterval);
+
+        symbolInterval.CandleList.Lock();
+        try
+        {
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                uint openTimeMinutes = (uint)reader.GetInt64(0);
+                byte ticks = (byte)reader.GetInt32(1);
+                decimal tickSize = TickSizeFor(ticks);
+
+                CryptoCandle candle = new()
+                {
+                    OpenTime = new CandleTime(openTimeMinutes),
+                    TickDecimals = ticks,
+                    Open = reader.GetInt64(2) * tickSize,
+                    High = reader.GetInt64(3) * tickSize,
+                    Low = reader.GetInt64(4) * tickSize,
+                    Close = reader.GetInt64(5) * tickSize,
+                    Volume = (decimal)reader.GetDouble(6),
+                };
+
+                symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                    symbolInterval.LastCandle = candle;
+            }
+        }
+        finally
+        {
+            symbolInterval.CandleList.Unlock();
+        }
+    }
+
+
+    /// <summary>
     /// Parallel load route that reads candles from the per-exchange candles.db (SQLite).
     /// Each worker opens its own connection — SqliteConnection is not thread-safe but
     /// WAL allows multiple concurrent readers on the same DB file, so this scales nearly
@@ -292,23 +346,37 @@ public class CandleDatabase : IDisposable
         {
             var exchange = GlobalData.ActiveExchange;
             if (exchange == null)
+            {
+                GlobalData.AddTextToLogTab("candles.db load: no active exchange — skipped");
                 return;
+            }
 
             InitializeSchema(exchange);
 
             // Snapshot to avoid enumerating a live collection from parallel workers
             var symbols = exchange.SymbolListName.Values.ToList();
+            GlobalData.AddTextToLogTab($"candles.db load {exchange.Name}: {symbols.Count} symbols");
+
+            int loaded = 0;
+            int skippedInactive = 0;
+            int skippedLowVolume = 0;
+            int failed = 0;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
 
             Parallel.ForEach(symbols, ParallelOptions, symbol =>
             {
                 if (!symbol.QuoteData.FetchCandles || symbol.Status != 1)
+                {
+                    Interlocked.Increment(ref skippedInactive);
                     return;
+                }
 
                 // Honour the same minimal-volume gating as the file loader.
                 if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                 {
                     if (symbol.ClearCandles())
                         ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
+                    Interlocked.Increment(ref skippedLowVolume);
                     return;
                 }
 
@@ -317,13 +385,20 @@ public class CandleDatabase : IDisposable
                     using var db = new CandleDatabase(exchange);
                     db.Open();
                     LoadCandlesForSymbol(db.Connection, symbol);
+                    Interlocked.Increment(ref loaded);
                 }
                 catch (Exception sqliteError)
                 {
+                    Interlocked.Increment(ref failed);
                     ScannerLog.Logger.Error(sqliteError, "candles.db read failed for " + symbol.Name);
                     GlobalData.AddTextToLogTab($"candles.db read failed for {symbol.Name}: {sqliteError.Message}");
                 }
             });
+
+            sw.Stop();
+            GlobalData.AddTextToLogTab(
+                $"candles.db load {exchange.Name}: done loaded={loaded} skippedInactive={skippedInactive} " +
+                $"skippedLowVolume={skippedLowVolume} failed={failed} in {sw.ElapsedMilliseconds} ms");
         }
         finally
         {
@@ -465,10 +540,15 @@ public class CandleDatabase : IDisposable
 
     /// <summary>
     /// Parallel save route mirroring DataStore.SaveCandlesAsync but writing to the
-    /// per-exchange candles.db. Each worker opens its own connection — writes still
-    /// serialise on the SQLite write-lock (one writer at a time, even in WAL), but
-    /// busy_timeout queues them politely and connection-open + prepare overlaps across
-    /// workers, giving a real if modest speed-up over fully sequential.
+    /// per-exchange candles.db. Scoped to the ACTIVE exchange only — consistent with
+    /// LoadCandlesAsync, CleanCandlesAsync and DataStore.CleanOrphanCandleFilesAsync.
+    /// Saving across every configured exchange would create empty {Name}.db files for
+    /// inactive exchanges (their SymbolListName is empty, but InitializeSchema still
+    /// opens a SqliteConnection in ReadWriteCreate mode).
+    ///
+    /// Each worker opens its own connection. Writes serialise on the SQLite write-lock
+    /// (one writer at a time, even in WAL); the SemaphoreSlim below makes that
+    /// serialisation explicit so we don't rely on busy_timeout races for large symbols.
     /// </summary>
     public static async Task SaveCandlesAsync()
     {
@@ -476,37 +556,66 @@ public class CandleDatabase : IDisposable
         try
         {
             GlobalData.AddTextToLogTab("Saving candles.db (please wait!)");
+            var swTotal = System.Diagnostics.Stopwatch.StartNew();
 
-            foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+            var exchange = GlobalData.ActiveExchange;
+            if (exchange == null)
             {
-                InitializeSchema(exchange);
+                GlobalData.AddTextToLogTab("candles.db save: no active exchange — skipped");
+                return;
+            }
 
-                // Snapshot to avoid enumerating a live collection from parallel workers
-                var symbols = exchange.SymbolListName.Values.ToList();
+            InitializeSchema(exchange);
 
-                await Parallel.ForEachAsync(symbols, ParallelOptions, (symbol, _) =>
+            // Snapshot to avoid enumerating a live collection from parallel workers
+            var symbols = exchange.SymbolListName.Values.ToList();
+            GlobalData.AddTextToLogTab($"candles.db save {exchange.Name}: {symbols.Count} symbols");
+
+            int saved = 0;
+            int failed = 0;
+
+            // SQLite serialises writers on the file write-lock anyway. Letting multiple
+            // workers race on BeginTransaction would just rely on busy_timeout, which
+            // breaks down for large symbols where one transaction holds the lock longer
+            // than the timeout window. The SemaphoreSlim makes the serialisation
+            // explicit and queues workers cleanly. Parallelism still pays off because
+            // a worker can prepare its next CandleList batch while another is committing.
+            using var sqliteWriteLock = new SemaphoreSlim(1, 1);
+
+            await Parallel.ForEachAsync(symbols, ParallelOptions, async (symbol, cancellationToken) =>
+            {
+                try
                 {
+                    // Don't save candles for symbols below the minimal volume threshold
+                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                    {
+                        symbol.ClearCandles();
+                    }
+
+                    await sqliteWriteLock.WaitAsync(cancellationToken);
                     try
                     {
-                        // Don't save candles for symbols below the minimal volume threshold
-                        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
-                        {
-                            symbol.ClearCandles();
-                        }
-
                         using var db = new CandleDatabase(exchange);
                         db.Open();
                         SaveCandlesForSymbol(db.Connection, symbol);
+                        Interlocked.Increment(ref saved);
                     }
-                    catch (Exception sqliteError)
+                    finally
                     {
-                        ScannerLog.Logger.Error(sqliteError, "candles.db write failed for " + symbol.Name);
-                        GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name}: {sqliteError.Message}");
+                        sqliteWriteLock.Release();
                     }
-                    return ValueTask.CompletedTask;
-                });
-            }
+                }
+                catch (Exception sqliteError)
+                {
+                    Interlocked.Increment(ref failed);
+                    ScannerLog.Logger.Error(sqliteError, "candles.db write failed for " + symbol.Name);
+                    GlobalData.AddTextToLogTab($"candles.db write failed for {symbol.Name}: {sqliteError.Message}");
+                }
+            });
 
+            swTotal.Stop();
+            GlobalData.AddTextToLogTab(
+                $"candles.db save {exchange.Name}: done saved={saved} failed={failed} in {swTotal.ElapsedMilliseconds} ms");
             ScannerLog.Logger.Trace("candles.db saved");
         }
         finally
@@ -609,24 +718,39 @@ public class CandleDatabase : IDisposable
     /// <summary>
     /// Cleanup for one symbol in one transaction. Either deletes ALL candles (symbol no
     /// longer in use) or deletes everything outside the computed keep-ranges per interval.
+    ///
+    /// DRY-RUN MODE: while the zone-candle loading logic is being stabilised, the actual
+    /// connection.Execute calls below are commented out and the SQL that WOULD have been
+    /// executed is logged instead. This lets us verify the cleanup queries by inspection
+    /// before letting them run. Re-enable by uncommenting the Execute lines + removing the
+    /// logging block.
     /// </summary>
     public static void CleanCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
     {
+        // Connection / transaction are still opened so the surrounding code keeps the same
+        // shape; nothing actually mutates the DB while the Execute calls are commented out.
         using var tx = connection.BeginTransaction();
 
         if (SymbolHasNoUse(symbol))
         {
-            connection.Execute("DELETE FROM Candle WHERE SymbolId = @SymbolId",
-                new { SymbolId = symbol.Id }, transaction: tx);
-            // Sync-bookkeeping has no value without candles either — drop it too so the next
-            // start treats the symbol as never-synced when it eventually comes back into use.
-            connection.Execute("DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId",
-                new { SymbolId = symbol.Id }, transaction: tx);
+            string sqlCandle = "DELETE FROM Candle WHERE SymbolId = @SymbolId";
+            string sqlState = "DELETE FROM SymbolInterval WHERE SymbolId = @SymbolId";
+
+            ScannerLog.Logger.Trace($"candles.db dry-run [no-use] {symbol.Name}: {sqlCandle}  @SymbolId={symbol.Id}");
+            ScannerLog.Logger.Trace($"candles.db dry-run [no-use] {symbol.Name}: {sqlState}   @SymbolId={symbol.Id}");
+            GlobalData.AddTextToLogTab($"candles.db dry-run [no-use] {symbol.Name}: would drop ALL rows + SymbolInterval");
+
+            //connection.Execute(sqlCandle, new { SymbolId = symbol.Id }, transaction: tx);
+            //// Sync-bookkeeping has no value without candles either — drop it too so the next
+            //// start treats the symbol as never-synced when it eventually comes back into use.
+            //connection.Execute(sqlState,  new { SymbolId = symbol.Id }, transaction: tx);
             tx.Commit();
             return;
         }
 
         var keepRanges = ComputeKeepRanges(symbol);
+        int queriesPlanned = 0;
+        int intervalsDroppedWhole = 0;
 
         foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
@@ -635,28 +759,50 @@ public class CandleDatabase : IDisposable
             if (!keepRanges.TryGetValue(intervalId, out var ranges) || ranges.Count == 0)
             {
                 // No keep-range for this interval → drop everything for it
-                connection.Execute(
-                    "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId",
-                    new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
+                string sql = "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId";
+                ScannerLog.Logger.Trace(
+                    $"candles.db dry-run [drop-interval] {symbol.Name} {symbolInterval.Interval.Name}: " +
+                    $"{sql}  @SymbolId={symbol.Id} @IntervalId={intervalId}");
+                queriesPlanned++;
+                intervalsDroppedWhole++;
+                //connection.Execute(sql, new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
                 continue;
             }
 
             // Build:  DELETE ... WHERE NOT ( (OpenTime BETWEEN @s0 AND @e0) OR (... @s1 ...) ... )
-            System.Text.StringBuilder sql = new(
+            System.Text.StringBuilder sql2 = new(
                 "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId AND NOT (");
             var p = new DynamicParameters();
             p.Add("@SymbolId", symbol.Id);
             p.Add("@IntervalId", intervalId);
             for (int i = 0; i < ranges.Count; i++)
             {
-                if (i > 0) sql.Append(" OR ");
-                sql.Append($"(OpenTime BETWEEN @s{i} AND @e{i})");
+                if (i > 0) sql2.Append(" OR ");
+                sql2.Append($"(OpenTime BETWEEN @s{i} AND @e{i})");
                 p.Add($"@s{i}", (long)ranges[i].start.Minutes);
                 p.Add($"@e{i}", (long)ranges[i].end.Minutes);
             }
-            sql.Append(')');
+            sql2.Append(')');
 
-            connection.Execute(sql.ToString(), p, transaction: tx);
+            // Trace: full SQL + a human-readable version of each keep-range
+            System.Text.StringBuilder rangeText = new();
+            for (int i = 0; i < ranges.Count; i++)
+            {
+                if (i > 0) rangeText.Append(", ");
+                rangeText.Append($"[{ranges[i].start.ToDateTime():yyyy-MM-dd HH:mm} .. {ranges[i].end.ToDateTime():yyyy-MM-dd HH:mm}]");
+            }
+            ScannerLog.Logger.Trace(
+                $"candles.db dry-run [trim] {symbol.Name} {symbolInterval.Interval.Name}: " +
+                $"{sql2}  @SymbolId={symbol.Id} @IntervalId={intervalId} keep={rangeText}");
+            queriesPlanned++;
+            //connection.Execute(sql2.ToString(), p, transaction: tx);
+        }
+
+        if (queriesPlanned > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"candles.db dry-run {symbol.Name}: queries={queriesPlanned} wholeDrops={intervalsDroppedWhole} " +
+                $"(rest=trim outside keep-ranges) — see Trace.log for SQL");
         }
 
         tx.Commit();
@@ -674,14 +820,23 @@ public class CandleDatabase : IDisposable
         using var db = new CandleDatabase(exchange);
         db.Open();
 
-        foreach (var symbol in exchange.SymbolListName.Values.ToList())
+        var symbols = exchange.SymbolListName.Values.ToList();
+        GlobalData.AddTextToLogTab($"candles.db cleanup {exchange.Name}: scanning {symbols.Count} symbols");
+
+        int processed = 0;
+        int failed = 0;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        foreach (var symbol in symbols)
         {
             try
             {
                 CleanCandlesForSymbol(db.Connection, symbol);
+                processed++;
             }
             catch (Exception err)
             {
+                failed++;
                 ScannerLog.Logger.Error(err, "candles.db cleanup failed for " + symbol.Name);
                 GlobalData.AddTextToLogTab($"candles.db cleanup failed for {symbol.Name}: {err.Message}");
             }
@@ -690,6 +845,10 @@ public class CandleDatabase : IDisposable
         // Reclaim pages freed by the DELETEs above. INCREMENTAL keeps it cheap;
         // pass a generous page-budget so a large cleanup completes in one call.
         db.Connection.Execute("PRAGMA incremental_vacuum(10000);");
+
+        sw.Stop();
+        GlobalData.AddTextToLogTab(
+            $"candles.db cleanup {exchange.Name}: done processed={processed} failed={failed} in {sw.ElapsedMilliseconds} ms");
     }
 
 

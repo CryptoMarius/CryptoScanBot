@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Zones;
 
 using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Streams;
@@ -262,16 +263,21 @@ public class DataStore
 
 
     /// <summary>
-    /// Walk every exchange/quote folder and the legacy Pivots folder, deleting leftover
-    /// candle files for symbols that are no longer active or no longer present (delisted).
-    /// Covers DataStore main files ({base}.compressed), per-interval bulk files
-    /// ({base}-{interval}.compressed) and the old uncompressed equivalents (.bin), plus
-    /// the exchange-agnostic Pivots/ folder ({symbol.Name}-{interval}.bin).
+    /// Scoped to the ACTIVE exchange — walks its exchange/quote folders plus the legacy
+    /// Pivots folder, deleting leftover candle files. Other exchanges' folders are
+    /// untouched. Rules per file class:
+    ///   - exchange/quote/{base}.compressed (no interval suffix): orphan-check — only
+    ///     remove when the symbol is dormant / below volume / delisted on this exchange.
+    ///   - exchange/quote/{base}-{interval}.compressed: migrate to candles.db via
+    ///     ReadCandlesFromDiskAsync when the active symbol still uses it; otherwise drop.
+    ///   - exchange/quote/*.bin and extension-less files: legacy formats that predate
+    ///     the .compressed era — always remove.
+    ///   - Pivots/*.bin: legacy folder. For symbols the active exchange still uses,
+    ///     migrate via ReadCandlesFromDiskAsync; everything else is dropped (symbols on
+    ///     other exchanges count as orphan from this run's perspective).
     ///
     /// Designed to run AFTER <see cref="CandleDatabase.CleanCandlesAsync"/> on the hourly
-    /// timer — by then the in-memory state is settled and we know which symbols are still
-    /// valuable. Sequential per folder; file deletes are cheap and we don't want to hammer
-    /// the filesystem with parallel deletes.
+    /// timer.
     /// </summary>
     public static async Task CleanOrphanCandleFilesAsync()
     {
@@ -280,51 +286,157 @@ public class DataStore
         {
             GlobalData.AddTextToLogTab("Cleaning orphan candle files (please wait!)");
 
-            // Per-exchange / per-quote sweep: filename is "{base}[-{interval}].(compressed|bin)".
-            // Symbol lookup is local to this exchange, key = base.ToUpper() + quote.ToUpper().
-            foreach (Model.CryptoExchange exchange in GlobalData.ExchangeListName.Values.ToList())
+            // Scoped to the ACTIVE exchange only — other exchanges' candle DBs and
+            // folders are out of scope for this run. The Pivots folder is exchange-
+            // agnostic on disk but the symbol-lookup also stays inside the active
+            // exchange (anything that does not live there counts as orphan from this
+            // perspective).
+            var exchange = GlobalData.ActiveExchange;
+            if (exchange == null)
             {
-                string exchangeFolder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
-                if (!Directory.Exists(exchangeFolder))
-                    continue;
+                GlobalData.AddTextToLogTab("Orphan cleanup: no active exchange — skipped");
+                return;
+            }
+
+            int totalMigrated = 0;
+            int totalDeleted = 0;
+
+            string exchangeFolder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
+            if (Directory.Exists(exchangeFolder))
+            {
+                GlobalData.AddTextToLogTab($"Orphan cleanup: scanning {exchange.Name}");
 
                 foreach (string quoteFolder in Directory.GetDirectories(exchangeFolder))
                 {
                     string quoteUpper = Path.GetFileName(quoteFolder).ToUpperInvariant();
+                    int quoteMigrated = 0;
+                    int quoteDeleted = 0;
 
-                    bool IsOrphanInExchange(string stemWithoutInterval)
+                    // 1) .compressed — split rule by interval-suffix
+                    foreach (string filePath in Directory.GetFiles(quoteFolder, "*.compressed"))
                     {
-                        string symbolName = stemWithoutInterval.ToUpperInvariant() + quoteUpper;
-                        return !exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol)
-                               || CandleDatabase.SymbolHasNoUse(symbol);
+                        string stem = Path.GetFileNameWithoutExtension(filePath);
+
+                        if (HasKnownIntervalSuffix(stem, out string baseWithoutSuffix))
+                        {
+                            // Zone-bulk file. If the symbol is still active, migrate the
+                            // file to candles.db via ReadCandlesFromDiskAsync (which reads,
+                            // upserts to DB and deletes the file). Otherwise drop it.
+                            string symbolName = baseWithoutSuffix.ToUpperInvariant() + quoteUpper;
+                            string intervalName = stem[(stem.LastIndexOf('-') + 1)..];
+
+                            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol)
+                                && !CandleDatabase.SymbolHasNoUse(symbol)
+                                && GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                            {
+                                if (await TryMigrateAsync(symbol, interval))
+                                    quoteMigrated++;
+                            }
+                            else
+                            {
+                                if (TryDeleteFile(filePath))
+                                    quoteDeleted++;
+                            }
+                        }
+                        else
+                        {
+                            // Main DataStore file → only remove when symbol is no longer in use
+                            string symbolName = stem.ToUpperInvariant() + quoteUpper;
+                            bool orphan = !exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol)
+                                          || CandleDatabase.SymbolHasNoUse(symbol);
+                            if (orphan && TryDeleteFile(filePath))
+                                quoteDeleted++;
+                        }
                     }
 
-                    SweepOrphanFiles(quoteFolder, "*.compressed", IsOrphanInExchange);
-                    SweepOrphanFiles(quoteFolder, "*.bin", IsOrphanInExchange);
+                    // 2) .bin in exchange/quote — legacy format that no code currently
+                    //    knows how to read from this location, so always remove.
+                    foreach (string filePath in Directory.GetFiles(quoteFolder, "*.bin"))
+                    {
+                        if (TryDeleteFile(filePath))
+                            quoteDeleted++;
+                    }
+
+                    // 3) Extension-less files in exchange/quote — oldest uncompressed
+                    //    DataStore format. Active symbols were already migrated by
+                    //    DataStore.LoadCandlesForSymbol at startup, so anything left here
+                    //    is genuinely orphan. Always remove.
+                    foreach (string filePath in Directory.EnumerateFiles(quoteFolder))
+                    {
+                        if (!Path.HasExtension(filePath) && TryDeleteFile(filePath))
+                            quoteDeleted++;
+                    }
+
+                    if (quoteMigrated + quoteDeleted > 0)
+                        GlobalData.AddTextToLogTab(
+                            $"  {exchange.Name}/{quoteUpper}: migrated={quoteMigrated} deleted={quoteDeleted}");
+
+                    totalMigrated += quoteMigrated;
+                    totalDeleted += quoteDeleted;
+
                     TryRemoveEmptyDir(quoteFolder);
                 }
             }
 
-            // Legacy Pivots/ sweep: filename is "{symbol.Name}[-{interval}].bin", exchange-
-            // agnostic. Symbol counts as active when ANY exchange still has it as in-use.
+            // Legacy Pivots/ — exchange-agnostic filenames "{symbol.Name}-{interval}.bin".
+            // For symbols that the ACTIVE exchange still uses, route through
+            // ReadCandlesFromDiskAsync so the data is migrated to candles.db before the
+            // file disappears. Anything else (symbols only on other exchanges, delisted,
+            // or below thresholds) gets dropped — they are orphan from the active
+            // exchange's perspective.
             string pivotsFolder = Path.Combine(GlobalData.AppDataFolder, "Pivots");
             if (Directory.Exists(pivotsFolder))
             {
-                bool IsOrphanAnyExchange(string stemWithoutInterval)
+                int pivotsMigrated = 0;
+                int pivotsDeleted = 0;
+                string[] pivotFiles = Directory.GetFiles(pivotsFolder, "*.bin");
+                GlobalData.AddTextToLogTab($"Orphan cleanup: scanning Pivots/ ({pivotFiles.Length} files)");
+
+                foreach (string filePath in pivotFiles)
                 {
-                    string symbolName = stemWithoutInterval.ToUpperInvariant();
-                    foreach (var exch in GlobalData.ExchangeListName.Values)
+                    string stem = Path.GetFileNameWithoutExtension(filePath);
+                    int dashIdx = stem.LastIndexOf('-');
+                    if (dashIdx <= 0)
                     {
-                        if (exch.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? sym)
-                            && !CandleDatabase.SymbolHasNoUse(sym))
-                            return false;
+                        if (TryDeleteFile(filePath))
+                            pivotsDeleted++;
+                        continue;
                     }
-                    return true;
+
+                    string symbolName = stem[..dashIdx].ToUpperInvariant();
+                    string intervalName = stem[(dashIdx + 1)..];
+
+                    if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
+                    {
+                        if (TryDeleteFile(filePath))
+                            pivotsDeleted++;
+                        continue;
+                    }
+
+                    // Active-exchange-only lookup.
+                    if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? sym)
+                        && !CandleDatabase.SymbolHasNoUse(sym))
+                    {
+                        if (await TryMigrateAsync(sym, interval))
+                            pivotsMigrated++;
+                    }
+                    else
+                    {
+                        if (TryDeleteFile(filePath))
+                            pivotsDeleted++;
+                    }
                 }
 
-                SweepOrphanFiles(pivotsFolder, "*.bin", IsOrphanAnyExchange);
+                GlobalData.AddTextToLogTab(
+                    $"Orphan cleanup Pivots/: migrated={pivotsMigrated} deleted={pivotsDeleted}");
+                totalMigrated += pivotsMigrated;
+                totalDeleted += pivotsDeleted;
+
                 TryRemoveEmptyDir(pivotsFolder);
             }
+
+            GlobalData.AddTextToLogTab(
+                $"Orphan cleanup {exchange.Name}: total migrated={totalMigrated} deleted={totalDeleted}");
         }
         finally
         {
@@ -334,49 +446,70 @@ public class DataStore
 
 
     /// <summary>
-    /// Scan <paramref name="folder"/> for files matching <paramref name="searchPattern"/>,
-    /// strip the optional "-{interval}" suffix from each filename stem, and ask
-    /// <paramref name="isOrphan"/> whether the file belongs to a symbol that no longer
-    /// needs it. Orphans are deleted; failures are logged but do not stop the sweep.
+    /// Returns true when <paramref name="stem"/> ends with a known interval suffix
+    /// (e.g. "btc-1h" → true, baseWithoutSuffix = "btc"). The check uses
+    /// <see cref="GlobalData.IntervalListPeriodName"/> so only real interval names
+    /// match (avoids treating "abc-xyz" as an interval).
     /// </summary>
-    private static void SweepOrphanFiles(string folder, string searchPattern, Func<string, bool> isOrphan)
-    {
-        foreach (string filePath in Directory.GetFiles(folder, searchPattern))
-        {
-            string stem = Path.GetFileNameWithoutExtension(filePath);
-            string stemNoInterval = StripIntervalSuffix(stem);
-
-            if (!isOrphan(stemNoInterval))
-                continue;
-
-            try
-            {
-                File.Delete(filePath);
-            }
-            catch (Exception err)
-            {
-                ScannerLog.Logger.Error(err, "orphan file delete failed: " + filePath);
-                GlobalData.AddTextToLogTab($"orphan file delete failed: {filePath}: {err.Message}");
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// Remove the trailing "-{interval}" suffix from <paramref name="stem"/> when the suffix
-    /// matches a known interval name (1m, 5m, 1h, …). Returns <paramref name="stem"/>
-    /// unchanged when no such suffix is present (i.e. the file is a main {base}.compressed).
-    /// </summary>
-    private static string StripIntervalSuffix(string stem)
+    private static bool HasKnownIntervalSuffix(string stem, out string baseWithoutSuffix)
     {
         int dashIdx = stem.LastIndexOf('-');
         if (dashIdx > 0)
         {
             string maybeInterval = stem[(dashIdx + 1)..];
             if (GlobalData.IntervalListPeriodName.ContainsKey(maybeInterval))
-                return stem[..dashIdx];
+            {
+                baseWithoutSuffix = stem[..dashIdx];
+                return true;
+            }
         }
-        return stem;
+        baseWithoutSuffix = stem;
+        return false;
+    }
+
+
+    /// <summary>
+    /// Delete a file. Returns true on success so the caller can count it. Per-file success
+    /// logging is intentionally omitted — with thousands of orphan files this would flood
+    /// the log; the summary lines in <see cref="CleanOrphanCandleFilesAsync"/> are enough.
+    /// Errors do go to the log so the user can investigate.
+    /// </summary>
+    private static bool TryDeleteFile(string filePath)
+    {
+        try
+        {
+            File.Delete(filePath);
+            return true;
+        }
+        catch (Exception err)
+        {
+            ScannerLog.Logger.Error(err, "orphan file delete failed: " + filePath);
+            GlobalData.AddTextToLogTab($"orphan file delete failed: {filePath}: {err.Message}");
+            return false;
+        }
+    }
+
+
+    /// <summary>
+    /// Route the (symbol, interval) through <see cref="ZoneCandleEngine.ReadCandlesFromDiskAsync"/>:
+    /// it reads the legacy file from its expected location, upserts every candle into the
+    /// per-exchange candles.db and deletes the source file on success. Returns true when
+    /// the call completed without exception. Failures are logged and leave the file in
+    /// place for the next sweep to retry.
+    /// </summary>
+    private static async Task<bool> TryMigrateAsync(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        try
+        {
+            await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
+            return true;
+        }
+        catch (Exception err)
+        {
+            ScannerLog.Logger.Error(err, $"orphan migration failed for {symbol.Name} {interval.Name}");
+            GlobalData.AddTextToLogTab($"orphan migration failed for {symbol.Name} {interval.Name}: {err.Message}");
+            return false;
+        }
     }
 
 

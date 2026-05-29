@@ -93,6 +93,7 @@ public class ZoneCandleEngine
         string oldFileName = Path.Combine(GlobalData.AppDataFolder, "Pivots", $"{symbol.Name}-{interval.Name}.bin");
         string newFileName = Path.Combine(GlobalData.AppDataFolder, symbol.Exchange.Name.ToLower(), symbol.Quote.ToLower(), $"{symbol.Base.ToLower()}-{interval.Name}.compressed");
         string fileName = string.Empty;
+        bool fileWasRead = false;
         try
         {
             // an old uncompressed file
@@ -102,6 +103,7 @@ public class ZoneCandleEngine
                 using FileStream fileStream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.None, 2 * 1024 * 1024);
                 using BinaryReader binaryReader = new(fileStream, Encoding.UTF8, false);
                 await ReadCandlesFromStreamAsync(binaryReader, symbol, interval);
+                fileWasRead = true;
             }
             // a new compressed file (preferred)
             else if (File.Exists(newFileName))
@@ -111,6 +113,7 @@ public class ZoneCandleEngine
                 using LZ4DecoderStream lz4Stream = LZ4Stream.Decode(fileStream);
                 using BinaryReader binaryReader = new(lz4Stream, Encoding.UTF8, false);
                 await ReadCandlesFromStreamAsync(binaryReader, symbol, interval);
+                fileWasRead = true;
             }
         }
         catch (Exception error)
@@ -118,6 +121,57 @@ public class ZoneCandleEngine
             GlobalData.AddTextToLogTab($"ERROR FetchFrom {symbol.Name} {interval.Name} {error.Message}");
             File.Delete(fileName);
             throw;
+        }
+
+        if (symbol.Exchange == null)
+            return;
+
+        if (fileWasRead)
+        {
+            // Migration: candles for this (symbol, interval) are now in memory — push them
+            // straight into the per-exchange candles.db and remove the source file. Mirrors
+            // the per-symbol migration in DataStore.LoadCandlesForSymbol but for the per-interval
+            // bulk files that ZoneCandleEngine owns. Crash-safety:
+            //   - crash before SaveCandlesForSymbolInterval completes → file stays, retry next time
+            //   - crash between save and File.Delete → file stays, re-saved (idempotent), deleted
+            //   - DB write fails → file stays for the next attempt
+            // Once every interval's file is migrated this branch is a no-op on every future call.
+            try
+            {
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                using var candleDb = new Context.CandleDatabase(symbol.Exchange);
+                candleDb.Open();
+                Context.CandleDatabase.SaveCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
+
+                if (File.Exists(fileName))
+                    File.Delete(fileName);
+            }
+            catch (Exception migrError)
+            {
+                ScannerLog.Logger.Error(migrError, $"zone-candle migration to candles.db failed for {symbol.Name} {interval.Name}");
+                GlobalData.AddTextToLogTab($"zone-candle migration to candles.db failed for {symbol.Name} {interval.Name}: {migrError.Message}");
+                // Leave the file in place so the next read attempt retries.
+            }
+        }
+        else
+        {
+            // No file (any more) → after migration the bulk lives in candles.db. Materialise
+            // the full series for this (symbol, interval) into the in-memory CandleList so
+            // zone-zoom logic has access to the same data it used to get from disk.
+            // TryAdd in LoadCandlesForSymbolInterval guards against duplicates from the
+            // bounded startup load.
+            try
+            {
+                CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                using var candleDb = new Context.CandleDatabase(symbol.Exchange);
+                candleDb.Open();
+                Context.CandleDatabase.LoadCandlesForSymbolInterval(candleDb.Connection, symbol, symbolInterval);
+            }
+            catch (Exception dbError)
+            {
+                ScannerLog.Logger.Error(dbError, $"candles.db read failed for {symbol.Name} {interval.Name}");
+                GlobalData.AddTextToLogTab($"candles.db read failed for {symbol.Name} {interval.Name}: {dbError.Message}");
+            }
         }
     }
 

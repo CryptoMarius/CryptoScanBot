@@ -306,7 +306,7 @@ public class ThreadLoadData
                 // listings and symbols added since the last manual "Calculate zones" run would
                 // have no zones otherwise. The worker thread just started, so the queue accepts
                 // items immediately; all work runs in the background without blocking startup.
-                ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
+                //ZoneThreadCalculate.CalculateZonesForAllSymbolsAsync();
 
                 //************************************************************************************
                 // Nu we de achterstand ingehaald hebben kunnen/mogen we analyseren (signals maken)

@@ -83,9 +83,15 @@ class Program
 
 
     public static AppBuilder BuildAvaloniaApp()
-           => AppBuilder.Configure<App>()
-               .UsePlatformDetect()
-               .LogToTrace()
-               .UseDesktopWebView();
+    {
+        // Route Avalonia's internal diagnostics (binding errors, XAML loader failures,
+        // layout warnings …) into ScannerLog instead of System.Diagnostics.Trace, so
+        // they end up in the same NLog files as the rest of the application.
+        Avalonia.Logging.Logger.Sink = new AvaloniaScannerLogSink();
+
+        return AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .UseDesktopWebView();
+    }
 
 }

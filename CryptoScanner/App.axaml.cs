@@ -91,6 +91,39 @@ public partial class App : Application
                 e.SetObserved(); // Mark as observed to avoid crash
             };
 
+#if DEBUG
+            // FirstChanceException fires for EVERY exception the runtime raises — even ones
+            // that get caught immediately by a downstream try/catch. Invaluable when an
+            // exception silently disappears (Avalonia/OxyPlot rendering, async-void handlers,
+            // property-changed callbacks). DEBUG-only because it's verbose; flip the filter
+            // below to narrow the noise if a specific area is being investigated.
+            AppDomain.CurrentDomain.FirstChanceException += (sender, e) =>
+            {
+                // Skip the noise sources that almost never indicate a real bug:
+                //  - Task/Operation cancellation: routine async cancellation
+                //  - IOException with "transport connection" / "thread exit" / "application
+                //    request": WebSocket / HTTP socket teardown during stream restart or
+                //    reconnect. Thrown deep inside the network stack, immediately caught by
+                //    the exchange library.
+                //  - ObjectDisposedException on SslStream / Socket / NetworkStream: same
+                //    teardown story.
+                string typeName = e.Exception.GetType().Name;
+                if (typeName == "TaskCanceledException" || typeName == "OperationCanceledException")
+                    return;
+
+                string message = e.Exception.Message;
+                if (typeName == "IOException" &&
+                    (message.Contains("transport connection") || message.Contains("thread exit") || message.Contains("application request")))
+                    return;
+
+                if (typeName == "ObjectDisposedException" &&
+                    (message.Contains("SslStream") || message.Contains("Socket") || message.Contains("NetworkStream")))
+                    return;
+
+                ScannerLog.Logger.Trace($"FirstChance: {typeName}: {message}");
+            };
+#endif
+
             _powerMonitor.PowerModeChanged += DoWhenPowerModeChanged;
 
             var scannerSession = GlobalData.GetService<IScannerSession>()
