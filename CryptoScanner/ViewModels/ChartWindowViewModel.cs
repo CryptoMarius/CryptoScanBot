@@ -549,9 +549,11 @@ public partial class ChartWindowViewModel : ObservableObject
         // ---------- Oscillator (Stoch / RSI) sub-panel ----------
         if (showOscillator)
         {
-            // Bottom slice when both, otherwise the only sub-panel.
-            double stochStart = showVolume ? 0.21 : 0.00;
-            double stochEnd = showVolume ? 0.38 : 0.20;
+            // When both panels are shown, the oscillator sits directly above the (halved)
+            // volume panel: 0.11..0.30. When alone it occupies the full sub-panel slot
+            // 0.00..0.20.
+            double stochStart = showVolume ? 0.11 : 0.00;
+            double stochEnd = showVolume ? 0.30 : 0.20;
 
             // Add the axis if missing, otherwise just keep its bounds in sync.
             var existingStoch = PlotModel.Axes.FirstOrDefault(a => a.Key == "stoch");
@@ -631,8 +633,9 @@ public partial class ChartWindowViewModel : ObservableObject
         if (showVolume)
         {
             // Always at the very bottom — leaves the oscillator panel directly above it.
+            // Half the height of the oscillator panel (10 % of the chart instead of 20 %).
             const double volStart = 0.00;
-            double volEnd = showOscillator ? 0.19 : 0.20;
+            const double volEnd = 0.10;
 
             var existingVol = PlotModel.Axes.FirstOrDefault(a => a.Key == "volume");
             if (existingVol is LinearAxis volAxisLinear)
@@ -656,6 +659,10 @@ public partial class ChartWindowViewModel : ObservableObject
                     Minimum = 0,
                     IsZoomEnabled = false,
                     IsPanEnabled = false,
+                    // Avoid OxyPlot's default scientific notation ("1E+06"). Format the tick
+                    // labels with metric suffixes (K / M / B / T) so the scale stays readable
+                    // across symbols whose volume ranges from a few hundred to billions.
+                    LabelFormatter = FormatVolumeAxisLabel,
                     TicklineColor = OxyColors.Gray,
                     TickStyle = OxyPlot.Axes.TickStyle.Inside,
                     AxislineStyle = LineStyle.Solid,
@@ -702,14 +709,25 @@ public partial class ChartWindowViewModel : ObservableObject
         }
 
         // ---------- Price panel height ----------
+        // Volume = 10 %, oscillator = 20 %. When both are shown the oscillator slides on top
+        // of the volume panel. With volume halved the layouts are:
+        //   neither            → price 0.00..1.00
+        //   oscillator only    → price 0.22..1.00, stoch  0.00..0.20
+        //   volume only        → price 0.12..1.00, volume 0.00..0.10
+        //   both               → price 0.32..1.00, stoch  0.11..0.30, volume 0.00..0.10
         if (showOscillator && showVolume)
         {
-            priceAxis.StartPosition = 0.40;
+            priceAxis.StartPosition = 0.32;
             priceAxis.EndPosition = 1.0;
         }
-        else if (showOscillator || showVolume)
+        else if (showOscillator)
         {
             priceAxis.StartPosition = 0.22;
+            priceAxis.EndPosition = 1.0;
+        }
+        else if (showVolume)
+        {
+            priceAxis.StartPosition = 0.12;
             priceAxis.EndPosition = 1.0;
         }
         else
@@ -717,6 +735,26 @@ public partial class ChartWindowViewModel : ObservableObject
             priceAxis.StartPosition = 0.0;
             priceAxis.EndPosition = 1.0;
         }
+    }
+
+    /// <summary>
+    /// LabelFormatter for the volume Y-axis. Returns "850K", "1.5M", "12.4B" etc instead of
+    /// OxyPlot's default "1E+06" scientific notation. Sub-1000 values are shown as integers.
+    /// Sign is preserved so anyone reusing this on a signed axis still gets a sensible label.
+    /// </summary>
+    private static string FormatVolumeAxisLabel(double value)
+    {
+        double absVal = Math.Abs(value);
+        string sign = value < 0 ? "-" : "";
+        if (absVal >= 1_000_000_000_000d)
+            return $"{sign}{absVal / 1_000_000_000_000d:0.##}T";
+        if (absVal >= 1_000_000_000d)
+            return $"{sign}{absVal / 1_000_000_000d:0.##}B";
+        if (absVal >= 1_000_000d)
+            return $"{sign}{absVal / 1_000_000d:0.##}M";
+        if (absVal >= 1_000d)
+            return $"{sign}{absVal / 1_000d:0.##}K";
+        return value.ToString("0.##");
     }
 
     private bool _refreshChart = false;
