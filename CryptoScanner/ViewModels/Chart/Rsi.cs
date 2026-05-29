@@ -58,7 +58,7 @@ public class Rsi
             Y = GlobalData.Settings.General.SettingsRsi.Overbought,
             Color = OxyColor.FromAColor(140, OxyColors.Tomato),
             StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            LineStyle = LineStyle.Solid,
             YAxisKey = AxisKey,
             Tag = tag,
         });
@@ -82,7 +82,7 @@ public class Rsi
             Y = GlobalData.Settings.General.SettingsRsi.Oversold,
             Color = OxyColor.FromAColor(140, OxyColors.LimeGreen),
             StrokeThickness = 1,
-            LineStyle = LineStyle.Dash,
+            LineStyle = LineStyle.Solid,
             YAxisKey = AxisKey,
             Tag = tag,
         });
