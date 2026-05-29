@@ -7,7 +7,7 @@ internal class CryptoBarometerPrice
 {
     // Outlier threshold: symbols with an absurdly high/low percentage are skipped
     // (guards against corrupted candle.Close values caused by race conditions on decimal reads)
-    private const decimal OutlierThreshold = 200m;
+    private const decimal OutlierThreshold = 250m;
 
     public static bool CalculatePriceBarometer(CryptoQuoteData quoteData, SortedList<string, CryptoSymbol> symbols,
         CryptoInterval interval, CandleTime unixCandleLast, out decimal barometerPerc)
