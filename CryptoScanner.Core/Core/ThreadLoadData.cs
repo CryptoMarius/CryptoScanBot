@@ -229,6 +229,7 @@ public class ThreadLoadData
 
                 GlobalData.AddTextToLogTab("Reading candle information");
                 await DataStore.LoadCandlesAsync();
+                await CandleDatabase.LoadCandlesAsync();
 
                 //************************************************************************************
                 // Vanaf dit moment worden de candles (en candleperiod) bewaard

@@ -323,6 +323,7 @@ public class ScannerSession : IScannerSession
                 //}
 
                 task = Task.Run(DataStore.SaveCandlesAsync);
+                task = Task.Run(CandleDatabase.SaveCandlesAsync);
                 taskList.Add(task);
 
                 await Task.WhenAll(taskList).ConfigureAwait(false);
@@ -341,6 +342,12 @@ public class ScannerSession : IScannerSession
     {
         // Save the candles each x hours..
         await DataStore.SaveCandlesAsync();
+        await CandleDatabase.SaveCandlesAsync();
+
+        // Hourly cleanup of the experimental SQLite candle store. Independent of the file
+        // save above — even if the .compressed save fails this still runs so the DB does
+        // not grow without bound. CandleDatabase has its own try/catch per symbol.
+        await CandleDatabase.CleanCandlesAsync();
     }
 
     public void SetTimerDefaults()
