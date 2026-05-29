@@ -123,21 +123,28 @@ public class Bbma
         // -----------------------------------------------------------------------
         // OmniView state series
         //
+        // Convention: COLOR encodes direction (LimeGreen = buy, Red = sell),
+        //             SHAPE encodes which state it is.
+        //
         // "Important" states (large markers, placed just outside the candle body):
-        //   - Extreme Buy  : yellow triangle  below   Extreme Sell  : orange-red triangle  above
-        //   - TPW Buy      : lime circle      below   TPW Sell      : orange circle        above
-        //   - MHV Buy      : cyan diamond     below   MHV Sell      : magenta diamond      above
-        //   - Reentry Buy  : white square     below   Reentry Sell  : light-blue square    above
+        //   - Extreme   → Triangle   (buy below, sell above)
+        //   - TPW       → Circle
+        //   - MHV       → Diamond
+        //   - Reentry   → Square
         //
         // "Intermediate" states (small gray dots, 1-bar offset below / above):
         //   CSD / CSAK2 / CSAA / CSM / Cross / GapBbEma50 / RejectedEma50
+        //
+        // The authoritative reference for both the chart symbol legend AND the
+        // OLD-vs-NEW BBMA code translation (RRE / REM / REE / RMEE → RRE / REH /
+        // REE / RHE) lives in SignalBbmaOmniBase.cs above the OmniState enum.
         // -----------------------------------------------------------------------
 
         var seriesOmniExtremeBuy = new ScatterSeries
         {
             Title = "omni extreme buy",
             MarkerSize = 5,
-            MarkerFill = OxyColors.Yellow,
+            MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Triangle,
             Tag = group,
         };
@@ -145,7 +152,7 @@ public class Bbma
         {
             Title = "omni extreme sell",
             MarkerSize = 5,
-            MarkerFill = OxyColors.OrangeRed,
+            MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Triangle,
             Tag = group,
         };
@@ -162,7 +169,7 @@ public class Bbma
         {
             Title = "omni tpw sell",
             MarkerSize = 5,
-            MarkerFill = OxyColors.Orange,
+            MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Circle,
             Tag = group,
         };
@@ -171,7 +178,7 @@ public class Bbma
         {
             Title = "omni mhv buy",
             MarkerSize = 5,
-            MarkerFill = OxyColors.Cyan,
+            MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Diamond,
             Tag = group,
         };
@@ -179,7 +186,7 @@ public class Bbma
         {
             Title = "omni mhv sell",
             MarkerSize = 5,
-            MarkerFill = OxyColors.Magenta,
+            MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Diamond,
             Tag = group,
         };
@@ -187,16 +194,16 @@ public class Bbma
         var seriesOmniReentryBuy = new ScatterSeries
         {
             Title = "omni reentry buy",
-            MarkerSize = 4,
-            MarkerFill = OxyColors.White,
+            MarkerSize = 5,
+            MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Square,
             Tag = group,
         };
         var seriesOmniReentrySell = new ScatterSeries
         {
             Title = "omni reentry sell",
-            MarkerSize = 4,
-            MarkerFill = OxyColor.FromArgb(255, 173, 216, 230),  // light blue
+            MarkerSize = 5,
+            MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Square,
             Tag = group,
         };
