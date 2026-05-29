@@ -327,7 +327,7 @@ public partial class MainWindow : Window
         //MenuTools.Items.Add(new MenuItem { Header = "Test - Save Candles", Command.None, TestSaveCandlesClick);
         //MenuTools.Items.Add(new MenuItem { Header = "Test - Create url testfile", Command.None, TestCreateUrlTestFileClick);
         //MenuTools.Items.Add(new MenuItem { Header = "Test - Dump ticker information", Command.None, TestShowTickerInformationClick);
-        MenuTools.Items.Add(new MenuItem { Header = "Cleanup data folder", Command = new CommandCleanOrphanCandleFiles(), CommandParameter = this });
+        MenuTools.Items.Add(new MenuItem { Header = "Cleanup candles and old files in data folder", Command = new CommandCleanOrphanCandleFiles(), CommandParameter = this });
 #endif
         //MenuTools.Items.Add(new MenuItem { Header = "Scanner internal restart", Command.ScannerSessionDebug);
         MenuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
