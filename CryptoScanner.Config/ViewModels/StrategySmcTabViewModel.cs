@@ -34,6 +34,6 @@ public partial class StrategySmcTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategySmcSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
     }
 }

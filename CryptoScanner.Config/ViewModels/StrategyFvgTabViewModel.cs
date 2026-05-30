@@ -35,6 +35,6 @@ public partial class StrategyFvgTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyFvgSettingsViewModel.SaveConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList);
+        IntervalViewModel.SaveConfig(settings.IntervalList);
     }
 }
