@@ -551,9 +551,9 @@ public partial class ChartWindowViewModel : ObservableObject
         // Compute the panel slots from the bottom up. Heights and gaps mirror the previous
         // hard-coded layout so the visuals stay close to what they were before MACD existed.
         const double volumeHeight = 0.10;
-        const double macdHeight = 0.14;
+        const double macdHeight = 0.10; // was 0.14
         const double subGap = 0.01; // gap between two sub-panels
-        const double priceGap = 0.02; // gap between the topmost sub-panel and the price panel
+        const double priceGap = 0.01; // 0.02 gap between the topmost sub-panel and the price panel
 
         double cursor = 0.0;
 
@@ -683,6 +683,10 @@ public partial class ChartWindowViewModel : ObservableObject
                     EndPosition = macdEnd,
                     // Auto-range: MACD values can be positive or negative and depend on price
                     // scale (BTC vs DOGE), so we let OxyPlot size the axis to the data.
+                    // Trim the default 1 % padding on both ends so the highest/lowest bars
+                    // (almost) touch the panel edges instead of leaving a visibly empty band.
+                    MinimumPadding = 0,
+                    MaximumPadding = 0,
                     IsZoomEnabled = false,
                     IsPanEnabled = false,
                     TicklineColor = OxyColors.Gray,

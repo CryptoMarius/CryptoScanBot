@@ -105,7 +105,7 @@ public static class ZoneSmc
                     if (c.Close >= c.Open)
                     {
                         zones.Add(BuildOrderBlock(symbol, interval, c,
-                            CryptoTradeSide.Short, "SMC bearish OB"));
+                            CryptoTradeSide.Short, $"SMC {interval.Name} bearish"));
                         break;
                     }
                 }
@@ -121,7 +121,7 @@ public static class ZoneSmc
                     if (c.Close < c.Open)
                     {
                         zones.Add(BuildOrderBlock(symbol, interval, c,
-                            CryptoTradeSide.Long, "SMC bullish OB"));
+                            CryptoTradeSide.Long, $"SMC {interval.Name} bullish"));
                         break;
                     }
                 }

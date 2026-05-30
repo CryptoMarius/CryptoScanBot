@@ -21,7 +21,7 @@ public class SettingsSignalStrategyFvg : SettingsSignalStrategyBase
     // How many candles back (including the current one) the rejection check may inspect.
     // 1 = only the current candle must show the test+close-back-outside pattern.
     // 2 = a previous candle may have done the wick, with the current candle as confirmation close.
-    public int RejectionLookback { get; set; } = 1;
+    public int RejectionLookback { get; set; } = 2;
 
     // ICT consequent encroachment: when true, a zone is disqualified for new combined-signals
     // once price has pierced past its 50% midpoint, even if TouchCount has not yet hit MaxTouches.
