@@ -35,7 +35,7 @@ public enum CryptoSignalStrategy
     Trend = 31,
 
     BbmaOmni = 43,
-    Bbma = 44,
+    //Bbma = 44,
 
     StochDir = 46,
 

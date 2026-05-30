@@ -236,17 +236,17 @@ public static class RegisterAlgorithms
         });
 #endif
 
-#if DEBUG
-        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-        // Confirmations from higher timeframe(s)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bbma",
-            Strategy = CryptoSignalStrategy.Bbma,
-            AnalyzeLongType = typeof(SignalBbmaLong),
-            AnalyzeShortType = typeof(SignalBbmaShort),
-        });
-#endif
+//#if DEBUG
+//        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
+//        // Confirmations from higher timeframe(s)
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "bbma",
+//            Strategy = CryptoSignalStrategy.Bbma,
+//            AnalyzeLongType = typeof(SignalBbmaLong),
+//            AnalyzeShortType = typeof(SignalBbmaShort),
+//        });
+//#endif
 
 #if DEBUG
         // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
