@@ -985,13 +985,14 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowFvgZones))
             FvgZones.Draw(model, Symbol, Session.MinDate, Session.MaxDate, group);
 
-        // Draw SMC zones (Order Blocks) — first-iteration: detector runs synchronously on
-        // toggle for every DLZ-enabled interval, results are kept in CryptoSymbolInterval.SmcZones
-        // and rendered directly. No DB persistence and no periodic recalc yet.
+        // Draw SMC zones (Order Blocks). The detector runs synchronously on toggle for every
+        // SMC-enabled interval (Settings.Signal.ZonesSmc), results are kept in
+        // CryptoSymbolInterval.SmcZones and rendered directly. In the live scanner the same
+        // ZoneSmc.Detect is driven by SignalPrepare on the interval boundary.
         group = "smc.zones";
         if (Toggle(model, group, Session.ShowSmcZones))
         {
-            foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+            foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
             {
                 if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
                     Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);

@@ -5,13 +5,13 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              xmlns:settings="using:CryptoScanner.Config.Views"
-             x:DataType="vm:StrategyFvgTabViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyFvgTabView">
+             x:DataType="vm:StrategySmcTabViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategySmcTabView">
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="5" HorizontalAlignment="Left">
             <settings:SoundAndColorsView Grid.Row="0" Grid.Column="0" DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategyFvgSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategyFvgSettingsViewModel}" />
+            <settings:StrategySmcSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategySmcSettingsViewModel}" />
             <settings:IntervalView Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" VerticalAlignment="Top" HorizontalAlignment="Left"/>
         </Grid>
     </ScrollViewer>

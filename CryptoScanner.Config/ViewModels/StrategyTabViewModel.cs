@@ -19,6 +19,8 @@ public partial class StrategyTabViewModel : ObservableObject
     [ObservableProperty]
     private StrategyFvgTabViewModel _strategyFvgTabViewModel;
     [ObservableProperty]
+    private StrategySmcTabViewModel _strategySmcTabViewModel;
+    [ObservableProperty]
     private StrategyNweTabViewModel _strategyNweTabViewModel;
     [ObservableProperty]
     private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
@@ -34,6 +36,7 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategyJumpTabViewModel = new();
         _strategyDlzTabViewModel = new();
         _strategyFvgTabViewModel = new();
+        _strategySmcTabViewModel = new();
         _strategyNweTabViewModel = new();
         _strategyBbmaTabViewModel = new();
         _strategyWaveTrendTabViewModel = new();
@@ -47,6 +50,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyJumpTabViewModel.LoadConfig("Jump", settings.Jump);
         StrategyDlzTabViewModel.LoadConfig("Dlz", settings.ZonesDlz);
         StrategyFvgTabViewModel.LoadConfig("Fvg", settings.ZonesFvg);
+        StrategySmcTabViewModel.LoadConfig("Smc", settings.ZonesSmc);
         StrategyNweTabViewModel.LoadConfig("Nwe", settings.Nwe);
         StrategyBbmaTabViewModel.LoadConfig("BBMA", settings.Bbma);
         StrategyWaveTrendTabViewModel.LoadConfig("WaveTrend", settings.WaveTrend);
@@ -60,6 +64,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyJumpTabViewModel.SaveConfig(settings.Jump);
         StrategyDlzTabViewModel.SaveConfig(settings.ZonesDlz);
         StrategyFvgTabViewModel.SaveConfig(settings.ZonesFvg);
+        StrategySmcTabViewModel.SaveConfig(settings.ZonesSmc);
         StrategyNweTabViewModel.SaveConfig(settings.Nwe);
         StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
         StrategyWaveTrendTabViewModel.SaveConfig(settings.WaveTrend);

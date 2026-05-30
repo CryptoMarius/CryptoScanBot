@@ -8,6 +8,7 @@ using CryptoScanner.Core.Signal.Fvg;
 using CryptoScanner.Core.Signal.Jump;
 using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Sbm;
+using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.StobbDlz;
 using CryptoScanner.Core.Signal.StobbFvg;
@@ -203,6 +204,24 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.FairValueGap,
             AnalyzeLongType = typeof(SignalFairValueGapLong),
             AnalyzeShortType = typeof(SignalFairValueGapShort),
+        });
+
+        // SMC supply/demand order block — price returns to a fresh/strong base zone.
+        // "smc" fires on a touch into the zone; "smc.near" fires while approaching it.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "smc",
+            Strategy = CryptoSignalStrategy.OrderBlock,
+            AnalyzeLongType = typeof(SignalOrderBlockLong),
+            AnalyzeShortType = typeof(SignalOrderBlockShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "smc.near",
+            Strategy = CryptoSignalStrategy.OrderBlockNear,
+            AnalyzeLongType = typeof(SignalOrderBlockNearLong),
+            AnalyzeShortType = typeof(SignalOrderBlockNearShort),
         });
 
         // NWE Repaining

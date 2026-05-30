@@ -19,6 +19,9 @@
 		<TabItem Header="FVG" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyFvgTabView DataContext="{Binding StrategyFvgTabViewModel}" />
 		</TabItem>
+		<TabItem Header="SMC" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+			<settings:StrategySmcTabView DataContext="{Binding StrategySmcTabViewModel}" />
+		</TabItem>
 		<TabItem Header="JUMP" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyJumpTabView DataContext="{Binding StrategyJumpTabViewModel}" />
 		</TabItem>

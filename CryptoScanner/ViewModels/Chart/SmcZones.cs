@@ -6,6 +6,9 @@ using OxyPlot.Annotations;
 
 namespace CryptoScanner.ViewModels.Chart;
 
+// How to Find Institutional Supply & Demand Zones (with ZERO experience)
+// https://www.youtube.com/watch?v=0YNWLzBEX2E
+
 /// <summary>
 /// Renders the SMC Order Blocks (from <see cref="CryptoSymbolInterval.SmcZones"/>) as
 /// rectangle annotations on the chart, using the same visual idiom as DLZ / FVG zones.
@@ -20,8 +23,9 @@ namespace CryptoScanner.ViewModels.Chart;
 public class SmcZones
 {
     // How many zones to show on each side (above / below) of the current price, PER interval.
-    // Bump this up if you want more context, lower it for an even cleaner chart.
-    private const int NearbyZonesPerSide = 3;
+    // Bump this up if you want more context, lower it for an even cleaner chart. Broken
+    // (invalidated) zones are intentionally included so you can look back at past structure.
+    private const int NearbyZonesPerSide = 5;
 
     private static void DrawZone(PlotModel chart, CryptoZone zone, CandleTime minDate, CandleTime maxDate, string group)
     {
@@ -58,7 +62,9 @@ public class SmcZones
             Stroke = stroke,
             StrokeThickness = 0,
             TextColor = textColor,
-            Text = zone.Description,
+            // Interval + freshness: append the touch count (CE touches) so a quick glance tells
+            // fresh (no number) from tested ("2x"). Colour already encodes demand vs supply.
+            Text = zone.TouchCount > 0 ? $"{zone.Interval.Name} {zone.TouchCount}x" : zone.Interval.Name,
             ToolTip = zone.Interval.Name,
             Tag = group,
         };
@@ -70,10 +76,8 @@ public class SmcZones
         var symbolData = symbol.Data;
         decimal? currentPrice = GetCurrentPrice(symbol);
 
-        // For the first iteration we reuse the DLZ interval list — same set of timeframes the
-        // user already considers "important". We can split this into its own SettingsSmc list
-        // once we have an SMC-specific UI section.
-        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+        // SMC has its own interval list in Settings.Signal.ZonesSmc (appsettings.json).
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
         {
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out CryptoInterval? interval))
                 continue;

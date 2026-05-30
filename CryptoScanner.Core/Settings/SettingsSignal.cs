@@ -49,6 +49,9 @@ public class SettingsSignal
     // Fair Value gap zones
     public SettingsSignalStrategyFvg ZonesFvg = new();
 
+    // SMC (Smart Money Concepts) supply/demand order blocks
+    public SettingsSignalStrategySmc ZonesSmc = new();
+
     // Nadaraya Watson Envelope
     public SettingsSignalStrategyNwe Nwe = new();
 

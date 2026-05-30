@@ -45,4 +45,11 @@ public enum CryptoSignalStrategy
     DominantLevel = 1000,
     DominantLevelNear = 1001,
     FairValueGap = 1003,
+
+    // SMC supply/demand order block: price returns to a fresh/strong base zone. Zone-based
+    // (>= DominantLevel) so it follows the same prepare/execute path as DLZ/FVG.
+    // OrderBlock fires on a touch INTO the zone; OrderBlockNear fires earlier, while price is
+    // still approaching the proximal edge. Mirrors the DominantLevel / DominantLevelNear pair.
+    OrderBlock = 1004,
+    OrderBlockNear = 1005,
 }

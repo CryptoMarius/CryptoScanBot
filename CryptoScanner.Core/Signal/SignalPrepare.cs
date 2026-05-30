@@ -11,6 +11,7 @@ public class SignalPrepare
     {
         Dlz,
         Fvg,
+        Smc,
         Indicator,
     }
 
@@ -94,6 +95,15 @@ public class SignalPrepare
                         Add(SignalPrepareKind.Indicator, "1m");
                     }
                 }
+                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockNear)
+                {
+                    // Separate intervals on which the SMC order blocks are calculated.
+                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+                    {
+                        Add(SignalPrepareKind.Smc, intervalName);
+                        Add(SignalPrepareKind.Indicator, "1m");
+                    }
+                }
             }
         }
 
@@ -167,6 +177,21 @@ public class SignalPrepare
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
                     ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
+                }
+            }
+        }
+
+
+        // Recompute SMC order blocks on the zone-interval boundary. ZoneSmc.Detect is a cheap
+        // full rebuild from the in-memory candles, so we just call it directly (no separate
+        // zone worker / DB persistence like DLZ/FVG).
+        if (Preparing.TryGetValue(SignalPrepareKind.Smc, out indexList))
+        {
+            foreach (var interval in indexList.Values)
+            {
+                if (lastCandle1mCloseTime % interval.Duration == 0)
+                {
+                    ZoneSmc.Detect(symbol, interval);
                 }
             }
         }
