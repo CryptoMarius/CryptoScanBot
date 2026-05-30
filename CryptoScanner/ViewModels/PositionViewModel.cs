@@ -575,6 +575,18 @@ public partial class PositionViewModel : BaseConvertersViewModel
         }
     }
 
+
+    //public string EventText => Object.EventText;
+    private string? _EventText;
+    public string EventText
+    {
+        get
+        {
+            _EventText ??= Object.EventText;
+            return _EventText!;
+        }
+    }
+
     //public decimal SignalPrice => Object.SignalPrice;
     private string? _SignalPriceText;
     public string SignalPrice

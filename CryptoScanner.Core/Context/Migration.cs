@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 58;
+    public readonly static int CurrentDatabaseVersion = 59;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1201,11 +1201,25 @@ public class Migration
 
 
         //***********************************************************
-        //
-        //
-        // The position.Data can be removed (unused)
-        // Please also remove from db definition
+        // 30-05-2026 Changed position
+        // There are no field changes, only version number for UpdateExchanges
+        if (CurrentVersion > version.Version && version.Version == 58)
+        {
+            using var transaction = database.BeginTransaction();
 
+            database.Connection.Execute("alter table Position drop column Data", transaction);
+            database.Connection.Execute("alter table Position add column EventText TEXT null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        //
+        //
         //
 
 

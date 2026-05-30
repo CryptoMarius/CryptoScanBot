@@ -76,7 +76,7 @@ public class CommandPositionCreate : CommandBase
 
                 // Create position + entry part
                 var position = PositionTools.CreatePosition(symbol, strategy, tradeSide,
-                    symbolInterval, LastCandle1mCloseTimeDate.ToDateTime());
+                    "Manual", symbolInterval, LastCandle1mCloseTimeDate.ToDateTime());
                 //PositionTools.AddSignalProperties(position, null);
                 databaseThread.Connection.Insert(position);
                 PositionTools.AddPosition(position);

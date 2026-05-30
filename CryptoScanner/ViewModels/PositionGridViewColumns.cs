@@ -38,6 +38,7 @@ public enum PositionColumnEnum
     //Object information
     SignalDate,
     SignalPrice,
+    EventText,
     SignalVolume,
 
     TrendInterval,

@@ -37,7 +37,6 @@ public partial class CryptoSignal : CryptoData2
     [Computed]
     public string DisplayText { get { return Symbol.Name + " " + Interval.Name + " signal=" + OpenDate.ToLocalTime() + " " + SideText + " " + StrategyText; } }
 
-    // This is a not null field which is not used anymore
     public string? EventText { get; set; }
 
     // Optional per-signal SL/TP price set by strategies that compute their own levels

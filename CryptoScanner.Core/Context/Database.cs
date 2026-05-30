@@ -437,10 +437,9 @@ public class CryptoDatabase : IDisposable
                 "IntervalId INTEGER NOT NULL," +
                 "Strategy INTEGER NOT NULL," +
                 "Side INTEGER NOT NULL," +
-
                 "Status INTEGER NOT NULL," +
-                "data TEXT NULL," +
 
+                "EventText TEXT NULL," +
                 "EntryPrice TEXT NULL," +
                 "EntryAmount TEXT NULL," +
                 "Quantity TEXT NULL," +

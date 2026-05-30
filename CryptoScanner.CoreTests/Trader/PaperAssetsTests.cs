@@ -141,7 +141,7 @@ public class PaperAssetsTests : TestBase
         database.Connection.Insert(assetQuote);
 
         CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
-            CryptoTradeSide.Long, symbol.Data.SymbolIntervalList[0], startTime);
+           CryptoTradeSide.Long, "Test", symbol.Data.SymbolIntervalList[0], startTime);
 
         // act
         TradeParams tradeParams = CreateTradeParams(database, startTime, CryptoOrderSide.Buy, CryptoOrderType.Market, 5.6261m, 0.53m);

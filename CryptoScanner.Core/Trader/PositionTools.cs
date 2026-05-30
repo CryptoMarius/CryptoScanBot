@@ -67,7 +67,7 @@ public static class PositionTools
     }
 
     public static CryptoPosition CreatePosition(CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
-        CryptoSymbolInterval symbolInterval, DateTime currentDate)
+        string eventText, CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {
@@ -82,6 +82,7 @@ public static class PositionTools
             Status = CryptoPositionStatus.Waiting,
             Strategy = strategy,
             ActiveDca = false,
+            EventText = eventText,
             PartCount = 0,
             Side = side,
         };

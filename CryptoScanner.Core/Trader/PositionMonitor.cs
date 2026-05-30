@@ -509,7 +509,7 @@ public class PositionMonitor //: IDisposable
 
                                 // Create position + entry part
                                 position = PositionTools.CreatePosition(Symbol, signal.Strategy, signal.Side,
-                                    symbolInterval, LastCandle1mCloseTimeDate);
+                                    signal.EventText, symbolInterval, LastCandle1mCloseTimeDate);
                                 PositionTools.AddSignalProperties(position, signal);
                                 Database.Connection.Insert(position);
                                 PositionTools.AddPosition(position);

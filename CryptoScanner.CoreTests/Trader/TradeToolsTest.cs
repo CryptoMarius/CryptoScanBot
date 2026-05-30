@@ -49,7 +49,7 @@ public class TradeToolsTest : TestBase
 
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
-            CryptoTradeSide.Long, symbolInterval, lastCandle1mCloseTimeDate);
+            CryptoTradeSide.Long, "Test", symbolInterval, lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
         GlobalData.ActiveExchange!.Data.PositionList.Add(symbol.Name, position);
 

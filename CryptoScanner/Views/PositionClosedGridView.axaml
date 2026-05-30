@@ -252,6 +252,15 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
+			<!-- Signal EventText -->
+			<DataGridTemplateColumn Header="Text" Width="75" SortMemberPath="EventText" IsVisible="False"  >
+				<DataGridTemplateColumn.CellTemplate>
+					<DataTemplate>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{Binding EventText}" />
+					</DataTemplate>
+				</DataGridTemplateColumn.CellTemplate>
+			</DataGridTemplateColumn>
+
 			<!-- TfTrend -->
 			<DataGridTemplateColumn Header="TF trend" Width="60" SortMemberPath="TrendInterval" IsVisible="False" >
 				<DataGridTemplateColumn.CellTemplate>
