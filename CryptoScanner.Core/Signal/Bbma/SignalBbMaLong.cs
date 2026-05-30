@@ -291,7 +291,7 @@ public class SignalBbmaLong : SignalBbmaBase
             || stateLtf == BbmaState.Mlv || stateLtf == BbmaState.Csm))
         {
             ExtraText = $"LTF unexpected state";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -306,7 +306,7 @@ public class SignalBbmaLong : SignalBbmaBase
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
             ExtraText = $"no data for MTF ({resultMtf.higherInterval.Interval.Name})";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
         stateMtf = GetBbmaState(resultMtf.candle);
@@ -321,7 +321,7 @@ public class SignalBbmaLong : SignalBbmaBase
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {
             ExtraText = $"no data for HTF";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
         stateHtf = GetBbmaState(resultHtf.candle); // just to show something
@@ -345,7 +345,7 @@ public class SignalBbmaLong : SignalBbmaBase
         if (ema50Htf >= midBbHtf || wma05LowHtf >= midBbHtf)
         {
             ExtraText = $"HTF ema50 not below mid-BB - bearish bias";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -354,14 +354,14 @@ public class SignalBbmaLong : SignalBbmaBase
         if (stateHtf != BbmaState.Reentry)
         {
             ExtraText = $"HTF not in Reentry ({TfStateCode(stateHtf)})";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
         if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, out string htfSetup))
         {
             ExtraText = $"HTF not in CSM/MHV reentry state";
-            ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {SignalSide} {code} {ExtraText}");
             return false;
         }
 
@@ -383,9 +383,9 @@ public class SignalBbmaLong : SignalBbmaBase
             ExtraText = $"{code} [{htfSetup}] {resultHtf.higherInterval.Interval.Name}/{resultMtf.higherInterval.Interval.Name}/{Interval.Name}";
 
             // Debug to see if the right candles are selected
-            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {code} {SignalSide} HTF {resultHtf.candle.Candle.OpenTime.ToLocalTime()} {resultHtf.candle.Candle.Close} {ExtraText}");
-            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {code} {SignalSide} MTF {resultMtf.candle.Candle.OpenTime.ToLocalTime()} {resultMtf.candle.Candle.Close} {ExtraText}");
-            ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {Interval.Name} {code} {SignalSide} LTF {CandleLast.Candle.OpenTime.ToLocalTime()} {CandleLast.Candle.Close} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultHtf.higherInterval.Interval.Name} {code} {SignalSide} HTF {resultHtf.candle.Candle.OpenTime.ToLocalTime()} {resultHtf.candle.Candle.Close} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {resultMtf.higherInterval.Interval.Name} {code} {SignalSide} MTF {resultMtf.candle.Candle.OpenTime.ToLocalTime()} {resultMtf.candle.Candle.Close} {ExtraText}");
+            //ScannerLog.Logger.Trace($"BBMA HIT {Symbol.Name} {Interval.Name} {code} {SignalSide} LTF {CandleLast.Candle.OpenTime.ToLocalTime()} {CandleLast.Candle.Close} {ExtraText}");
             return true;
         }
 
