@@ -32,13 +32,13 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     // ---- Signal tuning (entry) ----
 
     [ObservableProperty]
-    private decimal _nearZonePercentage = 0.25m;
-
-    [ObservableProperty]
     private bool _onlyStrong = true;
 
     [ObservableProperty]
     private int _maxTouches = 0;
+
+    [ObservableProperty]
+    private int _rejectionLookback = 3;
 
 
     public void LoadConfig(SettingsSignalStrategySmc settings)
@@ -51,9 +51,9 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         BaseMaxCandles = settings.BaseMaxCandles;
         MaxBlocksPerInterval = settings.MaxBlocksPerInterval;
 
-        NearZonePercentage = settings.NearZonePercentage;
         OnlyStrong = settings.OnlyStrong;
         MaxTouches = settings.MaxTouches;
+        RejectionLookback = settings.RejectionLookback;
     }
 
     public void SaveConfig(SettingsSignalStrategySmc settings)
@@ -66,8 +66,8 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         settings.BaseMaxCandles = BaseMaxCandles;
         settings.MaxBlocksPerInterval = MaxBlocksPerInterval;
 
-        settings.NearZonePercentage = NearZonePercentage;
         settings.OnlyStrong = OnlyStrong;
         settings.MaxTouches = MaxTouches;
+        settings.RejectionLookback = RejectionLookback;
     }
 }

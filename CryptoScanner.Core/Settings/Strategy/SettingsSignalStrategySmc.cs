@@ -9,7 +9,12 @@ namespace CryptoScanner.Core.Settings.Strategy;
 ///
 /// Two groups of knobs:
 ///   • Detector tuning — how a base + expansion is recognised (read by ZoneSmc.Detect)
-///   • Signal tuning   — how the SignalOrderBlockNear* classes turn a zone into an alarm
+///   • Signal tuning   — how the SignalOrderBlock* classes turn a zone into an alarm/entry
+///
+/// Two entry flavours, increasing in confirmation:
+///   • smc           — price TOUCHES the zone band (still no proof it holds)
+///   • smc.rejection — price tested the zone AND closed back outside the proximal edge
+///                     (the actual bounce/rejection → the entry-grade signal)
 /// </summary>
 [Serializable]
 public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
@@ -46,17 +51,18 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
 
     // ---- Signal tuning (entry) ----
 
-    // How far outside the PROXIMAL edge (in %) price may still be for the entry alarm to
-    // fire. Entry is at the proximal edge (Top for demand, Bottom for supply), NOT at the
-    // 50% midpoint — a shallow bounce into a large zone must not be missed.
-    public decimal NearZonePercentage { get; set; } = 0.25m;
-
     // Only fire on Strong zones (powerful expansion). Set false to also alarm on Weak zones.
     public bool OnlyStrong { get; set; } = true;
 
     // Maximum number of CE (50%) touches a zone may already have and still produce a signal.
     // 0 = only fresh (unmitigated) zones. 1 = also allow the first retest, etc.
     public int MaxTouches { get; set; } = 0;
+
+    // How many candles back (including the current one) the smc.rejection variant may look
+    // for the "tested the zone" wick. 1 = the rejection wick + close-back-outside must happen
+    // on the same candle. 3 = the wick into the zone may be up to 2 candles before the
+    // confirming close-back-outside candle.
+    public int RejectionLookback { get; set; } = 3;
 
     public SettingsSignalStrategySmc() : base()
     {

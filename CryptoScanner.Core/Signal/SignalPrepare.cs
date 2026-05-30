@@ -95,7 +95,7 @@ public class SignalPrepare
                         Add(SignalPrepareKind.Indicator, "1m");
                     }
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockNear)
+                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
                 {
                     // Separate intervals on which the SMC order blocks are calculated.
                     foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)

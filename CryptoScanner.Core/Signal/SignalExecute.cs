@@ -78,7 +78,7 @@ public class SignalExecute
                     Add(strategyDef, CryptoTradeSide.Short, false, "1m");
                 }
             }
-            else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockNear)
+            else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
             {
                 // Detect the SMC order-block proximity on the 1m, same as DLZ/FVG.
                 if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name))

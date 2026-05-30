@@ -9,8 +9,8 @@ namespace CryptoScanner.Core.Signal.Smc;
 /// fresh/strong supply base zone (a candle wicks into [Bottom, Top]). Mirror of
 /// SignalDominantLevelShort, reading <see cref="CryptoSymbolInterval.SmcZones"/>.
 ///
-/// The companion <see cref="SignalOrderBlockNearShort"/> ("smc.near") fires earlier, while
-/// price is still approaching the proximal edge.
+/// The companion <see cref="SignalOrderBlockRejectionShort"/> ("smc.rejection") waits for the
+/// confirmed rejection (close back outside the proximal edge) — the entry-grade signal.
 /// </summary>
 public class SignalOrderBlockShort : SignalCreateBase
 {

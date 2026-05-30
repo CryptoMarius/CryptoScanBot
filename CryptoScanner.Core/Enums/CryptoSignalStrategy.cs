@@ -35,9 +35,6 @@ public enum CryptoSignalStrategy
     Trend = 31,
 
     BbmaOmni = 43,
-    //Bbma = 44,
-
-    StochDir = 46,
 
     WaveTrend = 50,
 #endif
@@ -48,8 +45,9 @@ public enum CryptoSignalStrategy
 
     // SMC supply/demand order block: price returns to a fresh/strong base zone. Zone-based
     // (>= DominantLevel) so it follows the same prepare/execute path as DLZ/FVG.
-    // OrderBlock fires on a touch INTO the zone; OrderBlockNear fires earlier, while price is
-    // still approaching the proximal edge. Mirrors the DominantLevel / DominantLevelNear pair.
+    // OrderBlock fires on a touch INTO the zone.
     OrderBlock = 1004,
-    OrderBlockNear = 1005,
+    // Fires on the confirmed rejection: price tested the zone and closed back outside the
+    // proximal edge (the actual bounce). This is the entry-grade SMC signal.
+    OrderBlockRejection = 1006,
 }

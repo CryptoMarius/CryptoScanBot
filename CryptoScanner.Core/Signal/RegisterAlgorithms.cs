@@ -207,7 +207,7 @@ public static class RegisterAlgorithms
         });
 
         // SMC supply/demand order block — price returns to a fresh/strong base zone.
-        // "smc" fires on a touch into the zone; "smc.near" fires while approaching it.
+        // "smc" fires on a touch into the zone.
         Register(new AlgorithmDefinition()
         {
             Name = "smc",
@@ -216,12 +216,13 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalOrderBlockShort),
         });
 
+        // smc.rejection — entry-grade: fires on the confirmed bounce/rejection off the zone.
         Register(new AlgorithmDefinition()
         {
-            Name = "smc.near",
-            Strategy = CryptoSignalStrategy.OrderBlockNear,
-            AnalyzeLongType = typeof(SignalOrderBlockNearLong),
-            AnalyzeShortType = typeof(SignalOrderBlockNearShort),
+            Name = "smc.rejection",
+            Strategy = CryptoSignalStrategy.OrderBlockRejection,
+            AnalyzeLongType = typeof(SignalOrderBlockRejectionLong),
+            AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
         });
 
         // NWE Repaining

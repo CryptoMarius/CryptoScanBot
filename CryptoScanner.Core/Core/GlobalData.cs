@@ -787,13 +787,18 @@ public static class GlobalData
 #endif
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StobbDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
+        
         StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StobbFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
 #if DEBUG
         StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
 #endif
 #if DEBUG
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockNear, (Settings.Signal.ZonesSmc, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
 #endif
     }
 }
