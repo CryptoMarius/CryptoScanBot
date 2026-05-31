@@ -51,27 +51,27 @@ public class SignalCreateBase
     public virtual bool IsSignal() => false;
 
 
-    ///// <summary>
-    ///// Optional override for the price stored on the signal. Return null to use
-    ///// the default (last candle close). Use this when the signal references an
-    ///// earlier candle than CandleLast — for example BOS/CHoCH breaks, which
-    ///// happen at a swing pivot, not at the candle the check is running on.
-    ///// </summary>
-    //public virtual decimal? OverrideSignalPrice => null;
+    /// <summary>
+    /// Optional override for the price stored on the signal. Return null to use
+    /// the default (last candle close). Use this when the signal references an
+    /// earlier candle than CandleLast — for example BOS/CHoCH breaks, which
+    /// happen at a swing pivot, not at the candle the check is running on.
+    /// </summary>
+    public virtual decimal? OverrideSignalPrice => null;
 
-    ///// <summary>
-    ///// Optional per-signal stop-loss price. When non-null the trader uses this value
-    ///// instead of the default percentage-based SL from Settings.Trading. Strategies that
-    ///// anchor their SL on a structural level (swing high/low, BB band, etc.) populate this.
-    ///// </summary>
-    //public virtual decimal? OverrideSlPrice => null;
+    /// <summary>
+    /// Optional per-signal stop-loss price. When non-null the trader uses this value
+    /// instead of the default percentage-based SL from Settings.Trading. Strategies that
+    /// anchor their SL on a structural level (swing high/low, BB band, etc.) populate this.
+    /// </summary>
+    public virtual decimal? OverrideSlPrice => null;
 
-    ///// <summary>
-    ///// Optional per-signal take-profit price. When non-null the trader uses this value
-    ///// instead of the default percentage-based TP. Typically derived from <see cref="OverrideSlPrice"/>
-    ///// via a risk:reward multiple.
-    ///// </summary>
-    //public virtual decimal? OverrideTpPrice => null;
+    /// <summary>
+    /// Optional per-signal take-profit price. When non-null the trader uses this value
+    /// instead of the default percentage-based TP. Typically derived from <see cref="OverrideSlPrice"/>
+    /// via a risk:reward multiple.
+    /// </summary>
+    public virtual decimal? OverrideTpPrice => null;
 
 
     public virtual bool AdditionalChecks(MyData candle, out string response)
@@ -260,14 +260,16 @@ public class SignalCreateBase
             switch (SignalSide)
             {
                 case CryptoTradeSide.Long:
-                    if (k < GlobalData.Settings.General.SettingsStoch.Oversold || rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
+                    if (k < GlobalData.Settings.General.SettingsStoch.Oversold || 
+                        rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
                     {
                         ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
                         return false;
                     }
                     break;
                 case CryptoTradeSide.Short:
-                    if (k > GlobalData.Settings.General.SettingsStoch.Overbought || rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
+                    if (k > GlobalData.Settings.General.SettingsStoch.Overbought || 
+                        rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
                     {
                         ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
                         return false;

@@ -9,17 +9,34 @@
 
     <StackPanel >
         <HeaderedContentControl Classes="groupbox" Header="Strategies">
-            <ScrollViewer>
-                <UniformGrid Columns="2" Rows="0">
-                    <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </UniformGrid>
-            </ScrollViewer>
+            <DockPanel LastChildFill="True">
+                <!-- Top toolbar: "Copy from..." popup. Placed inside the content area because
+                     the shared groupbox style renders the Header as a plain TextBlock and would
+                     drop any interactive content put into HeaderedContentControl.Header. -->
+                <Button DockPanel.Dock="Top" Content="Copy from..."
+                        HorizontalAlignment="Right" Padding="6,2" FontSize="11"
+                        Margin="0,0,0,4"
+                        ToolTip.Tip="Replace this side's selection with the strategies enabled on the other side.">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="From Long"  Command="{Binding CopyFromLongCommand}"/>
+                            <MenuItem Header="From Short" Command="{Binding CopyFromShortCommand}"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+
+                <ScrollViewer>
+                    <UniformGrid Columns="2" Rows="0">
+                        <ItemsControl ItemsSource="{Binding StrategyList}" Margin="8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </UniformGrid>
+                </ScrollViewer>
+            </DockPanel>
         </HeaderedContentControl>
     </StackPanel>
 </UserControl>

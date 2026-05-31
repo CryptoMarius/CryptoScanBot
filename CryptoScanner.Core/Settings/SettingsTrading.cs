@@ -124,6 +124,10 @@ public class SettingsTrading
     public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.AfterNextSignal; // Alway's for now, but can be trailing
     // Verwijder de order indien niet na zoveel minuten gevuld
     public int EntryRemoveTime { get; set; } = 5;
+    // Pullback (in %) applied when EntryOrderPrice == SignalPriceWithPullback. Positive value:
+    // long limit goes below SignalPrice by this percentage, short limit goes above. Designed
+    // to land the entry inside a zone for zone-style strategies (smc.rejection, dlz.near …).
+    public decimal EntryPullbackPercentage { get; set; } = 0.5m;
     // Het afwijkend percentage bij het kopen
     //public decimal GlobalBuyVarying { get; set; } = -0.01m; // verlagen
 
@@ -133,6 +137,8 @@ public class SettingsTrading
     public CryptoOrderType DcaOrderType { get; set; } = CryptoOrderType.Limit; // Alway's! but stoplimit when trailing
     public CryptoEntryOrDcaPricing DcaOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
     public CryptoEntryOrDcaStrategy DcaStrategy { get; set; } = CryptoEntryOrDcaStrategy.FixedPercentage;
+    // Same role as EntryPullbackPercentage but for DCA orders.
+    public decimal DcaPullbackPercentage { get; set; } = 0.5m;
 
     // Tijd na een buy om niets te doen (om ladders te voorkomen)
     public int GlobalBuyCooldownTime { get; set; } = 30;

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Signal;
 
@@ -19,6 +20,15 @@ public partial class StrategyViewModel : ObservableObject
 {
     [ObservableProperty]
     private ObservableCollection<StrategyItem> _strategyList = [];
+
+    // Cross-references to the long/short siblings on the same tab, set once by the parent
+    // (AnalyzerTabViewModel / TraderTabViewModel) right after construction. Used by the
+    // "Copy from..." popup so the user can mirror the strategy selection from one side to
+    // the other without re-ticking dozens of checkboxes. Either may equal this instance —
+    // that just makes the corresponding command a self-copy no-op (it's hidden in the UI via
+    // CanExecute when the counterpart is this same viewmodel).
+    public StrategyViewModel? LongCounterpart { get; set; }
+    public StrategyViewModel? ShortCounterpart { get; set; }
 
     public StrategyViewModel()
     {
@@ -41,6 +51,11 @@ public partial class StrategyViewModel : ObservableObject
             };
             StrategyList.Add(item);
         }
+
+        // Refresh CanExecute now that the counterparts (typically set before LoadConfig)
+        // have populated strategy lists too.
+        CopyFromLongCommand.NotifyCanExecuteChanged();
+        CopyFromShortCommand.NotifyCanExecuteChanged();
     }
 
     public void SaveConfig(List<string> strategyList)
@@ -53,5 +68,31 @@ public partial class StrategyViewModel : ObservableObject
                 strategyList.Add(strategy.Name);
             }
         }
+    }
+
+
+    // ---- Copy from sibling ----
+
+    [RelayCommand(CanExecute = nameof(CanCopyFromLong))]
+    private void CopyFromLong() => CopyFrom(LongCounterpart);
+    private bool CanCopyFromLong() => LongCounterpart != null && !ReferenceEquals(LongCounterpart, this);
+
+    [RelayCommand(CanExecute = nameof(CanCopyFromShort))]
+    private void CopyFromShort() => CopyFrom(ShortCounterpart);
+    private bool CanCopyFromShort() => ShortCounterpart != null && !ReferenceEquals(ShortCounterpart, this);
+
+    private void CopyFrom(StrategyViewModel? source)
+    {
+        if (source == null || ReferenceEquals(source, this))
+            return;
+
+        var enabled = new HashSet<string>(
+            source.StrategyList.Where(s => s.IsEnabled).Select(s => s.Name),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Only the IsEnabled flag changes — the Name list itself is identical on both sides
+        // because both viewmodels are built from RegisterAlgorithms.AlgorithmDefinitionList.
+        foreach (var item in StrategyList)
+            item.IsEnabled = enabled.Contains(item.Name);
     }
 }

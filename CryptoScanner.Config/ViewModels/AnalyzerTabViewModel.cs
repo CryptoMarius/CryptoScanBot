@@ -57,6 +57,13 @@ public partial class AnalyzerTabViewModel : ObservableObject
         _analyzerMarketTrendFilterShortViewModel = new() { Header = "Market trend filter (primary)" };
         _analyzerMarketTrendFilterSecondaryShortViewModel = new() { Header = "Market trend filter (secondary)" };
         _analyzerTrendIntervalFilterShortViewModel = new();
+
+        // Wire up the "Copy from..." popup on the strategy views so each side knows about
+        // its counterpart. The popup hides the self-copy option via CanExecute.
+        _analyzerStrategyLongViewModel.LongCounterpart = _analyzerStrategyLongViewModel;
+        _analyzerStrategyLongViewModel.ShortCounterpart = _analyzerStrategyShortViewModel;
+        _analyzerStrategyShortViewModel.LongCounterpart = _analyzerStrategyLongViewModel;
+        _analyzerStrategyShortViewModel.ShortCounterpart = _analyzerStrategyShortViewModel;
     }
 
     internal void LoadConfig(SettingsSignal settings)
