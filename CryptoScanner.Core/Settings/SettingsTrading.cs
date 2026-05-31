@@ -117,7 +117,7 @@ public class SettingsTrading
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
     public CryptoEntryOrDcaPricing EntryOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
     public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.AfterNextSignal; // Alway's for now, but can be trailing
-    // Verwijder de order indien niet na zoveel minuten gevuld
+    // Verwijder de order indien niet na zoveel candles gevuld
     public int EntryRemoveTime { get; set; } = 5;
     // Pullback (in %) applied when EntryOrderPrice == SignalPriceWithPullback. Positive value:
     // long limit goes below SignalPrice by this percentage, short limit goes above. Designed
