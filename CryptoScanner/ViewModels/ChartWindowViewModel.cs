@@ -1107,6 +1107,18 @@ public partial class ChartWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(PlotView));
             _refreshChart = false;
         }
+        else
+        {
+            // Manual invocation (sender == null) from Calculate. Calculate calls
+            // InvalidatePlot(true) itself later, BUT if Show() runs before that point the
+            // very first OxyPlot layout pass tries to render the freshly-added annotations
+            // without their XAxis/YAxis being resolved yet (PlotBase only calls Update when
+            // isUpdateRequired is set, which InvalidatePlot would do). Force a non-data
+            // model update right here so EnsureAxes runs and every annotation we just added
+            // has its axes wired — fixes NRE in PlotElementUtilities.GetClippingRect during
+            // ChartWindow.Show() on the initial layout pass.
+            ((IPlotModel)model).Update(false);
+        }
     }
 
     [RelayCommand]
