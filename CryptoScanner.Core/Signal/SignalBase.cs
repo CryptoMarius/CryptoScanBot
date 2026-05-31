@@ -82,12 +82,23 @@ public class SignalCreateBase
 
 
     /// <summary>
-    /// Give up when the trader fails to pick up the signal within GiveUpCandles bars
+    /// Give up when the trader fails to pick up the signal within EntryRemoveTime bars
     /// after it fired (for example when no trading slot is free).
     /// </summary>
     public virtual bool GiveUp(CryptoSignal signal)
     {
-        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
+        // BUGFIX: the previous condition was
+        //     signal.CloseDate.Minutes + N * Duration < CandleLast.OpenTime.Minutes
+        // which combined two off-by-ones: (a) signal.CloseDate already includes one
+        // Duration past signal.OpenDate, and (b) the strict "<" requires another full
+        // candle past the threshold. Result: a 15m signal with EntryRemoveTime=5 was
+        // only removed 7 candles after signal close.
+        //
+        // Correct: signal expires once N full candles have elapsed since the signal
+        // candle's OPEN time, i.e. CandleLast (the just-closed signal-interval candle)
+        // sits at or beyond the N-th candle after signal.OpenDate.
+        long expiryTime = CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration;
+        if (CandleLast.Candle.OpenTime.Minutes >= expiryTime)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;

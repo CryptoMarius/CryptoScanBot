@@ -89,8 +89,10 @@ public class SignalTrendShort : SignalCreateBase
             return true;
         }
 
-        // Time limit exceeded
-        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GiveUpCandles * Interval.Duration < CandleLast.Candle.OpenTime.Minutes)
+        // Time limit exceeded — same fix as SignalCreateBase.GiveUp, count from signal OPEN
+        // with >= comparison so we remove after exactly GiveUpCandles candles instead of +2.
+        long expiryOpenMinutes = CandleTime.FromDateTime(signal.OpenDate).Minutes + GiveUpCandles * Interval.Duration;
+        if (CandleLast.Candle.OpenTime.Minutes >= expiryOpenMinutes)
         {
             ExtraText = $"give up after {GiveUpCandles} candles";
             return true;
