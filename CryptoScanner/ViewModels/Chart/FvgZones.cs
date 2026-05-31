@@ -67,6 +67,8 @@ public class FvgZones
                 Stroke = OxyColor.FromArgb(128 + 64 + 32 + 16 + 8 + 4 + 2, boxColor.R, boxColor.G, boxColor.B), // rectangle
                 StrokeThickness = stroke, // Border thickness
                 TextColor = textColor,
+                // Pin to the price axis explicitly — see SmcZones for the rationale.
+                YAxisKey = "price",
                 Text = zone.Description,
                 //Text = zone.Id.ToString() + " " + zone.Description,
                 ToolTip = zone.Description, // does not work, weak..

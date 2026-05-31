@@ -62,6 +62,12 @@ public class SmcZones
             Stroke = stroke,
             StrokeThickness = 0,
             TextColor = textColor,
+            // Pin the annotation to the price Y-axis explicitly. The chart toggles extra
+            // Y-axes (stoch / macd / volume) on top of "price"; without YAxisKey OxyPlot may
+            // resolve to the wrong axis, and during the very first layout pass (before
+            // PlotModel.Update runs) XAxis/YAxis stay null and GetClippingRect throws NRE
+            // during render.
+            YAxisKey = "price",
             // Interval + freshness: append the touch count (CE touches) so a quick glance tells
             // fresh (no number) from tested ("2x"). Colour already encodes demand vs supply.
             Text = zone.TouchCount > 0 ? $"{zone.Interval.Name} {zone.TouchCount}x" : zone.Interval.Name,
