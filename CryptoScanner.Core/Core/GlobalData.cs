@@ -336,6 +336,9 @@ public static class GlobalData
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
                 new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
+                if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
+                    continue;
+
                 if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
                     signal.Exchange = exchange2;

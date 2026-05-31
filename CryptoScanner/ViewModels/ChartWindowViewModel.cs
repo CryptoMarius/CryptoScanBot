@@ -1463,6 +1463,22 @@ public partial class ChartWindowViewModel : ObservableObject
         return (true, "");
     }
 
+    public void HideAnnototionCursor()
+    {
+        // Hide the crosshair cursor
+        if (CrossHairX != null && CrossHairY != null)
+        {
+            CrossHairX.LineStyle = LineStyle.None;
+            CrossHairY.LineStyle = LineStyle.None;
+        }
+        if (CrossHairXStoch != null)
+            CrossHairXStoch.LineStyle = LineStyle.None;
+        if (CrossHairXMacd != null)
+            CrossHairXMacd.LineStyle = LineStyle.None;
+        if (CrossHairXVolume != null)
+            CrossHairXVolume.LineStyle = LineStyle.None;
+    }
+
     private async Task SymbolOrIntervalChangedAsync(bool forceCalculation)
     {
         if (IsCalculating)
@@ -1484,18 +1500,7 @@ public partial class ChartWindowViewModel : ObservableObject
             WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName} Calculating...";
 
 
-            // Hide the crosshair cursor
-            if (CrossHairX != null && CrossHairY != null)
-            {
-                CrossHairX.LineStyle = LineStyle.None;
-                CrossHairY.LineStyle = LineStyle.None;
-            }
-            if (CrossHairXStoch != null)
-                CrossHairXStoch.LineStyle = LineStyle.None;
-            if (CrossHairXMacd != null)
-                CrossHairXMacd.LineStyle = LineStyle.None;
-            if (CrossHairXVolume != null)
-                CrossHairXVolume.LineStyle = LineStyle.None;
+            HideAnnototionCursor();
 
             SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 

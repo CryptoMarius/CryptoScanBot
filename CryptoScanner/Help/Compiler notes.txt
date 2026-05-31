@@ -51,7 +51,3 @@ Telegram
 (ik kon geen copy/paste doen van het bestand, misschien een andere naam geven?) -> crashte namelijk tijdens het opstarten, geen signals, geen positions, geen duidelijke error
 Bestand wordt niet meer bewaard?
 
-Cleanup:
--Traverse van de pivot folder op symbols die niet meer bestaan (verwijderen)
--Traverse van de exchange folders op symbols die niet meer bestaan (verwijderen)
-

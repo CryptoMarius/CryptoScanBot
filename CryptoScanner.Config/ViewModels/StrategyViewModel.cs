@@ -27,7 +27,12 @@ public partial class StrategyViewModel : ObservableObject
     public void LoadConfig(List<string> strategyList)
     {
         StrategyList.Clear();
-        foreach (var algorithm in RegisterAlgorithms.AlgorithmDefinitionList.Values)
+        // Sort alphabetically by name so the UI lists e.g. sbm1/sbm2/sbm3, stobb/stobb.dlz/...,
+        // storsi/storsi.dlz/... in a predictable order independent of the registration order
+        // in RegisterAlgorithms (which is grouped by topic, not name).
+        var ordered = RegisterAlgorithms.AlgorithmDefinitionList.Values
+            .OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase);
+        foreach (var algorithm in ordered)
         {
             var item = new StrategyItem
             {

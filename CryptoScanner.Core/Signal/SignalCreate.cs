@@ -233,18 +233,21 @@ public class SignalCreate
         CryptoSignal signal = CreateSignal(Candle);
         signal.Side = algorithm.SignalSide;
         signal.Strategy = algorithm.SignalStrategy;
+        // Might be different?
+        signal.Interval = algorithm.Interval;
+        signal.IntervalId = algorithm.Interval.Id;
 
         // Algorithms that detect events on an earlier candle (e.g. BOS/CHoCH swing break)
         // can report the actual event price here so SignalPrice reflects the break, not
         // the close of the candle on which the check happened to run.
-        if (algorithm.OverrideSignalPrice is decimal overridePrice)
-            signal.SignalPrice = overridePrice;
+        //if (algorithm.OverrideSignalPrice is decimal overridePrice)
+        //    signal.SignalPrice = overridePrice;
 
         // Strategies that anchor SL/TP on structural levels (swing high/low, BB band, RRR target)
         // report their proposed prices here. PositionTools.AddSignalProperties copies them onto
         // the resulting position, where PositionMonitor.CalculateTpPrices picks them up.
-        signal.SlPrice = algorithm.OverrideSlPrice;
-        signal.TpPrice = algorithm.OverrideTpPrice;
+        //signal.SlPrice = algorithm.OverrideSlPrice;
+        //signal.TpPrice = algorithm.OverrideTpPrice;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
@@ -427,21 +430,17 @@ public class SignalCreate
         signal.EventText = string.Join(", ", eventText);
         try
         {
-            // Bied het aan het monitorings systeem (indien aangevinkt)
-            // (lagere intervallen hebben hogere prioriteit - via EventTime, klopt dat?)
-            // We gebruiken (nog) geen exit signalen, echter dat zou best realistisch zijn voor de toekomst
+            // Pass it into the monitorings system (if trading)
+            // (lower intervals have higher priority - via EventTime?)
+            // We dont use (nog) any exit signals, but that can be done as wll (somewhere in the future)
             if (!signal.IsInvalid && GlobalData.Settings.Trading.Active)
             {
                 if (TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                 {
                     if (TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
-                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
-                        {
-                            //SignalList.Add(signal);
-                            if (GlobalData.Settings.Trading.Active)
-                                symbolInterval.SignalList.Add(signal);
-                        }
+                        CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
+                        symbolInterval.SignalList.Add(signal);
                     }
                 }
             }
@@ -470,12 +469,12 @@ public class SignalCreate
         CryptoSignal signal = new()
         {
             Exchange = Symbol.Exchange,
-            Symbol = Symbol,
-            Interval = Interval,
-            Candle = candle,
             ExchangeId = Symbol.ExchangeId,
+            Symbol = Symbol,
             SymbolId = Symbol.Id,
+            Interval = Interval,
             IntervalId = Interval.Id,
+            Candle = candle,
             BackTest = GlobalData.BackTest,
             SignalPrice = candle.Close,
             PriceMin = candle.Close, // statistics

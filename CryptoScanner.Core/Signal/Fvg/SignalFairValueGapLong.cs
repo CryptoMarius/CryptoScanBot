@@ -42,6 +42,7 @@ public class SignalFairValueGapLong : SignalCreateBase
                         if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                         {
                             result = true;
+                            Interval = interval; // Report different interval back
                             zone.AlarmDate = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                             decimal dist = 100m * (CandleLast.Candle.Low - zone.Top) / CandleLast.Candle.Close;

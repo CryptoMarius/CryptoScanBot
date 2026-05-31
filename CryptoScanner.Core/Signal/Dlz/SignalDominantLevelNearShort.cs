@@ -48,6 +48,7 @@ public class SignalDominantLevelNearShort : SignalCreateBase
                                 else
                                 {
                                     result = true;
+                                    Interval = interval; // Report different interval back
                                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                                     GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                                     decimal dist = 100m * (zone.Bottom - CandleLast.Candle.High) / CandleLast.Candle.Close;

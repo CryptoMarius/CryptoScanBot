@@ -40,7 +40,8 @@ public class SignalPrepare
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
             // long or short does not matter for the prepare
-            if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) || GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
+            if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) || 
+                GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
             {
                 if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevel)
                 {
@@ -53,59 +54,81 @@ public class SignalPrepare
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }
 
-                    // Combined DLZ strategies: also schedule zone recalculation on the DLZ intervals.
-                    // Without this, StoRsiDlz / StobbDlz (values < DominantLevel) would fall through
-                    // the plain-indicator branch and the zone worker would never be queued per candle.
-                    if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiDlz ||
-                        strategyDef.Strategy == CryptoSignalStrategy.StobbDlz)
-                    {
-                        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                        {
-                            Add(SignalPrepareKind.Dlz, intervalName);
-                            Add(SignalPrepareKind.Indicator, "1m");
-                        }
-                    }
+                    //// Combined DLZ strategies: also schedule zone recalculation on the DLZ intervals.
+                    //// Without this, StoRsiDlz / StobbDlz (values < DominantLevel) would fall through
+                    //// the plain-indicator branch and the zone worker would never be queued per candle.
+                    //if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiDlz ||
+                    //    strategyDef.Strategy == CryptoSignalStrategy.StobbDlz)
+                    //{
+                    //    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                    //    //{
+                    //    //    Add(SignalPrepareKind.Dlz, intervalName);
+                    //    //    Add(SignalPrepareKind.Indicator, "1m");
+                    //    //}
+                    //    Add(SignalPrepareKind.Indicator, "1m");
+                    //}
 
-                    // Combined FVG strategies: same reasoning as above for FVG zones.
-                    if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiFvg ||
-                        strategyDef.Strategy == CryptoSignalStrategy.StobbFvg)
-                    {
-                        foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
-                        {
-                            Add(SignalPrepareKind.Fvg, intervalName);
-                            Add(SignalPrepareKind.Indicator, "1m");
-                        }
-                    }
+                    //// Combined FVG strategies: same reasoning as above for FVG zones.
+                    //if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiFvg ||
+                    //    strategyDef.Strategy == CryptoSignalStrategy.StobbFvg)
+                    //{
+                    //    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                    //    //{
+                    //    //    Add(SignalPrepareKind.Fvg, intervalName);
+                    //    //    Add(SignalPrepareKind.Indicator, "1m");
+                    //    //}
+                    //    Add(SignalPrepareKind.Indicator, "1m");
+                    //}
                 }
                 else if (strategyDef.Strategy == CryptoSignalStrategy.FairValueGap)
                 {
                     // These are seperate intervals on which the FVG is calculated
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
-                    {
-                        Add(SignalPrepareKind.Fvg, intervalName);
-                        Add(SignalPrepareKind.Indicator, "1m");
-                    }
+                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+                    //{
+                    //    Add(SignalPrepareKind.Fvg, intervalName);
+                    //    Add(SignalPrepareKind.Indicator, "1m");
+                    //}
+                    Add(SignalPrepareKind.Indicator, "1m");
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel || strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
+                else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel 
+                    || strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
                 {
                     // These are seperate intervals on which the DLZ is calculated
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                    {
-                        Add(SignalPrepareKind.Dlz, intervalName);
-                        Add(SignalPrepareKind.Indicator, "1m");
-                    }
+                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+                    //{
+                    //    //Add(SignalPrepareKind.Dlz, intervalName);
+                    //}
+                    Add(SignalPrepareKind.Indicator, "1m");
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
+                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock 
+                    || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
                 {
                     // Separate intervals on which the SMC order blocks are calculated.
-                    foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
-                    {
-                        Add(SignalPrepareKind.Smc, intervalName);
+                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+                    //{
+                    //    Add(SignalPrepareKind.Smc, intervalName);
                         Add(SignalPrepareKind.Indicator, "1m");
-                    }
+                    //}
                 }
             }
         }
+
+        // These are seperate intervals on which the FVG is calculated
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+        {
+            Add(SignalPrepareKind.Fvg, intervalName);
+        }
+        // These are seperate intervals on which the DLZ is calculated
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
+        {
+            Add(SignalPrepareKind.Dlz, intervalName);
+        }
+        // Separate intervals on which the SMC order blocks are calculated.
+        foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+        {
+            Add(SignalPrepareKind.Smc, intervalName);
+        }
+
 
         // Remove the unused items
         foreach (var item in Preparing.ToList())
@@ -183,15 +206,28 @@ public class SignalPrepare
 
 
         // Recompute SMC order blocks on the zone-interval boundary. ZoneSmc.Detect is a cheap
-        // full rebuild from the in-memory candles, so we just call it directly (no separate
-        // zone worker / DB persistence like DLZ/FVG).
+        // full rebuild from the in-memory candles and now also writes the diff to the DB
+        // through ThreadSaveObjects. The ZoneLock guards the SmcZones swap and the DB queueing
+        // against the DLZ worker and any concurrent chart-driven Detect. Non-blocking try
+        // (Wait(0)): if the lock is currently held (e.g. DLZ recalculation on this symbol),
+        // skip this tick — the next 1m candle on the same interval boundary will retry.
         if (Preparing.TryGetValue(SignalPrepareKind.Smc, out indexList))
         {
             foreach (var interval in indexList.Values)
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
-                    ZoneSmc.Detect(symbol, interval);
+                    if (symbol.Data.ZoneLock.Wait(0))
+                    {
+                        try
+                        {
+                            ZoneSmc.Detect(symbol, interval);
+                        }
+                        finally
+                        {
+                            symbol.Data.ZoneLock.Release();
+                        }
+                    }
                 }
             }
         }

@@ -84,6 +84,14 @@ public class CryptoSymbolData
         }
     }
 
+    public void ResetSmcData()
+    {
+        foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
+        {
+            symbolInterval.SmcZones.Clear();
+        }
+    }
+
     public void ResetTrendData()
     {
         TrendPrimary.Reset();

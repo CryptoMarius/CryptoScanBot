@@ -49,14 +49,23 @@ public class SettingsSignalStrategySmc : SettingsSignalStrategyBase
     // Cap on zones kept per interval (newest kept) to avoid overloading memory / chart.
     public int MaxBlocksPerInterval { get; set; } = 50;
 
+    // Tighten the detector toward classical ICT/SMC Order Block semantics: when true, only
+    // accept a zone where the LAST base candle (the one immediately adjacent to the impulse)
+    // has the OPPOSITE color of the impulse. For a long zone the expansion is bullish, so the
+    // last base candle must close below its open ("the last bearish candle before the BOS").
+    // Mirrors for short zones. Dojis (close == open on the base candle) are rejected when
+    // this filter is on.
+    // Default false — keeps the broader supply/demand (base + expansion) behaviour.
+    public bool RequireOppositeBaseColor { get; set; } = false;
+
     // ---- Signal tuning (entry) ----
 
     // Only fire on Strong zones (powerful expansion). Set false to also alarm on Weak zones.
-    public bool OnlyStrong { get; set; } = true;
+    public bool OnlyStrong { get; set; } = false;
 
     // Maximum number of CE (50%) touches a zone may already have and still produce a signal.
     // 0 = only fresh (unmitigated) zones. 1 = also allow the first retest, etc.
-    public int MaxTouches { get; set; } = 0;
+    public int MaxTouches { get; set; } = 1;
 
     // How many candles back (including the current one) the smc.rejection variant may look
     // for the "tested the zone" wick. 1 = the rejection wick + close-back-outside must happen

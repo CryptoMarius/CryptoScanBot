@@ -37,6 +37,7 @@ public class CryptoSymbolInterval
     // Primary and Secondary trend data (Dow Theory interpretation)
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
+
     // BOS/CHoCH trend data (Break of Structure / Change of Character)
-    public CryptoTrendData TrendBos = new();
+    //public CryptoTrendData TrendBos = new();
 }

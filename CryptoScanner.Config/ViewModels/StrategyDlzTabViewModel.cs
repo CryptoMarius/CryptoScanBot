@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Config.ViewModels;
@@ -48,7 +48,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         StrategyDlzSettingsZoomedBoxViewModel.LoadConfig(settings);
         StrategyDlzSettingsUnzoomedBoxViewModel.LoadConfig(settings);
         StrategyDlzSettingsZoneFilterViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList, true);
+        IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
         IndicatorZigZagViewModel.LoadConfig(settings.ZigZag);
     }
 

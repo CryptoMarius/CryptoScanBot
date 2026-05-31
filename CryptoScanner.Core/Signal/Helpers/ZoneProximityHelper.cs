@@ -227,6 +227,113 @@ public static class ZoneProximityHelper
     }
 
 
+    /// <summary>
+    /// Returns true when the most recent candle on the signal's interval shows a rejection
+    /// off an open SMC Order Block matching the signal direction. Mirrors the DLZ/FVG
+    /// rejection criteria but reads from <see cref="CryptoSymbolInterval.SmcZones"/> (a flat
+    /// list, no Long/Short split) and honours the SMC-specific freshness gates
+    /// (<see cref="SettingsSignalStrategySmc.OnlyStrong"/>, <see cref="SettingsSignalStrategySmc.MaxTouches"/>).
+    /// NearZonePercentage is intentionally fixed at 0 — SMC uses strict inside-the-band
+    /// semantics matching the standalone <c>smc</c> / <c>smc.rejection</c> variants.
+    /// </summary>
+    public static bool WasRejectedAtSmcZone(this SignalCreateBase myBase, out string zoneInfo)
+    {
+        zoneInfo = "";
+        var settings = GlobalData.Settings.Signal.ZonesSmc;
+        var candle = myBase.CandleLast.Candle;
+        var symbolData = myBase.Symbol.Data;
+
+        int rejectionLookback = Math.Max(1, settings.RejectionLookback);
+
+        foreach (var intervalName in settings.IntervalList)
+        {
+            if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
+                continue;
+
+            var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
+            // Capture reference so a concurrent SmcZones swap mid-loop is safe.
+            var zones = symbolIntervalData.SmcZones;
+            for (int idx = 0; idx < zones.Count; idx++)
+            {
+                var zone = zones[idx];
+
+                // Side + active filter
+                if (zone.Side != myBase.SignalSide || zone.CloseTime != null)
+                    continue;
+
+                // Emulator/backtest safety: zone created after current candle
+                if (candle.OpenTime < zone.OpenTime)
+                    continue;
+
+                // Freshness / strength gates (same defaults as the smc.rejection algorithm).
+                if (settings.OnlyStrong && zone.Strength != CryptoZoneStrength.Strong)
+                    continue;
+                if (zone.TouchCount > settings.MaxTouches)
+                    continue;
+
+                if (myBase.SignalSide == CryptoTradeSide.Long)
+                {
+                    // Rejection: current candle closes back ABOVE the zone's proximal edge (Top).
+                    if (candle.Close <= zone.Top)
+                        continue;
+
+                    // Test: any of the last N candles wicked into [Bottom, Top].
+                    if (!HasWickIntoSmcZone(myBase, candle, zone, rejectionLookback, longSide: true))
+                        continue;
+
+                    decimal dist = 100m * (candle.Close - zone.Top) / candle.Close;
+                    zoneInfo = $"smc {intervalName} demand rejection {zone.Bottom} .. {zone.Top} " +
+                        $"touches={zone.TouchCount} ({dist:N2}% above)";
+                    return true;
+                }
+                else
+                {
+                    // Rejection: current candle closes back BELOW the zone's proximal edge (Bottom).
+                    if (candle.Close >= zone.Bottom)
+                        continue;
+
+                    if (!HasWickIntoSmcZone(myBase, candle, zone, rejectionLookback, longSide: false))
+                        continue;
+
+                    decimal dist = 100m * (zone.Bottom - candle.Close) / candle.Close;
+                    zoneInfo = $"smc {intervalName} supply rejection {zone.Bottom} .. {zone.Top} " +
+                        $"touches={zone.TouchCount} ({dist:N2}% below)";
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    // Walk back up to lookback candles (including current) looking for a wick into the
+    // SMC zone band [Bottom, Top]. Uses the signal's interval candle list, same as the
+    // DLZ/FVG version, so the "test" lives on the same timeframe as the confirming close.
+    private static bool HasWickIntoSmcZone(SignalCreateBase myBase, CryptoCandle current,
+        CryptoZone zone, int lookback, bool longSide)
+    {
+        if (current.Low <= zone.Top && current.High >= zone.Bottom)
+            return true;
+
+        if (lookback <= 1)
+            return false;
+
+        var candleList = myBase.SymbolInterval.CandleList;
+        CandleTime t = current.OpenTime - myBase.Interval.Duration;
+        for (int i = 1; i < lookback; i++)
+        {
+            if (!candleList.TryGetValue(t, out CryptoCandle prev))
+                return false;
+            if (prev.OpenTime < zone.OpenTime)
+                return false;
+            if (prev.Low <= zone.Top && prev.High >= zone.Bottom)
+                return true;
+            t -= myBase.Interval.Duration;
+        }
+        return false;
+    }
+
+
     // Shared rejection check used by both DLZ and FVG. Iterates each enabled interval and
     // each open zone on the signal side, applying the test+close-back-outside criteria.
     private static bool WasRejectedAtZone(SignalCreateBase myBase, List<string> intervalList,

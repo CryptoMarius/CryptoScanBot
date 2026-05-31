@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Config.ViewModels;
@@ -28,7 +28,7 @@ public partial class StrategyFvgTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyFvgSettingsViewModel.LoadConfig(settings);
-        IntervalViewModel.LoadConfig(settings.IntervalList, true);
+        IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
     }
 
     internal void SaveConfig(SettingsSignalStrategyFvg settings)

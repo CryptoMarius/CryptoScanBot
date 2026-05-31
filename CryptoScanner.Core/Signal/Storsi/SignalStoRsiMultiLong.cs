@@ -74,7 +74,7 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
                 return false;
 
             if (IndicatorsOkay(result.candle!) && result.candle!.StochOversold(addStochAmount)
-                && result.candle!.RsiOversold(GlobalData.Settings.Signal.StoRsi.AddRsiAmount + addRsiAmount))
+                && result.candle!.RsiOversold(settings.AddRsiAmount + addRsiAmount))
             {
                 if (ExtraText != "")
                     ExtraText += ',';
@@ -103,8 +103,8 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
-            addRsiAmount += 2;
-            addStochAmount += 2;
+            addRsiAmount += 3;
+            addStochAmount += 3;
         }
 
 

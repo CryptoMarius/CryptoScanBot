@@ -61,6 +61,14 @@
                              Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto"
+                      ToolTip.Tip="Tightens the detector toward classical ICT/SMC: the last base candle must have the opposite color of the impulse (bearish before a bullish BOS for a long zone). Default off keeps the broader supply/demand behaviour.">
+                    <TextBlock Grid.Column="0" Text="Require opposite base colour:" VerticalAlignment="Center"
+                               Margin="0,0,12,0" FontSize="12"/>
+                    <CheckBox Grid.Column="2" IsChecked="{Binding RequireOppositeBaseColor, Mode=TwoWay}"
+                              VerticalAlignment="Center"/>
+                </Grid>
+
             </StackPanel>
         </HeaderedContentControl>
 

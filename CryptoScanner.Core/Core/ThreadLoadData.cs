@@ -301,6 +301,12 @@ public class ThreadLoadData
                 _ = Task.Run(GlobalData.ThreadZoneCalculate!.ExecuteAsync).ConfigureAwait(false);
                 _ = Task.Run(async () => { await ZoneBroken.CalculateBrokenZonesForAllSymbols(); }).ConfigureAwait(false);
 
+                // SMC: refresh TouchCount/IsMitigated on the loaded zones and populate any
+                // (symbol, interval) that has no SMC rows in the DB yet (e.g. fresh deploy).
+                // The diff in Detect suppresses no-op writes so this is cheap when nothing
+                // changed since the previous shutdown.
+                _ = Task.Run(ZoneSmc.RebuildAllZonesForActiveExchange).ConfigureAwait(false);
+
                 // Queue a full DLZ + FVG recalculation for every symbol at startup.
                 // LoadAllZones() above only populates zones that already exist in the DB — new
                 // listings and symbols added since the last manual "Calculate zones" run would

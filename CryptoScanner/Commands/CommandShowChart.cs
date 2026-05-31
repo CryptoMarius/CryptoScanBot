@@ -48,6 +48,7 @@ public class CommandShowChart : CommandBase
                 {
                     if (ChartWindow.DataContext is ChartWindowViewModel vm1)
                     {
+                        vm1.HideAnnototionCursor();
                         vm1.SymbolSelector.SelectedBase = dto.symbol.Base;
                         vm1.SymbolSelector.SelectedQuote = dto.symbol.Quote;
                         if (dto.interval != null)

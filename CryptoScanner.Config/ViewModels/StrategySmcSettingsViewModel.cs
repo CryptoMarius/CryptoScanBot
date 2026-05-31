@@ -29,6 +29,9 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _maxBlocksPerInterval = 50;
 
+    [ObservableProperty]
+    private bool _requireOppositeBaseColor = false;
+
     // ---- Signal tuning (entry) ----
 
     [ObservableProperty]
@@ -50,6 +53,7 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         StrongExpansionFactor = settings.StrongExpansionFactor;
         BaseMaxCandles = settings.BaseMaxCandles;
         MaxBlocksPerInterval = settings.MaxBlocksPerInterval;
+        RequireOppositeBaseColor = settings.RequireOppositeBaseColor;
 
         OnlyStrong = settings.OnlyStrong;
         MaxTouches = settings.MaxTouches;
@@ -65,6 +69,7 @@ public partial class StrategySmcSettingsViewModel : ObservableObject
         settings.StrongExpansionFactor = StrongExpansionFactor;
         settings.BaseMaxCandles = BaseMaxCandles;
         settings.MaxBlocksPerInterval = MaxBlocksPerInterval;
+        settings.RequireOppositeBaseColor = RequireOppositeBaseColor;
 
         settings.OnlyStrong = OnlyStrong;
         settings.MaxTouches = MaxTouches;

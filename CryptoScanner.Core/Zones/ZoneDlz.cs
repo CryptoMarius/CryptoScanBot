@@ -19,6 +19,7 @@ public class ZoneDlz
         {
             symbol.Data.ResetFvgData();
             symbol.Data.ResetDlzData();
+            symbol.Data.ResetSmcData();
             symbol.Data.ResetTrendData();
         }
 
@@ -36,6 +37,7 @@ public class ZoneDlz
         CryptoSymbolData symbolData = symbol.Data;
         symbolData.ResetFvgData();
         symbolData.ResetDlzData();
+        symbolData.ResetSmcData();
         symbolData.ResetTrendData();
 
         using var database = new CryptoDatabase();
@@ -66,6 +68,12 @@ public class ZoneDlz
                     if (zone.Kind == CryptoZoneKind.FairValueGap)
                     {
                         symbolInterval.FvgZones.Add(zone);
+                    }
+                    else if (zone.Kind == CryptoZoneKind.OrderBlock)
+                    {
+                        // SMC zones use a flat list; TouchCount/IsMitigated are recomputed by
+                        // the next ZoneSmc.Detect (they are [Computed], not persisted).
+                        symbolInterval.SmcZones.Add(zone);
                     }
                     else
                     {

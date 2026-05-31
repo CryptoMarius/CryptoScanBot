@@ -598,7 +598,8 @@ public class TradeTools
                     position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Timeout;
 
-                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status}");
+#if DEBUG
+                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} changed to {position.Status}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
@@ -608,6 +609,7 @@ public class TradeTools
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
                     GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+#endif
                 }
             }
 
@@ -619,7 +621,7 @@ public class TradeTools
                 position.Reposition = true;
                 position.UpdateTime = lastDateTime;
                 position.Status = CryptoPositionStatus.Trading;
-                GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status aangepast naar {position.Status} (should not occur)");
+                GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} status changed to {position.Status} (should not occur)");
             }
 
             // Als alles verkocht is de positie alsnog sluiten. Maar wanneer weet je of alles echt verkocht is?

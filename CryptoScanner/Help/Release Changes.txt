@@ -1,12 +1,17 @@
 CryptoScanBot release historie:
 
-17-05-2025 2.5.2
-De Management van de position-parts is niet goed genoeg, als je een part annuleert (cancel open dca) dan blijft nummer en SL staan. Best verwarrend, weggooien ipv bewaren lijkt me
-  Tsja, das min of meer een rommel van de afgelopen x jaren: 
-
-Beslissing maken: Wil ik de statistieken zoals deze nu aanwezig zijn wel blijven hanteren? Vanwege delay's e.d. zijn de statistieken niet goed genoeg, wellicht gewoon onzichtbaar maken? (scheelt ook aardig wat cpu)
-Op zich zijn ze leuk, maar ik moet het ook allemaal weer uitleggen enzo, en het voegt qua echte trading helemaal niets toe
-
+31-05-2025 2.5.2
+- Meldingen van de fvg, dlz en smc melden nu het interval waarop de melding gedetecteerd is (was altijd 1m)
+- Nieuwe combinatie strategie voor de storsi, stobb icm met de fvg, dlz en smc zones (even zien of dit relevant is)
+- Configuratie van de intervallen veranderd voor de dlz, fvg en smc
+- Nieuwe strategie voor de smc methodien (expansie/bounce vanaf een base), 1e poging dus wellicht wat ruw?
+- Nieuwe strategien voor de stobb en storsi icm de fvg/dlz (die laatste moet dan wel aan staan)
+  De instap hiervan is tamelijk wisselend, ik ben niet tevreden over de trader en de condities.
+- De tekst van het signaal wordt nu overgenomen in de positie ter tracering
+- Opruimen van candles van zones die niet langer actief zijn of verwijderd zijn
+- Opruimen van bestanden van symbols die niet actief zijn of onder het minimum volume zijn gezakt
+- Candle opslag van de zone calculatie en de scanner zijn nu gecombineeerd in een [exchangename].db database (exchange folder)
+- Rsi, Stochastic, Macd en Volume aan het chart window toegevoegd + de lijnen voor oversold/overbought
 - Extra instelling voor de stobb en storsi om de melding pas te geven op het moment dat het niet meer os/ob is en de rsi in het middengebied zit
 - De Altrady SL wordt onder de laatste dca gezet (geen absoluut percentage zoals voorheen)
 - Extra instelling in de trader om met de trend mee te traden (+aantal intervallen die het moet controleren)

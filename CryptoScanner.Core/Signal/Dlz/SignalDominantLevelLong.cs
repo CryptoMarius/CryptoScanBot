@@ -52,6 +52,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                                 else
                                 {
                                     result = true;
+                                    Interval = interval; // Report different interval back
                                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                                     ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
                                     GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");

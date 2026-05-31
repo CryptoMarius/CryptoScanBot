@@ -67,7 +67,7 @@ public static class PositionTools
     }
 
     public static CryptoPosition CreatePosition(CryptoSymbol symbol, CryptoSignalStrategy strategy, CryptoTradeSide side,
-        string eventText, CryptoSymbolInterval symbolInterval, DateTime currentDate)
+        string? eventText, CryptoSymbolInterval symbolInterval, DateTime currentDate)
     {
         CryptoPosition position = new()
         {

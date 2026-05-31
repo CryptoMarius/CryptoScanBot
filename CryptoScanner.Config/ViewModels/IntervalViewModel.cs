@@ -45,7 +45,7 @@ public partial class IntervalViewModel : ObservableObject
     }
 
 
-    public void LoadConfig(List<string> intervalList, bool showHigherIntervalsOnly = false)
+    public void LoadConfig(List<string> intervalList, CryptoIntervalPeriod showFromInterval = CryptoIntervalPeriod.interval1m)
     {
         DayIntervals.Clear();
         HourIntervals.Clear();
@@ -60,10 +60,7 @@ public partial class IntervalViewModel : ObservableObject
             else
                 target = DayIntervals;
 
-            bool isEnabled = true;
-            if (showHigherIntervalsOnly)
-                isEnabled = interval.IntervalPeriod >= CryptoIntervalPeriod.interval1h;
-
+            bool isEnabled = interval.IntervalPeriod >= showFromInterval;
             var item = new IntervalItem(interval.Name, intervalList.Contains(interval.Name), isEnabled);
             target.Add(item);
         }

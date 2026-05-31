@@ -78,6 +78,7 @@ public class SignalOrderBlockRejectionShort : SignalCreateBase
                 if (zone.AlarmDate == null || CandleLast.Candle.OpenTime > zone.AlarmDate?.AddHours(1))
                 {
                     result = true;
+                    Interval = interval; // Report different interval back
                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                     decimal dist = 100m * (zone.Bottom - CandleLast.Candle.Close) / CandleLast.Candle.Close;
                     ExtraText = $"{interval.Name} supply OB rejection {zone.Bottom} .. {zone.Top} (+{dist:N2}%) touches={zone.TouchCount}";
