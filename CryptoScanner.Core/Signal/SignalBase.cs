@@ -154,25 +154,6 @@ public class SignalCreateBase
             }
         }
 
-        // ********************************************************************
-        // MACD crossover — scan the last MacdCrossoverLookbackBars adjacent pairs for a
-        // histogram zero-crossing in the trade direction. A wider lookback lets AllowStepIn
-        // pick up the cross even when it didn't happen on the exact bar AllowStepIn is polled.
-        if (settings.CheckForMacdCrossover)
-        {
-            int lookback = Math.Max(1, settings.MacdCrossoverLookbackBars);
-            bool? crossed = HasMacdHistogramCrossover(lookback, SignalSide);
-            if (crossed == null)
-            {
-                ExtraText = "macd histogram not available";
-                return false;
-            }
-            if (!crossed.Value)
-            {
-                ExtraText = $"no macd cross in last {lookback} bars";
-                return false;
-            }
-        }
 
         // ********************************************************************
         // RSI recovering
@@ -221,17 +202,22 @@ public class SignalCreateBase
                     }
                     break;
                 case CryptoTradeSide.Short:
-                    // %K should recover
+                    // %K should recover (= fall) for a short — refuse while it is still rising.
                     if (CandleLast?.CandleData!.StochOscillator > candlePrev?.CandleData?.StochOscillator)
                     {
                         ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering > {CandleLast.CandleData?.StochOscillator:N8}";
                         return false;
                     }
 
-                    // %D and %K should have crossed, %K(quick/blue) < %D(slow/red)
-                    if (CandleLast?.CandleData?.StochSignal > CandleLast?.CandleData?.StochOscillator)
+                    // %D and %K should have crossed, %K(quick/blue) < %D(slow/red).
+                    // BUGFIX: the previous condition was StochSignal > StochOscillator (= %D > %K
+                    // = %K < %D), which is the DESIRED short state — so the check refused exactly
+                    // when it should have allowed and vice versa, letting bullish %K-above-%D
+                    // setups through on shorts. Correct test: refuse while %K is still above %D
+                    // (cross has not yet happened in the short direction).
+                    if (CandleLast?.CandleData?.StochOscillator > CandleLast?.CandleData?.StochSignal)
                     {
-                        ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not below %K {candlePrev?.CandleData?.StochOscillator:N8}";
+                        ExtraText = $"Stoch.%K {CandleLast?.CandleData?.StochOscillator:N8} not below %D {CandleLast?.CandleData?.StochSignal:N8}";
                         return false;
                     }
                     break;
@@ -604,45 +590,6 @@ public class SignalCreateBase
             candleCount--;
             prevCandle = lastCandle;
             time -= Interval.Duration;
-        }
-        return false;
-    }
-
-
-    /// <summary>
-    /// Scans the last <paramref name="lookbackBars"/> adjacent candle pairs ending at CandleLast
-    /// for a MACD-histogram zero-crossing in the requested direction:
-    ///   Long  — older &lt; 0 and newer ≥ 0
-    ///   Short — older &gt; 0 and newer ≤ 0
-    /// Returns true on the first match, false when none of the pairs cross, and null when
-    /// histogram data is missing anywhere along the inspected range. Uses raw IndicatorData
-    /// lookups so a strict <see cref="IndicatorsOkay"/> on an older bar doesn't mask the cross.
-    /// </summary>
-    private bool? HasMacdHistogramCrossover(int lookbackBars, CryptoTradeSide side)
-    {
-        if (CandleLast?.CandleData?.MacdHistogram == null)
-            return null;
-        double newerH = CandleLast.CandleData.MacdHistogram.Value;
-
-        CandleTime time = CandleLast.Candle.OpenTime;
-        for (int i = 0; i < lookbackBars; i++)
-        {
-            time -= Interval.Duration;
-            if (!IndicatorData.TryGetCandle(time, out MyData? older)
-                || older?.CandleData?.MacdHistogram == null)
-                return null;
-
-            double olderH = older.CandleData.MacdHistogram.Value;
-            bool cross = side switch
-            {
-                CryptoTradeSide.Long => olderH < 0 && newerH >= 0,
-                CryptoTradeSide.Short => olderH > 0 && newerH <= 0,
-                _ => false,
-            };
-            if (cross)
-                return true;
-
-            newerH = olderH;
         }
         return false;
     }

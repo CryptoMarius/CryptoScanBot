@@ -52,16 +52,6 @@
 			<CheckBox IsChecked="{Binding WaitForRecovery, Mode=TwoWay}"
 					  Content="Wait if stoch %K or RSI are OS/OB"
 					  FontSize="12"/>
-
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-				<CheckBox IsChecked="{Binding CheckForMacdCrossover, Mode=TwoWay}"
-						  Content="Wait until MACD crossover"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding MacdCrossoverLookbackBars, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckForMacdCrossover}"/>
-			</Grid>
 			
 
 			<!-- Slot Limits -->
