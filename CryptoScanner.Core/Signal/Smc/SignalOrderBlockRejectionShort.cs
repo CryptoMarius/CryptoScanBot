@@ -19,9 +19,18 @@ namespace CryptoScanner.Core.Signal.Smc;
 /// </summary>
 public class SignalOrderBlockRejectionShort : SignalCreateBase
 {
+    // Captured from the zone that fired this signal (the proximal edge — Bottom for a supply
+    // zone). Exposed via OverrideSignalPrice so the trader can place a limit order on the
+    // zone band itself instead of at the rejection close (which sits below the zone by
+    // definition). Combinable with EntryOrderPrice = SignalPriceWithPullback to drift the
+    // entry further into the zone (toward CE) via the pullback percentage.
+    private decimal? _zoneProximalEdge;
+    public override decimal? OverrideSignalPrice => _zoneProximalEdge;
+
     public override bool IsSignal()
     {
         ExtraText = "";
+        _zoneProximalEdge = null;
         bool result = false;
 
         var settings = GlobalData.Settings.Signal.ZonesSmc;
@@ -79,6 +88,7 @@ public class SignalOrderBlockRejectionShort : SignalCreateBase
                 {
                     result = true;
                     Interval = interval; // Report different interval back
+                    _zoneProximalEdge = zone.Bottom; // supply zone: proximal = Bottom
                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                     decimal dist = 100m * (zone.Bottom - CandleLast.Candle.Close) / CandleLast.Candle.Close;
                     ExtraText = $"{interval.Name} supply OB rejection {zone.Bottom} .. {zone.Top} (+{dist:N2}%) touches={zone.TouchCount}";
