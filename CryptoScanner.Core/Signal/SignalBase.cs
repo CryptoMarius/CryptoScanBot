@@ -87,7 +87,7 @@ public class SignalCreateBase
     /// </summary>
     public virtual bool GiveUp(CryptoSignal signal)
     {
-        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
+        if (CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration < CandleLast?.Candle.OpenTime.Minutes)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;

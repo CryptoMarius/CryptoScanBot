@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Signal.Sbm;
+﻿using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Sbm;
 
 namespace CryptoScanner.Core.Signal.Stobb;
 
@@ -19,4 +20,31 @@ public class SignalStobbBase : SignalSbmBase
         return true;
     }
 
+
+    public override bool GiveUp(CryptoSignal signal)
+    {
+        if (!base.GiveUp(signal))
+            return false;
+
+        switch (SignalSide)
+        {
+            case Enums.CryptoTradeSide.Long:
+                if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.Sma20)
+                {
+                    ExtraText = "Close above sma20";
+                    return true;
+                }
+                break;
+            case Enums.CryptoTradeSide.Short:
+                if (CandleLast!.Candle.Close < (decimal?)CandleLast!.CandleData?.Sma20)
+                {
+                    ExtraText = "Close below sma20";
+                    return true;
+                }
+                break;
+        }
+
+        ExtraText = "";
+        return false;
+    }
 }
