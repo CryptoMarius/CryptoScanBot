@@ -3,7 +3,6 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
-using K4os.Compression.LZ4;
 using K4os.Compression.LZ4.Streams;
 
 using System.Text;

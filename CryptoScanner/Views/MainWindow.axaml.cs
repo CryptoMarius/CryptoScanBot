@@ -333,7 +333,7 @@ public partial class MainWindow : Window
         MenuTools.Items.Add(new MenuItem { Header = "Calculate all liquidity zones (slow!)", Command = new CommandCalculateDlzForAll(), CommandParameter = this });
         MenuTools.Items.Add(new MenuItem { Header = "-" });
 
-       
+
 
         MenuTools.Items.Add(new MenuItem { Header = "Open data folder", Command = new CommandOpenDataFolder(), CommandParameter = this });
 

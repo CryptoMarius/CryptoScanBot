@@ -792,7 +792,7 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StobbDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsiDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
-        
+
         StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StobbFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsiFvg, (Settings.Signal.ZonesFvg, DateTime.Today));

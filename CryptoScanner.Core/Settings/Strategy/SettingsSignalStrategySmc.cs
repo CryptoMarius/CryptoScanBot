@@ -1,5 +1,3 @@
-using CryptoScanner.Core.Core;
-
 namespace CryptoScanner.Core.Settings.Strategy;
 
 /// <summary>

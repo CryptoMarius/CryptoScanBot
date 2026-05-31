@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
@@ -1054,7 +1053,7 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowStoch))
             Stoch.DrawLines(model, group);
 
-        
+
         // Draw RSI(14) line
         group = "rsi";
         if (Toggle(model, group, Session.ShowRsi))

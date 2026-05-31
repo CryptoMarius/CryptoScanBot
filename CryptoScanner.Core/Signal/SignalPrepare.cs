@@ -40,7 +40,7 @@ public class SignalPrepare
         foreach (AlgorithmDefinition strategyDef in RegisterAlgorithms.AlgorithmDefinitionList.Values)
         {
             // long or short does not matter for the prepare
-            if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) || 
+            if (GlobalData.Settings.Signal.Long.Strategy.Contains(strategyDef.Name) ||
                 GlobalData.Settings.Signal.Short.Strategy.Contains(strategyDef.Name))
             {
                 if (strategyDef.Strategy < CryptoSignalStrategy.DominantLevel)
@@ -90,7 +90,7 @@ public class SignalPrepare
                     //}
                     Add(SignalPrepareKind.Indicator, "1m");
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel 
+                else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel
                     || strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
                 {
                     // These are seperate intervals on which the DLZ is calculated
@@ -100,14 +100,14 @@ public class SignalPrepare
                     //}
                     Add(SignalPrepareKind.Indicator, "1m");
                 }
-                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock 
+                else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock
                     || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
                 {
                     // Separate intervals on which the SMC order blocks are calculated.
                     //foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
                     //{
                     //    Add(SignalPrepareKind.Smc, intervalName);
-                        Add(SignalPrepareKind.Indicator, "1m");
+                    Add(SignalPrepareKind.Indicator, "1m");
                     //}
                 }
             }

@@ -240,14 +240,14 @@ public class SignalCreate
         // Algorithms that detect events on an earlier candle (e.g. BOS/CHoCH swing break)
         // can report the actual event price here so SignalPrice reflects the break, not
         // the close of the candle on which the check happened to run.
-        //if (algorithm.OverrideSignalPrice is decimal overridePrice)
-        //    signal.SignalPrice = overridePrice;
+        if (algorithm.OverrideSignalPrice is decimal overridePrice)
+            signal.SignalPrice = overridePrice;
 
         // Strategies that anchor SL/TP on structural levels (swing high/low, BB band, RRR target)
         // report their proposed prices here. PositionTools.AddSignalProperties copies them onto
         // the resulting position, where PositionMonitor.CalculateTpPrices picks them up.
-        //signal.SlPrice = algorithm.OverrideSlPrice;
-        //signal.TpPrice = algorithm.OverrideTpPrice;
+        signal.SlPrice = algorithm.OverrideSlPrice;
+        signal.TpPrice = algorithm.OverrideTpPrice;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
