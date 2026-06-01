@@ -202,6 +202,10 @@ public class SignalBbmaShort : SignalBbmaBase
     /// </summary>
     public override bool AllowStepIn(CryptoSignal signal)
     {
+        // Run the shared trader gates first — see SignalBbMaLong for the rationale.
+        if (!base.AllowStepIn(signal))
+            return false;
+
         CryptoInterval interval5m = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
 
         // Ensure 5m indicator data is available in IndicatorDataList

@@ -45,6 +45,10 @@ public class SignalTrendShort : SignalCreateBase
     /// </summary>
     public override bool AllowStepIn(CryptoSignal signal)
     {
+        // Run the shared trader gates first — see SignalTrendLong for the rationale.
+        if (!base.AllowStepIn(signal))
+            return false;
+
         // Recalculate so LastPivot reflects the current bar
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 

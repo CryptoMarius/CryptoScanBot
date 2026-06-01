@@ -398,7 +398,7 @@ public class PositionMonitor //: IDisposable
                             {
                                 if (TradingConfig.Trading[signal.Side].TrendLog)
                                     GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                symbolInterval.SignalList.Remove(signal);
                                 continue;
                             }
 
@@ -406,7 +406,7 @@ public class PositionMonitor //: IDisposable
                             if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Primary, TradingConfig.Trading[signal.Side].MarketTrend, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                symbolInterval.SignalList.Remove(signal);
                                 continue;
                             }
 
@@ -416,7 +416,7 @@ public class PositionMonitor //: IDisposable
                             if (!PositionTools.ValidMarketTrendConditions(signal.Symbol, TrendType.Secondary, TradingConfig.Trading[signal.Side].MarketTrendSecondary, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                symbolInterval.SignalList.Remove(signal);
                                 continue;
                             }
 
@@ -1405,7 +1405,7 @@ public class PositionMonitor //: IDisposable
                         {
                             // Is de order ouder dan X minuten dan deze verwijderen
                             CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(part.Interval!.IntervalPeriod);
-                            if (step.CreateTime.AddMinutes(GlobalData.Settings.Trading.EntryRemoveTime * symbolInterval.Interval?.Duration ?? 0) < LastCandle1mCloseTimeDate)
+                            if (step.CreateTime.AddMinutes(GlobalData.Settings.Trading.EntryRemoveTime * symbolInterval.Interval.Duration) < LastCandle1mCloseTimeDate)
                             {
                                 // Trades worden niet altijd op het juiste tijdstip opgemerkt (de user ticker ligt er vaak uit)
                                 // Controleer daarom eerst of de order gevallen is, synchroniseer de trades en herberekenen het geheel..

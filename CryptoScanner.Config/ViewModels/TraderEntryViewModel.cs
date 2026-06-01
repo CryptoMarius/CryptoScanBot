@@ -17,7 +17,7 @@ public partial class TraderEntryViewModel : ObservableObject
     {
         //{ "Direct na het signaal", CryptoEntryOrDcaStrategy.Immediately },
         { "Na een signaal (sbm/stobb/enz)", CryptoEntryOrDcaStrategy.AfterNextSignal },
-        { "Trace via de Keltner Channel en PSAR", CryptoEntryOrDcaStrategy.TrailViaKcPsar }
+        //{ "Trace via de Keltner Channel en PSAR", CryptoEntryOrDcaStrategy.TrailViaKcPsar }
     };
 
     private readonly Dictionary<string, CryptoEntryOrDcaPricing> _pricingList = new()

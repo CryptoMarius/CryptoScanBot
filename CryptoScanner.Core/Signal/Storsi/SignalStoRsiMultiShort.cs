@@ -103,8 +103,8 @@ public class SignalStoRsiMultiShort : SignalStoRsiBase
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
-            addRsiAmount -= 3;
-            addStochAmount -= 3;
+            addRsiAmount -= 2;
+            addStochAmount -= 2;
         }
 
 

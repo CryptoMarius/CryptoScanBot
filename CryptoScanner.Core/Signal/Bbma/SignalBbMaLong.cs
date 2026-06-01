@@ -202,6 +202,13 @@ public class SignalBbmaLong : SignalBbmaBase
     /// </summary>
     public override bool AllowStepIn(CryptoSignal signal)
     {
+        // Run the shared trader gates first (WaitForRecovery, CheckFurtherPriceMove,
+        // CheckIncreasingRsi/Stoch/Macd, CheckTrendPrimary/Secondary, …). Without this call
+        // the BBMA-specific WMA crossover check would bypass every Settings.Trading.Check*
+        // flag the user enabled in the trader UI.
+        if (!base.AllowStepIn(signal))
+            return false;
+
         CryptoInterval interval5m = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
 
         // Ensure 5m indicator data is available in IndicatorDataList

@@ -45,6 +45,13 @@ public class SignalTrendLong : SignalCreateBase
     /// </summary>
     public override bool AllowStepIn(CryptoSignal signal)
     {
+        // Run the shared trader gates first (WaitForRecovery, CheckFurtherPriceMove,
+        // CheckIncreasingRsi/Stoch/Macd, CheckTrendPrimaryDirection, …). Without this call
+        // a Trend-strategy entry would silently bypass every Settings.Trading.Check* flag
+        // the user enabled in the trader UI.
+        if (!base.AllowStepIn(signal))
+            return false;
+
         // Recalculate so LastPivot reflects the current bar
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, GlobalData.Settings.Trend.Primary).Result;
 
