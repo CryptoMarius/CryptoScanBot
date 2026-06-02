@@ -28,12 +28,22 @@ public partial class ChartWindow : Window
 
         // After OxyPlot's first render ActualMinimum/ActualMaximum are set correctly.
         // Refresh the x-axis ticks at that point so the initial labels are correct.
+        // Also kick off the FIRST data refresh here, NOT in the ChartWindowViewModel
+        // constructor — running it in the ctor races with Window.Show()'s
+        // ExecuteInitialLayoutPass, mutating PlotModel.Series while OxyPlot's Render
+        // iterates it, and throws NRE in PlotElementUtilities.GetClippingRect.
+        // By the time Opened fires the initial layout pass is complete, so any Series
+        // mutations the refresh does are safe.
         Opened += (_, _) =>
         {
             if (DataContext is ChartWindowViewModel vm)
             {
                 Dispatcher.UIThread.Post(
                     () => vm.RefreshAxisTicks(),
+                    DispatcherPriority.Background);
+
+                Dispatcher.UIThread.Post(
+                    () => _ = vm.RefreshCommand.ExecuteAsync(null),
                     DispatcherPriority.Background);
             }
         };

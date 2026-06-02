@@ -17,6 +17,7 @@ public class PSar
             MarkerSize = 2,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Square,
+            YAxisKey = "price",
             Tag = tag
         };
 

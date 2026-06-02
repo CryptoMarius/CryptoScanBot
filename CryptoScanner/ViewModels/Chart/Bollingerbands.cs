@@ -12,12 +12,17 @@ public class Bollingerbands
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
     {
+        // YAxisKey = "price" pins these series to the price axis so OxyPlot can resolve
+        // the axis via key lookup during the very first render pass — before PlotModel.Update
+        // populates the Series.XAxis/YAxis properties. Without this, GetClippingRect throws NRE.
+        // Same fix idiom as the zone annotations (SmcZones/DlzZones/FvgZones).
         var seriesHigh = new LineSeries
         {
             Title = "bb.upper",
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
             Color = OxyColors.DarkBlue,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesMiddle = new LineSeries
@@ -26,6 +31,7 @@ public class Bollingerbands
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
             Color = OxyColors.DarkBlue,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesLow = new LineSeries
@@ -34,6 +40,7 @@ public class Bollingerbands
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkBlue,
             Color = OxyColors.DarkBlue,
+            YAxisKey = "price",
             Tag = group,
         };
 

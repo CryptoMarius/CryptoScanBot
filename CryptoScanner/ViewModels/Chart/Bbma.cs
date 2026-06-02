@@ -24,6 +24,7 @@ public class Bbma
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkRed,
             Color = OxyColors.DarkRed,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesWma10High = new LineSeries
@@ -32,6 +33,7 @@ public class Bbma
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkRed,
             Color = OxyColors.DarkRed,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -41,6 +43,7 @@ public class Bbma
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGreen,
             Color = OxyColors.DarkGreen,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesWma10Low = new LineSeries
@@ -49,6 +52,7 @@ public class Bbma
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGreen,
             Color = OxyColors.DarkGreen,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -74,6 +78,7 @@ public class Bbma
             Fill = OxyColor.FromArgb(120, 139, 0, 0),   // semi-transparent dark red
             Color = OxyColors.Transparent,
             StrokeThickness = 0,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesBandLow = new AreaSeries
@@ -82,6 +87,7 @@ public class Bbma
             Fill = OxyColor.FromArgb(120, 0, 100, 0),   // semi-transparent dark green
             Color = OxyColors.Transparent,
             StrokeThickness = 0,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -93,6 +99,7 @@ public class Bbma
             MarkerSize = 4,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesMagicExtremeHigh = new ScatterSeries
@@ -101,6 +108,7 @@ public class Bbma
             MarkerSize = 4,
             MarkerFill = OxyColors.OrangeRed,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesExtremeALow = new ScatterSeries
@@ -109,6 +117,7 @@ public class Bbma
             MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesMagicExtremeLow = new ScatterSeries
@@ -117,6 +126,7 @@ public class Bbma
             MarkerSize = 4,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -146,6 +156,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesOmniExtremeSell = new ScatterSeries
@@ -154,6 +165,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -163,6 +175,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Circle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesOmniTpwSell = new ScatterSeries
@@ -171,6 +184,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Circle,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -180,6 +194,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesOmniMhvSell = new ScatterSeries
@@ -188,6 +203,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -197,6 +213,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.LimeGreen,
             MarkerType = MarkerType.Square,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesOmniReentrySell = new ScatterSeries
@@ -205,6 +222,7 @@ public class Bbma
             MarkerSize = 5,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Square,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -215,6 +233,7 @@ public class Bbma
             MarkerSize = 2,
             MarkerFill = OxyColor.FromArgb(200, 160, 160, 160),  // semi-transparent gray
             MarkerType = MarkerType.Circle,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesOmniIntermediateSell = new ScatterSeries
@@ -223,6 +242,7 @@ public class Bbma
             MarkerSize = 2,
             MarkerFill = OxyColor.FromArgb(200, 160, 160, 160),  // semi-transparent gray
             MarkerType = MarkerType.Circle,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -481,6 +501,7 @@ public class Bbma
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkOrange,
             Color = OxyColors.DarkOrange,
+            YAxisKey = "price",
             Tag = group,
         };
 

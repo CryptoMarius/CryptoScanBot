@@ -16,6 +16,7 @@ public class Points
             MarkerSize = 2,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Square,
+            YAxisKey = "price",
             Tag = group
         };
         var seriesLow = new ScatterSeries
@@ -24,6 +25,7 @@ public class Points
             MarkerSize = 2,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Square,
+            YAxisKey = "price",
             Tag = group
         };
 

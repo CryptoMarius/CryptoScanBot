@@ -113,7 +113,13 @@ public partial class ChartWindowViewModel : ObservableObject
         FibSettings.PropertyChanged += FibSettingsChanged;
         DisplayOptions.PropertyChanged += DisplayOptionsChanged;
 
-        RefreshCommand.ExecuteAsync(null);
+        // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
+        // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
+        // PlotView.Model.Series while OxyPlot's Render is iterating it, throwing NRE in
+        // PlotElementUtilities.GetClippingRect because Series.XAxis/YAxis are populated
+        // only by PlotModel.Update which runs after Render finished its first pass.
+        // The Window's Opened event triggers the first refresh; by that point the initial
+        // layout pass is done and mutating Series is safe.
         System.Diagnostics.Debug.WriteLine($"VisualisationViewModel default constructor called");
     }
 

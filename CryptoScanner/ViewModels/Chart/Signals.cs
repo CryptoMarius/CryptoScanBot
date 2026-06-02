@@ -16,6 +16,7 @@ public class Signals
             MarkerSize = 2,
             MarkerFill = OxyColors.Red,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group
         };
 
@@ -25,6 +26,7 @@ public class Signals
             MarkerSize = 2,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group
         };
 

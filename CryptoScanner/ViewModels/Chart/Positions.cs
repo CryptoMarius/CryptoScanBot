@@ -26,6 +26,7 @@ public class Positions
             LineStyle = LineStyle.Dot,
             StrokeThickness = 0.8,
             Font = Const.OxyFontName,
+            YAxisKey = "price",
             Tag = group
         };
         double x = CandleTime.FromDateTime(time).Minutes;
@@ -45,6 +46,7 @@ public class Positions
             LineStyle = LineStyle.DashDashDot,
             StrokeThickness = 0.8,
             Font = Const.OxyFontName,
+            YAxisKey = "price",
             Tag = group
         };
         series.Points.Add(new DataPoint(xStart, (double)atPrice));
@@ -79,6 +81,7 @@ public class Positions
             MarkerSize = 4,
             MarkerFill = OxyColors.Yellow,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesSell = new ScatterSeries
@@ -87,6 +90,7 @@ public class Positions
             MarkerSize = 4,
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group
         };
 

@@ -11,11 +11,11 @@ public class ZigZag
     internal static void Draw(PlotModel chart, List<ZigZagResult> zigZagList, string caption,
         OxyColor color, CandleTime minDate, CandleTime maxDate, string tag)
     {
-        var seriesZigZag = new LineSeries { Title = tag + caption, Color = color, Tag = tag };
-        var seriesHigh = new ScatterSeries { Title = tag + "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, Tag = tag };
-        var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, Tag = tag };
-        var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, Tag = tag };
-        var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, Tag = tag };
+        var seriesZigZag = new LineSeries { Title = tag + caption, Color = color, YAxisKey = "price", Tag = tag };
+        var seriesHigh = new ScatterSeries { Title = tag + "Markers high", MarkerSize = 3, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
+        var seriesLow = new ScatterSeries { Title = tag + "Markers low", MarkerSize = 3, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Circle, YAxisKey = "price", Tag = tag };
+        var seriesDummyHigh = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Red, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
+        var seriesDummyLow = new ScatterSeries { Title = tag + "Markers dummy", MarkerSize = 4, MarkerFill = OxyColors.Yellow, MarkerType = MarkerType.Square, YAxisKey = "price", Tag = tag };
         foreach (var zigzag in zigZagList)
         {
             if (zigzag.Candle!.OpenTime >= minDate && zigzag.Candle!.OpenTime <= maxDate)

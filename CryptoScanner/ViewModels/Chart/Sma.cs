@@ -18,6 +18,7 @@ public class Sma
             MarkerSize = 1,
             MarkerFill = color,
             Color = color,
+            YAxisKey = "price",
             Tag = group,
         };
 

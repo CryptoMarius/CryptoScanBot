@@ -20,6 +20,7 @@ public class Nwe
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGray,
             Color = OxyColors.DarkGray,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -29,6 +30,7 @@ public class Nwe
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
             Color = OxyColors.Gray,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesLow = new LineSeries
@@ -37,6 +39,7 @@ public class Nwe
             MarkerSize = 1,
             MarkerFill = OxyColors.DarkGray,
             Color = OxyColors.DarkGray,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -47,6 +50,7 @@ public class Nwe
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Square,
             MarkerStrokeThickness = 1.5,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -57,6 +61,7 @@ public class Nwe
             MarkerFill = OxyColors.White,
             MarkerType = MarkerType.Square,
             MarkerStrokeThickness = 1.5,
+            YAxisKey = "price",
             Tag = group,
         };
 

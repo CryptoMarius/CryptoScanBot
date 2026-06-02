@@ -77,6 +77,7 @@ public class FibRetracement
                     Color = color,
                     LineStyle = LineStyle.Dot,
                     Font = Const.OxyFontName,
+                    YAxisKey = "price",
                     Tag = group,
                 };
                 fibLevel.Points.Add(new DataPoint(start.Minutes, (double)value));

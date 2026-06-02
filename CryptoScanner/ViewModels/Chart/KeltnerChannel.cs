@@ -17,6 +17,7 @@ public class KeltnerChannel
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
             Color = OxyColors.Gray,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesMiddle = new LineSeries
@@ -25,6 +26,7 @@ public class KeltnerChannel
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
             Color = OxyColors.Gray,
+            YAxisKey = "price",
             Tag = group,
         };
         var seriesLow = new LineSeries
@@ -33,6 +35,7 @@ public class KeltnerChannel
             MarkerSize = 1,
             MarkerFill = OxyColors.Gray,
             Color = OxyColors.Gray,
+            YAxisKey = "price",
             Tag = group,
         };
 

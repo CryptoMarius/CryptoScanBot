@@ -29,6 +29,7 @@ public class Candles
             //TrackerFormatString = "{0}\n {1}\n {2}\nOpen: {5:0.###}\nHigh: {3:0.###}\nLow: {4:0.###}\nClose: {6:0.###} {DateX}"
             //TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}\n{Description}"
             TrackerFormatString = "Open: {5}\nHigh: {3}\nLow: {4}\nClose: {6}",
+            YAxisKey = "price",
             Tag = group,
         };
 

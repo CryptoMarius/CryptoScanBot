@@ -47,6 +47,7 @@ public class NweBb
             MarkerSize = 7,
             MarkerFill = OxyColor.FromArgb(220, 0, 210, 100),
             MarkerType = MarkerType.Triangle,
+            YAxisKey = "price",
             Tag = group,
         };
 
@@ -56,6 +57,7 @@ public class NweBb
             MarkerSize = 7,
             MarkerFill = OxyColor.FromArgb(220, 220, 60, 60),
             MarkerType = MarkerType.Diamond,
+            YAxisKey = "price",
             Tag = group,
         };
 
