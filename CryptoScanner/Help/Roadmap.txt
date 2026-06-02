@@ -8,7 +8,10 @@ Bug Bitvavo, haalt iedere keer alle candles op? (weet niet wat Claude aan het kn
 Bug Als je nieuwe exchanges toevoeg wordt het url-bestand niet opnieuw aangemaakt (zou eigenlijk default de geregistreerde dan moeten pakken?), 
     en er is ook nog een onhandige InitializeUrls()! Onhandig zoals ik het aangepakt heb
 
-De afstand tot de eerste de beste zone wordt niet altijd correct getoond, na het opstarten staat overal 200% en even later is het wel weer correct
+BUG: De Management van de position-parts is niet goed genoeg, als je een part annuleert (cancel open dca) dan blijft nummer en SL staan. Best verwarrend, weggooien ipv bewaren lijkt me
+  Tsja, das min of meer een rommel van de afgelopen x jaren: 
+
+De afstand tot de eerste de beste zone wordt niet altijd correct getoond, na het opstarten staat overal 100% en even later is het wel weer correct (interne reset, is prima)
 Na de configuratie aanpassing (of candlee) schiet alles ook naar 100% en dan weer terug, lijkt een wat raar probleem?
 En dan is deze niet goed gesorteerd zo te zien...
 

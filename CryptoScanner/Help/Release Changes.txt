@@ -1,16 +1,19 @@
 CryptoScanBot release historie:
 
-31-05-2025 2.5.2
+02-06-2025 2.5.2
+- In de configuratie worden de strategieën nu gesorteerd (het worden er wat veel)
+- Copy data cells gerepareerd, de tekst van het clipboard kan nu zo in Excel geplakt worden
 - Meldingen van de fvg, dlz en smc melden nu het interval waarop de melding gedetecteerd is (was altijd 1m)
-- Nieuwe combinatie strategie voor de storsi, stobb icm met de fvg, dlz en smc zones (even zien of dit relevant is)
+- Nieuwe combinatie strategie voor de storsi, stobb icm met de fvg, dlz en smc zones (experimenteel)
 - Configuratie van de intervallen veranderd voor de dlz, fvg en smc
-- Nieuwe strategie voor de smc methodien (expansie/bounce vanaf een base), 1e poging dus wellicht wat ruw?
-- Nieuwe strategien voor de stobb en storsi icm de fvg/dlz (die laatste moet dan wel aan staan)
+- Nieuwe strategie voor het rapporteren van de ChoCh en pullback's (experimenteel)
+- Nieuwe strategie voor de smc methodiek (expansie/bounce vanaf een base), 1e poging dus wellicht wat ruw?
+- Nieuwe strategieën voor de stobb en storsi icm de fvg/dlz (die laatste moet dan wel aan staan)
   De instap hiervan is tamelijk wisselend, ik ben niet tevreden over de trader en de condities.
 - De tekst van het signaal wordt nu overgenomen in de positie ter tracering
 - Opruimen van candles van zones die niet langer actief zijn of verwijderd zijn
 - Opruimen van bestanden van symbols die niet actief zijn of onder het minimum volume zijn gezakt
-- Candle opslag van de zone calculatie en de scanner zijn nu gecombineeerd in een [exchangename].db database (exchange folder)
+- Candle opslag van de zone calculatie en de scanner zijn nu gecombineerd in een [exchangename].db database (exchange folder)
 - Rsi, Stochastic, Macd en Volume aan het chart window toegevoegd + de lijnen voor oversold/overbought
 - Extra instelling voor de stobb en storsi om de melding pas te geven op het moment dat het niet meer os/ob is en de rsi in het middengebied zit
 - De Altrady SL wordt onder de laatste dca gezet (geen absoluut percentage zoals voorheen)
@@ -29,12 +32,12 @@ CryptoScanBot release historie:
 - De instellingen voor de primary en secondary trend + high/low vinkjes zijn overbodig (ook verwarrend)
 - De NWE en NWE.NP strategie aangepast (het is niet een winstgevende strategie en zal het ook niet worden denk ik)
 - Het chart formulier wil niet altijd naar voren komen vanuit de symbols. Met name de 1e keer vanuit de symbol lijst
-- De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardooor er meer meldingen ontstaan
+- De controles in de hogere intervallen van de storsi.multi strategie lichter gemaakt waardoor er meer meldingen ontstaan
 - Hyperliquid Futures - Foutmelding "System.InvalidOperationException: Cannot store 'NaN' values" opgelost
 - Binance futures - Uitsluiten van de munten met een Chinese naam (Altrady ondersteund deze niet)
-- Commando voor het clearen van de positions (na een bevestiging dialoog)
-- Commando voor het clearen van de signals (na een bevestiging dialoog)
-- Roadmap.txt verwijderd, waren toch allemaal gedateerde opmerkingen
+- Menu commando voor het clearen van de positions (na een bevestiging dialoog)
+- Menu commando voor het clearen van de signals (na een bevestiging dialoog)
+- Roadmap.txt verwijderd, het waren toch allemaal nogal gedateerde opmerkingen
 - Bitvavo toegevoegd, deze is experimenteel en de vraag is of de candle stream 
 - Configuratie van de primary en secondary trend verwijderd, deze moeten fixed zijn en mogen niet aangepast worden
 
