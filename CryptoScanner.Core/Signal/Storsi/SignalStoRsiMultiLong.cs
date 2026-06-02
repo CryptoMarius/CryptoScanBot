@@ -103,8 +103,12 @@ public class SignalStoRsiMultiLong : SignalStoRsiBase
             if (intervalPeriod == CryptoIntervalPeriod.interval1w)
                 return false;
             intervalPeriod++;
-            addRsiAmount += 2;
-            addStochAmount += 2;
+            // Make higher timeframes slightly LIGHTER on oversold (raises the threshold).
+            // RsiOversold(corr) compares against (Oversold - corr); a negative correction
+            // therefore relaxes the bar. Mirrors SignalStoRsiMultiShort which already runs
+            // negative for the same "lighter on higher TFs" intent.
+            addRsiAmount -= 2;
+            addStochAmount -= 2;
         }
 
 
