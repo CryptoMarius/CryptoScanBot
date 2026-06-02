@@ -18,9 +18,9 @@
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		
 		<!-- Assembly Version Info -->
-		<AssemblyVersion>2.5.2.0</AssemblyVersion>
-		<FileVersion>2.5.2.0</FileVersion>
-		<Version>2.5.2</Version>
+		<AssemblyVersion>2.5.3.0</AssemblyVersion>
+		<FileVersion>2.5.3.0</FileVersion>
+		<Version>2.5.3</Version>
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
@@ -55,16 +55,17 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.3.13" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.3.13" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+		<PackageReference Include="Avalonia" Version="11.3.17" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
 		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
-		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.725402" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.726401" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
 		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-avalonia11" />
-		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.7" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.8" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>
