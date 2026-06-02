@@ -38,6 +38,10 @@ public class CryptoSymbolInterval
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
 
-    // BOS/CHoCH trend data (Break of Structure / Change of Character)
-    //public CryptoTrendData TrendBos = new();
+    // BOS/CHoCH trend data (Break of Structure / Change of Character).
+    // Kept separate from TrendPrimary/Secondary because TrendIntervalBos and TrendInterval (Dow)
+    // both write to the same fields (Trend, PrevTrend, LastPivot, …) and would overwrite each other.
+    // Same ZigZag source data, different interpretation rules.
+    public CryptoTrendData TrendBosPrimary = new();
+    public CryptoTrendData TrendBosSecondary = new();
 }

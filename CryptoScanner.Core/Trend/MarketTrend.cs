@@ -43,14 +43,19 @@ public class MarketTrend
                         if (symbolInterval.LastCandle.OpenTime == 0)
                             return symbolTrend; // should never happen
                         CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
+                        CryptoTrendData intervalTrendBos = trend.TrendType == TrendType.Primary ? symbolInterval.TrendBosPrimary : symbolInterval.TrendBosSecondary;
                         candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
                         if (intervalTrend.Time == null || candleIntervalEnd > intervalTrend.Time || log != null)
                         {
-                            // Do NOT pre-set intervalTrend.Time here. TrendInterval.CalculateAsync saves
-                            // intervalTrend.Time into PrevTime before overwriting it with maxDate.
-                            // Pre-setting it here would cause PrevTime == Time, making the consecutive-candle
-                            // check in SignalTrendShort/Long (PrevTime + Interval.Duration == Time) always fail.
-                            await TrendInterval.CalculateAsync(symbol, interval, symbolInterval.CandleList, intervalTrend, trend, log);
+                            // Do NOT pre-set intervalTrend.Time here. TrendCalculator saves intervalTrend.Time
+                            // into PrevTime before overwriting it with maxDate. Pre-setting it here would cause
+                            // PrevTime == Time, making the consecutive-candle check in SignalTrendShort/Long
+                            // (PrevTime + Interval.Duration == Time) always fail.
+                            //
+                            // CalculateBothAsync builds the ZigZag once and feeds it to both the Dow and the
+                            // BOS interpretation, writing each to its own trend-data slot.
+                            await TrendCalculator.CalculateBothAsync(symbol, interval, symbolInterval.CandleList,
+                                intervalTrend, intervalTrendBos, trend, log);
                         }
                         else isCached = true;
 

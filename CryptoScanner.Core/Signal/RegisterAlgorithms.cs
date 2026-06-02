@@ -3,6 +3,7 @@
 using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.WaveTrend;
 #endif
+using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
 using CryptoScanner.Core.Signal.Jump;
@@ -395,6 +396,43 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalTrendShort),
         });
 #endif
+
+        //***************************************************
+        // CHoCH — fires on a Change of Character of the ZigZag-derived structure.
+        // Primary / Secondary chooses which trend slot is read. The .pullback variants
+        // additionally require an opposite zigzag pivot + breakthrough before stepping in.
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "choch.primary",
+            Strategy = CryptoSignalStrategy.ChochPrimary,
+            AnalyzeLongType = typeof(SignalChochPrimaryLong),
+            AnalyzeShortType = typeof(SignalChochPrimaryShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "choch.primary.pullback",
+            Strategy = CryptoSignalStrategy.ChochPrimaryPullback,
+            AnalyzeLongType = typeof(SignalChochPrimaryPullbackLong),
+            AnalyzeShortType = typeof(SignalChochPrimaryPullbackShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "choch.secondary",
+            Strategy = CryptoSignalStrategy.ChochSecondary,
+            AnalyzeLongType = typeof(SignalChochSecondaryLong),
+            AnalyzeShortType = typeof(SignalChochSecondaryShort),
+        });
+
+        Register(new AlgorithmDefinition()
+        {
+            Name = "choch.secondary.pullback",
+            Strategy = CryptoSignalStrategy.ChochSecondaryPullback,
+            AnalyzeLongType = typeof(SignalChochSecondaryPullbackLong),
+            AnalyzeShortType = typeof(SignalChochSecondaryPullbackShort),
+        });
 
     }
 

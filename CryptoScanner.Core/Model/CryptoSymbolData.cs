@@ -15,8 +15,10 @@ public class CryptoSymbolData
     // Primary and Secondary trend data (Dow Theory interpretation)
     public CryptoTrendData TrendPrimary = new();
     public CryptoTrendData TrendSecondary = new();
-    // BOS/CHoCH trend data (Break of Structure / Change of Character)
-    //public CryptoTrendData TrendBos = new();
+    // BOS/CHoCH trend data (Break of Structure / Change of Character) — separate slot,
+    // see CryptoSymbolInterval for the rationale.
+    public CryptoTrendData TrendBosPrimary = new();
+    public CryptoTrendData TrendBosSecondary = new();
 
 
     /// <summary>
@@ -96,7 +98,8 @@ public class CryptoSymbolData
     {
         TrendPrimary.Reset();
         TrendSecondary.Reset();
-        //TrendBos.Reset();
+        TrendBosPrimary.Reset();
+        TrendBosSecondary.Reset();
     }
 
 }

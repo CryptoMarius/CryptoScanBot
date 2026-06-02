@@ -1,70 +1,20 @@
-﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Settings;
 
 using System.Text;
 
 namespace CryptoScanner.Core.Trend;
 
 
+/// <summary>
+/// Dow theory interpretation of a ZigZag pivot list.
+/// A trend only flips after TWO consecutive contra-trend pivots (count > 1),
+/// which naturally dampens single-pivot noise (including dummy pivots).
+///
+/// The window/indicator setup used to live here in CalculateAsync; that orchestration
+/// is now shared with the BOS interpretation through <see cref="TrendCalculator.CalculateBothAsync"/>.
+/// </summary>
 public class TrendInterval
 {
-    private static bool ResolveStartAndEndDate(CryptoInterval interval,
-        CryptoCandleList candleList, ref CandleTime minDate, ref CandleTime maxDate)
-    {
-        // We cache the Primary indicator, this way we do not have to add all the candles again and again.
-        // (We hope this makes the scanner a more less cpu hungry)
-        // Question however: when is it save to clear the zigzag? to avoid memory overflow in the long run?
-        // Anwer: We save and load the candles every 24 hours, perhaps there (TODO)
-        //intervalTrend.ZigZagIndicator ??= new(candleList, false);
-
-        // start time
-        if (minDate == 0)
-        {
-            // Use the thread-safe helper — candleList.Values.First() enumerates without the read lock
-            // and throws InvalidOperationException when another thread calls Add() concurrently.
-            if (!candleList.TryGetFirstCandle(out var candle))
-                return false;
-            if (maxDate > 0)
-            {
-                // Need to set some limit or it will add 100.000 of candles (takes forever to initialize)
-                minDate = maxDate - 5000 * interval.Duration;
-                if (minDate < candle.OpenTime)
-                    minDate = candle.OpenTime;
-            }
-            else
-            {
-                minDate = candle.OpenTime; // in the right interval
-            }
-        }
-        else
-            minDate = IntervalTools.StartOfIntervalCandle(minDate, interval.Duration);
-        // correct the start with what we previously added
-        //if (intervalTrend.ZigZagLastCandleAdded.HasValue && intervalTrend.ZigZagLastCandleAdded.Value >= minDate)
-        //    minDate = (long)intervalTrend.ZigZagLastCandleAdded;
-
-
-
-        // end time
-        if (maxDate == 0)
-        {
-            if (!candleList.TryGetLastCandle(out var candle))
-                return false;
-            maxDate = candle.OpenTime; // in the right interval
-        }
-        else
-            maxDate = IntervalTools.StartOfIntervalCandle(maxDate, interval.Duration);
-        // go 1 candle back (date parameter was a low interval candle and higher interval not yet closed)
-        if (!candleList.ContainsKey(maxDate))
-            maxDate -= interval.Duration;
-
-
-        return true;
-    }
-
-
-
     /// <summary>
     /// Interpret the zigzag values en try to identify a trend
     /// </summary>
@@ -165,103 +115,4 @@ public class TrendInterval
         log?.AppendLine("");
         return trend;
     }
-
-
-
-    public static async Task CalculateAsync(CryptoSymbol symbol, CryptoInterval interval, CryptoCandleList candleList,
-        CryptoTrendData intervalTrend, SettingsZigZag trend, StringBuilder? log = null)
-    {
-        log?.AppendLine("");
-        log?.AppendLine("----");
-        log?.AppendLine($"{symbol.Name} Interval {interval.Name}");
-        log?.AppendLine("");
-
-        // Unable to calculate - Note: in fact we need at least ~24 candles because of the zigzag parameters to identify H/L
-        if (candleList.Count == 0)
-        {
-            // Lots of discussion, but if we dont have candles it really cannot be up or down so we choose sideway's
-            intervalTrend.Reset();
-#if DEBUG
-            if (intervalTrend.Time != null)
-            {
-                log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
-                //ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (no candles)");
-            }
-#endif
-            return;
-        }
-
-
-        // Determine the period (but limited <not 10000+ candles back>)
-        CandleTime minDate = CandleTime.MinValue;
-        CandleTime maxDate = CandleTime.MinValue;
-        if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
-        {
-            log?.AppendLine($"{symbol.Name} {interval.Name} calculated at {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
-            //ScannerLog.Logger.Debug($"MarketTrend.Calculate {symbol.Name} {interval.Name} {intervalTrend.Time?.ToDateTime()} {intervalTrend.Trend} (date period problem)");
-            return;
-        }
-        //#if DEBUG
-        //        DateTime candleIntervalStartDebug = CandleTools.GetUnixDate(minDate);
-        //        DateTime candleIntervalEndDebug = CandleTools.GetUnixDate(maxDate);
-        //#endif
-
-        // Add candles to the indicator
-        ZigZagIndicator indicator = new(trend.TrendType, trend.UseHighLow, 1.0m);
-        await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
-
-        // Interpret the pivot points and put Charles Dow theory at work
-        var bestIndicator = indicator;
-        CryptoTrendIndicator trendIndicator = InterpretZigZagPoints(bestIndicator, log);
-
-        intervalTrend.PrevTrend = intervalTrend.Trend;
-        intervalTrend.PrevTime = intervalTrend.Time;
-        intervalTrend.Trend = trendIndicator;
-        intervalTrend.Time = maxDate;
-
-        // Store the last confirmed ZigZag pivot so AllowStepIn can detect pullbacks after a signal.
-        // The last entry in ZigZagList is the most recent confirmed swing point.
-        // Also store the pivot before it (opposite type) so callers can reach BOTH last low and
-        // last high in one shot.
-        if (bestIndicator.ZigZagList.Count > 0)
-        {
-            var lastPivot = bestIndicator.ZigZagList[^1];
-            intervalTrend.LastPivotType = lastPivot.PointType;
-            intervalTrend.LastPivotValue = lastPivot.Value;
-            intervalTrend.LastPivotTime = lastPivot.Candle.OpenTime;
-
-            if (bestIndicator.ZigZagList.Count > 1)
-            {
-                var prevPivot = bestIndicator.ZigZagList[^2];
-                intervalTrend.PrevPivotType = prevPivot.PointType;
-                intervalTrend.PrevPivotValue = prevPivot.Value;
-                intervalTrend.PrevPivotTime = prevPivot.Candle.OpenTime;
-            }
-            else
-            {
-                intervalTrend.PrevPivotType = null;
-                intervalTrend.PrevPivotValue = null;
-                intervalTrend.PrevPivotTime = null;
-            }
-        }
-
-        // Note: We could also do something like take the average trend over the last x zigzag indicators??
-        // We still need to choose a proper indicator to do our analysis though on s/r & s/d and liquidity zones
-
-        if (GlobalData.Settings.General.DebugTrendCalculation)
-        {
-            //string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {intervalTrend.TrendInfoDate} " +
-            //$"avg={avg} best={bestIndicator.Deviation}% zigzagcount={bestIndicator.ZigZagList.Count} {intervalTrend.TrendInterval} "
-            string text = $"{symbol.Name} {interval.Name} candles={candleList.Count} calculated at {intervalTrend.Time?.ToDateTime()} " +
-            $"zigzagcount={bestIndicator.ZigZagList.Count} {intervalTrend.Trend} "
-            //#if DEBUG
-            //             + $"{candleIntervalStartDebug}..{candleIntervalEndDebug}"
-            //#endif
-            ;
-            log?.AppendLine(text);
-            //ScannerLog.Logger.Debug("MarketTrend.Calculate " + text);
-        }
-        return;
-    }
-
 }

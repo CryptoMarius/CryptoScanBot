@@ -59,10 +59,7 @@ public class TrendTools
                 }
                 loop += interval.Duration;
             }
-            //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
-            {
-                indicator.FinishBatch();
-            }
+            indicator.FinishBatch();
         }
         finally
         {

@@ -491,12 +491,8 @@ public class ZoneDlz
             if (indicator.LastSwingHigh != null)
                 symbolIntervalData.DlzAdmin.LastSwingHigh = indicator.LastSwingHigh.Value;
 
-            //if (true) //session.UseBatchProcess
-            //{
             foreach (var indicatorX in trendZigZagIndicatorList.Values)
                 indicatorX.FinishBatch();
-            //data.Indicator.FinishBatch();
-            //}
         }
         finally
         {

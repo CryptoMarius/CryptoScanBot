@@ -57,6 +57,14 @@ public enum CryptoSignalStrategy
     WaveTrend = 50,
 #endif
 
+    // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
+    // of Character on the primary or secondary trend. The .pullback variants additionally
+    // wait for an opposite zigzag pivot + breakthrough before allowing the trader to step in.
+    ChochPrimary = 60,
+    ChochPrimaryPullback = 61,
+    ChochSecondary = 62,
+    ChochSecondaryPullback = 63,
+
     DominantLevel = 1000,
     DominantLevelNear = 1001,
     FairValueGap = 1003,

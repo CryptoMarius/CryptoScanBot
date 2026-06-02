@@ -22,8 +22,11 @@ public class CryptoTrendData
     public CryptoStructureEvent LastStructureEvent { get; set; }
     public CandleTime? LastStructureEventTime { get; set; }
     public decimal? LastStructureEventPrice { get; set; }
-    // Tracks the event time of the last fired signal — prevents re-firing on the same event
-    public CandleTime? LastFiredStructureEventTime { get; set; }
+    // Tracks the event time of the last fired signal PER STRATEGY — prevents re-firing on the
+    // same event. Indexed per strategy because multiple strategies share this trend-data slot
+    // (e.g. choch.primary and choch.primary.pullback both read TrendBosPrimary); if they
+    // shared a single field the first one to fire would block the others on the same event.
+    public Dictionary<CryptoSignalStrategy, CandleTime> LastFiredStructureEventTimes { get; } = [];
 
     // Last confirmed ZigZag pivot — used by AllowStepIn to detect pullbacks after a signal.
     // 'H' = swing high, 'L' = swing low.
@@ -54,7 +57,7 @@ public class CryptoTrendData
         LastStructureEvent = CryptoStructureEvent.None;
         LastStructureEventTime = null;
         LastStructureEventPrice = null;
-        LastFiredStructureEventTime = null;
+        LastFiredStructureEventTimes.Clear();
 
         LastPivotType = null;
         LastPivotValue = null;
