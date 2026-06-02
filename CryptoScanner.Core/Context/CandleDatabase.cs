@@ -910,22 +910,44 @@ public class CandleDatabase : IDisposable
             }
             else
             {
-                // Build:  DELETE ... WHERE NOT ( (OpenTime BETWEEN @s0 AND @e0) OR (... @s1 ...) ... )
-                System.Text.StringBuilder sql = new(
-                    "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId AND NOT (");
-                var p = new DynamicParameters();
-                p.Add("@SymbolId", symbol.Id);
-                p.Add("@IntervalId", intervalId);
-                for (int i = 0; i < ranges.Count; i++)
-                {
-                    if (i > 0) sql.Append(" OR ");
-                    sql.Append($"(OpenTime BETWEEN @s{i} AND @e{i})");
-                    p.Add($"@s{i}", (long)ranges[i].start.Minutes);
-                    p.Add($"@e{i}", (long)ranges[i].end.Minutes);
-                }
-                sql.Append(')');
+                // For symbols with many keep-ranges (seen in production for ARKMUSDT, PUNDIXUSDT
+                // and others with hundreds of pivot zones across intervals), inlining the ranges
+                // as a single 'WHERE NOT (... OR ... OR ...)' blew past SQLite's expression-tree
+                // depth limit (default SQLITE_MAX_EXPR_DEPTH = 1000) and threw
+                //   "Expression tree is too large (maximum depth 1000)".
+                //
+                // Push the ranges into a TEMP table and use a NOT EXISTS join. Expression depth
+                // stays constant regardless of how many ranges there are. The temp table is
+                // recreated empty per symbol-interval pass; it's automatically dropped when the
+                // connection closes, but we reset it explicitly so consecutive intervals on the
+                // same connection cannot see each other's data.
+                connection.Execute(
+                    "CREATE TEMP TABLE IF NOT EXISTS keep_ranges (s INTEGER NOT NULL, e INTEGER NOT NULL)",
+                    transaction: tx);
+                connection.Execute("DELETE FROM keep_ranges", transaction: tx);
 
-                deleted = connection.Execute(sql.ToString(), p, transaction: tx);
+                // SQLite limits parameters to 999 per statement, so cap the batch at 400 ranges
+                // (= 800 parameters) per multi-VALUES insert.
+                const int batchSize = 400;
+                for (int offset = 0; offset < ranges.Count; offset += batchSize)
+                {
+                    int count = Math.Min(batchSize, ranges.Count - offset);
+                    var sb = new System.Text.StringBuilder("INSERT INTO keep_ranges (s, e) VALUES ");
+                    var batchParams = new DynamicParameters();
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append($"(@s{i}, @e{i})");
+                        batchParams.Add($"@s{i}", (long)ranges[offset + i].start.Minutes);
+                        batchParams.Add($"@e{i}", (long)ranges[offset + i].end.Minutes);
+                    }
+                    connection.Execute(sb.ToString(), batchParams, transaction: tx);
+                }
+
+                deleted = connection.Execute(
+                    "DELETE FROM Candle WHERE SymbolId = @SymbolId AND IntervalId = @IntervalId " +
+                    "AND NOT EXISTS (SELECT 1 FROM keep_ranges WHERE Candle.OpenTime BETWEEN s AND e)",
+                    new { SymbolId = symbol.Id, IntervalId = intervalId }, transaction: tx);
             }
 
             if (deleted > 0)
