@@ -501,7 +501,15 @@ public partial class ChartWindowViewModel : ObservableObject
                 _pendingRefresh = true;
                 return;
             }
-            RefreshCommand.ExecuteAsync(null);
+            // Defer to the next dispatcher cycle. Otherwise, when CommandShowChart sets
+            // SelectedBase/Quote/Interval just before calling Window.Show(), this handler
+            // would start the async refresh synchronously — and it would still be busy
+            // mutating PlotModel.Series when ExecuteInitialLayoutPass runs the first
+            // render, throwing NRE in OxyPlot.PlotElementUtilities.GetClippingRect.
+            // The Post queues the refresh AFTER Show()'s layout pass completes.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => _ = RefreshCommand.ExecuteAsync(null),
+                Avalonia.Threading.DispatcherPriority.Background);
         }
     }
 
