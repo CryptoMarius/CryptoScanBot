@@ -24,7 +24,7 @@ public partial class TraderEntryViewModel : ObservableObject
     {
         { "Market order", CryptoEntryOrDcaPricing.MarketPrice },
         { "Limit order op signaal prijs", CryptoEntryOrDcaPricing.SignalPrice },
-        { "Limit order met pullback (%)", CryptoEntryOrDcaPricing.SignalPriceWithPullback },
+        //{ "Limit order met pullback (%)", CryptoEntryOrDcaPricing.SignalPriceWithPullback },
         //{ "Limit order op bied prijs", CryptoEntryOrDcaPricing.BidPrice },
         //{ "Limit order op vraag prijs", CryptoEntryOrDcaPricing.AskPrice }
     };
@@ -41,9 +41,6 @@ public partial class TraderEntryViewModel : ObservableObject
     [ObservableProperty]
     private int _entryRemoveTime = 5; // int (EXACT match, in minutes)
 
-    [ObservableProperty]
-    private decimal _entryPullbackPercentage = 0.5m;
-
     public Dictionary<string, CryptoOrderType> OrderTypeList => _orderTypeList;
     public Dictionary<string, CryptoEntryOrDcaStrategy> StrategyList => _strategyList;
     public Dictionary<string, CryptoEntryOrDcaPricing> PricingList => _pricingList;
@@ -54,7 +51,6 @@ public partial class TraderEntryViewModel : ObservableObject
         EntryStrategy = settings.EntryStrategy;
         EntryOrderPrice = settings.EntryOrderPrice;
         EntryRemoveTime = settings.EntryRemoveTime;
-        EntryPullbackPercentage = settings.EntryPullbackPercentage;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -63,6 +59,5 @@ public partial class TraderEntryViewModel : ObservableObject
         settings.EntryStrategy = EntryStrategy;
         settings.EntryOrderPrice = EntryOrderPrice;
         settings.EntryRemoveTime = EntryRemoveTime;
-        settings.EntryPullbackPercentage = EntryPullbackPercentage;
     }
 }

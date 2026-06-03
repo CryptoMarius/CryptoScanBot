@@ -11,5 +11,5 @@ public enum CryptoEntryOrDcaPricing
     // Intended for zone-style signals (smc.rejection, dlz.near …) where the rejection close
     // is by definition outside the zone; a small pullback pulls the entry back toward the
     // proximal edge for better risk/reward.
-    SignalPriceWithPullback
+    //SignalPriceWithPullback
 }

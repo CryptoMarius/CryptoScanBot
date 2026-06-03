@@ -49,18 +49,6 @@
                           FontSize="12"/>
             </Grid>
 
-            <!-- Pullback % (only relevant when Pricing == SignalPriceWithPullback) -->
-            <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-                  ToolTip.Tip="Used when Pricing = 'Limit order met pullback'. Long limit goes below SignalPrice by this %, short limit goes above. Typical: 0.3-1.0% for zone-style entries (smc.rejection, dlz.near).">
-                <TextBlock Grid.Column="0" Text="Pullback:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="2"
-                         Text="{Binding EntryPullbackPercentage, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
-                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
-            </Grid>
-
             <!-- Remove Time -->
             <Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
                 <TextBlock Grid.Column="0" Text="Remove time:"
