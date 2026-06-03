@@ -1,5 +1,8 @@
 CryptoScanBot release historie:
 
+03-06-2026 2.1.9
+- Scanner - Fix voor Binance Futures vanwege wegvallende verbinding (library updates)
+
 20-11-2025 2.1.8
 - Scanner - Kraken spot verwijderd aangezien deze niet goe functioneerd
 - Scanner - Fix voor verkeerde geluiden (speelde altijd de jump geluiden)
