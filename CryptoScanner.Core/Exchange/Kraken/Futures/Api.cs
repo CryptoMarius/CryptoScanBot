@@ -35,14 +35,14 @@ public class Api : ExchangeBase
         KrakenRestClient.SetDefaultOptions(options =>
         {
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new KrakenCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         KrakenSocketClient.SetDefaultOptions(options =>
         {
             options.ReconnectInterval = TimeSpan.FromSeconds(15);
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
+                options.ApiCredentials = new KrakenCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret);
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price);

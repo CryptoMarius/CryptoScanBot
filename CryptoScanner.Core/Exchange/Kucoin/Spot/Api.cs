@@ -46,7 +46,7 @@ public class Api : ExchangeBase
             //options.ReceiveWindow = TimeSpan.FromSeconds(15);
             options.RequestTimeout = TimeSpan.FromSeconds(40); // standard=20 seconds
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new KucoinCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
         KucoinSocketClient.SetDefaultOptions(options =>
@@ -61,7 +61,7 @@ public class Api : ExchangeBase
             options.SocketSubscriptionsCombineTarget = 20;
 
             if (GlobalData.TradingApi.Key != "")
-                options.ApiCredentials = new ApiCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
+                options.ApiCredentials = new KucoinCredentials(GlobalData.TradingApi.Key, GlobalData.TradingApi.Secret, GlobalData.TradingApi.PassPhrase);
         });
 
         //PriceTicker = new Ticker(ExchangeOptions, typeof(SubscriptionPriceTicker), CryptoTickerType.price)

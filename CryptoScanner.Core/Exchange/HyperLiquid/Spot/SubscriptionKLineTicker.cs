@@ -27,7 +27,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
         var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
         //TickerGroup!.SocketClient.ClientOptions.OutputOriginalData = true;
-        var api = client.SpotApi;
+        var api = client.SpotApi.ExchangeData;
 
         SortedList<string, CryptoCandleList > symbolCandleCache = [];
 

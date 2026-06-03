@@ -25,7 +25,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         SemaphoreSlim cacheListSemaphore = new(1, 1);
         TickerGroup!.SocketClient ??= new HyperLiquidSocketClient();
         var client = (HyperLiquidSocketClient)TickerGroup.SocketClient;
-        var api = client.FuturesApi;
+        var api = client.FuturesApi.ExchangeData;
 
         // We verwachten (helaas) slechts 1 symbol per ticker
         List<string> symbols = [];
