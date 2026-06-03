@@ -109,7 +109,11 @@ public class SettingsTrading
     // When true, AllowStepIn refuses entries until Stoch %K (blue line) on the current
     // candle has exited the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,
     // so any strategy that does not override AllowStepIn inherits the behavior.
-    public bool WaitForRecovery { get; set; } = false;
+    public bool WaitForStochRecovery { get; set; } = false;
+    // When true, AllowStepIn refuses entries until RSI on the current candle has exited
+    // the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,
+    // so any strategy that does not override AllowStepIn inherits the behavior.
+    public bool WaitForRsiRecovery { get; set; } = false;
 
 
     //***************************

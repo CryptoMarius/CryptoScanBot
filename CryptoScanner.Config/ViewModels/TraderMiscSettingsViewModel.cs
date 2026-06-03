@@ -29,6 +29,13 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _globalBuyCooldownTime = 30; // int (EXACT match, in minutes)
 
+    // Slot limits (all int - EXACT match)
+    [ObservableProperty]
+    private int _slotsMaximalLong = 1;
+
+    [ObservableProperty]
+    private int _slotsMaximalShort = 1;
+
     public Dictionary<string, CryptoTradeVia> TradeViaList => _tradeViaList;
 
     public void LoadConfig(SettingsTrading settings)
@@ -38,6 +45,9 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         LogCanceledOrders = settings.LogCanceledOrders;
         GlobalBuyCooldownTime = settings.GlobalBuyCooldownTime;
         SoundTradeNotification = GlobalData.Settings.General.SoundTradeNotification;
+
+        SlotsMaximalLong = settings.SlotsMaximalLong;
+        SlotsMaximalShort = settings.SlotsMaximalShort;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -47,5 +57,8 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
         settings.LogCanceledOrders = LogCanceledOrders;
         settings.GlobalBuyCooldownTime = GlobalBuyCooldownTime;
         GlobalData.Settings.General.SoundTradeNotification = SoundTradeNotification;
+
+        settings.SlotsMaximalLong = SlotsMaximalLong;
+        settings.SlotsMaximalShort = SlotsMaximalShort;
     }
 }

@@ -202,7 +202,7 @@ public class SignalBbmaLong : SignalBbmaBase
     /// </summary>
     public override bool AllowStepIn(CryptoSignal signal)
     {
-        // Run the shared trader gates first (WaitForRecovery, CheckFurtherPriceMove,
+        // Run the shared trader gates first (WaitForStochRecovery, WaitForRsiRecovery, CheckFurtherPriceMove,
         // CheckIncreasingRsi/Stoch/Macd, CheckTrendPrimary/Secondary, …). Without this call
         // the BBMA-specific WMA crossover check would bypass every Settings.Trading.Check*
         // flag the user enabled in the trader UI.

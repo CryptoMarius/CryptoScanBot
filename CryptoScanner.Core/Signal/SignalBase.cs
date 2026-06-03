@@ -247,28 +247,53 @@ public class SignalCreateBase
         // ********************************************************************
         // Wait for stoch %K (blue line) to exit the OS/OB zone before stepping in.
         // Catches the actual bounce/fade candle instead of an extended oscillator extreme.
-        if (settings.WaitForRecovery)
+        if (settings.WaitForStochRecovery)
         {
             var k = CandleLast!.CandleData?.StochOscillator;
-            var rsi = CandleLast!.CandleData?.Rsi;
-            if (k == null || rsi == null)
+            if (k == null)
                 return false;
 
             switch (SignalSide)
             {
                 case CryptoTradeSide.Long:
-                    if (k < GlobalData.Settings.General.SettingsStoch.Oversold || 
-                        rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
+                    if (k < GlobalData.Settings.General.SettingsStoch.Oversold)
                     {
-                        ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
+                        ExtraText = "waiting for stoch %K to exit os zone";
                         return false;
                     }
                     break;
                 case CryptoTradeSide.Short:
-                    if (k > GlobalData.Settings.General.SettingsStoch.Overbought || 
-                        rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
+                    if (k > GlobalData.Settings.General.SettingsStoch.Overbought)
                     {
-                        ExtraText = "waiting for stoch %K and/or rsi to exit os/ob zone";
+                        ExtraText = "waiting for stoch %K to exit ob zone";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        // ********************************************************************
+        // Wait for RSI to exit the OS/OB zone before stepping in.
+        // Catches the actual bounce/fade candle instead of an extended oscillator extreme.
+        if (settings.WaitForRsiRecovery)
+        {
+            var rsi = CandleLast!.CandleData?.Rsi;
+            if (rsi == null)
+                return false;
+
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (rsi < GlobalData.Settings.General.SettingsRsi.Oversold)
+                    {
+                        ExtraText = "waiting for rsi to exit os zone";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (rsi > GlobalData.Settings.General.SettingsRsi.Overbought)
+                    {
+                        ExtraText = "waiting for rsi to exit ob zone";
                         return false;
                     }
                     break;

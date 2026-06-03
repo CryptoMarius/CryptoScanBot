@@ -48,38 +48,15 @@
 						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
 			</Grid>
 
-			<!-- Wait when stoch %K or rsi are in extreme zone -->
-			<CheckBox IsChecked="{Binding WaitForRecovery, Mode=TwoWay}"
-					  Content="Wait if stoch %K or RSI are OS/OB"
+			<!-- Wait when stoch %K is in extreme zone -->
+			<CheckBox IsChecked="{Binding WaitForStochRecovery, Mode=TwoWay}"
+					  Content="Wait if stoch %K is OS/OB"
 					  FontSize="12"/>
-			
 
-			<!-- Slot Limits -->
-            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
-                <StackPanel Margin="8" Spacing="8">
-                    
-                    <!-- Long Slots -->
-                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                        <TextBlock Grid.Column="0" Text="Long:" 
-                                   VerticalAlignment="Center" 
-                                   Margin="0,0,12,0" FontSize="12"/>
-                        <TextBox Grid.Column="2" 
-                                 Text="{Binding SlotsMaximalLong, Mode=TwoWay}" 
-                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                    </Grid>
-
-                    <!-- Short Slots -->
-                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
-                        <TextBlock Grid.Column="0" Text="Short:" 
-                                   VerticalAlignment="Center" 
-                                   Margin="0,0,12,0" FontSize="12"/>
-                        <TextBox Grid.Column="2" 
-                                 Text="{Binding SlotsMaximalShort, Mode=TwoWay}" 
-                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                    </Grid>
-
-                </StackPanel>
-            </HeaderedContentControl>
+			<!-- Wait when rsi is in extreme zone -->
+			<CheckBox IsChecked="{Binding WaitForRsiRecovery, Mode=TwoWay}"
+					  Content="Wait if RSI is OS/OB"
+					  FontSize="12"/>
 
         </StackPanel>
     </HeaderedContentControl>

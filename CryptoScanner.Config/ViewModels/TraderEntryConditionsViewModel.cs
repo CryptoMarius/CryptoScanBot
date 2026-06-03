@@ -32,14 +32,10 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private int _trendSecondaryDirectionCount = 2;
 
     [ObservableProperty]
-    private bool _waitForRecovery = false;
-
-    // Slot limits (all int - EXACT match)
-    [ObservableProperty]
-    private int _slotsMaximalLong = 1;
+    private bool _waitForStochRecovery = false;
 
     [ObservableProperty]
-    private int _slotsMaximalShort = 1;
+    private bool _waitForRsiRecovery = false;
 
     public void LoadConfig(SettingsTrading settings)
     {
@@ -51,10 +47,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
-        WaitForRecovery = settings.WaitForRecovery;
-
-        SlotsMaximalLong = settings.SlotsMaximalLong;
-        SlotsMaximalShort = settings.SlotsMaximalShort;
+        WaitForStochRecovery = settings.WaitForStochRecovery;
+        WaitForRsiRecovery = settings.WaitForRsiRecovery;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -67,9 +61,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
-        settings.WaitForRecovery = WaitForRecovery;
-
-        settings.SlotsMaximalLong = SlotsMaximalLong;
-        settings.SlotsMaximalShort = SlotsMaximalShort;
+        settings.WaitForStochRecovery = WaitForStochRecovery;
+        settings.WaitForRsiRecovery = WaitForRsiRecovery;
     }
 }
