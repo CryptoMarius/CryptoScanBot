@@ -12,6 +12,13 @@ public static class CommandHelper
         // Activate the trading application (and we use a dummy browser for Altrady)
         GlobalData.LoadWebLinkConfiguration(); // refresh links
         (string Url, CryptoExternalUrlType Execute) = GlobalData.ExternalUrls.GetExternalRef(tradingApp, false, symbol, interval);
+        if (Url == "")
+        {
+            // BUGFIX: silent return previously hid mis-configured weblinks. Surface it so
+            // the user can tell whether the symbol open failed because of a missing URL or
+            // because of the browser launch itself (e.g. WebView2 init in Release).
+            GlobalData.AddTextToLogTab($"Linktools: no URL configured for tradingApp={tradingApp} exchange={GlobalData.Settings.General.ActivateExchangeName} symbol={symbol.Name}");
+        }
         if (Url != "")
         {
             GlobalData.AddTextToLogTab($"Linktools activate {Url}");
