@@ -11,9 +11,8 @@
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
 		<!-- Single file basis -->
-		<PublishSingleFile>true</PublishSingleFile>
+		<PublishSingleFile>false</PublishSingleFile>
 		<SelfContained>true</SelfContained>
-		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 		<!-- Belangrijk: schakel default content uit om duplicaten te voorkomen -->
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		
@@ -47,7 +46,7 @@
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 		</Content>
 	</ItemGroup>
-	
+
 	<PropertyGroup>
 		<ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
 		<AssemblyName>CryptoScanBot</AssemblyName>
