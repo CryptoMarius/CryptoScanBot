@@ -63,6 +63,7 @@ public abstract class CommandBase : ICommand
         public SignalViewModel? SignalViewModel = null;
         public LiveDataViewModel? LiveDataViewModel = null;
         public PositionViewModel? PositionViewModel = null;
+        public LogViewModel? LogViewModel = null;
 
         public Core.Model.CryptoExchange? exchange;
         public CryptoSymbol? symbol = null;
@@ -117,6 +118,14 @@ public abstract class CommandBase : ICommand
             dto.symbol = positionViewModel.Object.Symbol;
             dto.interval = positionViewModel.Object.Interval;
             dto.position = positionViewModel.Object;
+            return true;
+        }
+
+        if (parameter is (DataGrid _datagrid5, LogViewModel logViewModel, Window parentWindow5))
+        {
+            dto.datagrid = _datagrid5;
+            dto.parentWindow = parentWindow5;
+            dto.LogViewModel = logViewModel;
             return true;
         }
 

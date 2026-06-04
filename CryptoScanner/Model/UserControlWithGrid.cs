@@ -278,7 +278,10 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
 
         if (_targetMenu == TargetMenu.Log)
         {
-            // Clear..?
+            // The Log grid has no symbol/position/signal context, so we don't show any of
+            // the open/export/calculate items below. Only the Copy-text option is relevant
+            // (puts the LogViewModel.Text of the selected row on the clipboard).
+            flyout.Items.Add(new MenuItem { Header = "Copy text", Command = new CommandLogCopyText(), CommandParameter = parameter });
             return;
         }
 
