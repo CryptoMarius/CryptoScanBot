@@ -509,21 +509,23 @@ public static class GlobalData
             string fullName = Path.Combine(GlobalData.AppDataFolder, filename);
             if (File.Exists(fullName))
             {
-                string text = File.ReadAllText(fullName);
-                var value = JsonSerializer.Deserialize<CryptoExternalUrlList>(text, JsonTools.DeSerializerOptions);
-                if (value != null)
-                    ExternalUrls = value;
-                else
-                    ExternalUrls = [];
-                ExternalUrls!.InitializeUrls(); // add new exchanges
+                File.Delete(fullName);
+                //string text = File.ReadAllText(fullName);
+                //var value = JsonSerializer.Deserialize<CryptoExternalUrlList>(text, JsonTools.DeSerializerOptions);
+                //if (value != null)
+                //    ExternalUrls = value;
+                //else
+                //    ExternalUrls = [];
+                //ExternalUrls!.InitializeUrls(); // add new exchanges
             }
-            else
+
+            //else
             {
                 ExternalUrls = []; // start from scratch (do not cache in memory)
                 ExternalUrls.InitializeUrls(); // add new exchanges
                 // het bestand in ieder geval aanmaken(updates moeten achteraf gepushed worden)
-                string text = JsonSerializer.Serialize(ExternalUrls, JsonTools.JsonSerializerIndented);
-                File.WriteAllText(fullName, text);
+                //string text = JsonSerializer.Serialize(ExternalUrls, JsonTools.JsonSerializerIndented);
+                //File.WriteAllText(fullName, text);
             }
         }
         catch (Exception error)
