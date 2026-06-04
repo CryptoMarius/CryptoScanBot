@@ -1,5 +1,16 @@
 CryptoScanBot release historie:
 
+04-06-2025 2.5.4
+- Tekst kunnen kopieeren uit de log
+- De default kleuren voor basismunten zijn niet goed (sommige zijn wit)
+- De link werkt niet goed bij een single execution file, single file executable uitgezet
+- Verouderde CryptoScanBot-weblinks.json met links niet meer gebruiken/weggooien
+
+04-06-2025 2.5.3
+- De Trader Rsi en Stobb entry opties gesplitst zodat je deze apart aan kan sturen
+- Nieuwe filters op de stoch zodat OS/OB met 1 candle niet telt als een melding
+- Foutmelding "The input string '219.95019055' was not in a correct format"
+
 02-06-2025 2.5.2
 - In de configuratie worden de strategieën nu gesorteerd (het worden er wat veel)
 - Copy data cells gerepareerd, de tekst van het clipboard kan nu zo in Excel geplakt worden

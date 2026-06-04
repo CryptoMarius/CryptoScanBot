@@ -31,7 +31,7 @@ public class HiddenBrowserService : IDisposable
     // (Info+) in both Debug and Release.
     private static void Log(string message)
     {
-        ScannerLog.Logger.Info("HiddenBrowserService: " + message);
+        //ScannerLog.Logger.Info("HiddenBrowserService: " + message);
         System.Diagnostics.Debug.WriteLine("HiddenBrowserService: " + message);
     }
 
@@ -40,12 +40,12 @@ public class HiddenBrowserService : IDisposable
         if (ex != null)
         {
             ScannerLog.Logger.Error(ex, "HiddenBrowserService: " + message);
-            GlobalData.AddTextToLogTab("HiddenBrowserService: " + message + " — " + ex.Message);
+            //GlobalData.AddTextToLogTab("HiddenBrowserService: " + message + " — " + ex.Message);
         }
         else
         {
             ScannerLog.Logger.Error("HiddenBrowserService: " + message);
-            GlobalData.AddTextToLogTab("HiddenBrowserService: " + message);
+            //GlobalData.AddTextToLogTab("HiddenBrowserService: " + message);
         }
         System.Diagnostics.Debug.WriteLine("HiddenBrowserService: " + message + (ex != null ? " — " + ex.Message : ""));
     }
