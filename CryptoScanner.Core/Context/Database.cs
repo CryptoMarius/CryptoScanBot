@@ -876,6 +876,13 @@ public class CryptoDatabase : IDisposable
         SqlMapper.AddTypeHandler(new GuidHandler());
         SqlMapper.AddTypeHandler(new TimeSpanHandler());
         SqlMapper.AddTypeHandler(new CandleTimeTypeHandler());
+        // BUGFIX: Dapper has a built-in fast path for primitive types (incl. double / double?)
+        // that bypasses TypeHandler<double>. Without RemoveTypeMap, NaNDoubleHandler.SetValue
+        // is never called, so IEEE-NaN values reach Microsoft.Data.Sqlite directly and trigger
+        // "Cannot store 'NaN' values". Removing the built-in mapping forces Dapper to consult
+        // the registered handler, which converts NaN to DBNull.
+        SqlMapper.RemoveTypeMap(typeof(double));
+        SqlMapper.RemoveTypeMap(typeof(double?));
         SqlMapper.AddTypeHandler(new NaNDoubleHandler());
 
 
