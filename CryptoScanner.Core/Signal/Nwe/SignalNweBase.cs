@@ -61,21 +61,25 @@ public class SignalNweBase : SignalCreateBase
 
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m && SignalSide == CryptoTradeSide.Long)
+        // BUGFIX: outer guard previously was `OnlyIfLux5m && SignalSide == Long`, which made
+        // the Short branch below unreachable — NWE-Short skipped the Lux gate entirely while
+        // StoRsi and Stobb did filter both sides. Aligned with the other two strategies.
+        if (GlobalData.Settings.Signal.Nwe.OnlyIfLux5m)
         {
+            int needed = GlobalData.Settings.Signal.Nwe.Lux5mPercentage;
             if (SignalSide == CryptoTradeSide.Long)
             {
-                if (CandleLast.CandleData!.Lux5mValue > -50)
+                if (CandleLast.CandleData!.Lux5mValue > -needed)
                 {
-                    response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                    response = $"lux 5m not oversold enough ({CandleLast.CandleData!.Lux5mValue}%, need <= -{needed}%)";
                     return false;
                 }
             }
             else if (SignalSide == CryptoTradeSide.Short)
             {
-                if (CandleLast.CandleData!.Lux5mValue < 50)
+                if (CandleLast.CandleData!.Lux5mValue < needed)
                 {
-                    response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                    response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
                     return false;
                 }
             }

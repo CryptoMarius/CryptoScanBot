@@ -22,6 +22,9 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     private bool _onlyIfLux5m = false;
 
     [ObservableProperty]
+    private int _lux5mPercentage = 50;
+
+    [ObservableProperty]
     private double _bbMinPercentage = 1.50;
 
     [ObservableProperty]
@@ -49,6 +52,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         CheckMacdRecovery = settings.CheckMacdRecovery;
         CheckBollingerBandsCondition = settings.CheckBollingerBandsCondition;
         OnlyIfLux5m = settings.OnlyIfLux5m;
+        Lux5mPercentage = settings.Lux5mPercentage;
         CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
@@ -64,6 +68,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.CheckMacdRecovery = CheckMacdRecovery;
         settings.CheckBollingerBandsCondition = CheckBollingerBandsCondition;
         settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.Lux5mPercentage = Lux5mPercentage;
         settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;

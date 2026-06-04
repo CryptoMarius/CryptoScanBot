@@ -11,6 +11,10 @@ public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
     public bool CheckBollingerBandsCondition { get; set; } = false;
     public bool CheckMacdRecovery { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
+    // Lux 5m threshold (percentage 1..100). Long needs Lux5mValue <= -Lux5mPercentage,
+    // short needs Lux5mValue >= +Lux5mPercentage. Default 50 matches the previous
+    // hard-coded behavior; raise toward 100 for stricter (rarer) signals.
+    public int Lux5mPercentage { get; set; } = 50;
     public bool SkipFirstSignal { get; set; } = false;
 
     public bool CheckTrendPrimaryDirection { get; set; } = false;

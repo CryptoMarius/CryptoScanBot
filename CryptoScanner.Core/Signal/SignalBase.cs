@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Signal;
@@ -104,6 +105,14 @@ public class SignalCreateBase
             return true;
         }
 
+        // Avoid duplicate signals
+        var position = PositionTools.HasPosition(GlobalData.ActiveExchange!, Symbol);
+        if (position != null)
+        {
+            ExtraText = $"Position open {position.Id} on interval {position.Interval.Name}";
+            return true;
+        }
+
         return false;
     }
 
@@ -173,14 +182,14 @@ public class SignalCreateBase
             switch (SignalSide)
             {
                 case CryptoTradeSide.Long:
-                    if (CandleLast?.CandleData?.Rsi < candlePrev?.CandleData?.Rsi)
+                    if (CandleLast?.CandleData?.Rsi <= candlePrev?.CandleData?.Rsi)
                     {
                         ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering <= {CandleLast.CandleData.Rsi:N8}";
                         return false;
                     }
                     break;
                 case CryptoTradeSide.Short:
-                    if (CandleLast?.CandleData?.Rsi > candlePrev?.CandleData?.Rsi)
+                    if (CandleLast?.CandleData?.Rsi >= candlePrev?.CandleData?.Rsi)
                     {
                         ExtraText = $"Rsi {candlePrev.CandleData.Rsi:N8} not recovering >= {CandleLast.CandleData.Rsi:N8}";
                         return false;
@@ -199,14 +208,14 @@ public class SignalCreateBase
             {
                 case CryptoTradeSide.Long:
                     // %K should recover
-                    if (CandleLast?.CandleData?.StochOscillator < candlePrev?.CandleData?.StochOscillator)
+                    if (CandleLast?.CandleData?.StochOscillator <= candlePrev?.CandleData?.StochOscillator)
                     {
                         ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering < {CandleLast.CandleData.StochOscillator:N8}";
                         return false;
                     }
 
                     // %D and %K should have crossed, %K(quick/blue) > %D(slow/red)
-                    if (CandleLast?.CandleData?.StochOscillator < CandleLast?.CandleData?.StochSignal)
+                    if (CandleLast?.CandleData?.StochOscillator <= CandleLast?.CandleData?.StochSignal)
                     {
                         ExtraText = $"Stoch.%D {candlePrev?.CandleData?.StochSignal:N8} not above %K {candlePrev?.CandleData?.StochOscillator:N8}";
                         return false;
@@ -214,7 +223,7 @@ public class SignalCreateBase
                     break;
                 case CryptoTradeSide.Short:
                     // %K should recover (= fall) for a short — refuse while it is still rising.
-                    if (CandleLast?.CandleData!.StochOscillator > candlePrev?.CandleData?.StochOscillator)
+                    if (CandleLast?.CandleData!.StochOscillator >= candlePrev?.CandleData?.StochOscillator)
                     {
                         ExtraText = $"Stoch.K {candlePrev.CandleData.StochOscillator:N8} not recovering > {CandleLast.CandleData?.StochOscillator:N8}";
                         return false;
@@ -226,7 +235,7 @@ public class SignalCreateBase
                     // when it should have allowed and vice versa, letting bullish %K-above-%D
                     // setups through on shorts. Correct test: refuse while %K is still above %D
                     // (cross has not yet happened in the short direction).
-                    if (CandleLast?.CandleData?.StochOscillator > CandleLast?.CandleData?.StochSignal)
+                    if (CandleLast?.CandleData?.StochOscillator >= CandleLast?.CandleData?.StochSignal)
                     {
                         ExtraText = $"Stoch.%K {CandleLast?.CandleData?.StochOscillator:N8} not below %D {CandleLast?.CandleData?.StochSignal:N8}";
                         return false;
@@ -269,6 +278,73 @@ public class SignalCreateBase
                         return false;
                     }
                     break;
+            }
+        }
+
+        // ********************************************************************
+        // Stoch OS/OB strength gates — verify the move into OS/OB was substantial enough
+        // to be a real exhaustion, not a 1-candle wick. Ordered cheapest to most expensive
+        // (persistence < AUC < z-score < MTF) so we bail early when the cheap gate fails.
+        if (settings.StochMinExtremeBars > 0 ||
+            settings.StochMinExtremeArea > 0m ||
+            settings.StochMinExtremeZScore > 0m ||
+            settings.StochMtfConfirm)
+        {
+            int lookback = settings.StochExtremeLookback > 0 ? settings.StochExtremeLookback : 20;
+
+            // (1) Persistence — count consecutive bars in OS/OB in the most-recent run.
+            if (settings.StochMinExtremeBars > 0)
+            {
+                int bars = this.CountStochExtremeBarsBack(SymbolInterval, CandleLast, lookback, SignalSide);
+                if (bars < settings.StochMinExtremeBars)
+                {
+                    ExtraText = $"Stoch {(SignalSide == CryptoTradeSide.Long ? "OS" : "OB")} run {bars} < min {settings.StochMinExtremeBars}";
+                    return false;
+                }
+            }
+
+            // (2) AUC — cumulative depth over the lookback window.
+            if (settings.StochMinExtremeArea > 0m)
+            {
+                double os = GlobalData.Settings.General.SettingsStoch.Oversold;
+                double ob = GlobalData.Settings.General.SettingsStoch.Overbought;
+                double area = SignalSide == CryptoTradeSide.Long
+                    ? this.StochOversoldSurface(SymbolInterval, CandleLast, lookback, os)
+                    : this.StochOverboughtSurface(SymbolInterval, CandleLast, lookback, ob);
+                if ((decimal)area < settings.StochMinExtremeArea)
+                {
+                    ExtraText = $"Stoch area {area:N1} < min {settings.StochMinExtremeArea:N1}";
+                    return false;
+                }
+            }
+
+            // (3) Z-score — statistical extremeness of the most extreme %K in the window.
+            if (settings.StochMinExtremeZScore > 0m)
+            {
+                double? z = this.StochExtremeZScore(SymbolInterval, CandleLast, lookback, SignalSide);
+                if (!z.HasValue)
+                {
+                    ExtraText = "Stoch z-score: insufficient/flat sample";
+                    return false;
+                }
+                double need = (double)settings.StochMinExtremeZScore;
+                bool ok = SignalSide == CryptoTradeSide.Long ? z.Value <= -need : z.Value >= need;
+                if (!ok)
+                {
+                    ExtraText = $"Stoch z-score {z.Value:N2} not extreme enough (need {(SignalSide == CryptoTradeSide.Long ? "≤ -" : "≥ ")}{need:N2})";
+                    return false;
+                }
+            }
+
+            // (5) MTF — confirm the higher TF also visited OS/OB recently. Last because it
+            // touches a different indicator-data cache (PrepareIndicators may calculate).
+            if (settings.StochMtfConfirm)
+            {
+                if (!this.HasHigherTfStochExtreme(settings.StochMtfLookback, SignalSide, out string mtfReason))
+                {
+                    ExtraText = $"Stoch MTF confirm failed: {mtfReason}";
+                    return false;
+                }
             }
         }
 

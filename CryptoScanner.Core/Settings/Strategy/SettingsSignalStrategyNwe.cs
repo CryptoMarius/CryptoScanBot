@@ -11,6 +11,10 @@ public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
     public bool IncludeSoftSbm { get; set; } = false;
     public bool IncludeSbmPercAndCrossing { get; set; } = false;
     public bool OnlyIfLux5m { get; set; } = false;
+    // Lux 5m threshold (percentage 1..100). Long needs Lux5mValue <= -Lux5mPercentage,
+    // short needs Lux5mValue >= +Lux5mPercentage. Default 50 matches the previous
+    // hard-coded behavior; raise toward 100 for stricter (rarer) signals.
+    public int Lux5mPercentage { get; set; } = 50;
 
     // Volume-klimax op de signaalcandle: filter losse "stille drift door de band"-tikken weg.
     public bool RequireVolumeClimax { get; set; } = false;

@@ -21,6 +21,9 @@ public partial class StrategyNweSettingsViewModel : ObservableObject
     private bool _onlyIfLux5m = false; // bool
 
     [ObservableProperty]
+    private int _lux5mPercentage = 50; // int
+
+    [ObservableProperty]
     private bool _requireVolumeClimax = false; // bool
 
     [ObservableProperty]
@@ -35,6 +38,7 @@ public partial class StrategyNweSettingsViewModel : ObservableObject
         IncludeSoftSbm = settings.IncludeSoftSbm;
         IncludeSbmPercAndCrossing = settings.IncludeSbmPercAndCrossing;
         OnlyIfLux5m = settings.OnlyIfLux5m;
+        Lux5mPercentage = settings.Lux5mPercentage;
         RequireVolumeClimax = settings.RequireVolumeClimax;
         VolumeClimaxLookback = settings.VolumeClimaxLookback;
         VolumeClimaxMultiplier = settings.VolumeClimaxMultiplier;
@@ -46,6 +50,7 @@ public partial class StrategyNweSettingsViewModel : ObservableObject
         settings.IncludeSoftSbm = IncludeSoftSbm;
         settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
         settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.Lux5mPercentage = Lux5mPercentage;
         settings.RequireVolumeClimax = RequireVolumeClimax;
         settings.VolumeClimaxLookback = VolumeClimaxLookback;
         settings.VolumeClimaxMultiplier = VolumeClimaxMultiplier;

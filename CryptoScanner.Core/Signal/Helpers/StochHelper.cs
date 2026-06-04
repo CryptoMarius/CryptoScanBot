@@ -226,4 +226,148 @@ public static class StochHelper
         return surface;
     }
 
+
+    /// <summary>
+    /// Persistence gate (option 1): walk back at most maxLookback bars from startCandle
+    /// and count the most-recent contiguous run of bars where %K was in OS (long) /
+    /// OB (short). Skips post-recovery bars at the head — looks for the first run, then
+    /// stops as soon as that run ends going further back. Returns 0 when no run is
+    /// found within the lookback or when %K data is missing.
+    /// </summary>
+    public static int CountStochExtremeBarsBack(
+        this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval,
+        MyData? startCandle, int maxLookback, CryptoTradeSide side)
+    {
+        if (maxLookback <= 0)
+            return 0;
+
+        double os = GlobalData.Settings.General.SettingsStoch.Oversold;
+        double ob = GlobalData.Settings.General.SettingsStoch.Overbought;
+
+        MyData? candle = startCandle;
+        bool inRun = false;
+        int count = 0;
+        while (maxLookback-- > 0 && candle?.CandleData?.StochOscillator != null)
+        {
+            double k = candle.CandleData.StochOscillator.Value;
+            bool extreme = side == CryptoTradeSide.Long ? k < os : k > ob;
+            if (extreme)
+            {
+                inRun = true;
+                count++;
+            }
+            else if (inRun)
+            {
+                // Found the back-edge of the run while walking backward → stop.
+                break;
+            }
+
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
+                break;
+        }
+        return count;
+    }
+
+
+    /// <summary>
+    /// Statistical-depth gate (option 3): compute mean / population stdev of %K over the
+    /// lookback window (signal interval), then return the z-score of the most extreme
+    /// observed %K in that window — minimum for Long, maximum for Short. Returns null
+    /// when the sample is too small (< 5) or stdev collapses (flat window).
+    /// </summary>
+    public static double? StochExtremeZScore(
+        this SignalCreateBase myBase, CryptoSymbolInterval symbolInterval,
+        MyData? startCandle, int lookback, CryptoTradeSide side)
+    {
+        if (lookback < 5)
+            return null;
+
+        MyData? candle = startCandle;
+        List<double> values = new(lookback);
+        while (lookback-- > 0 && candle?.CandleData?.StochOscillator != null)
+        {
+            values.Add(candle.CandleData.StochOscillator.Value);
+            if (!myBase.GetPrevCandle(symbolInterval.Interval, candle, out candle))
+                break;
+        }
+        if (values.Count < 5)
+            return null;
+
+        double mean = values.Average();
+        double variance = 0;
+        for (int i = 0; i < values.Count; i++)
+        {
+            double d = values[i] - mean;
+            variance += d * d;
+        }
+        variance /= values.Count;
+        double stdev = Math.Sqrt(variance);
+        if (stdev < 1e-6)
+            return null;
+
+        double extreme = side == CryptoTradeSide.Long ? values.Min() : values.Max();
+        return (extreme - mean) / stdev;
+    }
+
+
+    /// <summary>
+    /// Multi-timeframe gate (option 5): confirm the higher TF (mapped via
+    /// GetStochDirHigherInterval) was also in OS (long) / OB (short) within the last
+    /// mtfLookback closed bars. Returns false (with a reason) when the higher TF is
+    /// unavailable, data isn't ready, or no extreme bar is found in the window.
+    /// </summary>
+    public static bool HasHigherTfStochExtreme(
+        this SignalCreateBase myBase, int mtfLookback, CryptoTradeSide side, out string reason)
+    {
+        reason = "";
+        if (mtfLookback <= 0)
+            mtfLookback = 1;
+
+        var period = myBase.Interval.IntervalPeriod;
+        if (!GetStochDirHigherInterval(period, out CryptoIntervalPeriod higherPeriod))
+        {
+            reason = $"no higher tf mapped above {period}";
+            return false;
+        }
+
+        var higherSymbolInterval = myBase.Symbol.GetSymbolInterval(higherPeriod);
+        var higherInterval = higherSymbolInterval.Interval;
+
+        // Make sure the higher TF indicators are populated. PrepareIndicators is a no-op
+        // when already cached for this interval.
+        if (!myBase.IndicatorDataList.PrepareIndicators(myBase.Symbol, higherInterval, myBase.CandleLast.Candle.OpenTime))
+        {
+            reason = $"higher tf indicators not ready ({higherInterval.Name})";
+            return false;
+        }
+
+        // Align the current open time down to the higher-TF candle boundary.
+        CandleTime aligned = myBase.CandleLast.Candle.OpenTime
+                             - (myBase.CandleLast.Candle.OpenTime % higherInterval.Duration);
+        if (!myBase.IndicatorDataList.TryGetCandle(higherInterval, aligned, out MyData? higherCandle) || higherCandle == null)
+        {
+            reason = $"higher tf candle missing ({higherInterval.Name})";
+            return false;
+        }
+
+        double os = GlobalData.Settings.General.SettingsStoch.Oversold;
+        double ob = GlobalData.Settings.General.SettingsStoch.Overbought;
+
+        MyData? candle = higherCandle;
+        int n = mtfLookback;
+        while (n-- > 0 && candle?.CandleData?.StochOscillator != null)
+        {
+            double k = candle.CandleData.StochOscillator.Value;
+            bool extreme = side == CryptoTradeSide.Long ? k < os : k > ob;
+            if (extreme)
+                return true;
+
+            if (!myBase.GetPrevCandle(higherInterval, candle, out candle))
+                break;
+        }
+
+        reason = $"no {(side == CryptoTradeSide.Long ? "OS" : "OB")} on {higherInterval.Name} in last {mtfLookback} bars";
+        return false;
+    }
+
 }

@@ -31,6 +31,9 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
     private bool _onlyIfLux5m = false;
 
     [ObservableProperty]
+    private int _lux5mPercentage = 50;
+
+    [ObservableProperty]
     private bool _checkTrendPrimaryDirection = false;
 
     [ObservableProperty]
@@ -54,6 +57,7 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         IncludeSbmPercAndCrossing = settings.IncludeSbmPercAndCrossing;
         OnlyIfPreviousStobb = settings.OnlyIfPreviousStobb;
         OnlyIfLux5m = settings.OnlyIfLux5m;
+        Lux5mPercentage = settings.Lux5mPercentage;
         CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
@@ -70,6 +74,7 @@ public partial class StrategyStobbSettingsViewModel : ObservableObject
         settings.IncludeSbmPercAndCrossing = IncludeSbmPercAndCrossing;
         settings.OnlyIfPreviousStobb = OnlyIfPreviousStobb;
         settings.OnlyIfLux5m = OnlyIfLux5m;
+        settings.Lux5mPercentage = Lux5mPercentage;
         settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;

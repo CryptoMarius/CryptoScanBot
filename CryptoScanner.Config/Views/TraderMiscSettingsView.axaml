@@ -48,6 +48,33 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- Slot Limits -->
+            <HeaderedContentControl Classes="groupbox" Header="Slot limits" Margin="0,8,0,0">
+                <StackPanel Margin="8" Spacing="8">
+
+                    <!-- Long Slots -->
+                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                        <TextBlock Grid.Column="0" Text="Long:"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0" FontSize="12"/>
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding SlotsMaximalLong, Mode=TwoWay}"
+                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                    </Grid>
+
+                    <!-- Short Slots -->
+                    <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                        <TextBlock Grid.Column="0" Text="Short:"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0" FontSize="12"/>
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding SlotsMaximalShort, Mode=TwoWay}"
+                                 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                    </Grid>
+
+                </StackPanel>
+            </HeaderedContentControl>
+
         </StackPanel>
     </HeaderedContentControl>
 

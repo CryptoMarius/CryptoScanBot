@@ -12,9 +12,10 @@ public class SignalStobbMultiShort : SignalStobbBase
     {
         if (GlobalData.Settings.Signal.Stobb.OnlyIfLux5m)
         {
-            if (CandleLast.CandleData!.Lux5mValue < 50)
+            int needed = GlobalData.Settings.Signal.Stobb.Lux5mPercentage;
+            if (CandleLast.CandleData!.Lux5mValue < needed)
             {
-                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%)";
+                response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
                 return false;
             }
         }

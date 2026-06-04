@@ -53,6 +53,78 @@
 					  Content="Wait if stoch %K is OS/OB"
 					  FontSize="12"/>
 
+			<!-- Stoch OS/OB strength gates — only meaningful when the OS run is qualified.
+			     Each numeric field equals 0 = disabled. -->
+			<HeaderedContentControl Classes="groupbox" Header="Stoch OS/OB strength" Margin="0,4,0,0">
+				<StackPanel Margin="8" Spacing="6">
+
+					<!-- Shared lookback window for run search + z-score sample -->
+					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+					      ToolTip.Tip="Window (in signal-interval bars) used to find the most-recent OS run and to compute the Z-score mean/stdev.">
+						<TextBlock Grid.Column="0" Text="Lookback:"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" FontSize="12"/>
+						<TextBox Grid.Column="2"
+						         Text="{Binding StochExtremeLookback, Mode=TwoWay}"
+						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
+					</Grid>
+
+					<!-- (1) Persistence -->
+					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+					      ToolTip.Tip="Persistence: minimum consecutive bars stoch %K was in OS (long) / OB (short). 0 = off.">
+						<TextBlock Grid.Column="0" Text="Min OS bars:"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" FontSize="12"/>
+						<TextBox Grid.Column="2"
+						         Text="{Binding StochMinExtremeBars, Mode=TwoWay}"
+						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
+					</Grid>
+
+					<!-- (2) AUC / area -->
+					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+					      ToolTip.Tip="Cumulative depth: Σ max(0, threshold - %K) over the lookback. Units = %K-percent × bars. Typical 20-80. 0 = off.">
+						<TextBlock Grid.Column="0" Text="Min OS area:"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" FontSize="12"/>
+						<TextBox Grid.Column="2"
+						         Text="{Binding StochMinExtremeArea, Mode=TwoWay}"
+						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+						<TextBlock Grid.Column="3" Text="∑" VerticalAlignment="Center" FontSize="12"/>
+					</Grid>
+
+					<!-- (3) Z-score -->
+					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
+					      ToolTip.Tip="Z-score magnitude of the most-extreme %K in the lookback. Long requires z(min) ≤ -threshold; short requires z(max) ≥ threshold. Typical 1.5-2.5. 0 = off.">
+						<TextBlock Grid.Column="0" Text="Min |Z-score|:"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" FontSize="12"/>
+						<TextBox Grid.Column="2"
+						         Text="{Binding StochMinExtremeZScore, Mode=TwoWay}"
+						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
+						<TextBlock Grid.Column="3" Text="σ" VerticalAlignment="Center" FontSize="12"/>
+					</Grid>
+
+					<!-- (5) MTF confirm -->
+					<CheckBox IsChecked="{Binding StochMtfConfirm, Mode=TwoWay}"
+					          Content="Require higher-TF OS/OB"
+					          ToolTip.Tip="Multi-timeframe: higher TF (mapped via StochHelper.GetStochDirHigherInterval, ~12-20x signal interval) must also have been in OS/OB within the last N bars."
+					          FontSize="12"/>
+					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
+						<TextBlock Grid.Column="0" Text="MTF lookback:"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" FontSize="12"/>
+						<TextBox Grid.Column="2"
+						         Text="{Binding StochMtfLookback, Mode=TwoWay}"
+						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
+						         IsEnabled="{Binding StochMtfConfirm}"/>
+						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
+					</Grid>
+
+				</StackPanel>
+			</HeaderedContentControl>
+
 			<!-- Wait when rsi is in extreme zone -->
 			<CheckBox IsChecked="{Binding WaitForRsiRecovery, Mode=TwoWay}"
 					  Content="Wait if RSI is OS/OB"

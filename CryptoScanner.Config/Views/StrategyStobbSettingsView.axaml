@@ -57,10 +57,20 @@
                       Content="Only if a previous signal exists"
                       FontSize="12"/>
 
-            <!-- Only if lux 5m at 100% -->
-            <CheckBox IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
-                      Content="Only if lux 5m at 100%"
-                      FontSize="12"/>
+            <!-- Only if lux 5m at the configured threshold -->
+            <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
+                  ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
+                          Content="Only if lux 5m at"
+                          VerticalAlignment="Center"
+                          FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding Lux5mPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
+                         IsEnabled="{Binding OnlyIfLux5m}"/>
+                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
 
 			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
 				<CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
