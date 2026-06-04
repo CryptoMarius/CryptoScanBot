@@ -11,11 +11,12 @@ namespace CryptoScanner.ViewModels.Chart;
 /// <summary>
 /// Draws the MACD(12, 26, 9) indicator into the dedicated MACD sub-panel.
 /// The sub-panel Y-axis (key "macd", auto-ranged including negative values) is managed by
-/// AdjustPanels in ChartWindowViewModel. Three series are produced:
+/// AdjustPanels in ChartWindowViewModel. Series produced:
 ///   - MACD line (blue)
 ///   - Signal line (orange)
-///   - Histogram bars split into a positive/negative RectangleBarSeries so each bar can
-///     show whether the MACD is above or below its signal without per-item fill gymnastics.
+///   - Histogram bars split into four RectangleBarSeries matching the official TradingView
+///     histo coloring: dark green (above 0, growing), light green (above 0, fading),
+///     dark red (below 0, falling further), light red (below 0, recovering).
 /// All series share the same group tag so the toggle path removes them in one go.
 /// </summary>
 public class Macd
@@ -63,33 +64,61 @@ public class Macd
             Tag = tag,
         };
 
-        // Positive histogram (MACD above signal): green
-        var histUp = new RectangleBarSeries
+        // Histogram, official TradingView 4-color scheme. Each bar is binned by its sign and
+        // by whether |histogram| is growing versus the previous bar:
+        //   above 0, growing  → dark green   (momentum building up)
+        //   above 0, fading   → light green  (momentum fading)
+        //   below 0, falling  → dark red     (momentum building down)
+        //   below 0, recovering → light red  (momentum fading)
+        var histUpStrong = new RectangleBarSeries
         {
-            Title = "Hist+",
-            FillColor = OxyColor.FromAColor(180, OxyColors.LimeGreen),
+            Title = "Hist+ strong",
+            FillColor = OxyColor.FromAColor(200, OxyColors.LimeGreen),
+            StrokeColor = OxyColors.Transparent,
+            StrokeThickness = 0,
+            YAxisKey = AxisKey,
+            Tag = tag,
+        };
+        var histUpWeak = new RectangleBarSeries
+        {
+            Title = "Hist+ weak",
+            FillColor = OxyColor.FromAColor(200, OxyColors.PaleGreen),
+            StrokeColor = OxyColors.Transparent,
+            StrokeThickness = 0,
+            YAxisKey = AxisKey,
+            Tag = tag,
+        };
+        var histDownStrong = new RectangleBarSeries
+        {
+            Title = "Hist- strong",
+            FillColor = OxyColor.FromAColor(200, OxyColors.Red),
+            StrokeColor = OxyColors.Transparent,
+            StrokeThickness = 0,
+            YAxisKey = AxisKey,
+            Tag = tag,
+        };
+        var histDownWeak = new RectangleBarSeries
+        {
+            Title = "Hist- weak",
+            FillColor = OxyColor.FromAColor(200, OxyColors.LightPink),
             StrokeColor = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = AxisKey,
             Tag = tag,
         };
 
-        // Negative histogram (MACD below signal): red
-        var histDown = new RectangleBarSeries
-        {
-            Title = "Hist-",
-            FillColor = OxyColor.FromAColor(180, OxyColors.Tomato),
-            StrokeColor = OxyColors.Transparent,
-            StrokeThickness = 0,
-            YAxisKey = AxisKey,
-            Tag = tag,
-        };
-
+        double? prevH = null;
         foreach (var item in macdList)
         {
             CandleTime openTime = CandleTime.AlignFromDateTime(item.Date, interval.Duration);
             if (openTime < minDate || openTime > maxDate)
+            {
+                // Still track prevH outside the visible window so the first visible bar
+                // gets the correct strong/weak classification relative to its real predecessor.
+                if (item.Histogram.HasValue)
+                    prevH = item.Histogram.Value;
                 continue;
+            }
 
             double x = openTime.Minutes;
 
@@ -101,18 +130,35 @@ public class Macd
             {
                 double h = item.Histogram.Value;
                 var bar = new RectangleBarItem(x - halfWidth, 0.0, x + halfWidth, h);
+                // First bar has no predecessor → treat as "strong" (matches TradingView).
+                bool growing = !prevH.HasValue || Math.Abs(h) >= Math.Abs(prevH.Value);
                 if (h >= 0)
-                    histUp.Items.Add(bar);
+                {
+                    if (growing)
+                        histUpStrong.Items.Add(bar);
+                    else
+                        histUpWeak.Items.Add(bar);
+                }
                 else
-                    histDown.Items.Add(bar);
+                {
+                    if (growing)
+                        histDownStrong.Items.Add(bar);
+                    else
+                        histDownWeak.Items.Add(bar);
+                }
+                prevH = h;
             }
         }
 
         // Histograms first so the MACD/Signal lines render on top of the bars.
-        if (histUp.Items.Count > 0)
-            chart.Series.Add(histUp);
-        if (histDown.Items.Count > 0)
-            chart.Series.Add(histDown);
+        if (histUpStrong.Items.Count > 0)
+            chart.Series.Add(histUpStrong);
+        if (histUpWeak.Items.Count > 0)
+            chart.Series.Add(histUpWeak);
+        if (histDownStrong.Items.Count > 0)
+            chart.Series.Add(histDownStrong);
+        if (histDownWeak.Items.Count > 0)
+            chart.Series.Add(histDownWeak);
         chart.Series.Add(macdLine);
         chart.Series.Add(signalLine);
     }
