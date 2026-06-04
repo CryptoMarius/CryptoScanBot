@@ -216,6 +216,12 @@ public static class Helper
     }
 
 
+    public static void ClearSignals(this CryptoSymbol symbol)
+    {
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+            symbolInterval.SignalList.Clear();
+    }
+
 
     public static bool IsBarometerSymbol(this CryptoSymbol symbol)
     {

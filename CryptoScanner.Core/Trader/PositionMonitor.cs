@@ -40,12 +40,6 @@ public class PositionMonitor //: IDisposable
     }
 
 
-    public void ClearSignals()
-    {
-        foreach (CryptoSymbolInterval symbolInterval in Symbol.Data.SymbolIntervalList)
-            symbolInterval.SignalList.Clear();
-    }
-
     private bool CanOpenAdditionalDca(CryptoPosition position, out CryptoPositionStep? step,
         out decimal percentage, out decimal dcaPrice, out string reaction)
     {
@@ -107,14 +101,15 @@ public class PositionMonitor //: IDisposable
             return false;
         }
 
-        // At least one cooldown period must have elapsed since the last filled entry.
-        // step.CloseTime is always set here because the search loop above filters on CloseTime.HasValue.
-        if (step.CloseTime!.Value.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
-        {
-            reaction = "het is te vroeg voor een bijkoop vanwege de cooldown";
-            ClearSignals();
-            return false;
-        }
+        // Puspose: Event driven DCA, but we already have enough tiny problems..
+        //// At least one cooldown period must have elapsed since the last filled entry.
+        //// step.CloseTime is always set here because the search loop above filters on CloseTime.HasValue.
+        //if (step.CloseTime!.Value.AddMinutes(GlobalData.Settings.Trading.GlobalBuyCooldownTime) > LastCandle1mCloseTimeDate)
+        //{
+        //    reaction = "het is te vroeg voor een bijkoop vanwege de cooldown";
+        //    Symbol.ClearSignals();
+        //    return false;
+        //}
 
 
 
@@ -209,7 +204,7 @@ public class PositionMonitor //: IDisposable
         {
             reaction = "trade-bot deactivated";
             //GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            ClearSignals();
+            Symbol.ClearSignals();
             return;
         }
 
@@ -218,7 +213,7 @@ public class PositionMonitor //: IDisposable
         {
             reaction = "symbol price null";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            ClearSignals();
+            Symbol.ClearSignals();
             return;
         }
 
@@ -227,16 +222,16 @@ public class PositionMonitor //: IDisposable
         {
             reaction = "is in cooldown";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            ClearSignals();
+            Symbol.ClearSignals();
             return;
         }
 
         // Check the trading rules of the user (a quick drop of a symbol causes a pause)
         if (!TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1))
         {
-            reaction = $"the bot is paused because {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
+            reaction = $"paused because of {GlobalData.ActiveExchange!.Data.PauseTrading.Text}";
             GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-            ClearSignals();
+            Symbol.ClearSignals();
             return;
         }
 
@@ -336,7 +331,7 @@ public class PositionMonitor //: IDisposable
                             {
                                 reaction = "openen van nieuwe posities niet toegestaan";
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -349,7 +344,7 @@ public class PositionMonitor //: IDisposable
                             if (!TradingRules.CheckBarometerConditions(GlobalData.ActiveExchange!, Symbol.Quote, signal.Side, LastCandle1m.OpenTime, 60, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -357,7 +352,7 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckSymbolWhiteListOversold(Symbol, signal.Side, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -365,7 +360,7 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckSymbolBlackListOversold(Symbol, signal.Side, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -373,7 +368,7 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckValidMinimalVolume(Symbol, LastCandle1m.OpenTime, 1, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -381,7 +376,7 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckValidMinimalPrice(Symbol, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -389,7 +384,7 @@ public class PositionMonitor //: IDisposable
                             if (!SymbolTools.CheckMinimumTickPercentage(Symbol, out reaction))
                             {
                                 GlobalData.AddTextToLogTab(text + " " + reaction + " (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -425,7 +420,7 @@ public class PositionMonitor //: IDisposable
                             if (!GlobalData.ActiveExchange!.IsSupported)
                             {
                                 GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
-                                ClearSignals();
+                                Symbol.ClearSignals();
                                 return;
                             }
 
@@ -439,7 +434,7 @@ public class PositionMonitor //: IDisposable
                                 if (!SymbolTools.CheckAvailableSlots(GlobalData.ActiveExchange, Symbol, signal.Side, out reaction))
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {reaction} (removed)");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -449,7 +444,7 @@ public class PositionMonitor //: IDisposable
                                 if (!resultFetchAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultFetchAssets.reaction}");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -458,7 +453,7 @@ public class PositionMonitor //: IDisposable
                                 if (!resultAvailableAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab($"{text} {resultAvailableAssets.reaction}");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
                                 var info = resultAvailableAssets.info; // short alias
@@ -476,7 +471,7 @@ public class PositionMonitor //: IDisposable
                                 if (entryBase <= 0)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" because of minimum quantity {Symbol.QuantityMinimum} en aankoopbedrag {entryQuote} lukt de aankoop niet");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -484,7 +479,7 @@ public class PositionMonitor //: IDisposable
                                 if (entryBase == Symbol.QuantityMinimum)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" because of minimum quantity {entryBase} < {Symbol.QuantityMinimum} lukt de aankoop niet (te weinig)");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -492,7 +487,7 @@ public class PositionMonitor //: IDisposable
                                 if (Symbol.QuoteValueMinimum > 0 && entryQuote < Symbol.QuoteValueMinimum)
                                 {
                                     GlobalData.AddTextToLogTab(text + $" because of minimum value {entryQuote} < {Symbol.QuoteValueMinimum} lukt de aankoop niet (te weinig)");
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -501,7 +496,7 @@ public class PositionMonitor //: IDisposable
                                     if (info.QuoteFree == 0 || entryBase * entryPrice > info.QuoteTotal)
                                     {
                                         GlobalData.AddTextToLogTab($"{text} not enough assets available for trade entry {entryBase * entryPrice} > {info.QuoteTotal})");
-                                        ClearSignals();
+                                        Symbol.ClearSignals();
                                         return;
                                     }
                                 }
@@ -542,7 +537,7 @@ public class PositionMonitor //: IDisposable
                                     {
                                         GlobalData.AddTextToLogTab($"{text} {symbolInterval.Interval.Name} {reaction} (removed)");
                                     }
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -551,7 +546,7 @@ public class PositionMonitor //: IDisposable
                                 if (!success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + reaction2);
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -559,7 +554,7 @@ public class PositionMonitor //: IDisposable
                                 if (!resultCheckAssets.success)
                                 {
                                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                                    ClearSignals();
+                                    Symbol.ClearSignals();
                                     return;
                                 }
 
@@ -1340,7 +1335,7 @@ public class PositionMonitor //: IDisposable
                 if (!success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + reaction);
-                    ClearSignals();
+                    Symbol.ClearSignals();
                     return;
                 }
 
@@ -1348,7 +1343,7 @@ public class PositionMonitor //: IDisposable
                 if (!resultCheckAssets.success)
                 {
                     GlobalData.AddTextToLogTab(text + " " + resultCheckAssets.reaction);
-                    ClearSignals();
+                    Symbol.ClearSignals();
                     return;
                 }
 
@@ -1748,7 +1743,7 @@ public class PositionMonitor //: IDisposable
     //        // not really sure if we want this for zones? The same goes for trend and barometer????
     //        if (Symbol.QuoteData.MinimalVolume == 0 || Symbol.Volume <= Symbol.QuoteData.MinimalVolume)
     //        {
-    //            ClearSignals();
+    //            Symbol.ClearSignals();
     //            return [];
     //        }
 
@@ -1759,7 +1754,7 @@ public class PositionMonitor //: IDisposable
     //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
     //            if (GlobalData.Settings.General.DebugSignalCreate && (GlobalData.Settings.General.DebugSymbol == Symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
     //                GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} {reaction} (removed)");
-    //            ClearSignals();
+    //            Symbol.ClearSignals();
     //            return [];
     //        }
 
