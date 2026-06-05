@@ -48,6 +48,14 @@ public class SignalWtLbStochShort : SignalWtLbStochBase
             }
         }
 
+        // Price changed quickly, skip
+        if (CandleLast.Candle.Close <= (decimal)CandleLast.CandleData.BollingerBandsLowerBand!)
+        {
+            ExtraText = $"close {CandleLast.Candle.Close} below bb.lower";
+            return false;
+        }
+
+
         // 3. Stoch %K cross DOWN through StochCenterLevel within last StochCrossLookback candles.
         double centerLevel = (double)settings.StochCenterLevel;
         bool stochCrossed = false;
