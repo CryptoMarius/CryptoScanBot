@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="400"
+        Width="640" Height="400"
+        x:Class="CryptoScanner.EmulatorApp.Views.MainWindow"
+        Title="CryptoScanBot Emulator (scaffold)"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <TextBlock Grid.Row="0" FontSize="20" FontWeight="Bold"
+                   Text="CryptoScanBot Emulator"/>
+
+        <TextBlock Grid.Row="1" Margin="0,4,0,16" FontSize="12" Foreground="Gray"
+                   Text="Phase 3 — engine skeleton in progress. No run UI yet."/>
+
+        <Grid Grid.Row="2" ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,8">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" />
+            <TextBlock Grid.Row="0" Grid.Column="1" Name="VersionText" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="App path:" />
+            <TextBlock Grid.Row="1" Grid.Column="1" Name="AppPathText" TextWrapping="Wrap" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Data folder:" />
+            <TextBlock Grid.Row="2" Grid.Column="1" Name="DataFolderText" TextWrapping="Wrap"
+                       FontWeight="SemiBold" />
+        </Grid>
+
+        <TextBlock Grid.Row="3" Margin="0,8,0,0" FontSize="11" Foreground="Gray"
+                   TextWrapping="Wrap"
+                   Text="The emulator uses a dedicated data folder. Override with --folder &lt;name&gt; (relative to %APPDATA%) or --folder &lt;absolute&gt;."/>
+
+    </Grid>
+
+</Window>

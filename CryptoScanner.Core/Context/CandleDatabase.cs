@@ -330,6 +330,50 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
+    /// Loads candles for a single symbol+interval restricted to an OpenTime range.
+    /// Returned list is in ascending OpenTime order; both bounds are inclusive in minutes
+    /// (matching <see cref="CandleTime.Minutes"/>). Used by the emulator's CandleSource
+    /// to materialise a fixed replay window without filling the global CandleList.
+    /// </summary>
+    public static List<CryptoCandle> LoadCandlesInRange(SqliteConnection connection,
+        CryptoSymbol symbol, CryptoInterval interval, uint fromMinutes, uint toMinutes)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText =
+            "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
+            "FROM Candle " +
+            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
+            "  AND OpenTime BETWEEN $From AND $To " +
+            "ORDER BY OpenTime";
+        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = interval.Id; cmd.Parameters.Add(pInterval);
+        var pFrom = cmd.CreateParameter(); pFrom.ParameterName = "$From"; pFrom.Value = (long)fromMinutes; cmd.Parameters.Add(pFrom);
+        var pTo = cmd.CreateParameter(); pTo.ParameterName = "$To"; pTo.Value = (long)toMinutes; cmd.Parameters.Add(pTo);
+
+        var list = new List<CryptoCandle>();
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            uint openTimeMinutes = (uint)reader.GetInt64(0);
+            byte ticks = (byte)reader.GetInt32(1);
+            decimal tickSize = TickSizeFor(ticks);
+
+            list.Add(new CryptoCandle
+            {
+                OpenTime = new CandleTime(openTimeMinutes),
+                TickDecimals = ticks,
+                Open = reader.GetInt64(2) * tickSize,
+                High = reader.GetInt64(3) * tickSize,
+                Low = reader.GetInt64(4) * tickSize,
+                Close = reader.GetInt64(5) * tickSize,
+                Volume = (decimal)reader.GetDouble(6),
+            });
+        }
+        return list;
+    }
+
+
+    /// <summary>
     /// Parallel load route that reads candles from the per-exchange candles.db (SQLite).
     /// Each worker opens its own connection — SqliteConnection is not thread-safe but
     /// WAL allows multiple concurrent readers on the same DB file, so this scales nearly
