@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-using CryptoScanner.EmulatorApp.Views;
+using CryptoScanner.Emulator.Views;
 
-namespace CryptoScanner.EmulatorApp;
+namespace CryptoScanner.Emulator;
 
 public partial class App : Application
 {

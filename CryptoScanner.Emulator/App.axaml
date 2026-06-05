@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="CryptoScanner.EmulatorApp.App"
+             x:Class="CryptoScanner.Emulator.App"
              RequestedThemeVariant="Default">
 
     <Application.Styles>

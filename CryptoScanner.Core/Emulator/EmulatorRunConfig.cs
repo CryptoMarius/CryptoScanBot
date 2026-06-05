@@ -1,12 +1,12 @@
-using CryptoScanner.Core.Enums;
-
 namespace CryptoScanner.Core.Emulator;
 
 /// <summary>
-/// Configuration for a single emulator run — everything the engine needs to know to replay
-/// candles deterministically. Serialised as JSON into <see cref="Model.CryptoEmulatorRun.ConfigJson"/>
-/// at run-start so the exact inputs can always be retrieved later, even when the live settings
-/// have changed.
+/// Configuration for a single emulator run. Strategies, active intervals, trend filters and
+/// every other tuning knob live in <c>GlobalData.Settings</c> (the regular scanner settings) —
+/// the same JSON the live scanner uses. We just need to know which symbols to replay and over
+/// what period. The full settings snapshot at run start is captured in
+/// <see cref="SettingsSnapshotJson"/> so the run remains reproducible even after the user
+/// changes settings later.
 /// </summary>
 public class EmulatorRunConfig
 {
@@ -17,38 +17,27 @@ public class EmulatorRunConfig
     public List<string> Symbols { get; set; } = [];
 
     /// <summary>
-    /// Driving interval — the timeline along which the TickRunner advances. Typically the
-    /// shortest active interval (1m). Higher-timeframe candles are picked up via aggregation
-    /// just as the live scanner does.
-    /// </summary>
-    public string DrivingInterval { get; set; } = "1m";
-
-    /// <summary>
-    /// Inclusive UTC start of the replay window. Indicators are warmed up on candles before
-    /// this date so the first replayed bar already has stable values.
+    /// Inclusive UTC start of the replay window. Higher-interval candles are aggregated from
+    /// the 1m driving interval; enough 1m history is loaded before this date to fill the
+    /// longest indicator lookback on the longest active interval.
     /// </summary>
     public DateTime FromDate { get; set; }
 
     /// <summary>Inclusive UTC end of the replay window.</summary>
     public DateTime ToDate { get; set; }
 
-    /// <summary>Strategies enabled for the long side during this run.</summary>
-    public List<CryptoSignalStrategy> StrategiesLong { get; set; } = [];
-
-    /// <summary>Strategies enabled for the short side during this run.</summary>
-    public List<CryptoSignalStrategy> StrategiesShort { get; set; } = [];
-
     /// <summary>
-    /// Optional override snapshot of <c>GlobalData.Settings</c> (serialised JSON). When non-null
-    /// the engine applies it for the duration of the run instead of the user's live settings.
-    /// Use cases: parameter sweeps, reproducible experiments. Null means "use whatever
-    /// settings.json is in this emulator folder right now".
+    /// Snapshot of <c>GlobalData.Settings</c> serialised to JSON at run start. Captured into
+    /// <see cref="Model.CryptoEmulatorRun.ConfigJson"/> so the exact strategy set, intervals,
+    /// indicator parameters and trend filters used by this run can always be retrieved later.
+    /// Null is allowed (engine reads current settings directly), but persisted runs should
+    /// always have it set.
     /// </summary>
-    public string? SettingsOverrideJson { get; set; }
+    public string? SettingsSnapshotJson { get; set; }
 
     /// <summary>
     /// Free-form label so the operator can spot a run in the EmulatorRun table without
-    /// reading ConfigJson. Optional.
+    /// reading the full settings snapshot. Optional.
     /// </summary>
     public string Label { get; set; } = "";
 }

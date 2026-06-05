@@ -6,7 +6,7 @@ using CryptoScanner.Core.Services;
 
 using System.Reflection;
 
-namespace CryptoScanner.EmulatorApp;
+namespace CryptoScanner.Emulator;
 
 internal class Program
 {

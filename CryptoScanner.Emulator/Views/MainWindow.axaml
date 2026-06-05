@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="400"
         Width="640" Height="400"
-        x:Class="CryptoScanner.EmulatorApp.Views.MainWindow"
+        x:Class="CryptoScanner.Emulator.Views.MainWindow"
         Title="CryptoScanBot Emulator (scaffold)"
         WindowStartupLocation="CenterScreen">
 

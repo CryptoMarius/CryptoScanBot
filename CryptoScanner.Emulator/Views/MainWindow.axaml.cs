@@ -2,7 +2,7 @@ using Avalonia.Controls;
 
 using CryptoScanner.Core.Core;
 
-namespace CryptoScanner.EmulatorApp.Views;
+namespace CryptoScanner.Emulator.Views;
 
 public partial class MainWindow : Window
 {

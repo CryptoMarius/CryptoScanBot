@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoScanner.ShowChart", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.CoreTests", "CryptoScanner.CoreTests\CryptoScanner.CoreTests.csproj", "{2A46EE2A-926D-4CEA-916F-6E92A2740486}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Emulator", "CryptoScanner.Emulator\CryptoScanner.Emulator.csproj", "{00358383-D14D-498C-A5DA-95DB994FD998}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.EmulatorOld", "CryptoScanner.EmulatorOld\CryptoScanner.EmulatorOld.csproj", "{00358383-D14D-498C-A5DA-95DB994FD998}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -30,7 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Config", "CryptoScanner.Config\CryptoScanner.Config.csproj", "{61BF5C2D-60FD-00C9-5904-F636119665EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.EmulatorApp", "CryptoScanner.EmulatorApp\CryptoScanner.EmulatorApp.csproj", "{51C87B6C-D9A6-471B-9EBE-C8E270C5B944}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoScanner.Emulator", "CryptoScanner.Emulator\CryptoScanner.Emulator.csproj", "{51C87B6C-D9A6-471B-9EBE-C8E270C5B944}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
