@@ -28,11 +28,55 @@ internal class Program
         if (!Directory.Exists(GlobalData.AppDataFolder))
             Directory.CreateDirectory(GlobalData.AppDataFolder);
 
+        // First-run bootstrap: if the emulator folder has no settings yet, seed it from the
+        // live scanner's settings.json (lives in the parent folder by convention). The user
+        // can immediately tweak via the Configure dialog; nothing is shared after this copy.
+        BootstrapFromLiveScanner();
+
+        // Load the scanner settings from THIS folder. Identical to what the live scanner does
+        // at startup — same SettingsBasic shape, same JSON serializer.
+        GlobalData.LoadScannerConfiguration();
+
         Console.WriteLine($"Emulator Version:        {GlobalData.AppVersion}");
         Console.WriteLine($"Emulator AppPath:        {GlobalData.AppPath}");
         Console.WriteLine($"Emulator AppDataFolder:  {GlobalData.AppDataFolder}");
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+    }
+
+
+    /// <summary>
+    /// One-time copy of the live scanner's CryptoScanBot-settings.json into the emulator
+    /// folder when the emulator has no settings file yet. The live folder is the parent of
+    /// the emulator folder by convention (..\CryptoScanBot\Emulator → ..\CryptoScanBot).
+    /// If the live folder cannot be located or has no settings, this is a no-op — the
+    /// emulator will then start with default settings and the user can fill them via
+    /// Configure.
+    /// </summary>
+    private static void BootstrapFromLiveScanner()
+    {
+        string filename = $"{Constants.AppName}-settings.json";
+        string emulatorSettings = Path.Combine(GlobalData.AppDataFolder, filename);
+        if (File.Exists(emulatorSettings))
+            return;
+
+        string? liveFolder = Path.GetDirectoryName(GlobalData.AppDataFolder);
+        if (string.IsNullOrEmpty(liveFolder))
+            return;
+
+        string liveSettings = Path.Combine(liveFolder, filename);
+        if (!File.Exists(liveSettings))
+            return;
+
+        try
+        {
+            File.Copy(liveSettings, emulatorSettings);
+            Console.WriteLine($"Bootstrap: copied scanner settings from {liveSettings}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap: copy failed: {ex.Message}");
+        }
     }
 
 

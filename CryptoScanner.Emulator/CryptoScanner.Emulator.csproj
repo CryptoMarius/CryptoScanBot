@@ -25,9 +25,11 @@
 		<PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+		<ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 	</ItemGroup>
 </Project>
