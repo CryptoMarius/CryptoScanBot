@@ -85,6 +85,7 @@ public static class PositionTools
             EventText = eventText,
             PartCount = 0,
             Side = side,
+            EmulatorRunId = GlobalData.CurrentEmulatorRunId,
         };
         return position;
     }

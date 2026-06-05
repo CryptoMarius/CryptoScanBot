@@ -18,6 +18,9 @@ public partial class CryptoPosition : CryptoData2
     public DateTime? UpdateTime { get; set; }
     public DateTime? CloseTime { get; set; }
 
+    // FK to EmulatorRun (null on live positions; populated by the emulator).
+    public int? EmulatorRunId { get; set; }
+
     public int ExchangeId { get; set; }
     [Computed]
     public required virtual CryptoExchange Exchange { get; set; }

@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 60;
+    public readonly static int CurrentDatabaseVersion = 61;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1224,6 +1224,30 @@ public class Migration
             using var transaction = database.BeginTransaction();
 
             database.Connection.Execute("alter table Signal drop column Backtest", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 05-06-2026 Emulator run-metadata
+        // - Signal.EmulatorRunId  (NULL for live signals, FK to EmulatorRun)
+        // - Position.EmulatorRunId (idem for positions)
+        // The EmulatorRun table itself is created by Database.CreateTables() before
+        // Migration.Execute runs, so it always exists when the FK targets resolve.
+        // Same migration applies to the live DB; columns just stay NULL there and
+        // the EmulatorRun table remains empty, invisible to the live workflow.
+        if (CurrentVersion > version.Version && version.Version == 60)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute(
+                "alter table Signal add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+            database.Connection.Execute(
+                "alter table Position add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
 
             // update version
             version.Version += 1;

@@ -59,6 +59,11 @@ public static class GlobalData
     // interface stubs (INotifier, ISoundPlayer, ISubscriptionManager).
     public static bool IsEmulatorMode { get; set; }
 
+    // EmulatorRun.Id of the currently active emulator run, or null for live scanner.
+    // Set by the TickRunner at run-start, cleared at run-end. Signals and positions created
+    // while non-null are tagged with this id so the same DB can hold multiple runs.
+    public static int? CurrentEmulatorRunId { get; set; }
+
 
     private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;
     public static CryptoApplicationStatus ApplicationStatus

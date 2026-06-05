@@ -25,6 +25,10 @@ public partial class CryptoSignal : CryptoData2
 
     public bool IsInvalid { get; set; }
 
+    // FK to EmulatorRun (null on live signals; populated by the emulator's TickRunner via
+    // GlobalData.CurrentEmulatorRunId so each run's signals can be retrieved / compared).
+    public int? EmulatorRunId { get; set; }
+
     public DateTime OpenDate { get; set; }
 
     // Einde van de candle (voor sorteren in web)

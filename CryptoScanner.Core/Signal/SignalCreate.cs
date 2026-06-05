@@ -475,6 +475,7 @@ public class SignalCreate
             Interval = Interval,
             IntervalId = Interval.Id,
             Candle = candle,
+            EmulatorRunId = GlobalData.CurrentEmulatorRunId,
             SignalPrice = candle.Close,
             PriceMin = candle.Close, // statistics
             PriceMax = candle.Close, // statistics

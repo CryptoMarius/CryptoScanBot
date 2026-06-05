@@ -324,6 +324,7 @@ public class CryptoDatabase : IDisposable
                 "Side INTEGER NOT NULL," +
 
                 "IsInvalid INTEGER NOT NULL," +
+                "EmulatorRunId INTEGER NULL," +
 
                 "OpenDate TEXT NULL," +
                 "CloseDate TEXT NULL," +
@@ -410,7 +411,8 @@ public class CryptoDatabase : IDisposable
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
-                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
+                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxSignalId ON Signal(Id)");
             connection.Connection.Execute("CREATE INDEX IdxSignalExchangeId ON Signal(ExchangeId)");
@@ -430,6 +432,7 @@ public class CryptoDatabase : IDisposable
                 "CreateTime TEXT NOT NULL," +
                 "UpdateTime TEXT NOT NULL," +
                 "CloseTime TEXT NULL," +
+                "EmulatorRunId INTEGER NULL," +
 
                 "ExchangeId INTEGER NOT NULL," +
                 "SymbolId INTEGER NOT NULL," +
@@ -544,7 +547,8 @@ public class CryptoDatabase : IDisposable
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
-                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
+                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
             ")", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionId ON Position(Id)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionExchangeId ON Position(ExchangeId)", transaction);
@@ -841,12 +845,31 @@ public class CryptoDatabase : IDisposable
         }
     }
 
+    private static void CreateTableEmulatorRun(CryptoDatabase connection)
+    {
+        if (MissingTable(connection, "EmulatorRun"))
+        {
+            connection.Connection.Execute("CREATE TABLE [EmulatorRun] (" +
+                "Id INTEGER primary key autoincrement not null," +
+                "StartedAt TEXT NOT NULL," +
+                "FinishedAt TEXT NULL," +
+                "ConfigJson TEXT NOT NULL," +
+                "GitSha TEXT NULL," +
+                "Result TEXT NULL," +
+                "SignalCount INTEGER NOT NULL DEFAULT 0," +
+                "PositionCount INTEGER NOT NULL DEFAULT 0" +
+            ")");
+            connection.Connection.Execute("CREATE INDEX IdxEmulatorRunId ON EmulatorRun(Id)");
+        }
+    }
+
     public static void CreateTables(CryptoDatabase connection)
     {
         CreateTableInterval(connection); // (+hardcoded list)
         CreateTableExchange(connection); // (+hardcoded list)
 
         CreateTableSymbol(connection);
+        CreateTableEmulatorRun(connection); // before Signal/Position (FK targets, though SQLite doesn't enforce)
         CreateTableSignal(connection);
 
         CreateTablePosition(connection);

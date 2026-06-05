@@ -1,6 +1,8 @@
 CryptoScanBot release historie:
 
 05-06-2025 2.5.5
+- Nieuwe experimentele strategie voor wtlb en de stoch (for my eyes only)
+- Voorbereidingen voor een emulator die als een aparte executable kan draaien (naast de scanner)
 - De stobb/storsi strategien uitgebreid met 3 vinkjes voro zone "rejectie" (dlz, fvg en smc)
 - De stobb/storsi in combinatie met de zones verwijderd (melding op een willekeurige zone is niet handig)
 
