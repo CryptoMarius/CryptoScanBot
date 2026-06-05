@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Signal.Nwe;
 
 /// <summary>
 /// Short signal: NWE upper crosses BB upper downward (from outside in).
-/// BB upper must still be rising. At least one of the last 10 bars must have
+/// BB upper must still be rising. At least one of the last 5 bars must have
 /// closed above BB upper.
 ///
 /// Entry conditions (bars[^1] = current, bars[^2] = prev, bars[^3] = prev2):
@@ -14,7 +14,7 @@ namespace CryptoScanner.Core.Signal.Nwe;
 ///   - current.NweUpper &lt; current.BbUpper   : NWE upper crossed inside (below) BB upper
 ///   - current.BbUpper > prev.BbUpper        : BB upper still pointing up
 ///   - current.BbUpper > prev.BbUpper > prev2.BbUpper : BB upper rising for 2 bars
-///   - Any of last 10 bars: close > BbUpper
+///   - Any of last 5 bars: close > BbUpper
 /// </summary>
 public class SignalNweBbShort : SignalNweBbBase
 {
@@ -68,7 +68,7 @@ public class SignalNweBbShort : SignalNweBbBase
             return false;
         }
 
-        // At least one of the last 10 bars must have closed above BB upper
+        // At least one of the last 5 bars must have closed above BB upper
         bool hadExtension = false;
         int lookbackStart = Math.Max(0, bars.Length - 6); // exclude current bar (^1)
         for (int i = lookbackStart; i < bars.Length - 1; i++)
@@ -82,7 +82,7 @@ public class SignalNweBbShort : SignalNweBbBase
 
         if (!hadExtension)
         {
-            ExtraText = "no candle in last 10 bars closed above BB upper";
+            ExtraText = "no candle in last 5 bars closed above BB upper";
             return false;
         }
 
