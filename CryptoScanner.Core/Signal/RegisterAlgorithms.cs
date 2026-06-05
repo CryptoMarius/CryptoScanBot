@@ -2,6 +2,7 @@
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.WaveTrend;
+using CryptoScanner.Core.Signal.WtLbStoch;
 #endif
 using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
@@ -350,6 +351,15 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.WaveTrend,
             AnalyzeLongType = typeof(SignalWaveTrendLong),
             AnalyzeShortType = typeof(SignalWaveTrendShort),
+        });
+
+        // wtlb.stoch — WT_LB recovery cross combined with Stoch %K mid-cross
+        Register(new AlgorithmDefinition()
+        {
+            Name = "wtlb.stoch",
+            Strategy = CryptoSignalStrategy.WtLbStoch,
+            AnalyzeLongType = typeof(SignalWtLbStochLong),
+            AnalyzeShortType = typeof(SignalWtLbStochShort),
         });
 #endif
 

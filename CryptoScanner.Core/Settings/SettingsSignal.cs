@@ -61,6 +61,9 @@ public class SettingsSignal
     // WaveTrend [LazyBear] — WT_LB cross in OS/OB zone with optional trend filter
     public SettingsSignalStrategyWaveTrend WaveTrend = new();
 
+    // wtlb.stoch — WT_LB cross + Stoch %K mid-cross combined momentum signal
+    public SettingsSignalStrategyWtLbStoch WtLbStoch = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

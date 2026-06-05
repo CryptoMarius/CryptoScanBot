@@ -1023,10 +1023,10 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweRepainting))
             Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
 
-        // Draw NWE × BB crossover markers
+        // Draw NWE × BB crossover markers (from pre-stored signals; no recompute)
         group = "nwe.bb";
         if (Toggle(model, group, Session.ShowNweBb))
-            NweBb.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            NweBb.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
 
         // Draw Bollinger Bands
         group = "bb";

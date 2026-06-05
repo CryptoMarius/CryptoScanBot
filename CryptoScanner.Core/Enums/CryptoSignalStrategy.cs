@@ -46,6 +46,7 @@ public enum CryptoSignalStrategy
     BbmaOmni = 43,
 
     WaveTrend = 50,
+    WtLbStoch = 51,
 #endif
 
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
