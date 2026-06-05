@@ -114,14 +114,47 @@
                 </HeaderedContentControl>
 
 				<!-- Action Buttons -->
-				<StackPanel Spacing="4">
-					<Button Content="Refresh" Command="{Binding RefreshCommand}" HorizontalAlignment="Center"/>
-					<Button Content="Calculate"  Command="{Binding CalculateCommand}" HorizontalAlignment="Center"/>
+				<Grid ColumnDefinitions="*,*,*" Margin="0,6,4,0" ColumnSpacing="4">
+					<Button Grid.Column="0" Content="Refresh"
+							Command="{Binding RefreshCommand}"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Center"
+							Padding="4,4"/>
+					<Button Grid.Column="1" Content="Calc"
+							Command="{Binding CalculateCommand}"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Center"
+							Padding="4,4"
+							ToolTip.Tip="Calculate"/>
 					<!-- Open Trading App -->
-					<Button Content="Trading app" Command="{Binding OpenTradingAppCommand}" HorizontalAlignment="Center"/>
-					<!-- not working, turned off -->
-					<Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
-				</StackPanel>
+					<Button Grid.Column="2"
+							Command="{Binding OpenTradingAppCommand}"
+							HorizontalAlignment="Stretch"
+							HorizontalContentAlignment="Center"
+							Padding="4,4"
+							ToolTip.Tip="Open trading app">
+						<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+							<Viewbox Width="14" Height="14" VerticalAlignment="Center">
+								<Canvas Width="24" Height="24">
+									<!-- Flame -->
+									<Path Data="M9,18 L12,23 L15,18 L13,17 L12,19 L11,17 Z" Fill="#FF6B35"/>
+									<!-- Fins -->
+									<Path Data="M8,14 L4,18 L8,18 Z" Fill="#E63946"/>
+									<Path Data="M16,14 L20,18 L16,18 Z" Fill="#E63946"/>
+									<!-- Body -->
+									<Path Data="M12,2 C14,4 16,7 16,12 L16,18 L8,18 L8,12 C8,7 10,4 12,2 Z"
+										  Fill="#F1FAEE" Stroke="#1D3557" StrokeThickness="0.8"/>
+									<!-- Window -->
+									<Ellipse Width="3" Height="3" Canvas.Left="10.5" Canvas.Top="8"
+											 Fill="#457B9D" Stroke="#1D3557" StrokeThickness="0.6"/>
+								</Canvas>
+							</Viewbox>
+							<TextBlock Text="" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Button>
+				</Grid>
+				<!-- not working, turned off -->
+				<Button Content="Zoom last" Command="{Binding ZoomLastCommand}" HorizontalAlignment="Center" IsEnabled="false" IsVisible="false"/>
 
 
 
