@@ -17,9 +17,9 @@
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		
 		<!-- Assembly Version Info -->
-		<AssemblyVersion>2.5.4.0</AssemblyVersion>
-		<FileVersion>2.5.4.0</FileVersion>
-		<Version>2.5.4</Version>
+		<AssemblyVersion>2.5.5.0</AssemblyVersion>
+		<FileVersion>2.5.5.0</FileVersion>
+		<Version>2.5.5</Version>
 
 		<!-- Product Info -->
 		<Product>CryptoScanBot</Product>
