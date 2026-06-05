@@ -16,8 +16,8 @@ public class SettingsSignalStrategyWtLbStoch : SettingsSignalStrategyBase
 
     // Cross trigger levels for WT1. Intentionally asymmetric per user spec:
     // long fires earlier (further from neutral) than short.
-    public decimal WtCrossLongLevel { get; set; } = -40m;
-    public decimal WtCrossShortLevel { get; set; } = 60m;
+    public decimal WtCrossLongLevel { get; set; } = -10m;
+    public decimal WtCrossShortLevel { get; set; } = 10m;
 
     // WT1 must have been UNINTERRUPTEDLY below 0 (long) or above 0 (short) for at least
     // this many bars ending at the bar just before the cross. Single bar on the wrong
