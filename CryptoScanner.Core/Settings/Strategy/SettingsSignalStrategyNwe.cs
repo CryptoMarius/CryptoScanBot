@@ -4,7 +4,7 @@
 public class SettingsSignalStrategyNwe : SettingsSignalStrategyBase
 {
     // configuration:
-    public decimal BandWidth { get; set; } = 8.0m;
+    public double BandWidth { get; set; } = 8.0;
     public decimal Multiplication { get; set; } = 3.0m;
 
     public bool IncludeRsi { get; set; } = false;

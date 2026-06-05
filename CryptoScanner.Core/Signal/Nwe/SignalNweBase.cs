@@ -190,7 +190,7 @@ public class SignalNweBase : SignalCreateBase
         ExtraText = "";
 
         NweIndicator indicator = new(
-            bandwidth: (double)GlobalData.Settings.Signal.Nwe.BandWidth,
+            bandwidth: GlobalData.Settings.Signal.Nwe.BandWidth,
             multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
             smoothRepainting: SmoothRepainting
            );
@@ -206,7 +206,7 @@ public class SignalNweBase : SignalCreateBase
             if (CandleLast!.Candle.Close < lowerband && CandleLast!.Candle.Open < lowerband
                 && CandleLast.Candle.Close > CandleLast!.Candle.Open)
             {
-                ExtraText = $"{nweLast.OpenTime.ToLocalTime():ddd yyyy-MM-dd HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={lowerband?.ToString(Symbol.PriceDisplayFormat)}";
+                ExtraText = $"{nweLast.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={lowerband?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }
@@ -219,7 +219,7 @@ public class SignalNweBase : SignalCreateBase
             if (CandleLast!.Candle.Close > upperband && CandleLast!.Candle.Open > upperband
                 && CandleLast.Candle.Close < CandleLast!.Candle.Open)
             {
-                ExtraText = $"{nweLast.OpenTime.ToLocalTime():ddd yyyy-MM-dd HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={upperband?.ToString(Symbol.PriceDisplayFormat)}";
+                ExtraText = $"{nweLast.OpenTime.ToLocalTime():HH:mm} c={CandleLast!.Candle.Close.ToString(Symbol.PriceDisplayFormat)} o={CandleLast!.Candle.Open.ToString(Symbol.PriceDisplayFormat)} b={upperband?.ToString(Symbol.PriceDisplayFormat)}";
                 return true;
             }
         }

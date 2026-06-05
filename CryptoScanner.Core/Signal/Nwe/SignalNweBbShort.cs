@@ -30,6 +30,13 @@ public class SignalNweBbShort : SignalNweBbBase
             return false;
         }
 
+        // NWE lower was outside (below) BB lower
+        if (CandleLast.Candle.Close <= (decimal)CandleLast.CandleData.Sma20!)
+        {
+            ExtraText = $"Candle already below sma20";
+            return false;
+        }
+
         if (!TryBuildHistory(out var bars))
         {
             ExtraText = "insufficient history for NWE/BB";
