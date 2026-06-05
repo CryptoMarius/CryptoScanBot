@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
 
 namespace CryptoScanner.Core.Emulator;
 
@@ -111,9 +112,12 @@ public sealed class TickRunner
                 }
             }
 
-            // TODO: invoke the scanner analysis pipeline here. Needs a dedicated entry point
-            // that does not assume the live ScannerSession is running (current flow goes
-            // through ThreadMonitorCandle → SignalPrepare → SignalCreate). Phase 3 closer.
+            // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
+            // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
+            // Synchronous (await) so the next replay tick can never observe a half-processed
+            // state — multi-symbol parallelism is intentionally out of scope here.
+            PositionMonitor positionMonitor = new(symbol, candle);
+            await positionMonitor.NewCandleArrivedAsync();
 
             processedBars++;
             Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
