@@ -94,7 +94,7 @@ public class Emulator
     {
         try
         {
-            if (!GlobalData.BackTest)
+            if (!GlobalData.IsEmulatorMode)
                 return;
 
 
@@ -107,8 +107,8 @@ public class Emulator
 
             // Todo: Restore afterwards!
             symbol.LastTradeDate = null;
-            GlobalData.BackTestCandle = null;
-            GlobalData.BackTestDateTime = start;
+            // Legacy: BackTestCandle/BackTestDateTime were the old emulator's tick markers.
+            // Replaced by GlobalData.Clock = EmulatorClock { UtcNow = ... } in the new design.
             //GlobalData.ActiveAccount!.Data.Clear();
 
 
@@ -152,8 +152,8 @@ public class Emulator
                 //symbol.AskPrice = candle.Close;
                 //symbol.BidPrice = candle.Close;
 
-                GlobalData.BackTestCandle = candle;
-                GlobalData.BackTestDateTime = CandleTools.GetUnixDate(candle.OpenTime + 60);
+                // Legacy: BackTestCandle/BackTestDateTime were the old emulator's tick markers.
+                // Replaced by GlobalData.Clock = EmulatorClock { UtcNow = ... } in the new design.
 
                 // Calculate barometer
                 if (exec)
@@ -180,8 +180,6 @@ public class Emulator
                 //await positionMonitor.NewCandleArrivedAsync();
 
             }
-            GlobalData.BackTestCandle = null;
-
             // report something?
             GlobalData.AddTextToLogTab($"Emulator {symbol.Name} completed");
         }

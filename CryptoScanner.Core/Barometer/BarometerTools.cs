@@ -90,18 +90,17 @@ public class BarometerTools
         CryptoSymbolInterval symbolInterval = bmSymbol.GetSymbolInterval(interval.IntervalPeriod);
         CryptoCandleList candles = symbolInterval.CandleList;
 
-        // Remove old candles from the barometer symbol (< 24 hours, 1440 candles)
-        if (!GlobalData.BackTest)
+        // Remove old candles from the barometer symbol (< 24 hours, 1440 candles).
+        // Barometer does not run in the emulator (it needs the full symbol pool), so the
+        // legacy BackTest-branch has been removed from this method entirely.
+        CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
+        // Use TryGetFirstCandle() so the read is covered by the CryptoCandleList read lock,
+        // preventing InvalidOperationException when another thread concurrently calls Add().
+        while (candles.TryGetFirstCandle(out CryptoCandle c))
         {
-            CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(bmSymbol, interval, DateTime.UtcNow);
-            // Use TryGetFirstCandle() so the read is covered by the CryptoCandleList read lock,
-            // preventing InvalidOperationException when another thread concurrently calls Add().
-            while (candles.TryGetFirstCandle(out CryptoCandle c))
-            {
-                if (c.OpenTime < startFetchUnix)
-                    candles.Remove(c.OpenTime);
-                else break;
-            }
+            if (c.OpenTime < startFetchUnix)
+                candles.Remove(c.OpenTime);
+            else break;
         }
 
 
@@ -109,35 +108,23 @@ public class BarometerTools
 
         CryptoBarometerData? barometerData = GlobalData.ActiveExchange!.Data.GetBarometer(quoteData.Name, interval.IntervalPeriod);
 
-        if (GlobalData.BackTest)
-        {
-            if (GlobalData.BackTestCandle.OpenTime == 0)
-                return;
-
-            // Just 1 is okay
-            periodStart = GlobalData.BackTestCandle!.OpenTime;
-            periodStop = GlobalData.BackTestCandle!.OpenTime;
-        }
+        // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
+        if (symbolInterval.LastCandleSynchronized.HasValue)
+            periodStart = symbolInterval.LastCandleSynchronized.Value;
         else
         {
-            // Begin van de candle in interval X, bereken het laatste interval opnieuw (bewust)
-            if (symbolInterval.LastCandleSynchronized.HasValue)
-                periodStart = symbolInterval.LastCandleSynchronized.Value;
+            // Geef deze alvast een waarde — use TryGetFirstCandle() for thread-safe key access.
+            if (candles.TryGetFirstCandle(out CryptoCandle firstCandle))
+                periodStart = firstCandle.OpenTime;
             else
-            {
-                // Geef deze alvast een waarde — use TryGetFirstCandle() for thread-safe key access.
-                if (candles.TryGetFirstCandle(out CryptoCandle firstCandle))
-                    periodStart = firstCandle.OpenTime;
-                else
-                    periodStart = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddDays(-2), 1);
+                periodStart = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddDays(-2), 1);
 
-                symbolInterval.LastCandleSynchronized = periodStart;
-            }
-
-            // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
-            // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
-            periodStop = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+            symbolInterval.LastCandleSynchronized = periodStart;
         }
+
+        // De laatste candle die we moeten berekenen. Mogelijk 1 te hoog, wat "valse" waarden kan geven?
+        // Dat kan opgelost worden door de laatst aangekomen candle mee te geven (vanuit de 1m stream)
+        periodStop = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
         //DateTime periodStartDebug = CandleTools.GetUnixDate(periodStart);
         //DateTime periodStopDebug = CandleTools.GetUnixDate(periodStop);
 

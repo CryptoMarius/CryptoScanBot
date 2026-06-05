@@ -54,11 +54,10 @@ public static class GlobalData
     public static bool ApplicationIsClosing { get; set; } = false;
 
 
-    // todo, kill these properties, the emulator is now excluded and these are left overs..
-    // And for the emulator we need to introduce a datetime service + candleservice or something like that
-    public static bool BackTest { get; set; }
-    public static DateTime BackTestDateTime { get; set; }
-    public static CryptoCandle BackTestCandle { get; set; } = default;
+    // Mode flag for side-effect gates (sounds, telegram, websocket subscriptions, sleeps).
+    // Replaces the legacy "BackTest" boolean. In a later phase these gates are replaced by
+    // interface stubs (INotifier, ISoundPlayer, ISubscriptionManager).
+    public static bool IsEmulatorMode { get; set; }
 
 
     private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;

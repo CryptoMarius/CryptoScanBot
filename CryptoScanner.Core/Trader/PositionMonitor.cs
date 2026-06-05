@@ -1927,7 +1927,7 @@ public class PositionMonitor //: IDisposable
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 
             // Remove old candles or CandleData
-            if (!GlobalData.BackTest && Symbol.Data.ZoneLock.CurrentCount > 0)
+            if (!GlobalData.IsEmulatorMode && Symbol.Data.ZoneLock.CurrentCount > 0)
                 await CandleTools.CleanCandleDataAsync(Symbol, LastCandle1mCloseTime);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Done " + traceText);

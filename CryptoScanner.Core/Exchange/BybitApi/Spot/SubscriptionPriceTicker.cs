@@ -26,7 +26,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     {
                         Interlocked.Increment(ref TickerCount);
 
-                        if (!GlobalData.BackTest)
+                        if (!GlobalData.IsEmulatorMode)
                         {
 
                             // Waarschijnlijk ALLEMAAL gebaseerd op de 24h prijs

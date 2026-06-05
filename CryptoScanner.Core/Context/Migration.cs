@@ -1202,7 +1202,6 @@ public class Migration
 
         //***********************************************************
         // 30-05-2026 Changed position
-        // There are no field changes, only version number for UpdateExchanges
         if (CurrentVersion > version.Version && version.Version == 58)
         {
             using var transaction = database.BeginTransaction();
@@ -1218,9 +1217,28 @@ public class Migration
 
 
         //***********************************************************
+        // 05-06-2026 Changed signal
+        // - Signal.Backtest (+ adjust SQL for loading signals)
+        if (CurrentVersion > version.Version && version.Version == 58)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal drop column Backtest", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
         //
         //
         //
+        //***********************************************************
+        // 30-05-2026 Changed position
+        // There are no field changes, only version number for UpdateExchanges
 
 
         // Apply the exchange defaults with each update

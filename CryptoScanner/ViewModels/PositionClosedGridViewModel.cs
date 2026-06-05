@@ -88,7 +88,7 @@ public partial class PositionClosedGridViewModel : ObservableObject
         // TODO - limit to the last 2 days?
         //GlobalData.AddTextToLogTab("Reading closed positions");
         string sql = "select * from position where exchangeid=@exchangeid and not closetime is null order by id desc";
-        if (!GlobalData.BackTest)
+        if (!GlobalData.IsEmulatorMode)
             sql += " limit 500";
         using var database = new CryptoDatabase();
 

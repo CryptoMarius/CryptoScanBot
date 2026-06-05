@@ -1,10 +1,15 @@
 CryptoScanBot release historie:
 
+05-06-2025 2.5.5
+- De stobb/storsi strategien uitgebreid met 3 vinkjes voro zone "rejectie" (dlz, fvg en smc)
+- De stobb/storsi in combinatie met de zones verwijderd (melding op een willekeurige zone is niet handig)
+
 04-06-2025 2.5.4
 - Tekst kunnen kopieeren uit de log
 - De default kleuren voor basismunten zijn niet goed (sommige zijn wit)
 - De link werkt niet goed bij een single execution file, single file executable uitgezet
 - Verouderde CryptoScanBot-weblinks.json met links niet meer gebruiken/weggooien
+- Foutmelding "Cannot store 'NaN' values" opgelost (Hyperliquid)
 
 04-06-2025 2.5.3
 - De Trader Rsi en Stobb entry opties gesplitst zodat je deze apart aan kan sturen

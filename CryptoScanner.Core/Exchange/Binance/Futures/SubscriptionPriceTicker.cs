@@ -27,7 +27,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     {
                         Interlocked.Increment(ref TickerCount);
 
-                        if (!GlobalData.BackTest)
+                        if (!GlobalData.IsEmulatorMode)
                         {
                             symbol.LastPrice = tick.LastPrice;
                             //symbol.BidPrice = tick.BestBidPrice;

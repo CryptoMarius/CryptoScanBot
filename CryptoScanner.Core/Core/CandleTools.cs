@@ -158,7 +158,7 @@ public static class CandleTools
         try
         {
             // Last known price (and the price ticker will adjust)
-            if (!GlobalData.BackTest)
+            if (!GlobalData.IsEmulatorMode)
             {
                 symbol.LastPrice = close;
             }

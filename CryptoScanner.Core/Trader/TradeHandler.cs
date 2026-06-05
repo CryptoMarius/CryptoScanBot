@@ -17,7 +17,7 @@ public static class TradeHandler
         if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(symbol.Name, out CryptoPosition? position))
         {
             // could also be done in ThreadDoubleCheckPosition
-            if (!GlobalData.BackTest && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
+            if (!GlobalData.IsEmulatorMode && orderStatus.IsFilled() && GlobalData.Settings.General.SoundTradeNotification)
                 GlobalData.PlaySomeMusic("sound-trade-notification.wav");
 
             // De actie doorgeven naar een andere thread

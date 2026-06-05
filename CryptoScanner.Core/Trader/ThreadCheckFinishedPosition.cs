@@ -22,7 +22,7 @@ public class ThreadCheckFinishedPosition
 
     public async Task AddToQueue(CryptoPosition position, string? orderId = null, CryptoOrderStatus? status = null)
     {
-        if (GlobalData.BackTest)
+        if (GlobalData.IsEmulatorMode)
         {
             using CryptoDatabase database = new();
             database.Open();
@@ -67,7 +67,7 @@ public class ThreadCheckFinishedPosition
 
     //private static async Task<bool> UpdatePositionStatisticsAsync(CryptoPosition position)
     //{
-    //    if (position.CloseTime == null && GlobalData.BackTest)
+    //    if (position.CloseTime == null && GlobalData.IsEmulatorMode)
     //    {
     //        CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
     //        if (symbolInterval.CandleList.Count > 0)
@@ -158,19 +158,12 @@ public class ThreadCheckFinishedPosition
         {
             CryptoCandle lastCandle1m;
 
-            // Deze routine is vanwege de Last() niet geschikt voor de emulator
-            // Hoe lossen we dat nu weer op, want wordt strakt een echt probleem.
+            // Live path takes the most recent candle. The emulator runs in a separate process
+            // with its own DB and clock, so the legacy BackTest branch is no longer needed here.
             await position.Symbol.Data.CandleLock.WaitAsync();
             try
             {
-                if (GlobalData.BackTest)
-                {
-                    lastCandle1m = GlobalData.BackTestCandle;
-                    if (lastCandle1m.OpenTime == 0)
-                        return;
-                }
-                else
-                    lastCandle1m = symbolPeriod.CandleList.Values.Last();
+                lastCandle1m = symbolPeriod.CandleList.Values.Last();
             }
             finally
             {
@@ -198,13 +191,13 @@ public class ThreadCheckFinishedPosition
         //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} pickup {position.Status} check={position.ForceCheckPosition} {reason}");
         try
         {
-            if (!GlobalData.BackTest)
+            if (!GlobalData.IsEmulatorMode)
                 await position.ProcessPositionSemaphore.WaitAsync();
             try
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.Clock.UtcNow)
+                if (!GlobalData.IsEmulatorMode && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.Clock.UtcNow)
                 {
                     //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
                     await AddToQueue(position, orderId, status); // opnieuw, na een vertraging
@@ -272,7 +265,7 @@ public class ThreadCheckFinishedPosition
             }
             finally
             {
-                if (!GlobalData.BackTest)
+                if (!GlobalData.IsEmulatorMode)
                     position.ProcessPositionSemaphore.Release();
             }
 

@@ -2398,7 +2398,7 @@ public partial class TestForm : Form
         GlobalData.Settings.General.SoundTradeNotification = false;
         GlobalData.Settings.General.SoundTradeNotification = false;
 
-        GlobalData.BackTest = true;
+        GlobalData.IsEmulatorMode = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
         // Instap
@@ -2502,7 +2502,7 @@ public partial class TestForm : Form
                 }
             }
 
-            if (!GlobalData.BackTest)
+            if (!GlobalData.IsEmulatorMode)
                 throw new Exception("Backtest option not set");
             if (GlobalData.ActiveExchange == null)
                 throw new Exception("No active exchange");

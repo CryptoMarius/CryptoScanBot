@@ -23,11 +23,11 @@ internal class EmulatorTest
 
     public static void Test()
     {
-        //GlobalData.BackTest = true;
+        //GlobalData.IsEmulatorMode = true;
         //GlobalData.SetTradingAccounts();
 
 
-        //// Tickers can be active, but they need to be non ative when GlobalData.BackTest is true?
+        //// Tickers can be active, but they need to be non ative when GlobalData.IsEmulatorMode is true?
         //// Fixed: Stop Price tickers (yes) 
         //// Fixed: Stop KLine tickers (yes) 
         //// not needed: Stop User Ticker -> not the right tradingAccount (add to database as foreign key / lazy object?)

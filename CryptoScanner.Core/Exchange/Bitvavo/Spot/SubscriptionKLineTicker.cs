@@ -263,7 +263,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                             if (candleLast.OpenTime == expectedCandlesUpto)
                             {
                                 // Last known price(s)
-                                if (!GlobalData.BackTest)
+                                if (!GlobalData.IsEmulatorMode)
                                     symbol.LastPrice = candleLast.Close;
                                 GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candleLast);
                             }

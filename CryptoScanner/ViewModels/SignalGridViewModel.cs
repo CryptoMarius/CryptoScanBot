@@ -169,7 +169,7 @@ public partial class SignalGridViewModel : ObservableObject
 
     private void TimerClearAndUpdateSignalsTick(object? sender, EventArgs e)
     {
-        if (GlobalData.BackTest)
+        if (GlobalData.IsEmulatorMode)
             return;
 
         // Avoid duplicate calls (when the list is serious long)

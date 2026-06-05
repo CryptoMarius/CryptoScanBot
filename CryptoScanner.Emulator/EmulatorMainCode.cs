@@ -18,7 +18,7 @@ public class EmulatorMainCode
     //private void SetApplicationTitle()
     //{
     //    string text = $"{GlobalData.AppName} {GlobalData.AppVersion} {GlobalData.Settings.General.ExchangeName} {GlobalData.Settings.General.ExtraCaption}".Trim();
-    //    if (GlobalData.BackTest)
+    //    if (GlobalData.IsEmulatorMode)
     //        text += " (backtest mode)";
     //    // Adjust the application title
     //    Text = text;
@@ -54,7 +54,7 @@ public class EmulatorMainCode
     //                return;
     //            }
 
-    //            if (!GlobalData.BackTest)
+    //            if (!GlobalData.IsEmulatorMode)
     //            {
     //                ApplicationBackTestMode_Click(sender, e);
     //                if (GlobalData.ActiveAccount!.AccountType == CryptoAccountType.PaperTrade)
@@ -78,20 +78,20 @@ public class EmulatorMainCode
     //    ApplicationBackTestMode.Checked = !ApplicationBackTestMode.Checked;
     //    if (ApplicationBackTestMode.Checked)
     //    {
-    //        GlobalData.BackTest = true;
-    //        GlobalData.BackTestDateTime = GlobalData.Settings.BackTest.BackTestStartTime;
+    //        GlobalData.IsEmulatorMode = true;
+    //        GlobalData.IsEmulatorModeDateTime = GlobalData.Settings.BackTest.BackTestStartTime;
     //        GlobalData.Settings.Trading.ActiveBackup = GlobalData.Settings.Trading.Active;
     //        GlobalData.Settings.Trading.Active = true;
     //    }
     //    else
     //    {
-    //        GlobalData.BackTest = false;
+    //        GlobalData.IsEmulatorMode = false;
     //        GlobalData.Settings.Trading.Active = GlobalData.Settings.Trading.ActiveBackup;
     //    }
-    //    ApplicationTradingBot.Enabled = !GlobalData.BackTest;
-    //    ApplicationPlaySounds.Enabled = !GlobalData.BackTest;
-    //    ApplicationCreateSignals.Enabled = !GlobalData.BackTest;
-    //    ApplicationBackTestExec.Enabled = GlobalData.BackTest;
+    //    ApplicationTradingBot.Enabled = !GlobalData.IsEmulatorMode;
+    //    ApplicationPlaySounds.Enabled = !GlobalData.IsEmulatorMode;
+    //    ApplicationCreateSignals.Enabled = !GlobalData.IsEmulatorMode;
+    //    ApplicationBackTestExec.Enabled = GlobalData.IsEmulatorMode;
 
     //    GlobalData.SaveSettings();
     //    SetApplicationTitle();
@@ -100,7 +100,7 @@ public class EmulatorMainCode
     //    RefreshDataGrids();
 
     //    // Resume scanner session, fill missing information
-    //    if (!GlobalData.BackTest)
+    //    if (!GlobalData.IsEmulatorMode)
     //        ToolStripMenuItemRefresh_Click_1(null, null);
     //}
 

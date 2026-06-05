@@ -31,7 +31,7 @@ public class TestBase
             GlobalData.LoadIntervals();
             GlobalData.ActiveExchange = GlobalData.ExchangeListId.Values[0];
             GlobalData.LoadSymbols();
-            GlobalData.BackTest = true;
+            GlobalData.IsEmulatorMode = true;
         }
     }
 

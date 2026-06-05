@@ -41,9 +41,6 @@ public class SettingsBasic
     public List<string> WhiteListOverbought { get; set; } = [];
     public List<string> BlackListOverbought { get; set; } = [];
 
-    /// Backtest settings (the remains from the emulator)
-    //public SettingsBackTest BackTest { get; set; } = new();
-
     // What symbols to show in the information dashboard
     public List<string> ShowSymbolInformation { get; set; } = new(["BTC", "PAXG", "ETH", "XRP", "SOL", "ADA"]);
 }
