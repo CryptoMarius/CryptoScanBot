@@ -14,12 +14,10 @@ using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.StobbDlz;
 using CryptoScanner.Core.Signal.StobbFvg;
 using CryptoScanner.Core.Signal.StobbSmc;
-using CryptoScanner.Core.Signal.StobbZone;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.StorsiDlz;
 using CryptoScanner.Core.Signal.StorsiFvg;
 using CryptoScanner.Core.Signal.StorsiSmc;
-using CryptoScanner.Core.Signal.StorsiZone;
 using CryptoScanner.Core.Signal.Trend;
 
 namespace CryptoScanner.Core.Signal;
@@ -160,22 +158,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStobbMultiSmcShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.zone",
-            Strategy = CryptoSignalStrategy.StobbZone,
-            AnalyzeLongType = typeof(SignalStobbZoneLong),
-            AnalyzeShortType = typeof(SignalStobbZoneShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi.zone",
-            Strategy = CryptoSignalStrategy.StobbMultiZone,
-            AnalyzeLongType = typeof(SignalStobbMultiZoneLong),
-            AnalyzeShortType = typeof(SignalStobbMultiZoneShort),
-        });
-
         //***************************************************
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
         //***************************************************
@@ -246,21 +228,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiSmcShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.zone",
-            Strategy = CryptoSignalStrategy.StoRsiZone,
-            AnalyzeLongType = typeof(SignalStoRsiZoneLong),
-            AnalyzeShortType = typeof(SignalStoRsiZoneShort),
-        });
-
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi.zone",
-            Strategy = CryptoSignalStrategy.StoRsiMultiZone,
-            AnalyzeLongType = typeof(SignalStoRsiMultiZoneLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiZoneShort),
-        });
 
         //***************************************************
         // Level approaching
