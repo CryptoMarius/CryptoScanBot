@@ -64,7 +64,7 @@ public class ZoneBroken
             List<CryptoZone> zonesLong = [];
             List<CryptoZone> zonesShort = [];
             long delay = 4 * interval.Duration; // TODO, this is not right
-            CandleTime maxTime = CandleTime.FromDateTime(DateTime.UtcNow);
+            CandleTime maxTime = CandleTime.FromDateTime(GlobalData.Clock.UtcNow);
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
             // Kind of brute force (on 1h candles so its not that bad)..

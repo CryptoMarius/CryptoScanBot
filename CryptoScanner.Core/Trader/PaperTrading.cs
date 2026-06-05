@@ -173,7 +173,7 @@ public class PaperTrading
                 foreach (var (part, step) in indexList.Values)
                 {
                     CandleTime from = CandleTime.AlignFromDateTime(step.CreateTime, 1) + 1;
-                    CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.GetCurrentDateTime(), 1);
+                    CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
                     while (from < limit)
                     {
                         // Eventueel missende candles hebben op deze manier geen impact

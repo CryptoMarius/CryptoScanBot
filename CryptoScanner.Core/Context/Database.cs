@@ -821,12 +821,12 @@ public class CryptoDatabase : IDisposable
             {
                 // Database cleanup (there is no need for old signals <fixed 7 day's>)
                 databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate",
-                    new { opendate = DateTime.UtcNow.AddDays(-7) });
+                    new { opendate = GlobalData.Clock.UtcNow.AddDays(-7) });
 
                 // Database cleanup (there is no need for old zones older than the configured value)
                 foreach (var interval in GlobalData.IntervalList)
                 {
-                    CandleTime openTime = CandleTime.FromDateTime(DateTime.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration));
+                    CandleTime openTime = CandleTime.FromDateTime(GlobalData.Clock.UtcNow.AddMinutes(-GlobalData.Settings.Signal.ZonesDlz.CandleCount * interval.Duration));
 
                     // we use the same candlecount for both the fvg and dlz zones
                     databaseThread.Connection.Execute("delete from zone where OpenTime < @OpenTime",

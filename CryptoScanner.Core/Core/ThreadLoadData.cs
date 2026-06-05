@@ -215,7 +215,7 @@ public class ThreadLoadData
                 // Alle symbols van de exchange halen en mergen met de ingelezen symbols.
                 // Via een event worden de muntparen in de userinterface gezet (dat duurt even)
                 //************************************************************************************
-                if (!GlobalData.ActiveExchange.LastTimeFetched.HasValue || GlobalData.ActiveExchange.LastTimeFetched?.AddHours(1) < DateTime.UtcNow)
+                if (!GlobalData.ActiveExchange.LastTimeFetched.HasValue || GlobalData.ActiveExchange.LastTimeFetched?.AddHours(1) < GlobalData.Clock.UtcNow)
                     await GlobalData.ActiveExchange!.GetApiInstance().Symbol.GetSymbolsAsync();
                 IndexQuoteDataSymbols(GlobalData.ActiveExchange);
 
@@ -291,7 +291,7 @@ public class ThreadLoadData
                 //Ze zijn er wel, deze is eigenlijk overbodig geworden (zit alleen zoveel werk in!)
                 //CalculateMissingCandles();
 
-                CandleTime currentTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+                CandleTime currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
                 TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, currentTime, 1);
 
                 //************************************************************************************

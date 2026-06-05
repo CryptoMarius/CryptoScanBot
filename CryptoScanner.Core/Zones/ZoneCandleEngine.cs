@@ -304,8 +304,7 @@ public class ZoneCandleEngine
                 // Remove old candles
                 if (symbolInterval.CandleList.Count > 0)
                 {
-                    // TODO: Need end date instead of DateTime.UtcNow (works in SignalGrid, but not here)
-                    CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                    CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
 
                     // investigate the first, does it need removal?
                     CandleTime openTime = symbolInterval.CandleList.Keys.First();
@@ -390,7 +389,7 @@ public class ZoneCandleEngine
         CandleTime unixMinTime = IntervalTools.StartOfIntervalCandle(startTime, interval.Duration);
         CandleTime unixMaxTime = unixMinTime + candleCount * interval.Duration;
 
-        CandleTime unixNowTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo, emulator date?
+        CandleTime unixNowTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 0);
         unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, interval.Duration);
 
         if (unixMaxTime >= unixNowTime)
@@ -440,7 +439,7 @@ public class ZoneCandleEngine
                     await FetchFrom(loadedCandlesInMemory, symbol, lowerInterval!, fetchFrom, fetchCount);
 
                     // TODO: Calculate the needed candles in the interval from the lowerInterval...
-                    CandleTime unixNowTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 0); // todo, emulator date?
+                    CandleTime unixNowTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 0);
                     unixNowTime = IntervalTools.StartOfIntervalCandle(unixNowTime, lowerInterval.Duration);
                     CandleTools.BulkCalculateCandles(symbol, lowerInterval, interval, unixNowTime);
                     loadedCandlesInMemory[interval.IntervalPeriod] = true;

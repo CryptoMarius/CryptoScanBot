@@ -581,7 +581,7 @@ public class TradeTools
             CalculateProfitAndBreakEvenPrice(position);
 
             if (lastDateTime == null)
-                lastDateTime = GlobalData.GetCurrentDateTime();
+                lastDateTime = GlobalData.Clock.UtcNow;
 
             // quick fix to close positions with nothing attached to it... It does not belong here, just a quick and dirty fix for now....
             if (position.Status == CryptoPositionStatus.Waiting && position.PartList.Count == 0 && position.CreateTime.AddHours(1) < lastDateTime)
@@ -697,7 +697,7 @@ public class TradeTools
             if (markedAsReady)
             {
                 position.ForceCheckPosition = true;
-                position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
+                position.DelayUntil = GlobalData.Clock.UtcNow.AddSeconds(10);
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position);
             }
 

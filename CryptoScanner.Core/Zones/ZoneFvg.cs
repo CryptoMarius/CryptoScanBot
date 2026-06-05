@@ -351,7 +351,7 @@ public class ZoneFvg
     {
         // Determine the period (using the candlecount)
         int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
-        CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+        CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
         CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
         await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
 

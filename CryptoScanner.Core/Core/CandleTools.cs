@@ -341,7 +341,7 @@ public static class CandleTools
 
 
                         // Remove old candles
-                        CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
+                        CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
                         //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
                         while (candles.Count > 0)
                         {
@@ -372,7 +372,7 @@ public static class CandleTools
     /// </summary>
     public static void DetermineFetchStartDate(CryptoSymbol symbol)
     {
-        CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, 1) + 1;
+        CandleTime currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1) + 1;
         DateTime fetchEndDate = currentTime.ToDateTime();
         Dictionary<CryptoIntervalPeriod, CandleTime> fetchFrom = [];
 

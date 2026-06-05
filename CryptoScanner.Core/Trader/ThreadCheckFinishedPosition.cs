@@ -125,14 +125,14 @@ public class ThreadCheckFinishedPosition
                     string cancelReason = "cancel";
                     ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {cancelReason}");
                     var (succes, tradeParams) = await TradeTools.CancelOrder(database, position, part, step,
-                        GlobalData.GetCurrentDateTime(), CryptoOrderStatus.PositionClosed, cancelReason);
+                        GlobalData.Clock.UtcNow, CryptoOrderStatus.PositionClosed, cancelReason);
                     if (!succes)
                     {
                         // nog nooit gezien, maar kan geen kwaad
                         ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {cancelReason} failed");
                         ExchangeBase.Dump(position, succes, tradeParams, "DCA ORDER ANNULEREN NIET GELUKT!!! (retry)");
                         position.ForceCheckPosition = true;
-                        position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
+                        position.DelayUntil = GlobalData.Clock.UtcNow.AddSeconds(10);
                         await AddToQueue(position); // doe nog maar een keer... Endless loop?
                         removePosition = false;
                     }
@@ -204,7 +204,7 @@ public class ThreadCheckFinishedPosition
             {
                 // Geef de exchange en de aansturende code de kans om de administratie af te ronden
                 // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.GetCurrentDateTime())
+                if (!GlobalData.BackTest && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.Clock.UtcNow)
                 {
                     //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
                     await AddToQueue(position, orderId, status); // opnieuw, na een vertraging

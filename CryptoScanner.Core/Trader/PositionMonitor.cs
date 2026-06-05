@@ -1636,7 +1636,7 @@ public class PositionMonitor //: IDisposable
             // Always create a separate take profit part (if it didn't exist)
             CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
             takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
-                position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.GetCurrentDateTime());
+                position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.Clock.UtcNow);
             CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
 
             (decimal price, decimal? stop, decimal? limit) tp = CalculateTpPrices(position);

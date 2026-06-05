@@ -1,4 +1,5 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 
 using Dapper.Contrib.Extensions;
 
@@ -230,7 +231,7 @@ public static class CryptoPositionHelper
         if (position.CloseTime.HasValue)
             span = (DateTime)position.CloseTime - position.CreateTime;
         else
-            span = DateTime.UtcNow - position.CreateTime;
+            span = GlobalData.Clock.UtcNow - position.CreateTime;
         return span;
     }
 

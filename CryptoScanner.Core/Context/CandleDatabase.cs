@@ -235,7 +235,7 @@ public class CandleDatabase : IDisposable
         {
             pInterval.Value = symbolInterval.Interval.Id;
             // Same per-interval bound that the file-based DataStore applied during read.
-            CandleTime startFetch = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+            CandleTime startFetch = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
             pMinOpenTime.Value = (long)startFetch.Minutes;
 
             symbolInterval.CandleList.Lock();
@@ -684,7 +684,7 @@ public class CandleDatabase : IDisposable
     /// </summary>
     private static CandleTime ComputeScanWindowStart(CryptoSymbol symbol)
     {
-        CandleTime earliest = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+        CandleTime earliest = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
         bool any = false;
 
         // Union of DLZ + FVG enabled intervals — these are the only ones the zone recalc
@@ -696,7 +696,7 @@ public class CandleDatabase : IDisposable
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
                 continue;
 
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, DateTime.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
             if (!any || start.Minutes < earliest.Minutes)
             {
                 earliest = start;
@@ -783,7 +783,7 @@ public class CandleDatabase : IDisposable
         CryptoSymbol symbol, List<PivotZone> pivots)
     {
         Dictionary<int, List<(CandleTime, CandleTime)>> result = [];
-        CandleTime now = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+        CandleTime now = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
 
         // 1) Standard window per interval (today's GetCandleFetchStart bound).
         //    GetCandleFetchStart works at minute precision (align(now, 1m) - 500*Duration),
@@ -800,7 +800,7 @@ public class CandleDatabase : IDisposable
         //    buffer that candle still falls just outside on every midnight rollover.
         foreach (var si in symbol.Data.SymbolIntervalList)
         {
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, si.Interval, DateTime.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, si.Interval, GlobalData.Clock.UtcNow);
             uint duration = si.Interval.Duration;
             if (duration > 1)
             {

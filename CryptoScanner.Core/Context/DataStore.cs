@@ -85,9 +85,9 @@ public class DataStore
                 // max candle date
                 // For some reason we can have corrupted candles in the system.
                 // This killed the scanner because it had a loop until maxLong!
-                CandleTime futureCandles = CandleTime.AlignFromDateTime(DateTime.UtcNow.AddHours(1), 1);
+                CandleTime futureCandles = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow.AddHours(1), 1);
                 // Minimum synchronisation date (ignore candles below)
-                CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, DateTime.UtcNow);
+                CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
 
                 // 4: Candle count
                 int candleCount = reader.ReadInt32();

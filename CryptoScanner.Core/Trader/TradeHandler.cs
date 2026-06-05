@@ -22,7 +22,7 @@ public static class TradeHandler
 
             // De actie doorgeven naar een andere thread
             position.ForceCheckPosition = true;
-            position.DelayUntil = GlobalData.GetCurrentDateTime().AddSeconds(10);
+            position.DelayUntil = GlobalData.Clock.UtcNow.AddSeconds(10);
             if (GlobalData.ThreadCheckPosition != null)
                 await GlobalData.ThreadCheckPosition.AddToQueue(position, order.OrderId, order.Status);
 

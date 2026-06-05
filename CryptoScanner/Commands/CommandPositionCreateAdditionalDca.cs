@@ -78,7 +78,7 @@ public class CommandPositionCreateAdditionalDca : CommandBase
 
                     // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
                     PositionTools.ExtendPosition(databaseThread, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
-                        CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.GetCurrentDateTime(), true);
+                        CryptoEntryOrDcaStrategy.FixedPercentage, price, GlobalData.Clock.UtcNow, true);
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} handmatig een DCA toegevoegd aan positie {position.Id}");
 
                     //Grid.InvalidateRow(rowIndex);

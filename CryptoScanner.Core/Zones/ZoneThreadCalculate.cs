@@ -65,7 +65,7 @@ public class ZoneThreadCalculate
                     ZoneDlz.LoadZonesForSymbol(symbol);
 
                     int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
-                    CandleTime maxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
+                    CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
                     CandleTime minDate = maxDate - candleFetchCount * interval.Duration;
                     //await ZoneDlz.LoadHistoricCandles(symbol, interval, loadedCandlesInMemory);
 

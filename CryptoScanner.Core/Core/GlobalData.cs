@@ -61,15 +61,6 @@ public static class GlobalData
     public static CryptoCandle BackTestCandle { get; set; } = default;
 
 
-    // Replace with a proper DateTimeService
-    public static DateTime GetCurrentDateTime()
-    {
-        if (BackTest)
-            return BackTestDateTime; // or BackTestCandle.OpenTime + 1 minute
-        else
-            return DateTime.UtcNow;
-    }
-
     private static CryptoApplicationStatus _applicationStatus = CryptoApplicationStatus.Initializing;
     public static CryptoApplicationStatus ApplicationStatus
     {
@@ -101,6 +92,13 @@ public static class GlobalData
     /// Scanner settings
     /// </summary>
     public static SettingsBasic Settings { get; set; } = new();
+
+    /// <summary>
+    /// Wall-clock abstraction. Default is <see cref="SystemClock"/> (delegates to DateTime.UtcNow).
+    /// The emulator swaps in <see cref="EmulatorClock"/> and advances it per replayed candle so
+    /// signal/position timestamps become deterministic. Read via <c>GlobalData.Clock.UtcNow</c>.
+    /// </summary>
+    public static IClock Clock { get; set; } = new SystemClock();
 
     /// <summary>
     /// Exchange API settings (not used at this moment)
@@ -334,7 +332,7 @@ public static class GlobalData
 
             //SignalQueue.Clear();
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
-                new { FromDate = DateTime.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
+                new { FromDate = Clock.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
             {
                 if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
                     continue;
