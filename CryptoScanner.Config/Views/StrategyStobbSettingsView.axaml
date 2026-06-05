@@ -8,7 +8,7 @@
              x:Class="CryptoScanner.Config.Views.StrategyStobbSettingsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Settings">
-        <StackPanel Margin="4" Spacing="0">
+        <StackPanel Margin="4" Spacing="4">
             
             <!-- Filter on BB% -->
             <Grid ColumnDefinitions="Auto,80,80,*" RowDefinitions="Auto">
@@ -91,6 +91,20 @@
 						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
 						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
 			</Grid>
+
+			<!-- Zone confirmation (OR over enabled types) -->
+			<CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
+					  Content="Require DLZ zone rejection"
+					  FontSize="12"
+					  ToolTip.Tip="Only fire when the candle was rejected at a DLZ zone (same logic as the StobbDlz strategy)."/>
+			<CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
+					  Content="Require FVG zone rejection"
+					  FontSize="12"
+					  ToolTip.Tip="Only fire when the candle was rejected at an FVG zone (same logic as the StobbFvg strategy)."/>
+			<CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
+					  Content="Require SMC zone rejection"
+					  FontSize="12"
+					  ToolTip.Tip="Only fire when the candle was rejected at an SMC order block (same logic as the StobbSmc strategy)."/>
 
 		</StackPanel>
     </HeaderedContentControl>

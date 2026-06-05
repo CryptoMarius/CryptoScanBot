@@ -106,6 +106,15 @@ public class SignalStobbMultiLong : SignalStobbBase
                     if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
                         return false;
 
+                    // Optional zone-rejection confirmation (DLZ / FVG / SMC). OR over enabled types.
+                    if (!CheckEnabledZoneRejections(out string zoneInfo))
+                    {
+                        ExtraText = zoneInfo;
+                        return false;
+                    }
+                    if (zoneInfo.Length > 0)
+                        ExtraText += " " + zoneInfo;
+
                     return true;
                 }
             }

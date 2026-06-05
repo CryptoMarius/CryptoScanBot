@@ -42,6 +42,15 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _trendSecondaryDirectionCount = 2;
 
+    [ObservableProperty]
+    private bool _useDlzZone = false;
+
+    [ObservableProperty]
+    private bool _useFvgZone = false;
+
+    [ObservableProperty]
+    private bool _useSmcZone = false;
+
 
     public void LoadConfig(string caption, SettingsSignalStrategyStoRsi settings)
     {
@@ -57,6 +66,9 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
+        UseDlzZone = settings.UseDlzZone;
+        UseFvgZone = settings.UseFvgZone;
+        UseSmcZone = settings.UseSmcZone;
     }
 
     public void SaveConfig(SettingsSignalStrategyStoRsi settings)
@@ -73,5 +85,8 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        settings.UseDlzZone = UseDlzZone;
+        settings.UseFvgZone = UseFvgZone;
+        settings.UseSmcZone = UseSmcZone;
     }
 }

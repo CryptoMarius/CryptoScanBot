@@ -22,6 +22,12 @@ public class SettingsSignalStrategyStoRsi : SettingsSignalStrategyBase
     public bool CheckTrendSecondaryDirection { get; set; } = false;
     public int TrendSecondaryDirectionCount { get; set; } = 2;
 
+    // Zone confirmations — when any of these is enabled, at least one of the enabled
+    // zone rejections must match (OR). All disabled = no zone filter.
+    public bool UseDlzZone { get; set; } = false;
+    public bool UseFvgZone { get; set; } = false;
+    public bool UseSmcZone { get; set; } = false;
+
     public SettingsSignalStrategyStoRsi() : base()
     {
         SoundFileLong = "sound-storsi-oversold.wav";

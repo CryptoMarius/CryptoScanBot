@@ -75,6 +75,15 @@ public class SignalStoRsiLong : SignalStoRsiBase
         if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
+        // Optional zone-rejection confirmation (DLZ / FVG / SMC). OR over enabled types.
+        if (!CheckEnabledZoneRejections(out string zoneInfo))
+        {
+            ExtraText = zoneInfo;
+            return false;
+        }
+        if (zoneInfo.Length > 0)
+            ExtraText = $"storsi+{zoneInfo}";
+
         return true;
     }
 
