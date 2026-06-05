@@ -35,15 +35,6 @@ public enum CryptoSignalStrategy
     StobbMultiFvg = 23,
     StobbMultiSmc = 19,
 
-    // Unified ".zone" variants — fire when the base storsi/stobb signal hits AND price was
-    // rejected at ANY active zone type (DLZ or FVG or SMC). Consolidates the .dlz/.fvg/.smc
-    // permutations into a single strategy name per base so the user's strategy list stays
-    // short, while the per-zone variants remain available for debugging / A-B comparisons.
-    StoRsiZone = 24,
-    StoRsiMultiZone = 28,
-    StobbZone = 29,
-    StobbMultiZone = 30,
-
     Nwe = 25,
 
 
