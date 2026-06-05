@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 59;
+    public readonly static int CurrentDatabaseVersion = 60;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1217,9 +1217,9 @@ public class Migration
 
 
         //***********************************************************
-        // 05-06-2026 Changed signal
+        // 05-06-2026 (Emulator preperation)
         // - Signal.Backtest (+ adjust SQL for loading signals)
-        if (CurrentVersion > version.Version && version.Version == 58)
+        if (CurrentVersion > version.Version && version.Version == 59)
         {
             using var transaction = database.BeginTransaction();
 

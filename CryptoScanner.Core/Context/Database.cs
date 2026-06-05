@@ -323,7 +323,6 @@ public class CryptoDatabase : IDisposable
                 "Strategy INTEGER NULL," +
                 "Side INTEGER NOT NULL," +
 
-                "BackTest INTEGER NOT NULL," +
                 "IsInvalid INTEGER NOT NULL," +
 
                 "OpenDate TEXT NULL," +

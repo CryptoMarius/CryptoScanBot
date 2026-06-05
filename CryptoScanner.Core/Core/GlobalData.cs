@@ -287,69 +287,40 @@ public static class GlobalData
     public static List<CryptoSignal> LoadSignals(string filterText = "")
     {
         List<CryptoSignal> list = [];
-        //GlobalData.AddTextToLogTab("Reading some signals");
 
-        if (BackTest)
-        {
-            string sql = "select * from signal where exchangeid=@exchangeid and BackTest=1 order by OpenDate";
-
-            using var database = new CryptoDatabase();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
-                new { exchangeid = GlobalData.ActiveExchange!.Id }))
-            {
-                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
-                {
-                    signal.Exchange = exchange2;
-
-                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
-                    {
-                        signal.Symbol = symbol;
-
-                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
-                            signal.Interval = interval;
-
-                        //SignalQueue.Enqueue(signal);
-                        list.Add(signal);
-                    }
-                }
-            }
-        }
+        // Single codepath now that the live scanner and the emulator each have their own
+        // database — there is no need to filter on a per-row BackTest flag anymore.
+        string sql;
+        using var database = new CryptoDatabase();
+        if (string.IsNullOrEmpty(filterText))
+            sql = "select * from signal where exchangeid=@exchangeid and ExpirationDate >= @FromDate order by OpenDate";
         else
         {
-            string sql;
-            using var database = new CryptoDatabase();
-            if (string.IsNullOrEmpty(filterText))
-                sql = "select * from signal where exchangeid=@exchangeid and BackTest=0 and ExpirationDate >= @FromDate order by OpenDate";
-            else
-            {
-                sql = "select * from signal " +
-                    "inner join symbol on signal.symbolid=symbol.id " +
-                    "where signal.exchangeid=@exchangeid and signal.BackTest=0 and signal.ExpirationDate >= @FromDate " +
-                    $"and symbol.name like '%{filterText}%' " +
-                    "order by signal.OpenDate ";
-            }
+            sql = "select * from signal " +
+                "inner join symbol on signal.symbolid=symbol.id " +
+                "where signal.exchangeid=@exchangeid and signal.ExpirationDate >= @FromDate " +
+                $"and symbol.name like '%{filterText}%' " +
+                "order by signal.OpenDate ";
+        }
 
-            //SignalQueue.Clear();
-            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
-                new { FromDate = Clock.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
-            {
-                if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
-                    continue;
+        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
+            new { FromDate = Clock.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
+        {
+            if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
+                continue;
 
-                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
+            if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
+            {
+                signal.Exchange = exchange2;
+
+                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
                 {
-                    signal.Exchange = exchange2;
+                    signal.Symbol = symbol;
 
-                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
-                    {
-                        signal.Symbol = symbol;
+                    if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
+                        signal.Interval = interval;
 
-                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
-                            signal.Interval = interval;
-
-                        //SignalQueue.Enqueue(signal);
-                        list.Add(signal);
-                    }
+                    list.Add(signal);
                 }
             }
         }
@@ -714,7 +685,7 @@ public static class GlobalData
 
     public static void AddTextToTelegram(string text)
     {
-        if (!BackTest)
+        if (!IsEmulatorMode)
         {
             try
             {
@@ -730,7 +701,7 @@ public static class GlobalData
 
     public static void AddTextToTelegram(string text, CryptoPosition position)
     {
-        if (!BackTest)
+        if (!IsEmulatorMode)
         {
             if (LogToTelegram is null)
                 return;

@@ -23,7 +23,6 @@ public partial class CryptoSignal : CryptoData2
     [Computed]
     public virtual required CryptoCandle? Candle { get; set; }
 
-    public bool BackTest { get; set; }
     public bool IsInvalid { get; set; }
 
     public DateTime OpenDate { get; set; }

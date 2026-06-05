@@ -843,87 +843,84 @@ public partial class SignalViewModel : BaseConvertersViewModel
     internal bool UpdateSignalStatisticsInternal()
     {
         var signal = Object;
-        if (!signal.BackTest) //  && signal.Strategy != CryptoSignalStrategy.Jump
+        try
         {
-            try
+            CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+            CryptoCandle candle = symbolInterval.CandleList.Values.LastOrDefault();
+            if (candle.OpenTime != 0)
             {
-                CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                CryptoCandle candle = symbolInterval.CandleList.Values.LastOrDefault(); // todo, not working for emulator & dates!
-                if (candle.OpenTime != 0)
+                var result = false;
+
+                if (candle.Low < signal.PriceMin)
                 {
-                    var result = false;
+                    signal.PriceMin = candle.Low;
+                    signal.PriceMinPerc = (float)(100 * (signal.PriceMin / signal.SignalPrice - 1));
+                    result = true;
+                }
+                if (candle.High > signal.PriceMax)
+                {
+                    signal.PriceMax = candle.High;
+                    signal.PriceMaxPerc = (float)(100 * (signal.PriceMax / signal.SignalPrice - 1));
+                    result = true;
+                }
 
-                    if (candle.Low < signal.PriceMin)
+                if (signal.SignalStatus == CryptoSignalStatus.Run)
+                {
+                    decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
+                    if (stopLossPerc != 0.0m)
                     {
-                        signal.PriceMin = candle.Low;
-                        signal.PriceMinPerc = (float)(100 * (signal.PriceMin / signal.SignalPrice - 1));
-                        result = true;
+                        if (signal.Side == CryptoTradeSide.Long)
+                        {
+                            decimal stopLossPrice = signal.SignalPrice - stopLossPerc * signal.SignalPrice;
+                            if (signal.PriceMin <= stopLossPrice)
+                            {
+                                signal.SignalStatus = CryptoSignalStatus.Lost;
+                                result = true;
+                            }
+                        }
+                        else if (signal.Side == CryptoTradeSide.Short)
+                        {
+                            decimal stopLossPrice = signal.SignalPrice + stopLossPerc * signal.SignalPrice;
+                            if (signal.PriceMax >= stopLossPrice)
+                            {
+                                signal.SignalStatus = CryptoSignalStatus.Lost;
+                                result = true;
+                            }
+                        }
                     }
-                    if (candle.High > signal.PriceMax)
-                    {
-                        signal.PriceMax = candle.High;
-                        signal.PriceMaxPerc = (float)(100 * (signal.PriceMax / signal.SignalPrice - 1));
-                        result = true;
-                    }
-
+                    // still running? ;-)
                     if (signal.SignalStatus == CryptoSignalStatus.Run)
                     {
-                        decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
-                        if (stopLossPerc != 0.0m)
+                        decimal takeProfitPercentage = GlobalData.Settings.Trading.ProfitPercentage / 100;
+                        if (takeProfitPercentage != 0.0m)
                         {
                             if (signal.Side == CryptoTradeSide.Long)
                             {
-                                decimal stopLossPrice = signal.SignalPrice - stopLossPerc * signal.SignalPrice;
-                                if (signal.PriceMin <= stopLossPrice)
+                                decimal takeProfitPrice = signal.SignalPrice + takeProfitPercentage * signal.SignalPrice;
+                                if (signal.PriceMax > takeProfitPrice)
                                 {
-                                    signal.SignalStatus = CryptoSignalStatus.Lost;
+                                    signal.SignalStatus = CryptoSignalStatus.Win;
                                     result = true;
                                 }
                             }
                             else if (signal.Side == CryptoTradeSide.Short)
                             {
-                                decimal stopLossPrice = signal.SignalPrice + stopLossPerc * signal.SignalPrice;
-                                if (signal.PriceMax >= stopLossPrice)
+                                decimal takeProfitPrice = signal.SignalPrice - takeProfitPercentage * signal.SignalPrice;
+                                if (signal.PriceMin < takeProfitPrice)
                                 {
-                                    signal.SignalStatus = CryptoSignalStatus.Lost;
+                                    signal.SignalStatus = CryptoSignalStatus.Win;
                                     result = true;
                                 }
                             }
                         }
-                        // still running? ;-)
-                        if (signal.SignalStatus == CryptoSignalStatus.Run)
-                        {
-                            decimal takeProfitPercentage = GlobalData.Settings.Trading.ProfitPercentage / 100;
-                            if (takeProfitPercentage != 0.0m)
-                            {
-                                if (signal.Side == CryptoTradeSide.Long)
-                                {
-                                    decimal takeProfitPrice = signal.SignalPrice + takeProfitPercentage * signal.SignalPrice;
-                                    if (signal.PriceMax > takeProfitPrice)
-                                    {
-                                        signal.SignalStatus = CryptoSignalStatus.Win;
-                                        result = true;
-                                    }
-                                }
-                                else if (signal.Side == CryptoTradeSide.Short)
-                                {
-                                    decimal takeProfitPrice = signal.SignalPrice - takeProfitPercentage * signal.SignalPrice;
-                                    if (signal.PriceMin < takeProfitPrice)
-                                    {
-                                        signal.SignalStatus = CryptoSignalStatus.Win;
-                                        result = true;
-                                    }
-                                }
-                            }
-                        }
                     }
-                    return result;
                 }
+                return result;
             }
-            catch
-            {
-                // ignore errors
-            }
+        }
+        catch
+        {
+            // ignore errors
         }
         return false;
     }

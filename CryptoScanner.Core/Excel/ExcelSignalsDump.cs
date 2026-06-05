@@ -15,7 +15,7 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
 
     public void LoadSignals()
     {
-        string sql = "select * from signal where BackTest=0 order by OpenDate";
+        string sql = "select * from signal order by OpenDate";
 
         using var database = new CryptoDatabase();
         foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql, new { FromDate = DateTime.UtcNow }))

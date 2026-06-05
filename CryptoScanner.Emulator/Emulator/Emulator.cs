@@ -22,10 +22,8 @@ public class Emulator
 
         using var transaction = database.BeginTransaction();
 
-        // clean signals
-        b.Clear();
-        b.AppendLine("delete from signal where BackTest=1");
-        database.Connection.Execute(b.ToString(), transaction);
+        // Legacy: signal.BackTest column has been dropped. Signals will live in a separate
+        // emulator database (see fase 2 of the emulator checklist) so per-row filtering is moot.
 
 
         // clean positionsteps

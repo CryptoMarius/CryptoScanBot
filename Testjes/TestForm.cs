@@ -343,10 +343,7 @@ public partial class TestForm : Form
         StringBuilder stringBuilder = new();
 
         stringBuilder.AppendLine();
-        if (!signal.BackTest)
-            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " " + DateTime.Now.ToLocalTime()); //+ " notification " + notification
-        else
-            stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " (backTest)"); //+ " notification " + notification
+        stringBuilder.AppendLine("Melding#" + createdSignalCount.ToString() + " " + DateTime.Now.ToLocalTime()); //+ " notification " + notification
 
         string s = signal.Symbol.Name + " " + signal.Interval.Name + " " + CandleTools.GetUnixDate(signal.Candle!.OpenTime).ToLocalTime() + " (" + signal.StrategyText + ") " + signal.EventText;
         stringBuilder.AppendLine(s);

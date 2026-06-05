@@ -138,10 +138,6 @@ public partial class SignalGridViewModel : ObservableObject
         if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
             GlobalData.SignalQueue.Enqueue(signal);
 
-        if (signal.BackTest)
-            return;
-
-
         if (!signal.IsInvalid)
         {
             if (GlobalData.StrategiesSettings.TryGetValue(signal.Strategy, out (SettingsSignalStrategyBase strategySettings, DateTime lastSignalTime) x))

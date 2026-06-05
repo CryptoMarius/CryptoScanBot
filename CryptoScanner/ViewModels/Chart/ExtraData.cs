@@ -12,7 +12,7 @@ public class ExtraData
     public static void LoadSignalsForSymbol(CryptoSymbol symbol, CandleTime from, List<CryptoSignal> signals)
     {
         signals.Clear();
-        string sql = "select * from signal where BackTest=0 and SymbolId = @SymbolId and CloseDate > @CloseDate";
+        string sql = "select * from signal where SymbolId = @SymbolId and CloseDate > @CloseDate";
 
         using var database = new CryptoDatabase();
         try

@@ -11,8 +11,7 @@ internal class EmulatorTest
         string text = signal.CloseDate.ToLocalTime() + " Analyze signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
         GlobalData.AddTextToLogTab(text);
 
-        if (signal.BackTest)
-            return;
+        // signal.BackTest removed; legacy emulator path obsolete.
 
         //if (!signal.IsInvalid)
         //{
