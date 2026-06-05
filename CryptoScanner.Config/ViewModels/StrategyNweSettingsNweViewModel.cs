@@ -7,7 +7,7 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class StrategyNweSettingsNweViewModel : ObservableObject
 {
     [ObservableProperty]
-    private decimal _bandWidth = 8.0m;
+    private double _bandWidth = 8.0;
 
     [ObservableProperty]
     private decimal _multiplication = 3.0m;
