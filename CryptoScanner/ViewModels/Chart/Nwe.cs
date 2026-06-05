@@ -80,7 +80,7 @@ public class Nwe
         }
 
         NweIndicator nwe = new(
-            bandwidth: (double)GlobalData.Settings.Signal.Nwe.BandWidth,
+            bandwidth: GlobalData.Settings.Signal.Nwe.BandWidth,
             multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
             smoothRepainting: smoothRepainting
            );

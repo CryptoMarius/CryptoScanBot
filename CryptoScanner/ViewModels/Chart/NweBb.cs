@@ -23,7 +23,7 @@ public class NweBb
 
         // Repainting NWE on the full candle list — same variant as the signal class
         var nweIndicator = new NweIndicator(
-            bandwidth: (double)GlobalData.Settings.Signal.Nwe.BandWidth,
+            bandwidth: GlobalData.Settings.Signal.Nwe.BandWidth,
             multiplier: GlobalData.Settings.Signal.Nwe.Multiplication,
             smoothRepainting: true);
         var nweResults = nweIndicator.Calculate(symbolInterval.CandleList);
