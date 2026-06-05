@@ -11,8 +11,9 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class NweBb
 {
-    // Look back this many bars for the "prior extension" confirmation
-    private const int ExtensionLookback = 10;
+    // Look back this many bars for the "prior extension" confirmation.
+    // Matches the strategy's effective window in SignalNweBbBase (bars.Length - 6 .. ^1 = 5 bars).
+    private const int ExtensionLookback = 5;
 
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
@@ -41,6 +42,9 @@ public class NweBb
             bbByTime[ct] = bb;
         }
 
+        // BB-width minimum — strategy sources this from Stobb settings, mirror that here.
+        double bbWidthMin = GlobalData.Settings.Signal.Stobb.BBMinPercentage;
+
         var seriesLong = new ScatterSeries
         {
             Title = "nwe.bb ↑",
@@ -49,6 +53,7 @@ public class NweBb
             MarkerType = MarkerType.Triangle,
             YAxisKey = "price",
             Tag = group,
+            TrackerFormatString = "{0}\n{Tag}",
         };
 
         var seriesShort = new ScatterSeries
@@ -59,6 +64,7 @@ public class NweBb
             MarkerType = MarkerType.Diamond,
             YAxisKey = "price",
             Tag = group,
+            TrackerFormatString = "{0}\n{Tag}",
         };
 
         // Iterate the NWE results (oldest first), detect crossings, emit visible markers
@@ -78,7 +84,8 @@ public class NweBb
                 || !bbByTime.TryGetValue(prev2.OpenTime, out var prev2Bb)
                 || curBb.UpperBand == null || curBb.LowerBand == null
                 || prevBb.UpperBand == null || prevBb.LowerBand == null
-                || prev2Bb.UpperBand == null || prev2Bb.LowerBand == null)
+                || prev2Bb.UpperBand == null || prev2Bb.LowerBand == null
+                || curBb.Sma == null)
                 continue;
 
             if (!symbolInterval.CandleList.TryGetValue(cur.OpenTime, out var curCandle))
@@ -94,31 +101,48 @@ public class NweBb
             double prevBbLow = prevBb.LowerBand.Value;
             double prev2BbUp = prev2Bb.UpperBand.Value;
             double prev2BbLow = prev2Bb.LowerBand.Value;
+            double curSma = curBb.Sma.Value;
+            double curClose = (double)curCandle.Close;
 
             // Only emit markers for visible bars
             if (cur.OpenTime < minDate || cur.OpenTime > maxDate)
                 continue;
 
-            // Short: NWE upper crosses BB upper from outside (above) to inside; BB upper rising 2 bars
+            // BB-width filter — must match the strategy (Stobb.BBMinPercentage).
+            double bbWidthPct = curSma != 0.0 ? ((curBbUp - curBbLow) / curSma) * 100.0 : 0.0;
+            if (bbWidthPct < bbWidthMin)
+                continue;
+
+            // Short: NWE upper crosses BB upper from outside (above) to inside; BB upper rising 2 bars.
+            // Strategy also requires close > sma20 (current candle still in upper half).
             if (prevNweUp >= prevBbUp
                 && curNweUp < curBbUp
                 && curBbUp > prevBbUp && prevBbUp > prev2BbUp
+                && curClose > curSma
                 && HadUpperExtension(nweResults, bbByTime, symbolInterval, i))
             {
                 seriesShort.Points.Add(new ScatterPoint(
                     curCandle.OpenTime.Minutes,
-                    (double)curCandle.High * 1.003));
+                    (double)curCandle.High * 1.003,
+                    double.NaN,
+                    double.NaN,
+                    tag: $"nwe.bb ↓ nwe={curNweUp:N6} bb={curBbUp:N6}"));
             }
 
-            // Long: NWE lower crosses BB lower from outside (below) to inside; BB lower falling 2 bars
+            // Long: NWE lower crosses BB lower from outside (below) to inside; BB lower falling 2 bars.
+            // Strategy also requires close < sma20 (current candle still in lower half).
             if (prevNweLow <= prevBbLow
                 && curNweLow > curBbLow
                 && curBbLow < prevBbLow && prevBbLow < prev2BbLow
+                && curClose < curSma
                 && HadLowerExtension(nweResults, bbByTime, symbolInterval, i))
             {
                 seriesLong.Points.Add(new ScatterPoint(
                     curCandle.OpenTime.Minutes,
-                    (double)curCandle.Low * 0.997));
+                    (double)curCandle.Low * 0.997,
+                    double.NaN,
+                    double.NaN,
+                    tag: $"nwe.bb ↑ nwe={curNweLow:N6} bb={curBbLow:N6}"));
             }
         }
 
