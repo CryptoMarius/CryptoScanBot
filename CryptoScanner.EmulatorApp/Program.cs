@@ -2,6 +2,7 @@ using Avalonia;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Services;
 
 using System.Reflection;
 
@@ -22,7 +23,7 @@ internal class Program
 
         // The emulator defaults to a dedicated subfolder so its DB, settings.json and cached
         // candles do not interfere with a parallel live scanner. Users can override with the
-        // standard --folder argument (absolute path or relative subfolder under %APPDATA%).
+        // standard --folder argument (absolute path or relative subfolder).
         GlobalData.AppDataFolder = ResolveAppDataFolder();
         if (!Directory.Exists(GlobalData.AppDataFolder))
             Directory.CreateDirectory(GlobalData.AppDataFolder);
@@ -36,23 +37,30 @@ internal class Program
 
 
     /// <summary>
-    /// Resolves the emulator's data folder. Honours <c>--folder</c> when given (absolute or
-    /// relative under %APPDATA%), otherwise defaults to <c>%APPDATA%\CryptoScanBot\Emulator</c>.
-    /// Keeps the emulator's state physically separate from the live scanner.
+    /// Reuses the OS-specific <see cref="IPlatformService"/> from the live scanner. The
+    /// emulator only needs to ensure a sensible default subfolder when the user did not pass
+    /// <c>--folder</c>; we set ApplicationParams.Options.AppDataFolder to
+    /// "<see cref="Constants.AppName"/>/Emulator" first, then let the PlatformService translate
+    /// it into the proper base directory for Windows (%APPDATA%), macOS (~/Library/Application
+    /// Support equivalent), or Linux (~/.local/share). Explicit --folder overrides keep working.
     /// </summary>
     private static string ResolveAppDataFolder()
     {
         ApplicationParams.InitApplicationOptions();
-        string? folder = ApplicationParams.Options?.AppDataFolder;
-        string baseFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        ApplicationParams.Options ??= new ApplicationParams();
 
-        if (string.IsNullOrEmpty(folder))
-            return Path.Combine(baseFolder, Constants.AppName, "Emulator");
+        if (string.IsNullOrEmpty(ApplicationParams.Options.AppDataFolder))
+            ApplicationParams.Options.AppDataFolder = Path.Combine(Constants.AppName, "Emulator");
 
-        if (Path.IsPathFullyQualified(folder))
-            return folder;
+        IPlatformService platformService = OperatingSystem.IsWindows()
+            ? new WindowsPlatformService()
+            : OperatingSystem.IsMacOS()
+                ? new MacOSPlatformService()
+                : OperatingSystem.IsLinux()
+                    ? new LinuxPlatformService()
+                    : throw new PlatformNotSupportedException($"Platform not supported: {Environment.OSVersion.Platform}");
 
-        return Path.Combine(baseFolder, folder);
+        return platformService.GetDataDirectory();
     }
 
 
