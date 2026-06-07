@@ -417,11 +417,7 @@ public class PositionMonitor //: IDisposable
 
                             // Alleen deze 2 ondersteunen we op dit moment (bool CanTrade introduceren ofzo)
                             // Voorlopig alleen traden op Bybit Spot en Futures (alleen daar kan ik het testen)
-                            // The emulator always paper-trades with its own fill logic, so real
-                            // trading support for the exchange is irrelevant — without this bypass a
-                            // backtest on any IsSupported=false exchange (BitMart, BloFin, Kraken, …)
-                            // would block every single entry with "trader not supported".
-                            if (!GlobalData.IsEmulatorMode && !GlobalData.ActiveExchange!.IsSupported)
+                            if (!GlobalData.ActiveExchange!.IsSupported)
                             {
                                 GlobalData.AddTextToLogTab(text + $" trader not supported on {GlobalData.ActiveExchange.Name} (removed)");
                                 Symbol.ClearSignals();
