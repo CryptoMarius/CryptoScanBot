@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Emulator;
 
@@ -21,32 +22,41 @@ public static class IndicatorWarmup
     private const int SafetyExtraBars = 10;
 
     /// <summary>
-    /// Returns the union of active intervals across long+short configurations, ordered by
-    /// duration. Used as the set of intervals the engine needs to maintain.
+    /// Delegates to <see cref="SignalPrepare.GetActiveIntervals"/> so the emulator never has
+    /// to keep its own copy of Prepare's strategy / zone / forced-1m logic in sync. Prepare
+    /// itself is the single source of truth for "which intervals does the engine maintain"
+    /// — bootstrap calls SignalPrepare.Prepare(), and from there we just read the result.
     /// </summary>
     public static List<CryptoInterval> ResolveActiveIntervals()
-    {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var name in GlobalData.Settings.Signal.Long.Interval)
-            names.Add(name);
-        foreach (var name in GlobalData.Settings.Signal.Short.Interval)
-            names.Add(name);
+        => SignalPrepare.GetActiveIntervals();
 
-        var result = new List<CryptoInterval>(names.Count);
-        foreach (var name in names)
-        {
-            if (GlobalData.IntervalListPeriodName.TryGetValue(name, out CryptoInterval? interval))
-                result.Add(interval);
-        }
-        result.Sort((a, b) => a.Duration.CompareTo(b.Duration));
-        return result;
+
+    /// <summary>
+    /// How much history (in <em>that interval's own units, expressed in minutes</em>) the
+    /// fetch routine should ensure is available before the replay window starts. The fetcher
+    /// pulls candles per interval directly, so we no longer over-fetch 1m candles to cover
+    /// a 1w warmup — the 1w interval pulls 270 weekly bars (about 5 years) in 1w-resolution
+    /// instead of millions of 1m bars.
+    /// <list type="bullet">
+    ///   <item>1m gets a fixed-cap window (24 h) — typical 1m indicators reach back at most
+    ///         a few hundred bars; a day of history is comfortably enough.</item>
+    ///   <item>Every higher interval gets <see cref="MinCandlesPerInterval"/> + safety bars
+    ///         worth of its own duration. SMA200 on 1d → ≈ 270 days; on 1w → ≈ 5 years.</item>
+    /// </list>
+    /// </summary>
+    public static uint ComputeWarmupMinutes(CryptoInterval interval)
+    {
+        const uint OneMinuteWarmupMinutes = 24 * 60;  // 24 hours of 1m history
+        if (interval.Duration <= 1)
+            return OneMinuteWarmupMinutes;
+        return (uint)((MinCandlesPerInterval + SafetyExtraBars) * interval.Duration);
     }
 
 
     /// <summary>
-    /// Computes how many minutes of 1m history are needed before <paramref name="replayFrom"/>
-    /// so that every active interval has at least <see cref="MinCandlesPerInterval"/> aggregated
-    /// candles available. Long active intervals (e.g. 1d) dominate this number.
+    /// Backward-compatible overload still used by <see cref="PrepareSymbol"/>: the warmup
+    /// span the 1m CandleList must cover so the longest active higher interval can be
+    /// reconstructed from 1m at run start. Use the per-interval overload for the fetch step.
     /// </summary>
     public static uint ComputeWarmupMinutes(IReadOnlyList<CryptoInterval> activeIntervals)
     {
