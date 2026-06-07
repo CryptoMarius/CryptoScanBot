@@ -38,7 +38,7 @@ public static class EmulatorDb
     /// <see cref="GlobalData.CurrentEmulatorRunId"/> so subsequent signals and positions are
     /// tagged with it. Call once at run start.
     /// </summary>
-    public static CryptoEmulatorRun StartRun(string configJson, string? gitSha = null)
+    public static CryptoEmulatorRun StartRun(string configJson, string? settingsJson = null, string? gitSha = null)
     {
         using var database = new CryptoDatabase();
         database.Open();
@@ -47,6 +47,7 @@ public static class EmulatorDb
         {
             StartedAt = GlobalData.Clock.UtcNow,
             ConfigJson = configJson,
+            SettingsJson = settingsJson,
             GitSha = gitSha,
         };
         run.Id = (int)database.Connection.Insert(run);

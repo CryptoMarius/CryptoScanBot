@@ -1,19 +1,19 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="420"
-        Width="780" Height="420"
-        x:Class="CryptoScanner.Emulator.Views.RunResultsWindow"
-        x:DataType="vm:RunResultsViewModel"
-        Title="Emulator runs"
-        WindowStartupLocation="CenterOwner">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="420"
+             x:Class="CryptoScanner.Emulator.Views.RunResultsView"
+             x:DataType="vm:RunResultsViewModel">
 
-    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
 
-        <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="14"
-                   Text="Emulator runs (double-click for positions)"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+            <TextBlock FontWeight="Bold" FontSize="13" VerticalAlignment="Center"
+                       Text="Emulator runs (double-click for positions)"/>
+            <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
+        </StackPanel>
 
         <DataGrid Grid.Row="1"
                   Name="RunsGrid"
@@ -40,4 +40,4 @@
 
     </Grid>
 
-</Window>
+</UserControl>

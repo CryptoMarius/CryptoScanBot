@@ -854,6 +854,7 @@ public class CryptoDatabase : IDisposable
                 "StartedAt TEXT NOT NULL," +
                 "FinishedAt TEXT NULL," +
                 "ConfigJson TEXT NOT NULL," +
+                "SettingsJson TEXT NULL," +
                 "GitSha TEXT NULL," +
                 "Result TEXT NULL," +
                 "SignalCount INTEGER NOT NULL DEFAULT 0," +

@@ -24,6 +24,30 @@ public class SignalPrepare
     public static bool ZoneDlzActive() => Preparing.ContainsKey(SignalPrepareKind.Dlz);
     public static bool ZoneFvgActive() => Preparing.ContainsKey(SignalPrepareKind.Fvg);
 
+
+    /// <summary>
+    /// Union of every interval registered by <see cref="Prepare"/> across all four
+    /// <c>SignalPrepareKind</c> buckets (Indicator + DLZ + FVG + SMC). This is the full set
+    /// of intervals the engine maintains CandleLists for — the emulator's TickRunner uses it
+    /// to decide which intervals to keep warm, and avoids duplicating Prepare's strategy /
+    /// zone / forced-1m logic in a second place.
+    /// </summary>
+    public static List<CryptoInterval> GetActiveIntervals()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<CryptoInterval>();
+        foreach (var bucket in Preparing.Values)
+        {
+            foreach (var (name, interval) in bucket)
+            {
+                if (seen.Add(name))
+                    result.Add(interval);
+            }
+        }
+        result.Sort((a, b) => a.Duration.CompareTo(b.Duration));
+        return result;
+    }
+
     private static void Add(SignalPrepareKind kind, string intervalName)
     {
         CryptoInterval interval = GlobalData.IntervalListPeriodName[intervalName];

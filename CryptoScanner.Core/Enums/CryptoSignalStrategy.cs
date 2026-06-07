@@ -40,7 +40,6 @@ public enum CryptoSignalStrategy
 
 #if DEBUG
     NweNp = 26,
-    NweBb = 27,
     Trend = 31,
 
     BbmaOmni = 43,
@@ -48,6 +47,7 @@ public enum CryptoSignalStrategy
     WaveTrend = 50,
     WtLbStoch = 51,
 #endif
+    NweBb = 27,
 
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally

@@ -5,19 +5,16 @@ using CryptoScanner.Emulator.ViewModels;
 
 namespace CryptoScanner.Emulator.Views;
 
-public partial class RunResultsWindow : Window
+public partial class RunResultsView : UserControl
 {
-    public RunResultsViewModel ViewModel { get; }
-
-    public RunResultsWindow()
+    public RunResultsView()
     {
         InitializeComponent();
-        ViewModel = new RunResultsViewModel();
-        DataContext = ViewModel;
 
         // Wire the double-click drill-down. Done in code-behind because the handler needs the
-        // owner Window (to root the modal) and the selected row — both are easier here than in
-        // an MVVM-style binding.
+        // owner Window (to root the modal positions dialog) and the selected row — both easier
+        // here than via an MVVM binding. The owner is resolved at click-time from the visual
+        // tree because this control lives inside MainWindow's TabControl, not its own Window.
         RunsGrid.DoubleTapped += OnRunDoubleTapped;
     }
 
@@ -26,8 +23,10 @@ public partial class RunResultsWindow : Window
     {
         if (RunsGrid.SelectedItem is not RunRow row)
             return;
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
 
         var positions = new RunPositionsWindow(row);
-        await positions.ShowDialog(this);
+        await positions.ShowDialog(owner);
     }
 }

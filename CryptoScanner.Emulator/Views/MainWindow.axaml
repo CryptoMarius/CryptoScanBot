@@ -35,10 +35,6 @@
                         Command="{Binding FetchCandlesCommand}"
                         IsEnabled="{Binding !IsRunning}"
                         ToolTip.Tip="Pulls candles for every symbol in emulator-run.json and persists them. May take a while; only needs doing once per symbol/range."/>
-                <Button Content="Results..."
-                        Command="{Binding ShowResultsCommand}"
-                        CommandParameter="{Binding $parent[Window]}"
-                        IsEnabled="{Binding !IsRunning}"/>
                 <Button Content="Start"
                         Command="{Binding StartCommand}"
                         IsVisible="{Binding !IsRunning}"
@@ -87,10 +83,13 @@
             </Grid>
         </Border>
 
-        <!-- ─── Tabs: only Log for now; results / charts can slot in later ────────── -->
+        <!-- ─── Tabs: Log + Results (charts etc. can slot in later) ───────────────── -->
         <TabControl Grid.Row="4">
             <TabItem Header="Log">
                 <views:LogTabView DataContext="{Binding LogTab}"/>
+            </TabItem>
+            <TabItem Header="Results">
+                <views:RunResultsView DataContext="{Binding RunResults}"/>
             </TabItem>
         </TabControl>
 

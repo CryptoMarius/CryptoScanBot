@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 61;
+    public readonly static int CurrentDatabaseVersion = 62;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1248,6 +1248,27 @@ public class Migration
                 "alter table Signal add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
             database.Connection.Execute(
                 "alter table Position add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 07-06-2026 Emulator run-metadata: snapshot of the scanner settings.json
+        // - EmulatorRun.SettingsJson (full GlobalData.Settings at run start, so the exact
+        //   configuration that produced a run can be inspected/restored later)
+        // The EmulatorRun table is created by Database.CreateTables() before Migration.Execute,
+        // so it always exists here. On the live DB the table stays empty; the column just rides
+        // along unused.
+        if (CurrentVersion > version.Version && version.Version == 61)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute(
+                "alter table EmulatorRun add SettingsJson Text null", transaction);
 
             // update version
             version.Version += 1;

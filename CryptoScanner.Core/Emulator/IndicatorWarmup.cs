@@ -32,6 +32,43 @@ public static class IndicatorWarmup
 
 
     /// <summary>
+    /// The full set of intervals the emulator must MAINTAIN in memory during a replay: the active
+    /// strategy + zone intervals from <see cref="ResolveActiveIntervals"/>, plus the intervals the
+    /// trading-pause rules read (<c>Settings.Trading.PauseTradingRules</c> — by default BTCUSDT on
+    /// 2m and 5m). Without the pause-rule intervals their reference symbol has no candles on those
+    /// timeframes and <c>TradingRules.CalculateTradingRules</c> logs "Missing candles for
+    /// tradingrules?" on every single tick.
+    ///
+    /// These extra intervals are synthesised from 1m by the warmup / TickRunner (never fetched), so
+    /// only 1m needs to be on disk. The pause-rule's reference symbol must of course be one of the
+    /// run symbols, otherwise it has no 1m candles to synthesise from in the first place.
+    /// </summary>
+    public static List<CryptoInterval> ResolveMaintainedIntervals()
+    {
+        var seen = new HashSet<CryptoIntervalPeriod>();
+        var result = new List<CryptoInterval>();
+
+        foreach (var interval in ResolveActiveIntervals())
+        {
+            if (seen.Add(interval.IntervalPeriod))
+                result.Add(interval);
+        }
+
+        foreach (var rule in GlobalData.Settings.Trading.PauseTradingRules)
+        {
+            if (GlobalData.IntervalListPeriod.TryGetValue(rule.Interval, out CryptoInterval? interval)
+                && seen.Add(interval.IntervalPeriod))
+            {
+                result.Add(interval);
+            }
+        }
+
+        result.Sort((a, b) => a.Duration.CompareTo(b.Duration));
+        return result;
+    }
+
+
+    /// <summary>
     /// How much history (in <em>that interval's own units, expressed in minutes</em>) the
     /// fetch routine should ensure is available before the replay window starts. The fetcher
     /// pulls candles per interval directly, so we no longer over-fetch 1m candles to cover
@@ -80,7 +117,7 @@ public static class IndicatorWarmup
     public static List<CryptoCandle> PrepareSymbol(CryptoSymbol symbol,
         CandleTime replayFrom, CandleTime replayTo)
     {
-        var activeIntervals = ResolveActiveIntervals();
+        var activeIntervals = ResolveMaintainedIntervals();
         uint warmupMinutes = ComputeWarmupMinutes(activeIntervals);
 
         // Clamp warmupFrom to 0 if it would go negative (when replayFrom is very early).

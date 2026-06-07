@@ -11,8 +11,10 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// <summary>
 /// Lightweight log viewer for the emulator. Hooks <see cref="GlobalData.LogToLogTabEvent"/>
 /// — the same event the live scanner's LogGridViewModel listens to — so any <c>AddTextToLogTab</c>
-/// call anywhere in Core surfaces here. Lines are timestamped with the active clock so emulator
-/// runs show the candle-time of the replayed event, not wall-clock.
+/// call anywhere in Core surfaces here. Lines are timestamped with the real wall-clock
+/// (<see cref="DateTime.Now"/>): during a run <c>GlobalData.Clock</c> is the virtual EmulatorClock,
+/// whose UtcNow jumps around the replay window (and reads as a nonsensical year-0001 time before
+/// the first tick), which is useless for telling when a line was actually emitted.
 ///
 /// Older entries are pruned at <see cref="MaxLines"/> to stop the list from growing without bound
 /// during long runs. The deliberate simplification vs the scanner version: no DataGrid sort, no
@@ -37,7 +39,7 @@ public partial class LogTabViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(text))
             return;
 
-        string stamped = $"{GlobalData.Clock.UtcNow.ToLocalTime():HH:mm:ss}  {text.Trim()}";
+        string stamped = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {text.Trim()}";
 
         // Marshal to the UI thread because LogToLogTabEvent fires from any worker (REST
         // fetch, TickRunner, etc.). Without the post Avalonia logs binding errors.

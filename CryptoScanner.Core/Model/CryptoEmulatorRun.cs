@@ -21,6 +21,11 @@ public class CryptoEmulatorRun
     // Stored as JSON so the schema does not need to evolve every time a knob is added.
     public string ConfigJson { get; set; } = "";
 
+    // Full snapshot of the scanner's settings.json (GlobalData.Settings) at run start, so the
+    // exact configuration that produced a run can be inspected and the "best" one restored later.
+    // Nullable for rows written before this column existed.
+    public string? SettingsJson { get; set; }
+
     // Build identification (git short SHA, optional).
     public string? GitSha { get; set; }
 

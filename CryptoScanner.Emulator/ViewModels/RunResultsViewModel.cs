@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Context;
 
@@ -30,7 +31,7 @@ public class RunRow
 
 
 /// <summary>
-/// Backs <c>RunResultsWindow</c>. Pulls EmulatorRun rows from the emulator's CryptoScanBot.db
+/// Backs the Results tab (<c>RunResultsView</c>). Pulls EmulatorRun rows from the emulator's CryptoScanBot.db
 /// directly with Dapper — no in-memory cache, no MVVM messages, no live-scanner machinery.
 /// The user double-clicks a row to drill into its positions (handled in code-behind).
 /// </summary>
@@ -49,6 +50,7 @@ public partial class RunResultsViewModel : ObservableObject
     }
 
 
+    [RelayCommand]
     public void Refresh()
     {
         Runs.Clear();

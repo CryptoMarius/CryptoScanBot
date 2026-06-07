@@ -60,6 +60,11 @@ public partial class App : Application
         //    AddTextToLogTab calls already write to file and the in-app Log tab.
         ScannerLog.InitializeLogging();
 
+        // 2b. Also mirror the AddTextToLogTab stream (the Log tab's content) to a plain-text
+        //     file. NLog only captures ScannerLog.Logger.* calls; this keeps the human progress
+        //     log too. Hooks the same event the Log tab uses, so it must start before Bootstrap.
+        EmulatorLogFile.Start();
+
         // 3. Seed settings.json from the live scanner if this is a fresh emulator folder.
         //    Keeps the same convention as before; only the call site moved out of Program.cs.
         BootstrapFromLiveScanner();

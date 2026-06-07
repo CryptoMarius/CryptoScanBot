@@ -45,7 +45,10 @@ public sealed class TickRunner
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
                 throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
 
-            List<CryptoInterval> activeIntervals = IndicatorWarmup.ResolveActiveIntervals();
+            // Maintained = strategy/zone intervals PLUS the trading-pause-rule intervals (e.g.
+            // BTCUSDT 2m/5m). Must match what IndicatorWarmup.PrepareSymbol aggregated, otherwise
+            // the higher-TF candle a rule/strategy reads would be missing during replay.
+            List<CryptoInterval> activeIntervals = IndicatorWarmup.ResolveMaintainedIntervals();
             var higherIntervals = activeIntervals
                 .Where(i => i.IntervalPeriod != CryptoIntervalPeriod.interval1m)
                 .ToList();
@@ -107,14 +110,25 @@ public sealed class TickRunner
                     await ProcessTickAsync(symbol, candle, interval1m, higherIntervals, closeMinutes);
 
                     processedBars++;
-                    Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
 
-                    // Yield occasionally so a UI thread or test harness stays responsive —
-                    // engine work itself is synchronous and CPU-bound.
+                    // Throttle progress reporting. Reporting every bar posts hundreds of thousands
+                    // of updates to the UI thread on a multi-week 1m replay, which floods the
+                    // dispatcher and dominates the run time. Once per 256 bars is smooth enough for
+                    // a progress bar; the final count is reported after the loop.
                     if ((processedBars & 0xFF) == 0)
+                    {
+                        Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
+
+                        // Yield occasionally so a UI thread or test harness stays responsive —
+                        // engine work itself is synchronous and CPU-bound.
                         await Task.Yield();
+                    }
                 }
             }
+
+            // Final progress report so the bar lands on 100% / the exact processed count even when
+            // the last batch didn't hit the 256-bar boundary.
+            Progress?.Report(new TickRunProgress("", processedBars, totalBars));
         }
         finally
         {

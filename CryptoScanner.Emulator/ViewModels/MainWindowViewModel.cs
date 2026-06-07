@@ -58,6 +58,13 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public LogTabViewModel LogTab { get; } = new();
 
+    /// <summary>
+    /// Backs the Results tab next to the Log tab. Lives for the whole MainWindow lifetime and is
+    /// re-queried (<see cref="RunResultsViewModel.Refresh"/>) whenever a run finishes, so the grid
+    /// reflects the latest EmulatorRun rows without the user reopening anything.
+    /// </summary>
+    public RunResultsViewModel RunResults { get; } = new();
+
 
     private CancellationTokenSource? _cts;
 
@@ -356,16 +363,28 @@ public partial class MainWindowViewModel : ObservableObject
         try
         {
             // Tag every signal and position with this run. ConfigJson captures the user's
-            // intent (which symbols/period) and the live settings at the moment of start.
+            // intent (which symbols/period); SettingsJson is a full snapshot of the scanner
+            // settings.json (GlobalData.Settings) at run start — serialized with the SAME options
+            // the live SaveConfiguration uses — so the exact configuration behind a run can be
+            // inspected and the "best" one restored later.
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
-            run = EmulatorDb.StartRun(configJson);
+            string settingsJson = System.Text.Json.JsonSerializer.Serialize(
+                GlobalData.Settings, CryptoScanner.Core.Json.JsonTools.JsonSerializerIndented);
+            run = EmulatorDb.StartRun(configJson, settingsJson);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner
             {
                 Progress = new Progress<TickRunProgress>(OnTickProgress),
             };
-            await runner.RunAsync(config, _cts.Token);
+
+            // Run the replay on a background thread. Previously RunAsync was awaited directly on
+            // the UI thread; even with periodic Task.Yield the engine work saturated the
+            // dispatcher, so the Stop button's click (and thus _cts.Cancel()) was starved and the
+            // run "couldn't be stopped". Offloading frees the UI thread to process Stop instantly;
+            // the loop then sees the cancelled token at its next iteration. Progress<T> still
+            // marshals OnTickProgress back to the UI thread (it captured the UI context here).
+            await Task.Run(() => runner.RunAsync(config, _cts.Token), _cts.Token);
 
             EmulatorDb.FinishRun("completed");
             Status = $"Run \"{config.Label}\" completed.";
@@ -403,6 +422,10 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 GlobalData.AddTextToLogTab($"Run: persisting candles FAILED — {sx.Message}");
             }
+
+            // The run just added/updated its EmulatorRun row (and its signals/positions); pull
+            // the fresh numbers into the Results tab so it reflects this run immediately.
+            RunResults.Refresh();
 
             IsRunning = false;
             _cts?.Dispose();
@@ -475,29 +498,6 @@ public partial class MainWindowViewModel : ObservableObject
 
             symbol.QuoteData.FetchCandles = true;
         }
-    }
-
-
-    /// <summary>
-    /// Opens the run-results window. Lists every EmulatorRun in the DB; double-click on a row
-    /// drills into that run's positions. Modal so the user finishes inspecting before going
-    /// back to the main panel; if you want to leave it open alongside, swap ShowDialog for Show.
-    /// </summary>
-
-
-    /// <summary>
-    /// Opens the run-results window. Lists every EmulatorRun in the DB; double-click on a row
-    /// drills into that run's positions. Modal so the user finishes inspecting before going
-    /// back to the main panel; if you want to leave it open alongside, swap ShowDialog for Show.
-    /// </summary>
-    [RelayCommand]
-    private async Task ShowResultsAsync(Window? owner)
-    {
-        var window = new RunResultsWindow();
-        if (owner != null)
-            await window.ShowDialog(owner);
-        else
-            window.Show();
     }
 
 

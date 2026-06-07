@@ -82,14 +82,51 @@ public class ZoneThreadCalculate
                 }
                 finally
                 {
-                    await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
-                    loadedCandlesInMemory.Clear();
-                    _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
+                    // In emulator mode the replay owns the in-memory CandleList and drives a
+                    // virtual clock. Persisting per tick and pruning candles here would hurt:
+                    // CleanLoadedCandlesAsync drops everything before
+                    // GetCandleFetchStart(Clock.UtcNow), removing history the replay (higher-TF
+                    // synthesis + indicator lookback) still needs, and SaveCandleDataToDiskAsync
+                    // adds a slow disk write on every tick. The emulator persists the candles
+                    // once at the end of the run instead, so we skip both side-effects here.
+                    if (!GlobalData.IsEmulatorMode)
+                    {
+                        await ZoneCandleEngine.SaveCandleDataToDiskAsync(symbol, loadedCandlesInMemory);
+                        loadedCandlesInMemory.Clear();
+                        _ = ZoneCandleEngine.CleanLoadedCandlesAsync(symbol);
+                    }
                     symbol.Data.ZoneLock.Release();
                 }
             }
         }
     }
+
+    /// <summary>
+    /// Synchronously processes everything currently in the queue and returns once it is empty.
+    /// The live scanner runs <see cref="ExecuteAsync"/> on a background thread, but the emulator
+    /// must keep zone calculation deterministic and on the replay thread. So instead of starting
+    /// the worker, the emulator drains the queue inline at the end of each tick (right after
+    /// PositionMonitor.NewCandleArrivedAsync) while the virtual clock is still pinned to the
+    /// current bar — the queued (symbol, interval) items are exactly what SignalPrepare.Execute
+    /// scheduled for this minute. TryTake is non-blocking, so this returns immediately when no
+    /// zone work was queued for the tick.
+    /// </summary>
+    public async Task DrainQueueAsync()
+    {
+        while (Queue.TryTake(out (CryptoSymbol symbol, CryptoInterval interval) item))
+        {
+            try
+            {
+                await CalculateZones(item.symbol, item.interval);
+            }
+            catch (Exception error)
+            {
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"ThreadZoneCalculate (drain) ERROR {error.Message}");
+            }
+        }
+    }
+
 
     public async Task ExecuteAsync()
     {
