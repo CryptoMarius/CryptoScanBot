@@ -34,6 +34,50 @@ public static class EmulatorDb
     }
 
     /// <summary>
+    /// Removes all stored zones (DLZ/FVG/SMC) for the given symbols and clears their in-memory
+    /// zone state so a run starts from a blank slate.
+    ///
+    /// Zones have no EmulatorRunId — unlike signals/positions they are NOT separated per run.
+    /// <see cref="Zones.ZoneDlz.LoadZonesForSymbol"/> reloads every stored zone from the DB at the
+    /// start of each zone calculation, INCLUDING its CloseTime/broken state. So a zone that a
+    /// PREVIOUS run closed at time T would be loaded as already-closed at the start of a new run,
+    /// even though on the new replay's timeline T hasn't happened yet — look-ahead contamination
+    /// that makes runs non-reproducible. Zones are fully rebuilt from the candles as the replay
+    /// progresses, so clearing them loses nothing.
+    /// </summary>
+    public static void ClearZonesForSymbols(Model.CryptoExchange exchange, IEnumerable<string> symbolNames)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        using var transaction = database.BeginTransaction();
+        try
+        {
+            foreach (string name in symbolNames)
+            {
+                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
+                    continue;
+
+                database.Connection.Execute("delete from Zone where SymbolId = @id", new { id = symbol.Id }, transaction);
+
+                // Drop the in-memory zone lists + DLZ swing-point admin too, otherwise the first
+                // inline FVG/SMC scan (before the first DLZ reload) would still see last run's
+                // leftover in-memory zones from the same app session.
+                symbol.Data.ResetFvgData();
+                symbol.Data.ResetDlzData();
+                symbol.Data.ResetSmcData();
+                symbol.Data.ResetTrendData();
+            }
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+
+    /// <summary>
     /// Inserts an EmulatorRun row and stores its id in
     /// <see cref="GlobalData.CurrentEmulatorRunId"/> so subsequent signals and positions are
     /// tagged with it. Call once at run start.

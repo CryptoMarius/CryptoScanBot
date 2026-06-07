@@ -65,7 +65,12 @@ public static class EmulatorLogFile
                 return;
             try
             {
-                _writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {text.Trim()}");
+                // Same convention as the Log tab: during a run stamp with the virtual replay date
+                // (so the file shows how far the run got), wall-clock otherwise.
+                DateTime stamp = GlobalData.CurrentEmulatorRunId != null
+                    ? GlobalData.Clock.UtcNow
+                    : DateTime.Now;
+                _writer.WriteLine($"{stamp:yyyy-MM-dd HH:mm:ss}  {text.Trim()}");
             }
             catch
             {

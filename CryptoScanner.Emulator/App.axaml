@@ -3,15 +3,51 @@
              x:Class="CryptoScanner.Emulator.App"
              RequestedThemeVariant="Default">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Suppress the datagrid sort indicator (takes up too much space) -->
+            <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Mirror the scanner's per-theme alternating-row colour so the grids look the
+                     same in both light and dark mode. -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 
-        <!-- Compact row styling mirrored from CryptoScanner/App.axaml so all the future grids
-             in the emulator look the same as the live scanner. Keep these in sync if the
-             scanner gets new conventions. -->
+        <!-- Compact + non-cell-select grid styling mirrored from CryptoScanner/App.axaml so the
+             emulator grids look and behave like the live scanner. Keep these in sync if the
+             scanner gets new conventions. The HoverHelper-based rules from the scanner are
+             intentionally omitted (that attached property lives in the scanner project). -->
 
-        <!-- DataGrid: smaller cell + row, scrollbars always visible. -->
+        <Style Selector="DataGrid ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
+        </Style>
+
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="BorderBrush" Value="#50808080" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+        </Style>
+
+        <!-- Alternating row colors -->
+        <Style Selector="DataGridRow:nth-child(even)">
+            <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
+        </Style>
+
+        <!-- Smaller cell + row height -->
         <Style Selector="DataGridCell">
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="0" />
@@ -20,25 +56,41 @@
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="0" />
         </Style>
-        <Style Selector="DataGrid ScrollViewer">
-            <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
+
+        <!-- Hide the focus indicator (the dotted/blue cell rectangle on click) -->
+        <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
 
-        <!-- ListBox items (log tab + future lists). The Fluent default leaves a lot of
-             vertical padding around each entry; with this override one log line takes one
-             monospace line height. -->
+        <!-- Hide the "current cell" border so selection is whole-row, not a single cell -->
+        <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Transparent rows + no per-row hover highlight (scanner behaviour) -->
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridRow:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{x:Null}"/>
+        </Style>
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackground}"/>
+        </Style>
+
+        <!-- ListBox items (log tab). The Fluent default leaves a lot of vertical padding around
+             each entry; with this override one log line takes one monospace line height. -->
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="4,1" />
             <Setter Property="MinHeight" Value="16" />
         </Style>
 
-        <!-- Default TextBlock font size: the scanner uses 12 globally so menus + labels
-             match the compact grid rows. -->
+        <!-- Default font sizes: the scanner uses 12 globally so menus + labels match the
+             compact grid rows. -->
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="12" />
         </Style>
-
         <Style Selector="Button">
             <Setter Property="FontSize" Value="12" />
         </Style>

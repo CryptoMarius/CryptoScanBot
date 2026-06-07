@@ -2,10 +2,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Emulator;
 
 using Dapper;
 
 using System.Collections.ObjectModel;
+using System.Text.Json;
 
 namespace CryptoScanner.Emulator.ViewModels;
 
@@ -19,7 +21,14 @@ public class RunRow
     public int Id { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
+
+    // The EmulatorRun table has no Label column — the label lives inside ConfigJson (the
+    // serialized EmulatorRunConfig). Dapper fills ConfigJson from the query; Refresh parses
+    // the human Label out of it afterwards. Selecting a non-existent "Label" column was the
+    // bug that made the whole grid come up empty (the query threw "no such column: Label").
+    public string? ConfigJson { get; set; }
     public string Label { get; set; } = "";
+
     public string? Result { get; set; }
     public int SignalCount { get; set; }
     public int PositionCount { get; set; }
@@ -61,11 +70,28 @@ public partial class RunResultsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<RunRow>(
-                "SELECT Id, StartedAt, FinishedAt, Label, Result, SignalCount, PositionCount " +
+                "SELECT Id, StartedAt, FinishedAt, ConfigJson, Result, SignalCount, PositionCount " +
                 "FROM EmulatorRun ORDER BY StartedAt DESC");
 
             foreach (var row in rows)
+            {
+                // Pull the human label out of the stored run config. Best-effort: a malformed or
+                // legacy ConfigJson just leaves the Label blank rather than dropping the row.
+                if (!string.IsNullOrWhiteSpace(row.ConfigJson))
+                {
+                    try
+                    {
+                        var cfg = JsonSerializer.Deserialize<EmulatorRunConfig>(row.ConfigJson);
+                        if (cfg != null)
+                            row.Label = cfg.Label;
+                    }
+                    catch
+                    {
+                        // leave Label empty
+                    }
+                }
                 Runs.Add(row);
+            }
 
             Status = Runs.Count == 0
                 ? "No runs yet — start one from the main window."

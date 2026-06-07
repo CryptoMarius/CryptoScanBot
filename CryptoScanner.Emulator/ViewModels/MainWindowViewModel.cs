@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Config.Views;
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Emulator;
@@ -16,8 +17,6 @@ using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Emulator.Views;
 
-using System.Diagnostics;
-
 namespace CryptoScanner.Emulator.ViewModels;
 
 /// <summary>
@@ -28,6 +27,15 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// </summary>
 public partial class MainWindowViewModel : ObservableObject
 {
+    /// <summary>
+    /// Window title, same shape as the live scanner's (AppName + version + exchange). Bound to the
+    /// custom title bar's title text and the Window.Title. Built once at construction; the active
+    /// exchange is already known by the time the MainWindow is created (bootstrap runs first).
+    /// </summary>
+    [ObservableProperty]
+    private string _title =
+        $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.ActiveExchange?.Name} — Emulator".Trim();
+
     [ObservableProperty]
     private string _appVersion = GlobalData.AppVersion;
 
@@ -102,6 +110,10 @@ public partial class MainWindowViewModel : ObservableObject
         // shutdown — we do it eagerly so the change survives a crash too.
         GlobalData.SaveConfiguration();
         GlobalData.AddTextToLogTab("Settings saved.");
+
+        // The user may have changed the dark/light theme in the dialog; apply it right away so the
+        // emulator reflects the new choice without needing a restart.
+        App.ApplyThemeFromSettings();
     }
 
 
@@ -221,72 +233,81 @@ public partial class MainWindowViewModel : ObservableObject
 
         try
         {
-            foreach (string symbolName in config.Symbols)
+            // Run the whole fetch on a background thread so the UI stays responsive, same as the
+            // replay run. ZoneCandleEngine.FetchFrom is async (network I/O) but the work between
+            // the awaits — IsDataLocal walks, candle aggregation, candles.db reads/writes — is
+            // synchronous CPU/disk work that would otherwise stutter the UI on a big fetch.
+            // Status is a UI-bound property, so every assignment inside is marshalled back to the
+            // UI thread; AddTextToLogTab already marshals itself via the Log tab.
+            await Task.Run(async () =>
             {
-                symbolIdx++;
-                if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                foreach (string symbolName in config.Symbols)
                 {
-                    Status = $"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?";
-                    GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
-                    continue;
-                }
-
-                Status = $"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…";
-
-                // One dict per symbol, exactly like the DLZ zone-calculation path: it tells
-                // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
-                // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
-                // step sees the full picture instead of only the bounded startup load.
-                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
-
-                foreach (CryptoInterval interval in activeIntervals)
-                {
-                    // Per-interval warmup window — 1m=24h, higher=270×duration. Each interval
-                    // pulled in its OWN resolution: a 1w warmup is 270 weekly candles (~5y),
-                    // not 5 years of 1m bars. minDate..maxDate is the window we WANT;
-                    // ZoneCandleEngine.FetchFrom figures out how much of it we already have and
-                    // fetches only the rest.
-                    uint warmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval);
-                    DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
-
-                    CandleTime minDate = IntervalTools.StartOfIntervalCandle(
-                        CandleTime.AlignFromDateTime(intervalFromUtc, 1), interval.Duration);
-                    CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
-                        CandleTime.AlignFromDateTime(config.ToDate, 1), interval.Duration);
-
-                    if (maxDate <= minDate)
+                    symbolIdx++;
+                    if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                    {
+                        SetStatus($"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?");
+                        GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
                         continue;
-
-                    // candleFetchCount is the bar-count of the wanted range; ZoneCandleEngine's
-                    // CalculateDates rebuilds maxDate as minDate + count*duration (and caps it
-                    // at "now"), so passing the count keeps us inside the DLZ contract.
-                    int candleFetchCount = (int)((maxDate.Minutes - minDate.Minutes) / interval.Duration);
-
-                    GlobalData.AddTextToLogTab(
-                        $"Fetch candles: {symbol.Name} {interval.Name} — want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
-
-                    try
-                    {
-                        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
                     }
-                    catch (Exception sx)
+
+                    SetStatus($"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…");
+
+                    // One dict per symbol, exactly like the DLZ zone-calculation path: it tells
+                    // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
+                    // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
+                    // step sees the full picture instead of only the bounded startup load.
+                    SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+
+                    foreach (CryptoInterval interval in activeIntervals)
                     {
-                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
+                        // Per-interval warmup window — 1m=24h, higher=270×duration. Each interval
+                        // pulled in its OWN resolution: a 1w warmup is 270 weekly candles (~5y),
+                        // not 5 years of 1m bars. minDate..maxDate is the window we WANT;
+                        // ZoneCandleEngine.FetchFrom figures out how much of it we already have and
+                        // fetches only the rest.
+                        uint warmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval);
+                        DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
+
+                        CandleTime minDate = IntervalTools.StartOfIntervalCandle(
+                            CandleTime.AlignFromDateTime(intervalFromUtc, 1), interval.Duration);
+                        CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
+                            CandleTime.AlignFromDateTime(config.ToDate, 1), interval.Duration);
+
+                        if (maxDate <= minDate)
+                            continue;
+
+                        // candleFetchCount is the bar-count of the wanted range; ZoneCandleEngine's
+                        // CalculateDates rebuilds maxDate as minDate + count*duration (and caps it
+                        // at "now"), so passing the count keeps us inside the DLZ contract.
+                        int candleFetchCount = (int)((maxDate.Minutes - minDate.Minutes) / interval.Duration);
+
+                        GlobalData.AddTextToLogTab(
+                            $"Fetch candles: {symbol.Name} {interval.Name} — want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
+
+                        try
+                        {
+                            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
+                        }
+                        catch (Exception sx)
+                        {
+                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
+                        }
                     }
+
+                    GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done");
                 }
 
-                GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done");
-            }
-
-            // Persist the in-memory CandleLists to {Exchange}.db. Without this, everything
-            // the REST fetch just pulled lives only in memory and is gone on the next start
-            // — so each launch would have to refetch from the exchange. SaveCandlesAsync is
-            // the same call the live scanner makes during ScannerSession shutdown; bulk
-            // upserts via SQLite transactions, so calling it once at the end of the fetch is
-            // far cheaper than after every symbol.
-            Status = $"Saving candles to database…";
-            GlobalData.AddTextToLogTab("Fetch candles: persisting to database");
-            await CandleDatabase.SaveCandlesAsync();
+                // Persist the in-memory CandleLists to {Exchange}.db. Without this, everything
+                // the REST fetch just pulled lives only in memory and is gone on the next start
+                // — so each launch would have to refetch from the exchange. SaveCandlesAsync is
+                // the same call the live scanner makes during ScannerSession shutdown; bulk
+                // upserts via SQLite transactions, so calling it once at the end of the fetch is
+                // far cheaper than after every symbol.
+                SetStatus("Saving candles to database…");
+                GlobalData.AddTextToLogTab("Fetch candles: persisting to database");
+                await CandleDatabase.SaveCandlesAsync();
+            });
 
             Status = $"Fetch candles: completed for {total} symbol(s).";
             GlobalData.AddTextToLogTab($"Fetch candles: completed ({total} symbol(s))");
@@ -304,27 +325,31 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Opens emulator-run.json in the OS-default text editor. Quick way to edit symbols/dates
-    /// before a proper UI exists. The file is created on first start by RunConfigFile.Load.
+    /// Sets the UI-bound <see cref="Status"/> from any thread. Fetch/run work happens on a
+    /// background thread (Task.Run) but Status drives a binding, so the assignment is marshalled
+    /// to the UI thread. Posting from the UI thread itself is fine — it just queues.
+    /// </summary>
+    private void SetStatus(string text) => Dispatcher.UIThread.Post(() => Status = text);
+
+
+    /// <summary>
+    /// Opens the run-parameters dialog (label, replay period, symbol selection) instead of making
+    /// the user hand-edit emulator-run.json. The dialog saves to that same file on OK; we only
+    /// surface the result in the log.
     /// </summary>
     [RelayCommand]
-    private void OpenRunConfig()
+    private async Task EditRunConfigAsync(Window? owner)
     {
-        // Ensure the file exists (Load creates a placeholder if missing).
-        RunConfigFile.Load();
-        string path = RunConfigFile.FilePath;
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true,
-            });
-        }
-        catch (Exception ex)
-        {
-            Status = $"Could not open {path}: {ex.Message}";
-        }
+        var window = new RunConfigWindow();
+
+        bool saved = false;
+        if (owner != null)
+            saved = await window.ShowDialog<bool>(owner);
+        else
+            window.Show();
+
+        if (saved)
+            GlobalData.AddTextToLogTab("Run parameters saved to emulator-run.json.");
     }
 
 
@@ -357,6 +382,16 @@ public partial class MainWindowViewModel : ObservableObject
 
         ApplyRunOverrides(config);
 
+        // Start from a clean zone slate. Zones carry no EmulatorRunId, so without this a run
+        // inherits the previous run's zones from the DB — including ones already closed/broken at
+        // a point in time that hasn't happened yet on this replay's timeline (look-ahead). Zones
+        // are rebuilt from the candles during the replay, so nothing is lost.
+        if (GlobalData.ActiveExchange != null)
+        {
+            EmulatorDb.ClearZonesForSymbols(GlobalData.ActiveExchange, config.Symbols);
+            GlobalData.AddTextToLogTab($"Run: cleared previous zones for {config.Symbols.Count} symbol(s)");
+        }
+
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
 
@@ -386,9 +421,23 @@ public partial class MainWindowViewModel : ObservableObject
             // marshals OnTickProgress back to the UI thread (it captured the UI context here).
             await Task.Run(() => runner.RunAsync(config, _cts.Token), _cts.Token);
 
-            EmulatorDb.FinishRun("completed");
-            Status = $"Run \"{config.Label}\" completed.";
-            GlobalData.AddTextToLogTab($"Run #{run.Id} completed");
+            // The TickRunner's replay loop breaks out cleanly on cancellation (it checks the token
+            // at the top of each iteration) rather than throwing, so a Stop during replay returns
+            // here normally — NOT via the OperationCanceledException catch below. Inspect the token
+            // so a stopped run is recorded as "cancelled" instead of "completed". (Cancelling during
+            // the warmup phase still throws and is handled by the catch.)
+            if (_cts.IsCancellationRequested)
+            {
+                EmulatorDb.FinishRun("cancelled");
+                Status = $"Run \"{config.Label}\" cancelled.";
+                GlobalData.AddTextToLogTab($"Run #{run.Id} cancelled");
+            }
+            else
+            {
+                EmulatorDb.FinishRun("completed");
+                Status = $"Run \"{config.Label}\" completed.";
+                GlobalData.AddTextToLogTab($"Run #{run.Id} completed");
+            }
         }
         catch (OperationCanceledException)
         {

@@ -1,0 +1,71 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="620"
+        Width="520" Height="640"
+        x:Class="CryptoScanner.Emulator.Views.RunConfigWindow"
+        x:DataType="vm:RunConfigViewModel"
+        Title="Run parameters"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" RowSpacing="8">
+
+        <!-- Label -->
+        <Grid Grid.Row="0" ColumnDefinitions="90,*">
+            <TextBlock Grid.Column="0" Text="Label:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Label}"
+                     Watermark="optional — to spot the run in the Results tab"/>
+        </Grid>
+
+        <!-- Period -->
+        <Grid Grid.Row="1" ColumnDefinitions="90,*,40,*">
+            <TextBlock Grid.Column="0" Text="From:" VerticalAlignment="Center"/>
+            <CalendarDatePicker Grid.Column="1" SelectedDate="{Binding FromDate}"/>
+            <TextBlock Grid.Column="2" Text="To:" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <CalendarDatePicker Grid.Column="3" SelectedDate="{Binding ToDate}"/>
+        </Grid>
+
+        <!-- Symbols header + filter -->
+        <Grid Grid.Row="2" ColumnDefinitions="90,*,Auto,Auto">
+            <TextBlock Grid.Column="0" Text="Symbols:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding SymbolFilter}" Watermark="filter…"/>
+            <Button Grid.Column="2" Content="All" Margin="6,0,0,0"
+                    Command="{Binding SelectAllFilteredCommand}"
+                    ToolTip.Tip="Select every symbol currently shown by the filter"/>
+            <Button Grid.Column="3" Content="None" Margin="6,0,0,0"
+                    Command="{Binding DeselectAllFilteredCommand}"
+                    ToolTip.Tip="Deselect every symbol currently shown by the filter"/>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="{Binding SelectedSummary}" Foreground="Gray" FontSize="11"/>
+
+        <!-- Symbol checklist -->
+        <Border Grid.Row="4" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
+            <ScrollViewer VerticalScrollBarVisibility="Visible">
+                <ItemsControl ItemsSource="{Binding FilteredSymbols}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SymbolSelectionItem">
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
+                                      Padding="4,1" MinHeight="18"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Validation -->
+        <TextBlock Grid.Row="5" Text="{Binding ValidationMessage}" Foreground="#C0392B"
+                   TextWrapping="Wrap" FontSize="11"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Click="OnCancel" MinWidth="80"/>
+            <Button Content="OK" Click="OnOk" MinWidth="80"
+                    Background="#3A8D3A" Foreground="White"/>
+        </StackPanel>
+
+    </Grid>
+
+</Window>

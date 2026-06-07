@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
@@ -13,6 +14,30 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+    }
+
+
+    /// <summary>
+    /// Applies the scanner's dark/light/system theme choice (<c>Settings.General.Theme</c>) to the
+    /// emulator. The live scanner does this in ScannerSession.Start; the emulator doesn't run that
+    /// session, so without this call it would always stay on the default (system) variant and
+    /// ignore the user's settings.json choice. Call after settings are loaded and again after the
+    /// Configure dialog so a changed theme takes effect immediately.
+    /// </summary>
+    public static void ApplyThemeFromSettings()
+    {
+        if (Current == null)
+            return;
+
+        ThemeVariant chosen = GlobalData.Settings.General.Theme switch
+        {
+            "Light" => ThemeVariant.Light,
+            "Dark" => ThemeVariant.Dark,
+            _ => ThemeVariant.Default,
+        };
+
+        if (Current.RequestedThemeVariant != chosen)
+            Current.RequestedThemeVariant = chosen;
     }
 
 
@@ -74,10 +99,19 @@ public partial class App : Application
         //    the user clicks Fetch candles. The setup-chosen exchange wins.
         await EmulatorBootstrap.InitializeAsync(setup.ViewModel.SelectedExchange);
 
+        // 4b. Apply the dark/light/system theme from settings.json now that settings are loaded.
+        //     The live scanner does this in ScannerSession.Start, which the emulator never runs.
+        ApplyThemeFromSettings();
+
         // 5. Now show the actual main window.
         var main = new MainWindow();
         desktop.MainWindow = main;
         main.Show();
+
+        // Signal readiness. Logged AFTER the MainWindow exists so the LogTabViewModel (which
+        // subscribes in its constructor) is already hooked and shows it; the file log captures
+        // it too. Tells the user bootstrap finished and the app is ready for input.
+        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}");
     }
 
 
