@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Emulator;
+using CryptoScanner.Emulator.Engine;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;

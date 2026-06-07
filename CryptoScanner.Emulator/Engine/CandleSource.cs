@@ -1,7 +1,7 @@
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Materialises a candle window for the emulator. Reads from the per-exchange candles.db

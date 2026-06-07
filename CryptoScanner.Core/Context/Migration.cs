@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 62;
+    public readonly static int CurrentDatabaseVersion = 63;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1269,6 +1269,30 @@ public class Migration
 
             database.Connection.Execute(
                 "alter table EmulatorRun add SettingsJson Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 07-06-2026 Emulator run outcome columns: replay period + position breakdown + profit
+        // - EmulatorRun.FromDate / ToDate     (the replay window, so the grid can show the period)
+        // - EmulatorRun.PositionsOpen/Won/Lost (outcome split, filled at run end)
+        // - EmulatorRun.Profit                (summed realised result of the run)
+        // Same migration on the live DB; the columns just ride along unused there.
+        if (CurrentVersion > version.Version && version.Version == 62)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table EmulatorRun add FromDate Text null", transaction);
+            database.Connection.Execute("alter table EmulatorRun add ToDate Text null", transaction);
+            database.Connection.Execute("alter table EmulatorRun add PositionsOpen Integer not null default 0", transaction);
+            database.Connection.Execute("alter table EmulatorRun add PositionsWon Integer not null default 0", transaction);
+            database.Connection.Execute("alter table EmulatorRun add PositionsLost Integer not null default 0", transaction);
+            database.Connection.Execute("alter table EmulatorRun add Profit Text null", transaction);
 
             // update version
             version.Version += 1;

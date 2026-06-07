@@ -6,7 +6,7 @@ using CryptoScanner.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Utility entry points for the emulator's own CryptoScanBot.db lifecycle.
@@ -45,7 +45,7 @@ public static class EmulatorDb
     /// that makes runs non-reproducible. Zones are fully rebuilt from the candles as the replay
     /// progresses, so clearing them loses nothing.
     /// </summary>
-    public static void ClearZonesForSymbols(Model.CryptoExchange exchange, IEnumerable<string> symbolNames)
+    public static void ClearZonesForSymbols(CryptoScanner.Core.Model.CryptoExchange exchange, IEnumerable<string> symbolNames)
     {
         using var database = new CryptoDatabase();
         database.Open();
@@ -82,7 +82,8 @@ public static class EmulatorDb
     /// <see cref="GlobalData.CurrentEmulatorRunId"/> so subsequent signals and positions are
     /// tagged with it. Call once at run start.
     /// </summary>
-    public static CryptoEmulatorRun StartRun(string configJson, string? settingsJson = null, string? gitSha = null)
+    public static CryptoEmulatorRun StartRun(string configJson, DateTime fromDate, DateTime toDate,
+        string? settingsJson = null, string? gitSha = null)
     {
         using var database = new CryptoDatabase();
         database.Open();
@@ -90,6 +91,8 @@ public static class EmulatorDb
         var run = new CryptoEmulatorRun
         {
             StartedAt = GlobalData.Clock.UtcNow,
+            FromDate = fromDate,
+            ToDate = toDate,
             ConfigJson = configJson,
             SettingsJson = settingsJson,
             GitSha = gitSha,
@@ -122,6 +125,21 @@ public static class EmulatorDb
                 "select count(*) from signal where EmulatorRunId = @id", new { id = runId });
             run.PositionCount = database.Connection.ExecuteScalar<int>(
                 "select count(*) from position where EmulatorRunId = @id", new { id = runId });
+
+            // Outcome split. Open = no CloseTime yet; closed positions are won/lost on their
+            // realised Profit. Profit is stored as TEXT (decimal), so CAST to REAL for the numeric
+            // comparison and the SUM. Profit total covers the CLOSED positions (realised result).
+            run.PositionsOpen = database.Connection.ExecuteScalar<int>(
+                "select count(*) from position where EmulatorRunId = @id and CloseTime is null", new { id = runId });
+            run.PositionsWon = database.Connection.ExecuteScalar<int>(
+                "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and CAST(Profit as REAL) > 0", new { id = runId });
+            run.PositionsLost = database.Connection.ExecuteScalar<int>(
+                "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and (Profit is null or CAST(Profit as REAL) <= 0)", new { id = runId });
+
+            double profit = database.Connection.ExecuteScalar<double?>(
+                "select sum(CAST(Profit as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id = runId }) ?? 0.0;
+            run.Profit = (decimal)profit;
+
             database.Connection.Update(run);
         }
 

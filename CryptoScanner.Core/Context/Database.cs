@@ -853,12 +853,18 @@ public class CryptoDatabase : IDisposable
                 "Id INTEGER primary key autoincrement not null," +
                 "StartedAt TEXT NOT NULL," +
                 "FinishedAt TEXT NULL," +
+                "FromDate TEXT NULL," +
+                "ToDate TEXT NULL," +
                 "ConfigJson TEXT NOT NULL," +
                 "SettingsJson TEXT NULL," +
                 "GitSha TEXT NULL," +
                 "Result TEXT NULL," +
                 "SignalCount INTEGER NOT NULL DEFAULT 0," +
-                "PositionCount INTEGER NOT NULL DEFAULT 0" +
+                "PositionCount INTEGER NOT NULL DEFAULT 0," +
+                "PositionsOpen INTEGER NOT NULL DEFAULT 0," +
+                "PositionsWon INTEGER NOT NULL DEFAULT 0," +
+                "PositionsLost INTEGER NOT NULL DEFAULT 0," +
+                "Profit TEXT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxEmulatorRunId ON EmulatorRun(Id)");
         }

@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
-using CryptoScanner.Core.Emulator;
+using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.ViewModels;
 
 namespace CryptoScanner.Emulator.Views;

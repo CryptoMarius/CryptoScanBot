@@ -8,7 +8,7 @@ using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Emulator;
+using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
@@ -405,7 +405,7 @@ public partial class MainWindowViewModel : ObservableObject
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
             string settingsJson = System.Text.Json.JsonSerializer.Serialize(
                 GlobalData.Settings, CryptoScanner.Core.Json.JsonTools.JsonSerializerIndented);
-            run = EmulatorDb.StartRun(configJson, settingsJson);
+            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, settingsJson);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner

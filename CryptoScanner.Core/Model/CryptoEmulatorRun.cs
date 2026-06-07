@@ -17,6 +17,11 @@ public class CryptoEmulatorRun
     public DateTime StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
 
+    // The replay window of the run (copied from the run config). Stored on the run itself so the
+    // Results grid can show the period — its LENGTH matters when comparing runs.
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+
     // Snapshot of the run configuration (symbols, period, active strategies, settings).
     // Stored as JSON so the schema does not need to evolve every time a knob is added.
     public string ConfigJson { get; set; } = "";
@@ -34,4 +39,12 @@ public class CryptoEmulatorRun
 
     public int SignalCount { get; set; }
     public int PositionCount { get; set; }
+
+    // Outcome breakdown, computed at run end. Open = still running (no CloseTime); Won/Lost split
+    // the closed positions on their realised profit. Profit is the summed realised result of the
+    // closed positions — the number the whole backtest is ultimately about.
+    public int PositionsOpen { get; set; }
+    public int PositionsWon { get; set; }
+    public int PositionsLost { get; set; }
+    public decimal Profit { get; set; }
 }

@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Core.Context;
-using CryptoScanner.Core.Emulator;
+using CryptoScanner.Emulator.Engine;
 
 using Dapper;
 
@@ -22,6 +22,10 @@ public class RunRow
     public DateTime StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
 
+    // Nullable: runs created before the period columns existed have NULL here.
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
+
     // The EmulatorRun table has no Label column — the label lives inside ConfigJson (the
     // serialized EmulatorRunConfig). Dapper fills ConfigJson from the query; Refresh parses
     // the human Label out of it afterwards. Selecting a non-existent "Label" column was the
@@ -32,10 +36,29 @@ public class RunRow
     public string? Result { get; set; }
     public int SignalCount { get; set; }
     public int PositionCount { get; set; }
+    public int PositionsOpen { get; set; }
+    public int PositionsWon { get; set; }
+    public int PositionsLost { get; set; }
+    public decimal Profit { get; set; }
 
     public string Duration => FinishedAt.HasValue
         ? (FinishedAt.Value - StartedAt).ToString(@"hh\:mm\:ss")
         : "—";
+
+    /// <summary>The replay window as "from → to", plus the length in days — the period length is
+    /// what makes two runs comparable. Blank for legacy runs without a stored period.</summary>
+    public string Period
+    {
+        get
+        {
+            if (FromDate == null || ToDate == null)
+            {
+                return "—";
+            }
+            int days = (int)Math.Round((ToDate.Value - FromDate.Value).TotalDays);
+            return $"{FromDate.Value:yyyy-MM-dd} → {ToDate.Value:yyyy-MM-dd} ({days}d)";
+        }
+    }
 }
 
 
@@ -70,7 +93,8 @@ public partial class RunResultsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<RunRow>(
-                "SELECT Id, StartedAt, FinishedAt, ConfigJson, Result, SignalCount, PositionCount " +
+                "SELECT Id, StartedAt, FinishedAt, FromDate, ToDate, ConfigJson, Result, " +
+                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit " +
                 "FROM EmulatorRun ORDER BY StartedAt DESC");
 
             foreach (var row in rows)

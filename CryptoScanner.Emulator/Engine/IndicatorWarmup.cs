@@ -3,7 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Pre-fills a symbol's CandleList for an emulator run.

@@ -3,7 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Progress payload emitted by <see cref="TickRunner"/> after each replayed candle.
@@ -33,12 +33,12 @@ public sealed class TickRunner
 
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
-        if (!GlobalData.ExchangeListName.TryGetValue(config.ExchangeName, out Model.CryptoExchange? exchange))
+        if (!GlobalData.ExchangeListName.TryGetValue(config.ExchangeName, out CryptoScanner.Core.Model.CryptoExchange? exchange))
             throw new InvalidOperationException($"Exchange '{config.ExchangeName}' is not registered in GlobalData.ExchangeListName.");
 
         // Bind ActiveExchange so the rest of Core (zone calculators, settings lookups, …)
         // sees the emulator's exchange. Restored on exit so unit-test re-entry is safe.
-        Model.CryptoExchange? previousActive = GlobalData.ActiveExchange;
+        CryptoScanner.Core.Model.CryptoExchange? previousActive = GlobalData.ActiveExchange;
         GlobalData.ActiveExchange = exchange;
         try
         {

@@ -1,6 +1,6 @@
 using CryptoScanner.Core.Model;
 
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Per-symbol queue of 1-minute candles waiting to be replayed. Populated by

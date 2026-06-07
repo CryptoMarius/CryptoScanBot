@@ -1,5 +1,5 @@
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Emulator;
+using CryptoScanner.Emulator.Engine;
 
 using System.Text.Json;
 

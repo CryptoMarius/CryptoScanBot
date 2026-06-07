@@ -25,14 +25,18 @@
                   AutoGenerateColumns="False"
                   GridLinesVisibility="Horizontal">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="60"/>
-                <DataGridTextColumn Header="Started"     Binding="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="160"/>
-                <DataGridTextColumn Header="Finished"    Binding="{Binding FinishedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="160"/>
-                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="100"/>
-                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="160"/>
-                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="140"/>
-                <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="80"/>
-                <DataGridTextColumn Header="Positions"   Binding="{Binding PositionCount}" Width="90"/>
+                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="50"/>
+                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="130"/>
+                <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="200"/>
+                <DataGridTextColumn Header="Started"     Binding="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="120"/>
+                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="80"/>
+                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="120"/>
+                <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="70"/>
+                <DataGridTextColumn Header="Pos"         Binding="{Binding PositionCount}" Width="55"/>
+                <DataGridTextColumn Header="Won"         Binding="{Binding PositionsWon}" Width="55"/>
+                <DataGridTextColumn Header="Lost"        Binding="{Binding PositionsLost}" Width="55"/>
+                <DataGridTextColumn Header="Open"        Binding="{Binding PositionsOpen}" Width="55"/>
+                <DataGridTextColumn Header="Profit"      Binding="{Binding Profit, StringFormat='{}{0:N2}'}" Width="90"/>
             </DataGrid.Columns>
         </DataGrid>
 

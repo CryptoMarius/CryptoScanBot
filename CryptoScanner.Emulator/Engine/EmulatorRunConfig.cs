@@ -1,11 +1,11 @@
-namespace CryptoScanner.Core.Emulator;
+namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
 /// Configuration for a single emulator run. Strategies, active intervals, trend filters and
 /// every other tuning knob live in <c>GlobalData.Settings</c> (the regular scanner settings) —
 /// the same JSON the live scanner uses. We just need to know which symbols to replay and over
 /// what period. The full settings snapshot at run start is captured separately in
-/// <see cref="Model.CryptoEmulatorRun.SettingsJson"/>, so it deliberately does NOT live here.
+/// <see cref="CryptoScanner.Core.Model.CryptoEmulatorRun.SettingsJson"/>, so it deliberately does NOT live here.
 /// </summary>
 public class EmulatorRunConfig
 {

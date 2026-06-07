@@ -18,6 +18,17 @@ public static class BarometerHelper
         CryptoBarometerData? barometerData = activeExchange.Data.GetBarometer(quoteName, intervalPeriod);
         if (!barometerData.PriceBarometer.HasValue)
         {
+            // The barometer is a market-breadth measure over the FULL symbol pool of a quote. The
+            // emulator replays only a handful of symbols, so it is never calculated — and computing
+            // it from that subset would be meaningless (a few coins do not represent "the market").
+            // Treat the missing barometer as neutral (pass) in emulator mode so it does not block
+            // every signal/position; the live scanner still requires a real barometer value.
+            if (GlobalData.IsEmulatorMode)
+            {
+                reaction = "";
+                return true;
+            }
+
             reaction = $"Barometer {interval.Name} not calculated";
             return false;
         }
