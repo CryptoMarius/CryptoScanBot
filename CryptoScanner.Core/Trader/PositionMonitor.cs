@@ -593,14 +593,15 @@ public class PositionMonitor //: IDisposable
         await position.Symbol.Data.CandleLock.WaitAsync();
         try
         {
+            symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastx);
+
             // Niet zomaar een laatste candle nemen in verband met Backtesting
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))
             {
-                //string t = string.Format("candle 1m interval: {0}", LastCandle1m.DateLocal.ToString()) + ".." + LastCandle1mCloseTimeDate.ToLocalTime() + "\r\n" +
-                //string.Format("is de candle op het {0} interval echt missing in action?", interval.Name) + "\r\n" +
-                //string.Format("position.CreateDate = {0}", position.CreateTime.ToString()) + "\r\n";
+                string t = string.Format("candle 1m interval: {0}", candleOpenTimeInterval.ToLocalTime()) + " " +
+                string.Format("is de candle op het {0} interval echt missing in action?", interval.Name);
+                GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} position={position.CreateTime} interval={interval.Name} {t}");
                 //throw new Exception($"Candle niet aanwezig? {t}");
-                //GlobalData.AddTextToLogTab($"Analyse {position.Symbol.Name} {t}");
                 return (false, candleInterval);
             }
 

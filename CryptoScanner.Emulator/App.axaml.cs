@@ -80,15 +80,13 @@ public partial class App : Application
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);
 
-        // 2. Logging must be initialised AFTER AppDataFolder is known (the log files land in
-        //    that folder's Log subdirectory) but BEFORE Bootstrap runs so its first
-        //    AddTextToLogTab calls already write to file and the in-app Log tab.
+        // 2. Logging must be initialised AFTER AppDataFolder is known (the NLog files land in that
+        //    folder's Log subdirectory) but BEFORE Bootstrap runs so its first AddTextToLogTab
+        //    calls already write to file and the in-app Log tab. Same NLog setup as the scanner:
+        //    a default log, an error log, and (in DEBUG) a Trace log. LogTabViewModel forwards
+        //    every AddTextToLogTab line to ScannerLog.Logger.Info (exactly like the scanner's
+        //    LogGridViewModel), so those lines land in the files alongside explicit Trace calls.
         ScannerLog.InitializeLogging();
-
-        // 2b. Also mirror the AddTextToLogTab stream (the Log tab's content) to a plain-text
-        //     file. NLog only captures ScannerLog.Logger.* calls; this keeps the human progress
-        //     log too. Hooks the same event the Log tab uses, so it must start before Bootstrap.
-        EmulatorLogFile.Start();
 
         // 3. Seed settings.json from the live scanner if this is a fresh emulator folder.
         //    Keeps the same convention as before; only the call site moved out of Program.cs.
