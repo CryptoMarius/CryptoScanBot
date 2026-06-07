@@ -158,10 +158,7 @@ public static class CandleTools
         try
         {
             // Last known price (and the price ticker will adjust)
-            if (!GlobalData.IsEmulatorMode)
-            {
-                symbol.LastPrice = close;
-            }
+            symbol.LastPrice = close;
 
             // Process the single 1m candle
             CryptoCandle candle = CreateCandle(symbol, GlobalData.IntervalList[0], openTime, open, high, low, close, quoteVolume);

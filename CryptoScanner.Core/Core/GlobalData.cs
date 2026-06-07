@@ -105,7 +105,7 @@ public static class GlobalData
     public static IClock Clock { get; set; } = new SystemClock();
 
     /// <summary>
-    /// Exchange API settings (not used at this moment)
+    /// Exchange API settings
     /// </summary>
     public static SettingsExchangeApi TradingApi { get; set; } = new();
 

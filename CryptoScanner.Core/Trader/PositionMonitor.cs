@@ -1591,7 +1591,7 @@ public class PositionMonitor //: IDisposable
             // voor de niet afgesloten parts...
             if (!part.CloseTime.HasValue && part.Purpose != CryptoPartPurpose.TakeProfit)
             {
-                // De prepare controleert of we een geldige candle in het interval (van de part of positie) hebben!
+                // Prepare checks if we have a valid candle in the interval (from the part or position)
                 var (success, candleInterval) = await PrepareAsync(position, part);
                 if (success)
                 {
@@ -1912,7 +1912,7 @@ public class PositionMonitor //: IDisposable
             if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.RealTrading)
                 await PaperTrading.PaperTradingCheckOrders(Database, GlobalData.ActiveExchange!, this.Symbol, LastCandle1m);
 
-            // Pause becuase of trading rules or low barometer
+            // Pause because of trading rules or low barometer
             PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
 
             //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?

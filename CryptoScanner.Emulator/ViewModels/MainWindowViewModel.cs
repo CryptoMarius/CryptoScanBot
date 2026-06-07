@@ -8,13 +8,13 @@ using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
-using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
+using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.Views;
 
 namespace CryptoScanner.Emulator.ViewModels;
@@ -391,6 +391,9 @@ public partial class MainWindowViewModel : ObservableObject
             EmulatorDb.ClearZonesForSymbols(GlobalData.ActiveExchange, config.Symbols);
             GlobalData.AddTextToLogTab($"Run: cleared previous zones for {config.Symbols.Count} symbol(s)");
         }
+
+        // Clear positions, assets etc
+        //exchange.Data.Clear();
 
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
