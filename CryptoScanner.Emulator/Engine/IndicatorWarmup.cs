@@ -109,12 +109,17 @@ public static class IndicatorWarmup
 
     /// <summary>
     /// Loads all 1m candles for <paramref name="symbol"/> in the warmup+replay window from
-    /// the per-exchange candles.db, injects them into the 1m CandleList, then aggregates the
-    /// active higher intervals from the 1m candles via <see cref="CandleTools.BulkCalculateCandles"/>.
-    /// Returns the replay-window 1m candles separately so the TickRunner can pop them one by
-    /// one without removing anything from the CandleList.
+    /// the per-exchange candles.db, injects the warmup ones into the 1m CandleList, then
+    /// aggregates the active higher intervals from those candles via
+    /// <see cref="CandleTools.BulkCalculateCandles"/>.
+    ///
+    /// Returns the replay-window 1m candles as a separate <see cref="CryptoCandleList"/> keyed by
+    /// OpenTime. The TickRunner walks the replay window minute by minute and simply looks the
+    /// candle up by candle-time (TryGetValue), feeding it to ProcessTickAsync — no queue, no
+    /// peeking. They are kept OUT of the symbol's live CandleList so the pipeline never sees a
+    /// future candle; ProcessTickAsync adds each one to the CandleList at the moment it "arrives".
     /// </summary>
-    public static List<CryptoCandle> PrepareSymbol(CryptoSymbol symbol,
+    public static CryptoCandleList PrepareSymbol(CryptoSymbol symbol,
         CandleTime replayFrom, CandleTime replayTo)
     {
         var activeIntervals = ResolveMaintainedIntervals();
@@ -132,16 +137,16 @@ public static class IndicatorWarmup
         var all1m = CandleSource.Load(symbol, interval1m, warmupFrom, replayTo);
         var symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
 
-        var replayCandles = new List<CryptoCandle>();
+        CryptoCandleList replayCandles = [];
         foreach (var candle in all1m)
         {
             // Warmup candles go into the CandleList immediately so indicators can build state.
-            // Replay candles will be added one-by-one by the TickRunner so the strategy sees
-            // exactly the same incremental view the live scanner sees.
+            // Replay candles are set aside (keyed by OpenTime) so the TickRunner can hand them to
+            // the pipeline one minute at a time — the same incremental view the live scanner sees.
             if (candle.OpenTime.Minutes < replayFrom.Minutes)
                 symbolInterval1m.CandleList.TryAdd(candle.OpenTime, candle);
             else
-                replayCandles.Add(candle);
+                replayCandles.Add(candle.OpenTime, candle);
         }
 
         if (symbolInterval1m.CandleList.Count > 0)

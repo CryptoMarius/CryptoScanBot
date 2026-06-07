@@ -12,24 +12,32 @@ public readonly record struct TickRunProgress(string SymbolName, int ProcessedBa
 
 
 /// <summary>
-/// Drives the emulator replay. Multi-symbol time-merged feed: per replayed minute, every
-/// symbol that has a 1m candle at that minute gets its tick processed (CandleList add,
-/// higher-TF synthesis, PositionMonitor) before the clock advances to the next minute. This
-/// matches what a real exchange does — symbols don't run on independent timelines — and is
-/// what lets cross-symbol strategies (barometer, trend filters that read other symbols)
-/// behave the same way in the emulator as they do live.
+/// Drives the emulator replay. Multi-symbol time-merged feed: the loop walks the replay window
+/// minute by minute and, for every symbol that has a 1m candle at that minute, processes its tick
+/// before the clock advances. This matches what a real exchange does — symbols don't run on
+/// independent timelines — and is what lets cross-symbol strategies (barometer, trend filters that
+/// read other symbols) behave the same way in the emulator as they do live.
 ///
-/// Higher intervals are NOT delivered by anything else. <see cref="SignalPrepare.Execute"/>
-/// only computes indicators; it expects the higher-TF candle to already be in
-/// <c>CandleList</c> (live KLineTicker subscribes per interval and provides them natively).
-/// In the emulator that subscription doesn't exist, so the TickRunner synthesises higher
-/// candles from 1m whenever a bucket-close aligns with the current minute. Without this
-/// the higher CandleLists stay empty and signal pipeline produces nothing.
+/// The per-symbol replay candles are set aside as a <see cref="CryptoCandleList"/> keyed by
+/// OpenTime (built by <see cref="IndicatorWarmup.PrepareSymbol"/>); each minute the loop simply
+/// looks the candle up by candle-time. Higher intervals are NOT delivered by anything else —
+/// <see cref="SignalPrepare.Execute"/> only computes indicators and expects the higher-TF candle
+/// to already be in <c>CandleList</c>. The emulator has no live KLine subscription, so
+/// <see cref="ProcessTickAsync"/> hands each 1m candle to <see cref="CandleTools.Process1mCandleAsync"/>
+/// — the exact live 1m handler — which adds the 1m candle and synthesises the higher timeframes
+/// from it. Without this the higher CandleLists stay empty and the signal pipeline produces nothing.
 /// </summary>
 public sealed class TickRunner
 {
     public IProgress<TickRunProgress>? Progress { get; init; }
 
+
+    private static void ReceivedCreatedSignals(CryptoSignal signal)
+    {
+        //GlobalData.CreatedSignalCount++;
+        string text = "Signal " + signal.Symbol.Name + " " + signal.Interval.Name + " " + signal.SideText + " " + signal.StrategyText + " " + signal.EventText;
+        GlobalData.AddTextToLogTab(text);
+    }
 
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
@@ -40,28 +48,31 @@ public sealed class TickRunner
         // sees the emulator's exchange. Restored on exit so unit-test re-entry is safe.
         CryptoScanner.Core.Model.CryptoExchange? previousActive = GlobalData.ActiveExchange;
         GlobalData.ActiveExchange = exchange;
+        GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
         try
         {
+            // Clear positions, assets etc
+            exchange.Data.Clear();
+
+            GlobalData.Settings.General.ExchangeName = config.ExchangeName;
+            GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
+
+
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
                 throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
 
-            // Maintained = strategy/zone intervals PLUS the trading-pause-rule intervals (e.g.
-            // BTCUSDT 2m/5m). Must match what IndicatorWarmup.PrepareSymbol aggregated, otherwise
-            // the higher-TF candle a rule/strategy reads would be missing during replay.
-            List<CryptoInterval> activeIntervals = IndicatorWarmup.ResolveMaintainedIntervals();
-            var higherIntervals = activeIntervals
-                .Where(i => i.IntervalPeriod != CryptoIntervalPeriod.interval1m)
-                .ToList();
-
+            // The higher-timeframe synthesis is now done inside CandleTools.Process1mCandleAsync
+            // (the live 1m handler) per tick, so the TickRunner no longer needs its own list of
+            // higher intervals here — only the 1m driving interval to merge the per-symbol feeds.
             CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, 1);
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, 1);
 
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             // PrepareSymbol fills the 1m CandleList up to replayFrom and aggregates higher
-            // intervals so signal indicators have stable values on the very first tick.
-            // We keep one ReserveList per symbol; the merge loop below peeks across all of
-            // them every minute.
-            var reserves = new List<(CryptoSymbol Symbol, ReserveList Reserve)>();
+            // intervals so signal indicators have stable values on the very first tick. It hands
+            // back the replay-window 1m candles as a CryptoCandleList keyed by OpenTime; the merge
+            // loop below just looks each minute up by candle-time.
+            var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
             int totalBars = 0;
             foreach (string symbolName in config.Symbols)
             {
@@ -70,58 +81,55 @@ public sealed class TickRunner
                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{config.ExchangeName}'.");
 
-                List<CryptoCandle> replayCandles = IndicatorWarmup.PrepareSymbol(symbol, replayFrom, replayTo);
-                reserves.Add((symbol, new ReserveList(symbol, replayCandles)));
+                CryptoCandleList replayCandles = IndicatorWarmup.PrepareSymbol(symbol, replayFrom, replayTo);
+                replays.Add((symbol, replayCandles));
                 totalBars += replayCandles.Count;
+
+                // Reset trade data
+                symbol.LastPrice = null;
+                symbol.LastTradeDate = null;
+                symbol.LastTradeFetched = null;
+                symbol.LastTradeIdFetched = null;
             }
 
             // ───── Time-merged replay loop ──────────────────────────────────────────
-            // Per iteration:
-            //   1. Find the earliest pending candle across all symbols' reserves.
-            //   2. Advance the EmulatorClock to that candle's close-time once.
-            //   3. For each symbol whose next candle has that exact OpenTime, process it
-            //      (CandleList add → higher-TF synthesis → NewCandleArrivedAsync).
-            // Symbols without a candle at this minute simply don't tick; their next candle
-            // will be picked up in a later iteration.
+            // Walk the replay window minute by minute (the exchange's own clock). For each minute:
+            //   1. Advance the EmulatorClock to that minute's close-time once, so any "now" read
+            //      inside SignalPrepare/SignalExecute points at the end of the current bar.
+            //   2. For every symbol that HAS a 1m candle at this minute (TryGetValue), process it.
+            // Symbols without a candle at this minute simply don't tick. No queue / peek / pop —
+            // the per-symbol CryptoCandleList is the set-aside feed and we index it by candle-time.
             EmulatorClock? emulatorClock = GlobalData.Clock as EmulatorClock;
             int processedBars = 0;
 
-            while (!ct.IsCancellationRequested)
+            for (CandleTime openTime = replayFrom; openTime <= replayTo; openTime += interval1m.Duration)
             {
-                uint? nextMinute = FindNextMinute(reserves);
-                if (nextMinute == null)
-                    break; // all reserves drained
+                if (ct.IsCancellationRequested)
+                    break;
 
-                // Clock advances to the close-time of the current tick BEFORE the symbols
-                // process — that way any "now" read inside SignalPrepare/SignalExecute
-                // points at the end of the current bar (same as live ticker behavior).
-                uint closeMinutes = nextMinute.Value + interval1m.Duration;
+                // Clock advances to the close-time of the current minute BEFORE the symbols process.
+                CandleTime closeTime = openTime; // + interval1m.Duration;
                 if (emulatorClock != null)
-                    emulatorClock.UtcNow = new CandleTime(closeMinutes).ToDateTime();
+                    emulatorClock.UtcNow = closeTime.ToDateTime();
 
-                foreach (var (symbol, reserve) in reserves)
+                foreach (var (symbol, replay) in replays)
                 {
-                    if (!reserve.TryPeek(out CryptoCandle peek))
-                        continue;
-                    if (peek.OpenTime.Minutes != nextMinute.Value)
-                        continue;
-
-                    reserve.TryPop(out CryptoCandle candle);
-                    await ProcessTickAsync(symbol, candle, interval1m, higherIntervals, closeMinutes);
-
-                    processedBars++;
-
-                    // Throttle progress reporting. Reporting every bar posts hundreds of thousands
-                    // of updates to the UI thread on a multi-week 1m replay, which floods the
-                    // dispatcher and dominates the run time. Once per 256 bars is smooth enough for
-                    // a progress bar; the final count is reported after the loop.
-                    if ((processedBars & 0xFF) == 0)
+                    if (replay.TryGetValue(openTime, out CryptoCandle candle))
                     {
-                        Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
+                        await ProcessTickAsync(symbol, candle);
 
-                        // Yield occasionally so a UI thread or test harness stays responsive —
-                        // engine work itself is synchronous and CPU-bound.
-                        await Task.Yield();
+                        // Throttle progress reporting. Reporting every bar posts hundreds of thousands
+                        // of updates to the UI thread on a multi-week 1m replay, which floods the
+                        // dispatcher and dominates the run time. Once per 256 bars is smooth enough for
+                        // a progress bar; the final count is reported after the loop.
+                        if ((++processedBars & 0xFF) == 0)
+                        {
+                            Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
+
+                            // Yield occasionally so a UI thread or test harness stays responsive —
+                            // engine work itself is synchronous and CPU-bound.
+                            await Task.Yield();
+                        }
                     }
                 }
             }
@@ -133,25 +141,8 @@ public sealed class TickRunner
         finally
         {
             GlobalData.ActiveExchange = previousActive;
+            GlobalData.AnalyzeSignalCreated = null;
         }
-    }
-
-
-    /// <summary>
-    /// Returns the smallest OpenTime.Minutes value sitting at the head of any reserve, or
-    /// null when every reserve is empty.
-    /// </summary>
-    private static uint? FindNextMinute(List<(CryptoSymbol Symbol, ReserveList Reserve)> reserves)
-    {
-        uint? earliest = null;
-        foreach (var (_, reserve) in reserves)
-        {
-            if (!reserve.TryPeek(out CryptoCandle peek))
-                continue;
-            if (earliest == null || peek.OpenTime.Minutes < earliest.Value)
-                earliest = peek.OpenTime.Minutes;
-        }
-        return earliest;
     }
 
 
@@ -161,28 +152,18 @@ public sealed class TickRunner
     /// higher-TF candles whose period closed on this minute, then run the live scanner
     /// analysis pipeline.
     /// </summary>
-    private static async Task ProcessTickAsync(CryptoSymbol symbol, CryptoCandle candle,
-        CryptoInterval interval1m, List<CryptoInterval> higherIntervals, uint closeMinutes)
+    private static async Task ProcessTickAsync(CryptoSymbol symbol, CryptoCandle candle)
     {
-        CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-
-        symbolInterval1m.CandleList.TryAdd(candle.OpenTime, candle);
-        symbolInterval1m.LastCandle = candle;
-        symbol.LastPrice = candle.Close;
-
-        // Whenever this 1m close-time aligns on a higher-interval boundary, build the
-        // higher-interval candle from the 1m candles already in the CandleList. Required
-        // because SignalPrepare.Execute only checks the higher CandleList — it does NOT
-        // synthesise the missing candle. Without this every check for the higher interval
-        // fails silently and no signal/position can fire on those timeframes.
-        foreach (CryptoInterval higher in higherIntervals)
-        {
-            if (closeMinutes % higher.Duration == 0)
-            {
-                var higherOpen = new CandleTime(closeMinutes - higher.Duration);
-                CandleTools.CalculateCandleForInterval(symbol, interval1m, higher, higherOpen);
-            }
-        }
+        // Reuse the canonical 1m-arrival handler instead of re-deriving it here. Process1mCandleAsync
+        // is exactly what the live SubscriptionKLineTicker calls for every incoming 1m candle: it
+        // adds the 1m candle to its CandleList, advances UpdateCandleFetched, and synthesises every
+        // higher timeframe from 1m via CalculateCandleForInterval — using the look-ahead-safe
+        // "targetComplete" check (StartOfIntervalCandle3) so an incomplete higher bucket is never
+        // emitted. The pre-fetched higher candles in candles.db are the COMPLETE/closed bars; during
+        // replay we must instead rebuild the CURRENT higher bar incrementally from the 1m candles
+        // seen so far, otherwise the strategy would peek at the rest of the (future) bucket.
+        await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
+            candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
@@ -211,4 +192,5 @@ public sealed class TickRunner
         // LoadZonesForSymbol reload sees them instead of resetting them away.
         GlobalData.ThreadSaveObjects?.Flush();
     }
+
 }
