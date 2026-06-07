@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="280"
+        Width="560" Height="280"
+        x:Class="CryptoScanner.Emulator.Views.SetupWindow"
+        x:DataType="vm:SetupWindowViewModel"
+        Title="Emulator Setup"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
+
+        <TextBlock Grid.Row="0" FontSize="18" FontWeight="Bold" Text="Emulator setup"/>
+
+        <TextBlock Grid.Row="1" FontSize="11" Foreground="Gray" TextWrapping="Wrap"
+                   Text="Choose where the emulator stores its data (database, settings, cached candles) and which exchange to work against. These are remembered in the chosen folder."/>
+
+        <!-- Data folder row -->
+        <Grid Grid.Row="2" ColumnDefinitions="100,*,Auto" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" Text="Data folder:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding DataFolder}" />
+            <Button Grid.Column="2" Content="Browse..."
+                    Command="{Binding BrowseFolderCommand}"
+                    CommandParameter="{Binding $parent[Window]}"/>
+        </Grid>
+
+        <!-- Exchange row -->
+        <Grid Grid.Row="3" ColumnDefinitions="100,*" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" Text="Exchange:" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding Exchanges}"
+                      SelectedItem="{Binding SelectedExchange}"/>
+        </Grid>
+
+        <!-- Spacer row 4 (*) -->
+
+        <!-- OK / Cancel -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    CommandParameter="{Binding $parent[Window]}"
+                    Width="90"/>
+            <Button Content="OK"
+                    Command="{Binding OkCommand}"
+                    CommandParameter="{Binding $parent[Window]}"
+                    Width="90"
+                    Background="#3A8D3A" Foreground="White"
+                    IsDefault="True"/>
+        </StackPanel>
+
+    </Grid>
+
+</Window>

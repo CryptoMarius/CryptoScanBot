@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CryptoScanner.Emulator": {
+      "commandName": "Project",
+      "commandLineArgs": "-e \"Binance Futures\" -f \"E:\\CryptoScanBot\\Data\\Binance\\Futures.Emulator\""
+    }
+  }
+}

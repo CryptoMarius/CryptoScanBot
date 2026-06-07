@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="420"
+        Width="780" Height="420"
+        x:Class="CryptoScanner.Emulator.Views.RunResultsWindow"
+        x:DataType="vm:RunResultsViewModel"
+        Title="Emulator runs"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+
+        <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="14"
+                   Text="Emulator runs (double-click for positions)"/>
+
+        <DataGrid Grid.Row="1"
+                  Name="RunsGrid"
+                  ItemsSource="{Binding Runs}"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  AutoGenerateColumns="False"
+                  GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="60"/>
+                <DataGridTextColumn Header="Started"     Binding="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="160"/>
+                <DataGridTextColumn Header="Finished"    Binding="{Binding FinishedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="160"/>
+                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="100"/>
+                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="160"/>
+                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="140"/>
+                <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="80"/>
+                <DataGridTextColumn Header="Positions"   Binding="{Binding PositionCount}" Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="Gray" FontSize="11"/>
+
+    </Grid>
+
+</Window>

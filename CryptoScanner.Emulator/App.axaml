@@ -5,6 +5,44 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <!-- Compact row styling mirrored from CryptoScanner/App.axaml so all the future grids
+             in the emulator look the same as the live scanner. Keep these in sync if the
+             scanner gets new conventions. -->
+
+        <!-- DataGrid: smaller cell + row, scrollbars always visible. -->
+        <Style Selector="DataGridCell">
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="DataGridRow">
+            <Setter Property="MinHeight" Value="18" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="DataGrid ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
+        </Style>
+
+        <!-- ListBox items (log tab + future lists). The Fluent default leaves a lot of
+             vertical padding around each entry; with this override one log line takes one
+             monospace line height. -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="MinHeight" Value="16" />
+        </Style>
+
+        <!-- Default TextBlock font size: the scanner uses 12 globally so menus + labels
+             match the compact grid rows. -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
     </Application.Styles>
 
 </Application>

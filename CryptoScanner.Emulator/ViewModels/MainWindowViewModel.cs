@@ -5,9 +5,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CryptoScanner.Config.Views;
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Emulator;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Exchange;
+using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trader;
+using CryptoScanner.Core.Zones;
+using CryptoScanner.Emulator.Views;
 
 using System.Diagnostics;
 
@@ -45,6 +52,12 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isRunning;
 
+    /// <summary>
+    /// Single LogTab VM lives for the whole MainWindow lifetime so it can keep accumulating
+    /// log lines across runs. The Log tab's DataContext is bound to this property.
+    /// </summary>
+    public LogTabViewModel LogTab { get; } = new();
+
 
     private CancellationTokenSource? _cts;
 
@@ -52,16 +65,234 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Opens the scanner ConfigurationWindow as a modal dialog rooted at this window. The
     /// dialog reads from and writes back to GlobalData.Settings; the settings.json the
-    /// emulator just loaded is the one being edited.
+    /// emulator just loaded is the one being edited. The dialog itself only updates the
+    /// in-memory Settings object — without persisting here every restart would reload the
+    /// old file and the user would lose their edits.
     /// </summary>
     [RelayCommand]
     private async Task ConfigureScannerAsync(Window? owner)
     {
         ConfigurationWindow window = new();
+
+        // ConfigurationViewModel signals OK/Cancel through Window.Close(true|false); capture
+        // the bool result so a Cancel doesn't persist whatever the user was poking at when
+        // they realised they wanted to abandon. ShowDialog<T> returns T?; null is treated as
+        // a cancel (e.g. window closed via the X button).
+        bool confirmed = false;
         if (owner != null)
-            await window.ShowDialog(owner);
+            confirmed = await window.ShowDialog<bool>(owner);
         else
             window.Show();
+
+        if (!confirmed)
+        {
+            GlobalData.AddTextToLogTab("Settings dialog cancelled — nothing saved.");
+            return;
+        }
+
+        // Persist what the dialog wrote into GlobalData.* back to settings.json + the other
+        // sidecar files (telegram, altrady, weblinks). Same call live App.axaml.cs makes on
+        // shutdown — we do it eagerly so the change survives a crash too.
+        GlobalData.SaveConfiguration();
+        GlobalData.AddTextToLogTab("Settings saved.");
+    }
+
+
+    /// <summary>
+    /// Fetches the symbol list for the active exchange (REST call, no websocket subscriptions).
+    /// Mirrors what ThreadLoadData does at scanner startup; needed before Configure can show
+    /// quotes and before TickRunner has any symbols to drive.
+    /// </summary>
+    [RelayCommand]
+    private async Task FetchSymbolsAsync()
+    {
+        if (GlobalData.ActiveExchange == null)
+        {
+            Status = "No active exchange — restart and pick one in the Setup dialog.";
+            return;
+        }
+
+        IsRunning = true;
+        Status = $"Fetching symbols for {GlobalData.ActiveExchange.Name}…";
+        GlobalData.AddTextToLogTab($"Fetch symbols: {GlobalData.ActiveExchange.Name} — start");
+
+        try
+        {
+            // CRITICAL: re-sync the in-memory SymbolListName from the DB before invoking the
+            // REST fetch. The Symbol table has NO UNIQUE constraint on (ExchangeId, Name); the
+            // entire dedup logic in IsSymbolAccepted (SymbolBase.cs) runs against this cache.
+            // If the cache is empty or out of sync, every Fetch click reinserts the full list,
+            // producing duplicates in the DB. Bootstrap already does this once at startup,
+            // but explicitly repeating it here is cheap (AddSymbol skips known keys) and
+            // covers state corruption scenarios (cache lost, parallel writes from elsewhere).
+            int beforeCount = GlobalData.ActiveExchange.SymbolListName.Count;
+            GlobalData.LoadSymbols();
+            int afterLoadCount = GlobalData.ActiveExchange.SymbolListName.Count;
+            GlobalData.AddTextToLogTab($"Fetch symbols: in-memory cache synced with DB ({beforeCount} → {afterLoadCount})");
+
+            // Same call the live scanner makes (ThreadLoadData.cs). Hits the exchange REST
+            // API, writes/updates rows in the Symbol table, sets LastTimeFetched.
+            await GlobalData.ActiveExchange.GetApiInstance().Symbol.GetSymbolsAsync();
+
+            // Refresh the in-memory symbol caches from the DB so Configure and run-time code
+            // see what we just persisted.
+            GlobalData.LoadSymbols();
+
+            // Wire the freshly-known symbols into their quote-side index so Configure shows
+            // the new per-quote counts immediately (otherwise it stays empty until next start).
+            ThreadLoadData.IndexQuoteDataSymbols(GlobalData.ActiveExchange);
+
+            // Same notification the live scanner sends so any future grid/Combo bindings
+            // refresh themselves.
+            GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
+
+            int count = GlobalData.ActiveExchange.SymbolListName.Count;
+            Status = $"Fetched {count} symbols for {GlobalData.ActiveExchange.Name}.";
+            GlobalData.AddTextToLogTab($"Fetch symbols: {GlobalData.ActiveExchange.Name} — done ({count} symbols)");
+        }
+        catch (Exception ex)
+        {
+            Status = $"Fetch symbols failed: {ex.Message}";
+            GlobalData.AddTextToLogTab($"Fetch symbols: FAILED — {ex.Message}");
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+
+    /// <summary>
+    /// For every symbol listed in emulator-run.json, fetch the candles needed for the backtest
+    /// window per active interval. Reuses the DLZ "inzoomen" routine
+    /// <see cref="Zones.ZoneCandleEngine.FetchFrom"/> exactly the way
+    /// <see cref="Zones.ZoneDlz.LoadHistoricCandles"/> does: we only compute the wanted range
+    /// (a <c>minDate</c> + <c>candleFetchCount</c>) and hand the rest to that routine. It already
+    /// does everything that's needed — materialise what's on disk/candles.db into the in-memory
+    /// CandleList, verify with its <c>IsDataLocal</c> walk how much of <c>minDate..maxDate</c> we
+    /// already have, and then call <see cref="CandleBase.FetchFrom"/> ONLY for the candles still
+    /// missing (from the first gap onward). No hand-rolled coverage logic here — reusing that
+    /// routine IS the point.
+    ///
+    /// Only the intervals <see cref="IndicatorWarmup.ResolveActiveIntervals"/> reports are
+    /// fetched — pulling 1d/1w candles for a strategy that never touches them is wasted work.
+    /// </summary>
+    [RelayCommand]
+    private async Task FetchCandlesAsync()
+    {
+        if (GlobalData.ActiveExchange == null)
+        {
+            Status = "No active exchange — restart and pick one in the Setup dialog.";
+            return;
+        }
+
+        EmulatorRunConfig config;
+        try
+        {
+            config = RunConfigFile.Load();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to read run config: {ex.Message}";
+            return;
+        }
+
+        if (config.Symbols.Count == 0)
+        {
+            Status = "Run config has no symbols — edit emulator-run.json first.";
+            return;
+        }
+
+        IsRunning = true;
+        int total = config.Symbols.Count;
+        int symbolIdx = 0;
+
+        List<CryptoInterval> activeIntervals = IndicatorWarmup.ResolveActiveIntervals();
+        string intervalNames = string.Join(", ", activeIntervals.Select(i => i.Name));
+        GlobalData.AddTextToLogTab(
+            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, active intervals: {intervalNames}");
+
+        try
+        {
+            foreach (string symbolName in config.Symbols)
+            {
+                symbolIdx++;
+                if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                {
+                    Status = $"Symbol '{symbolName}' not in exchange list — did you Fetch symbols first?";
+                    GlobalData.AddTextToLogTab($"Fetch candles: SKIP {symbolName} — not in exchange list");
+                    continue;
+                }
+
+                Status = $"Fetching candles for {symbol.Name} ({symbolIdx}/{total})…";
+
+                // One dict per symbol, exactly like the DLZ zone-calculation path: it tells
+                // ZoneCandleEngine.FetchFrom which intervals it has already materialised from
+                // disk/candles.db into the in-memory CandleList, so the IsDataLocal verify
+                // step sees the full picture instead of only the bounded startup load.
+                SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
+
+                foreach (CryptoInterval interval in activeIntervals)
+                {
+                    // Per-interval warmup window — 1m=24h, higher=270×duration. Each interval
+                    // pulled in its OWN resolution: a 1w warmup is 270 weekly candles (~5y),
+                    // not 5 years of 1m bars. minDate..maxDate is the window we WANT;
+                    // ZoneCandleEngine.FetchFrom figures out how much of it we already have and
+                    // fetches only the rest.
+                    uint warmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval);
+                    DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
+
+                    CandleTime minDate = IntervalTools.StartOfIntervalCandle(
+                        CandleTime.AlignFromDateTime(intervalFromUtc, 1), interval.Duration);
+                    CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
+                        CandleTime.AlignFromDateTime(config.ToDate, 1), interval.Duration);
+
+                    if (maxDate <= minDate)
+                        continue;
+
+                    // candleFetchCount is the bar-count of the wanted range; ZoneCandleEngine's
+                    // CalculateDates rebuilds maxDate as minDate + count*duration (and caps it
+                    // at "now"), so passing the count keeps us inside the DLZ contract.
+                    int candleFetchCount = (int)((maxDate.Minutes - minDate.Minutes) / interval.Duration);
+
+                    GlobalData.AddTextToLogTab(
+                        $"Fetch candles: {symbol.Name} {interval.Name} — want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
+
+                    try
+                    {
+                        await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
+                    }
+                    catch (Exception sx)
+                    {
+                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
+                    }
+                }
+
+                GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done");
+            }
+
+            // Persist the in-memory CandleLists to {Exchange}.db. Without this, everything
+            // the REST fetch just pulled lives only in memory and is gone on the next start
+            // — so each launch would have to refetch from the exchange. SaveCandlesAsync is
+            // the same call the live scanner makes during ScannerSession shutdown; bulk
+            // upserts via SQLite transactions, so calling it once at the end of the fetch is
+            // far cheaper than after every symbol.
+            Status = $"Saving candles to database…";
+            GlobalData.AddTextToLogTab("Fetch candles: persisting to database");
+            await CandleDatabase.SaveCandlesAsync();
+
+            Status = $"Fetch candles: completed for {total} symbol(s).";
+            GlobalData.AddTextToLogTab($"Fetch candles: completed ({total} symbol(s))");
+        }
+        catch (Exception ex)
+        {
+            Status = $"Fetch candles failed: {ex.Message}";
+            GlobalData.AddTextToLogTab($"Fetch candles: FAILED — {ex.Message}");
+        }
+        finally
+        {
+            IsRunning = false;
+        }
     }
 
 
@@ -117,6 +348,8 @@ public partial class MainWindowViewModel : ObservableObject
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
 
+        ApplyRunOverrides(config);
+
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
 
@@ -126,6 +359,7 @@ public partial class MainWindowViewModel : ObservableObject
             // intent (which symbols/period) and the live settings at the moment of start.
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
             run = EmulatorDb.StartRun(configJson);
+            GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner
             {
@@ -135,19 +369,41 @@ public partial class MainWindowViewModel : ObservableObject
 
             EmulatorDb.FinishRun("completed");
             Status = $"Run \"{config.Label}\" completed.";
+            GlobalData.AddTextToLogTab($"Run #{run.Id} completed");
         }
         catch (OperationCanceledException)
         {
             EmulatorDb.FinishRun("cancelled");
             Status = $"Run \"{config.Label}\" cancelled.";
+            GlobalData.AddTextToLogTab($"Run cancelled");
         }
         catch (Exception ex)
         {
             EmulatorDb.FinishRun($"failed: {ex.GetType().Name}");
             Status = $"Run failed: {ex.Message}";
+            GlobalData.AddTextToLogTab($"Run FAILED — {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
+            // Persist any candles the run pulled in beyond what the up-front fetch stored.
+            // The DLZ zone calculation (ZoneDlz.CalculateZonesAsync → ZoneCandleEngine.FetchFrom)
+            // fetches its own CandleCount window per zone interval, which can reach further back
+            // than our warmup window — those candles land in the in-memory CandleList but the
+            // per-tick SaveCandleDataToDiskAsync is intentionally disabled during replay (see
+            // ZoneThreadCalculate). A single save here captures them; the replay's own candles
+            // are already in the DB so re-upserting them is a cheap idempotent no-op (composite
+            // PK on Candle). Runs in finally so a cancelled or failed run still keeps whatever
+            // was fetched, avoiding a needless refetch next time.
+            try
+            {
+                GlobalData.AddTextToLogTab("Run: persisting fetched candles to database");
+                await CandleDatabase.SaveCandlesAsync();
+            }
+            catch (Exception sx)
+            {
+                GlobalData.AddTextToLogTab($"Run: persisting candles FAILED — {sx.Message}");
+            }
+
             IsRunning = false;
             _cts?.Dispose();
             _cts = null;
@@ -160,6 +416,88 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _cts?.Cancel();
         Status = "Cancelling…";
+    }
+
+
+    /// <summary>
+    /// Run-start safety overrides. The emulator must never accidentally drive the real
+    /// exchange or starve waiting for live services, so this method forces the bits the
+    /// engine depends on:
+    ///   • ThreadCheckPosition exists (NewCandleArrivedAsync calls AddToQueue on it).
+    ///   • Trading goes through PaperTrade — never RealTrading, no matter what settings.json
+    ///     contained. The emulator's own paper-trade logic fills orders on candle high/low.
+    ///   • For every symbol in the run config the quote is allowed to fetch candles and uses
+    ///     the run's EntryAmount as the per-trade size, overriding settings.json. Without
+    ///     FetchCandles the live NewCandleArrivedAsync skips the symbol entirely.
+    /// </summary>
+    private static void ApplyRunOverrides(EmulatorRunConfig config)
+    {
+        // 1. Make sure a position-check thread exists. Live App.axaml.cs sets this via
+        //    ScannerSession.Start; we don't run the session so we wire a bare instance.
+        //    No Execute()/threads — the emulator only uses AddToQueue, which works in the
+        //    IsEmulatorMode branch without a running worker loop.
+        GlobalData.ThreadCheckPosition ??= new ThreadCheckFinishedPosition();
+
+        // 1b. Wire a ThreadZoneCalculate instance so SignalPrepare.Execute's DLZ branch can
+        //     enqueue (symbol, interval) work via AddToQueue. We do NOT start its ExecuteAsync
+        //     worker loop — the TickRunner drains the queue synchronously after each tick
+        //     (DrainQueueAsync) so zone calculation stays on the deterministic replay thread.
+        //     Without this instance the AddToQueue null-conditional silently drops every DLZ
+        //     recalculation and no DLZ zones would ever form during a run.
+        GlobalData.ThreadZoneCalculate ??= new ZoneThreadCalculate();
+
+        // 1c. Wire a ThreadSaveObjects instance. Signal/position/zone persistence all go through
+        //     GlobalData.ThreadSaveObjects!.AddToQueue(...) with a null-forgiving '!' — without
+        //     an instance the very first created signal or zone diff throws a NullReferenceException.
+        //     As with the zone worker we do NOT start its background Execute loop; the TickRunner
+        //     calls Flush() synchronously at each tick boundary so the DB is current before
+        //     ZoneDlz.LoadZonesForSymbol reloads zones on the next calculation.
+        GlobalData.ThreadSaveObjects ??= new ThreadSaveObjects();
+
+        // 2. Force paper-trading. The user's settings.json is otherwise authoritative;
+        //    overriding here protects against accidental RealTrading after a Configure edit.
+        GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
+
+        // 3. For every symbol in the run, make sure its quote is active. Each quote keeps
+        //    its own EntryAmount in QuoteData (set via Configure dialog), since different
+        //    quotes typically need different per-trade sizes (BTC vs USDT etc.). Without
+        //    FetchCandles=true, NewCandleArrivedAsync short-circuits and no signal/position
+        //    can ever fire.
+        if (GlobalData.ActiveExchange == null)
+            return;
+
+        foreach (string symbolName in config.Symbols)
+        {
+            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+                continue;
+            if (symbol.QuoteData == null)
+                continue;
+
+            symbol.QuoteData.FetchCandles = true;
+        }
+    }
+
+
+    /// <summary>
+    /// Opens the run-results window. Lists every EmulatorRun in the DB; double-click on a row
+    /// drills into that run's positions. Modal so the user finishes inspecting before going
+    /// back to the main panel; if you want to leave it open alongside, swap ShowDialog for Show.
+    /// </summary>
+
+
+    /// <summary>
+    /// Opens the run-results window. Lists every EmulatorRun in the DB; double-click on a row
+    /// drills into that run's positions. Modal so the user finishes inspecting before going
+    /// back to the main panel; if you want to leave it open alongside, swap ShowDialog for Show.
+    /// </summary>
+    [RelayCommand]
+    private async Task ShowResultsAsync(Window? owner)
+    {
+        var window = new RunResultsWindow();
+        if (owner != null)
+            await window.ShowDialog(owner);
+        else
+            window.Show();
     }
 
 

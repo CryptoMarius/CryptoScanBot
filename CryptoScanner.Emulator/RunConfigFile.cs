@@ -65,11 +65,11 @@ public static class RunConfigFile
         DateTime from = to.AddDays(-7);
         return new EmulatorRunConfig
         {
-            ExchangeName = GlobalData.ActiveExchange?.Name ?? "Binance Spot",
+            ExchangeName = GlobalData.ActiveExchange?.Name ?? "Binance Futures",
             Symbols = ["BTCUSDT"],
             FromDate = from,
             ToDate = to,
-            Label = "first-smoke",
+            Label = "first-run",
         };
     }
 

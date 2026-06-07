@@ -3,24 +3,62 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="720" d:DesignHeight="460"
-        Width="720" Height="460"
+        xmlns:views="using:CryptoScanner.Emulator.Views"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
+        Width="900" Height="640"
         x:Class="CryptoScanner.Emulator.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="CryptoScanBot Emulator"
         WindowStartupLocation="CenterScreen">
 
-    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="12">
+    <!-- Single-column layout: all the "what's going on" widgets sit above the tabs, the
+         TabControl below is now just the streaming log. Run tab removed because its
+         contents were duplicated state we already show up top. New tabs (Results, Charts,
+         …) can slot into the TabControl without disturbing the command/status area. -->
+    <Grid Margin="8" RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="8">
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0">
+        <!-- ─── Command bar (knoppen) ─────────────────────────────────────────────── -->
+        <Border Grid.Row="0" Padding="8" BorderBrush="#606060" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Fetch symbols"
+                        Command="{Binding FetchSymbolsCommand}"
+                        IsEnabled="{Binding !IsRunning}"
+                        ToolTip.Tip="Pulls the symbol list from the exchange (REST). Needed before Configure can show quotes and before runs can find any symbol."/>
+                <Button Content="Configure scanner..."
+                        Command="{Binding ConfigureScannerCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        IsEnabled="{Binding !IsRunning}"/>
+                <Button Content="Open run.json"
+                        Command="{Binding OpenRunConfigCommand}"
+                        IsEnabled="{Binding !IsRunning}"/>
+                <Button Content="Fetch candles"
+                        Command="{Binding FetchCandlesCommand}"
+                        IsEnabled="{Binding !IsRunning}"
+                        ToolTip.Tip="Pulls candles for every symbol in emulator-run.json and persists them. May take a while; only needs doing once per symbol/range."/>
+                <Button Content="Results..."
+                        Command="{Binding ShowResultsCommand}"
+                        CommandParameter="{Binding $parent[Window]}"
+                        IsEnabled="{Binding !IsRunning}"/>
+                <Button Content="Start"
+                        Command="{Binding StartCommand}"
+                        IsVisible="{Binding !IsRunning}"
+                        Background="#3A8D3A" Foreground="White"/>
+                <Button Content="Stop"
+                        Command="{Binding StopCommand}"
+                        IsVisible="{Binding IsRunning}"
+                        Background="#A03030" Foreground="White"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ─── Header (titel + hint) ─────────────────────────────────────────────── -->
+        <StackPanel Grid.Row="1" Margin="4,0,0,0">
             <TextBlock FontSize="20" FontWeight="Bold" Text="CryptoScanBot Emulator"/>
             <TextBlock FontSize="11" Foreground="Gray"
                        Text="Backtest replay over a dedicated data folder. Edit settings.json via Configure; symbols and dates via emulator-run.json."/>
         </StackPanel>
 
-        <!-- Resolved paths -->
-        <Grid Grid.Row="1" ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
+        <!-- ─── Paths (Version / App / Data folder) ───────────────────────────────── -->
+        <Grid Grid.Row="2" Margin="4,0,0,0" ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:"/>
             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppVersion}"/>
 
@@ -31,26 +69,7 @@
             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DataFolder}" TextWrapping="Wrap" FontWeight="SemiBold"/>
         </Grid>
 
-        <!-- Action buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-            <Button Content="Configure scanner..."
-                    Command="{Binding ConfigureScannerCommand}"
-                    CommandParameter="{Binding $parent[Window]}"
-                    IsEnabled="{Binding !IsRunning}"/>
-            <Button Content="Open run.json"
-                    Command="{Binding OpenRunConfigCommand}"
-                    IsEnabled="{Binding !IsRunning}"/>
-            <Button Content="Start"
-                    Command="{Binding StartCommand}"
-                    IsVisible="{Binding !IsRunning}"
-                    Background="#3A8D3A" Foreground="White"/>
-            <Button Content="Stop"
-                    Command="{Binding StopCommand}"
-                    IsVisible="{Binding IsRunning}"
-                    Background="#A03030" Foreground="White"/>
-        </StackPanel>
-
-        <!-- Status panel -->
+        <!-- ─── Status panel (progress / symbol / status text) ────────────────────── -->
         <Border Grid.Row="3" BorderBrush="#808080" BorderThickness="1" Padding="10" CornerRadius="3">
             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="100,*" RowSpacing="4">
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Progress:"/>
@@ -67,6 +86,13 @@
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Status}" TextWrapping="Wrap"/>
             </Grid>
         </Border>
+
+        <!-- ─── Tabs: only Log for now; results / charts can slot in later ────────── -->
+        <TabControl Grid.Row="4">
+            <TabItem Header="Log">
+                <views:LogTabView DataContext="{Binding LogTab}"/>
+            </TabItem>
+        </TabControl>
 
     </Grid>
 

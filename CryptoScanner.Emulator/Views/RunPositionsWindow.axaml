@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="500"
+        Width="940" Height="500"
+        x:Class="CryptoScanner.Emulator.Views.RunPositionsWindow"
+        x:DataType="vm:RunPositionsViewModel"
+        Title="Run positions"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+
+        <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="13"
+                   Text="{Binding Header}"/>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Positions}"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  AutoGenerateColumns="False"
+                  GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="60"/>
+                <DataGridTextColumn Header="Created"     Binding="{Binding CreateTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140"/>
+                <DataGridTextColumn Header="Closed"      Binding="{Binding CloseTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140"/>
+                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
+                <DataGridTextColumn Header="Symbol"      Binding="{Binding Symbol}" Width="100"/>
+                <DataGridTextColumn Header="Interval"    Binding="{Binding Interval}" Width="80"/>
+                <DataGridTextColumn Header="Side"        Binding="{Binding SideText}" Width="70"/>
+                <DataGridTextColumn Header="Strategy"    Binding="{Binding Strategy}" Width="80"/>
+                <DataGridTextColumn Header="Status"      Binding="{Binding Status}" Width="80"/>
+                <DataGridTextColumn Header="Profit"      Binding="{Binding Profit}" Width="100"/>
+                <DataGridTextColumn Header="Percentage"  Binding="{Binding Percentage}" Width="90"/>
+                <DataGridTextColumn Header="EventText"   Binding="{Binding EventText}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="Gray" FontSize="11"/>
+
+    </Grid>
+
+</Window>

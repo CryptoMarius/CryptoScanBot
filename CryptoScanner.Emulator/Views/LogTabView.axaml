@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="780" d:DesignHeight="420"
+             x:Class="CryptoScanner.Emulator.Views.LogTabView"
+             x:DataType="vm:LogTabViewModel">
+
+    <Grid RowDefinitions="*,Auto" RowSpacing="4">
+
+        <ListBox Grid.Row="0"
+                 ItemsSource="{Binding Lines}"
+                 FontFamily="Consolas,Menlo,Monaco,monospace"
+                 FontSize="11"
+                 SelectionMode="Single">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="NoWrap" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Clear" Command="{Binding ClearCommand}"/>
+        </StackPanel>
+
+    </Grid>
+
+</UserControl>
