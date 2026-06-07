@@ -528,6 +528,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         // 2. Force paper-trading. The user's settings.json is otherwise authoritative;
         //    overriding here protects against accidental RealTrading after a Configure edit.
+        GlobalData.Settings.Signal.Active = true;
+        GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
         // 3. For every symbol in the run, make sure its quote is active. Each quote keeps
