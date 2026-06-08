@@ -98,8 +98,8 @@ public class SignalCreateBase
         // Correct: signal expires once N full candles have elapsed since the signal
         // candle's OPEN time, i.e. CandleLast (the just-closed signal-interval candle)
         // sits at or beyond the N-th candle after signal.OpenDate.
-        long expiryTime = CandleTime.FromDateTime(signal.CloseDate).Minutes + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration;
-        if (CandleLast.Candle.OpenTime.Minutes >= expiryTime)
+        CandleTime expiryTime = CandleTime.FromDateTime(signal.OpenDate) + GlobalData.Settings.Trading.EntryRemoveTime * signal.Interval.Duration;
+        if (CandleLast.Candle.OpenTime >= expiryTime)
         {
             ExtraText = $"Stop after {GlobalData.Settings.Trading.EntryRemoveTime} candles";
             return true;
