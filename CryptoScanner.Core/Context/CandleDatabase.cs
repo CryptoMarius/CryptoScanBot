@@ -224,11 +224,33 @@ public class CandleDatabase : IDisposable
         cmd.CommandText =
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
             "FROM Candle " +
-            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId AND OpenTime >= $MinOpenTime " +
-            "ORDER BY OpenTime";
-        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
-        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; cmd.Parameters.Add(pInterval);
-        var pMinOpenTime = cmd.CreateParameter(); pMinOpenTime.ParameterName = "$MinOpenTime"; cmd.Parameters.Add(pMinOpenTime);
+            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId AND OpenTime >= $MinOpenTime ";
+        // Do not read future candles
+        if (GlobalData.IsEmulatorMode)
+            cmd.CommandText += " and OpenTime <= $OpenTime ";
+        cmd.CommandText += "ORDER BY OpenTime";
+
+        var pSymbol = cmd.CreateParameter(); 
+        pSymbol.ParameterName = "$SymbolId"; 
+        pSymbol.Value = symbol.Id; 
+        cmd.Parameters.Add(pSymbol);
+        
+        var pInterval = cmd.CreateParameter(); 
+        pInterval.ParameterName = "$IntervalId"; 
+        cmd.Parameters.Add(pInterval);
+
+        var pMinOpenTime = cmd.CreateParameter(); 
+        pMinOpenTime.ParameterName = "$MinOpenTime"; 
+        cmd.Parameters.Add(pMinOpenTime);
+
+        if (GlobalData.IsEmulatorMode)
+        {
+            var pOpenTime = cmd.CreateParameter();
+            pOpenTime.ParameterName = "$OpenTime";
+            pOpenTime.Value = (long)CandleTime.FromDateTime(GlobalData.Clock.UtcNow).Minutes;
+            cmd.Parameters.Add(pOpenTime);
+        }
+
         cmd.Prepare();
 
         foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
@@ -291,10 +313,30 @@ public class CandleDatabase : IDisposable
         cmd.CommandText =
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
             "FROM Candle " +
-            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
-            "ORDER BY OpenTime";
-        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
-        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = symbolInterval.Interval.Id; cmd.Parameters.Add(pInterval);
+            "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId ";
+        // Do not read future candles
+        if (GlobalData.IsEmulatorMode)
+            cmd.CommandText += " and OpenTime <= $OpenTime ";
+        cmd.CommandText += "ORDER BY OpenTime";
+
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId"; 
+        pSymbol.Value = symbol.Id; 
+        cmd.Parameters.Add(pSymbol);
+
+        var pInterval = cmd.CreateParameter(); 
+        pInterval.ParameterName = "$IntervalId"; 
+        pInterval.Value = symbolInterval.Interval.Id; 
+        cmd.Parameters.Add(pInterval);
+
+        if (GlobalData.IsEmulatorMode)
+        {
+            var pOpenTime = cmd.CreateParameter();
+            pOpenTime.ParameterName = "$OpenTime";
+            pOpenTime.Value = (long)CandleTime.FromDateTime(GlobalData.Clock.UtcNow).Minutes;
+            cmd.Parameters.Add(pOpenTime);
+        }
+
 
         symbolInterval.CandleList.Lock();
         try
@@ -343,12 +385,39 @@ public class CandleDatabase : IDisposable
             "SELECT OpenTime, Ticks, Open, High, Low, Close, Volume " +
             "FROM Candle " +
             "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
-            "  AND OpenTime BETWEEN $From AND $To " +
-            "ORDER BY OpenTime";
-        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
-        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = interval.Id; cmd.Parameters.Add(pInterval);
-        var pFrom = cmd.CreateParameter(); pFrom.ParameterName = "$From"; pFrom.Value = (long)fromMinutes; cmd.Parameters.Add(pFrom);
-        var pTo = cmd.CreateParameter(); pTo.ParameterName = "$To"; pTo.Value = (long)toMinutes; cmd.Parameters.Add(pTo);
+            "  AND OpenTime BETWEEN $From AND $To ";
+        // Do not read future candles
+        if (GlobalData.IsEmulatorMode)
+            cmd.CommandText += " and OpenTime <= $OpenTime ";
+        cmd.CommandText += " ORDER BY OpenTime";
+
+        var pSymbol = cmd.CreateParameter(); 
+        pSymbol.ParameterName = "$SymbolId"; 
+        pSymbol.Value = symbol.Id; 
+        cmd.Parameters.Add(pSymbol);
+
+        var pInterval = cmd.CreateParameter(); 
+        pInterval.ParameterName = "$IntervalId"; 
+        pInterval.Value = interval.Id; 
+        cmd.Parameters.Add(pInterval);
+
+        var pFrom = cmd.CreateParameter(); 
+        pFrom.ParameterName = "$From"; 
+        pFrom.Value = (long)fromMinutes; 
+        cmd.Parameters.Add(pFrom);
+
+        var pTo = cmd.CreateParameter(); 
+        pTo.ParameterName = "$To"; 
+        pTo.Value = (long)toMinutes; 
+        cmd.Parameters.Add(pTo);
+
+        if (GlobalData.IsEmulatorMode)
+        {
+            var pOpenTime = cmd.CreateParameter();
+            pOpenTime.ParameterName = "$OpenTime";
+            pOpenTime.Value = (long)CandleTime.FromDateTime(GlobalData.Clock.UtcNow).Minutes;
+            cmd.Parameters.Add(pOpenTime);
+        }
 
         var list = new List<CryptoCandle>();
         using var reader = cmd.ExecuteReader();
@@ -468,7 +537,11 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; cmd.Parameters.Add(pSymbol);
         var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; cmd.Parameters.Add(pInterval);
-        var pOpenTime = cmd.CreateParameter(); pOpenTime.ParameterName = "$OpenTime"; cmd.Parameters.Add(pOpenTime);
+        
+        var pOpenTime = cmd.CreateParameter(); 
+        pOpenTime.ParameterName = "$OpenTime"; 
+        cmd.Parameters.Add(pOpenTime);
+
         var pTickDecimals = cmd.CreateParameter(); pTickDecimals.ParameterName = "$Ticks"; cmd.Parameters.Add(pTickDecimals);
         var pOpen = cmd.CreateParameter(); pOpen.ParameterName = "$Open"; cmd.Parameters.Add(pOpen);
         var pHigh = cmd.CreateParameter(); pHigh.ParameterName = "$High"; cmd.Parameters.Add(pHigh);
