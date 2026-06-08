@@ -6,13 +6,15 @@ using CryptoScanner.Core.Signal;
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
-/// Pre-fills a symbol's CandleList for an emulator run.
+/// Warms up a symbol's CandleList for an emulator run by replaying the pre-replay 1m candles
+/// through the live 1m handler (<see cref="CandleTools.Process1mCandleAsync"/>), so the candle
+/// history is built incrementally and identically to the actual replay.
 ///
-/// The emulator drives off the 1-minute interval and aggregates higher intervals itself via
-/// <see cref="CandleTools.BulkCalculateCandles"/>, so only 1m candles are fetched from the
-/// per-exchange candles.db. Enough 1m history is loaded BEFORE the replay window so the
-/// longest indicator lookback (typically SMA200) on the longest active interval has at least
-/// 260 candles to work with when the TickRunner emits its first replay candle.
+/// Only 1m candles are read from the per-exchange candles.db; every higher timeframe is
+/// synthesised from 1m. Enough 1m history is loaded BEFORE the replay window so the longest
+/// indicator lookback (typically SMA200) on the longest active interval has at least 260 candles
+/// of its own resolution — for a higher interval that necessarily means many more than 260 1m
+/// candles (e.g. SMA200 on 1h needs ~200×60 = 12 000 1m candles to build the 200 hourly bars).
 /// </summary>
 public static class IndicatorWarmup
 {
@@ -90,80 +92,84 @@ public static class IndicatorWarmup
     }
 
 
-    /// <summary>
-    /// Backward-compatible overload still used by <see cref="PrepareSymbol"/>: the warmup
-    /// span the 1m CandleList must cover so the longest active higher interval can be
-    /// reconstructed from 1m at run start. Use the per-interval overload for the fetch step.
-    /// </summary>
-    public static uint ComputeWarmupMinutes(IReadOnlyList<CryptoInterval> activeIntervals)
-    {
-        uint maxDuration = 1;
-        foreach (var interval in activeIntervals)
-        {
-            if (interval.Duration > maxDuration)
-                maxDuration = interval.Duration;
-        }
-        return (uint)((MinCandlesPerInterval + SafetyExtraBars) * maxDuration);
-    }
+    ///// <summary>
+    ///// Backward-compatible overload still used by <see cref="PrepareSymbol"/>: the warmup
+    ///// span the 1m CandleList must cover so the longest active higher interval can be
+    ///// reconstructed from 1m at run start. Use the per-interval overload for the fetch step.
+    ///// </summary>
+    //public static uint ComputeWarmupMinutes(IReadOnlyList<CryptoInterval> activeIntervals)
+    //{
+    //    uint maxDuration = 1;
+    //    foreach (var interval in activeIntervals)
+    //    {
+    //        if (interval.Duration > maxDuration)
+    //            maxDuration = interval.Duration;
+    //    }
+    //    return (uint)((MinCandlesPerInterval + SafetyExtraBars) * maxDuration);
+    //}
 
 
     /// <summary>
-    /// Loads all 1m candles for <paramref name="symbol"/> in the warmup+replay window from
-    /// the per-exchange candles.db, injects the warmup ones into the 1m CandleList, then
-    /// aggregates the active higher intervals from those candles via
-    /// <see cref="CandleTools.BulkCalculateCandles"/>.
+    /// Warms a symbol up for the replay. For EVERY interval (1m and all higher ones) it loads the
+    /// last <see cref="MinCandlesPerInterval"/>+ candles ending just before <paramref name="replayFrom"/>
+    /// straight from the per-exchange candles.db into that interval's own CandleList. Reading is
+    /// almost free (the candles were already stored by "Fetch candles"), and loading each interval at
+    /// its OWN resolution avoids the absurd cost of rebuilding, say, a single 1w bar from ~2 million
+    /// 1m candles. Each interval therefore has real history for SMA200 (≥200 bars) and for the day/
+    /// week bars that rely on it.
     ///
-    /// Returns the replay-window 1m candles as a separate <see cref="CryptoCandleList"/> keyed by
-    /// OpenTime. The TickRunner walks the replay window minute by minute and simply looks the
-    /// candle up by candle-time (TryGetValue), feeding it to ProcessTickAsync — no queue, no
-    /// peeking. They are kept OUT of the symbol's live CandleList so the pipeline never sees a
-    /// future candle; ProcessTickAsync adds each one to the CandleList at the moment it "arrives".
+    /// Only the 1m interval gets a replay list — the candles fed one minute at a time during the
+    /// replay. The higher intervals are EXTENDED during the replay by
+    /// <see cref="CandleTools.Process1mCandleAsync"/>, which appends each newly-closed higher bar
+    /// onto the DB-loaded history. No higher candle straddling replayFrom is loaded (only bars that
+    /// close at or before replayFrom), so the strategy never sees a future-containing bar.
     /// </summary>
     public static CryptoCandleList PrepareSymbol(CryptoSymbol symbol,
         CandleTime replayFrom, CandleTime replayTo)
     {
-        var activeIntervals = ResolveMaintainedIntervals();
-        uint warmupMinutes = ComputeWarmupMinutes(activeIntervals);
 
-        // Clamp warmupFrom to 0 if it would go negative (when replayFrom is very early).
-        CandleTime warmupFrom = replayFrom.Minutes > warmupMinutes
-            ? new CandleTime(replayFrom.Minutes - warmupMinutes)
-            : new CandleTime(0);
+        symbol.ClearCandles();
 
         if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
             throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName");
 
-        // Pull the entire 1m range in one DB pass — cheaper than two queries.
-        var all1m = CandleSource.Load(symbol, interval1m, warmupFrom, replayTo);
-        var symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        // Ascending order so an interval's ConstructFrom is already warmed when (rarely) we have to
+        // synthesise a chain interval the DB does not contain.
+        foreach (CryptoInterval interval in GlobalData.IntervalList)
+        {
+            // Candles of EACH interval's own resolution to load before replayFrom: enough for SMA200
+            // (200) plus a safety margin, and enough history to make a day/week bar meaningful.
+            CandleTime from = new(replayFrom.Minutes - 270 * interval.Duration);
 
+            //CandleTime lastWarmup = new(replayTo.Minutes);
+            //if (interval.IntervalPeriod > CryptoIntervalPeriod.interval1m)
+            //    lastWarmup = new(replayFrom.Minutes);
+
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            foreach (CryptoCandle candle in CandleSource.Load(symbol, interval, from, replayFrom))
+            {
+                // Guard against look-ahead: only bars that fully close at/before replayFrom.
+                if (candle.OpenTime + interval.Duration <= replayFrom)
+                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+            }
+
+            // Fallback for a chain interval the DB happens not to have (e.g. an intermediate 5m that
+            // "Fetch candles" never pulled): rebuild its warmup from the already-warmed ConstructFrom.
+            // Cheap — it aggregates from the immediate lower interval, never straight from 1m.
+            //if (interval.ConstructFrom != null && symbolInterval.CandleList.Count == 0)
+            //    CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, replayFrom);
+
+            if (symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastCandle))
+                symbolInterval.LastCandle = lastCandle;
+        }
+
+        // Only the 1m interval is fed candle-by-candle during the replay. Set its window aside,
+        // keyed by OpenTime, so the TickRunner can look each minute up by candle-time.
         CryptoCandleList replayCandles = [];
-        foreach (var candle in all1m)
+        foreach (CryptoCandle candle in CandleSource.Load(symbol, interval1m, replayFrom, replayTo))
         {
-            // Warmup candles go into the CandleList immediately so indicators can build state.
-            // Replay candles are set aside (keyed by OpenTime) so the TickRunner can hand them to
-            // the pipeline one minute at a time — the same incremental view the live scanner sees.
-            if (candle.OpenTime.Minutes < replayFrom.Minutes)
-                symbolInterval1m.CandleList.TryAdd(candle.OpenTime, candle);
-            else
+            if (candle.OpenTime >= replayFrom)
                 replayCandles.Add(candle.OpenTime, candle);
-        }
-
-        if (symbolInterval1m.CandleList.Count > 0)
-        {
-            symbolInterval1m.LastCandle = symbolInterval1m.CandleList.Values.Last();
-        }
-
-        // Aggregate higher intervals from the 1m candles already in the CandleList. We aggregate
-        // up to replayFrom (exclusive) so the higher-interval CandleLists end one bar short of
-        // the first replay candle — the TickRunner will produce that bar at the appropriate
-        // close-time during the replay.
-        foreach (var higher in activeIntervals)
-        {
-            if (higher.IntervalPeriod == CryptoIntervalPeriod.interval1m)
-                continue;
-
-            CandleTools.BulkCalculateCandles(symbol, interval1m, higher, replayFrom);
         }
 
         return replayCandles;

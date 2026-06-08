@@ -40,7 +40,7 @@ public partial class LogTabViewModel : ObservableObject
 
     public LogTabViewModel()
     {
-        GlobalData.LogToLogTabEvent += OnLog;
+        //GlobalData.LogToLogTabEvent += OnLog;
     }
 
 
@@ -60,10 +60,11 @@ public partial class LogTabViewModel : ObservableObject
             // ignore — never let logging crash the run
         }
 
-        DateTime stamp = GlobalData.CurrentEmulatorRunId != null
-            ? GlobalData.Clock.UtcNow   // virtual replay date — shows how far the run has progressed
-            : DateTime.Now;             // wall-clock when no run is active (EmulatorClock is unset)
-        string stamped = $"{stamp:yyyy-MM-dd HH:mm:ss}  {text.Trim()}";
+        //DateTime stamp = GlobalData.CurrentEmulatorRunId != null
+        //    ? GlobalData.Clock.UtcNow   // virtual replay date — shows how far the run has progressed
+        //    : DateTime.Now;             // wall-clock when no run is active (EmulatorClock is unset)
+        //string stamped = $"{stamp:yyyy-MM-dd HH:mm:ss}  {text.Trim()}";
+        string stamped = text.Trim();
 
         // Marshal to the UI thread because LogToLogTabEvent fires from any worker (REST
         // fetch, TickRunner, etc.). Without the post Avalonia logs binding errors.

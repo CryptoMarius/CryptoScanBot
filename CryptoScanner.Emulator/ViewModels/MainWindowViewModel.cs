@@ -12,6 +12,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Emulator.Engine;
@@ -259,7 +260,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // step sees the full picture instead of only the bounded startup load.
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-                    foreach (CryptoInterval interval in activeIntervals)
+                    foreach (CryptoInterval interval in GlobalData.IntervalList)
                     {
                         // Per-interval warmup window — 1m=24h, higher=270×duration. Each interval
                         // pulled in its OWN resolution: a 1w warmup is 270 weekly candles (~5y),
@@ -270,9 +271,13 @@ public partial class MainWindowViewModel : ObservableObject
                         DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
 
                         CandleTime minDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(intervalFromUtc, 1), interval.Duration);
+                            CandleTime.AlignFromDateTime(intervalFromUtc, interval.Duration), interval.Duration);
                         CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(config.ToDate, 1), interval.Duration);
+                            CandleTime.AlignFromDateTime(config.ToDate, interval.Duration), interval.Duration);
+
+                        if (interval.IntervalPeriod > CryptoIntervalPeriod.interval1m)
+                            maxDate = IntervalTools.StartOfIntervalCandle(
+                            CandleTime.AlignFromDateTime(config.FromDate, interval.Duration), interval.Duration);
 
                         if (maxDate <= minDate)
                             continue;
@@ -376,24 +381,30 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        // ─── ScannerSession.ApplyConfigurationAsync subset ──────────────────────────
+        // Bind the exchange the user/settings selected.
+        if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
+        {
+            Status = "Run needs an exchange";
+            return;
+        }
+
+        GlobalData.ActiveExchange = exchange;
+        GlobalData.Settings.General.ExchangeName = config.ExchangeName;
+
+        GlobalData.ActiveExchange = exchange;
+        GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
+
         IsRunning = true;
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
 
         ApplyRunOverrides(config);
 
-        // Start from a clean zone slate. Zones carry no EmulatorRunId, so without this a run
-        // inherits the previous run's zones from the DB — including ones already closed/broken at
-        // a point in time that hasn't happened yet on this replay's timeline (look-ahead). Zones
-        // are rebuilt from the candles during the replay, so nothing is lost.
-        if (GlobalData.ActiveExchange != null)
-        {
-            EmulatorDb.ClearZonesForSymbols(GlobalData.ActiveExchange, config.Symbols);
-            GlobalData.AddTextToLogTab($"Run: cleared previous zones for {config.Symbols.Count} symbol(s)");
-        }
-
-        // Clear positions, assets etc
-        //exchange.Data.Clear();
+        // Put the DB into WAL mode so the per-tick Flush transactions don't each fsync a
+        // freshly created/deleted rollback journal. Persistent in the DB file, so it covers
+        // every connection the run opens. Core is untouched.
+        EmulatorDb.EnableFastWriteMode();
 
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
@@ -529,29 +540,51 @@ public partial class MainWindowViewModel : ObservableObject
         //     ZoneDlz.LoadZonesForSymbol reloads zones on the next calculation.
         GlobalData.ThreadSaveObjects ??= new ThreadSaveObjects();
 
-        // 2. Force paper-trading. The user's settings.json is otherwise authoritative;
-        //    overriding here protects against accidental RealTrading after a Configure edit.
+
+        var exchange = GlobalData.ActiveExchange!;
+
+        // Clear positions, assets etc
+        exchange.Data.Clear();
+
+        exchange.GetApiInstance().ExchangeDefaults();
+
+        // Clear symbols and refresh
+        exchange.Clear();
+        GlobalData.LoadSymbols();
+        
+        // Force paper-trading. The user's settings.json is otherwise authoritative;
+        // overriding here protects against accidental RealTrading after a Configure edit.
         GlobalData.Settings.Signal.Active = true;
         GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
-        // 3. For every symbol in the run, make sure its quote is active. Each quote keeps
-        //    its own EntryAmount in QuoteData (set via Configure dialog), since different
-        //    quotes typically need different per-trade sizes (BTC vs USDT etc.). Without
-        //    FetchCandles=true, NewCandleArrivedAsync short-circuits and no signal/position
-        //    can ever fire.
-        if (GlobalData.ActiveExchange == null)
-            return;
+        // Start from a clean zone slate. Zones carry no EmulatorRunId, so without this a run
+        // inherits the previous run's zones from the DB — including ones already closed/broken at
+        // a point in time that hasn't happened yet on this replay's timeline (look-ahead). Zones
+        // are rebuilt from the candles during the replay, so nothing is lost.
+        EmulatorDb.ClearZonesForSymbols(exchange, config.Symbols);
+        GlobalData.AddTextToLogTab($"Run: cleared previous zones for {config.Symbols.Count} symbol(s)");
 
+        // Activte quoteData
         foreach (string symbolName in config.Symbols)
         {
-            if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
+            if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                 continue;
             if (symbol.QuoteData == null)
                 continue;
 
             symbol.QuoteData.FetchCandles = true;
         }
+
+        // Just to be sure, do the basic stuff
+        GlobalData.IndexStrategySettings();
+        TradingConfig.IndexStrategyInternally();
+        TradingConfig.InitWhiteAndBlackListSettings();
+
+        SignalPrepare.Prepare();
+        SignalExecute.Prepare();
+
+        //GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)    
     }
 
 
