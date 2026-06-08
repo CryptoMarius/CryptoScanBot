@@ -78,6 +78,26 @@ public static class EmulatorDb
 
 
     /// <summary>
+    /// Switches the emulator's main CryptoScanBot.db into a write-optimised mode for a run.
+    /// <c>journal_mode=WAL</c> is PERSISTENT — SQLite stores it in the database file header — so this
+    /// single call before the replay starts applies to every <see cref="CryptoDatabase"/> connection
+    /// the run later opens (each <see cref="ThreadSaveObjects.Flush"/> opens its own), without any
+    /// change to Core. WAL replaces the default DELETE journal's create-and-delete-per-transaction
+    /// churn (plus an fsync per commit) with a single append-only log; a higher
+    /// <c>wal_autocheckpoint</c> lets the many tiny per-tick flush transactions accumulate before
+    /// SQLite checkpoints them back to the main file. Safe for an emulator run: a crash mid-run
+    /// loses only that run's (reproducible) data, never the historical candles.
+    /// </summary>
+    public static void EnableFastWriteMode()
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        database.Connection.Execute("PRAGMA journal_mode=WAL;");
+        database.Connection.Execute("PRAGMA wal_autocheckpoint=10000;");
+    }
+
+
+    /// <summary>
     /// Inserts an EmulatorRun row and stores its id in
     /// <see cref="GlobalData.CurrentEmulatorRunId"/> so subsequent signals and positions are
     /// tagged with it. Call once at run start.
@@ -90,7 +110,7 @@ public static class EmulatorDb
 
         var run = new CryptoEmulatorRun
         {
-            StartedAt = GlobalData.Clock.UtcNow,
+            StartedAt = DateTime.UtcNow,
             FromDate = fromDate,
             ToDate = toDate,
             ConfigJson = configJson,
@@ -100,6 +120,10 @@ public static class EmulatorDb
         run.Id = (int)database.Connection.Insert(run);
 
         GlobalData.CurrentEmulatorRunId = run.Id;
+
+        // Open a dedicated log file named after this run id, so every line produced during the run
+        // lands in its own "<base> Run <id>.log" alongside the shared default/error/trace logs.
+        ScannerLog.StartRunLog(run.Id);
         return run;
     }
 
@@ -119,7 +143,7 @@ public static class EmulatorDb
         var run = database.Connection.Get<CryptoEmulatorRun>(runId.Value);
         if (run != null)
         {
-            run.FinishedAt = GlobalData.Clock.UtcNow;
+            run.FinishedAt = DateTime.UtcNow;
             run.Result = result;
             run.SignalCount = database.Connection.ExecuteScalar<int>(
                 "select count(*) from signal where EmulatorRunId = @id", new { id = runId });
@@ -144,5 +168,8 @@ public static class EmulatorDb
         }
 
         GlobalData.CurrentEmulatorRunId = null;
+
+        // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
+        ScannerLog.StopRunLog();
     }
 }
