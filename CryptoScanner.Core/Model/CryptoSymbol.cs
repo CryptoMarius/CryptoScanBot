@@ -113,6 +113,8 @@ public partial class CryptoSymbol
         {
             count += symbolInterval.CandleList.Count;
             symbolInterval.CandleList.Clear();
+
+            symbolInterval.LastCandle = default;
         }
         return count > 0;
     }
