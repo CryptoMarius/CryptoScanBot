@@ -3,6 +3,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
@@ -19,7 +21,7 @@ public readonly record struct TickRunProgress(string SymbolName, int ProcessedBa
 /// read other symbols) behave the same way in the emulator as they do live.
 ///
 /// The per-symbol replay candles are set aside as a <see cref="CryptoCandleList"/> keyed by
-/// OpenTime (built by <see cref="IndicatorWarmup.PrepareSymbol"/>); each minute the loop simply
+/// OpenTime (built by <see cref="IndicatorWarmup.PrepareSymbolAsync"/>); each minute the loop simply
 /// looks the candle up by candle-time. Higher intervals are NOT delivered by anything else —
 /// <see cref="SignalPrepare.Execute"/> only computes indicators and expects the higher-TF candle
 /// to already be in <c>CandleList</c>. The emulator has no live KLine subscription, so
@@ -31,6 +33,18 @@ public sealed class TickRunner
 {
     public IProgress<TickRunProgress>? Progress { get; init; }
 
+    // ───── Per-phase profiling accumulators ─────────────────────────────────────────
+    // Raw Stopwatch ticks spent in each hot-loop phase, summed across every processed tick.
+    // GetTimestamp() is a static QueryPerformanceCounter read (no allocation), so accumulating
+    // per tick is negligible against the engine work it measures. Converted to wall-time and
+    // logged once at the end of RunAsync, so a run tells you where its time actually went —
+    // candle synthesis, the signal/trade pipeline, zone calculation, or DB flushing — instead
+    // of having to guess before optimising.
+    private long elapsedProcess1m;
+    private long elapsedPipeline;
+    private long elapsedZoneDrain;
+    private long elapsedFlush;
+
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
     {
@@ -41,23 +55,11 @@ public sealed class TickRunner
 
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
-        if (!GlobalData.ExchangeListName.TryGetValue(config.ExchangeName, out CryptoScanner.Core.Model.CryptoExchange? exchange))
-            throw new InvalidOperationException($"Exchange '{config.ExchangeName}' is not registered in GlobalData.ExchangeListName.");
+        var exchange = GlobalData.ActiveExchange!;
 
-        // Bind ActiveExchange so the rest of Core (zone calculators, settings lookups, …)
-        // sees the emulator's exchange. Restored on exit so unit-test re-entry is safe.
-        CryptoScanner.Core.Model.CryptoExchange? previousActive = GlobalData.ActiveExchange;
-        GlobalData.ActiveExchange = exchange;
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
         try
         {
-            // Clear positions, assets etc
-            exchange.Data.Clear();
-
-            GlobalData.Settings.General.ExchangeName = config.ExchangeName;
-            GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
-
-
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
                 throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
 
@@ -68,10 +70,10 @@ public sealed class TickRunner
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, 1);
 
             // ───── Warmup all symbols up-front ──────────────────────────────────────
-            // PrepareSymbol fills the 1m CandleList up to replayFrom and aggregates higher
-            // intervals so signal indicators have stable values on the very first tick. It hands
-            // back the replay-window 1m candles as a CryptoCandleList keyed by OpenTime; the merge
-            // loop below just looks each minute up by candle-time.
+            // PrepareSymbol loads ~270 candles of EACH interval (1m + higher) before replayFrom
+            // straight from the candles.db, so every timeframe has real history for its indicators.
+            // It hands back ONLY the 1m replay window as a CryptoCandleList keyed by OpenTime; the
+            // higher intervals are extended by Process1mCandleAsync as the replay progresses.
             var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
             int totalBars = 0;
             foreach (string symbolName in config.Symbols)
@@ -84,13 +86,9 @@ public sealed class TickRunner
                 CryptoCandleList replayCandles = IndicatorWarmup.PrepareSymbol(symbol, replayFrom, replayTo);
                 replays.Add((symbol, replayCandles));
                 totalBars += replayCandles.Count;
-
-                // Reset trade data
-                symbol.LastPrice = null;
-                symbol.LastTradeDate = null;
-                symbol.LastTradeFetched = null;
-                symbol.LastTradeIdFetched = null;
             }
+
+
 
             // ───── Time-merged replay loop ──────────────────────────────────────────
             // Walk the replay window minute by minute (the exchange's own clock). For each minute:
@@ -108,7 +106,7 @@ public sealed class TickRunner
                     break;
 
                 // Clock advances to the close-time of the current minute BEFORE the symbols process.
-                CandleTime closeTime = openTime; // + interval1m.Duration;
+                CandleTime closeTime = openTime + interval1m.Duration;
                 if (emulatorClock != null)
                     emulatorClock.UtcNow = closeTime.ToDateTime();
 
@@ -140,9 +138,36 @@ public sealed class TickRunner
         }
         finally
         {
-            GlobalData.ActiveExchange = previousActive;
             GlobalData.AnalyzeSignalCreated = null;
+            LogPhaseTimings();
         }
+    }
+
+
+    /// <summary>
+    /// Writes the per-phase profiling totals (candle synthesis / signal+trade pipeline / zone
+    /// calculation / DB flush) collected during the run to the log, so a run reveals where its
+    /// time actually went before any optimisation is attempted. Raw Stopwatch ticks are converted
+    /// to seconds via <see cref="Stopwatch.Frequency"/>.
+    /// </summary>
+    private void LogPhaseTimings()
+    {
+        static double Seconds(long ticks) => (double)ticks / Stopwatch.Frequency;
+
+        double process1m = Seconds(elapsedProcess1m);
+        double pipeline = Seconds(elapsedPipeline);
+        double zoneDrain = Seconds(elapsedZoneDrain);
+        double flush = Seconds(elapsedFlush);
+        double total = process1m + pipeline + zoneDrain + flush;
+        if (total <= 0)
+            return;
+
+        GlobalData.AddTextToLogTab(
+            $"Timing — total {total:F1}s | " +
+            $"candles {process1m:F1}s ({process1m / total:P0}), " +
+            $"pipeline {pipeline:F1}s ({pipeline / total:P0}), " +
+            $"zones {zoneDrain:F1}s ({zoneDrain / total:P0}), " +
+            $"flush {flush:F1}s ({flush / total:P0})");
     }
 
 
@@ -152,8 +177,17 @@ public sealed class TickRunner
     /// higher-TF candles whose period closed on this minute, then run the live scanner
     /// analysis pipeline.
     /// </summary>
-    private static async Task ProcessTickAsync(CryptoSymbol symbol, CryptoCandle candle)
+    private async Task ProcessTickAsync(CryptoSymbol symbol, CryptoCandle candle)
     {
+        // keep please for debugging!!!
+        var symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+        var c = symbolPeriod.CandleList.Count;
+        if (c > 0)
+        {
+        }
+        var first = symbolPeriod.CandleList.FirstOrDefault();
+        var last = symbolPeriod.CandleList.LastOrDefault();
+
         // Reuse the canonical 1m-arrival handler instead of re-deriving it here. Process1mCandleAsync
         // is exactly what the live SubscriptionKLineTicker calls for every incoming 1m candle: it
         // adds the 1m candle to its CandleList, advances UpdateCandleFetched, and synthesises every
@@ -162,8 +196,11 @@ public sealed class TickRunner
         // emitted. The pre-fetched higher candles in candles.db are the COMPLETE/closed bars; during
         // replay we must instead rebuild the CURRENT higher bar incrementally from the 1m candles
         // seen so far, otherwise the strategy would peek at the rest of the (future) bucket.
+        long t0 = Stopwatch.GetTimestamp();
         await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
             candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
+        long t1 = Stopwatch.GetTimestamp();
+        elapsedProcess1m += t1 - t0;
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
@@ -171,6 +208,8 @@ public sealed class TickRunner
         // state — multi-symbol parallelism is intentionally out of scope here.
         PositionMonitor positionMonitor = new(symbol, candle);
         await positionMonitor.NewCandleArrivedAsync();
+        long t2 = Stopwatch.GetTimestamp();
+        elapsedPipeline += t2 - t1;
 
         // Persist everything NewCandleArrivedAsync queued — created signals/positions plus the
         // inline FVG (ScanForNew) and SMC (Detect) zone diffs. This must happen BEFORE the DLZ
@@ -179,6 +218,8 @@ public sealed class TickRunner
         // queue would be reset away. Live this is fine on a 250 ms background flush, but the
         // emulator's tick boundaries collapse that timing so we flush synchronously here.
         GlobalData.ThreadSaveObjects?.Flush();
+        long t3 = Stopwatch.GetTimestamp();
+        elapsedFlush += t3 - t2;
 
         // DLZ zones are queued (not computed) by SignalPrepare.Execute via
         // ThreadZoneCalculate.AddToQueue — the live scanner has a background worker draining
@@ -187,10 +228,13 @@ public sealed class TickRunner
         // clock is still pinned to this bar.
         if (GlobalData.ThreadZoneCalculate != null)
             await GlobalData.ThreadZoneCalculate.DrainQueueAsync();
+        long t4 = Stopwatch.GetTimestamp();
+        elapsedZoneDrain += t4 - t3;
 
         // Persist the DLZ zone diffs the drain just produced, so the next tick's
         // LoadZonesForSymbol reload sees them instead of resetting them away.
         GlobalData.ThreadSaveObjects?.Flush();
+        elapsedFlush += Stopwatch.GetTimestamp() - t4;
     }
 
 }
