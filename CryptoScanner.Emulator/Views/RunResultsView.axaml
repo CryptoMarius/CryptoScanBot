@@ -29,7 +29,8 @@
                 <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="130"/>
                 <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="200"/>
                 <DataGridTextColumn Header="Started"     Binding="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="120"/>
-                <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="80"/>
+				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="120"/>
+				<DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="80"/>
                 <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="120"/>
                 <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="70"/>
                 <DataGridTextColumn Header="Pos"         Binding="{Binding PositionCount}" Width="55"/>
