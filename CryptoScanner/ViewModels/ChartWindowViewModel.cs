@@ -1038,6 +1038,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
+        // Draw BaBa Bands & Ribbon
+        group = "baba";
+        if (Toggle(model, group, Session.ShowBaBaBands))
+            BaBaBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
         // Draw PSar
         group = "psar";
         if (Toggle(model, group, Session.ShowPSar))

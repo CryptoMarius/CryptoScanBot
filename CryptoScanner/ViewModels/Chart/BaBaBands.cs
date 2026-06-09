@@ -1,0 +1,209 @@
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
+
+using OxyPlot;
+using OxyPlot.Annotations;
+using OxyPlot.Series;
+
+using Skender.Stock.Indicators;
+
+namespace CryptoScanner.ViewModels.Chart;
+
+/// <summary>
+/// "BaBa Bands & Ribbon" indicator (clone of the TradingView Pine script).
+/// It is a Keltner-style construction: an EMA basis with two ATR based band sets.
+///   - Macro outer bands : basis +/- ATR * outerMult  (the wide green cloud)
+///   - Inner ribbon       : basis +/- ATR * innerMult  (trend coloured: green up / red down)
+///   - Basis              : EMA(len)
+///   - Overextension labels: percentage deviation when high/low breaks the macro bands,
+///     filtered to the highest/lowest point within a 5 candle window to avoid label spam.
+/// </summary>
+public class BaBaBands
+{
+    // Parameters come from the shared helper so the chart and the "baba" signal stay in sync.
+    private const int Len = BaBaBandsHelper.Len;
+    private const double OuterMult = BaBaBandsHelper.OuterMult;
+    private const double InnerMult = BaBaBandsHelper.InnerMult;
+    private const int BreakLookback = BaBaBandsHelper.BreakLookback;
+
+    // Colours, translated from the Pine color.new(..., transparency) values.
+    // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
+    private static readonly OxyColor MacroLineColor = OxyColor.FromArgb(102, 0, 128, 0);    // green, 60% transparent
+    private static readonly OxyColor MacroFillColor = OxyColor.FromArgb(15, 0, 128, 0);     // green, 94% transparent
+    private static readonly OxyColor BasisColor = OxyColor.FromArgb(153, 0, 0, 255);        // blue, 40% transparent
+    private static readonly OxyColor RibbonUpColor = OxyColor.FromArgb(178, 0, 255, 170);   // #00ffaa, 30% transparent
+    private static readonly OxyColor RibbonDownColor = OxyColor.FromArgb(178, 255, 59, 59); // #ff3b3b, 30% transparent
+    private static readonly OxyColor RibbonUpFill = OxyColor.FromArgb(38, 0, 255, 170);     // ribbon shading, 85% transparent
+    private static readonly OxyColor RibbonDownFill = OxyColor.FromArgb(38, 255, 59, 59);
+
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    {
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.CandleList.Count == 0)
+            return;
+
+        var candles = symbolInterval.CandleList.Values.ToList();
+
+        // EMA basis and ATR are computed by Skender; index them by date so we can join on the candle.
+        var emaByDate = new Dictionary<DateTime, double>();
+        foreach (var ema in candles.GetEma(Len))
+        {
+            if (ema.Ema.HasValue)
+                emaByDate[ema.Date] = ema.Ema.Value;
+        }
+
+        var atrByDate = new Dictionary<DateTime, double>();
+        foreach (var atr in candles.GetAtr(Len))
+        {
+            if (atr.Atr.HasValue)
+                atrByDate[atr.Date] = atr.Atr.Value;
+        }
+
+        // Macro outer cloud (fill behind everything) and its two bounding lines.
+        var macroFill = new AreaSeries
+        {
+            Title = "baba.macro.fill",
+            Fill = MacroFillColor,
+            Color = OxyColors.Transparent,
+            StrokeThickness = 0,
+            YAxisKey = "price",
+            Tag = group,
+        };
+        var macroUp = new LineSeries { Title = "baba.macro.up", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var macroDown = new LineSeries { Title = "baba.macro.down", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+
+        // Inner ribbon shading (trend coloured body between inner_up and inner_down).
+        var ribbonFillUp = new AreaSeries { Title = "baba.ribbon.fill.up", Fill = RibbonUpFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+        var ribbonFillDown = new AreaSeries { Title = "baba.ribbon.fill.down", Fill = RibbonDownFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+
+        // Inner ribbon lines, split per trend so each segment keeps its own colour.
+        var ribbonUpGreen = new LineSeries { Title = "baba.ribbon.up", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonUpRed = new LineSeries { Title = "baba.ribbon.up", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonDownGreen = new LineSeries { Title = "baba.ribbon.down", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonDownRed = new LineSeries { Title = "baba.ribbon.down", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+
+        // Basis (middle) line.
+        var basisLine = new LineSeries { Title = "baba.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+
+        // Break point used to interrupt a line/area series so trend segments do not connect.
+        var breakPoint = new DataPoint(double.NaN, double.NaN);
+
+        for (int i = 0; i < candles.Count; i++)
+        {
+            var candle = candles[i];
+            CandleTime openTime = CandleTime.AlignFromDateTime(candle.Date, interval.Duration);
+            if (openTime < minDate || openTime > maxDate)
+                continue;
+
+            if (!emaByDate.TryGetValue(candle.Date, out double basis) || !atrByDate.TryGetValue(candle.Date, out double atr))
+                continue;
+
+            double x = openTime.Minutes;
+            double close = (double)candle.Close;
+            double high = (double)candle.High;
+            double low = (double)candle.Low;
+
+            double outerUp = basis + atr * OuterMult;
+            double outerDown = basis - atr * OuterMult;
+            double innerUp = basis + atr * InnerMult;
+            double innerDown = basis - atr * InnerMult;
+            bool isUptrend = close > basis;
+
+            macroFill.Points.Add(new DataPoint(x, outerUp));
+            macroFill.Points2.Add(new DataPoint(x, outerDown));
+            macroUp.Points.Add(new DataPoint(x, outerUp));
+            macroDown.Points.Add(new DataPoint(x, outerDown));
+            basisLine.Points.Add(new DataPoint(x, basis));
+
+            // Trend coloured ribbon: add the real value on the matching trend, a break on the other.
+            if (isUptrend)
+            {
+                ribbonUpGreen.Points.Add(new DataPoint(x, innerUp));
+                ribbonDownGreen.Points.Add(new DataPoint(x, innerDown));
+                ribbonUpRed.Points.Add(breakPoint);
+                ribbonDownRed.Points.Add(breakPoint);
+
+                ribbonFillUp.Points.Add(new DataPoint(x, innerUp));
+                ribbonFillUp.Points2.Add(new DataPoint(x, innerDown));
+                ribbonFillDown.Points.Add(breakPoint);
+                ribbonFillDown.Points2.Add(breakPoint);
+            }
+            else
+            {
+                ribbonUpRed.Points.Add(new DataPoint(x, innerUp));
+                ribbonDownRed.Points.Add(new DataPoint(x, innerDown));
+                ribbonUpGreen.Points.Add(breakPoint);
+                ribbonDownGreen.Points.Add(breakPoint);
+
+                ribbonFillDown.Points.Add(new DataPoint(x, innerUp));
+                ribbonFillDown.Points2.Add(new DataPoint(x, innerDown));
+                ribbonFillUp.Points.Add(breakPoint);
+                ribbonFillUp.Points2.Add(breakPoint);
+            }
+
+            // Overextension labels: price breaks the macro band and is the extreme of a 5 candle window.
+            if (high > outerUp && IsHighestHigh(candles, i, BreakLookback))
+            {
+                double pctDevUp = (high - basis) / basis * 100;
+                AddLabel(chart, x, high, pctDevUp, VerticalAlignment.Top, group);
+            }
+            if (low < outerDown && IsLowestLow(candles, i, BreakLookback))
+            {
+                double pctDevDown = (basis - low) / basis * 100;
+                AddLabel(chart, x, low, pctDevDown, VerticalAlignment.Bottom, group);
+            }
+        }
+
+        // Add background fills first, then lines, then the basis on top.
+        chart.Series.Add(macroFill);
+        chart.Series.Add(ribbonFillUp);
+        chart.Series.Add(ribbonFillDown);
+        chart.Series.Add(macroUp);
+        chart.Series.Add(macroDown);
+        chart.Series.Add(ribbonUpGreen);
+        chart.Series.Add(ribbonUpRed);
+        chart.Series.Add(ribbonDownGreen);
+        chart.Series.Add(ribbonDownRed);
+        chart.Series.Add(basisLine);
+    }
+
+    private static void AddLabel(PlotModel chart, double x, double y, double pct, VerticalAlignment vAlign, string group)
+    {
+        chart.Annotations.Add(new TextAnnotation
+        {
+            Text = pct.ToString("0.##") + "%",
+            TextPosition = new DataPoint(x, y),
+            TextHorizontalAlignment = HorizontalAlignment.Center,
+            TextVerticalAlignment = vAlign,
+            TextColor = OxyColors.Black,
+            Background = OxyColors.White,
+            FontSize = 9,
+            YAxisKey = "price",
+            Tag = group,
+        });
+    }
+
+    // True when candle[index] has the highest High within the trailing BreakLookback window (matches ta.highest).
+    private static bool IsHighestHigh(List<CryptoCandle> candles, int index, int lookback)
+    {
+        decimal value = candles[index].High;
+        for (int j = Math.Max(0, index - lookback + 1); j <= index; j++)
+        {
+            if (candles[j].High > value)
+                return false;
+        }
+        return true;
+    }
+
+    // True when candle[index] has the lowest Low within the trailing BreakLookback window (matches ta.lowest).
+    private static bool IsLowestLow(List<CryptoCandle> candles, int index, int lookback)
+    {
+        decimal value = candles[index].Low;
+        for (int j = Math.Max(0, index - lookback + 1); j <= index; j++)
+        {
+            if (candles[j].Low < value)
+                return false;
+        }
+        return true;
+    }
+}
