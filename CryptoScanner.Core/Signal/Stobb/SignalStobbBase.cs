@@ -62,8 +62,8 @@ public class SignalStobbBase : SignalSbmBase
 
     public override bool GiveUp(CryptoSignal signal)
     {
-        if (!base.GiveUp(signal))
-            return false;
+        if (base.GiveUp(signal))
+            return true;
 
         switch (SignalSide)
         {

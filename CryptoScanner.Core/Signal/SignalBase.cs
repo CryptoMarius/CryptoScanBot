@@ -284,11 +284,10 @@ public class SignalCreateBase
         // ********************************************************************
         // Stoch OS/OB strength gates — verify the move into OS/OB was substantial enough
         // to be a real exhaustion, not a 1-candle wick. Ordered cheapest to most expensive
-        // (persistence < AUC < z-score < MTF) so we bail early when the cheap gate fails.
+        // (persistence < AUC < z-score) so we bail early when the cheap gate fails.
         if (settings.StochMinExtremeBars > 0 ||
             settings.StochMinExtremeArea > 0m ||
-            settings.StochMinExtremeZScore > 0m ||
-            settings.StochMtfConfirm)
+            settings.StochMinExtremeZScore > 0m)
         {
             int lookback = settings.StochExtremeLookback > 0 ? settings.StochExtremeLookback : 20;
 
@@ -332,17 +331,6 @@ public class SignalCreateBase
                 if (!ok)
                 {
                     ExtraText = $"Stoch z-score {z.Value:N2} not extreme enough (need {(SignalSide == CryptoTradeSide.Long ? "≤ -" : "≥ ")}{need:N2})";
-                    return false;
-                }
-            }
-
-            // (5) MTF — confirm the higher TF also visited OS/OB recently. Last because it
-            // touches a different indicator-data cache (PrepareIndicators may calculate).
-            if (settings.StochMtfConfirm)
-            {
-                if (!this.HasHigherTfStochExtreme(settings.StochMtfLookback, SignalSide, out string mtfReason))
-                {
-                    ExtraText = $"Stoch MTF confirm failed: {mtfReason}";
                     return false;
                 }
             }
