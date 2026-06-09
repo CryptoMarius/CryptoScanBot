@@ -4,6 +4,7 @@ using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.WaveTrend;
 using CryptoScanner.Core.Signal.WtLbStoch;
 #endif
+using CryptoScanner.Core.Signal.BaBa;
 using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
@@ -373,6 +374,18 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalTrendShort),
         });
 #endif
+
+        //***************************************************
+        // BaBa Bands — fires when price hits a macro band:
+        // long on the lower band, short on the upper band.
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "baba",
+            Strategy = CryptoSignalStrategy.BaBa,
+            AnalyzeLongType = typeof(SignalBaBaLong),
+            AnalyzeShortType = typeof(SignalBaBaShort),
+        });
 
         //***************************************************
         // CHoCH — fires on a Change of Character of the ZigZag-derived structure.

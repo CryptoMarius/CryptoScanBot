@@ -1,0 +1,123 @@
+using CryptoScanner.Core.Model;
+
+using Skender.Stock.Indicators;
+
+namespace CryptoScanner.Core.Signal.Helpers;
+
+/// <summary>
+/// Shared parameters and calculations for the "BaBa Bands &amp; Ribbon" construction
+/// (a Keltner-style EMA basis with ATR based bands). The chart drawer and the "baba"
+/// signal algorithm both read these constants so they stay in sync — change them here
+/// and both the chart and the alert follow.
+/// </summary>
+public static class BaBaBandsHelper
+{
+    // Defaults taken from the original Pine inputs (macro multiplier tuned to 4.2).
+    public const int Len = 20;
+    public const double OuterMult = 4.2;
+    public const double InnerMult = 1.0;
+    public const int BreakLookback = 5;
+
+    // Number of candles to feed the EMA/ATR calculation. Matches the signal pipeline window.
+    private const int CalculationCandles = 260;
+
+    /// <summary>
+    /// Returns true when the candle at <paramref name="openTime"/> breaks below the macro lower
+    /// band (EMA - ATR * OuterMult) and is the lowest Low within the trailing BreakLookback window.
+    /// This mirrors exactly the lower-band label condition drawn on the chart.
+    /// <paramref name="pctDeviation"/> is the percentage the Low sits below the basis,
+    /// the same number printed as the chart label.
+    /// </summary>
+    public static bool IsLowerBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
+        out double pctDeviation, out double lowerBand)
+    {
+        pctDeviation = 0;
+        lowerBand = 0;
+
+        // Thread-safe ascending snapshot of the most recent candles.
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
+        if (candles.Count < Len + BreakLookback)
+            return false;
+
+        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < 0)
+            idx = candles.Count - 1;
+        if (idx < BreakLookback - 1)
+            return false;
+
+        // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
+        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(Len);
+        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(Len);
+        double? basis = emaList[idx].Ema;
+        double? atr = atrList[idx].Atr;
+        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
+            return false;
+
+        lowerBand = basis.Value - atr.Value * OuterMult;
+
+        double low = (double)candles[idx].Low;
+        if (low >= lowerBand)
+            return false;
+
+        // Only fire on the lowest Low within the trailing window (matches ta.lowest filter).
+        for (int j = idx - BreakLookback + 1; j < idx; j++)
+        {
+            if ((double)candles[j].Low < low)
+                return false;
+        }
+
+        pctDeviation = (basis.Value - low) / basis.Value * 100;
+        return true;
+    }
+
+    /// <summary>
+    /// Returns true when the candle at <paramref name="openTime"/> breaks above the macro upper
+    /// band (EMA + ATR * OuterMult) and is the highest High within the trailing BreakLookback window.
+    /// This mirrors exactly the upper-band label condition drawn on the chart.
+    /// <paramref name="pctDeviation"/> is the percentage the High sits above the basis,
+    /// the same number printed as the chart label.
+    /// </summary>
+    public static bool IsUpperBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
+        out double pctDeviation, out double upperBand)
+    {
+        pctDeviation = 0;
+        upperBand = 0;
+
+        // Thread-safe ascending snapshot of the most recent candles.
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
+        if (candles.Count < Len + BreakLookback)
+            return false;
+
+        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < 0)
+            idx = candles.Count - 1;
+        if (idx < BreakLookback - 1)
+            return false;
+
+        // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
+        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(Len);
+        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(Len);
+        double? basis = emaList[idx].Ema;
+        double? atr = atrList[idx].Atr;
+        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
+            return false;
+
+        upperBand = basis.Value + atr.Value * OuterMult;
+
+        double high = (double)candles[idx].High;
+        if (high <= upperBand)
+            return false;
+
+        // Only fire on the highest High within the trailing window (matches ta.highest filter).
+        for (int j = idx - BreakLookback + 1; j < idx; j++)
+        {
+            if ((double)candles[j].High > high)
+                return false;
+        }
+
+        pctDeviation = (high - basis.Value) / basis.Value * 100;
+        return true;
+    }
+}

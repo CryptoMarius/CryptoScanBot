@@ -49,6 +49,10 @@ public enum CryptoSignalStrategy
 #endif
     NweBb = 27,
 
+    // BaBa Bands macro-band hit — long on the lower band, short on the upper band
+    // (the same events the chart prints as percentage labels).
+    BaBa = 28,
+
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally
     // wait for an opposite zigzag pivot + breakthrough before allowing the trader to step in.
