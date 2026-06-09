@@ -125,6 +125,22 @@ public class TrendCalculator
             return;
         }
 
+        // Emulator only: bound the ZigZag window to the same span the live scanner retains
+        // (GetCandleFetchStart). The live scanner trims its CandleList to that window via
+        // CleanCandleDataAsync, so it never builds the trend over more than ~500 candles per interval
+        // (deliberately sized for the trend calculation). The emulator disables that cleanup, so its
+        // CandleList grows unbounded and the trend was being rebuilt over the entire multi-week
+        // history on every recompute — the single dominant run cost, AND over far more history than
+        // live ever sees. Clamping minDate up makes the emulator trend both fast and faithful to live.
+        // Gated on IsEmulatorMode so the live path is provably untouched (no edge case where live's
+        // list happens to hold more than this window).
+        if (GlobalData.IsEmulatorMode)
+        {
+            CandleTime windowStart = CandleTools.GetCandleFetchStart(symbol, interval, maxDate.ToDateTime());
+            if (minDate < windowStart)
+                minDate = windowStart;
+        }
+
         // Build the ZigZag indicator ONCE and feed it to both interpretations.
         ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
         await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
