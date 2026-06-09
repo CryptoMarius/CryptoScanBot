@@ -50,6 +50,7 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
+    public bool ShowBaBaBands { get; set; } = false; // BaBa Bands & Ribbon
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
