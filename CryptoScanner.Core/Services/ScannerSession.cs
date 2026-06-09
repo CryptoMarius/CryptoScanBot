@@ -166,7 +166,7 @@ public class ScannerSession : IScannerSession
         if (loadSymbols)
         {
             // Positions will be loaded later
-            LoadAssets(); // not sure if we need this (papertrading perhaps?)
+            GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)
             GlobalData.LoadSymbols(); // need to load these before the tickers are created
             GlobalData.SendMvvmMessage(new SymbolsHaveChangedMessage());
         }
@@ -202,22 +202,6 @@ public class ScannerSession : IScannerSession
         }
     }
 
-    private static void LoadAssets()
-    {
-        //GlobalData.AddTextToLogTab("Reading asset information");
-
-        if (GlobalData.ActiveExchange != null)
-        {
-            // Load all assets
-            GlobalData.ActiveExchange.Data.AssetList.Clear();
-
-            using var database = new CryptoDatabase();
-            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
-            {
-                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
-            }
-        }
-    }
 
 
     public void Start(int delay)

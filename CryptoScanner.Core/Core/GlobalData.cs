@@ -333,6 +333,23 @@ public static class GlobalData
     }
 
 
+    public static void LoadAssets()
+    {
+        //GlobalData.AddTextToLogTab("Reading asset information");
+
+        if (GlobalData.ActiveExchange != null)
+        {
+            // Load all assets
+            GlobalData.ActiveExchange.Data.AssetList.Clear();
+
+            using var database = new CryptoDatabase();
+            foreach (CryptoAsset asset in database.Connection.GetAll<CryptoAsset>())
+            {
+                GlobalData.ActiveExchange.Data.AssetList.TryAdd(asset.Name, asset);
+            }
+        }
+    }
+
     public static void AddExchange(Model.CryptoExchange exchange)
     {
         if (!ExchangeListName.ContainsKey(exchange.Name))
