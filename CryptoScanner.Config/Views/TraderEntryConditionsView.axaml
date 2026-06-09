@@ -84,7 +84,7 @@
 
 					<!-- (2) AUC / area -->
 					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Cumulative depth: Σ max(0, threshold - %K) over the lookback. Units = %K-percent × bars. Typical 20-80. 0 = off.">
+					      ToolTip.Tip="Absolute cumulative depth below the oversold line (overbought for short), summed over the lookback window. Measures how DEEP and how LONG the oversold move was — a 1-candle wick gives almost nothing; a sustained deep dip gives a lot. Unit = %K-points × bars (e.g. 5 points below OS for 4 bars = 20).&#x0a;&#x0a;0 = off.   Start with ~20.   Strict: 60-80+.">
 						<TextBlock Grid.Column="0" Text="Min OS area:"
 						           VerticalAlignment="Center"
 						           Margin="0,0,12,0" FontSize="12"/>
@@ -96,7 +96,7 @@
 
 					<!-- (3) Z-score -->
 					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto"
-					      ToolTip.Tip="Z-score magnitude of the most-extreme %K in the lookback. Long requires z(min) ≤ -threshold; short requires z(max) ≥ threshold. Typical 1.5-2.5. 0 = off.">
+					      ToolTip.Tip="Statistical outlier of the deepest %K in the lookback, NOT absolute depth: how many standard deviations the most-extreme %K sits from the window's own mean (long needs z(min) ≤ -threshold, short z(max) ≥ +threshold). Because it is relative to the window, a long oversold stretch can score LOW (mean is already low) — use Min OS area if you want absolute depth.&#x0a;&#x0a;0 = off.   Start with 1.0-1.5.   Strict: 2.0+ (often blocks most entries).">
 						<TextBlock Grid.Column="0" Text="Min |Z-score|:"
 						           VerticalAlignment="Center"
 						           Margin="0,0,12,0" FontSize="12"/>
@@ -104,22 +104,6 @@
 						         Text="{Binding StochMinExtremeZScore, Mode=TwoWay}"
 						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"/>
 						<TextBlock Grid.Column="3" Text="σ" VerticalAlignment="Center" FontSize="12"/>
-					</Grid>
-
-					<!-- (5) MTF confirm -->
-					<CheckBox IsChecked="{Binding StochMtfConfirm, Mode=TwoWay}"
-					          Content="Require higher-TF OS/OB"
-					          ToolTip.Tip="Multi-timeframe: higher TF (mapped via StochHelper.GetStochDirHigherInterval, ~12-20x signal interval) must also have been in OS/OB within the last N bars."
-					          FontSize="12"/>
-					<Grid ColumnDefinitions="Auto,*,100,Auto" RowDefinitions="Auto">
-						<TextBlock Grid.Column="0" Text="MTF lookback:"
-						           VerticalAlignment="Center"
-						           Margin="0,0,12,0" FontSize="12"/>
-						<TextBox Grid.Column="2"
-						         Text="{Binding StochMtfLookback, Mode=TwoWay}"
-						         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="0,0,8,0"
-						         IsEnabled="{Binding StochMtfConfirm}"/>
-						<TextBlock Grid.Column="3" Text="bars" VerticalAlignment="Center" FontSize="12"/>
 					</Grid>
 
 				</StackPanel>

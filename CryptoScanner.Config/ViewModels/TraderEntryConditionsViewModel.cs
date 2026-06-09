@@ -50,12 +50,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private decimal _stochMinExtremeZScore = 0m;
 
-    [ObservableProperty]
-    private bool _stochMtfConfirm = false;
-
-    [ObservableProperty]
-    private int _stochMtfLookback = 5;
-
     public void LoadConfig(SettingsTrading settings)
     {
         CheckIncreasingRsi = settings.CheckIncreasingRsi;
@@ -73,8 +67,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         StochMinExtremeBars = settings.StochMinExtremeBars;
         StochMinExtremeArea = settings.StochMinExtremeArea;
         StochMinExtremeZScore = settings.StochMinExtremeZScore;
-        StochMtfConfirm = settings.StochMtfConfirm;
-        StochMtfLookback = settings.StochMtfLookback;
     }
 
     public void SaveConfig(SettingsTrading settings)
@@ -94,7 +86,5 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.StochMinExtremeBars = StochMinExtremeBars;
         settings.StochMinExtremeArea = StochMinExtremeArea;
         settings.StochMinExtremeZScore = StochMinExtremeZScore;
-        settings.StochMtfConfirm = StochMtfConfirm;
-        settings.StochMtfLookback = StochMtfLookback;
     }
 }

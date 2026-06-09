@@ -135,10 +135,6 @@ public class SettingsTrading
     // lookback. Long requires z(min %K) <= -threshold; short requires z(max %K) >= threshold.
     // 0 = off. Typical 1.5 — 2.5.
     public decimal StochMinExtremeZScore { get; set; } = 0m;
-    // Multi-timeframe confirmation: require the higher TF (via StochHelper.GetStochDirHigherInterval)
-    // to have been in OS (long) / OB (short) within StochMtfLookback most-recent bars.
-    public bool StochMtfConfirm { get; set; } = false;
-    public int StochMtfLookback { get; set; } = 5;
 
 
     //***************************
