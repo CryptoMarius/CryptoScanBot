@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
         mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="620"
-        Width="520" Height="640"
+        Width="600" Height="800"
         x:Class="CryptoScanner.Emulator.Views.RunConfigWindow"
         x:DataType="vm:RunConfigViewModel"
         Title="Run parameters"

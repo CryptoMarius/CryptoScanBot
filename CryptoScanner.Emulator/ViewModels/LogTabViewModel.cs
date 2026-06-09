@@ -13,12 +13,12 @@ namespace CryptoScanner.Emulator.ViewModels;
 /// — the same event the live scanner's LogGridViewModel listens to — so any <c>AddTextToLogTab</c>
 /// call anywhere in Core surfaces here.
 ///
-/// Like the scanner's LogGridViewModel, every line is ALSO forwarded to
-/// <see cref="ScannerLog.Logger"/> at Info level, so it lands in the NLog files configured by
-/// <see cref="ScannerLog.InitializeLogging"/> — the default log, and (in DEBUG) the Trace log that
-/// also captures explicit <c>ScannerLog.Logger.Trace(...)</c> calls. That gives the emulator the
-/// exact same on-disk logging as the scanner: drop a Trace call anywhere and it shows up in the
-/// Trace file alongside the human progress lines.
+/// This ViewModel ONLY renders lines for the user. Routing those same lines to the NLog files is
+/// done by <see cref="CryptoScanner.Emulator.EmulatorLogBridge"/>, which subscribes to the same
+/// event independently of the UI. Keeping the on-disk forwarding out of here is what prevents every
+/// line from being written to the files twice (the bug that appeared when both this VM and the
+/// bridge forwarded to <see cref="ScannerLog.Logger"/>), and it means file logging keeps working
+/// even when this tab's subscription is disabled.
 ///
 /// Timestamp (in-app only): during a run (<see cref="GlobalData.CurrentEmulatorRunId"/> set) lines
 /// are stamped with the virtual EmulatorClock — i.e. the replay date the emulator is currently AT —
@@ -40,7 +40,7 @@ public partial class LogTabViewModel : ObservableObject
 
     public LogTabViewModel()
     {
-        //GlobalData.LogToLogTabEvent += OnLog;
+        GlobalData.LogToLogTabEvent += OnLog;
     }
 
 
@@ -49,16 +49,8 @@ public partial class LogTabViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(text))
             return;
 
-        // Mirror the scanner's LogGridViewModel: route every log line through NLog so it lands in
-        // the on-disk log + Trace files. Wrapped so a logging failure can never break a run.
-        try
-        {
-            ScannerLog.Logger.Info(text.Trim());
-        }
-        catch
-        {
-            // ignore — never let logging crash the run
-        }
+        // NLog file forwarding intentionally lives in EmulatorLogBridge, not here — see the class
+        // summary. This handler only feeds the in-app tab.
 
         //DateTime stamp = GlobalData.CurrentEmulatorRunId != null
         //    ? GlobalData.Clock.UtcNow   // virtual replay date — shows how far the run has progressed

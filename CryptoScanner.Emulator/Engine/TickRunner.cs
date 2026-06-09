@@ -58,6 +58,12 @@ public sealed class TickRunner
         var exchange = GlobalData.ActiveExchange!;
 
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
+
+        // Enable the per-candle pipeline profiler for this run (off in the live scanner). It breaks
+        // NewCandleArrivedAsync down into indicators / algorithms / trade handling / position check,
+        // so the LogPhaseTimings summary can show where the dominant "pipeline" time actually goes.
+        PipelineProfiler.Reset();
+        PipelineProfiler.Enabled = true;
         try
         {
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
@@ -86,6 +92,12 @@ public sealed class TickRunner
                 CryptoCandleList replayCandles = IndicatorWarmup.PrepareSymbol(symbol, replayFrom, replayTo);
                 replays.Add((symbol, replayCandles));
                 totalBars += replayCandles.Count;
+
+                // Reset trade data
+                symbol.LastPrice = null;
+                symbol.LastTradeDate = null;
+                symbol.LastTradeFetched = null;
+                symbol.LastTradeIdFetched = null;
             }
 
 
@@ -140,6 +152,7 @@ public sealed class TickRunner
         {
             GlobalData.AnalyzeSignalCreated = null;
             LogPhaseTimings();
+            PipelineProfiler.Enabled = false;
         }
     }
 
@@ -168,6 +181,74 @@ public sealed class TickRunner
             $"pipeline {pipeline:F1}s ({pipeline / total:P0}), " +
             $"zones {zoneDrain:F1}s ({zoneDrain / total:P0}), " +
             $"flush {flush:F1}s ({flush / total:P0})");
+
+        // Sub-breakdown of the "pipeline" phase from the PipelineProfiler (NewCandleArrivedAsync).
+        // Percentages are of the pipeline total so they line up with the line above. Only emitted
+        // when the profiler actually accumulated something this run.
+        double prepare = Seconds(PipelineProfiler.PrepareTicks);
+        double execute = Seconds(PipelineProfiler.ExecuteTicks);
+        double trade = Seconds(PipelineProfiler.TradeTicks);
+        double posCheck = Seconds(PipelineProfiler.PositionCheckTicks);
+        double pipelineMeasured = prepare + execute + trade + posCheck;
+        if (pipelineMeasured > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Pipeline — measured {pipelineMeasured:F1}s over {PipelineProfiler.CandleArrivals} candle(s) | " +
+                $"indicators(SignalPrepare) {prepare:F1}s ({prepare / pipelineMeasured:P0}), " +
+                $"algorithms(SignalExecute) {execute:F1}s ({execute / pipelineMeasured:P0}), " +
+                $"trade+rules+position {trade:F1}s ({trade / pipelineMeasured:P0}), " +
+                $"positionCheck {posCheck:F1}s ({posCheck / pipelineMeasured:P0})");
+        }
+
+        // Sub-breakdown of the indicator (SignalPrepare) bucket: where inside CalculateIndicators
+        // the time goes — candle-list building, Skender batch math, the per-candle fill loop, or Lux.
+        // This decides whether an incremental rewrite is worthwhile or just cheaper bookkeeping.
+        double collect = Seconds(PipelineProfiler.PrepCollectTicks);
+        double skender = Seconds(PipelineProfiler.PrepSkenderTicks);
+        double fill = Seconds(PipelineProfiler.PrepFillTicks);
+        double lux = Seconds(PipelineProfiler.PrepLuxTicks);
+        double prepMeasured = collect + skender + fill + lux;
+        if (prepMeasured > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Indicators — measured {prepMeasured:F1}s | " +
+                $"collectCandles {collect:F1}s ({collect / prepMeasured:P0}), " +
+                $"skender {skender:F1}s ({skender / prepMeasured:P0}), " +
+                $"fillLoop {fill:F1}s ({fill / prepMeasured:P0}), " +
+                $"lux {lux:F1}s ({lux / prepMeasured:P0})");
+        }
+
+        // Sub-breakdown of the algorithms (SignalExecute) bucket: normal-strategy evaluation vs.
+        // zone-touch (FVG/DLZ/SMC) vs. the rest (barometer + loop overhead, derived from the total).
+        // The eval/signal counters reveal whether the cost scales with evaluations or with signals.
+        double seStrategy = Seconds(PipelineProfiler.SeStrategyTicks);
+        double seZoneTouch = Seconds(PipelineProfiler.SeZoneTouchTicks);
+        double seOther = execute - seStrategy - seZoneTouch;
+        if (seOther < 0)
+            seOther = 0;
+        if (execute > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"SignalExecute — {execute:F1}s over {PipelineProfiler.SeEvaluations} eval(s), {PipelineProfiler.SeSignals} signal(s) | " +
+                $"strategy {seStrategy:F1}s ({seStrategy / execute:P0}), " +
+                $"zoneTouch {seZoneTouch:F1}s ({seZoneTouch / execute:P0}), " +
+                $"other(barometer+loop) {seOther:F1}s ({seOther / execute:P0})");
+        }
+
+        // Carve-outs — these OVERLAP the buckets above (not additive to the total). They isolate
+        // pieces that are otherwise hidden: trend (inside the strategy bucket) and the inline FVG/SMC
+        // scans (inside the indicators bucket).
+        double trend = Seconds(PipelineProfiler.TrendTicks);
+        double fvgInline = Seconds(PipelineProfiler.FvgInlineTicks);
+        double smcInline = Seconds(PipelineProfiler.SmcInlineTicks);
+        if (trend + fvgInline + smcInline > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Carve-outs (overlap above) — " +
+                $"trend {trend:F1}s over {PipelineProfiler.TrendCalls} call(s), " +
+                $"fvgInline {fvgInline:F1}s, " +
+                $"smcInline {smcInline:F1}s");
+        }
     }
 
 

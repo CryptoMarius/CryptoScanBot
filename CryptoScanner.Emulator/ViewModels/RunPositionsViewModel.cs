@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Signal;
 
 using Dapper;
 
@@ -26,11 +29,24 @@ public class PositionRow
     public decimal Percentage { get; set; }
     public string? EventText { get; set; }
 
+    // .NET numeric format of the quote currency (e.g. "N8"), set from the symbol's QuoteData when the
+    // rows are loaded. Profit is in quote currency, so it is shown with the quote's own decimals.
+    public string QuoteDisplayFormat { get; set; } = "N8";
+
     public string Duration => CloseTime.HasValue
         ? (CloseTime.Value - CreateTime).ToString(@"hh\:mm\:ss")
         : "—";
 
-    public string SideText => Side switch { 1 => "Long", 2 => "Short", _ => Side.ToString() };
+    // Side is stored as the CryptoTradeSide enum value (Long = 0, Short = 1) — show its name.
+    public string SideText => ((CryptoTradeSide)Side).ToString();
+
+    // Strategy is the CryptoSignalStrategy enum value — show the algorithm's name (GetAlgorithm
+    // falls back to the enum name for an unknown strategy).
+    public string StrategyText => RegisterAlgorithms.GetAlgorithm((CryptoSignalStrategy)Strategy);
+
+    // Percentage with 2 decimals; Profit in the quote currency's own decimals.
+    public string PercentageText => Percentage.ToString("N2");
+    public string ProfitText => Profit.ToString(QuoteDisplayFormat);
 }
 
 
@@ -75,8 +91,19 @@ public partial class RunPositionsViewModel : ObservableObject
                 "ORDER BY p.CreateTime",
                 new { runId });
 
+            // Attach the quote currency's display format per row so Profit shows the quote's own
+            // decimals. The symbols of the run's exchange are loaded in memory (with their QuoteData);
+            // fall back to the default format when the symbol isn't found.
+            var exchange = GlobalData.ActiveExchange;
             foreach (var row in rows)
+            {
+                if (exchange != null && row.Symbol != null
+                    && exchange.SymbolListName.TryGetValue(row.Symbol, out var symbol) && symbol.QuoteData != null)
+                {
+                    row.QuoteDisplayFormat = symbol.QuoteData.DisplayFormat;
+                }
                 Positions.Add(row);
+            }
 
             Status = Positions.Count == 0
                 ? "This run produced no positions."

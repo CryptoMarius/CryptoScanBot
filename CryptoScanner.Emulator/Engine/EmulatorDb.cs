@@ -172,4 +172,68 @@ public static class EmulatorDb
         // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
         ScannerLog.StopRunLog();
     }
+
+
+    /// <summary>
+    /// Permanently removes an emulator run and everything tagged with it: the run's signals, its
+    /// positions, and the position parts/steps that hang off those positions. Parts and steps carry
+    /// no EmulatorRunId of their own (they reference PositionId), so they are removed via a subselect
+    /// on the run's positions. Everything runs inside one transaction, so a failure leaves the run
+    /// fully intact rather than half-deleted.
+    ///
+    /// Zones are deliberately NOT touched: they have no EmulatorRunId, are shared across runs and get
+    /// rebuilt from candles, so deleting a run must not remove them.
+    /// </summary>
+    /// <summary>
+    /// Returns the full scanner settings snapshot (GlobalData.Settings serialized at run start) that
+    /// was stored with the run, or null when the run has none (e.g. a legacy run). Loaded on demand
+    /// so the runs grid does not have to carry the large JSON for every row.
+    /// </summary>
+    public static string? GetSettingsJson(int runId)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        return database.Connection.ExecuteScalar<string?>(
+            "select SettingsJson from EmulatorRun where Id = @id", new { id = runId });
+    }
+
+
+    public static void DeleteRun(int runId) => DeleteRuns([runId]);
+
+
+    /// <summary>
+    /// Deletes multiple emulator runs (and everything tagged with them — signals, positions and their
+    /// parts/steps) in a SINGLE transaction, so a multi-select delete is all-or-nothing. See
+    /// <see cref="DeleteRun"/> for the per-run rationale; zones are deliberately left untouched.
+    /// </summary>
+    public static void DeleteRuns(IEnumerable<int> runIds)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        using var transaction = database.BeginTransaction();
+        try
+        {
+            foreach (int runId in runIds)
+            {
+                database.Connection.Execute(
+                    "delete from PositionStep where PositionId in (select Id from Position where EmulatorRunId = @id)",
+                    new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from PositionPart where PositionId in (select Id from Position where EmulatorRunId = @id)",
+                    new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from Position where EmulatorRunId = @id", new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from Signal where EmulatorRunId = @id", new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
+            }
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
 }

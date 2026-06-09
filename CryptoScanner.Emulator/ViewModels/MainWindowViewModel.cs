@@ -584,7 +584,7 @@ public partial class MainWindowViewModel : ObservableObject
         SignalPrepare.Prepare();
         SignalExecute.Prepare();
 
-        //GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)    
+        GlobalData.LoadAssets(); // not sure if we need this (papertrading perhaps?)    
     }
 
 
