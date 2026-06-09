@@ -99,8 +99,12 @@ public class LuxIndicator
         int overbuy = 0;
         int oversell = 0;
         var N = max - min + 1;
-        decimal[] num = new decimal[N];
-        decimal[] den = new decimal[N];
+        // Uses double instead of decimal: the RMA is a smoothing average and the result is only an
+        // integer count (overbought/oversold, 0..100), so the extra precision of decimal is wasted
+        // while decimal arithmetic is ~10-20x slower. A borderline RSI may very occasionally land on
+        // the other side of the 70/30 threshold, so this can differ by ±1 in rare cases — accepted.
+        double[] num = new double[N];
+        double[] den = new double[N];
 
         CryptoCandle candlePrev = default;
         CryptoCandle candleLast = default;
@@ -114,19 +118,19 @@ public class LuxIndicator
                 int k = 0;
                 overbuy = 0;
                 oversell = 0;
-                decimal diff = candleLast!.Close - candlePrev.Close;
+                double diff = (double)(candleLast!.Close - candlePrev.Close);
 
                 for (int i = min; i <= max; i++)
                 {
-                    decimal alpha = 1.0m / i;
-                    decimal num_rma = alpha * diff + (1m - alpha) * num[k];
-                    decimal den_rma = alpha * Math.Abs(diff) + (1m - alpha) * den[k];
+                    double alpha = 1.0 / i;
+                    double num_rma = alpha * diff + (1.0 - alpha) * num[k];
+                    double den_rma = alpha * Math.Abs(diff) + (1.0 - alpha) * den[k];
 
-                    decimal rsi;
-                    if (den_rma == 0)
-                        rsi = 50m;
+                    double rsi;
+                    if (den_rma == 0.0)
+                        rsi = 50.0;
                     else
-                        rsi = 50m * num_rma / den_rma + 50m;
+                        rsi = 50.0 * num_rma / den_rma + 50.0;
 
                     if (rsi > 70)
                         overbuy++;
@@ -141,8 +145,8 @@ public class LuxIndicator
             loop += symbolInterval.Interval.Duration;
         }
 
-        luxOverSold = (int)(100m * oversell / N);
-        luxOverBought = (int)(100m * overbuy / N);
+        luxOverSold = (int)(100.0 * oversell / N);
+        luxOverBought = (int)(100.0 * overbuy / N);
     }
 
     /// <summary>
