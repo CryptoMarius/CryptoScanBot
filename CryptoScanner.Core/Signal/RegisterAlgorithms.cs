@@ -4,7 +4,7 @@ using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.WaveTrend;
 using CryptoScanner.Core.Signal.WtLbStoch;
 #endif
-using CryptoScanner.Core.Signal.BaBa;
+using CryptoScanner.Core.Signal.AtrRb;
 using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
@@ -376,15 +376,15 @@ public static class RegisterAlgorithms
 #endif
 
         //***************************************************
-        // BaBa Bands — fires when price hits a macro band:
+        // AtrRb Bands — fires when price hits a macro band:
         // long on the lower band, short on the upper band.
         //***************************************************
         Register(new AlgorithmDefinition()
         {
-            Name = "baba",
-            Strategy = CryptoSignalStrategy.BaBa,
-            AnalyzeLongType = typeof(SignalBaBaLong),
-            AnalyzeShortType = typeof(SignalBaBaShort),
+            Name = "atrrb",
+            Strategy = CryptoSignalStrategy.AtrRb,
+            AnalyzeLongType = typeof(SignalAtrRbLong),
+            AnalyzeShortType = typeof(SignalAtrRbShort),
         });
 
         //***************************************************

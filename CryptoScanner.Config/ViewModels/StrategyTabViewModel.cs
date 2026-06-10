@@ -26,6 +26,8 @@ public partial class StrategyTabViewModel : ObservableObject
     private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
     [ObservableProperty]
     private StrategyWaveTrendTabViewModel _strategyWaveTrendTabViewModel;
+    [ObservableProperty]
+    private StrategyAtrRbTabViewModel _strategyAtrRbTabViewModel;
 
 
     public StrategyTabViewModel()
@@ -40,6 +42,7 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategyNweTabViewModel = new();
         _strategyBbmaTabViewModel = new();
         _strategyWaveTrendTabViewModel = new();
+        _strategyAtrRbTabViewModel = new();
     }
 
     internal void LoadConfig(SettingsSignal settings)
@@ -54,6 +57,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyNweTabViewModel.LoadConfig("Nwe", settings.Nwe);
         StrategyBbmaTabViewModel.LoadConfig("BBMA", settings.Bbma);
         StrategyWaveTrendTabViewModel.LoadConfig("WaveTrend", settings.WaveTrend);
+        StrategyAtrRbTabViewModel.LoadConfig("AtrRb", settings.AtrRb);
     }
 
     internal void SaveConfig(SettingsSignal settings)
@@ -68,5 +72,6 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyNweTabViewModel.SaveConfig(settings.Nwe);
         StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
         StrategyWaveTrendTabViewModel.SaveConfig(settings.WaveTrend);
+        StrategyAtrRbTabViewModel.SaveConfig(settings.AtrRb);
     }
 }

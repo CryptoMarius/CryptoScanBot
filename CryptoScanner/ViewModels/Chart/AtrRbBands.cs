@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
@@ -10,7 +11,7 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.ViewModels.Chart;
 
 /// <summary>
-/// "BaBa Bands & Ribbon" indicator (clone of the TradingView Pine script).
+/// "AtrRb Bands & Ribbon" indicator (clone of the TradingView Pine script).
 /// It is a Keltner-style construction: an EMA basis with two ATR based band sets.
 ///   - Macro outer bands : basis +/- ATR * outerMult  (the wide green cloud)
 ///   - Inner ribbon       : basis +/- ATR * innerMult  (trend coloured: green up / red down)
@@ -18,17 +19,14 @@ namespace CryptoScanner.ViewModels.Chart;
 ///   - Overextension labels: percentage deviation when high/low breaks the macro bands,
 ///     filtered to the highest/lowest point within a 5 candle window to avoid label spam.
 /// </summary>
-public class BaBaBands
+public class AtrRbBands
 {
-    // Parameters come from the shared helper so the chart and the "baba" signal stay in sync.
-    private const int Len = BaBaBandsHelper.Len;
-    private const double OuterMult = BaBaBandsHelper.OuterMult;
-    private const double InnerMult = BaBaBandsHelper.InnerMult;
-    private const int BreakLookback = BaBaBandsHelper.BreakLookback;
+    // Parameters come from GlobalData.Settings.Signal.AtrRb (read per draw, below) so the chart and
+    // the "atrrb" signal stay in sync with the user's configured values.
 
     // Colours, translated from the Pine color.new(..., transparency) values.
     // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
-    private static readonly OxyColor MacroLineColor = OxyColor.FromArgb(102, 0, 128, 0);    // green, 60% transparent
+    private static readonly OxyColor MacroLineColor = OxyColors.Gray; // gray (outer macro band lines)
     private static readonly OxyColor MacroFillColor = OxyColor.FromArgb(15, 0, 128, 0);     // green, 94% transparent
     private static readonly OxyColor BasisColor = OxyColor.FromArgb(153, 0, 0, 255);        // blue, 40% transparent
     private static readonly OxyColor RibbonUpColor = OxyColor.FromArgb(178, 0, 255, 170);   // #00ffaa, 30% transparent
@@ -43,6 +41,13 @@ public class BaBaBands
             return;
 
         var candles = symbolInterval.CandleList.Values.ToList();
+
+        // Read the configured band parameters (same source as the atrrb signal → chart stays in sync).
+        var atrrb = GlobalData.Settings.Signal.AtrRb;
+        int Len = atrrb.Length;
+        double OuterMult = atrrb.OuterMult;
+        double InnerMult = atrrb.InnerMult;
+        int BreakLookback = atrrb.BreakLookback;
 
         // EMA basis and ATR are computed by Skender; index them by date so we can join on the candle.
         var emaByDate = new Dictionary<DateTime, double>();
@@ -62,28 +67,28 @@ public class BaBaBands
         // Macro outer cloud (fill behind everything) and its two bounding lines.
         var macroFill = new AreaSeries
         {
-            Title = "baba.macro.fill",
+            Title = "atrrb.macro.fill",
             Fill = MacroFillColor,
             Color = OxyColors.Transparent,
             StrokeThickness = 0,
             YAxisKey = "price",
             Tag = group,
         };
-        var macroUp = new LineSeries { Title = "baba.macro.up", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var macroDown = new LineSeries { Title = "baba.macro.down", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var macroUp = new LineSeries { Title = "atrrb.macro.up", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var macroDown = new LineSeries { Title = "atrrb.macro.down", Color = MacroLineColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
 
         // Inner ribbon shading (trend coloured body between inner_up and inner_down).
-        var ribbonFillUp = new AreaSeries { Title = "baba.ribbon.fill.up", Fill = RibbonUpFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
-        var ribbonFillDown = new AreaSeries { Title = "baba.ribbon.fill.down", Fill = RibbonDownFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+        var ribbonFillUp = new AreaSeries { Title = "atrrb.ribbon.fill.up", Fill = RibbonUpFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+        var ribbonFillDown = new AreaSeries { Title = "atrrb.ribbon.fill.down", Fill = RibbonDownFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
 
         // Inner ribbon lines, split per trend so each segment keeps its own colour.
-        var ribbonUpGreen = new LineSeries { Title = "baba.ribbon.up", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var ribbonUpRed = new LineSeries { Title = "baba.ribbon.up", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var ribbonDownGreen = new LineSeries { Title = "baba.ribbon.down", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var ribbonDownRed = new LineSeries { Title = "baba.ribbon.down", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonUpGreen = new LineSeries { Title = "atrrb.ribbon.up", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonUpRed = new LineSeries { Title = "atrrb.ribbon.up", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonDownGreen = new LineSeries { Title = "atrrb.ribbon.down", Color = RibbonUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var ribbonDownRed = new LineSeries { Title = "atrrb.ribbon.down", Color = RibbonDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
 
         // Basis (middle) line.
-        var basisLine = new LineSeries { Title = "baba.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        var basisLine = new LineSeries { Title = "atrrb.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
 
         // Break point used to interrupt a line/area series so trend segments do not connect.
         var breakPoint = new DataPoint(double.NaN, double.NaN);
@@ -142,15 +147,22 @@ public class BaBaBands
             }
 
             // Overextension labels: price breaks the macro band and is the extreme of a 5 candle window.
+            // Label value = "Pure ATR %" from the Pine script: ATR as a percentage of close (the
+            // current volatility). Same number for an up- or down-break; it does NOT depend on how
+            // far the wick extended.
+            double pureAtrPct = atr / close * 100;
+
             if (high > outerUp && IsHighestHigh(candles, i, BreakLookback))
             {
-                double pctDevUp = (high - basis) / basis * 100;
-                AddLabel(chart, x, high, pctDevUp, VerticalAlignment.Top, group);
+                // vAlign Bottom = the label's bottom sits on the High, so the text extends UPWARD,
+                // above the candle instead of over it.
+                AddLabel(chart, x, high, pureAtrPct, VerticalAlignment.Bottom, group);
             }
             if (low < outerDown && IsLowestLow(candles, i, BreakLookback))
             {
-                double pctDevDown = (basis - low) / basis * 100;
-                AddLabel(chart, x, low, pctDevDown, VerticalAlignment.Bottom, group);
+                // vAlign Top = the label's top sits on the Low, so the text extends DOWNWARD, below
+                // the candle instead of over it.
+                AddLabel(chart, x, low, pureAtrPct, VerticalAlignment.Top, group);
             }
         }
 
@@ -169,10 +181,17 @@ public class BaBaBands
 
     private static void AddLabel(PlotModel chart, double x, double y, double pct, VerticalAlignment vAlign, string group)
     {
+        // Extra gap so the label clears the wick. Screen coordinates: Y increases downward, so a
+        // label above the High (vAlign Bottom) is nudged UP (negative), one below the Low (vAlign Top)
+        // DOWN (positive). Bump the pixel value to push the labels further away from the price action.
+        const double gapPixels = 20;
+        double offsetY = vAlign == VerticalAlignment.Bottom ? -gapPixels : gapPixels;
+
         chart.Annotations.Add(new TextAnnotation
         {
             Text = pct.ToString("0.##") + "%",
             TextPosition = new DataPoint(x, y),
+            Offset = new ScreenVector(0, offsetY),
             TextHorizontalAlignment = HorizontalAlignment.Center,
             TextVerticalAlignment = vAlign,
             TextColor = OxyColors.Black,

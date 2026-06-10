@@ -977,7 +977,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
         // enabled, MACD and volume panels each have their own toggle.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi, Session.ShowMacd, Session.ShowVolume);
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux, Session.ShowMacd, Session.ShowVolume);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -1038,10 +1038,10 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
-        // Draw BaBa Bands & Ribbon
-        group = "baba";
-        if (Toggle(model, group, Session.ShowBaBaBands))
-            BaBaBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+        // Draw AtrRb Bands & Ribbon
+        group = "atrrb";
+        if (Toggle(model, group, Session.ShowAtrRbBands))
+            AtrRbBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Draw PSar
         group = "psar";
@@ -1081,6 +1081,11 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "rsi.tresholds";
         if (Toggle(model, group, Session.ShowRsi))
             Rsi.DrawLines(model, group);
+
+        // Draw the Lux (RSI Multi Length [LuxAlgo], 5m) line in the shared oscillator panel
+        group = "lux";
+        if (Toggle(model, group, Session.ShowLux))
+            Lux.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
         group = "macd";

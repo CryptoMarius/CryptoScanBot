@@ -789,11 +789,14 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.StobbFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsiFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
 #if DEBUG
+        StrategiesSettings.Add(CryptoSignalStrategy.WtLbStoch, (Settings.Signal.WtLbStoch, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.WaveTrend, (Settings.Signal.WaveTrend, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
 #endif
 #if DEBUG
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
 #endif
+        StrategiesSettings.Add(CryptoSignalStrategy.AtrRb, (Settings.Signal.AtrRb, DateTime.Today));
     }
 }

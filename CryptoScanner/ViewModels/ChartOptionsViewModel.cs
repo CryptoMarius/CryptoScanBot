@@ -17,6 +17,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showRsi = false;
 
     [ObservableProperty]
+    private bool _showLux = false;
+
+    [ObservableProperty]
     private bool _showMacd = false;
 
     [ObservableProperty]
@@ -41,7 +44,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showKeltnerChannel = false;
 
     [ObservableProperty]
-    private bool _showBaBaBands = false;
+    private bool _showAtrRbBands = false;
 
     [ObservableProperty]
     private bool _showPSar = false;
@@ -79,6 +82,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowBbma = session.ShowBbma;
         ShowStoch = session.ShowStoch;
         ShowRsi = session.ShowRsi;
+        ShowLux = session.ShowLux;
         ShowMacd = session.ShowMacd;
         ShowVolume = session.ShowVolume;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
@@ -88,7 +92,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
-        ShowBaBaBands = session.ShowBaBaBands;
+        ShowAtrRbBands = session.ShowAtrRbBands;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
         ShowSmcZones = session.ShowSmcZones;
@@ -108,6 +112,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowBbma = ShowBbma;
         session.ShowStoch = ShowStoch;
         session.ShowRsi = ShowRsi;
+        session.ShowLux = ShowLux;
         session.ShowMacd = ShowMacd;
         session.ShowVolume = ShowVolume;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
@@ -117,7 +122,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
-        session.ShowBaBaBands = ShowBaBaBands;
+        session.ShowAtrRbBands = ShowAtrRbBands;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
         session.ShowSmcZones = ShowSmcZones;

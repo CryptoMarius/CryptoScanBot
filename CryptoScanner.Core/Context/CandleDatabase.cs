@@ -484,7 +484,10 @@ public class CandleDatabase : IDisposable
                 }
 
                 // Honour the same minimal-volume gating as the file loader.
-                if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                // Skipped in the emulator (the user explicitly chose these symbols) so a low-volume
+                // symbol's candles are kept on load instead of being cleared.
+                if (!GlobalData.IsEmulatorMode
+                    && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                 {
                     if (symbol.ClearCandles())
                         ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
@@ -703,8 +706,13 @@ public class CandleDatabase : IDisposable
             {
                 try
                 {
-                    // Don't save candles for symbols below the minimal volume threshold
-                    if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                    // Don't save candles for symbols below the minimal volume threshold.
+                    // Skipped in the emulator: the user explicitly picks the symbols to replay, so
+                    // their fetched candles must be kept regardless of the live volume heuristic
+                    // (a freshly-added symbol has no 24h volume yet, so this would clear the just-
+                    // fetched candles and force a full re-fetch on every run).
+                    if (!GlobalData.IsEmulatorMode
+                        && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                     {
                         symbol.ClearCandles();
                     }
@@ -789,7 +797,10 @@ public class CandleDatabase : IDisposable
     {
         if (!symbol.QuoteData.FetchCandles || symbol.Status == 0)
             return true;
-        if (!symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+        // In the emulator the user explicitly picks the symbols, so a low-volume symbol still has a
+        // use (its candles must be kept); only apply the volume gate for the live scanner.
+        if (!GlobalData.IsEmulatorMode
+            && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
             return true;
         return false;
     }
