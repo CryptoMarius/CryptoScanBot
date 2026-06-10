@@ -64,6 +64,9 @@ public class SettingsSignal
     // wtlb.stoch — WT_LB cross + Stoch %K mid-cross combined momentum signal
     public SettingsSignalStrategyWtLbStoch WtLbStoch = new();
 
+    // atrrb — AtrRb Bands & Ribbon: macro band break (long on lower, short on upper)
+    public SettingsSignalStrategyAtrRb AtrRb = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

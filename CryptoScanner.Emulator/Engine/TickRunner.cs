@@ -33,6 +33,14 @@ public sealed class TickRunner
 {
     public IProgress<TickRunProgress>? Progress { get; init; }
 
+    /// <summary>
+    /// When true, the symbols of each replay minute are processed in parallel (their per-symbol state
+    /// is independent). The shared DB flush + zone drain still run serially after the parallel phase,
+    /// per minute, so the outcome is deterministic. Set to false for a single-threaded baseline (to
+    /// confirm parallel and serial produce the same signals/positions).
+    /// </summary>
+    public bool RunParallel { get; init; } = true;
+
     // ───── Per-phase profiling accumulators ─────────────────────────────────────────
     // Raw Stopwatch ticks spent in each hot-loop phase, summed across every processed tick.
     // GetTimestamp() is a static QueryPerformanceCounter read (no allocation), so accumulating
@@ -44,6 +52,13 @@ public sealed class TickRunner
     private long elapsedPipeline;
     private long elapsedZoneDrain;
     private long elapsedFlush;
+
+    // Wall-clock of the whole RunAsync, and the up-front warmup (PrepareSymbol per symbol). These let
+    // the Timing line reconcile against the real run time: the four per-tick buckets above only cover
+    // the instrumented phases, so wall − (buckets + warmup) is the "unaccounted" remainder (loop
+    // overhead, logging, the per-tick debug block, etc.).
+    private readonly Stopwatch runWall = new();
+    private long elapsedWarmup;
 
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
@@ -64,6 +79,7 @@ public sealed class TickRunner
         // so the LogPhaseTimings summary can show where the dominant "pipeline" time actually goes.
         PipelineProfiler.Reset();
         PipelineProfiler.Enabled = true;
+        runWall.Restart();
         try
         {
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
@@ -82,6 +98,7 @@ public sealed class TickRunner
             // higher intervals are extended by Process1mCandleAsync as the replay progresses.
             var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
             int totalBars = 0;
+            long warmupStart = Stopwatch.GetTimestamp();
             foreach (string symbolName in config.Symbols)
             {
                 ct.ThrowIfCancellationRequested();
@@ -99,6 +116,9 @@ public sealed class TickRunner
                 symbol.LastTradeFetched = null;
                 symbol.LastTradeIdFetched = null;
             }
+            elapsedWarmup = Stopwatch.GetTimestamp() - warmupStart;
+            GlobalData.AddTextToLogTab($"Warmup (load candles for {replays.Count} symbol(s)): " +
+                $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s");
 
 
 
@@ -112,6 +132,8 @@ public sealed class TickRunner
             EmulatorClock? emulatorClock = GlobalData.Clock as EmulatorClock;
             int processedBars = 0;
 
+            var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+
             for (CandleTime openTime = replayFrom; openTime <= replayTo; openTime += interval1m.Duration)
             {
                 if (ct.IsCancellationRequested)
@@ -122,25 +144,41 @@ public sealed class TickRunner
                 if (emulatorClock != null)
                     emulatorClock.UtcNow = closeTime.ToDateTime();
 
+                // Collect the symbols that have a candle this minute.
+                List<(CryptoSymbol Symbol, CryptoCandle Candle)> ticksThisMinute = [];
                 foreach (var (symbol, replay) in replays)
                 {
                     if (replay.TryGetValue(openTime, out CryptoCandle candle))
-                    {
-                        await ProcessTickAsync(symbol, candle);
+                        ticksThisMinute.Add((symbol, candle));
+                }
+                if (ticksThisMinute.Count == 0)
+                    continue;
 
-                        // Throttle progress reporting. Reporting every bar posts hundreds of thousands
-                        // of updates to the UI thread on a multi-week 1m replay, which floods the
-                        // dispatcher and dominates the run time. Once per 256 bars is smooth enough for
-                        // a progress bar; the final count is reported after the loop.
-                        if ((++processedBars & 0xFF) == 0)
-                        {
-                            Progress?.Report(new TickRunProgress(symbol.Name, processedBars, totalBars));
+                // ── Phase A: per-symbol compute (indicators + signal/trade pipeline) ──────────
+                // Per-symbol state is independent, so this is the part we parallelise. No shared DB
+                // flush or zone drain happens here — those are deferred to Phase B.
+                if (RunParallel && ticksThisMinute.Count > 1)
+                {
+                    await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
+                        async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle));
+                }
+                else
+                {
+                    foreach (var item in ticksThisMinute)
+                        await ProcessComputeAsync(item.Symbol, item.Candle);
+                }
 
-                            // Yield occasionally so a UI thread or test harness stays responsive —
-                            // engine work itself is synchronous and CPU-bound.
-                            await Task.Yield();
-                        }
-                    }
+                // ── Phase B: persist + zones (serial, deterministic order) ────────────────────
+                await PersistAndCalculateZonesAsync();
+
+                // Progress, throttled to ~once per 256 bars (reporting every bar floods the UI
+                // dispatcher on a multi-week replay). Done serially here, after the parallel phase.
+                int previousBars = processedBars;
+                processedBars += ticksThisMinute.Count;
+                if (processedBars / 256 != previousBars / 256)
+                {
+                    Progress?.Report(new TickRunProgress(ticksThisMinute[0].Symbol.Name, processedBars, totalBars));
+                    await Task.Yield();
                 }
             }
 
@@ -175,8 +213,18 @@ public sealed class TickRunner
         if (total <= 0)
             return;
 
+        // Wall-clock of the whole run and the up-front warmup, so the buckets reconcile with the real
+        // duration. "unaccounted" = wall − (measured buckets + warmup): loop overhead, logging, the
+        // per-tick debug block, the end-of-run candle save happens AFTER this so is NOT included here.
+        double wall = runWall.Elapsed.TotalSeconds;
+        double warmup = Seconds(elapsedWarmup);
+        double unaccounted = wall - total - warmup;
         GlobalData.AddTextToLogTab(
-            $"Timing — total {total:F1}s | " +
+            $"Wall-clock — run {wall:F1}s | warmup {warmup:F1}s, measured phases {total:F1}s, " +
+            $"unaccounted {unaccounted:F1}s ({(wall > 0 ? unaccounted / wall : 0):P0})");
+
+        GlobalData.AddTextToLogTab(
+            $"Timing — measured {total:F1}s | " +
             $"candles {process1m:F1}s ({process1m / total:P0}), " +
             $"pipeline {pipeline:F1}s ({pipeline / total:P0}), " +
             $"zones {zoneDrain:F1}s ({zoneDrain / total:P0}), " +
@@ -253,12 +301,14 @@ public sealed class TickRunner
 
 
     /// <summary>
-    /// Standard per-tick processing for one symbol: insert the new 1m candle, mirror the
-    /// state-mutations the live KLine ticker does (LastCandle, LastPrice), synthesise any
-    /// higher-TF candles whose period closed on this minute, then run the live scanner
-    /// analysis pipeline.
+    /// Phase A — per-symbol compute (parallel-safe): insert the new 1m candle, synthesise the higher
+    /// timeframes, then run the live scanner analysis pipeline (signals, paper-trade, position eval).
+    /// Touches only this symbol's own state plus thread-safe queues (ThreadSaveObjects /
+    /// ThreadZoneCalculate AddToQueue). The shared DB flush + zone drain are NOT done here — they run
+    /// once per minute in <see cref="PersistAndCalculateZonesAsync"/> after all symbols are computed.
+    /// elapsed* are accumulated with Interlocked because several symbols run this concurrently.
     /// </summary>
-    private async Task ProcessTickAsync(CryptoSymbol symbol, CryptoCandle candle)
+    private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle)
     {
         // keep please for debugging!!!
         var symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
@@ -281,41 +331,39 @@ public sealed class TickRunner
         await CandleTools.Process1mCandleAsync(symbol, candle.OpenTime.ToDateTime(),
             candle.Open, candle.High, candle.Low, candle.Close, candle.Volume);
         long t1 = Stopwatch.GetTimestamp();
-        elapsedProcess1m += t1 - t0;
+        Interlocked.Add(ref elapsedProcess1m, t1 - t0);
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
-        // Synchronous (await) so the next replay tick can never observe a half-processed
-        // state — multi-symbol parallelism is intentionally out of scope here.
         PositionMonitor positionMonitor = new(symbol, candle);
         await positionMonitor.NewCandleArrivedAsync();
-        long t2 = Stopwatch.GetTimestamp();
-        elapsedPipeline += t2 - t1;
+        Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
+    }
 
-        // Persist everything NewCandleArrivedAsync queued — created signals/positions plus the
-        // inline FVG (ScanForNew) and SMC (Detect) zone diffs. This must happen BEFORE the DLZ
-        // drain below, because ZoneDlz.LoadZonesForSymbol (first thing in CalculateZones) resets
-        // all in-memory zones and reloads them from the DB; anything still sitting in the save
-        // queue would be reset away. Live this is fine on a 250 ms background flush, but the
-        // emulator's tick boundaries collapse that timing so we flush synchronously here.
+
+    /// <summary>
+    /// Phase B — runs ONCE per minute, serially, after all symbols of the minute are computed.
+    /// Persists everything the compute phase queued (created signals/positions plus the inline FVG
+    /// (ScanForNew) and SMC (Detect) zone diffs), then drains the DLZ zone-calculation queue, then
+    /// flushes again. Order matters: ZoneDlz.LoadZonesForSymbol (first thing in CalculateZones) resets
+    /// all in-memory zones and reloads them from the DB, so the queued diffs must be flushed BEFORE
+    /// the drain, and the drain's own diffs flushed after. Serial + deterministic order, so the
+    /// persisted result does not depend on the (parallel) compute order.
+    /// </summary>
+    private async Task PersistAndCalculateZonesAsync()
+    {
+        long t0 = Stopwatch.GetTimestamp();
         GlobalData.ThreadSaveObjects?.Flush();
-        long t3 = Stopwatch.GetTimestamp();
-        elapsedFlush += t3 - t2;
+        long t1 = Stopwatch.GetTimestamp();
+        elapsedFlush += t1 - t0;
 
-        // DLZ zones are queued (not computed) by SignalPrepare.Execute via
-        // ThreadZoneCalculate.AddToQueue — the live scanner has a background worker draining
-        // that queue. The emulator has no such worker (it would race the virtual clock and the
-        // shared CandleList), so we drain synchronously here, on the replay thread, while the
-        // clock is still pinned to this bar.
         if (GlobalData.ThreadZoneCalculate != null)
             await GlobalData.ThreadZoneCalculate.DrainQueueAsync();
-        long t4 = Stopwatch.GetTimestamp();
-        elapsedZoneDrain += t4 - t3;
+        long t2 = Stopwatch.GetTimestamp();
+        elapsedZoneDrain += t2 - t1;
 
-        // Persist the DLZ zone diffs the drain just produced, so the next tick's
-        // LoadZonesForSymbol reload sees them instead of resetting them away.
         GlobalData.ThreadSaveObjects?.Flush();
-        elapsedFlush += Stopwatch.GetTimestamp() - t4;
+        elapsedFlush += Stopwatch.GetTimestamp() - t2;
     }
 
 }

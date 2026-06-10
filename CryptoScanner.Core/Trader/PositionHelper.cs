@@ -39,7 +39,7 @@ internal static class PositionHelper
     }
 
 
-    public static void ShowPositions(this SortedList<string, CryptoPosition> positionList, StringBuilder stringBuilder)
+    public static void ShowPositions(this IDictionary<string, CryptoPosition> positionList, StringBuilder stringBuilder)
     {
         int positionTotal = 0;
         if (GlobalData.ActiveExchange != null)

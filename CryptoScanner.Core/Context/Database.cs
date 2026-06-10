@@ -56,6 +56,13 @@ public class CryptoDatabase : IDisposable
     public void Open()
     {
         Connection.Open();
+        // Make concurrent writers WAIT for the lock instead of failing with SQLITE_BUSY. SQLite allows
+        // only one writer at a time; the emulator's parallel symbol processing can open several
+        // connections that each write (positions, zones). With WAL (set per run) + this timeout those
+        // writes simply serialize at the storage level instead of throwing. Per-connection setting, so
+        // it must be applied on every Open. Harmless for the live scanner (only matters under
+        // contention, which the single-threaded live path never hits).
+        Connection.Execute("PRAGMA busy_timeout=5000;");
     }
 
     public void Close()

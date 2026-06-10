@@ -54,9 +54,9 @@ public class ScannerLog
         {
             Name = $"run-{runId}",
             KeepFileOpen = true,
-            // Run ids auto-increment and are never reused, but after a DB reset they restart at 1;
-            // start the file fresh so a stale file from an earlier reset can never be appended to.
-            DeleteOldFileOnStartup = true,
+            // Per-run log files are kept, never deleted: run ids auto-increment and are unique, so each
+            // run gets its own file. (After a DB reset the ids restart at 1; NLog then appends to the
+            // existing "Run 1.log" rather than deleting it, so earlier content is preserved.)
             FileName = filename,
         };
 

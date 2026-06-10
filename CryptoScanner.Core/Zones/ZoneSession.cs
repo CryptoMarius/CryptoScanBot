@@ -50,11 +50,12 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
-    public bool ShowBaBaBands { get; set; } = false; // BaBa Bands & Ribbon
+    public bool ShowAtrRbBands { get; set; } = false; // AtrRb Bands & Ribbon
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;
+    public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m
     public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
 

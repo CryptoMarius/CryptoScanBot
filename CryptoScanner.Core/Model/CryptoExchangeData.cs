@@ -2,6 +2,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 
+using System.Collections.Concurrent;
+
 namespace CryptoScanner.Core.Model;
 
 public class CryptoExchangeData
@@ -16,6 +18,11 @@ public class CryptoExchangeData
     // Key = QuoteName
     public Dictionary<string, CryptoQuoteData> QuoteDataList { get; set; } = [];
 
+    // Guards the lazy creation of QuoteDataList entries in GetQuoteData. The emulator processes the
+    // symbols of one minute in parallel, and several share the same quote (e.g. USDT), so they would
+    // otherwise concurrently insert into this non-thread-safe Dictionary and corrupt it.
+    private readonly object quoteDataLock = new();
+
 
     // Assets
     // Assets + locking (unused as we are aiming for Altrady as platform)
@@ -28,7 +35,12 @@ public class CryptoExchangeData
     // Open positions
     // Open positions Key = symbolName
     // (for speed we have removed this from the symbol data)
-    public SortedList<string, CryptoPosition> PositionList { get; } = [];
+    // ConcurrentDictionary (was SortedList): the emulator processes symbols in parallel, so positions
+    // are added/looked up/removed from several threads at once. Keys are per symbol, so different
+    // threads never touch the same entry; the concurrent collection just keeps the structural
+    // operations (TryAdd/TryRemove/enumerate) safe. No code relied on the sorted order (only the
+    // Telegram ShowPositions display, which is cosmetic).
+    public ConcurrentDictionary<string, CryptoPosition> PositionList { get; } = new();
 
 
 
@@ -50,12 +62,19 @@ public class CryptoExchangeData
 
     private CryptoQuoteData GetQuoteData(string quoteName)
     {
-        if (!QuoteDataList.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
+        // Lock the whole read+lazy-add: a Dictionary is unsafe for a concurrent read while another
+        // thread is inserting, so reads must be inside the lock too. Few quotes + trivial body, so
+        // contention is negligible. Without this the emulator's parallel symbol processing corrupts
+        // QuoteDataList (InvalidOperationException in Dictionary.TryInsert).
+        lock (quoteDataLock)
         {
-            quoteData = new() { Name = quoteName };
-            QuoteDataList.TryAdd(quoteName, quoteData);
+            if (!QuoteDataList.TryGetValue(quoteName, out CryptoQuoteData? quoteData))
+            {
+                quoteData = new() { Name = quoteName };
+                QuoteDataList[quoteName] = quoteData;
+            }
+            return quoteData;
         }
-        return quoteData;
     }
 
 
