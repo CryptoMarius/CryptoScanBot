@@ -3,6 +3,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Zones;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Signal;
 
 public class SignalPrepare
@@ -223,7 +225,9 @@ public class SignalPrepare
             {
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
+                    long profFvgStart = Stopwatch.GetTimestamp();
                     ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
+                    PipelineProfiler.RecordFvgInline(Stopwatch.GetTimestamp() - profFvgStart);
                 }
             }
         }
@@ -245,7 +249,9 @@ public class SignalPrepare
                     {
                         try
                         {
+                            long profSmcStart = Stopwatch.GetTimestamp();
                             ZoneSmc.Detect(symbol, interval);
+                            PipelineProfiler.RecordSmcInline(Stopwatch.GetTimestamp() - profSmcStart);
                         }
                         finally
                         {

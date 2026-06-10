@@ -241,7 +241,7 @@ public static class PositionTools
         if (activeExchange.Data.PositionList.TryGetValue(position.Symbol.Name, out CryptoPosition? positionFound))
         {
             position.Symbol.ClearSignals();
-            activeExchange.Data.PositionList.Remove(positionFound.Symbol.Name);
+            activeExchange.Data.PositionList.TryRemove(positionFound.Symbol.Name, out _);
 
             if (addToClosed)
             {

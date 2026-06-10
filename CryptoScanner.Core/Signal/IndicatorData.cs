@@ -5,6 +5,8 @@ using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Signal;
 
 public class CryptoIndicatorData
@@ -82,7 +84,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     {
         if (!TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? _))
         {
+            long profCollectStart = Stopwatch.GetTimestamp();
             List<CryptoCandle>? History = CollectCandles(symbol, interval, candleOpenTime, out string response, calculateCandles);
+            PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
             if (History == null)
             {
                 //GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
@@ -206,6 +210,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         CryptoCandle candle = history[^1];
         CryptoIndicatorData? indicatorData = null;
 
+        // Profiling: start of the Skender batch-calculation block (see PipelineProfiler).
+        long profSkenderStart = Stopwatch.GetTimestamp();
+
         //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
         //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
 #if EXTRASTRATEGIES
@@ -308,6 +315,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 
         //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
+
+        // Profiling: end of the Skender batch block, start of the per-candle fill loop.
+        long profFillStart = Stopwatch.GetTimestamp();
 
         // Fill the last 60 candles with the indicator data
         int iteration = 0;
@@ -424,6 +434,9 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         }
 
 
+        // Profiling: end of the fill loop, start of the Lux calculation.
+        long profLuxStart = Stopwatch.GetTimestamp();
+
         // I use the lux indicator frequently and combine its results in a single value
         CryptoCandle? lastCandle = history[^1];
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
@@ -435,6 +448,13 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         if (luxOverSold > 0)
             luxValue -= luxOverSold;
         indicatorData!.LastCandleData.Lux5mValue = (short)luxValue;
+
+        // Profiling: attribute the three sub-buckets of this method to the profiler (thread-safe).
+        PipelineProfiler.RecordIndicatorPhases(
+            skender: profFillStart - profSkenderStart,
+            fill: profLuxStart - profFillStart,
+            lux: Stopwatch.GetTimestamp() - profLuxStart);
+
         return indicatorData;
     }
 }

@@ -9,6 +9,8 @@ using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Trader;
 
 public class PositionMonitor //: IDisposable
@@ -1900,11 +1902,19 @@ public class PositionMonitor //: IDisposable
                 }
             }
 
+            // Profiling timestamps. GetTimestamp is a cheap QueryPerformanceCounter read; the totals
+            // are only accumulated when PipelineProfiler.Enabled (the emulator turns it on), so the
+            // live scanner is unaffected. Splits this method into indicators / algorithms / trade
+            // handling / position-finished check so we can see where the dominant pipeline cost sits.
+            long profPrepareStart = Stopwatch.GetTimestamp();
+
             // Calculate all the indicators, queue the fvg and dlz zones etc
             IndicatorDataList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            long profExecuteStart = Stopwatch.GetTimestamp();
 
             // Calculate signals and touch of the dlz and fvg zones
             await SignalExecute.ExecuteAsync(Symbol, IndicatorDataList, LastCandle1mCloseTime);
+            long profTradeStart = Stopwatch.GetTimestamp();
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
 
@@ -1920,10 +1930,17 @@ public class PositionMonitor //: IDisposable
             // Open or extend a position
             //if (signalList.Count > 0) // alway's?
             await CreateOrExtendPositionAsync(IndicatorDataList);
+            long profPositionCheckStart = Stopwatch.GetTimestamp();
 
             // Check the positions
             if (GlobalData.ActiveExchange!.Data.PositionList.TryGetValue(Symbol.Name, out CryptoPosition? position))
                 await GlobalData.ThreadCheckPosition!.AddToQueue(position!);
+
+            PipelineProfiler.Record(
+                prepare: profExecuteStart - profPrepareStart,
+                execute: profTradeStart - profExecuteStart,
+                trade: profPositionCheckStart - profTradeStart,
+                positionCheck: Stopwatch.GetTimestamp() - profPositionCheckStart);
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Clean " + traceText);
 

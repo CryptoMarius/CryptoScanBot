@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 
+using System.Diagnostics;
 using System.Text;
 
 namespace CryptoScanner.Core.Trend;
@@ -13,6 +14,9 @@ public class MarketTrend
     {
         // MarketTrend is summarized in the Symbol.Data.TrendPrimary/Secondary and is calculated from the Interval.TrendPrimary/Secondary
         CryptoTrendData symbolTrend = trend.TrendType == TrendType.Primary ? symbol.Data.TrendPrimary : symbol.Data.TrendSecondary;
+
+        // Profiling: time the whole trend calculation (any exit path) — see PipelineProfiler.
+        long profTrendStart = Stopwatch.GetTimestamp();
         try
         {
             await symbol.Data.TrendLock.WaitAsync();
@@ -119,6 +123,10 @@ public class MarketTrend
             ScannerLog.Logger.Error(error, "");
             GlobalData.AddTextToLogTab("");
             GlobalData.AddTextToLogTab(error.ToString());
+        }
+        finally
+        {
+            PipelineProfiler.RecordTrend(Stopwatch.GetTimestamp() - profTrendStart);
         }
         return symbolTrend;
     }

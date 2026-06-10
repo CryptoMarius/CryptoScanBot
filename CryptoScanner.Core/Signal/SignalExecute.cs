@@ -4,6 +4,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Signal;
 
 public class SignalExecute
@@ -168,7 +170,12 @@ public class SignalExecute
                                 };
 
                                 string text = "";
-                                if (await createSignal.ExecuteAlgorithmAsync(strategyDefinition!))
+                                long profAlgoStart = Stopwatch.GetTimestamp();
+                                bool signalCreated = await createSignal.ExecuteAlgorithmAsync(strategyDefinition!);
+                                // checkBarometer==true → normal strategy; false → FVG/DLZ/SMC zone-touch.
+                                PipelineProfiler.RecordSignalExecuteCall(
+                                    Stopwatch.GetTimestamp() - profAlgoStart, entry.Key.checkBarometer, signalCreated);
+                                if (signalCreated)
                                 {
                                     text = "*";
                                     //signalList.AddRange(createSignal.SignalList);
