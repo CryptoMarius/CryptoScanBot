@@ -45,6 +45,11 @@ internal static class EmulatorServices
 
         services.AddSingleton<IJsonSerializerService, JsonSerializerService>();
 
+        // Needed by the shared ChartWindow (opened from the run-positions grid) to save/restore its
+        // window position and grid layout. Its ctor resolves IPlatformService + IJsonSerializerService,
+        // both registered above.
+        services.AddSingleton<ApplicationStateService>();
+
         return services.BuildServiceProvider();
     }
 }

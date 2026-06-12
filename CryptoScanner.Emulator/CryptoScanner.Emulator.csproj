@@ -35,5 +35,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
+		<ProjectReference Include="..\CryptoScanner.Chart\CryptoScanner.Chart.csproj" />
 	</ItemGroup>
 </Project>

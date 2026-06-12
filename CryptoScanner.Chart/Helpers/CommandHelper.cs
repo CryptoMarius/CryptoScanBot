@@ -6,6 +6,13 @@ namespace CryptoScanner.Helpers;
 
 public static class CommandHelper
 {
+    // Host-supplied browser launchers. The scanner wires these to its App.OpenInInternalBrowser /
+    // App.OpenInHiddenBrowser at startup; the emulator (which has no embedded browser) leaves them
+    // null, so the internal/hidden path is a no-op there while the external-browser path still works.
+    // Keeps this shared chart project free of a hard dependency on the scanner's App.
+    public static Action<string, bool>? OpenInternalBrowser;
+    public static Action<string>? OpenHiddenBrowser;
+
     public static void ActivateTradingApp(CryptoTradingApp tradingApp,
         CryptoSymbol symbol, CryptoInterval interval, CryptoExternalUrlType viaTradingBrowser, bool activateTab = true)
     {
@@ -32,7 +39,7 @@ public static class CommandHelper
                 //    TabControl.SelectedTab = TabPageBrowser;
                 // Usage anywhere:
                 //App.OpenInHiddenBrowser(Url);
-                App.OpenInInternalBrowser(Url, activateTab);
+                OpenInternalBrowser?.Invoke(Url, activateTab);
             }
             else
             {
@@ -41,7 +48,7 @@ public static class CommandHelper
                     // Send url-event via the MainWindowViewModel
                     //EventOpenInInternalBrowser?.Invoke(this, Url);
                     //App.OpenInInternalBrowser(commandBase, Url);
-                    App.OpenInHiddenBrowser(Url);
+                    OpenHiddenBrowser?.Invoke(Url);
                 }
                 else
                 {

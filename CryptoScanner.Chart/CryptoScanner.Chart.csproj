@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+		<Configurations>Debug;Release</Configurations>
+
+		<!-- Shared chart window, extracted from the scanner so the emulator can show it too. -->
+		<Product>CryptoScanBot.Chart</Product>
+		<Description>Shared chart window for the scanner and the emulator</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.3.17" />
+		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-avalonia11" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
+	</ItemGroup>
+</Project>
