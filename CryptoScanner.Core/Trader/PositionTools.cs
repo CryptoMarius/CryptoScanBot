@@ -100,9 +100,9 @@ public static class PositionTools
         position.PriceMax = signal.SignalPrice;
         position.PriceMinPerc = 0;
         position.PriceMaxPerc = 0;
-        // Forward any per-signal SL/TP override to the position (non-persisted; see CryptoPosition).
-        position.SlPrice = signal.SlPrice;
-        position.TpPrice = signal.TpPrice;
+        // Forward any per-signal SL/TP override to the position (persisted; see CryptoPosition).
+        position.SlPercentage = signal.SlPercentage;
+        position.TpPercentage = signal.TpPercentage;
     }
 
     public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,

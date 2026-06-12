@@ -85,12 +85,12 @@ public partial class CryptoPosition : CryptoData2
 
     public string? EventText { get; set; }
 
-    // Optional per-signal SL/TP price, populated from CryptoSignal at position creation time.
-    // When non-null, PositionMonitor.CalculateTpPrices uses these instead of the percentage-based
-    // defaults in Settings.Trading. Persisted, so the levels survive an app restart instead of
-    // falling back to the default TP strategy.
-    public decimal? SlPrice { get; set; }
-    public decimal? TpPrice { get; set; }
+    // Optional per-signal SL and TP distances, each a positive percentage from the entry, populated
+    // from CryptoSignal at position creation time. When non-null, PositionMonitor.CalculateTpPrices /
+    // the Altrady webhook use these instead of the percentage-based defaults in Settings.Trading.
+    // Persisted, so the levels survive an app restart instead of falling back to the default strategy.
+    public decimal? SlPercentage { get; set; }
+    public decimal? TpPercentage { get; set; }
 
     [Computed]
     public decimal MinEntry

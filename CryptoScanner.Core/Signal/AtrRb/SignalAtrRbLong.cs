@@ -16,16 +16,16 @@ namespace CryptoScanner.Core.Signal.AtrRb;
 public class SignalAtrRbLong : SignalCreateBase
 {
     private decimal? _entryPrice;
-    private decimal? _slPrice;
+    private decimal? _slPercentage;
 
     public override decimal? OverrideSignalPrice => _entryPrice;
-    public override decimal? OverrideSlPrice => _slPrice;
+    public override decimal? OverrideSlPercentage => _slPercentage;
 
     public override bool IsSignal()
     {
         ExtraText = "";
         _entryPrice = null;
-        _slPrice = null;
+        _slPercentage = null;
 
         var settings = GlobalData.Settings.Signal.AtrRb;
         if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
@@ -48,11 +48,11 @@ public class SignalAtrRbLong : SignalCreateBase
         decimal bodyLow = Math.Min(candle.Open, candle.Close);
         _entryPrice = bodyLow < band ? candle.Close : band;
 
-        // Stop-loss: the same percentage (from the label) below the entry.
-        // Only hand it to the trader when enabled; otherwise leave null so the trader
-        // falls back to its default percentage stop-loss.
-        if (GlobalData.Settings.Signal.AtrRb.UseStopLoss)
-            _slPrice = _entryPrice * (1m - (decimal)pctDeviation / 100m);
+        // Stop-loss: the percentage shown in the label (factor * ATR%), handed to the trader as the
+        // SL distance from the entry. Only when enabled; otherwise leave null so the trader falls back
+        // to its default percentage stop-loss.
+        if (settings.UseStopLoss)
+            _slPercentage = (decimal)pctDeviation;
 
         ExtraText = $"hit lower band {pctDeviation:N2}%";
         return true;

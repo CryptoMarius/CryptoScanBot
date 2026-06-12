@@ -803,12 +803,14 @@ public class PositionMonitor //: IDisposable
 
 
 
-        // Take-profit: use the per-signal override when set, otherwise fall back to the
-        // percentage-based default (or the TrailViaKcPsar wide initial value).
+        // Take-profit: use the per-signal override (distance % from the entry) when set, otherwise fall
+        // back to the percentage-based default (or the TrailViaKcPsar wide initial value). Anchored on
+        // the break-even, so the target stays the configured profit above/below the averaged entry even
+        // after a DCA. multiplier = +1 long / -1 short, so the TP sits above for a long, below for a short.
         decimal price;
-        if (position.TpPrice is decimal tpOverride)
+        if (position.TpPercentage is decimal tpPct)
         {
-            price = tpOverride;
+            price = breakEven + (multiplier * breakEven * (tpPct / 100));
         }
         else if (GlobalData.Settings.Trading.TakeProfitStrategy == CryptoTakeProfitStrategy.TrailViaKcPsar)
             price = breakEven + (multiplier * breakEven * (2.0m / 100)); // In eerste instantie flink hoog!
@@ -819,14 +821,24 @@ public class PositionMonitor //: IDisposable
         // Stop-loss override (paper-trade only path, same as the default below).
         // Limit is offset slightly beyond the stop so the stop triggers first (same direction
         // ratio as the default StopLossPercentage vs StopLossLimitPercentage).
-        if (position.SlPrice is decimal slOverride
+        //
+        // The signal provides its SL as a distance percentage from the entry; convert it to an absolute
+        // stop relative to the break-even (== entry while PartCount == 0). multiplier = +1 long / -1
+        // short, so a long stop sits below and a short stop above.
+        //
+        // Only valid for the initial entry: once a DCA has actually filled (PartCount > 0) the averaged
+        // break-even has shifted and the signal SL no longer matches the position. In that case we fall
+        // through to the default, DCA-aware percentage SL below (which anchors on the lowest/highest DCA).
+        if (position.SlPercentage is decimal slPct
+            && position.PartCount == 0
             && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade)
         {
-            decimal slStop = slOverride.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            decimal stopToLimitGap = Math.Abs(slStop * 0.001m); // 0.1% buffer for the limit beyond the stop
-            decimal slLimit = (slStop - multiplier * stopToLimitGap)
+            decimal stop = (breakEven * (1m - multiplier * slPct / 100m))
                 .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            return (price, slStop, slLimit);
+            decimal stopToLimitGap = Math.Abs(stop * 0.001m); // 0.1% buffer for the limit beyond the stop
+            decimal limit = (stop - multiplier * stopToLimitGap)
+                .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            return (price, stop, limit);
         }
 
 

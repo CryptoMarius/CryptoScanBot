@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 65;
+    public readonly static int CurrentDatabaseVersion = 66;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1322,14 +1322,20 @@ public class Migration
         // 12-06-2026 Persist the per-signal / per-position SL and TP levels (previously [Computed],
         // i.e. in-memory only). Columns added to both Signal and Position so the strategy-anchored
         // SL/TP survive an app restart instead of falling back to the default percentage TP.
+        // 12-06-2026 Store the per-signal / per-position stop-loss as a distance percentage instead of
+        // an absolute price (SlPrice, added in v65, is now a legacy/unused column). A percentage is
+        // reference-independent: it maps straight onto Altrady and works for market orders.
+        // 12-06-2026 Store the per-signal / per-position take-profit as a distance percentage too
+        // (TpPrice, added in v65, is now a legacy/unused column). Same rationale as SlPercentage.
         if (CurrentVersion > version.Version && version.Version == 64)
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table Signal add SlPrice Text null", transaction);
-            database.Connection.Execute("alter table Signal add TpPrice Text null", transaction);
-            database.Connection.Execute("alter table Position add SlPrice Text null", transaction);
-            database.Connection.Execute("alter table Position add TpPrice Text null", transaction);
+            database.Connection.Execute("alter table Signal add TpPercentage Text null", transaction);
+            database.Connection.Execute("alter table Signal add SlPercentage Text null", transaction);
+
+            database.Connection.Execute("alter table Position add TpPercentage Text null", transaction);
+            database.Connection.Execute("alter table Position add SlPercentage Text null", transaction);
 
             // update version
             version.Version += 1;

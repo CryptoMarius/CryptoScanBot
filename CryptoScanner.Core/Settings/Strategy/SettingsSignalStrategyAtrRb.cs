@@ -21,7 +21,7 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public int BreakLookback { get; set; } = 5;
 
     // When true the signal hands its own (percentage based) stop-loss to the trader via
-    // OverrideSlPrice. When false the signal returns null for the SL, so the trader falls back
+    // OverrideSlPercentage. When false the signal returns null for the SL, so the trader falls back
     // to the default percentage stop-loss from the trading settings.
     public bool UseStopLoss { get; set; } = true;
 

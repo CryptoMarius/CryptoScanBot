@@ -61,18 +61,19 @@ public class SignalCreateBase
     public virtual decimal? OverrideSignalPrice => null;
 
     /// <summary>
-    /// Optional per-signal stop-loss price. When non-null the trader uses this value
-    /// instead of the default percentage-based SL from Settings.Trading. Strategies that
-    /// anchor their SL on a structural level (swing high/low, BB band, etc.) populate this.
+    /// Optional per-signal stop-loss distance, as a positive percentage from the entry. When non-null
+    /// the trader uses this instead of the default percentage-based SL from Settings.Trading. Strategies
+    /// that size their SL off volatility (e.g. atrrb: factor * ATR%) populate this. A percentage is
+    /// reference-independent, so it works for market orders and maps straight onto Altrady.
     /// </summary>
-    public virtual decimal? OverrideSlPrice => null;
+    public virtual decimal? OverrideSlPercentage => null;
 
     /// <summary>
-    /// Optional per-signal take-profit price. When non-null the trader uses this value
-    /// instead of the default percentage-based TP. Typically derived from <see cref="OverrideSlPrice"/>
-    /// via a risk:reward multiple.
+    /// Optional per-signal take-profit distance, as a positive percentage from the entry. When non-null
+    /// the trader uses this instead of the default percentage-based TP from Settings.Trading. Typically
+    /// derived from <see cref="OverrideSlPercentage"/> via a risk:reward multiple.
     /// </summary>
-    public virtual decimal? OverrideTpPrice => null;
+    public virtual decimal? OverrideTpPercentage => null;
 
 
     public virtual bool AdditionalChecks(MyData candle, out string response)

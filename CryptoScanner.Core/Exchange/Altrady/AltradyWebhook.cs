@@ -154,7 +154,8 @@ public class AltradyWebhook
                 dynamic tp = new JObject();
                 tp_orders.Add(tp);
 
-                tp.price_percentage = GlobalData.Settings.Trading.ProfitPercentage;
+                // Prefer the strategy-computed TP distance (position.TpPercentage); else the default.
+                tp.price_percentage = position.TpPercentage ?? GlobalData.Settings.Trading.ProfitPercentage;
                 tp.position_percentage = 100;
             }
 
@@ -180,7 +181,15 @@ public class AltradyWebhook
             }
 
             // SL body
-            if (GlobalData.Settings.Trading.StopLossPercentage > 0)
+            // Prefer the strategy-computed SL distance (position.SlPercentage) when present: it is already
+            // the percentage Altrady expects (distance from the entry; Altrady applies the direction based
+            // on the side). No price inversion needed, so this also works for market orders. Otherwise fall
+            // back to the configured percentage (deepest DCA + StopLossPercentage).
+            if (position.SlPercentage is decimal slPercentage)
+            {
+                request.stop_loss_percentage = slPercentage;
+            }
+            else if (GlobalData.Settings.Trading.StopLossPercentage > 0)
             {
                 //dynamic stop_loss = new JObject();
                 //request.stop_loss = stop_loss;

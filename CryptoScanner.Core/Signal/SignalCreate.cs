@@ -246,8 +246,8 @@ public class SignalCreate
         // Strategies that anchor SL/TP on structural levels (swing high/low, BB band, RRR target)
         // report their proposed prices here. PositionTools.AddSignalProperties copies them onto
         // the resulting position, where PositionMonitor.CalculateTpPrices picks them up.
-        signal.SlPrice = algorithm.OverrideSlPrice;
-        signal.TpPrice = algorithm.OverrideTpPrice;
+        signal.SlPercentage = algorithm.OverrideSlPercentage;
+        signal.TpPercentage = algorithm.OverrideTpPercentage;
 
         List<string> eventText = [];
         if (algorithm.ExtraText != "")
