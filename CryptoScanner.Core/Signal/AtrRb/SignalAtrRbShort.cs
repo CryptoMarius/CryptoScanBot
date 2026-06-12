@@ -54,7 +54,7 @@ public class SignalAtrRbShort : SignalCreateBase
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
-        ExtraText = $"hit upper band{pctDeviation:N2}%";
+        ExtraText = $"hit upper band {pctDeviation:N2}%";
         return true;
     }
 }
