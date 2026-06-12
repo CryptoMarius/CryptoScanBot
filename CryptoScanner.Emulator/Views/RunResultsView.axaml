@@ -27,6 +27,8 @@
                   GridLinesVisibility="Horizontal">
             <DataGrid.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="Show signals…" Click="OnShowSignalsClick"/>
+                    <Separator/>
                     <MenuItem Header="Show settings JSON…" Click="OnShowJsonClick"/>
                     <Separator/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>

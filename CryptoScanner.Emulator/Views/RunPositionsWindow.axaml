@@ -16,6 +16,7 @@
                    Text="{Binding Header}"/>
 
         <DataGrid Grid.Row="1"
+                  Name="PositionsGrid"
                   ItemsSource="{Binding Positions}"
                   IsReadOnly="True"
                   CanUserReorderColumns="True"
@@ -23,6 +24,11 @@
                   CanUserSortColumns="True"
                   AutoGenerateColumns="False"
                   GridLinesVisibility="Horizontal">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open Symbol Chart" Click="OnOpenChartClick"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="60"/>
                 <DataGridTextColumn Header="Created"     Binding="{Binding CreateTime, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140"/>
@@ -35,6 +41,7 @@
                 <DataGridTextColumn Header="Status"      Binding="{Binding Status}" Width="80"/>
                 <DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="100"/>
                 <DataGridTextColumn Header="Percentage"  Binding="{Binding PercentageText}" Width="90"/>
+                <DataGridTextColumn Header="SL %"        Binding="{Binding SlPercentageText}" Width="70"/>
                 <DataGridTextColumn Header="EventText"   Binding="{Binding EventText}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>

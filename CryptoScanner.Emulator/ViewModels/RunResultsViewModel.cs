@@ -31,11 +31,9 @@ public class RunRow
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
 
-    // The EmulatorRun table has no Label column — the label lives inside ConfigJson (the
-    // serialized EmulatorRunConfig). Dapper fills ConfigJson from the query; Refresh parses
-    // the human Label out of it afterwards. Selecting a non-existent "Label" column was the
-    // bug that made the whole grid come up empty (the query threw "no such column: Label").
-    public string? ConfigJson { get; set; }
+    // Label is now its own EmulatorRun column (filled from the run config at run start), so the grid
+    // binds it directly. Previously it was parsed out of ConfigJson per row, which is what made the
+    // Results tab take ~10s to open. Legacy runs created before the column show a blank label.
     public string Label { get; set; } = "";
 
     public string? Result { get; set; }
@@ -144,27 +142,12 @@ public partial class RunResultsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<RunRow>(
-                "SELECT Id, StartedAt, FinishedAt, FromDate, ToDate, ConfigJson, Result, " +
+                "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
                 "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit, Invested " +
                 "FROM EmulatorRun ORDER BY StartedAt DESC");
 
             foreach (var row in rows)
             {
-                // Pull the human label out of the stored run config. Best-effort: a malformed or
-                // legacy ConfigJson just leaves the Label blank rather than dropping the row.
-                if (!string.IsNullOrWhiteSpace(row.ConfigJson))
-                {
-                    try
-                    {
-                        var cfg = JsonSerializer.Deserialize<EmulatorRunConfig>(row.ConfigJson);
-                        if (cfg != null)
-                            row.Label = cfg.Label;
-                    }
-                    catch
-                    {
-                        // leave Label empty
-                    }
-                }
                 Runs.Add(row);
             }
 

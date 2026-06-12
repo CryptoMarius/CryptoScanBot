@@ -27,6 +27,7 @@ public class PositionRow
     public int Status { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
+    public decimal? SlPercentage { get; set; }
     public string? EventText { get; set; }
 
     // .NET numeric format of the quote currency (e.g. "N8"), set from the symbol's QuoteData when the
@@ -47,6 +48,9 @@ public class PositionRow
     // Percentage with 2 decimals; Profit in the quote currency's own decimals.
     public string PercentageText => Percentage.ToString("N2");
     public string ProfitText => Profit.ToString(QuoteDisplayFormat);
+
+    // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
+    public string SlPercentageText => SlPercentage.HasValue ? SlPercentage.Value.ToString("N2") : "—";
 }
 
 
@@ -83,7 +87,7 @@ public partial class RunPositionsViewModel : ObservableObject
 
             var rows = database.Connection.Query<PositionRow>(
                 "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
-                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, p.EventText " +
+                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, p.SlPercentage, p.EventText " +
                 "FROM Position p " +
                 "LEFT JOIN Symbol s ON s.Id = p.SymbolId " +
                 "LEFT JOIN Interval i ON i.Id = p.IntervalId " +

@@ -4,11 +4,14 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.ViewModels;
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace CryptoScanner.Emulator.Views;
@@ -17,6 +20,25 @@ public partial class RunResultsView : UserControl
 {
     public RunResultsView()
     {
+        // TEMP diagnostic: time the Results tab from view-construction (tab select) to two milestones.
+        // The data (RunResultsViewModel.Refresh) already ran at startup, so any delay here is the
+        // Avalonia/DataGrid render. Loaded fires after attach but BEFORE the rows are fully laid out
+        // and rendered; to capture the END of rendering we post at DispatcherPriority.ContextIdle,
+        // which only runs once the UI thread has finished all layout + render work and gone idle.
+        // Remove once the slow-open cause is found.
+        var renderWatch = Stopwatch.StartNew();
+        Loaded += (_, _) =>
+        {
+            double loadedAt = renderWatch.Elapsed.TotalSeconds;
+            int rowCount = (DataContext as RunResultsViewModel)?.Runs.Count ?? 0;
+            Dispatcher.UIThread.Post(() =>
+            {
+                GlobalData.AddTextToLogTab(
+                    $"Results tab: Loaded at {loadedAt:N2}s, render settled at " +
+                    $"{renderWatch.Elapsed.TotalSeconds:N2}s ({rowCount} run row(s))");
+            }, DispatcherPriority.ContextIdle);
+        };
+
         InitializeComponent();
 
         // Wire the double-click drill-down. Done in code-behind because the handler needs the
@@ -34,15 +56,28 @@ public partial class RunResultsView : UserControl
     }
 
 
-    private async void OnRunDoubleTapped(object? sender, TappedEventArgs e)
+    private void OnRunDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (RunsGrid.SelectedItem is not RunRow row)
             return;
         if (TopLevel.GetTopLevel(this) is not Window owner)
             return;
 
-        var positions = new RunPositionsWindow(row);
-        await positions.ShowDialog(owner);
+        // Non-modal (Show, not ShowDialog): the chart opened from here renders correctly only when it
+        // is NOT spawned from within a modal dialog's nested loop. Non-modal also lets results +
+        // positions + chart stay open together.
+        new RunPositionsWindow(row).Show(owner);
+    }
+
+
+    private void OnShowSignalsClick(object? sender, RoutedEventArgs e)
+    {
+        if (RunsGrid.SelectedItem is not RunRow row)
+            return;
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        new RunSignalsWindow(row).Show(owner);
     }
 
 

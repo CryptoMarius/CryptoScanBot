@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="500"
+        Width="1300" Height="900"
+        x:Class="CryptoScanner.Emulator.Views.RunSignalsWindow"
+        x:DataType="vm:RunSignalsViewModel"
+        Title="Run signals"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+
+        <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="13" Text="{Binding Header}"/>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Signals}"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  AutoGenerateColumns="False"
+                  GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Signal time"  Binding="{Binding SignalLocal}" Width="130"/>
+                <DataGridTextColumn Header="Symbol"       Binding="{Binding Symbol}" Width="100"/>
+                <DataGridTextColumn Header="Interval"     Binding="{Binding Interval}" Width="70"/>
+                <DataGridTextColumn Header="Side"         Binding="{Binding SideText}" Width="60"/>
+                <DataGridTextColumn Header="Strategy"     Binding="{Binding StrategyText}" Width="100"/>
+                <DataGridTextColumn Header="Signal price" Binding="{Binding SignalPriceText}" Width="100"/>
+                <DataGridTextColumn Header="SL %"         Binding="{Binding SlPercentageText}" Width="70"/>
+                <DataGridTextColumn Header="Valid"        Binding="{Binding ValidText}" Width="60"/>
+                <DataGridTextColumn Header="Position"     Binding="{Binding PositionText}" Width="70"/>
+                <DataGridTextColumn Header="Pos. created" Binding="{Binding PositionCreatedLocal}" Width="130"/>
+                <DataGridTextColumn Header="Pos. status"  Binding="{Binding PositionStatusText}" Width="90"/>
+                <DataGridTextColumn Header="Profit"       Binding="{Binding ProfitText}" Width="100"/>
+                <DataGridTextColumn Header="%"            Binding="{Binding PercentageText}" Width="70"/>
+                <DataGridTextColumn Header="EventText"    Binding="{Binding EventText}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="Gray" FontSize="11"/>
+
+    </Grid>
+
+</Window>
