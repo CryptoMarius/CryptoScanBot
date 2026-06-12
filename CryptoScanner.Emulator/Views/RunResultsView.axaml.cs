@@ -66,6 +66,35 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private async void OnShowJsonClick(object? sender, RoutedEventArgs e)
+    {
+        // Single-row action: only meaningful for one run's JSON at a time.
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+
+        if (rows.Count != 1)
+        {
+            viewModel.Status = "Select a single run to view its JSON.";
+            return;
+        }
+
+        RunRow row = rows[0];
+        string? json = viewModel.GetSettingsJsonForDisplay(row.Id);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            viewModel.Status = $"Run #{row.Id} has no stored settings JSON.";
+            return;
+        }
+
+        string label = string.IsNullOrWhiteSpace(row.Label) ? "" : $" — {row.Label}";
+        var window = new RunJsonWindow($"Run #{row.Id} settings JSON{label}", json);
+        await window.ShowDialog(owner);
+    }
+
+
     private void OnExportSettingsClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
@@ -77,6 +106,19 @@ public partial class RunResultsView : UserControl
         // Non-destructive (just writes files), so no confirmation dialog — the ViewModel reports
         // the result via Status.
         viewModel.ExportSettings(rows);
+    }
+
+
+    private void OnRecalculateClick(object? sender, RoutedEventArgs e)
+    {
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        if (rows.Count == 0)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+
+        // Non-destructive recompute from existing positions — no confirmation needed.
+        viewModel.RecalculateRuns(rows);
     }
 
 

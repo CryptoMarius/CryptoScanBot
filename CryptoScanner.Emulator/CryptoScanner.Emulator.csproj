@@ -7,17 +7,21 @@
 		<Nullable>enable</Nullable>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-		<AssemblyVersion>2.5.4.0</AssemblyVersion>
-		<FileVersion>2.5.4.0</FileVersion>
-		<Version>2.5.4</Version>
+		<!-- Self-contained publish so the emulator carries its own runtime and can ship next to
+		     (or merged with) the scanner without a system-wide .NET 8 install. Mirrors the scanner. -->
+		<PublishSingleFile>false</PublishSingleFile>
+		<SelfContained>true</SelfContained>
 
+		<!-- Version / Company / Copyright / Authors are shared via Directory.Build.props -->
 		<Product>CryptoScanBot.Emulator</Product>
-		<Company>Marius</Company>
 		<Description>Backtest emulator for the CryptoScanBot scanner</Description>
-		<Authors>Marius</Authors>
 		<Configurations>Debug;Release</Configurations>
 
 		<AssemblyName>CryptoScanBot.Emulator</AssemblyName>
+
+		<!-- Same application/exe icon as the scanner. Referenced directly from the scanner's
+		     Assets folder so the two stay identical (no duplicated .ico file). -->
+		<ApplicationIcon>..\CryptoScanner\Assets\AppIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>

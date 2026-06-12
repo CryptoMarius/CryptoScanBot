@@ -833,7 +833,9 @@ public class PositionMonitor //: IDisposable
         // Stop-loss is only supported in paper/backtest mode.
         // Real trading would require OCO orders (or a separate stop-limit order), which are not yet implemented.
         // The condition StopLossPercentage < StopLossLimitPercentage ensures the stop triggers before the limit.
-        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade && GlobalData.Settings.Trading.StopLossPercentage > 0 && GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
+        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade && 
+            GlobalData.Settings.Trading.StopLossPercentage > 0 && 
+            GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
             GlobalData.Settings.Trading.StopLossPercentage < GlobalData.Settings.Trading.StopLossLimitPercentage)
         {
             // Calculate SL price relative to the last (lowest/highest) DCA entry
@@ -1665,7 +1667,8 @@ public class PositionMonitor //: IDisposable
                     //  xx = xx; does not change (afaict)????
 
                     // And place the (single/combined) take profit order to minimize dust)
-                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart, tp.price, tp.stop, tp.limit, LastCandle1mCloseTimeDate, text);
+                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart, 
+                        tp.price, tp.stop, tp.limit, LastCandle1mCloseTimeDate, text);
                 }
                 else
                     GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");

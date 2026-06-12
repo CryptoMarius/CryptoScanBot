@@ -64,6 +64,18 @@ public class AtrRbBands
                 atrByDate[atr.Date] = atr.Atr.Value;
         }
 
+        // Bollinger-band width per candle (BollingerBandsPercentage = 100 * (upper/lower - 1)),
+        // computed with the same BB settings as the signal pipeline. Used to gate the break labels
+        // exactly like the atrrb signal's CheckBollingerBandsWidth, so chart labels match the alert.
+        var bbPctByDate = new Dictionary<DateTime, double>();
+        foreach (var bb in candles.GetBollingerBands(
+            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
+            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation))
+        {
+            if (bb.UpperBand.HasValue && bb.LowerBand.HasValue && bb.LowerBand.Value != 0)
+                bbPctByDate[bb.Date] = 100 * (bb.UpperBand.Value / bb.LowerBand.Value - 1);
+        }
+
         // Macro outer cloud (fill behind everything) and its two bounding lines.
         var macroFill = new AreaSeries
         {
@@ -147,22 +159,27 @@ public class AtrRbBands
             }
 
             // Overextension labels: price breaks the macro band and is the extreme of a 5 candle window.
-            // Label value = "Pure ATR %" from the Pine script: ATR as a percentage of close (the
-            // current volatility). Same number for an up- or down-break; it does NOT depend on how
-            // far the wick extended.
-            double pureAtrPct = atr / close * 100;
+            // Label value = the stop-loss distance the atrrb signal applies: StopLossAtrFactor * ATR%,
+            // so the chart prints exactly the percentage used as the SL (chart and alert stay in sync).
+            // Same number for an up- or down-break; it does NOT depend on how far the wick extended.
+            double slPct = atrrb.StopLossAtrFactor * (atr / close * 100);
 
-            if (high > outerUp && IsHighestHigh(candles, i, BreakLookback))
+            // BB-width gate: only flag a break when the BB width is within range, exactly like the
+            // atrrb signal. A break on a candle whose BB width is out of range gets no label.
+            bool bbWidthOk = bbPctByDate.TryGetValue(candle.Date, out double bbPct)
+                && BbWidthOk(bbPct, atrrb.BBMinPercentage, atrrb.BBMaxPercentage);
+
+            if (bbWidthOk && high > outerUp && IsHighestHigh(candles, i, BreakLookback))
             {
                 // vAlign Bottom = the label's bottom sits on the High, so the text extends UPWARD,
                 // above the candle instead of over it.
-                AddLabel(chart, x, high, pureAtrPct, VerticalAlignment.Bottom, group);
+                AddLabel(chart, x, high, slPct, VerticalAlignment.Bottom, group);
             }
-            if (low < outerDown && IsLowestLow(candles, i, BreakLookback))
+            if (bbWidthOk && low < outerDown && IsLowestLow(candles, i, BreakLookback))
             {
                 // vAlign Top = the label's top sits on the Low, so the text extends DOWNWARD, below
                 // the candle instead of over it.
-                AddLabel(chart, x, low, pureAtrPct, VerticalAlignment.Top, group);
+                AddLabel(chart, x, low, slPct, VerticalAlignment.Top, group);
             }
         }
 
@@ -200,6 +217,17 @@ public class AtrRbBands
             YAxisKey = "price",
             Tag = group,
         });
+    }
+
+    // Mirrors BollingerBandsHelper.CheckBollingerBandsWidth: a bound of 0 disables that side, so the
+    // width must be > min (when min > 0) and < max (when max > 0).
+    private static bool BbWidthOk(double bbPct, double min, double max)
+    {
+        if (min > 0 && bbPct <= min)
+            return false;
+        if (max > 0 && bbPct >= max)
+            return false;
+        return true;
     }
 
     // True when candle[index] has the highest High within the trailing BreakLookback window (matches ta.highest).

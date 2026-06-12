@@ -27,7 +27,11 @@
                   GridLinesVisibility="Horizontal">
             <DataGrid.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="Show settings JSON…" Click="OnShowJsonClick"/>
+                    <Separator/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
+                    <Separator/>
+                    <MenuItem Header="Recalculate stats" Click="OnRecalculateClick"/>
                     <Separator/>
                     <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
                 </ContextMenu>
@@ -44,8 +48,10 @@
                 <DataGridTextColumn Header="Pos"         Binding="{Binding PositionCount}" Width="55"/>
                 <DataGridTextColumn Header="Won"         Binding="{Binding PositionsWon}" Width="55"/>
                 <DataGridTextColumn Header="Lost"        Binding="{Binding PositionsLost}" Width="55"/>
+                <DataGridTextColumn Header="Win %"       Binding="{Binding WinPercentage, StringFormat='{}{0:N2}%'}" Width="70"/>
                 <DataGridTextColumn Header="Open"        Binding="{Binding PositionsOpen}" Width="55"/>
                 <DataGridTextColumn Header="Profit"      Binding="{Binding Profit, StringFormat='{}{0:N2}'}" Width="90"/>
+                <DataGridTextColumn Header="Profit %"    Binding="{Binding ProfitPercentage, StringFormat='{}{0:N2}%'}" Width="80"/>
             </DataGrid.Columns>
         </DataGrid>
 

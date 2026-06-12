@@ -87,11 +87,9 @@ public partial class CryptoPosition : CryptoData2
 
     // Optional per-signal SL/TP price, populated from CryptoSignal at position creation time.
     // When non-null, PositionMonitor.CalculateTpPrices uses these instead of the percentage-based
-    // defaults in Settings.Trading. Not persisted — values are lost on app restart and the position
-    // falls back to the default TP strategy.
-    [Computed]
+    // defaults in Settings.Trading. Persisted, so the levels survive an app restart instead of
+    // falling back to the default TP strategy.
     public decimal? SlPrice { get; set; }
-    [Computed]
     public decimal? TpPrice { get; set; }
 
     [Computed]

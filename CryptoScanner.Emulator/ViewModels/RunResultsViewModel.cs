@@ -46,6 +46,26 @@ public class RunRow
     public int PositionsLost { get; set; }
     public decimal Profit { get; set; }
 
+    // Summed invested capital of the run's closed positions. Nullable in the DB for legacy runs
+    // written before this column existed; Dapper maps a NULL to 0 for a non-nullable decimal.
+    public decimal Invested { get; set; }
+
+    /// <summary>
+    /// Total return as a percentage of the invested capital (100 * Profit / Invested). Returns 0
+    /// when nothing was invested (e.g. a run with no closed positions, or a legacy run without the
+    /// Invested column). This is the number the grid's "Profit %" column binds to.
+    /// </summary>
+    public decimal ProfitPercentage => Invested > 0 ? 100m * Profit / Invested : 0m;
+
+    /// <summary>
+    /// Win rate over the closed positions: 100 * Won / (Won + Lost). Derived from the already-stored
+    /// PositionsWon / PositionsLost counters (no separate DB column needed). Returns 0 when the run
+    /// has no closed positions. This is the number the grid's "Win %" column binds to.
+    /// </summary>
+    public decimal WinPercentage => (PositionsWon + PositionsLost) > 0
+        ? 100m * PositionsWon / (PositionsWon + PositionsLost)
+        : 0m;
+
     // StartedAt/FinishedAt are stored as UTC (DateTime.UtcNow in EmulatorDb), but SQLite/Dapper
     // hands them back with Kind=Unspecified. SpecifyKind(..., Utc) tags them correctly so
     // ToLocalTime() actually shifts to the machine's timezone instead of treating the value as
@@ -125,7 +145,7 @@ public partial class RunResultsViewModel : ObservableObject
 
             var rows = database.Connection.Query<RunRow>(
                 "SELECT Id, StartedAt, FinishedAt, FromDate, ToDate, ConfigJson, Result, " +
-                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit " +
+                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit, Invested " +
                 "FROM EmulatorRun ORDER BY StartedAt DESC");
 
             foreach (var row in rows)
@@ -183,6 +203,54 @@ public partial class RunResultsViewModel : ObservableObject
         {
             Refresh();
             Status = $"Failed to delete run(s): {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
+    /// Recomputes and stores each selected run's aggregates (counts, won/lost/open, Profit, Invested)
+    /// from its current positions, then reloads the grid. Use to backfill runs that predate a stat
+    /// column (e.g. Invested → the Profit % column) or after positions changed. Non-destructive.
+    /// </summary>
+    public void RecalculateRuns(IReadOnlyList<RunRow> rows)
+    {
+        if (rows.Count == 0)
+            return;
+
+        try
+        {
+            int updated = EmulatorDb.RecalculateRuns(rows.Select(r => r.Id));
+            Refresh();
+            Status = $"Recalculated {updated} run(s).";
+        }
+        catch (Exception ex)
+        {
+            Refresh();
+            Status = $"Failed to recalculate run(s): {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
+    /// Returns the scanner-settings JSON that was stored with the run, pretty-printed for display in
+    /// the JSON viewer. Returns null when the run has no stored snapshot (e.g. a legacy run); the
+    /// caller shows a message then. Falls back to the raw text if it cannot be re-parsed/indented.
+    /// </summary>
+    public string? GetSettingsJsonForDisplay(int runId)
+    {
+        string? json = EmulatorDb.GetSettingsJson(runId);
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(json);
+            return JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            // Not valid JSON for some reason — show it as-is rather than nothing.
+            return json;
         }
     }
 

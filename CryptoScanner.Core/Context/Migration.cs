@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 63;
+    public readonly static int CurrentDatabaseVersion = 65;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1293,6 +1293,43 @@ public class Migration
             database.Connection.Execute("alter table EmulatorRun add PositionsWon Integer not null default 0", transaction);
             database.Connection.Execute("alter table EmulatorRun add PositionsLost Integer not null default 0", transaction);
             database.Connection.Execute("alter table EmulatorRun add Profit Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 11-06-2026 Emulator run invested column: total invested capital of the closed positions,
+        // so the Results grid can show the total return as a percentage of the investment.
+        // Same migration on the live DB; the column just rides along unused there.
+        if (CurrentVersion > version.Version && version.Version == 63)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table EmulatorRun add Invested Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 12-06-2026 Persist the per-signal / per-position SL and TP levels (previously [Computed],
+        // i.e. in-memory only). Columns added to both Signal and Position so the strategy-anchored
+        // SL/TP survive an app restart instead of falling back to the default percentage TP.
+        if (CurrentVersion > version.Version && version.Version == 64)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table Signal add SlPrice Text null", transaction);
+            database.Connection.Execute("alter table Signal add TpPrice Text null", transaction);
+            database.Connection.Execute("alter table Position add SlPrice Text null", transaction);
+            database.Connection.Execute("alter table Position add TpPrice Text null", transaction);
 
             // update version
             version.Version += 1;

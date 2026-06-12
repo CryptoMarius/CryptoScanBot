@@ -145,25 +145,7 @@ public static class EmulatorDb
         {
             run.FinishedAt = DateTime.UtcNow;
             run.Result = result;
-            run.SignalCount = database.Connection.ExecuteScalar<int>(
-                "select count(*) from signal where EmulatorRunId = @id", new { id = runId });
-            run.PositionCount = database.Connection.ExecuteScalar<int>(
-                "select count(*) from position where EmulatorRunId = @id", new { id = runId });
-
-            // Outcome split. Open = no CloseTime yet; closed positions are won/lost on their
-            // realised Profit. Profit is stored as TEXT (decimal), so CAST to REAL for the numeric
-            // comparison and the SUM. Profit total covers the CLOSED positions (realised result).
-            run.PositionsOpen = database.Connection.ExecuteScalar<int>(
-                "select count(*) from position where EmulatorRunId = @id and CloseTime is null", new { id = runId });
-            run.PositionsWon = database.Connection.ExecuteScalar<int>(
-                "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and CAST(Profit as REAL) > 0", new { id = runId });
-            run.PositionsLost = database.Connection.ExecuteScalar<int>(
-                "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and (Profit is null or CAST(Profit as REAL) <= 0)", new { id = runId });
-
-            double profit = database.Connection.ExecuteScalar<double?>(
-                "select sum(CAST(Profit as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id = runId }) ?? 0.0;
-            run.Profit = (decimal)profit;
-
+            ComputeRunStats(database, run);
             database.Connection.Update(run);
         }
 
@@ -171,6 +153,79 @@ public static class EmulatorDb
 
         // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
         ScannerLog.StopRunLog();
+    }
+
+
+    /// <summary>
+    /// Fills a run's stored aggregates from its current signals and positions: signal/position
+    /// counts, the open/won/lost split, and the realised Profit and Invested totals over the CLOSED
+    /// positions. Profit/Invested are stored as TEXT (decimal), so they are CAST to REAL for the
+    /// numeric comparison and SUM. Caller is responsible for persisting the run (Update).
+    /// </summary>
+    private static void ComputeRunStats(CryptoDatabase database, CryptoEmulatorRun run)
+    {
+        int id = run.Id;
+
+        run.SignalCount = database.Connection.ExecuteScalar<int>(
+            "select count(*) from signal where EmulatorRunId = @id", new { id });
+        run.PositionCount = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id", new { id });
+
+        // Outcome split. Open = no CloseTime yet; closed positions are won/lost on their realised Profit.
+        run.PositionsOpen = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is null", new { id });
+        run.PositionsWon = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and CAST(Profit as REAL) > 0", new { id });
+        run.PositionsLost = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and (Profit is null or CAST(Profit as REAL) <= 0)", new { id });
+
+        double profit = database.Connection.ExecuteScalar<double?>(
+            "select sum(CAST(Profit as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id }) ?? 0.0;
+        run.Profit = (decimal)profit;
+
+        // Total invested capital of the closed positions (same scope as Profit), so the Results grid
+        // can show the total return as a percentage: 100 * Profit / Invested.
+        double invested = database.Connection.ExecuteScalar<double?>(
+            "select sum(CAST(Invested as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id }) ?? 0.0;
+        run.Invested = (decimal)invested;
+    }
+
+
+    /// <summary>
+    /// Recomputes and stores the aggregates (counts, open/won/lost split, Profit and Invested) for the
+    /// given runs from their current signals and positions. Use to backfill runs created before a stat
+    /// column existed (e.g. Invested → the Profit % column) or after positions were edited. Does NOT
+    /// touch FinishedAt/Result/config. Returns the number of runs updated.
+    /// </summary>
+    public static int RecalculateRuns(IEnumerable<int> runIds)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+
+        int updated = 0;
+        foreach (int id in runIds)
+        {
+            var run = database.Connection.Get<CryptoEmulatorRun>(id);
+            if (run == null)
+                continue;
+            ComputeRunStats(database, run);
+            database.Connection.Update(run);
+            updated++;
+        }
+        return updated;
+    }
+
+
+    /// <summary>Recalculates every run in the EmulatorRun table. Convenience wrapper for the full backfill.</summary>
+    public static int RecalculateAllRuns()
+    {
+        List<int> ids;
+        using (var database = new CryptoDatabase())
+        {
+            database.Open();
+            ids = database.Connection.Query<int>("select Id from EmulatorRun").AsList();
+        }
+        return RecalculateRuns(ids);
     }
 
 

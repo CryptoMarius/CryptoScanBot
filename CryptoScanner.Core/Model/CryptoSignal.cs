@@ -43,11 +43,9 @@ public partial class CryptoSignal : CryptoData2
     public string? EventText { get; set; }
 
     // Optional per-signal SL/TP price set by strategies that compute their own levels
-    // (e.g. swing-anchored). Not persisted: when set, copied to the resulting position
-    // at creation time via PositionTools.AddSignalProperties.
-    [Computed]
+    // (e.g. swing-anchored). Persisted, and also copied to the resulting position at creation
+    // time via PositionTools.AddSignalProperties.
     public decimal? SlPrice { get; set; }
-    [Computed]
     public decimal? TpPrice { get; set; }
 
     [Computed]

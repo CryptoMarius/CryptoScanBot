@@ -18,6 +18,18 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _breakLookback = 5;
 
+    [ObservableProperty]
+    private bool _useStopLoss = true;
+
+    [ObservableProperty]
+    private double _stopLossAtrFactor = 2.0;
+
+    [ObservableProperty]
+    private double _bBMinPercentage = 1.50;
+
+    [ObservableProperty]
+    private double _bBMaxPercentage = 0.0;
+
 
     public void LoadConfig(string caption, SettingsSignalStrategyAtrRb settings)
     {
@@ -25,6 +37,10 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         OuterMult = settings.OuterMult;
         InnerMult = settings.InnerMult;
         BreakLookback = settings.BreakLookback;
+        UseStopLoss = settings.UseStopLoss;
+        StopLossAtrFactor = settings.StopLossAtrFactor;
+        BBMinPercentage = settings.BBMinPercentage;
+        BBMaxPercentage = settings.BBMaxPercentage;
     }
 
     public void SaveConfig(SettingsSignalStrategyAtrRb settings)
@@ -33,5 +49,9 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         settings.OuterMult = OuterMult;
         settings.InnerMult = InnerMult;
         settings.BreakLookback = BreakLookback;
+        settings.UseStopLoss = UseStopLoss;
+        settings.StopLossAtrFactor = StopLossAtrFactor;
+        settings.BBMinPercentage = BBMinPercentage;
+        settings.BBMaxPercentage = BBMaxPercentage;
     }
 }

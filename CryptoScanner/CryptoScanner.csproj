@@ -16,19 +16,11 @@
 		<!-- Belangrijk: schakel default content uit om duplicaten te voorkomen -->
 		<EnableDefaultContentItems>false</EnableDefaultContentItems>
 		
-		<!-- Assembly Version Info -->
-		<AssemblyVersion>2.5.5.0</AssemblyVersion>
-		<FileVersion>2.5.5.0</FileVersion>
-		<Version>2.5.5</Version>
+		<!-- Version / Company / Copyright / Authors are shared via Directory.Build.props -->
 
-		<!-- Product Info -->
+		<!-- Product Info (project specific) -->
 		<Product>CryptoScanBot</Product>
-		<Company>Marius</Company>
-		<Copyright>Copyright © 2026 Marius</Copyright>
 		<Description>Crypto scanner and trading bot</Description>
-
-		<!-- Optional -->
-		<Authors>Marius</Authors>
 		<PackageProjectUrl>https://github.com/CryptoMarius/CryptoScanBot</PackageProjectUrl>
 		<Configurations>Debug;Release</Configurations>
 	</PropertyGroup>
@@ -198,6 +190,44 @@
 	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
+
+
+	<!-- ============================================================================
+	     One-command merged publish: when the scanner is published self-contained for a
+	     specific runtime, also publish the emulator (self-contained, same RID/config) and
+	     drop its files into the same publish folder. Both CryptoScanBot.exe and
+	     CryptoScanBot.Emulator.exe then live side by side and share the runtime + libraries;
+	     each keeps its own .deps.json / .runtimeconfig.json, so there is no DLL clash.
+
+	     Runs only on 'dotnet publish' (AfterTargets="Publish") AND only when a RuntimeIdentifier
+	     is set (so a plain framework build is never affected). Disable with -p:BundleEmulator=false.
+	     ============================================================================ -->
+	<PropertyGroup>
+		<BundleEmulator Condition="'$(BundleEmulator)' == ''">true</BundleEmulator>
+	</PropertyGroup>
+
+	<Target Name="BundleEmulatorIntoPublish" AfterTargets="Publish"
+			Condition="'$(BundleEmulator)' == 'true' and '$(RuntimeIdentifier)' != ''">
+		<PropertyGroup>
+			<_EmulatorProject>$(MSBuildThisFileDirectory)..\CryptoScanner.Emulator\CryptoScanner.Emulator.csproj</_EmulatorProject>
+			<_EmulatorPublishDir>$(IntermediateOutputPath)emulator-bundle\</_EmulatorPublishDir>
+		</PropertyGroup>
+
+		<Message Importance="high" Text="BundleEmulator: publishing emulator ($(RuntimeIdentifier), $(Configuration)) into $(PublishDir)" />
+
+		<!-- Nested publish of the emulator to a temp folder (no recursion: the emulator does not reference the scanner). -->
+		<Exec Command="dotnet publish &quot;$(_EmulatorProject)&quot; -c $(Configuration) -r $(RuntimeIdentifier) --self-contained true -p:BundleEmulator=false -o &quot;$(_EmulatorPublishDir)&quot;" />
+
+		<!-- Copy the emulator output over the scanner publish folder. Shared files are identical
+		     versions (overwrite is harmless); only the CryptoScanBot.Emulator.* files are really new. -->
+		<ItemGroup>
+			<_EmulatorFiles Include="$(_EmulatorPublishDir)**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(_EmulatorFiles)"
+			  DestinationFiles="@(_EmulatorFiles->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+			  SkipUnchangedFiles="true"
+			  OverwriteReadOnlyFiles="true" />
+	</Target>
 
 
 </Project>

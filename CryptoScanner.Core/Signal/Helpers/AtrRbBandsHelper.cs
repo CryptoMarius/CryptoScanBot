@@ -7,7 +7,7 @@ namespace CryptoScanner.Core.Signal.Helpers;
 
 /// <summary>
 /// Shared parameters and calculations for the "AtrRb Bands &amp; Ribbon" construction
-/// (a Keltner-style EMA basis with ATR based bands). The chart drawer and the "atrrb"
+/// (a Keltner-style EMA basis with ATR based bands). The chart drawer and the "settings"
 /// signal algorithm both read these constants so they stay in sync — change them here
 /// and both the chart and the alert follow.
 /// </summary>
@@ -33,42 +33,44 @@ public static class AtrRbBandsHelper
         pctDeviation = 0;
         lowerBand = 0;
 
-        var atrrb = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.AtrRb;
 
         // Thread-safe ascending snapshot of the most recent candles.
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
-        if (candles.Count < atrrb.Length + atrrb.BreakLookback)
+        if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
         // Locate the requested (just-closed) candle; fall back to the most recent one.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
             idx = candles.Count - 1;
-        if (idx < atrrb.BreakLookback - 1)
+        if (idx < settings.BreakLookback - 1)
             return false;
 
         // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(atrrb.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(atrrb.Length);
+        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
+        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
         double? basis = emaList[idx].Ema;
         double? atr = atrList[idx].Atr;
         if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
             return false;
 
-        lowerBand = basis.Value - atr.Value * atrrb.OuterMult;
+        lowerBand = basis.Value - atr.Value * settings.OuterMult;
 
         double low = (double)candles[idx].Low;
         if (low >= lowerBand)
             return false;
 
         // Only fire on the lowest Low within the trailing window (matches ta.lowest filter).
-        for (int j = idx - atrrb.BreakLookback + 1; j < idx; j++)
+        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
         {
             if ((double)candles[j].Low < low)
                 return false;
         }
 
-        pctDeviation = (basis.Value - low) / basis.Value * 100;
+        //pctDeviation = (basis.Value - low) / basis.Value * 100;
+        //pctDeviation = atr.Value / (double)candles[idx].Close * 100;
+        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
         return true;
     }
 
@@ -85,42 +87,43 @@ public static class AtrRbBandsHelper
         pctDeviation = 0;
         upperBand = 0;
 
-        var atrrb = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.AtrRb;
 
         // Thread-safe ascending snapshot of the most recent candles.
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
-        if (candles.Count < atrrb.Length + atrrb.BreakLookback)
+        if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
         // Locate the requested (just-closed) candle; fall back to the most recent one.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
             idx = candles.Count - 1;
-        if (idx < atrrb.BreakLookback - 1)
+        if (idx < settings.BreakLookback - 1)
             return false;
 
         // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(atrrb.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(atrrb.Length);
+        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
+        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
         double? basis = emaList[idx].Ema;
         double? atr = atrList[idx].Atr;
         if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
             return false;
 
-        upperBand = basis.Value + atr.Value * atrrb.OuterMult;
+        upperBand = basis.Value + atr.Value * settings.OuterMult;
 
         double high = (double)candles[idx].High;
         if (high <= upperBand)
             return false;
 
         // Only fire on the highest High within the trailing window (matches ta.highest filter).
-        for (int j = idx - atrrb.BreakLookback + 1; j < idx; j++)
+        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
         {
             if ((double)candles[j].High > high)
                 return false;
         }
 
-        pctDeviation = (high - basis.Value) / basis.Value * 100;
+        //pctDeviation = (high - basis.Value) / basis.Value * 100;
+        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
         return true;
     }
 }

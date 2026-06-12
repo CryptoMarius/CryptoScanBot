@@ -416,6 +416,10 @@ public class CryptoDatabase : IDisposable
                 "PriceMaxPerc TEXT NULL," +
                 "SignalStatus TEXT NULL," +
 
+                // Optional per-signal SL/TP levels computed by the strategy (e.g. atrrb).
+                "SlPrice TEXT NULL," +
+                "TpPrice TEXT NULL," +
+
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)," +
@@ -551,6 +555,10 @@ public class CryptoDatabase : IDisposable
                 "PriceMinPerc TEXT NULL," +
                 "PriceMaxPerc TEXT NULL," +
                 "SignalStatus TEXT NULL," +
+
+                // Optional per-position SL/TP levels carried over from the signal (e.g. atrrb).
+                "SlPrice TEXT NULL," +
+                "TpPrice TEXT NULL," +
 
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
@@ -871,7 +879,8 @@ public class CryptoDatabase : IDisposable
                 "PositionsOpen INTEGER NOT NULL DEFAULT 0," +
                 "PositionsWon INTEGER NOT NULL DEFAULT 0," +
                 "PositionsLost INTEGER NOT NULL DEFAULT 0," +
-                "Profit TEXT NULL" +
+                "Profit TEXT NULL," +
+                "Invested TEXT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxEmulatorRunId ON EmulatorRun(Id)");
         }

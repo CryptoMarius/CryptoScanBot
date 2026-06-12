@@ -47,4 +47,8 @@ public class CryptoEmulatorRun
     public int PositionsWon { get; set; }
     public int PositionsLost { get; set; }
     public decimal Profit { get; set; }
+
+    // Summed invested amount of the closed positions (same scope as Profit). Lets the Results grid
+    // show the total return as a percentage of the invested capital (100 * Profit / Invested).
+    public decimal Invested { get; set; }
 }

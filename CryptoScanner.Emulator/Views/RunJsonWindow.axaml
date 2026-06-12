@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
+        Width="820" Height="720"
+        x:Class="CryptoScanner.Emulator.Views.RunJsonWindow"
+        Title="Run JSON"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="*,Auto" Margin="10" RowSpacing="8">
+
+        <!-- Read-only, scrollable, monospace view of the stored JSON. -->
+        <TextBox Grid.Row="0"
+                 Name="JsonBox"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="NoWrap"
+                 FontFamily="Cascadia Mono,Consolas,Courier New,monospace"
+                 FontSize="12"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Name="CopyButton" Content="Copy" MinWidth="80"/>
+            <Button Name="CloseButton" Content="Close" MinWidth="80" IsCancel="True"/>
+        </StackPanel>
+
+    </Grid>
+
+</Window>
