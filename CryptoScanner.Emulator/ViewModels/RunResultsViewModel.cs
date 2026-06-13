@@ -64,6 +64,17 @@ public class RunRow
         ? 100m * PositionsWon / (PositionsWon + PositionsLost)
         : 0m;
 
+    // Pre-formatted string projections for the numeric grid columns. The grid binds these plain
+    // strings instead of a StringFormat on the column binding: a DataGridTextColumn.Binding with a
+    // StringFormat over a decimal source sets up a converting binding that tries to parse the
+    // formatted text back to decimal on every cell realization, throwing a caught FormatException /
+    // TypeConverter ArgumentException per cell — which floods the debugger and stutters scrolling.
+    // A string→string binding has no conversion at all. Same approach already used for StartedLocal,
+    // Duration, Period and for the columns in PositionRow.
+    public string ProfitText => Profit.ToString("N2");
+    public string ProfitPercentageText => ProfitPercentage.ToString("N2") + "%";
+    public string WinPercentageText => WinPercentage.ToString("N2") + "%";
+
     // StartedAt/FinishedAt are stored as UTC (DateTime.UtcNow in EmulatorDb), but SQLite/Dapper
     // hands them back with Kind=Unspecified. SpecifyKind(..., Utc) tags them correctly so
     // ToLocalTime() actually shifts to the machine's timezone instead of treating the value as

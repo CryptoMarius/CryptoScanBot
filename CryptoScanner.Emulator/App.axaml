@@ -1,40 +1,190 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="CryptoScanner.Emulator.App"
+             xmlns:helper="using:CryptoScanner.Emulator.Helpers"
+             xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
              RequestedThemeVariant="Default">
 
     <Application.Resources>
+
         <ResourceDictionary>
-            <!-- Suppress the datagrid sort indicator (takes up too much space) -->
+            <!-- Suppress the datagrid sort indicator (takes up to much space) -->
             <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
 
+            <!-- Override Fluent theme scrollbar thumb scale transforms with identity (= no shrink).
+                 By default, scaleX/scaleY(0.125) shrinks the thumb when the pointer leaves.
+                 ScaleX/Y=1 is an identity transform so the thumb stays at full size at all times. -->
+            <ScaleTransform x:Key="VerticalSmallScrollThumbScaleTransform" ScaleX="0.75" ScaleY="1"/>
+            <ScaleTransform x:Key="HorizontalSmallScrollThumbScaleTransform" ScaleX="1" ScaleY="0.75"/>
+
             <ResourceDictionary.ThemeDictionaries>
-                <!-- Mirror the scanner's per-theme alternating-row colour so the grids look the
-                     same in both light and dark mode. -->
+                <!-- Light theme resources -->
                 <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="LowVolumeBrush">#E61A1A</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#202020</SolidColorBrush>
+                    
+                    <!-- Price change colors -->
+                    <!--
+                    <SolidColorBrush x:Key="PriceUpBrush">#00C853</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#D32F2F</SolidColorBrush>
+                    -->
+                    <SolidColorBrush x:Key="PriceUpBrush">#439982</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#c95b5c</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#202020</SolidColorBrush>
+
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
+
+                    <!--  Background color + grid oneven color 
+                    <Color x:Key="MyBackground1">#f0f0f0</Color>
+                    <Color x:Key="MyBackground2">#e8e8e8</Color>
+                    <Color x:Key="MyBackground3">#b8b8b8</Color>
+
+                    Override Avalonia fluent colors (perhaps a bit too much?)
+                    <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
+                    -->
                 </ResourceDictionary>
+
+                <!-- Dark theme resources -->
                 <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="LowVolumeBrush">#FF4444</SolidColorBrush>
+                    <SolidColorBrush x:Key="NormalVolumeBrush">#E0E0E0</SolidColorBrush>
+                    
+                    <!-- Price change colors (aangepast voor dark mode) -->
+                    <!--
+                    <SolidColorBrush x:Key="PriceUpBrush">#66BB6A</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#ef4436</SolidColorBrush>
+                    -->
+                    <SolidColorBrush x:Key="PriceNeutralBrush">#E0E0E0</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceUpBrush">#45c173</SolidColorBrush>
+                    <SolidColorBrush x:Key="PriceDownBrush">#cd4040</SolidColorBrush>
+
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
+
+                    <!-- Background color + grid oneven color
+                    <Color x:Key="MyBackground1">#202020</Color>
+                    <Color x:Key="MyBackground2">#282828</Color>
+                    <Color x:Key="MyBackground3">#585858</Color>
+
+                    Override Avalonia fluent colors (perhaps a bit too much?)
+                    <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundBaseHighBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundAltHighBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlForegroundBaseMediumBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush" Color="{StaticResource MyBackground1}"/>
+                    <SolidColorBrush x:Key="SystemControlForegroundChromeHighBrush" Color="{StaticResource MyBackground2}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush2" Color="{StaticResource MyBackground2}"/>
+                    <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush3" Color="{StaticResource MyBackground3}"/>
+                    -->
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
         </ResourceDictionary>
+
     </Application.Resources>
 
+
     <Application.Styles>
-        <FluentTheme />
+        <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
 
-        <!-- OxyPlot PlotView control template. Without this the shared ChartWindow's PlotView has no
-             template and renders nothing (blank chart) even though its PlotModel is fully populated.
-             The scanner's App.axaml includes the same; required now the emulator hosts the chart. -->
-        <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <!-- Light mode: kies een lichtere accentkleur -->
+                <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
 
-        <!-- Compact + non-cell-select grid styling mirrored from CryptoScanner/App.axaml so the
-             emulator grids look and behave like the live scanner. Keep these in sync if the
-             scanner gets new conventions. The HoverHelper-based rules from the scanner are
-             intentionally omitted (that attached property lives in the scanner project). -->
+                <!-- Dark mode: behoud standaard of pas aan -->
+                <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
+            </FluentTheme.Palettes>
+        </FluentTheme>
 
+        <!-- ============================================ -->
+        <!-- OxyPlot tracker popup: dark background, white text -->
+        <!-- ============================================ -->
+        <Style Selector="oxy|TrackerControl">
+            <Setter Property="Background" Value="#EE1E1E2E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#888888"/>
+        </Style>
+
+        <!-- ============================================ -->
+        <!-- Common theming -->
+        <!-- ============================================ -->
+        
+        <Style Selector="ScrollBar">
+            <Setter Property="AllowAutoHide" Value="False" />
+        </Style>
+
+        <!-- Title bar theme-aware styling -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+        </Style>
+
+
+        <!-- Globale style voor TextBlock -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="5,0,5,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
+        <!-- Optioneel: Voor andere controls zoals Button, Label, etc. -->
+        <Style Selector="Button">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="Label">
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="TextBox:not(:multiline)">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ============================================ -->
+        <!-- Dashboard theming -->
+        <!-- ============================================ -->
+        
+        <!-- Alle TextBlocks in dashboard krijgen margin en vertical alignment -->
+        <Style Selector="TextBlock.dashboard">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        
+        <!-- Labels (kolom 0) -->
+        <Style Selector="TextBlock.label">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="TextAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        
+        <!-- Values (kolom 1) -->
+        <Style Selector="TextBlock.value">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+        <!-- ============================================ -->
+        <!-- DataGrid theming -->
+        <!-- ============================================ -->
+        
+       	<Style Selector="DataGrid ScrollBar">
+		    <Setter Property="AllowAutoHide" Value="False"/>
+	    </Style>
+
+        <!-- Always show both scrollbars in DataGrid, never hide them -->
         <Style Selector="DataGrid ScrollViewer">
             <Setter Property="VerticalScrollBarVisibility" Value="Visible"/>
             <Setter Property="HorizontalScrollBarVisibility" Value="Visible"/>
@@ -43,68 +193,117 @@
         <Style Selector="DataGridColumnHeader">
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <!-- Right border makes the resize boundary visible between column headers.
+                 The resize gripper (8 px transparent area at the right edge) still works
+                 as before; the border just shows users where to hover and drag. -->
             <Setter Property="BorderBrush" Value="#50808080" />
             <Setter Property="BorderThickness" Value="0,0,1,0" />
         </Style>
 
-        <!-- Alternating row colors via :nth-child are intentionally REMOVED: that selector forces
-             Avalonia to re-evaluate the style across all rows on every (re)build of the grid, which
-             made the Results tab take ~10s to open every time it was selected (the view is rebuilt on
-             each tab switch). Plain rows render instantly. -->
-        <!-- Alternating row colors
+        <!-- Alternating row colors -->
         <Style Selector="DataGridRow:nth-child(even)">
             <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
         </Style>
-	 -->
-
-        <!-- Smaller cell + row height -->
+        
+        <!-- Kleinere row height -->
         <Style Selector="DataGridCell">
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="0" />
         </Style>
+
+        <!--
+        <Style Selector="DataGridCell:pointerover">
+            <Setter Property="Background" Value="{x:Null}"/>
+            <Setter Property="BorderBrush" Value="{x:Null}"/>
+        </Style>
+        -->
+        
         <Style Selector="DataGridRow">
             <Setter Property="MinHeight" Value="18" />
             <Setter Property="Margin" Value="0" />
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" />
         </Style>
+        
+        <!--
+        <Style Selector="DataGridRow:pointerover"> 
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
+        </Style>
+        -->
 
-        <!-- Hide the focus indicator (the dotted/blue cell rectangle on click) -->
+        <!-- Hide focus indicator -->
         <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
             <Setter Property="IsVisible" Value="False" />
         </Style>
+        
 
-        <!-- Hide the "current cell" border so selection is whole-row, not a single cell -->
+        <!-- Hide hover indicator 
+        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+		    <Setter Property="IsVisible" Value="False"/>
+	    </Style>
+        -->
+        
+        <!-- Hide selected cell border -->
         <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
             <Setter Property="IsVisible" Value="False" />
         </Style>
 
-        <!-- Transparent rows + no per-row hover highlight (scanner behaviour) -->
-        <Style Selector="DataGridRow">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
+	    <Style Selector="DataGridRow">
+		    <Setter Property="Background" Value="Transparent"/>
+	    </Style>
+        
         <Style Selector="DataGridRow:pointerover">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{x:Null}"/>
         </Style>
-        <Style Selector="DataGridRow:selected">
-            <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackground}"/>
+
+        <!--
+	    <Style Selector="DataGridRow:pointerover">
+            <Setter Property="helper:HoverHelper.IsHover" Value="False" /> 
+		    <Setter Property="Background" Value="{DynamicResource DataGridRowPointerOverBackground}"/>
+	    </Style>
+        -->
+        
+	    <Style Selector="DataGridRow:selected">
+		    <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackground}"/>
+	    </Style>
+
+
+        <!-- ============================================ -->
+        <!-- WINFORMS-STYLE GROUPBOX (HeaderedContentControl) -->
+        <!-- ============================================ -->
+        
+        <Style Selector="HeaderedContentControl.groupbox">
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="4,10,4,4"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid>
+                        <!-- Main border (with gap at top for header) -->
+                        <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="0,8,0,0">
+                            <ContentPresenter Content="{TemplateBinding Content}"/>
+                        </Border>
+                        
+                        <!-- Header text positioned over the border -->
+                        <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                Padding="5,0"
+                                Margin="10,0,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <TextBlock Text="{TemplateBinding Header}" FontSize="12"/>
+                            <!-- Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"-->
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
         </Style>
 
-        <!-- ListBox items (log tab). The Fluent default leaves a lot of vertical padding around
-             each entry; with this override one log line takes one monospace line height. -->
-        <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="4,1" />
-            <Setter Property="MinHeight" Value="16" />
-        </Style>
-
-        <!-- Default font sizes: the scanner uses 12 globally so menus + labels match the
-             compact grid rows. -->
-        <Style Selector="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-        <Style Selector="Button">
-            <Setter Property="FontSize" Value="12" />
-        </Style>
 
     </Application.Styles>
-
 </Application>

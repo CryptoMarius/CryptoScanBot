@@ -34,8 +34,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// exchange is already known by the time the MainWindow is created (bootstrap runs first).
     /// </summary>
     [ObservableProperty]
-    private string _title =
-        $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.ActiveExchange?.Name} — Emulator".Trim();
+    private string _title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.ActiveExchange?.Name} — Emulator".Trim();
 
     [ObservableProperty]
     private string _appVersion = GlobalData.AppVersion;

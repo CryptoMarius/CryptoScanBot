@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 67;
+    public readonly static int CurrentDatabaseVersion = 68;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1373,12 +1373,28 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
             database.Connection.Execute("alter table Zone add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+            database.Connection.Execute("CREATE INDEX IdxPositionEmulatorRunId ON Position(EmulatorRunId)", transaction);
 
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
             transaction.Commit();
         }
+
+
+        //***********************************************************
+        // 13-06-2026 Add signal id to releate position with signal
+        if (CurrentVersion > version.Version && version.Version == 67)
+        {
+            using var transaction = database.BeginTransaction();
+            database.Connection.Execute("alter table Position add SignalId Integer null REFERENCES Signal(Id)", transaction);
+            database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
 
         //***********************************************************
         //

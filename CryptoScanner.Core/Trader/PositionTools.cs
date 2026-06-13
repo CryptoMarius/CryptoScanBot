@@ -92,14 +92,16 @@ public static class PositionTools
 
     public static void AddSignalProperties(CryptoPosition position, CryptoSignal signal)
     {
+        position.SignalId = signal.Id;
         position.SignalEventTime = signal.CloseDate;
-        // Copy common indicator values
-        position.AssignValues(signal);
-        // Reset the statistics though
-        position.PriceMin = signal.SignalPrice;
-        position.PriceMax = signal.SignalPrice;
+        position.AssignValues(signal); // Copy common indicator values
+
+        // Reset the statistics
         position.PriceMinPerc = 0;
         position.PriceMaxPerc = 0;
+        position.PriceMin = signal.SignalPrice;
+        position.PriceMax = signal.SignalPrice;
+
         // Forward any per-signal SL/TP override to the position (persisted; see CryptoPosition).
         position.SlPercentage = signal.SlPercentage;
         position.TpPercentage = signal.TpPercentage;

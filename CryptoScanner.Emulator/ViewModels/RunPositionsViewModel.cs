@@ -34,6 +34,14 @@ public class PositionRow
     // rows are loaded. Profit is in quote currency, so it is shown with the quote's own decimals.
     public string QuoteDisplayFormat { get; set; } = "N8";
 
+    // Pre-formatted timestamp strings for the grid. Bound as plain strings instead of a StringFormat
+    // on the column binding: a DataGridTextColumn.Binding with a StringFormat over a DateTime source
+    // sets up a converting binding that tries to parse the formatted text back to DateTime on every
+    // cell realization, throwing a caught FormatException / TypeConverter ArgumentException per cell —
+    // which floods the debugger and stutters scrolling. Same approach as the other *Text columns here.
+    public string CreatedText => CreateTime.ToString("yyyy-MM-dd HH:mm");
+    public string ClosedText => CloseTime.HasValue ? CloseTime.Value.ToString("yyyy-MM-dd HH:mm") : "—";
+
     public string Duration => CloseTime.HasValue
         ? (CloseTime.Value - CreateTime).ToString(@"hh\:mm\:ss")
         : "—";
