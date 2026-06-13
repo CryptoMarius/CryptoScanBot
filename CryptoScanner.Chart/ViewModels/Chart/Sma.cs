@@ -9,7 +9,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Sma
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, int length,
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles, int length,
         OxyColor color, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesSma = new LineSeries
@@ -22,11 +22,10 @@ public class Sma
             Tag = group,
         };
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        List<SmaResult> smaList = (List<SmaResult>)symbolInterval.CandleList.Values.GetSma(length);
+        List<SmaResult> smaList = (List<SmaResult>)candles.GetSma(length);
 
 
         foreach (var bb in smaList)

@@ -25,12 +25,12 @@ public class Macd
         PlotModel chart,
         CryptoSymbol symbol,
         CryptoInterval interval,
+        List<CryptoCandle> candles,
         CandleTime minDate,
         CandleTime maxDate,
         string tag, string AxisKey = "macd")
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
         // Defensive: skip drawing when the macd sub-panel axis is not (yet) attached to
@@ -39,7 +39,7 @@ public class Macd
         if (!chart.Axes.Any(a => a.Key == AxisKey))
             return;
 
-        var macdList = symbolInterval.CandleList.Values.GetMacd();
+        var macdList = candles.GetMacd();
 
         // Histogram bar takes up 90 % of one candle interval so adjacent bars don't touch.
         double halfWidth = 0.45 * interval.Duration;

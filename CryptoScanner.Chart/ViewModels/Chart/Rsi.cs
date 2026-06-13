@@ -11,19 +11,13 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Rsi
 {
-    internal static void Draw(
-        PlotModel chart,
-        CryptoSymbol symbol,
-        CryptoInterval interval,
-        CandleTime minDate,
-        CandleTime maxDate,
-        string tag, string AxisKey = "stoch")
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string tag, string AxisKey = "stoch")
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        var rsiList = symbolInterval.CandleList.Values.GetRsi(14);
+        var rsiList = candles.GetRsi(14);
 
         // RSI(14) line — white, thinner than stoch lines so it remains readable when overlaid
         var series = new LineSeries

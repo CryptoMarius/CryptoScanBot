@@ -19,12 +19,12 @@ public class Volume
         PlotModel chart,
         CryptoSymbol symbol,
         CryptoInterval interval,
+        List<CryptoCandle> candles,
         CandleTime minDate,
         CandleTime maxDate,
         string tag, string AxisKey = "volume")
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
         // Defensive: skip drawing when the volume sub-panel axis is not (yet) attached to
@@ -60,7 +60,7 @@ public class Volume
             Tag = tag,
         };
 
-        foreach (var c in symbolInterval.CandleList.Values)
+        foreach (var c in candles)
         {
             if (c.OpenTime < minDate || c.OpenTime > maxDate)
                 continue;

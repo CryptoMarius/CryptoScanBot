@@ -775,14 +775,17 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
+                "EmulatorRunId INTEGER NULL," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
-                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)" +
+                "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)," +
+                "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxZoneId ON Zone(Id)");
             connection.Connection.Execute("CREATE INDEX IdxZoneExchangeId ON Zone(ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneSymbolId ON Zone(SymbolId)");
             connection.Connection.Execute("CREATE INDEX IdxZoneIntervalId ON Zone(IntervalId)");
+            connection.Connection.Execute("CREATE INDEX IdxZoneEmulatorRunId ON Zone(EmulatorRunId)");
         }
     }
 
@@ -872,6 +875,7 @@ public class CryptoDatabase : IDisposable
                 "Id INTEGER primary key autoincrement not null," +
                 "StartedAt TEXT NOT NULL," +
                 "FinishedAt TEXT NULL," +
+                "Label TEXT NULL," +
                 "FromDate TEXT NULL," +
                 "ToDate TEXT NULL," +
                 "ConfigJson TEXT NOT NULL," +

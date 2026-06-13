@@ -1,5 +1,11 @@
 CryptoScanBot release historie:
 
+12-06-2025 2.5.7
+- Diverse aanpassingen aan de atrrb waaronder sl
+
+10-06-2025 2.5.6
+- Nieuwe experimentele strategie atrrb (oftewel de baba strategie).
+
 05-06-2025 2.5.5
 - Nieuwe experimentele strategie voor wtlb en de stoch (for my eyes only)
 - Voorbereidingen voor een emulator die als een aparte executable kan draaien (naast de scanner)

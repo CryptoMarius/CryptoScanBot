@@ -40,10 +40,13 @@ public static class AtrRbBandsHelper
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
-        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        // Locate the requested (just-closed) candle. If it is not in the snapshot, DON'T fire — the old
+        // fallback to candles.Count-1 (the previous candle) made the band come from the wrong candle,
+        // while the signal class read high/low/close from CandleLast, so the entry landed on the
+        // previous candle's band.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
-            idx = candles.Count - 1;
+            return false;
         if (idx < settings.BreakLookback - 1)
             return false;
 
@@ -94,10 +97,13 @@ public static class AtrRbBandsHelper
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
-        // Locate the requested (just-closed) candle; fall back to the most recent one.
+        // Locate the requested (just-closed) candle. If it is not in the snapshot, DON'T fire — the old
+        // fallback to candles.Count-1 (the previous candle) made the band come from the wrong candle,
+        // while the signal class read high/low/close from CandleLast, so the entry landed on the
+        // previous candle's band.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
-            idx = candles.Count - 1;
+            return false;
         if (idx < settings.BreakLookback - 1)
             return false;
 

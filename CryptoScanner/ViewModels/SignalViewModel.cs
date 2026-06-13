@@ -866,7 +866,10 @@ public partial class SignalViewModel : BaseConvertersViewModel
 
                 if (signal.SignalStatus == CryptoSignalStatus.Run)
                 {
-                    decimal stopLossPerc = GlobalData.Settings.Trading.StopLossPercentage / 100;
+                    // Prefer the signal's own SL distance (e.g. atrrb's factor*ATR%) when it set one;
+                    // fall back to the global default. The signal's SlPercentage is the distance from
+                    // the entry (= SignalPrice), matching how the trader applies it.
+                    decimal stopLossPerc = (signal.SlPercentage ?? GlobalData.Settings.Trading.StopLossPercentage) / 100;
                     if (stopLossPerc != 0.0m)
                     {
                         if (signal.Side == CryptoTradeSide.Long)

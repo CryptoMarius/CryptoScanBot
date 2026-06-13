@@ -138,6 +138,11 @@ public partial class RunResultsViewModel : ObservableObject
 
         try
         {
+            // TEMP diagnostic: isolate the actual data-load cost of the Results tab from any UI-thread
+            // blocking. If this logs a few ms while the view's "render settled" shows seconds, the delay
+            // is NOT this grid — it is the UI thread being busy with something else (e.g. the chart).
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
             using var database = new CryptoDatabase();
             database.Open();
 
@@ -150,6 +155,9 @@ public partial class RunResultsViewModel : ObservableObject
             {
                 Runs.Add(row);
             }
+
+            sw.Stop();
+            GlobalData.AddTextToLogTab($"RunResults.Refresh: loaded {Runs.Count} run(s) in {sw.Elapsed.TotalMilliseconds:N0} ms");
 
             Status = Runs.Count == 0
                 ? "No runs yet — start one from the main window."

@@ -25,15 +25,15 @@ public class Stoch
         PlotModel chart,
         CryptoSymbol symbol,
         CryptoInterval interval,
+        List<CryptoCandle> candles,
         CandleTime minDate,
         CandleTime maxDate,
         string tag, string AxisKey = "stoch")
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        var stochList = symbolInterval.CandleList.Values.GetStoch(14, 3, 3);
+        var stochList = candles.GetStoch(14, 3, 3);
 
         // %K — fast stochastic (blue)
         var seriesK = new LineSeries

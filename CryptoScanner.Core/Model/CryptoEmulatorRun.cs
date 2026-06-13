@@ -17,6 +17,10 @@ public class CryptoEmulatorRun
     public DateTime StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }
 
+    // Free-form label copied from the run config at run start, so the Results grid can show it as a
+    // column without deserializing ConfigJson per row (that per-row parse was the grid's slow part).
+    public string Label { get; set; } = "";
+
     // The replay window of the run (copied from the run config). Stored on the run itself so the
     // Results grid can show the period — its LENGTH matters when comparing runs.
     public DateTime FromDate { get; set; }

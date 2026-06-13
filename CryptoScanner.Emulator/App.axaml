@@ -25,6 +25,11 @@
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
 
+        <!-- OxyPlot PlotView control template. Without this the shared ChartWindow's PlotView has no
+             template and renders nothing (blank chart) even though its PlotModel is fully populated.
+             The scanner's App.axaml includes the same; required now the emulator hosts the chart. -->
+        <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
+
         <!-- Compact + non-cell-select grid styling mirrored from CryptoScanner/App.axaml so the
              emulator grids look and behave like the live scanner. Keep these in sync if the
              scanner gets new conventions. The HoverHelper-based rules from the scanner are
@@ -42,10 +47,15 @@
             <Setter Property="BorderThickness" Value="0,0,1,0" />
         </Style>
 
-        <!-- Alternating row colors -->
+        <!-- Alternating row colors via :nth-child are intentionally REMOVED: that selector forces
+             Avalonia to re-evaluate the style across all rows on every (re)build of the grid, which
+             made the Results tab take ~10s to open every time it was selected (the view is rebuilt on
+             each tab switch). Plain rows render instantly. -->
+        <!-- Alternating row colors
         <Style Selector="DataGridRow:nth-child(even)">
             <Setter Property="Background" Value="{DynamicResource AlternatingBrushColor}" />
         </Style>
+	 -->
 
         <!-- Smaller cell + row height -->
         <Style Selector="DataGridCell">

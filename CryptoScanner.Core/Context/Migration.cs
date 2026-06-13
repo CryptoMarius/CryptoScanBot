@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 66;
+    public readonly static int CurrentDatabaseVersion = 67;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1343,6 +1343,42 @@ public class Migration
             transaction.Commit();
         }
 
+
+        //***********************************************************
+        // 13-06-2026 Emulator run Label column: copied from the run config at run start so the Results
+        // grid can show it directly, instead of deserializing ConfigJson per row (that per-row JSON
+        // parse was what made the Results tab take ~10s to open). Same column on the live DB, unused.
+        if (CurrentVersion > version.Version && version.Version == 65)
+        {
+            using var transaction = database.BeginTransaction();
+
+            database.Connection.Execute("alter table EmulatorRun add Label Text null", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 13-06-2026 Per-run zones
+        // - Zone.EmulatorRunId (NULL for live zones, FK to EmulatorRun)
+        // Until now zones were shared across runs and wiped per run start to avoid look-ahead
+        // contamination. Tagging each zone with its run lets ZoneDlz load only one run's zones, so
+        // runs stay isolated/reproducible AND a finished run's zones survive for the chart to show.
+        // The EmulatorRun table is created by Database.CreateTables() before Migration.Execute runs,
+        // so the FK target always exists; on the live DB the column just stays NULL.
+        if (CurrentVersion > version.Version && version.Version == 66)
+        {
+            using var transaction = database.BeginTransaction();
+            database.Connection.Execute("alter table Zone add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
 
         //***********************************************************
         //

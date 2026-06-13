@@ -9,7 +9,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class KeltnerChannel
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesHigh = new LineSeries
         {
@@ -39,11 +39,10 @@ public class KeltnerChannel
             Tag = group,
         };
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)symbolInterval.CandleList.Values.GetKeltner();
+        List<KeltnerResult> keltnerList = (List<KeltnerResult>)candles.GetKeltner();
 
 
         foreach (var kc in keltnerList)

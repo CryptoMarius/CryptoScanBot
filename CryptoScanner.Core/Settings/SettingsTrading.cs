@@ -115,6 +115,12 @@ public class SettingsTrading
     // so any strategy that does not override AllowStepIn inherits the behavior.
     public bool WaitForRsiRecovery { get; set; } = false;
 
+    // When true, AllowStepIn refuses a long entry while the Lux 5m indicator is still overbought
+    // (Lux5mValue > LuxMaximumValue), and a short entry while still oversold (< -LuxMaximumValue).
+    // A refinement of the RSI recovery gate. Cross-strategy via SignalBase.AllowStepIn.
+    public bool CheckLuxMaximum { get; set; } = false;
+    public int LuxMaximumValue { get; set; } = 100;
+
     // ********************************************************************
     // Stoch OS/OB strength gates — applied AFTER WaitForStochRecovery. Each gate is off
     // when its threshold is 0. Together they prevent stepping in after a 1-candle wick into

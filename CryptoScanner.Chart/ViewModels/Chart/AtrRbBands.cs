@@ -34,13 +34,11 @@ public class AtrRbBands
     private static readonly OxyColor RibbonUpFill = OxyColor.FromArgb(38, 0, 255, 170);     // ribbon shading, 85% transparent
     private static readonly OxyColor RibbonDownFill = OxyColor.FromArgb(38, 255, 59, 59);
 
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, 
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
-
-        var candles = symbolInterval.CandleList.Values.ToList();
 
         // Read the configured band parameters (same source as the atrrb signal → chart stays in sync).
         var atrrb = GlobalData.Settings.Signal.AtrRb;

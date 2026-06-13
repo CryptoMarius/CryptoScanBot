@@ -34,45 +34,28 @@ public static class EmulatorDb
     }
 
     /// <summary>
-    /// Removes all stored zones (DLZ/FVG/SMC) for the given symbols and clears their in-memory
-    /// zone state so a run starts from a blank slate.
+    /// Clears the in-memory zone state (DLZ/FVG/SMC lists + DLZ swing-point admin) for the given
+    /// symbols so a run starts from a blank in-memory slate.
     ///
-    /// Zones have no EmulatorRunId — unlike signals/positions they are NOT separated per run.
-    /// <see cref="Zones.ZoneDlz.LoadZonesForSymbol"/> reloads every stored zone from the DB at the
-    /// start of each zone calculation, INCLUDING its CloseTime/broken state. So a zone that a
-    /// PREVIOUS run closed at time T would be loaded as already-closed at the start of a new run,
-    /// even though on the new replay's timeline T hasn't happened yet — look-ahead contamination
-    /// that makes runs non-reproducible. Zones are fully rebuilt from the candles as the replay
-    /// progresses, so clearing them loses nothing.
+    /// Stored zones are NO LONGER deleted here: each zone now carries its EmulatorRunId (set on insert)
+    /// and <see cref="Zones.ZoneDlz.LoadZonesForSymbol"/> loads only the active run's zones. A fresh run
+    /// has none yet, so it starts clean automatically and cannot inherit a previous run's already-closed
+    /// zones (the look-ahead that made runs non-reproducible). Keeping prior runs' zones in the DB is
+    /// exactly what lets the chart show a finished run's zones afterwards. The in-memory reset is still
+    /// required: without it the first inline FVG/SMC scan (before the first DLZ reload) would still see
+    /// last run's leftover in-memory zones from the same app session.
     /// </summary>
     public static void ClearZonesForSymbols(CryptoScanner.Core.Model.CryptoExchange exchange, IEnumerable<string> symbolNames)
     {
-        using var database = new CryptoDatabase();
-        database.Open();
-        using var transaction = database.BeginTransaction();
-        try
+        foreach (string name in symbolNames)
         {
-            foreach (string name in symbolNames)
-            {
-                if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
-                    continue;
+            if (!exchange.SymbolListName.TryGetValue(name, out CryptoSymbol? symbol))
+                continue;
 
-                database.Connection.Execute("delete from Zone where SymbolId = @id", new { id = symbol.Id }, transaction);
-
-                // Drop the in-memory zone lists + DLZ swing-point admin too, otherwise the first
-                // inline FVG/SMC scan (before the first DLZ reload) would still see last run's
-                // leftover in-memory zones from the same app session.
-                symbol.Data.ResetFvgData();
-                symbol.Data.ResetDlzData();
-                symbol.Data.ResetSmcData();
-                symbol.Data.ResetTrendData();
-            }
-            transaction.Commit();
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
+            symbol.Data.ResetFvgData();
+            symbol.Data.ResetDlzData();
+            symbol.Data.ResetSmcData();
+            symbol.Data.ResetTrendData();
         }
     }
 
@@ -103,7 +86,7 @@ public static class EmulatorDb
     /// tagged with it. Call once at run start.
     /// </summary>
     public static CryptoEmulatorRun StartRun(string configJson, DateTime fromDate, DateTime toDate,
-        string? settingsJson = null, string? gitSha = null)
+        string label = "", string? settingsJson = null, string? gitSha = null)
     {
         using var database = new CryptoDatabase();
         database.Open();
@@ -111,6 +94,7 @@ public static class EmulatorDb
         var run = new CryptoEmulatorRun
         {
             StartedAt = DateTime.UtcNow,
+            Label = label,
             FromDate = fromDate,
             ToDate = toDate,
             ConfigJson = configJson,
@@ -236,8 +220,8 @@ public static class EmulatorDb
     /// on the run's positions. Everything runs inside one transaction, so a failure leaves the run
     /// fully intact rather than half-deleted.
     ///
-    /// Zones are deliberately NOT touched: they have no EmulatorRunId, are shared across runs and get
-    /// rebuilt from candles, so deleting a run must not remove them.
+    /// Zones now carry an EmulatorRunId too, so the run's zones are removed as well — otherwise a
+    /// deleted run would leave orphaned zones behind that the chart could still load.
     /// </summary>
     /// <summary>
     /// Returns the full scanner settings snapshot (GlobalData.Settings serialized at run start) that
@@ -258,8 +242,8 @@ public static class EmulatorDb
 
     /// <summary>
     /// Deletes multiple emulator runs (and everything tagged with them — signals, positions and their
-    /// parts/steps) in a SINGLE transaction, so a multi-select delete is all-or-nothing. See
-    /// <see cref="DeleteRun"/> for the per-run rationale; zones are deliberately left untouched.
+    /// parts/steps, plus the run's zones) in a SINGLE transaction, so a multi-select delete is
+    /// all-or-nothing. See <see cref="DeleteRun"/> for the per-run rationale.
     /// </summary>
     public static void DeleteRuns(IEnumerable<int> runIds)
     {
@@ -280,6 +264,8 @@ public static class EmulatorDb
                     "delete from Position where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from Signal where EmulatorRunId = @id", new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from Zone where EmulatorRunId = @id", new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
             }

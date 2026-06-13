@@ -365,6 +365,32 @@ public class SignalCreateBase
             }
         }
 
+        // ********************************************************************
+        // Don't step in while the Lux 5m indicator is still extreme: a long needs Lux not overbought
+        // (<= LuxMaximumValue), a short needs Lux not oversold (>= -LuxMaximumValue). A refinement of
+        // the RSI recovery gate above.
+        if (settings.CheckLuxMaximum)
+        {
+            int lux = CandleLast!.CandleData?.Lux5mValue ?? 0;
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (lux > settings.LuxMaximumValue)
+                    {
+                        ExtraText = $"lux {lux} still overbought (> {settings.LuxMaximumValue})";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (lux < -settings.LuxMaximumValue)
+                    {
+                        ExtraText = $"lux {lux} still oversold (< -{settings.LuxMaximumValue})";
+                        return false;
+                    }
+                    break;
+            }
+        }
+
         return true;
     }
 

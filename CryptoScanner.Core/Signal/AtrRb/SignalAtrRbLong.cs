@@ -43,10 +43,10 @@ public class SignalAtrRbLong : SignalCreateBase
         var candle = CandleLast.Candle;
         decimal band = (decimal)lowerBand;
 
-        // Wick only touches the band -> entry on the band.
-        // Body breaks through the band (body low below the band) -> entry on the close.
-        decimal bodyLow = Math.Min(candle.Open, candle.Close);
-        _entryPrice = bodyLow < band ? candle.Close : band;
+        // Entry placement (band is this break candle's lower band):
+        //   - only the wick (low) pierced the band, close still above it -> entry on the band
+        //   - the close itself broke below the band                      -> entry on the close
+        _entryPrice = candle.Close < band ? candle.Close : band;
 
         // Stop-loss: the percentage shown in the label (factor * ATR%), handed to the trader as the
         // SL distance from the entry. Only when enabled; otherwise leave null so the trader falls back

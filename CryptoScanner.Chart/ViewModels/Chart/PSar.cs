@@ -9,7 +9,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class PSar
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string tag)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string tag)
     {
         var series = new ScatterSeries
         {
@@ -22,11 +22,10 @@ public class PSar
         };
 
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)symbolInterval.CandleList.Values.GetParabolicSar();
+        List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)candles.GetParabolicSar();
 
         foreach (var psar in psarList)
         {

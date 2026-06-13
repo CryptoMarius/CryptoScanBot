@@ -50,6 +50,11 @@ public partial class App : Application
         MyServices.ConfigureServices(services);
         GlobalData.Services = services.BuildServiceProvider();
 
+        // Wire the shared chart project's browser launchers to this app's browser (the chart project
+        // has no hard dependency on App; the emulator leaves these null and only uses the system browser).
+        CryptoScanner.Helpers.CommandHelper.OpenInternalBrowser = OpenInInternalBrowser;
+        CryptoScanner.Helpers.CommandHelper.OpenHiddenBrowser = OpenInHiddenBrowser;
+
         // Basicly start the whole scanner
         InitializeGlobalDataAsync(); // Needs the DI services
 

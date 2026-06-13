@@ -16,7 +16,7 @@ namespace CryptoScanner.ViewModels.Chart;
 public class Bbma
 {
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
-        CandleTime minDate, CandleTime maxDate, string group)
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesWma5High = new LineSeries
         {
@@ -56,11 +56,9 @@ public class Bbma
             Tag = group,
         };
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        var candles = symbolInterval.CandleList.Values;
         List<WmaResult> wmaList05Low = (List<WmaResult>)candles.Use(CandlePart.Low).GetWma(05);
         List<WmaResult> wmaList05High = (List<WmaResult>)candles.Use(CandlePart.High).GetWma(05);
         List<WmaResult> wmaList10Low = (List<WmaResult>)candles.Use(CandlePart.Low).GetWma(10);
@@ -303,6 +301,8 @@ public class Bbma
 
 
 #if DEBUG
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+
         // Build indicator data ending at maxDate.
         // Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
         // fully warmed up for every displayed candle. Without the extra history, SMA200 is null

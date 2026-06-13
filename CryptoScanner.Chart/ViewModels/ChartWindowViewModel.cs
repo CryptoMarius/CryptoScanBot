@@ -238,8 +238,19 @@ public partial class ChartWindowViewModel : ObservableObject
     private static int _lastShownDay = -1;
     private static double _lastTickX = double.MinValue;
 
+    // Upper bound for an axis value (CandleTime minutes) that still converts to a valid DateTime.
+    // OxyPlot can call the formatter / hit-test with values far outside the data during margin and
+    // tick measurement; (uint)x of a negative or huge value wraps and then epoch.AddMinutes overflows
+    // DateTime — which aborted the entire render (blank chart). ~4e9 min ≈ year 9580, safely inside range.
+    private const double MaxAxisMinutes = 4_000_000_000d;
+
     private static string LabelFormatterX(double x)
     {
+        // Guard against out-of-range axis values (see MaxAxisMinutes): otherwise the conversion below
+        // throws ArgumentOutOfRangeException and OxyPlot's render pass aborts, leaving the chart blank.
+        if (x < 0 || x > MaxAxisMinutes)
+            return "";
+
         // OxyPlot renders ticks left-to-right within a single pass.
         // If x goes backward, a new render pass has started - reset day tracking.
         if (x < _lastTickX)
@@ -1031,42 +1042,42 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw Bollinger Bands
         group = "bb";
         if (Toggle(model, group, Session.ShowBollingerBand))
-            Bollingerbands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Bollingerbands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw Keltner Channel
         group = "kc";
         if (Toggle(model, group, Session.ShowKeltnerChannel))
-            KeltnerChannel.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw AtrRb Bands & Ribbon
         group = "atrrb";
         if (Toggle(model, group, Session.ShowAtrRbBands))
-            AtrRbBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            AtrRbBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw PSar
         group = "psar";
         if (Toggle(model, group, Session.ShowPSar))
-            PSar.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            PSar.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw SMA lines
         group = "sma";
         if (Toggle(model, group, Session.ShowSmaLinesSbm))
         {
-            Sma.Draw(model, Symbol, Interval, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
-            Sma.Draw(model, Symbol, Interval, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
-            Sma.Draw(model, Symbol, Interval, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
+            Sma.Draw(model, Symbol, Interval, WindowCandleList, 200, OxyColors.Red, Session.MinDate, Session.MaxDate, group);
+            Sma.Draw(model, Symbol, Interval, WindowCandleList, 50, OxyColors.Orange, Session.MinDate, Session.MaxDate, group);
+            Sma.Draw(model, Symbol, Interval, WindowCandleList, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
         }
 
         // Draw BBMA
         group = "bbma";
         if (Toggle(model, group, Session.ShowBbma))
-            Bbma.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Bbma.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
 
         // Draw Stochastic lines (%K / %D)
         group = "stoch";
         if (Toggle(model, group, Session.ShowStoch))
-            Stoch.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Stoch.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "stoch.tresholds";
         if (Toggle(model, group, Session.ShowStoch))
@@ -1076,7 +1087,7 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw RSI(14) line
         group = "rsi";
         if (Toggle(model, group, Session.ShowRsi))
-            Rsi.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Rsi.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "rsi.tresholds";
         if (Toggle(model, group, Session.ShowRsi))
@@ -1090,7 +1101,7 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
         group = "macd";
         if (Toggle(model, group, Session.ShowMacd))
-            Macd.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Macd.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         group = "macd.tresholds";
         if (Toggle(model, group, Session.ShowMacd))
@@ -1099,14 +1110,14 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw Volume bars in dedicated sub-panel (auto-range "volume" Y axis)
         group = "volume";
         if (Toggle(model, group, Session.ShowVolume))
-            Volume.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            Volume.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
 
         // Other options
         // Draw candles (note: we draw additional candles each minutes if needed)
         group = "candles";
         if (Toggle(model, group, Session.ShowCandles, Session.IntervalName + lastCandleTime.Minutes.ToString()))
-            lastCandleTime = Candles.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+            lastCandleTime = Candles.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw pivots
         group = "pivots";
@@ -1157,52 +1168,66 @@ public partial class ChartWindowViewModel : ObservableObject
         await SymbolOrIntervalChangedAsync(false);
     }
 
-    //[RelayCommand]
-    //private void ZoomLast()
-    //{
-    //    // Zoom to last candles
-    //    if (Data != null)
-    //    {
-    //        Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-    //        Session.MaxDate = IntervalTools.StartOfIntervalCandle(Session.MaxDate, Interval.Duration);
-    //        Session.MinDate = Session.MaxDate - GlobalData.Settings.Signal.ZonesDlz.CandleCount * Interval.Duration;
-
-    //        // ?
-
-    //        PlotModel.InvalidatePlot(true);
-    //        OnPropertyChanged(nameof(PlotModel));
-    //        OnPropertyChanged(nameof(PlotView));
-    //    }
-    //}
-
     [RelayCommand]
     private void ZoomLast()
     {
-        if (Symbol != null && PlotView.Model != null && SymbolInterval.CandleList.Count > 0)
+        if (Symbol != null && PlotView.Model != null && WindowCandleList.Count > 0)
         {
             decimal l = decimal.MaxValue;
             decimal h = decimal.MinValue;
-            CryptoCandle candleLast = SymbolInterval.CandleList.Values.Last();
-            CandleTime unix = candleLast.OpenTime;
-            int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
-            CryptoCandle xlast = candleLast;
-            CryptoCandle xfirst = candleLast;
-            while (count > 0)
+
+            CryptoCandle xfirst;
+            CryptoCandle xlast;
+
+            if (WindowStart.HasValue)
             {
-                if (SymbolInterval.CandleList.TryGetValue(unix, out CryptoCandle candle))
+                // Explicit window (emulator: a position's lifetime ± margin) → zoom to the whole drawn
+                // window [MinDate, MaxDate]; the Y range comes from the candles inside it. Iterate the
+                // bounded WindowCandleList (a few hundred candles) instead of the full history, skipping
+                // the leading warmup candles (< MinDate) that the list carries for the indicators.
+                xfirst = default;
+                xlast = default;
+                foreach (var c in WindowCandleList)
                 {
-                    if (candle!.High > h)
+                    if (c.OpenTime < Session.MinDate)
+                        continue;
+                    if (c.OpenTime > Session.MaxDate)
+                        break;
+                    if (xfirst.OpenTime == 0)
+                        xfirst = c;
+                    xlast = c;
+                    if (c.High > h)
+                        h = c.High;
+                    if (c.Low < l)
+                        l = c.Low;
+                }
+                if (xfirst.OpenTime == 0)
+                    return; // no candles in the window
+            }
+            else
+            {
+                // Anchor the zoom on the last candle in the window (≤ Session.MaxDate) and walk back
+                // CandleCountZoom candles. WindowCandleList is bounded and ends at MaxDate, so its last
+                // element is that anchor and we just walk back over the list's tail — no full-history scan.
+                CryptoCandle candleLast = WindowCandleList[^1];
+                xlast = candleLast;
+                xfirst = candleLast;
+
+                int count = GlobalData.Settings.Signal.ZonesDlz.CandleCountZoom;
+                for (int i = WindowCandleList.Count - 1; i >= 0 && count > 0; i--, count--)
+                {
+                    CryptoCandle candle = WindowCandleList[i];
+                    if (candle.High > h)
                         h = candle.High;
                     if (candle.Low < l)
                         l = candle.Low;
                     if (candle.Date < xfirst.Date)
                         xfirst = candle;
                 }
-                unix -= Interval.Duration;
-                count--;
             }
 
-            //PlotView!.Model = PlotView.Model;
+
+
 
             int extra = 5;
             if (Session.ShowFibRetracement)
@@ -1310,6 +1335,12 @@ public partial class ChartWindowViewModel : ObservableObject
             double x = model.Axes[0].InverseTransform(screenPoint.X);
             double y = model.Axes[1].InverseTransform(screenPoint.Y);
 
+            // When the cursor is outside the plotted data, InverseTransform returns values far outside
+            // the axis. (uint)x would then wrap and CandleTime.ToDateTime would overflow — which threw on
+            // EVERY mouse move and was logged twice each time (the real cause of the chart feeling slow).
+            if (x < 0 || x > MaxAxisMinutes)
+                return;
+
             var symbolInterval = Symbol.GetSymbolInterval(Session.ActiveInterval);
             CandleTime unix = new CandleTime((uint)x) + symbolInterval.Interval.Duration / 2;
             unix = IntervalTools.StartOfIntervalCandle(unix, symbolInterval.Interval.Duration);
@@ -1367,6 +1398,7 @@ public partial class ChartWindowViewModel : ObservableObject
             }
             catch (Exception error)
             {
+                ScannerLog.Logger.Error(error, "Calculate error");
                 ScannerLog.Logger.Info("PlotModel_MouseMove.Error " + error.ToString());
             }
         }
@@ -1420,6 +1452,43 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
 
+    // Candles of context drawn on each side of the position's lifetime when opening from a position.
+    private const int WindowMarginCandles = 200;
+
+    // Extra candles loaded BEFORE the visible window purely to warm up the indicators. The longest
+    // lookback we draw is SMA(200), so the windowed candle list starts this many candles before
+    // MinDate; every indicator value at MinDate is then fully warmed up, identical to computing over
+    // the whole history — but without paying for the whole history.
+    private const int WindowCalcWarmupCandles = 300;
+
+    /// <summary>
+    /// The single windowed candle list every drawer computes AND renders from. Built once per refresh
+    /// (BuildWindowCandleList) from [MinDate - warmup .. MaxDate]; ascending by OpenTime. This is the
+    /// fix for the chart being unusable on huge histories: indicators (EMA/ATR/BB/SMA/MACD/...) used to
+    /// run over the FULL CryptoSymbolInterval.CandleList (tens of thousands of candles) per drawer.
+    /// Now they run over this bounded slice instead. NEVER mutate the candles — they are shared with
+    /// the live scanner / emulator engine; this list only references them.
+    /// </summary>
+    private List<CryptoCandle> WindowCandleList { get; } = [];
+
+    /// <summary>
+    /// Optional explicit window for the chart. Null (live scanner) → the chart follows the clock.
+    /// Set (emulator, opening the chart from a position) → the chart shows WindowStart..WindowEnd (the
+    /// position's CreateTime..CloseTime) plus a fixed candle margin on each side, instead of the whole
+    /// multi-month run. WindowEnd null (still-open position) falls back to WindowStart.
+    /// </summary>
+    public DateTime? WindowStart { get; set; }
+    public DateTime? WindowEnd { get; set; }
+
+    /// <summary>
+    /// Which run's signals/positions to show. Set (emulator, opening the chart from a run's position
+    /// grid) → only that EmulatorRun's signals/positions. Null (live scanner) → only live ones
+    /// (EmulatorRunId IS NULL). Without this the chart loaded every run's positions for the symbol at
+    /// once, which was unreadable. See ExtraData.LoadSignalsForSymbol / LoadPositionsForSymbol.
+    /// </summary>
+    public int? WindowEmulatorRunId { get; set; }
+
+
     private async Task<(bool succes, string reason)> PrepareSessionDataAsync()
     {
         string reason = "";
@@ -1461,7 +1530,12 @@ public partial class ChartWindowViewModel : ObservableObject
             Session.IntervalName = Interval.Name;
             Session.ActiveInterval = Interval.IntervalPeriod;
 
-            await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
+            // Load candles from disk — but skip the (re)read when viewing a historical position whose
+            // candles are already in memory (the emulator loaded the whole run). Re-reading ~tens of
+            // thousands of rows from candles.db on every open is a big part of the lag. The live scanner
+            // (WindowStart null) always reads so it has the full history for the chart.
+            if (!WindowStart.HasValue || SymbolInterval.CandleList.Count == 0)
+                await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
 
 
             // Clear all series and and all annotations except the crosshairs
@@ -1476,26 +1550,66 @@ public partial class ChartWindowViewModel : ObservableObject
             UpdateAxisTicks(chart.Axes[0]);
         }
 
-        // Reset the min and maxdate so the refresh draw'subtitle the new candles and attributes
-        int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
-        Session.MaxDate = CandleTime.AlignFromDateTime(DateTime.UtcNow, interval.Duration);
-        Session.MinDate = Session.MaxDate - candleFetchCount * Interval.Duration;
+        // Reset the min and maxdate so the refresh draws the new candles and attributes.
+        // WindowStart/End (emulator, opening the chart from a position) → the position's lifetime
+        // (CreateTime..CloseTime) plus WindowMarginCandles of context on each side. This bounds the
+        // drawn candles so a multi-month run's tens of thousands aren't all drawn at once (unusable).
+        // Live (WindowStart null) → the normal clock window.
+        if (WindowStart.HasValue)
+        {
+            CandleTime start = CandleTime.AlignFromDateTime(WindowStart.Value, interval.Duration);
+            CandleTime end = CandleTime.AlignFromDateTime(WindowEnd ?? WindowStart.Value, interval.Duration);
+            Session.MinDate = start - WindowMarginCandles * interval.Duration;
+            Session.MaxDate = end + WindowMarginCandles * interval.Duration;
+        }
+        else
+        {
+            int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+            Session.MaxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);
+            Session.MinDate = Session.MaxDate - candleFetchCount * Interval.Duration;
+        }
         //Session.MaxDate += 1 * Interval.Duration; // Allow room for extra candles (we draw the 1m candles there)
 
         // Load or refresh signals each minute
-        var currentTime = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+        var currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
         if (lastLoadedSignalsAndPositions.Minutes != currentTime)
         {
             lastLoadedSignalsAndPositions = Session.MaxDate;
-            ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, SignalList);
+            ExtraData.LoadSignalsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, SignalList);
             optionsInChart.TryAdd("signals", "");
             optionsInChart["signals"] = "";
-            ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, PositionList);
+            ExtraData.LoadPositionsForSymbol(symbol, Session.MinDate, Session.MaxDate, WindowEmulatorRunId, PositionList);
             optionsInChart.TryAdd("positions", "");
             optionsInChart["positions"] = "";
         }
 
         return (true, "");
+    }
+
+    /// <summary>
+    /// Rebuild <see cref="WindowCandleList"/> for the current symbol/interval window. Collects the
+    /// candles in [MinDate - warmup .. MaxDate] (warmup = WindowCalcWarmupCandles, so SMA(200) and all
+    /// shorter indicators are fully warmed up at MinDate). CandleList is a SortedList keyed by OpenTime,
+    /// so iteration is ascending and we can stop once we pass MaxDate. Called once per full refresh,
+    /// before the drawers run; toggles reuse the list built by the last refresh.
+    /// </summary>
+    private void BuildWindowCandleList()
+    {
+        WindowCandleList.Clear();
+        if (SymbolInterval == null || Interval == null)
+            return;
+
+        CandleTime minDate = Session.MinDate - WindowCalcWarmupCandles * Interval.Duration;
+
+
+        foreach (var candle in SymbolInterval.CandleList.Values)
+        {
+            if (candle.OpenTime < minDate)
+                continue;
+            if (candle.OpenTime > Session.MaxDate)
+                break;
+            WindowCandleList.Add(candle);
+        }
     }
 
     public void HideAnnototionCursor()
@@ -1543,15 +1657,22 @@ public partial class ChartWindowViewModel : ObservableObject
             try
             {
                 // Load and (re)calculate the zones
-                ZoneDlz.LoadZonesForSymbol(Symbol);
+                // Scope to the viewed run (null = live) so the chart only shows that run's zones.
+                ZoneDlz.LoadZonesForSymbol(Symbol, WindowEmulatorRunId);
 
-                // Calculate the required zigzag points to draw the FIB and/or Main trend
-                // (DLZ zones will not be calculated, routine can be splitted I guess)
-                await ZoneDlz.LoadHistoricCandles(Symbol, Interval, loadedCandlesInMemory);
+                // Calculate the required zigzag points to draw the FIB and/or Main trend.
+                // Skip the exchange fetch when viewing a historical position (WindowStart set): the candles
+                // are already loaded and pulling recent candles for an old trade is pointless and slow
+                // (it was a network call on every open). The live scanner (WindowStart null) still fetches.
+                // CalculatePivots is bounded to [MinDate, MaxDate] (the window), so it stays cheap.
+                if (!WindowStart.HasValue)
+                    await ZoneDlz.LoadHistoricCandles(Symbol, Interval, loadedCandlesInMemory);
                 await ZoneDlz.CalculatePivots(Symbol, Interval, Session.MinDate, Session.MaxDate, TrendZigZagIndicatorList);
 
-                // Force DLZ and FVG zones to be calculated (they are calculated on other intervals)
-                if (Session.ForceCalculation)
+                // Force DLZ and FVG zones to be calculated (they are calculated on other intervals).
+                // Skipped when viewing a historical position — recomputing zones over the whole history is
+                // expensive and not needed just to look at an old trade.
+                if (Session.ForceCalculation && !WindowStart.HasValue)
                 {
 
                     // Calculate the DLZ zones for the configured intervals
@@ -1576,6 +1697,10 @@ public partial class ChartWindowViewModel : ObservableObject
                     GlobalData.SendMvvmMessage(new ZonesCalculatedForSymbolMessage(Symbol));
                 }
 
+                // Build the bounded candle slice the drawers compute + render from (see WindowCandleList).
+                // Must run AFTER all candle loading above so the window reflects the final CandleList.
+                BuildWindowCandleList();
+
                 // Draw the indicator layers and candles
                 DisplayOptionsChanged(null, null!);
                 FibSettingsChanged(null, null!);
@@ -1584,12 +1709,21 @@ public partial class ChartWindowViewModel : ObservableObject
             finally
             {
                 await ZoneCandleEngine.SaveCandleDataToDiskAsync(Symbol, loadedCandlesInMemory);
-                await ZoneCandleEngine.CleanLoadedCandlesAsync(Symbol);
+                if (!GlobalData.IsEmulatorMode)
+                    await ZoneCandleEngine.CleanLoadedCandlesAsync(Symbol);
                 Symbol.Data.ZoneLock.Release();
             }
 
             ZoomLast();
             PlotModel.InvalidatePlot(true);
+
+            // TEMP diagnostic (shows in the emulator Log tab): is the data actually there and drawn?
+            // candles=0 → CandleList not loaded; series=0 → nothing drawn; range tells the window used.
+            GlobalData.AddTextToLogTab(
+                $"Chart {Symbol?.Name} {Interval?.Name}: full={SymbolInterval?.CandleList.Count ?? 0}, " +
+                $"window={WindowCandleList.Count}, " +
+                $"series={PlotModel?.Series.Count ?? 0}, " +
+                $"range {Session.MinDate.ToDateTime():yyyy-MM-dd HH:mm}..{Session.MaxDate.ToDateTime():yyyy-MM-dd HH:mm}");
 
             WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         }

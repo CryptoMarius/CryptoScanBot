@@ -11,7 +11,7 @@ public class Candles
 {
 
     public static CandleTime Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
-        CandleTime minDate, CandleTime maxDate, string group)
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
         CandleTime lastCandleTime = CandleTime.MinValue;
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
@@ -33,16 +33,15 @@ public class Candles
             Tag = group,
         };
 
-        if (symbolInterval.CandleList.Count > 0)
+        if (candles.Count > 0)
         {
             CryptoCandle last = default;
-            foreach (var c in symbolInterval.CandleList.Values)
+            foreach (var c in candles)
             {
                 if (c.OpenTime >= minDate && c.OpenTime <= maxDate)
                 {
                     try
                     {
-                        //var curHighLow = new MyHighLowItem(c.Time.ToString(), c.OpenTime, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         var curHighLow = new HighLowItem(c.OpenTime.Minutes, (double)c.High, (double)c.Low, (double)c.Open, (double)c.Close); //OhlcvItem
                         candleSerie.Items.Add(curHighLow);
                         last = c;
@@ -61,7 +60,7 @@ public class Candles
 
 
             // Build the last candle(s) from scratch using the 1m candles
-            if (last.OpenTime != 0)
+            if (!GlobalData.IsEmulatorMode && last.OpenTime != 0)
             {
                 CandleTime loopHighInterval = last.OpenTime + symbolInterval.Interval.Duration;
                 CryptoSymbolInterval symbolInterval1m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);

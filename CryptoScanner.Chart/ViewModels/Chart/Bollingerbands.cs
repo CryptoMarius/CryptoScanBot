@@ -10,7 +10,7 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Bollingerbands
 {
-    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, CandleTime minDate, CandleTime maxDate, string group)
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval, List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {
         // YAxisKey = "price" pins these series to the price axis so OxyPlot can resolve
         // the axis via key lookup during the very first render pass — before PlotModel.Update
@@ -44,11 +44,10 @@ public class Bollingerbands
             Tag = group,
         };
 
-        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-        if (symbolInterval.CandleList.Count == 0)
+        if (candles.Count == 0)
             return;
 
-        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)symbolInterval.CandleList.Values.GetBollingerBands(
+        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)candles.GetBollingerBands(
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 

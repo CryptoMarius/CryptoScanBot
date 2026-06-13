@@ -419,12 +419,15 @@ public partial class MainWindowViewModel : ObservableObject
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
             string settingsJson = System.Text.Json.JsonSerializer.Serialize(
                 GlobalData.Settings, CryptoScanner.Core.Json.JsonTools.JsonSerializerIndented);
-            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, settingsJson);
+            run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner
             {
                 Progress = new Progress<TickRunProgress>(OnTickProgress),
+                // Temporarily serial: testing whether the parallel symbol order (under slot/capital
+                // contention) is what makes the emulator diverge from the serial live scanner.
+                RunParallel = false,
             };
 
             // Run the replay on a background thread. Previously RunAsync was awaited directly on
@@ -558,12 +561,12 @@ public partial class MainWindowViewModel : ObservableObject
         GlobalData.Settings.Trading.Active = true;
         GlobalData.Settings.Trading.TradeVia = CryptoTradeVia.PaperTrade;
 
-        // Start from a clean zone slate. Zones carry no EmulatorRunId, so without this a run
-        // inherits the previous run's zones from the DB — including ones already closed/broken at
-        // a point in time that hasn't happened yet on this replay's timeline (look-ahead). Zones
-        // are rebuilt from the candles during the replay, so nothing is lost.
+        // Start from a clean IN-MEMORY zone slate. Stored zones are now tagged per run (EmulatorRunId)
+        // and loaded per run, so a fresh run already starts with no zones of its own — no DB wipe and no
+        // look-ahead from a previous run. This only clears the in-memory lists so the first inline
+        // FVG/SMC scan does not see leftover zones from an earlier run in the same app session.
         EmulatorDb.ClearZonesForSymbols(exchange, config.Symbols);
-        GlobalData.AddTextToLogTab($"Run: cleared previous zones for {config.Symbols.Count} symbol(s)");
+        GlobalData.AddTextToLogTab($"Run: cleared in-memory zones for {config.Symbols.Count} symbol(s)");
 
         // Activte quoteData
         foreach (string symbolName in config.Symbols)

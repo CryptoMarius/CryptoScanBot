@@ -30,6 +30,9 @@
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<!-- Direct ref (also transitive via CryptoScanner.Chart) so the OxyPlot PlotView control theme
+		     (avares://OxyPlot.Avalonia/Themes/Default.axaml in App.axaml) resolves at startup. -->
+		<PackageReference Include="Oxyplot.Avalonia" Version="2.1.0-avalonia11" />
 	</ItemGroup>
 
 	<ItemGroup>

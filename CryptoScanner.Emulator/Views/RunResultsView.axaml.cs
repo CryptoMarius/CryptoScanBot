@@ -20,22 +20,23 @@ public partial class RunResultsView : UserControl
 {
     public RunResultsView()
     {
-        // TEMP diagnostic: time the Results tab from view-construction (tab select) to two milestones.
-        // The data (RunResultsViewModel.Refresh) already ran at startup, so any delay here is the
-        // Avalonia/DataGrid render. Loaded fires after attach but BEFORE the rows are fully laid out
-        // and rendered; to capture the END of rendering we post at DispatcherPriority.ContextIdle,
-        // which only runs once the UI thread has finished all layout + render work and gone idle.
-        // Remove once the slow-open cause is found.
-        var renderWatch = Stopwatch.StartNew();
-        Loaded += (_, _) =>
+        // TEMP diagnostic: time the actual render of the Results tab.
+        // IMPORTANT: this view is constructed once at startup (the TabControl builds it eagerly), NOT
+        // when the tab is selected. So a stopwatch started in the constructor would measure the time
+        // until the user happens to click the tab — pure idle time, which is exactly what made an
+        // earlier log read "17.81s" while the data itself loads in ~8 ms. Instead we start a fresh
+        // stopwatch on AttachedToVisualTree (fires when the tab is actually shown) and post at
+        // ContextIdle (runs only after the UI thread finishes all layout + render and goes idle); the
+        // delta is the true render cost of showing the tab. Remove once confirmed fast.
+        AttachedToVisualTree += (_, _) =>
         {
-            double loadedAt = renderWatch.Elapsed.TotalSeconds;
+            var renderWatch = Stopwatch.StartNew();
             int rowCount = (DataContext as RunResultsViewModel)?.Runs.Count ?? 0;
             Dispatcher.UIThread.Post(() =>
             {
                 GlobalData.AddTextToLogTab(
-                    $"Results tab: Loaded at {loadedAt:N2}s, render settled at " +
-                    $"{renderWatch.Elapsed.TotalSeconds:N2}s ({rowCount} run row(s))");
+                    $"Results tab: render settled {renderWatch.Elapsed.TotalSeconds:N2}s after shown " +
+                    $"({rowCount} run row(s))");
             }, DispatcherPriority.ContextIdle);
         };
 
