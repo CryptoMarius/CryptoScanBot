@@ -24,7 +24,9 @@ public class ZoneDlz
         }
 
         using var database = new CryptoDatabase();
-        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null order by OpenTime";
+        // Startup load is for the live scanner: only live zones (EmulatorRunId IS NULL). Emulator
+        // zones belong to a specific run and are loaded per run by LoadZonesForSymbol instead.
+        string sql = "select * from zone where exchangeid=exchangeid and CloseTime is null and EmulatorRunId is null order by OpenTime";
         foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { exchangeid = GlobalData.ActiveExchange!.Id }))
         {
             PutZoneInMemory(zone);
@@ -32,7 +34,14 @@ public class ZoneDlz
     }
 
 
-    public static void LoadZonesForSymbol(CryptoSymbol symbol)
+    /// <summary>
+    /// Loads a symbol's zones into memory, scoped to one source: <paramref name="emulatorRunId"/> set →
+    /// that emulator run's zones; null → live zones only (EmulatorRunId IS NULL). The engine passes
+    /// GlobalData.CurrentEmulatorRunId (the active run during a replay, null when live); the chart passes
+    /// the run it is viewing. Scoping keeps each run isolated/reproducible — a run never sees another
+    /// run's (possibly already-closed) zones — while letting a finished run's zones be shown later.
+    /// </summary>
+    public static void LoadZonesForSymbol(CryptoSymbol symbol, int? emulatorRunId)
     {
         CryptoSymbolData symbolData = symbol.Data;
         symbolData.ResetFvgData();
@@ -42,8 +51,9 @@ public class ZoneDlz
 
         using var database = new CryptoDatabase();
 
-        string sql = "select * from zone where SymbolId = @SymbolId order by OpenTime"; //and Kind=1
-        foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbol.Id }))
+        string runFilter = emulatorRunId.HasValue ? "and EmulatorRunId = @RunId " : "and EmulatorRunId is null ";
+        string sql = "select * from zone where SymbolId = @SymbolId " + runFilter + "order by OpenTime"; //and Kind=1
+        foreach (CryptoZone zone in database.Connection.Query<CryptoZone>(sql, new { SymbolId = symbol.Id, RunId = emulatorRunId }))
         {
             PutZoneInMemory(zone);
         }

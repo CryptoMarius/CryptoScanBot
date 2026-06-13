@@ -26,6 +26,11 @@ public class CryptoZone
     public required CryptoTradeSide Side { get; set; }
     public required CryptoZoneStrength Strength { get; set; }
 
+    // NULL for live zones; the EmulatorRun this zone belongs to during a backtest. Set at insert time
+    // (ThreadSaveObjects) from GlobalData.CurrentEmulatorRunId so each run's zones stay isolated and a
+    // finished run's zones can be reloaded for the chart. See ZoneDlz.LoadZonesForSymbol.
+    public int? EmulatorRunId { get; set; }
+
     public required CandleTime OpenTime { get; set; } // Zone starts on this date, for limited types of zones
     public required decimal Top { get; set; }
     public required decimal Bottom { get; set; }

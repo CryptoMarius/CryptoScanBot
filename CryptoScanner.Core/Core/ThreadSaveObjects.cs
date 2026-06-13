@@ -85,7 +85,14 @@ public class ThreadSaveObjects
                 databaseThread.Connection.Delete(zone, transaction);
             }
             else if (zone.Id == 0)
+            {
+                // Tag every new zone with the run that created it (NULL when live). Single chokepoint so
+                // all zone sources (DLZ/FVG/SMC) are covered without touching each creation site. During
+                // a backtest CurrentEmulatorRunId is the active run; LoadZonesForSymbol then loads only
+                // that run's zones, keeping runs isolated and reproducible.
+                zone.EmulatorRunId = GlobalData.CurrentEmulatorRunId;
                 databaseThread.Connection.Insert(zone, transaction);
+            }
             else
                 databaseThread.Connection.Update(zone, transaction);
         }

@@ -62,7 +62,8 @@ public class ZoneThreadCalculate
                 await symbol.Data.ZoneLock.WaitAsync();
                 try
                 {
-                    ZoneDlz.LoadZonesForSymbol(symbol);
+                    // Scope to the active run (null when live) so a replay only ever sees its own zones.
+                    ZoneDlz.LoadZonesForSymbol(symbol, GlobalData.CurrentEmulatorRunId);
 
                     int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
                     CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);

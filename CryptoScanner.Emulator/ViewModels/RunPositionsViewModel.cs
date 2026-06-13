@@ -70,9 +70,13 @@ public partial class RunPositionsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<PositionRow> _positions = [];
 
+    /// <summary>The run this grid belongs to; passed to the chart so it only shows this run's data.</summary>
+    public int RunId { get; }
+
 
     public RunPositionsViewModel(RunRow run)
     {
+        RunId = run.Id;
         Header = $"Positions for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
         Load(run.Id);
     }

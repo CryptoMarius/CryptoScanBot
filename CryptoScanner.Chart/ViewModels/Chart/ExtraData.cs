@@ -9,16 +9,23 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class ExtraData
 {
-    public static void LoadSignalsForSymbol(CryptoSymbol symbol, CandleTime from, List<CryptoSignal> signals)
+    public static void LoadSignalsForSymbol(CryptoSymbol symbol, CandleTime from, CandleTime to, int? emulatorRunId, List<CryptoSignal> signals)
     {
         signals.Clear();
-        string sql = "select * from signal where SymbolId = @SymbolId and CloseDate > @CloseDate";
+
+        // Bound to the visible window (from, to] AND to a single source: emulatorRunId set → that
+        // emulator run's signals; null → live signals only (EmulatorRunId IS NULL). Without these the
+        // query returned every signal of the symbol across ALL runs (and live), so the chart drew them
+        // all on top of each other and became unreadable.
+        string runFilter = emulatorRunId.HasValue ? "and EmulatorRunId = @RunId " : "and EmulatorRunId is null ";
+        string sql = "select * from signal where SymbolId = @SymbolId " +
+            "and CloseDate > @From and CloseDate <= @To " + runFilter;
 
         using var database = new CryptoDatabase();
         try
         {
             foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
-                new { SymbolId = symbol.Id, CloseDate = from.ToDateTime() }))
+                new { SymbolId = symbol.Id, From = from.ToDateTime(), To = to.ToDateTime(), RunId = emulatorRunId }))
             {
                 if (GlobalData.ExchangeListId.TryGetValue(signal.ExchangeId, out Core.Model.CryptoExchange? exchange2))
                 {
@@ -42,7 +49,7 @@ public class ExtraData
         }
     }
 
-    public static void LoadPositionsForSymbol(CryptoSymbol symbol, CandleTime from, List<CryptoPosition> positions)
+    public static void LoadPositionsForSymbol(CryptoSymbol symbol, CandleTime from, CandleTime to, int? emulatorRunId, List<CryptoPosition> positions)
     {
         using var database = new CryptoDatabase();
         try
@@ -64,13 +71,19 @@ public class ExtraData
 
 
             positions.Clear();
-            string sql = "select position.* from positionstep " +
-                "inner join position on position.id=positionstep.positionid " +
-                "where position.SymbolId = @SymbolId " +
-                "and positionstep.CreateTime > @CreateTime";
+
+            // Only positions whose lifetime overlaps the visible window [from, to], and only for one
+            // source: emulatorRunId set → that emulator run; null → live positions only (EmulatorRunId
+            // IS NULL). Filtering on the position itself (not via a positionstep join) also stops the
+            // same position being returned once per step. Previously this loaded every position of the
+            // symbol across ALL runs with no upper bound, which made the chart unreadable.
+            string runFilter = emulatorRunId.HasValue ? "and EmulatorRunId = @RunId " : "and EmulatorRunId is null ";
+            string sql = "select * from position where SymbolId = @SymbolId " +
+                "and CreateTime <= @To and (CloseTime is null or CloseTime >= @From) " + runFilter +
+                "order by CreateTime";
 
             foreach (CryptoPosition position in database.Connection.Query<CryptoPosition>(sql,
-               new { SymbolId = symbol.Id, CreateTime = from.ToDateTime().AddDays(-3) }))
+               new { SymbolId = symbol.Id, From = from.ToDateTime(), To = to.ToDateTime(), RunId = emulatorRunId }))
             {
                 if (GlobalData.ExchangeListId.TryGetValue(position.ExchangeId, out Core.Model.CryptoExchange? exchange))
                 {
