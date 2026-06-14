@@ -1044,12 +1044,6 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweBb))
             NweBb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // Draw combined NWE×BB + AtrRb markers (same side within 5 candles, on the second), recomputed
-        // from the windowed candles via NweBbAtrRbDetector — the same algorithm the live strategy runs.
-        group = "nwe.bb.atrrb";
-        if (Toggle(model, group, Session.ShowNweBbAtrRb))
-            NweBbAtrRb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
-
         // Draw Bollinger Bands
         group = "bb";
         if (Toggle(model, group, Session.ShowBollingerBand))

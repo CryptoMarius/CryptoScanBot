@@ -90,10 +90,9 @@ public static class AtrRbBandsHelper
 
     /// <summary>
     /// Core lower-band-break test against a candle list with pre-computed EMA/ATR (Skender results
-    /// aligned 1:1 to <paramref name="candles"/> by index). The per-symbol-interval overload above and
-    /// the multi-candle <see cref="Nwe.NweBbAtrRbDetector"/> both call this, so the band logic lives in
-    /// one place. Computing EMA/ATR once and scanning every index is far cheaper than re-deriving them
-    /// per candle when a whole window has to be evaluated.
+    /// aligned 1:1 to <paramref name="candles"/> by index). The per-symbol-interval overload above
+    /// calls this, so the band logic lives in one place. Computing EMA/ATR once and scanning every
+    /// index is far cheaper than re-deriving them per candle when a whole window has to be evaluated.
     /// </summary>
     public static bool LowerBandBreakAt(IReadOnlyList<CryptoCandle> candles,
         IReadOnlyList<EmaResult> emaList, IReadOnlyList<AtrResult> atrList, int idx,

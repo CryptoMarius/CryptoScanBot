@@ -105,7 +105,6 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNwe, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBb, Mode=TwoWay}" Content="NWE × BB signals" FontSize="12"/>
-                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBbAtrRb, Mode=TwoWay}" Content="NWE×BB + AtrRb combo" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>

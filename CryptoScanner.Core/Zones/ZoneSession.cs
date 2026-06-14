@@ -47,7 +47,6 @@ public class ZoneSession
     public bool ShowNwe { get; set; } = true; // NWE non repainting?
     public bool ShowNweRepainting { get; set; } = false;
     public bool ShowNweBb { get; set; } = false;
-    public bool ShowNweBbAtrRb { get; set; } = false; // combined NWE×BB + AtrRb (second within 5 candles) // NWE × BB crossover markers
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;

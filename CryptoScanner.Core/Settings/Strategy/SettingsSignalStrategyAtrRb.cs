@@ -36,6 +36,13 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public double BBMinPercentage { get; set; } = 1.50;
     public double BBMaxPercentage { get; set; } = 0.0;
 
+    // Zone confirmations — when any of these is enabled, the band break must ALSO be a rejection at
+    // one of the enabled zone types (OR). All disabled = no zone filter. Same logic/extensions as the
+    // StoRsi zone checkboxes (WasRejectedAtDlz/Fvg/SmcZone).
+    public bool UseDlzZone { get; set; } = false;
+    public bool UseFvgZone { get; set; } = false;
+    public bool UseSmcZone { get; set; } = false;
+
     public SettingsSignalStrategyAtrRb() : base()
     {
     }

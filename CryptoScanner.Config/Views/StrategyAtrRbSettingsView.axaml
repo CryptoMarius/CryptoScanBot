@@ -78,6 +78,20 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- Zone confirmation (OR over enabled types) -->
+            <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
+                      Content="Require DLZ zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the band break was also a rejection at a DLZ zone (same logic as the StoRsi zone filter)."/>
+            <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
+                      Content="Require FVG zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the band break was also a rejection at an FVG zone."/>
+            <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
+                      Content="Require SMC zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the band break was also a rejection at an SMC order block."/>
+
         </StackPanel>
     </HeaderedContentControl>
 

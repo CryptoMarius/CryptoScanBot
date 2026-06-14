@@ -30,6 +30,15 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _bBMaxPercentage = 0.0;
 
+    [ObservableProperty]
+    private bool _useDlzZone = false;
+
+    [ObservableProperty]
+    private bool _useFvgZone = false;
+
+    [ObservableProperty]
+    private bool _useSmcZone = false;
+
 
     public void LoadConfig(string caption, SettingsSignalStrategyAtrRb settings)
     {
@@ -41,6 +50,9 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         StopLossAtrFactor = settings.StopLossAtrFactor;
         BBMinPercentage = settings.BBMinPercentage;
         BBMaxPercentage = settings.BBMaxPercentage;
+        UseDlzZone = settings.UseDlzZone;
+        UseFvgZone = settings.UseFvgZone;
+        UseSmcZone = settings.UseSmcZone;
     }
 
     public void SaveConfig(SettingsSignalStrategyAtrRb settings)
@@ -53,5 +65,8 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         settings.StopLossAtrFactor = StopLossAtrFactor;
         settings.BBMinPercentage = BBMinPercentage;
         settings.BBMaxPercentage = BBMaxPercentage;
+        settings.UseDlzZone = UseDlzZone;
+        settings.UseFvgZone = UseFvgZone;
+        settings.UseSmcZone = UseSmcZone;
     }
 }

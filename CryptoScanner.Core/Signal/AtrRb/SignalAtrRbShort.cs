@@ -13,7 +13,7 @@ namespace CryptoScanner.Core.Signal.AtrRb;
 ///   - body breaks through the band -> entry on the close
 /// Stop-loss: the same percentage shown in the label, placed above the entry.
 /// </summary>
-public class SignalAtrRbShort : SignalCreateBase
+public class SignalAtrRbShort : SignalAtrRbBase
 {
     private decimal? _entryPrice;
     private decimal? _slPercentage;
@@ -40,6 +40,14 @@ public class SignalAtrRbShort : SignalCreateBase
             return false;
         }
 
+        // Optional DLZ/FVG/SMC zone confluence (settings checkboxes). Checked only after the rare band
+        // break, so the zone lookup runs sparingly.
+        if (!CheckEnabledZoneRejections(out string zoneInfo))
+        {
+            ExtraText = zoneInfo;
+            return false;
+        }
+
         var candle = CandleLast.Candle;
         decimal band = (decimal)upperBand;
 
@@ -54,7 +62,7 @@ public class SignalAtrRbShort : SignalCreateBase
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
-        ExtraText = $"hit upper band {pctDeviation:N2}%";
+        ExtraText = $"hit upper band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
         return true;
     }
 }

@@ -53,10 +53,6 @@ public enum CryptoSignalStrategy
     // (the same events the chart prints as percentage labels).
     AtrRb = 28,
 
-    // Combined NWE×BB crossover + AtrRb macro-band hit on the same side within 5 candles of each
-    // other (order irrelevant); the signal fires on the second of the two.
-    NweBbAtrRb = 29,
-
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally
     // wait for an opposite zigzag pivot + breakthrough before allowing the trader to step in.
