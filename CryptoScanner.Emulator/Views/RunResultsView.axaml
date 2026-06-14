@@ -36,7 +36,7 @@
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="50"/>
-                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="130"/>
+                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="260"/>
                 <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="230"/>
                 <DataGridTextColumn Header="Started"     Binding="{Binding StartedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedLocal}" Width="130"/>

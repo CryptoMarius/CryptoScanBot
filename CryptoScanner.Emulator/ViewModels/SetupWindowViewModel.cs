@@ -51,7 +51,11 @@ public partial class SetupWindowViewModel : ObservableObject
                 Exchanges.Add(exchange.Name);
         }
 
-        SelectedExchange = Exchanges.FirstOrDefault();
+        // Pre-select the last-used exchange (if it is still in the supported list); otherwise the first.
+        string? lastExchange = LastFolderMemory.LoadExchange();
+        SelectedExchange = lastExchange != null && Exchanges.Contains(lastExchange)
+            ? lastExchange
+            : Exchanges.FirstOrDefault();
     }
 
 
@@ -78,9 +82,10 @@ public partial class SetupWindowViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(DataFolder) || string.IsNullOrWhiteSpace(SelectedExchange))
             return;
 
-        // Remember the picked folder so next launch lands the user back here without forcing
-        // them through the picker again. Exchange isn't persisted — that's run-time choice.
+        // Remember the picked folder and exchange so next launch pre-fills both without forcing
+        // the user through the picker/combo again.
         LastFolderMemory.Save(DataFolder);
+        LastFolderMemory.SaveExchange(SelectedExchange);
 
         Confirmed = true;
         owner?.Close();
