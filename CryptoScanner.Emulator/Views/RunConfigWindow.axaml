@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
         mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="620"
-        Width="600" Height="800"
+        Width="760" Height="800"
         x:Class="CryptoScanner.Emulator.Views.RunConfigWindow"
         x:DataType="vm:RunConfigViewModel"
         Title="Run parameters"
@@ -22,9 +22,11 @@
         <!-- Period -->
         <Grid Grid.Row="1" ColumnDefinitions="90,*,40,*">
             <TextBlock Grid.Column="0" Text="From:" VerticalAlignment="Center"/>
-            <CalendarDatePicker Grid.Column="1" SelectedDate="{Binding FromDate}"/>
+            <CalendarDatePicker Grid.Column="1" SelectedDate="{Binding FromDate}"
+								SelectedDateFormat="Custom" CustomDateFormatString="dd-MM-yyyy"/>
             <TextBlock Grid.Column="2" Text="To:" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-            <CalendarDatePicker Grid.Column="3" SelectedDate="{Binding ToDate}"/>
+            <CalendarDatePicker Grid.Column="3" SelectedDate="{Binding ToDate}"
+								SelectedDateFormat="Custom" CustomDateFormatString="dd-MM-yyyy"/>
         </Grid>
 
         <!-- Symbols header + filter -->
