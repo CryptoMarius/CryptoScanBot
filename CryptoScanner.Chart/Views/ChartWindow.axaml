@@ -101,6 +101,7 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowKeltnerChannel, Mode=TwoWay}" Content="Keltner Channel" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowAtrRbBands, Mode=TwoWay}" Content="ATR Reversal Bands" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowAtrRbSignals, Mode=TwoWay}" Content="ATR Reversal signals (actual)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowPSar, Mode=TwoWay}" Content="PSar" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNwe, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>

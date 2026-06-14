@@ -181,6 +181,12 @@ public class SettingsTrading
     public decimal StopLossPercentage { get; set; } = 0m;
     public decimal StopLossLimitPercentage { get; set; } = 0m;
 
+    // SL protection (break-even): once an open position reaches MoveSlToBreakEvenPercentage in profit,
+    // the stop-loss is pulled up to the break-even price and kept there (sticky, never loosened again).
+    // Paper-trade only, same as the rest of the stop-loss handling.
+    public bool MoveSlToBreakEven { get; set; } = false;
+    public decimal MoveSlToBreakEvenPercentage { get; set; } = 0.5m;
+
 
     //***************************
     // Perpetual / Futures

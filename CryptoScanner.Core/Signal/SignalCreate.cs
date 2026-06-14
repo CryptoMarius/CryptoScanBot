@@ -241,7 +241,10 @@ public class SignalCreate
         // can report the actual event price here so SignalPrice reflects the break, not
         // the close of the candle on which the check happened to run.
         if (algorithm.OverrideSignalPrice is decimal overridePrice)
+        {
             signal.SignalPrice = overridePrice;
+            signal.EntryPriceOverridden = true;
+        }
 
         // Strategies that anchor SL/TP on structural levels (swing high/low, BB band, RRR target)
         // report their proposed prices here. PositionTools.AddSignalProperties copies them onto

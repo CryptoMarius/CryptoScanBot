@@ -50,6 +50,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showAtrRbBands = false;
 
     [ObservableProperty]
+    private bool _showAtrRbSignals = false;
+
+    [ObservableProperty]
     private bool _showPSar = false;
 
     [ObservableProperty]
@@ -97,6 +100,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
         ShowAtrRbBands = session.ShowAtrRbBands;
+        ShowAtrRbSignals = session.ShowAtrRbSignals;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
         ShowSmcZones = session.ShowSmcZones;
@@ -128,6 +132,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
         session.ShowAtrRbBands = ShowAtrRbBands;
+        session.ShowAtrRbSignals = ShowAtrRbSignals;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
         session.ShowSmcZones = ShowSmcZones;

@@ -51,6 +51,7 @@ public class ZoneSession
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowAtrRbBands { get; set; } = false; // AtrRb Bands & Ribbon
+    public bool ShowAtrRbSignals { get; set; } = false; // stored AtrRb signals (real triggers)
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;

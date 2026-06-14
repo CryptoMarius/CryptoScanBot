@@ -463,8 +463,12 @@ public class PositionMonitor //: IDisposable
 
                                 // Check the assets, the symbol limits..
 
-                                // Bepaal het entry bedrag
-                                decimal entryPrice = Symbol.LastPrice.Value.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+                                // Bepaal het entry bedrag. Strategies that supplied an explicit entry
+                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. atrrb's band,
+                                // CHoCH/BOS break) enter at that level; otherwise at the current market price.
+                                decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
+                                    ? signal.SignalPrice
+                                    : Symbol.LastPrice.Value).Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
                                 decimal entryBase = entryQuote / entryPrice;
                                 entryBase = entryBase.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
                                 entryBase = TradeTools.CorrectEntryQuantityIfWayLess(Symbol, entryQuote, entryBase, entryPrice);
@@ -833,6 +837,9 @@ public class PositionMonitor //: IDisposable
             price = breakEven + (multiplier * breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
         price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
+        decimal? stop = null;
+        decimal? limit = null;
+
         // Stop-loss override (paper-trade only path, same as the default below).
         // Limit is offset slightly beyond the stop so the stop triggers first (same direction
         // ratio as the default StopLossPercentage vs StopLossLimitPercentage).
@@ -848,20 +855,18 @@ public class PositionMonitor //: IDisposable
             && position.PartCount == 0
             && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade)
         {
-            decimal stop = (breakEven * (1m - multiplier * slPct / 100m))
+            decimal slStop = (breakEven * (1m - multiplier * slPct / 100m))
                 .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            decimal stopToLimitGap = Math.Abs(stop * 0.01m); // 1% buffer for the limit beyond the stop
-            decimal limit = (stop - multiplier * stopToLimitGap)
+            decimal stopToLimitGap = Math.Abs(slStop * 0.01m); // 1% buffer for the limit beyond the stop
+            stop = slStop;
+            limit = (slStop - multiplier * stopToLimitGap)
                 .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            return (price, stop, limit);
         }
-
-
         // Stop-loss is only supported in paper/backtest mode.
         // Real trading would require OCO orders (or a separate stop-limit order), which are not yet implemented.
         // The condition StopLossPercentage < StopLossLimitPercentage ensures the stop triggers before the limit.
-        if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade && 
-            GlobalData.Settings.Trading.StopLossPercentage > 0 && 
+        else if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade &&
+            GlobalData.Settings.Trading.StopLossPercentage > 0 &&
             GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
             GlobalData.Settings.Trading.StopLossPercentage < GlobalData.Settings.Trading.StopLossLimitPercentage)
         {
@@ -906,17 +911,51 @@ public class PositionMonitor //: IDisposable
 
             // Stop price
             decimal perc = Math.Abs(GlobalData.Settings.Trading.StopLossPercentage) / 100;
-            decimal stop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            stop = stop.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            decimal dcaStop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
+            stop = dcaStop.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             // Limit prijs x% lager
             perc = Math.Abs(GlobalData.Settings.Trading.StopLossLimitPercentage) / 100;
-            decimal limit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            limit = limit.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-
-            return (price, stop, limit);
+            decimal dcaLimit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
+            limit = dcaLimit.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         }
-        else return (price, null, null);
+
+        // SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
+        // pull the stop up to break-even and keep it there (sticky — the flag never resets, so a later
+        // pullback cannot loosen it). Paper-trade only, like the stop-loss handling above.
+        if (GlobalData.Settings.Trading.MoveSlToBreakEven
+            && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade
+            && breakEven > 0)
+        {
+            if (!position.SlMovedToBreakEven)
+            {
+                // Favorable extreme of the just-closed 1m candle: high for a long, low for a short.
+                decimal favorable = position.Side == CryptoTradeSide.Long ? LastCandle1m.High : LastCandle1m.Low;
+                decimal profitPct = multiplier * (favorable - breakEven) / breakEven * 100m;
+                if (profitPct >= GlobalData.Settings.Trading.MoveSlToBreakEvenPercentage)
+                    position.SlMovedToBreakEven = true;
+            }
+
+            if (position.SlMovedToBreakEven)
+            {
+                decimal beStop = breakEven.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+                decimal beGap = Math.Abs(beStop * 0.01m);
+                decimal beLimit = (beStop - multiplier * beGap)
+                    .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+
+                // Tighten only: pull the stop to BE when there was none, or when BE is tighter than the
+                // current stop (long: a higher stop is tighter; short: a lower stop is tighter).
+                if (stop == null
+                    || (multiplier == 1 && beStop > stop.Value)
+                    || (multiplier == -1 && beStop < stop.Value))
+                {
+                    stop = beStop;
+                    limit = beLimit;
+                }
+            }
+        }
+
+        return (price, stop, limit);
     }
 
 

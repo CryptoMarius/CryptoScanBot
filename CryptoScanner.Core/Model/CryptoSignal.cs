@@ -50,8 +50,18 @@ public partial class CryptoSignal : CryptoData2
     public decimal? SlPercentage { get; set; }
     public decimal? TpPercentage { get; set; }
 
+    // In-memory only: set when the strategy supplied an explicit entry price via OverrideSignalPrice
+    // (so SignalPrice is a deliberate entry level, not just the signal candle's close). The trader then
+    // enters at SignalPrice instead of the current market price.
     [Computed]
-    public double? PriceDiff { get { if (Symbol.LastPrice.HasValue) return (double)(100 * (Symbol.LastPrice / SignalPrice - 1)); else return 0; } }
+    public bool EntryPriceOverridden { get; set; }
+
+    [Computed]
+    public double? PriceDiff { 
+        get { if (Symbol.LastPrice.HasValue) 
+                return (double)(100 * (Symbol.LastPrice / SignalPrice - 1)); 
+            else return 0; } 
+    }
 
     [Computed]
     public decimal MinEntry

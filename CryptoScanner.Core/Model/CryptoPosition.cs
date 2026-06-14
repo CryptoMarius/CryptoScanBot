@@ -93,6 +93,11 @@ public partial class CryptoPosition : CryptoData2
     public decimal? SlPercentage { get; set; }
     public decimal? TpPercentage { get; set; }
 
+    // Sticky flag (in-memory only): set once the position reached the SL-protection profit threshold and
+    // the stop was pulled to break-even, so CalculateTpPrices keeps it at BE and never loosens it again.
+    [Computed]
+    public bool SlMovedToBreakEven { get; set; }
+
     [Computed]
     public decimal MinEntry
     {

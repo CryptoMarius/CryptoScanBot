@@ -1059,6 +1059,12 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowAtrRbBands))
             AtrRbBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
+        // Draw the ACTUAL stored AtrRb signals (real triggers from the run) — these match the strategy
+        // exactly, unlike the recomputed band-break labels above.
+        group = "atrrb.signals";
+        if (Toggle(model, group, Session.ShowAtrRbSignals))
+            AtrRbSignals.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
+
         // Draw PSar
         group = "psar";
         if (Toggle(model, group, Session.ShowPSar))
