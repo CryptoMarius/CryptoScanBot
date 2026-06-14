@@ -20,6 +20,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showLux = false;
 
     [ObservableProperty]
+    private bool _showBbPercent = false;
+
+    [ObservableProperty]
     private bool _showMacd = false;
 
     [ObservableProperty]
@@ -36,6 +39,9 @@ public partial class ChartOptionsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _showNweBb = false;
+
+    [ObservableProperty]
+    private bool _showNweBbAtrRb = false;
 
     [ObservableProperty]
     private bool _showBollingerBand = false;
@@ -83,12 +89,14 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowStoch = session.ShowStoch;
         ShowRsi = session.ShowRsi;
         ShowLux = session.ShowLux;
+        ShowBbPercent = session.ShowBbPercent;
         ShowMacd = session.ShowMacd;
         ShowVolume = session.ShowVolume;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNwe = session.ShowNwe;
         ShowNweRepainting = session.ShowNweRepainting;
         ShowNweBb = session.ShowNweBb;
+        ShowNweBbAtrRb = session.ShowNweBbAtrRb;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
@@ -113,12 +121,14 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowStoch = ShowStoch;
         session.ShowRsi = ShowRsi;
         session.ShowLux = ShowLux;
+        session.ShowBbPercent = ShowBbPercent;
         session.ShowMacd = ShowMacd;
         session.ShowVolume = ShowVolume;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNwe = ShowNwe;
         session.ShowNweRepainting = ShowNweRepainting;
         session.ShowNweBb = ShowNweBb;
+        session.ShowNweBbAtrRb = ShowNweBbAtrRb;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;

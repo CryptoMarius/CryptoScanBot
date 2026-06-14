@@ -441,6 +441,14 @@ public class SignalCreate
                     {
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
                         symbolInterval.SignalList.Add(signal);
+
+                        // Off-by-one diagnostic: a signal must be accepted at the CLOSE of its trigger
+                        // candle, i.e. clock == triggerCandle.close (= OpenDate + interval). If the clock
+                        // is a further interval ahead, the decision itself is a candle late.
+                        TraderTrace.Timing(Symbol,
+                            $"accept {Symbol.Name} {signal.Interval.Name} {signal.Side} {signal.Strategy} " +
+                            $"trigger.open={signal.OpenDate:yyyy-MM-dd HH:mm} trigger.close={signal.CloseDate:HH:mm} " +
+                            $"clock={GlobalData.Clock.UtcNow:HH:mm} price={signal.SignalPrice}");
                     }
                 }
             }

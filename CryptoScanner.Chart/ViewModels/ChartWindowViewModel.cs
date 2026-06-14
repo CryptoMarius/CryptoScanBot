@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
@@ -48,6 +49,11 @@ public partial class ChartWindowViewModel : ObservableObject
     [ObservableProperty]
     private PlotModel _plotModel;
 
+    // Controller for the XAML-hosted PlotView. The PlotView itself lives in ChartWindow.axaml
+    // (<oxy:PlotView>); the View assigns both this controller and the control reference back to
+    // the VM. See the constructor for why the control is NOT created in the VM.
+    public IPlotController PlotController { get; }
+
     // Chart crosshair annotations
     private LineAnnotation? CrossHairX;
     private LineAnnotation? CrossHairY;
@@ -87,14 +93,12 @@ public partial class ChartWindowViewModel : ObservableObject
 
         _plotModel = CreatePlotModel();
 
-        // Create PlotView in ViewModel
-        _plotView = new OxyPlot.Avalonia.PlotView
-        {
-            Model = PlotModel,
-            //Dock = DockStyle.Fill,
-            //Background = OxyColors.Transparent,
-            Controller = CreateController()
-        };
+        // The chart is hosted as <oxy:PlotView> in ChartWindow.axaml with Model bound to PlotModel,
+        // and the View assigns the control back into PlotView (plus this controller) once it exists.
+        // Do NOT create the PlotView here and host it via a ContentControl: a code-created PlotView
+        // placed in a ContentControl never gets its OxyPlot control theme applied and renders as a
+        // completely blank panel (no axes, no candles) — even though the model is fully populated.
+        PlotController = CreateController();
 
         // Load session
         ClearOptions();
@@ -921,7 +925,7 @@ public partial class ChartWindowViewModel : ObservableObject
             SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
             var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
             CryptoTrendIndicator trendIndicator = TrendInterval.InterpretZigZagPoints(mainIndicator, null);
-            model.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Interval.Name} UTC " +
+            model.Title = $"{Session.SymbolBase}{Session.SymbolQuote} {Interval.Name} " +
                 $"{trendIndicator} candles={mainIndicator.CandleCount} points={mainIndicator.ZigZagList.Count}";
         }
 
@@ -988,7 +992,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
         // enabled, MACD and volume panels each have their own toggle.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux, Session.ShowMacd, Session.ShowVolume);
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux || Session.ShowBbPercent, Session.ShowMacd, Session.ShowVolume);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -1034,10 +1038,17 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweRepainting))
             Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
 
-        // Draw NWE × BB crossover markers (from pre-stored signals; no recompute)
+        // Draw NWE × BB crossover markers — recomputed from the windowed candles via NweBbDetector
+        // (the live strategy's algorithm), so they also show in the emulator where no signals were stored.
         group = "nwe.bb";
         if (Toggle(model, group, Session.ShowNweBb))
-            NweBb.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
+            NweBb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+
+        // Draw combined NWE×BB + AtrRb markers (same side within 5 candles, on the second), recomputed
+        // from the windowed candles via NweBbAtrRbDetector — the same algorithm the live strategy runs.
+        group = "nwe.bb.atrrb";
+        if (Toggle(model, group, Session.ShowNweBbAtrRb))
+            NweBbAtrRb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw Bollinger Bands
         group = "bb";
@@ -1098,6 +1109,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowLux))
             Lux.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
+        // Draw Bollinger %B (pink) + band width (red widening / green narrowing) in the oscillator panel
+        group = "bbpercent";
+        if (Toggle(model, group, Session.ShowBbPercent))
+            Bollingerbands.DrawPercentWidth(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+
         // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
         group = "macd";
         if (Toggle(model, group, Session.ShowMacd))
@@ -1132,7 +1148,7 @@ public partial class ChartWindowViewModel : ObservableObject
         // Draw signals
         group = "positions";
         if (Toggle(model, group, Session.ShowPositions))
-            Positions.Draw(model, PositionList, Interval, Session.MinDate, Session.MaxDate, group);
+            Positions.Draw(model, Symbol, PositionList, Interval, Session.MinDate, Session.MaxDate, group);
 
 
         if (_refreshChart && sender != null)
@@ -1187,11 +1203,14 @@ public partial class ChartWindowViewModel : ObservableObject
                 // the leading warmup candles (< MinDate) that the list carries for the indicators.
                 xfirst = default;
                 xlast = default;
+                var min = Session.MinDate + (WindowMarginCandles - 30) * Interval.Duration;
+                var max = Session.MaxDate - (WindowMarginCandles - 30) * Interval.Duration;
+
                 foreach (var c in WindowCandleList)
                 {
-                    if (c.OpenTime < Session.MinDate)
+                    if (c.OpenTime < min)
                         continue;
-                    if (c.OpenTime > Session.MaxDate)
+                    if (c.OpenTime > max)
                         break;
                     if (xfirst.OpenTime == 0)
                         xfirst = c;
@@ -1530,11 +1549,13 @@ public partial class ChartWindowViewModel : ObservableObject
             Session.IntervalName = Interval.Name;
             Session.ActiveInterval = Interval.IntervalPeriod;
 
-            // Load candles from disk — but skip the (re)read when viewing a historical position whose
-            // candles are already in memory (the emulator loaded the whole run). Re-reading ~tens of
-            // thousands of rows from candles.db on every open is a big part of the lag. The live scanner
-            // (WindowStart null) always reads so it has the full history for the chart.
-            if (!WindowStart.HasValue || SymbolInterval.CandleList.Count == 0)
+            // Load candles from disk. The live scanner (WindowStart null) reads the full interval
+            // history so the chart can show it. The emulator (WindowStart set) does NOT read the whole
+            // interval here — only the intervals its run needs are materialised in memory, and pulling
+            // the entire history of an extra interval (e.g. a 3m position) on every open is exactly the
+            // lag we want to avoid. Instead the visible window is loaded from candles.db further below
+            // (LoadWindowCandlesFromDb), bounded to [MinDate - warmup .. MaxDate].
+            if (!WindowStart.HasValue)
                 await ZoneCandleEngine.ReadCandlesFromDiskAsync(symbol, interval);
 
 
@@ -1570,6 +1591,15 @@ public partial class ChartWindowViewModel : ObservableObject
         }
         //Session.MaxDate += 1 * Interval.Duration; // Allow room for extra candles (we draw the 1m candles there)
 
+        // Emulator: the chart's interval is usually not pre-loaded into memory (only the intervals the
+        // run needs are materialised). Load exactly the visible window — including the indicator warmup
+        // prefix — from candles.db now that MinDate/MaxDate are known, so candles, pivots and indicators
+        // all have data without materialising the whole interval history. Must run before CalculatePivots
+        // (in SymbolOrIntervalChangedAsync) so the pivots see these candles too. The live scanner already
+        // holds the full history in memory (read above), so this is emulator-only.
+        if (WindowStart.HasValue)
+            LoadWindowCandlesFromDb(symbol, interval);
+
         // Load or refresh signals each minute
         var currentTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
         if (lastLoadedSignalsAndPositions.Minutes != currentTime)
@@ -1599,16 +1629,64 @@ public partial class ChartWindowViewModel : ObservableObject
         if (SymbolInterval == null || Interval == null)
             return;
 
-        CandleTime minDate = Session.MinDate - WindowCalcWarmupCandles * Interval.Duration;
+        uint duration = Interval.Duration;
+        CandleTime minDate = Session.MinDate - WindowCalcWarmupCandles * duration;
 
-
-        foreach (var candle in SymbolInterval.CandleList.Values)
+        // Walk the key range and look each candle up by its OpenTime instead of enumerating the whole
+        // CandleList. TryGetValue takes the CryptoCandleList read lock, so this is safe against concurrent
+        // writes from the live feed — enumerating .Values is NOT, and threw "collection was modified",
+        // which aborted the refresh and left the chart blank (no axes / no candles). It also avoids
+        // scanning the full ~50k-candle history just to pick out the few hundred window candles.
+        // MinDate (and therefore minDate) is aligned to the interval grid, as are the stored candle
+        // OpenTimes, so stepping by Duration hits the exact keys; gaps (missing candles) are skipped.
+        for (CandleTime time = minDate; time <= Session.MaxDate; time += duration)
         {
-            if (candle.OpenTime < minDate)
-                continue;
-            if (candle.OpenTime > Session.MaxDate)
-                break;
-            WindowCandleList.Add(candle);
+            if (SymbolInterval.CandleList.TryGetValue(time, out CryptoCandle candle))
+                WindowCandleList.Add(candle);
+        }
+    }
+
+    /// <summary>
+    /// Emulator-only: materialise the chart's visible window for the current symbol/interval straight
+    /// from candles.db into the in-memory CandleList. The emulator only loads the intervals its run
+    /// needs, so the chart's interval (e.g. a 3m position) is usually absent; this fills exactly
+    /// [MinDate - warmup .. MaxDate] (TryAdd skips anything already present) without materialising the
+    /// whole interval history. NEVER mutates existing candles — it only adds missing ones.
+    /// </summary>
+    private void LoadWindowCandlesFromDb(CryptoSymbol symbol, CryptoInterval interval)
+    {
+        try
+        {
+            CandleTime fromDate = Session.MinDate - WindowCalcWarmupCandles * interval.Duration;
+            CandleTime toDate = Session.MaxDate;
+
+            using var db = new CandleDatabase(symbol.Exchange);
+            db.Open();
+            var candles = CandleDatabase.LoadCandlesInRange(db.Connection, symbol, interval, fromDate.Minutes, toDate.Minutes);
+            if (candles.Count == 0)
+                return;
+
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            symbolInterval.CandleList.Lock();
+            try
+            {
+                symbolInterval.LastCandle = default;
+                foreach (CryptoCandle candle in candles)
+                {
+                    symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                    if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                        symbolInterval.LastCandle = candle;
+                }
+            }
+            finally
+            {
+                symbolInterval.CandleList.Unlock();
+            }
+        }
+        catch (Exception error)
+        {
+            ScannerLog.Logger.Error(error, $"chart window candle load failed for {symbol.Name} {interval.Name}");
+            GlobalData.AddTextToLogTab($"chart window candle load failed for {symbol.Name} {interval.Name}: {error.Message}");
         }
     }
 

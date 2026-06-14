@@ -39,8 +39,14 @@ public class PositionRow
     // sets up a converting binding that tries to parse the formatted text back to DateTime on every
     // cell realization, throwing a caught FormatException / TypeConverter ArgumentException per cell —
     // which floods the debugger and stutters scrolling. Same approach as the other *Text columns here.
-    public string CreatedText => CreateTime.ToString("yyyy-MM-dd HH:mm");
-    public string ClosedText => CloseTime.HasValue ? CloseTime.Value.ToString("yyyy-MM-dd HH:mm") : "—";
+    // CreateTime/CloseTime are stored as UTC (candle close time), but SQLite/Dapper returns them
+    // with DateTimeKind.Unspecified. SpecifyKind(..., Utc) marks them so ToLocalTime() shifts to the
+    // machine's timezone instead of treating the value as already-local. Matches the signals/results
+    // grids so every grid shows local time consistently.
+    public string CreatedText => DateTime.SpecifyKind(CreateTime, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+    public string ClosedText => CloseTime.HasValue
+        ? DateTime.SpecifyKind(CloseTime.Value, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+        : "—";
 
     public string Duration => CloseTime.HasValue
         ? (CloseTime.Value - CreateTime).ToString(@"hh\:mm\:ss")

@@ -14,6 +14,15 @@
                  FontFamily="Consolas,Menlo,Monaco,monospace"
                  FontSize="11"
                  SelectionMode="Single">
+            <!-- The Fluent default ListBoxItem has a large MinHeight + padding, which made the log
+                 rows spread far apart. Collapse it to a compact single-line row so the density
+                 matches the scanner's log grid. -->
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="MinHeight" Value="0"/>
+                    <Setter Property="Padding" Value="6,1"/>
+                </Style>
+            </ListBox.Styles>
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding}" TextWrapping="NoWrap" />

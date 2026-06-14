@@ -158,9 +158,18 @@ public class CandleDatabase : IDisposable
             "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
             "VALUES ($SymbolId, $IntervalId, $LastSync)";
 
-        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
-        var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; pInterval.Value = symbolInterval.Interval.Id; cmd.Parameters.Add(pInterval);
-        var pLastSync = cmd.CreateParameter(); pLastSync.ParameterName = "$LastSync";
+        var pSymbol = cmd.CreateParameter(); 
+        pSymbol.ParameterName = "$SymbolId"; 
+        pSymbol.Value = symbol.Id; 
+        cmd.Parameters.Add(pSymbol);
+
+        var pInterval = cmd.CreateParameter();
+        pInterval.ParameterName = "$IntervalId"; 
+        pInterval.Value = symbolInterval.Interval.Id; 
+        cmd.Parameters.Add(pInterval);
+
+        var pLastSync = cmd.CreateParameter(); 
+        pLastSync.ParameterName = "$LastSync";
         pLastSync.Value = symbolInterval.LastCandleSynchronized.HasValue
             ? (long)symbolInterval.LastCandleSynchronized.Value.Minutes
             : (object)DBNull.Value;
@@ -179,7 +188,11 @@ public class CandleDatabase : IDisposable
     {
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
-        var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; pSymbol.Value = symbol.Id; cmd.Parameters.Add(pSymbol);
+        
+        var pSymbol = cmd.CreateParameter(); 
+        pSymbol.ParameterName = "$SymbolId"; 
+        pSymbol.Value = symbol.Id; 
+        cmd.Parameters.Add(pSymbol);
 
         Dictionary<int, CryptoSymbolInterval> intervalsId = [];
         foreach (CryptoSymbolInterval si in symbol.Data.SymbolIntervalList)
@@ -307,7 +320,8 @@ public class CandleDatabase : IDisposable
     /// candles that are already in memory (loaded earlier via the bounded startup path)
     /// are silently skipped.
     /// </summary>
-    public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, CryptoSymbolInterval symbolInterval)
+    public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, 
+        CryptoSymbolInterval symbolInterval)
     {
         using var cmd = connection.CreateCommand();
         cmd.CommandText =
@@ -486,8 +500,7 @@ public class CandleDatabase : IDisposable
                 // Honour the same minimal-volume gating as the file loader.
                 // Skipped in the emulator (the user explicitly chose these symbols) so a low-volume
                 // symbol's candles are kept on load instead of being cleared.
-                if (!GlobalData.IsEmulatorMode
-                    && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                if (!GlobalData.IsEmulatorMode&& !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                 {
                     if (symbol.ClearCandles())
                         ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");

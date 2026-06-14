@@ -9,6 +9,10 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Positions
 {
+    // Gap between the candle wick and the end of the vertical open-time line, as a fraction of the
+    // wick price. Keeps the line clear of the wick so the candle stays readable. Tune to taste.
+    private const decimal WickGapPercentage = 0.015m;
+
     // Color convention: Buy orders = green, Sell orders = red.
     // This naturally handles all cases: long entry/DCA (buy=green), long TP (sell=red),
     // short entry/DCA (sell=red), short TP (buy=green).
@@ -69,7 +73,7 @@ public class Positions
     }
 
 
-    internal static void Draw(PlotModel chart, List<CryptoPosition> positionList, CryptoInterval interval,
+    internal static void Draw(PlotModel chart, CryptoSymbol symbol, List<CryptoPosition> positionList, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
         // Label offset: 1.5 candle-widths to the right of the line start
@@ -172,7 +176,25 @@ public class Positions
             // Long grows up from y=0; short hangs down from 2× entry price.
             // TODO: Draw line to the TP above the entry
             OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.DarkGreen : OxyColors.DarkRed;
-            DrawVerticalLine(chart, position.CreateTime, yStart, yEnd, positionColor, group);
+
+            // Stop the vertical line at the wick of the candle at the open time instead of running it
+            // through the candle (which made it impossible to see where the wick begins/ends). Look up
+            // the candle of the CHART interval (aligned to its grid) and end the line at its Low (long,
+            // line approaches from below) or High (short, approaches from above). Fall back to the entry
+            // price when the candle is not in memory.
+            CandleTime openCandleTime = CandleTime.AlignFromDateTime(position.CreateTime, interval.Duration);
+            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            decimal lineEnd;
+            if (symbolInterval.CandleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
+                // Stop a clear gap (WickGapPercentage) short of the wick: below the low (long) or above
+                // the high (short), so the line never touches the candle.
+                lineEnd = position.Side == CryptoTradeSide.Long
+                    ? openCandle.Low * (1m - WickGapPercentage)
+                    : openCandle.High * (1m + WickGapPercentage);
+            else
+                lineEnd = position.EntryPrice!.Value;
+
+            DrawVerticalLine(chart, position.CreateTime, yStart, lineEnd, positionColor, group);
 
             // Break-even and take-profit levels, only while the position is open
             if (position.CloseTime == null)

@@ -513,6 +513,21 @@ public class PositionMonitor //: IDisposable
                                 PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Entry,
                                     signal.Interval, signal.Strategy, GlobalData.Settings.Trading.EntryStrategy,
                                     entryPrice, LastCandle1mCloseTimeDate);
+
+                                // Off-by-one diagnostic: compare the entry candle to the signal's trigger
+                                // candle. delayCandles == 1 means we entered at the trigger candle's close
+                                // (= next candle open, on time); == 2 means one candle too late.
+                                if (TraderTrace.TimingEnabled(Symbol))
+                                {
+                                    double delayCandles = signal.Interval.Duration > 0
+                                        ? (LastCandle1mCloseTimeDate - signal.OpenDate).TotalMinutes / signal.Interval.Duration
+                                        : 0;
+                                    TraderTrace.Timing(Symbol,
+                                        $"entry  {Symbol.Name} {signal.Interval.Name} {signal.Side} {signal.Strategy} " +
+                                        $"trigger.open={signal.OpenDate:yyyy-MM-dd HH:mm} trigger.close={signal.CloseDate:HH:mm} " +
+                                        $"entry={LastCandle1mCloseTimeDate:HH:mm} clock={GlobalData.Clock.UtcNow:HH:mm} " +
+                                        $"entryPrice={entryPrice} delayCandles={delayCandles:0.##}");
+                                }
                             }
                             finally
                             {
@@ -835,7 +850,7 @@ public class PositionMonitor //: IDisposable
         {
             decimal stop = (breakEven * (1m - multiplier * slPct / 100m))
                 .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-            decimal stopToLimitGap = Math.Abs(stop * 0.001m); // 0.1% buffer for the limit beyond the stop
+            decimal stopToLimitGap = Math.Abs(stop * 0.01m); // 1% buffer for the limit beyond the stop
             decimal limit = (stop - multiplier * stopToLimitGap)
                 .Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
             return (price, stop, limit);

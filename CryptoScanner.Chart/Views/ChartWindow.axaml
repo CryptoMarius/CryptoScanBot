@@ -105,11 +105,13 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNwe, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBb, Mode=TwoWay}" Content="NWE × BB signals" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowNweBbAtrRb, Mode=TwoWay}" Content="NWE×BB + AtrRb combo" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSmaLinesSbm, Mode=TwoWay}" Content="SBM SMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbma, Mode=TwoWay}" Content="BBMA lines" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowStoch, Mode=TwoWay}" Content="Stochastic" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowRsi, Mode=TwoWay}" Content="RSI" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowLux, Mode=TwoWay}" Content="Lux" FontSize="12"/>
+						<CheckBox IsChecked="{Binding DisplayOptions.ShowBbPercent, Mode=TwoWay}" Content="BB %B / width" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
 					</StackPanel>
@@ -164,8 +166,14 @@
         </ScrollViewer>
 
         <!-- Right Panel - Chart -->
+        <!-- Host the PlotView directly in XAML (like DashboardPositionsView) so OxyPlot's control
+             theme is applied. Hosting a VM-created PlotView via <ContentControl Content="{Binding PlotView}"/>
+             left it without a template → a completely blank panel. Model is bound to PlotModel; the
+             code-behind hands this control + controller back to the VM. -->
         <Border Grid.Column="1" Margin="8">
-            <ContentControl Content="{Binding PlotView}" />
+            <oxy:PlotView x:Name="PlotViewControl"
+                          Model="{Binding PlotModel}"
+                          Background="Transparent" />
         </Border>
     </Grid>
     

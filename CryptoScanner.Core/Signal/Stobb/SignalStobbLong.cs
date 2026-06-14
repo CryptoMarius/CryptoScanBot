@@ -93,10 +93,18 @@ public class SignalStobbLong : SignalStobbBase
 
         // ********************************************************************
         // Dont trade against the trend (only check current interval)
-        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+        if (settings.CheckTrendPrimaryDirection)
+        {
+            if (!CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+                return false;
+        }
+
+        if (settings.CheckTrendSecondaryDirection)
+        {
+            if (!CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
-        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
+        }
+
 
         // Optional zone-rejection confirmation (DLZ / FVG / SMC). OR over enabled types.
         if (!CheckEnabledZoneRejections(out string zoneInfo))

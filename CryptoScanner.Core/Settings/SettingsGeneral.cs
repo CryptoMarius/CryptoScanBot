@@ -111,5 +111,9 @@ public class SettingsGeneral
     public bool DebugSignalCreate { get; set; } = false;
     public bool DebugTrendCalculation { get; set; } = false;
     public bool DebugAssetManagement { get; set; } = false;
+    // When on, the signal/trade pipeline logs [SIGNAL-TIMING] lines (Info level, so they also land in
+    // the per-run emulator log) tying each signal's trigger candle to the actual entry candle. Used to
+    // prove/disprove an off-by-one ("entry one candle too late"). Respects DebugSymbol as a filter.
+    public bool DebugSignalTiming { get; set; } = false;
 }
 

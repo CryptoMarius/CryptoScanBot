@@ -317,6 +317,16 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalNweBbLong),
             AnalyzeShortType = typeof(SignalNweBbShort),
         });
+
+        // NWE × BB crossover combined with an AtrRb macro-band hit (same side, within 5 candles,
+        // fires on the second). One class serves both sides.
+        Register(new AlgorithmDefinition()
+        {
+            Name = "nwe.bb.atrrb",
+            Strategy = CryptoSignalStrategy.NweBbAtrRb,
+            AnalyzeLongType = typeof(SignalNweBbAtrRb),
+            AnalyzeShortType = typeof(SignalNweBbAtrRb),
+        });
 #endif
 
         //#if DEBUG

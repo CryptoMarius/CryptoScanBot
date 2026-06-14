@@ -52,6 +52,15 @@ public partial class ChartWindow : Window
         {
             DataContext = new ChartWindowViewModel();
         }
+
+        // The PlotView is hosted in XAML (Model bound to PlotModel). Hand the control and its
+        // controller to the VM so ZoomLast / crosshair / axis-tick logic can drive it directly,
+        // exactly like the original named-PlotView pattern did before the refactoring.
+        if (DataContext is ChartWindowViewModel chartVm)
+        {
+            PlotViewControl.Controller = chartVm.PlotController;
+            chartVm.PlotView = PlotViewControl;
+        }
         //if (DataContext is VisualisationViewModel vm)
         //{
         //    vm.PlotView = this.FindControl<PlotView>("PlotViewControl")

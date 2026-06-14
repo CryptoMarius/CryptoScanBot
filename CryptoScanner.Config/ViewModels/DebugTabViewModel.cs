@@ -24,6 +24,9 @@ public partial class DebugTabViewModel : ObservableObject
     [ObservableProperty]
     private bool _debugZoneCandles = false;
 
+    [ObservableProperty]
+    private bool _debugSignalTiming = false;
+
     public void LoadConfig(SettingsGeneral settings)
     {
         DebugTrendCalculation = settings.DebugTrendCalculation;
@@ -32,6 +35,7 @@ public partial class DebugTabViewModel : ObservableObject
         DebugSignalCreate = settings.DebugSignalCreate;
         DebugAssetManagement = settings.DebugAssetManagement;
         DebugZoneCandles = settings.DebugZoneCandles;
+        DebugSignalTiming = settings.DebugSignalTiming;
     }
 
     public void SaveConfig(SettingsGeneral settings)
@@ -42,5 +46,6 @@ public partial class DebugTabViewModel : ObservableObject
         settings.DebugSignalCreate = DebugSignalCreate;
         settings.DebugAssetManagement = DebugAssetManagement;
         settings.DebugZoneCandles = DebugZoneCandles;
+        settings.DebugSignalTiming = DebugSignalTiming;
     }
 }

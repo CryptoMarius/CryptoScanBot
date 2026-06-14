@@ -46,7 +46,8 @@ public class ZoneSession
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
     public bool ShowNwe { get; set; } = true; // NWE non repainting?
     public bool ShowNweRepainting { get; set; } = false;
-    public bool ShowNweBb { get; set; } = false; // NWE × BB crossover markers
+    public bool ShowNweBb { get; set; } = false;
+    public bool ShowNweBbAtrRb { get; set; } = false; // combined NWE×BB + AtrRb (second within 5 candles) // NWE × BB crossover markers
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
@@ -56,6 +57,7 @@ public class ZoneSession
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;
     public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m
+    public bool ShowBbPercent { get; set; } = false; // Bollinger %B + band width in the oscillator panel
     public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
 
