@@ -37,12 +37,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _waitForRsiRecovery = false;
 
-    [ObservableProperty]
-    private bool _checkLuxMaximum = false;
-
-    [ObservableProperty]
-    private int _luxMaximumValue = 100;
-
     // Stoch OS/OB strength gates
     [ObservableProperty]
     private int _stochExtremeLookback = 20;
@@ -68,8 +62,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
         WaitForStochRecovery = settings.WaitForStochRecovery;
         WaitForRsiRecovery = settings.WaitForRsiRecovery;
-        CheckLuxMaximum = settings.CheckLuxMaximum;
-        LuxMaximumValue = settings.LuxMaximumValue;
 
         StochExtremeLookback = settings.StochExtremeLookback;
         StochMinExtremeBars = settings.StochMinExtremeBars;
@@ -89,8 +81,6 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
         settings.WaitForStochRecovery = WaitForStochRecovery;
         settings.WaitForRsiRecovery = WaitForRsiRecovery;
-        settings.CheckLuxMaximum = CheckLuxMaximum;
-        settings.LuxMaximumValue = LuxMaximumValue;
 
         settings.StochExtremeLookback = StochExtremeLookback;
         settings.StochMinExtremeBars = StochMinExtremeBars;

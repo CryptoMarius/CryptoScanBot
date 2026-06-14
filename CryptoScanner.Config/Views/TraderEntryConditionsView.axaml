@@ -114,18 +114,6 @@
 					  Content="Wait if RSI is OS/OB"
 					  FontSize="12"/>
 
-			<!-- Don't enter while the Lux 5m indicator is still extreme (overbought for long, oversold for short) -->
-			<Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto"
-			      ToolTip.Tip="Refuse a long while Lux 5m &gt; value (still overbought), and a short while Lux &lt; -value (still oversold). A refinement of the RSI recovery gate.">
-				<CheckBox IsChecked="{Binding CheckLuxMaximum, Mode=TwoWay}"
-						  Content="Skip while Lux extreme (&gt;)"
-						  FontSize="12"/>
-				<TextBox Grid.Column="2"
-						 Text="{Binding LuxMaximumValue, Mode=TwoWay}"
-						 Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
-						 IsEnabled="{Binding CheckLuxMaximum}"/>
-			</Grid>
-
         </StackPanel>
     </HeaderedContentControl>
 
