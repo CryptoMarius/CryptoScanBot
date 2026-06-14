@@ -91,22 +91,24 @@
     
 
     <Application.Styles>
-        <FluentTheme />
         <!-- DataGrid styles: Essentieel voor rendering van rijen/kolommen -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+
+        <!-- OxyPlot PlotView control theme — REQUIRED. Without it the PlotView has no ControlTemplate
+             and renders as a completely blank panel (no axes, no candles), even when the model is fully
+             populated. The OxyPlot.Avalonia package is referenced so this avares resource resolves. -->
         <StyleInclude Source="avares://OxyPlot.Avalonia/Themes/Default.axaml"/>
 
         <FluentTheme>
+            <FluentTheme.Palettes>
+                <!-- Light mode: kies een lichtere accentkleur -->
+                <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
 
-        <FluentTheme.Palettes>
-            <!-- Light mode: kies een lichtere accentkleur -->
-            <ColorPaletteResources x:Key="Light" Accent="#FF60A0FF" />  <!-- Lichtere blauw, pas aan naar wens (bijv. #FFA0C0FF voor nog lichter) -->
-
-            <!-- Dark mode: behoud standaard of pas aan -->
-            <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
-        </FluentTheme.Palettes>
-    </FluentTheme>
+                <!-- Dark mode: behoud standaard of pas aan -->
+                <ColorPaletteResources x:Key="Dark" Accent="#FF0078D7" />  <!-- Standaard blauw, of donkerder -->
+            </FluentTheme.Palettes>
+        </FluentTheme>
 
         <!-- ============================================ -->
         <!-- OxyPlot tracker popup: dark background, white text -->

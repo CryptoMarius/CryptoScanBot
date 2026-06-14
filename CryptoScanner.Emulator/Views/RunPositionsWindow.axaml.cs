@@ -27,7 +27,13 @@ public partial class RunPositionsWindow : Window
         // Select the row under the cursor on right-click BEFORE the context menu opens, so
         // "Open Symbol Chart" always acts on the row the user actually clicked.
         PositionsGrid.AddHandler(PointerPressedEvent, OnGridPointerPressed, RoutingStrategies.Tunnel);
+
+        // Double-click a position row to open its chart (same action as the context menu) — quicker
+        // than right-click → menu.
+        PositionsGrid.DoubleTapped += OnPositionDoubleTapped;
     }
+
+    private void OnPositionDoubleTapped(object? sender, TappedEventArgs e) => OpenChartForSelectedRow();
 
     private void OnGridPointerPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -41,7 +47,9 @@ public partial class RunPositionsWindow : Window
         }
     }
 
-    private void OnOpenChartClick(object? sender, RoutedEventArgs e)
+    private void OnOpenChartClick(object? sender, RoutedEventArgs e) => OpenChartForSelectedRow();
+
+    private void OpenChartForSelectedRow()
     {
         if (PositionsGrid.SelectedItem is not PositionRow row || string.IsNullOrEmpty(row.Symbol))
             return;

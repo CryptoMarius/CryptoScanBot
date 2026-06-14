@@ -78,7 +78,8 @@ public partial class RunResultsView : UserControl
         if (TopLevel.GetTopLevel(this) is not Window owner)
             return;
 
-        new RunSignalsWindow(row).Show(owner);
+        // Reuse the single signals window instead of opening a new one each time.
+        RunSignalsWindow.ShowSingle(row, owner);
     }
 
 
