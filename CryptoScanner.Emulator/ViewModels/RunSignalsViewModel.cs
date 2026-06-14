@@ -71,9 +71,13 @@ public partial class RunSignalsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<SignalRow> _signals = [];
 
+    /// <summary>The run these signals belong to — passed to the chart so it shows only this run's data.</summary>
+    public int RunId { get; }
+
 
     public RunSignalsViewModel(RunRow run)
     {
+        RunId = run.Id;
         Header = $"Signals for run #{run.Id}  ({run.Label}, started {run.StartedAt:yyyy-MM-dd HH:mm})";
         Load(run.Id);
     }

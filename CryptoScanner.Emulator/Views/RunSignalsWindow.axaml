@@ -15,6 +15,7 @@
         <TextBlock Grid.Row="0" FontWeight="Bold" FontSize="13" Text="{Binding Header}"/>
 
         <DataGrid Grid.Row="1"
+                  x:Name="SignalsGrid"
                   ItemsSource="{Binding Signals}"
                   IsReadOnly="True"
                   CanUserReorderColumns="True"
@@ -22,6 +23,11 @@
                   CanUserSortColumns="True"
                   AutoGenerateColumns="False"
                   GridLinesVisibility="Horizontal">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Open chart" Click="OnOpenChartClick"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Signal time"  Binding="{Binding SignalLocal}" Width="130"/>
                 <DataGridTextColumn Header="Symbol"       Binding="{Binding Symbol}" Width="100"/>

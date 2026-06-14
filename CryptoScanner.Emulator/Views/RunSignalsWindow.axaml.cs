@@ -1,6 +1,12 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
+using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.ViewModels;
+using CryptoScanner.Views;
 
 namespace CryptoScanner.Emulator.Views;
 
@@ -20,6 +26,57 @@ public partial class RunSignalsWindow : Window
     {
         InitializeComponent();
         DataContext = new RunSignalsViewModel(run);
+
+        // Select the row under the cursor on right-click BEFORE the context menu opens, so
+        // "Open chart" always acts on the row the user actually clicked.
+        SignalsGrid.AddHandler(PointerPressedEvent, OnGridPointerPressed, RoutingStrategies.Tunnel);
+
+        // Double-click a signal row to open its chart (same action as the context menu).
+        SignalsGrid.DoubleTapped += OnSignalDoubleTapped;
+    }
+
+    private void OnGridPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(SignalsGrid).Properties.IsRightButtonPressed)
+            return;
+
+        if (e.Source is Visual source && source.FindAncestorOfType<DataGridRow>() is DataGridRow gridRow
+            && gridRow.DataContext is SignalRow row)
+        {
+            SignalsGrid.SelectedItem = row;
+        }
+    }
+
+    private void OnSignalDoubleTapped(object? sender, TappedEventArgs e) => OpenChartForSelectedRow();
+
+    private void OnOpenChartClick(object? sender, RoutedEventArgs e) => OpenChartForSelectedRow();
+
+    private void OpenChartForSelectedRow()
+    {
+        if (SignalsGrid.SelectedItem is not SignalRow row || string.IsNullOrEmpty(row.Symbol))
+            return;
+        if (DataContext is not RunSignalsViewModel viewModel)
+            return;
+
+        // Resolve the symbol (base/quote) from the run's exchange, loaded in memory.
+        var exchange = GlobalData.ActiveExchange;
+        if (exchange == null || !exchange.SymbolListName.TryGetValue(row.Symbol, out var symbol))
+        {
+            viewModel.Status = $"Symbol {row.Symbol} not found in the active exchange.";
+            return;
+        }
+
+        try
+        {
+            // Shared launcher: reuses one window. Centre the chart on the signal's candle (no close time,
+            // so a window around the signal ± a candle margin). Pass the run id so the chart only draws
+            // THIS run's signals/positions.
+            ChartWindowLauncher.Show(symbol.Base, symbol.Quote, row.Interval, row.SignalTime, null, viewModel.RunId);
+        }
+        catch (Exception ex)
+        {
+            viewModel.Status = $"Failed to open chart: {ex.Message}";
+        }
     }
 
     /// <summary>

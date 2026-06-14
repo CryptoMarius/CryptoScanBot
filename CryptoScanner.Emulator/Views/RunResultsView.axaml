@@ -28,13 +28,9 @@
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Show signals…" Click="OnShowSignalsClick"/>
-                    <Separator/>
                     <MenuItem Header="Show settings JSON…" Click="OnShowJsonClick"/>
-                    <Separator/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
-                    <Separator/>
                     <MenuItem Header="Recalculate stats" Click="OnRecalculateClick"/>
-                    <Separator/>
                     <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
