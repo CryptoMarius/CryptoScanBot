@@ -45,11 +45,12 @@ public class NweBbAtrRb
             TrackerFormatString = "{0}\n{Tag}",
         };
 
-        foreach (var marker in NweBbAtrRbDetector.Detect(candles))
+        // Walk-forward: evaluate each visible candle over a trailing window ending at that candle, so the
+        // markers match the live strategy's actual signals instead of the repainting whole-window
+        // approximation (NweBbAtrRbDetector.Detect). Heavier, but faithful. DetectWalkForward already
+        // bounds to [minDate, maxDate], using the candles before minDate only as window context.
+        foreach (var marker in NweBbAtrRbDetector.DetectWalkForward(candles, NweBbAtrRbDetector.StrategyLookback, minDate, maxDate))
         {
-            if (marker.OpenTime < minDate || marker.OpenTime > maxDate)
-                continue;
-
             if (marker.Side == CryptoTradeSide.Long)
             {
                 seriesLong.Points.Add(new ScatterPoint(

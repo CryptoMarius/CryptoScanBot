@@ -13,15 +13,13 @@ namespace CryptoScanner.Core.Signal.Nwe;
 /// </summary>
 public class SignalNweBbAtrRb : SignalCreateBase
 {
-    // How many recent candles to feed the detector. Must comfortably cover the AtrRb EMA/ATR + break
-    // lookback, the NWE×BB lookback (~60) and the NWE repaint warm-up, plus the co-occurrence window.
-    private const int WindowCandles = 350;
-
     public override bool IsSignal()
     {
         ExtraText = "";
 
-        List<CryptoCandle> candles = SymbolInterval.CandleList.GetLastNValues(WindowCandles);
+        // Feed the detector the same trailing window the walk-forward chart overlay uses, so the live
+        // signal and the chart match exactly (NweBbAtrRbDetector.StrategyLookback).
+        List<CryptoCandle> candles = SymbolInterval.CandleList.GetLastNValues(NweBbAtrRbDetector.StrategyLookback);
         if (candles.Count < 60)
         {
             ExtraText = "insufficient history for nwe.bb × atrrb";
