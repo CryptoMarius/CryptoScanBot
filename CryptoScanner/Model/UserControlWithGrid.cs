@@ -5,6 +5,7 @@ using Avalonia.VisualTree;
 
 using CryptoScanner.Commands;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Services;
 using CryptoScanner.ViewModels;
 using CryptoScanner.Views;
@@ -183,9 +184,18 @@ public abstract partial class UserControlWithGrid<T> : UserControl where T : cla
         if (_dataGrid.SelectedItem != null)
         {
             var parentWindow = this.FindAncestorOfType<Window>();
-            var command = new CommandLaunchTradingAppStandard();
-            command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
-            e.Handled = true;
+            if (GlobalData.Settings.General.DoubleClickAction == CryptoDoubleClickAction.ActivateChartForm)
+            {
+                var command = new CommandShowChart();
+                command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
+                e.Handled = true;
+            }
+            else
+            {
+                var command = new CommandLaunchTradingAppStandard();
+                command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
+                e.Handled = true;
+            }
         }
     }
 
