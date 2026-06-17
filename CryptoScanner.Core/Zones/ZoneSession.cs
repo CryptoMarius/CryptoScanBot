@@ -52,6 +52,7 @@ public class ZoneSession
     public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowAtrRbBands { get; set; } = false; // AtrRb Bands & Ribbon
     public bool ShowAtrRbSignals { get; set; } = false; // stored AtrRb signals (real triggers)
+    public bool ShowSlide { get; set; } = false; // experimental "glijbaan" (slide) detector overlay
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;

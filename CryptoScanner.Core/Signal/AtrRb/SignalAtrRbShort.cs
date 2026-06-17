@@ -4,14 +4,10 @@ using CryptoScanner.Core.Signal.Helpers;
 namespace CryptoScanner.Core.Signal.AtrRb;
 
 /// <summary>
-/// "settings" algorithm — fires a (short) alert when price hits the macro upper band of the
-/// AtrRb Bands construction, i.e. the exact moment the chart prints its upper-band percentage
-/// label. The reported percentage matches the chart label.
-///
-/// Entry placement:
-///   - wick only touches the band  -> entry on the band
-///   - body breaks through the band -> entry on the close
-/// Stop-loss: the same percentage shown in the label, placed above the entry.
+/// Mean Reversion Bands — short signal. Fires when price breaks the UPPER band (wick or close) while
+/// RSI is overbought (confluence). Optionally suppressed while the coin is in an UP-slide (don't short a
+/// melt-up). Entry on the band, or on the close when the close itself broke through; stop-loss =
+/// StopLossAtrFactor * ATR%.
 /// </summary>
 public class SignalAtrRbShort : SignalAtrRbBase
 {
@@ -28,16 +24,42 @@ public class SignalAtrRbShort : SignalAtrRbBase
         _slPercentage = null;
 
         var settings = GlobalData.Settings.Signal.AtrRb;
-        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
+
+        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last AtrRb signal.
+        if (InCooldown())
         {
-            ExtraText = $"bb.width out of range {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            ExtraText = "cooldown active";
             return false;
         }
 
+        // Cheap RSI confluence first (precomputed lookup): a sell needs overbought. The OB/OS levels come
+        // from the general RSI settings (Indicators tab), so all strategies share the same thresholds.
+        if (settings.UseRsiFilter)
+        {
+            double? rsi = CandleLast.CandleData?.Rsi;
+            if (!rsi.HasValue || rsi.Value < GlobalData.Settings.General.SettingsRsi.Overbought)
+            {
+                ExtraText = $"rsi not overbought ({rsi:N0})";
+                return false;
+            }
+        }
+
+        // The (rarer, more expensive) upper-band break.
         if (!AtrRbBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand))
         {
             ExtraText = "no upper band break";
             return false;
+        }
+
+        // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
+        if (settings.UseSlideFilter)
+        {
+            AtrRbBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out _, out bool slidingUp);
+            if (slidingUp)
+            {
+                ExtraText = "suppressed: up-slide active";
+                return false;
+            }
         }
 
         // Optional DLZ/FVG/SMC zone confluence (settings checkboxes). Checked only after the rare band
@@ -51,17 +73,13 @@ public class SignalAtrRbShort : SignalAtrRbBase
         var candle = CandleLast.Candle;
         decimal band = (decimal)upperBand;
 
-        // Entry placement (band is this break candle's upper band):
-        //   - only the wick (high) pierced the band, close still below it -> entry on the band
-        //   - the close itself broke above the band                       -> entry on the close
-        _entryPrice = candle.Close > band ? candle.Close : band;
+        // Entry = the most extreme (HIGHEST) of the wick (High), the Close and the band.
+        _entryPrice = Math.Max(candle.High, Math.Max(candle.Close, band));
 
-        // Stop-loss: the percentage shown in the label (factor * ATR%), handed to the trader as the
-        // SL distance from the entry. Only when enabled; otherwise leave null so the trader falls back
-        // to its default percentage stop-loss.
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
+        MarkSignalFired();
         ExtraText = $"hit upper band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
         return true;
     }

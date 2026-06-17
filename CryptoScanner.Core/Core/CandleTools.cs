@@ -151,6 +151,14 @@ public static class CandleTools
     public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime,
         decimal open, decimal high, decimal low, decimal close, decimal quoteVolume)
     {
+        // Guard against empty/invalid candles (any OHLC <= 0). A no-trade minute or a price that rounds
+        // to 0 (too-small PriceDecimals) would otherwise be stored as an all-zero candle and corrupt the
+        // higher timeframes. Skip it (don't store, don't touch LastPrice) and return the last valid candle;
+        // the missing minute is back-filled as a flat candle (previous close) by BulkAddMissingCandles.
+        // Central chokepoint, so every exchange's SubscriptionKLineTicker is covered by this one check.
+        if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
+            return symbol.GetSymbolInterval(GlobalData.IntervalList[0].IntervalPeriod).LastCandle;
+
         await symbol.Data.CandleLock.WaitAsync();
         try
         {

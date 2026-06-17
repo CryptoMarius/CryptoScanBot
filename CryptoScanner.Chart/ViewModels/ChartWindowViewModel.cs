@@ -1063,7 +1063,12 @@ public partial class ChartWindowViewModel : ObservableObject
         // exactly, unlike the recomputed band-break labels above.
         group = "atrrb.signals";
         if (Toggle(model, group, Session.ShowAtrRbSignals))
-            AtrRbSignals.Draw(model, SignalList, Session.MinDate, Session.MaxDate, group);
+            AtrRbSignals.Draw(model, SignalList, Interval, Session.MinDate, Session.MaxDate, group);
+
+        // Experimental "glijbaan" (slide) detector overlay — additive, nothing else uses it yet.
+        group = "slide";
+        if (Toggle(model, group, Session.ShowSlide))
+            Slide.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw PSar
         group = "psar";
@@ -1803,7 +1808,7 @@ public partial class ChartWindowViewModel : ObservableObject
                 $"series={PlotModel?.Series.Count ?? 0}, " +
                 $"range {Session.MinDate.ToDateTime():yyyy-MM-dd HH:mm}..{Session.MaxDate.ToDateTime():yyyy-MM-dd HH:mm}");
 
-            WindowTitle = $"{Symbol.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
+            WindowTitle = $"{Symbol?.Exchange.Name}.{Session.SymbolBase}{Session.SymbolQuote} {Session.IntervalName}";
         }
         catch (Exception error)
         {

@@ -6,26 +6,24 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.Core.Signal.Helpers;
 
 /// <summary>
-/// Shared parameters and calculations for the "AtrRb Bands &amp; Ribbon" construction
-/// (a Keltner-style EMA basis with ATR based bands). The chart drawer and the "settings"
-/// signal algorithm both read these constants so they stay in sync — change them here
-/// and both the chart and the alert follow.
+/// Shared calculations for the "Mean Reversion Bands" construction (Bollinger basis + a fast ATR term):
+///   basis = SMA(Length)
+///   band  = Mult * stdev(Length) + AtrMult * ATR(AtrLength)
+///   upper = basis + band,  lower = basis - band
+/// The chart drawer (AtrRbBands) and the atrrb signal (SignalAtrRbLong/Short) both read these, so the
+/// chart and the alert stay in sync — change the parameters in GlobalData.Settings.Signal.AtrRb and both
+/// follow. A break is simply a wick or close outside the band (no lowest/highest filter; the signal
+/// supersede rule keeps only the latest break). The symmetric slide ("glijbaan") detection lives here too.
 /// </summary>
 public static class AtrRbBandsHelper
 {
-    // The band parameters (Len / OuterMult / InnerMult / BreakLookback) now live in
-    // GlobalData.Settings.Signal.AtrRb so the user can tune them; the chart drawer reads the same
-    // settings, so chart and alert stay in sync.
-
-    // Number of candles to feed the EMA/ATR calculation. Matches the signal pipeline window.
+    // Number of candles to feed the SMA/stdev/ATR calculation. Matches the signal pipeline window.
     private const int CalculationCandles = 260;
 
     /// <summary>
-    /// Returns true when the candle at <paramref name="openTime"/> breaks below the macro lower
-    /// band (EMA - ATR * OuterMult) and is the lowest Low within the trailing BreakLookback window.
-    /// This mirrors exactly the lower-band label condition drawn on the chart.
-    /// <paramref name="pctDeviation"/> is the percentage the Low sits below the basis,
-    /// the same number printed as the chart label.
+    /// Returns true when the candle at <paramref name="openTime"/> breaks below the lower band — a wick
+    /// (Low) or the Close sitting under it. <paramref name="pctDeviation"/> is the stop-loss distance the
+    /// signal applies (StopLossAtrFactor * ATR%), <paramref name="lowerBand"/> the band value.
     /// </summary>
     public static bool IsLowerBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
         out double pctDeviation, out double lowerBand)
@@ -34,32 +32,23 @@ public static class AtrRbBandsHelper
         lowerBand = 0;
 
         var settings = GlobalData.Settings.Signal.AtrRb;
-
-        // Thread-safe ascending snapshot of the most recent candles.
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
-        if (candles.Count < settings.Length + settings.BreakLookback)
+        if (candles.Count < settings.Length + 1)
             return false;
 
-        // Locate the requested (just-closed) candle. If it is not in the snapshot, DON'T fire — the old
-        // fallback to candles.Count-1 (the previous candle) made the band come from the wrong candle,
-        // while the signal class read high/low/close from CandleLast, so the entry landed on the
-        // previous candle's band.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
             return false;
 
-        // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        return LowerBandBreakAt(candles, emaList, atrList, idx, out pctDeviation, out lowerBand);
+        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
+        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        return LowerBandBreakAt(candles, bbList, atrList, slAtrList, idx, out pctDeviation, out lowerBand);
     }
 
     /// <summary>
-    /// Returns true when the candle at <paramref name="openTime"/> breaks above the macro upper
-    /// band (EMA + ATR * OuterMult) and is the highest High within the trailing BreakLookback window.
-    /// This mirrors exactly the upper-band label condition drawn on the chart.
-    /// <paramref name="pctDeviation"/> is the percentage the High sits above the basis,
-    /// the same number printed as the chart label.
+    /// Returns true when the candle at <paramref name="openTime"/> breaks above the upper band — a wick
+    /// (High) or the Close sitting over it. See <see cref="IsLowerBandBreak"/>.
     /// </summary>
     public static bool IsUpperBandBreak(CryptoSymbolInterval symbolInterval, CandleTime openTime,
         out double pctDeviation, out double upperBand)
@@ -68,31 +57,24 @@ public static class AtrRbBandsHelper
         upperBand = 0;
 
         var settings = GlobalData.Settings.Signal.AtrRb;
-
-        // Thread-safe ascending snapshot of the most recent candles.
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
-        if (candles.Count < settings.Length + settings.BreakLookback)
+        if (candles.Count < settings.Length + 1)
             return false;
 
-        // Locate the requested (just-closed) candle. If it is not in the snapshot, DON'T fire — the old
-        // fallback to candles.Count-1 (the previous candle) made the band come from the wrong candle,
-        // while the signal class read high/low/close from CandleLast, so the entry landed on the
-        // previous candle's band.
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < 0)
             return false;
 
-        // EMA(Len) basis and ATR(Len), computed exactly like the chart drawer.
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        return UpperBandBreakAt(candles, emaList, atrList, idx, out pctDeviation, out upperBand);
+        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
+        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        return UpperBandBreakAt(candles, bbList, atrList, slAtrList, idx, out pctDeviation, out upperBand);
     }
 
     /// <summary>
-    /// Returns the macro LOWER band value (EMA - ATR * OuterMult) at <paramref name="openTime"/> without
-    /// the break / lowest-low conditions — used by the AtrRb delayed entry to read the band of the candle
-    /// after the signal. <paramref name="pctDeviation"/> is the SL distance % (factor * ATR%) at that candle.
-    /// Returns false only when there is not enough history / the candle is not in the snapshot.
+    /// Returns the LOWER band value at <paramref name="openTime"/> without the break condition — used by
+    /// the delayed entry to read the band of the candle after the signal. <paramref name="pctDeviation"/>
+    /// is the SL distance % (factor * ATR%) at that candle.
     /// </summary>
     public static bool TryGetLowerBand(CryptoSymbolInterval symbolInterval, CandleTime openTime,
         out double lowerBand, out double pctDeviation)
@@ -106,22 +88,16 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        double? basis = emaList[idx].Ema;
-        double? atr = atrList[idx].Atr;
-        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
+        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
+        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        if (!TryBand(bbList, atrList, idx, out _, out lowerBand))
             return false;
-
-        lowerBand = basis.Value - atr.Value * settings.OuterMult;
-        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
+        pctDeviation = StopLossPercent(slAtrList, candles, idx);
         return true;
     }
 
-    /// <summary>
-    /// Returns the macro UPPER band value (EMA + ATR * OuterMult) at <paramref name="openTime"/>. See
-    /// <see cref="TryGetLowerBand"/>.
-    /// </summary>
+    /// <summary>Returns the UPPER band value at <paramref name="openTime"/>. See <see cref="TryGetLowerBand"/>.</summary>
     public static bool TryGetUpperBand(CryptoSymbolInterval symbolInterval, CandleTime openTime,
         out double upperBand, out double pctDeviation)
     {
@@ -134,95 +110,124 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        List<EmaResult> emaList = (List<EmaResult>)candles.GetEma(settings.Length);
-        List<AtrResult> atrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        double? basis = emaList[idx].Ema;
-        double? atr = atrList[idx].Atr;
-        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
+        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
+        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        if (!TryBand(bbList, atrList, idx, out upperBand, out _))
             return false;
-
-        upperBand = basis.Value + atr.Value * settings.OuterMult;
-        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
+        pctDeviation = StopLossPercent(slAtrList, candles, idx);
         return true;
     }
 
     /// <summary>
-    /// Core lower-band-break test against a candle list with pre-computed EMA/ATR (Skender results
-    /// aligned 1:1 to <paramref name="candles"/> by index). The per-symbol-interval overload above
-    /// calls this, so the band logic lives in one place. Computing EMA/ATR once and scanning every
-    /// index is far cheaper than re-deriving them per candle when a whole window has to be evaluated.
+    /// Computes the upper/lower band at <paramref name="idx"/> from pre-computed Bollinger (already
+    /// including Mult * stdev) and ATR results. band = bollinger +/- AtrMult * ATR.
+    /// </summary>
+    public static bool TryBand(IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
+        int idx, out double upperBand, out double lowerBand)
+    {
+        upperBand = 0;
+        lowerBand = 0;
+        if (idx < 0 || idx >= bbList.Count)
+            return false;
+
+        double? bbUpper = bbList[idx].UpperBand;
+        double? bbLower = bbList[idx].LowerBand;
+        double? atr = atrList[idx].Atr;
+        if (!bbUpper.HasValue || !bbLower.HasValue || !atr.HasValue)
+            return false;
+
+        double pad = GlobalData.Settings.Signal.AtrRb.AtrMult * atr.Value;
+        upperBand = bbUpper.Value + pad;
+        lowerBand = bbLower.Value - pad;
+        return true;
+    }
+
+    /// <summary>
+    /// Core lower-band-break test against a candle list with pre-computed Bollinger/ATR. A break is a
+    /// wick (Low) OR Close below the lower band. Computing the indicators once and scanning each index is
+    /// far cheaper than re-deriving them per candle when a whole window has to be evaluated.
     /// </summary>
     public static bool LowerBandBreakAt(IReadOnlyList<CryptoCandle> candles,
-        IReadOnlyList<EmaResult> emaList, IReadOnlyList<AtrResult> atrList, int idx,
-        out double pctDeviation, out double lowerBand)
+        IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
+        IReadOnlyList<AtrResult> slAtrList, int idx, out double pctDeviation, out double lowerBand)
     {
         pctDeviation = 0;
-        lowerBand = 0;
-
-        var settings = GlobalData.Settings.Signal.AtrRb;
-        if (idx < 0 || idx >= candles.Count)
-            return false;
-        if (idx < settings.BreakLookback - 1)
+        if (!TryBand(bbList, atrList, idx, out _, out lowerBand))
             return false;
 
-        double? basis = emaList[idx].Ema;
-        double? atr = atrList[idx].Atr;
-        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
+        if ((double)candles[idx].Low >= lowerBand && (double)candles[idx].Close >= lowerBand)
             return false;
 
-        lowerBand = basis.Value - atr.Value * settings.OuterMult;
+        pctDeviation = StopLossPercent(slAtrList, candles, idx);
+        return true;
+    }
 
-        double low = (double)candles[idx].Low;
-        if (low >= lowerBand)
+    /// <summary>Core upper-band-break test. See <see cref="LowerBandBreakAt"/>.</summary>
+    public static bool UpperBandBreakAt(IReadOnlyList<CryptoCandle> candles,
+        IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
+        IReadOnlyList<AtrResult> slAtrList, int idx, out double pctDeviation, out double upperBand)
+    {
+        pctDeviation = 0;
+        if (!TryBand(bbList, atrList, idx, out upperBand, out _))
             return false;
 
-        // Only fire on the lowest Low within the trailing window (matches ta.lowest filter).
-        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
-        {
-            if ((double)candles[j].Low < low)
-                return false;
-        }
+        if ((double)candles[idx].High <= upperBand && (double)candles[idx].Close <= upperBand)
+            return false;
 
-        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
+        pctDeviation = StopLossPercent(slAtrList, candles, idx);
         return true;
     }
 
     /// <summary>
-    /// Core upper-band-break test against a candle list with pre-computed EMA/ATR. See
-    /// <see cref="LowerBandBreakAt"/>.
+    /// Stop-loss distance the signal/label reports: StopLossAtrFactor * ATR(Length)%. The SL uses the
+    /// SLOW ATR over the band Length (not the fast AtrLength used to shape the band), so the percentage
+    /// stays stable through a volatile rally — matching the reference chart's break labels (~0.85%)
+    /// instead of spiking with the fast ATR.
     /// </summary>
-    public static bool UpperBandBreakAt(IReadOnlyList<CryptoCandle> candles,
-        IReadOnlyList<EmaResult> emaList, IReadOnlyList<AtrResult> atrList, int idx,
-        out double pctDeviation, out double upperBand)
+    private static double StopLossPercent(IReadOnlyList<AtrResult> slAtrList, IReadOnlyList<CryptoCandle> candles, int idx)
     {
-        pctDeviation = 0;
-        upperBand = 0;
+        double? atr = (idx >= 0 && idx < slAtrList.Count) ? slAtrList[idx].Atr : null;
+        if (!atr.HasValue)
+            return 0;
+        return GlobalData.Settings.Signal.AtrRb.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
+    }
+
+    /// <summary>
+    /// Symmetric slide ("glijbaan") detection at <paramref name="openTime"/> using the Kaufman efficiency
+    /// ratio over SlideWindow bars: efficiency = |net change| / (sum of absolute bar-to-bar moves).
+    /// A high efficiency + a real net move = an orderly one-way slide.
+    ///   <paramref name="slidingDown"/> = an efficient DOWN move (suppress longs),
+    ///   <paramref name="slidingUp"/>   = an efficient UP move   (suppress shorts).
+    /// </summary>
+    public static void ComputeSlide(CryptoSymbolInterval symbolInterval, CandleTime openTime,
+        out bool slidingDown, out bool slidingUp)
+    {
+        slidingDown = false;
+        slidingUp = false;
 
         var settings = GlobalData.Settings.Signal.AtrRb;
-        if (idx < 0 || idx >= candles.Count)
-            return false;
-        if (idx < settings.BreakLookback - 1)
-            return false;
+        int window = settings.SlideWindow;
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 2);
+        int idx = candles.FindIndex(c => c.OpenTime == openTime);
+        if (idx < window)
+            return;
 
-        double? basis = emaList[idx].Ema;
-        double? atr = atrList[idx].Atr;
-        if (!basis.HasValue || !atr.HasValue || basis.Value == 0)
-            return false;
+        double closeNow = (double)candles[idx].Close;
+        double closeThen = (double)candles[idx - window].Close;
+        if (closeThen == 0)
+            return;
 
-        upperBand = basis.Value + atr.Value * settings.OuterMult;
+        double change = closeNow - closeThen;          // negative = down over the window
+        double path = 0;
+        for (int j = idx - window + 1; j <= idx; j++)
+            path += Math.Abs((double)candles[j].Close - (double)candles[j - 1].Close);
 
-        double high = (double)candles[idx].High;
-        if (high <= upperBand)
-            return false;
+        double efficiency = path > 0 ? Math.Abs(change) / path : 0;
+        double movePct = Math.Abs(change) / closeThen * 100.0;
 
-        // Only fire on the highest High within the trailing window (matches ta.highest filter).
-        for (int j = idx - settings.BreakLookback + 1; j < idx; j++)
-        {
-            if ((double)candles[j].High > high)
-                return false;
-        }
-
-        pctDeviation = settings.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
-        return true;
+        bool qualifies = efficiency >= settings.SlideMinEfficiency && movePct >= settings.SlideMinMovePercent;
+        slidingDown = qualifies && change < 0;
+        slidingUp = qualifies && change > 0;
     }
 }

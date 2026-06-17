@@ -83,9 +83,14 @@
                 </HeaderedContentControl>
 
 
-                <!-- Display Options -->
-                <HeaderedContentControl Classes="groupbox" Header="Display">
-                    <StackPanel Margin="4" Spacing="-7">
+                <!-- Display Options — collapsed into a flyout so they don't take the whole left panel -->
+                <Button Content="Display options ▾"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Margin="4,10,4,4" Padding="4">
+                    <Button.Flyout>
+                        <Flyout Placement="Right">
+                            <ScrollViewer MaxHeight="640" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="4" Spacing="2" MinWidth="180">
                         <!-- not working, turned off -->
                         <!--
                         <CheckBox IsChecked="{Binding DisplayOptions.Transparent, Mode=TwoWay}" Content="Transparent" FontSize="12"/>
@@ -102,6 +107,7 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowKeltnerChannel, Mode=TwoWay}" Content="Keltner Channel" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowAtrRbBands, Mode=TwoWay}" Content="ATR Reversal Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowAtrRbSignals, Mode=TwoWay}" Content="ATR Reversal signals (actual)" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowSlide, Mode=TwoWay}" Content="Slide / glijbaan (experimental)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowPSar, Mode=TwoWay}" Content="PSar" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNweRepainting, Mode=TwoWay}" Content="NWE (repainting)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowNwe, Mode=TwoWay}" Content="NWE (not repainting)" FontSize="12"/>
@@ -115,7 +121,10 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
 					</StackPanel>
-                </HeaderedContentControl>
+                            </ScrollViewer>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
 
 				<!-- Action Buttons -->
 				<Grid ColumnDefinitions="*,*,*" Margin="0,6,4,0" ColumnSpacing="4">

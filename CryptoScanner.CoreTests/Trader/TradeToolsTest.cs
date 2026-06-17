@@ -51,7 +51,7 @@ public class TradeToolsTest : TestBase
         CryptoPosition position = PositionTools.CreatePosition(symbol, CryptoSignalStrategy.Stobb,
             CryptoTradeSide.Long, "Test", symbolInterval, lastCandle1mCloseTimeDate);
         database.Connection.Insert<CryptoPosition>(position);
-        GlobalData.ActiveExchange!.Data.PositionList.Add(symbol.Name, position);
+        GlobalData.ActiveExchange!.Data.PositionList[symbol.Name] = position;
 
         CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
 

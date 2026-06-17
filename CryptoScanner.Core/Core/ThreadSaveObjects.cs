@@ -6,6 +6,7 @@ using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
 
 using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace CryptoScanner.Core.Core;
 
@@ -42,8 +43,41 @@ public class ThreadSaveObjects
     /// insert/update/delete rules (negative Id = delete, 0 = insert, positive = update) live
     /// in exactly one place.
     /// </summary>
+    // Cached persisted double/double? properties per type (excludes Dapper [Computed] / [Write(false)]).
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PersistedDoubleProps = new();
+
+    private static PropertyInfo[] GetPersistedDoubleProps(Type type) =>
+        PersistedDoubleProps.GetOrAdd(type, t => t
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.CanWrite
+                && (p.PropertyType == typeof(double) || p.PropertyType == typeof(double?))
+                && p.GetCustomAttribute<ComputedAttribute>() == null
+                && (p.GetCustomAttribute<WriteAttribute>()?.Write ?? true))
+            .ToArray());
+
+    /// <summary>
+    /// SQLite rejects NaN/Infinity ("Cannot store 'NaN' values"). An indicator occasionally yields a
+    /// NaN (e.g. a divide-by-zero in a surface/slope calc) which then lands in a persisted double of a
+    /// CryptoSignal. Scrub those just before writing: NaN/Inf -> null for nullable doubles, -> 0 for
+    /// non-nullable, so one bad value can't abort the whole batch.
+    /// </summary>
+    private static void SanitizeDoubles(object o)
+    {
+        foreach (PropertyInfo p in GetPersistedDoubleProps(o.GetType()))
+        {
+            object? val = p.GetValue(o);
+            if (val == null)
+                continue;
+            double d = (double)val;
+            if (double.IsNaN(d) || double.IsInfinity(d))
+                p.SetValue(o, p.PropertyType == typeof(double?) ? null : (object)0.0);
+        }
+    }
+
     private static void WriteObject(CryptoDatabase databaseThread, SqliteTransaction transaction, object o)
     {
+        SanitizeDoubles(o);
+
         if (o is CryptoSignal signal)
         {
             if (signal.Id == 0)

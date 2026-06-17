@@ -7,28 +7,43 @@ namespace CryptoScanner.Config.ViewModels;
 public partial class StrategyAtrRbSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
-    private int _length = 20;
+    private int _length = 90;
 
     [ObservableProperty]
-    private double _outerMult = 4.2;
+    private double _mult = 2.5;
 
     [ObservableProperty]
-    private double _innerMult = 1.0;
+    private int _atrLength = 14;
 
     [ObservableProperty]
-    private int _breakLookback = 5;
+    private double _atrMult = 1.0;
+
+    [ObservableProperty]
+    private bool _useRsiFilter = true;
+
+    [ObservableProperty]
+    private bool _useSlideFilter = false;
+
+    [ObservableProperty]
+    private int _slideWindow = 40;
+
+    [ObservableProperty]
+    private double _slideMinEfficiency = 0.35;
+
+    [ObservableProperty]
+    private double _slideMinMovePercent = 1.0;
+
+    [ObservableProperty]
+    private bool _useCooldown = true;
+
+    [ObservableProperty]
+    private int _cooldownBars = 10;
 
     [ObservableProperty]
     private bool _useStopLoss = true;
 
     [ObservableProperty]
     private double _stopLossAtrFactor = 2.0;
-
-    [ObservableProperty]
-    private double _bBMinPercentage = 1.50;
-
-    [ObservableProperty]
-    private double _bBMaxPercentage = 0.0;
 
     [ObservableProperty]
     private bool _useDlzZone = false;
@@ -43,13 +58,18 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     public void LoadConfig(string caption, SettingsSignalStrategyAtrRb settings)
     {
         Length = settings.Length;
-        OuterMult = settings.OuterMult;
-        InnerMult = settings.InnerMult;
-        BreakLookback = settings.BreakLookback;
+        Mult = settings.Mult;
+        AtrLength = settings.AtrLength;
+        AtrMult = settings.AtrMult;
+        UseRsiFilter = settings.UseRsiFilter;
+        UseSlideFilter = settings.UseSlideFilter;
+        SlideWindow = settings.SlideWindow;
+        SlideMinEfficiency = settings.SlideMinEfficiency;
+        SlideMinMovePercent = settings.SlideMinMovePercent;
+        UseCooldown = settings.UseCooldown;
+        CooldownBars = settings.CooldownBars;
         UseStopLoss = settings.UseStopLoss;
         StopLossAtrFactor = settings.StopLossAtrFactor;
-        BBMinPercentage = settings.BBMinPercentage;
-        BBMaxPercentage = settings.BBMaxPercentage;
         UseDlzZone = settings.UseDlzZone;
         UseFvgZone = settings.UseFvgZone;
         UseSmcZone = settings.UseSmcZone;
@@ -58,13 +78,18 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     public void SaveConfig(SettingsSignalStrategyAtrRb settings)
     {
         settings.Length = Length;
-        settings.OuterMult = OuterMult;
-        settings.InnerMult = InnerMult;
-        settings.BreakLookback = BreakLookback;
+        settings.Mult = Mult;
+        settings.AtrLength = AtrLength;
+        settings.AtrMult = AtrMult;
+        settings.UseRsiFilter = UseRsiFilter;
+        settings.UseSlideFilter = UseSlideFilter;
+        settings.SlideWindow = SlideWindow;
+        settings.SlideMinEfficiency = SlideMinEfficiency;
+        settings.SlideMinMovePercent = SlideMinMovePercent;
+        settings.UseCooldown = UseCooldown;
+        settings.CooldownBars = CooldownBars;
         settings.UseStopLoss = UseStopLoss;
         settings.StopLossAtrFactor = StopLossAtrFactor;
-        settings.BBMinPercentage = BBMinPercentage;
-        settings.BBMaxPercentage = BBMaxPercentage;
         settings.UseDlzZone = UseDlzZone;
         settings.UseFvgZone = UseFvgZone;
         settings.UseSmcZone = UseSmcZone;

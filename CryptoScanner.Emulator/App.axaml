@@ -34,6 +34,9 @@
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#FBFBFB"/>
 
+                    <!-- Window outline: a dark-ish gray that stands out against light window/desktop. -->
+                    <SolidColorBrush x:Key="WindowBorderBrush" Color="#606060"/>
+
                     <!--  Background color + grid oneven color 
                     <Color x:Key="MyBackground1">#f0f0f0</Color>
                     <Color x:Key="MyBackground2">#e8e8e8</Color>
@@ -66,6 +69,9 @@
                     <SolidColorBrush x:Key="PriceDownBrush">#cd4040</SolidColorBrush>
 
                     <SolidColorBrush x:Key="AlternatingBrushColor" Color="#121212"/>
+
+                    <!-- Window outline: a light gray that stands out against the dark window/desktop. -->
+                    <SolidColorBrush x:Key="WindowBorderBrush" Color="#A0A0A0"/>
 
                     <!-- Background color + grid oneven color
                     <Color x:Key="MyBackground1">#202020</Color>
@@ -127,9 +133,21 @@
             <Setter Property="AllowAutoHide" Value="False" />
         </Style>
 
-        <!-- Title bar theme-aware styling -->
+        <!-- Context menus: suppress the up/down scroll chevrons on short menus. Disabling vertical
+             scrolling on the menu's ScrollViewer removes the arrows; these menus always fit on screen. -->
+        <Style Selector="ContextMenu /template/ ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+        <Style Selector="MenuFlyoutPresenter /template/ ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+
+        <!-- Title bar theme-aware styling. A 1px border gives every window a visible outline so the
+             edges/top are findable against the desktop (especially in dark mode / extended client area). -->
         <Style Selector="Window">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
 

@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -13,6 +15,38 @@ namespace CryptoScanner.Core.Signal.AtrRb;
 /// </summary>
 public class SignalAtrRbBase : SignalCreateBase
 {
+    // Shared last-signal time per symbol+interval — long and short share one cooldown, like the Pine
+    // script. Static so both side instances (and rescans) see the same state; this survives the signal
+    // leaving the SignalList (a position-bound signal is removed, but the cooldown must still apply).
+    private static readonly ConcurrentDictionary<string, CandleTime> LastSignalTime = new();
+
+    private string CooldownKey() => $"{Symbol.Name}|{Interval.IntervalPeriod}";
+
+    /// <summary>
+    /// True while still within the cooldown window after the last AtrRb signal on this symbol+interval
+    /// (shared long &amp; short): CooldownBars candles must pass before a new signal may fire.
+    /// </summary>
+    protected bool InCooldown()
+    {
+        var settings = GlobalData.Settings.Signal.AtrRb;
+        if (!settings.UseCooldown)
+            return false;
+        if (!LastSignalTime.TryGetValue(CooldownKey(), out CandleTime last))
+            return false;
+        // A candle BEFORE the recorded time means a new/earlier (re)run — stale state from a previous
+        // emulator run — so it is NOT a cooldown; the first signal of this run overwrites it again.
+        if (CandleLast.Candle.OpenTime.Minutes < last.Minutes)
+            return false;
+        uint elapsed = CandleLast.Candle.OpenTime.Minutes - last.Minutes;
+        return elapsed < (uint)(settings.CooldownBars * Interval.Duration);
+    }
+
+    /// <summary>Records that an AtrRb signal fired on the current candle, starting the cooldown.</summary>
+    protected void MarkSignalFired()
+    {
+        LastSignalTime[CooldownKey()] = CandleLast.Candle.OpenTime;
+    }
+
     /// <summary>
     /// Delayed entry (per the AtrRb playbook):
     ///   - Wait one candle after the signal candle.
@@ -67,21 +101,15 @@ public class SignalAtrRbBase : SignalCreateBase
         {
             decimal entry = (decimal)nextBandD;
 
-            // Body break on the signal candle → use the further of (signal close, next band):
-            // lower for a long, higher for a short.
+            // Entry = the most extreme of the wick, the Close and the band: LOWEST for a long, HIGHEST
+            // for a short. So we keep going with the highest/lowest price of the signal candle and the
+            // (next) candle's band.
             if (signal.Candle.HasValue)
             {
                 CryptoCandle sigCandle = signal.Candle.Value;
-                bool signalBandOk = isLong
-                    ? AtrRbBandsHelper.TryGetLowerBand(symbolInterval, sigCandle.OpenTime, out double sigBandD, out _)
-                    : AtrRbBandsHelper.TryGetUpperBand(symbolInterval, sigCandle.OpenTime, out sigBandD, out _);
-                if (signalBandOk)
-                {
-                    decimal sigBand = (decimal)sigBandD;
-                    bool bodyBreak = isLong ? sigCandle.Close < sigBand : sigCandle.Close > sigBand;
-                    if (bodyBreak)
-                        entry = isLong ? Math.Min(sigCandle.Close, entry) : Math.Max(sigCandle.Close, entry);
-                }
+                entry = isLong
+                    ? Math.Min(entry, Math.Min(sigCandle.Low, sigCandle.Close))
+                    : Math.Max(entry, Math.Max(sigCandle.High, sigCandle.Close));
             }
 
             signal.SignalPrice = entry.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);

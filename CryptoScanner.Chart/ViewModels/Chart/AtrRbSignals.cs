@@ -12,10 +12,12 @@ namespace CryptoScanner.ViewModels.Chart;
 /// position must have a matching marker here on its trigger candle (the position itself opens one
 /// candle later, on the entry band — see the delayed-entry rule). Placed at the signal's OpenDate (the
 /// trigger candle), so it lines up with the AtrRb band-break label drawn at that same candle.
+/// Only signals of the chart's OWN interval are drawn — the strategy can run on several intervals and
+/// a (e.g.) 3m signal at 07:51 would land between the 10m candles and look "one candle too early".
 /// </summary>
 public class AtrRbSignals
 {
-    internal static void Draw(PlotModel chart, List<CryptoSignal> signalList,
+    internal static void Draw(PlotModel chart, List<CryptoSignal> signalList, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesLong = new ScatterSeries
@@ -47,6 +49,11 @@ public class AtrRbSignals
         foreach (var signal in signalList)
         {
             if (signal.Strategy != CryptoSignalStrategy.AtrRb)
+                continue;
+
+            // Only this chart's interval — otherwise a 1m/3m/5m signal is drawn on a 10m chart and
+            // lands off-grid (looks like it triggers a candle too early).
+            if (signal.Interval.IntervalPeriod != interval.IntervalPeriod)
                 continue;
 
             // OpenDate = the trigger (band-break) candle, so the marker coincides with the band-break label.
