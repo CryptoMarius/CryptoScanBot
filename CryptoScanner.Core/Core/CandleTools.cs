@@ -148,9 +148,6 @@ public static class CandleTools
 
 
 
-    /// <summary>
-    /// Add the 1m candle and calculate all other finished timeframes as well
-    /// </summary>
     public static async Task<CryptoCandle> Process1mCandleAsync(CryptoSymbol symbol, DateTime openTime,
         decimal open, decimal high, decimal low, decimal close, decimal quoteVolume)
     {

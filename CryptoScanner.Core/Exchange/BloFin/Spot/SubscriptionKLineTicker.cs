@@ -22,7 +22,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // Aantekeningen
         // De Base volume is the volume in terms of the first currency pair.
         // De Quote volume is the volume in terms of the second currency pair.
-        // For example, for "MFN/USDT": 
+        // For example, for "MFN/USDT":
         // base volume would be MFN
         // quote volume would be USDT
 
@@ -41,7 +41,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //ScannerLog.Logger.Trace($"kline ticker {topic} process");
                 //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
+                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
                     kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
                     kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
                 GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
@@ -81,7 +81,7 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 Task.Run(async () => { await ProcessCandleAsync(kline.Symbol, kline.Kline); });
             }
 
-                
+
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
