@@ -12,7 +12,10 @@ namespace CryptoScanner.Core.Sounds;
 public static class ThreadSoundPlayer
 {
     private static Thread? soundThread = null;
-    private static Dictionary<string, DateTime> FilesPlayed = [];
+    // Concurrent: AddToQueue is called from multiple threads (signal pipeline, UI). A plain Dictionary
+    // here corrupted its internal state under concurrent access ("non-concurrent collections must have
+    // exclusive access").
+    private static readonly ConcurrentDictionary<string, DateTime> FilesPlayed = new();
     private static readonly BlockingCollection<string> soundQueue = [];
     private static readonly CancellationTokenSource soundCancelToken = new();
 
@@ -38,16 +41,15 @@ public static class ThreadSoundPlayer
             if (!GlobalData.Settings.Signal.SoundsActive)
                 return;
 
-            // Ignore recently played sounds
+            // Ignore recently played sounds. AddOrUpdate is atomic, so the get-old-and-set-new is
+            // thread-safe (no read/modify/write race on the dictionary).
             DateTime now = DateTime.Now;
             bool isPlayedRecently = false;
-            if (FilesPlayed.TryGetValue(fileName, out DateTime last))
+            FilesPlayed.AddOrUpdate(fileName, now, (key, last) =>
             {
                 isPlayedRecently = (now - last).TotalSeconds < 15;
-                FilesPlayed[fileName] = now;
-            }
-            else
-                FilesPlayed.TryAdd(fileName, now);
+                return now;
+            });
 
             if (!isPlayedRecently)
             {
