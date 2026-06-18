@@ -35,6 +35,9 @@ public class CommandPositionDelete : CommandBase
                 databaseThread.Connection.Execute($"delete from position where id={dto.position.Id}", transaction);
                 transaction.Commit();
 
+                dto.position.Symbol.LastTradeDate = null;
+                GlobalData.ThreadSaveObjects!.AddToQueue(dto.position.Symbol);
+
                 // Remove the position from open or closed positions
                 GlobalData.SendMvvmMessage(new PositionIsDeletedMessage(dto.position));
                 PositionTools.RemovePosition(GlobalData.ActiveExchange!, dto.position, false);

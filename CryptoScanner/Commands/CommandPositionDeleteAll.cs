@@ -44,6 +44,12 @@ public class CommandPositionDeleteAll : CommandBase
 
             GlobalData.ActiveExchange!.Data.PositionList.Clear();
 
+            foreach (var symbol in GlobalData.ActiveExchange.SymbolListId.Values)
+            {
+                symbol.LastTradeDate = null;
+                GlobalData.ThreadSaveObjects!.AddToQueue(symbol);
+            }
+
             // Remove the position from open or closed positions
             GlobalData.SendMvvmMessage(new PositionDeleteAllMessage());
             GlobalData.AddTextToLogTab($"Manually deleted all positions from the database");
