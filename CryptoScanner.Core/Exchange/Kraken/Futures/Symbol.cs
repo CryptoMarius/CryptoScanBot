@@ -66,8 +66,11 @@ public class Symbol() : SymbolBase(), ISymbol
                     {
                         foreach (var symbolData in symbolInfo.Data)
                         {
+                            if (symbolData.Category != "DeFi")
+                                continue;
+
                             // TODO? Inspect
-                            SymbolInfo info = ParseSymbol(symbolData.Symbol, "", "");
+                            SymbolInfo info = ParseSymbol(symbolData.Symbol, symbolData.BaseAsset, symbolData.QuoteAsset);
                             if (IsSymbolAccepted(exchange, info, api, TradingMode.PerpetualLinear, out CryptoSymbol? symbol))
                             {
                                 //string name = symbolInfo.WebsocketName; // AlternateName; // symbolInfo.Base + symbolInfo.Quote;
@@ -107,7 +110,7 @@ public class Symbol() : SymbolBase(), ISymbol
                                 //symbol.IsMarginTradingAllowed = false; // binanceSymbol.MarginTading; ???
 
                                 // volume from the tickers
-                                if (volumeTicker.TryGetValue(symbol.Name, out decimal volume))
+                                if (volumeTicker.TryGetValue(symbol.ExchangeName, out decimal volume))
                                     symbol.Volume = (double)volume;
                                 else
                                     symbol.Volume = 0;
