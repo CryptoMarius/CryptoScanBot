@@ -60,8 +60,11 @@ public class SignalAtrRbBase : SignalCreateBase
     /// <summary>
     /// Supersede: when a newer AtrRb signal of the same side exists, this older one is dropped from the
     /// list entirely (GiveUp → true → removed by the monitor) instead of lingering until EntryRemoveTime.
-    /// So only the latest band break stays pending — the latest replaces all previous. Otherwise the
-    /// standard base GiveUp applies (EntryRemoveTime / a position is already open).
+    /// So only the latest band break stays pending — the latest replaces all previous.
+    /// Slide ("glijbaan", experimental): when the slide filter is enabled, a still-pending signal is also
+    /// dropped once an efficient one-way slide develops against it (a LONG during a DOWN-slide, a SHORT
+    /// during an UP-slide) — so we don't step into a knife that started sliding after the band break.
+    /// Otherwise the standard base GiveUp applies (EntryRemoveTime / a position is already open).
     /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
@@ -74,6 +77,21 @@ public class SignalAtrRbBase : SignalCreateBase
                 && other.OpenDate > signal.OpenDate)
             {
                 ExtraText = "superseded by a newer atrrb signal";
+                return true;
+            }
+        }
+
+        // Slide ("glijbaan", experimental): drop the pending signal when a slide now runs against it —
+        // symmetric, using the same ComputeSlide thresholds the IsSignal suppression uses. Only when the
+        // slide filter is enabled. Cheap UseSlideFilter check first; the slide computation runs only then.
+        var settings = GlobalData.Settings.Signal.AtrRb;
+        if (settings.UseSlideFilter)
+        {
+            AtrRbBandsHelper.ComputeSlide(symbolInterval, CandleLast.Candle.OpenTime, out bool slidingDown, out bool slidingUp);
+            if ((signal.Side == CryptoTradeSide.Long && slidingDown)
+                || (signal.Side == CryptoTradeSide.Short && slidingUp))
+            {
+                ExtraText = "slide active (glijbaan): signal removed";
                 return true;
             }
         }
