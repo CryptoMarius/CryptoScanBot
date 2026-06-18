@@ -1,24 +1,25 @@
 namespace CryptoScanner.Core.Settings.Strategy;
 
-// "atrrb" — Mean Reversion Bands (Bollinger + ATR), reverse-engineered from the trading-course chart.
-// The band is a Bollinger basis with an added fast-ATR term: SMA(Length) +/- (Mult * stdev + AtrMult * ATR).
-// A long alert fires when price breaks the LOWER band while RSI is oversold; a short on the UPPER band
-// while RSI is overbought. These parameters drive BOTH the chart drawer (AtrRbBands) and the signal
-// (AtrRbBandsHelper), so the chart and the alert always stay in sync.
+// "atrrb" — Mean Reversion Bands (volume-weighted VWAP bands), reverse-engineered from the trading-course
+// chart. The band is a rolling VWAP basis with a volume-weighted stdev envelope, plus an optional fast-ATR
+// term: VWMA(hlc3, Length) +/- (Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)). It is NOT a
+// Bollinger band (no SMA of close, no plain stdev). A long alert fires when price breaks the LOWER band
+// while RSI is oversold; a short on the UPPER band while RSI is overbought. These parameters drive BOTH the
+// chart drawer (AtrRbBands) and the signal (AtrRbBandsHelper), so the chart and the alert always stay in sync.
 [Serializable]
 public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
 {
-    // SMA / standard-deviation window for the Bollinger basis (fit against the reference: ~90).
-    public int Length { get; set; } = 90;
+    // VWMA / volume-weighted-stdev window for the VWAP basis (fit against the reference: 50).
+    public int Length { get; set; } = 50;
 
-    // Standard-deviation multiplier: basis +/- Mult * stdev (the Bollinger part).
+    // Volume-weighted-stdev multiplier: basis +/- Mult * vwStdev (the VWAP-band part; fit ~2.5).
     public double Mult { get; set; } = 2.5;
 
-    // Fast ATR length added on top of the stdev band (brings back the angular shape).
+    // Fast ATR length added on top of the vw-stdev band (optional angular shape).
     public int AtrLength { get; set; } = 14;
 
-    // Multiplier on the fast ATR term: band = Mult * stdev + AtrMult * ATR(AtrLength). 0 = pure Bollinger.
-    public double AtrMult { get; set; } = 1.0;
+    // Multiplier on the fast ATR term: band = Mult * vwStdev + AtrMult * ATR(AtrLength). 0 = pure VWAP bands.
+    public double AtrMult { get; set; } = 0.0;
 
     // RSI confluence: only fire a sell on an upper-band break when RSI is overbought, and a buy on a
     // lower-band break when RSI is oversold. The overbought/oversold LEVELS are taken from the general

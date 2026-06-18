@@ -62,9 +62,9 @@ public class AtrRbSignals
                 continue;
 
             if (signal.Side == CryptoTradeSide.Long)
-                seriesLong.Points.Add(new ScatterPoint(openDate.Minutes, (double)(0.996m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↑"));
+                seriesLong.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(0.996m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↑"));
             else
-                seriesShort.Points.Add(new ScatterPoint(openDate.Minutes, (double)(1.004m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↓"));
+                seriesShort.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(1.004m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↓"));
         }
 
         chart.Series.Add(seriesLong);

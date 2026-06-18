@@ -6,19 +6,86 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.Core.Signal.Helpers;
 
 /// <summary>
-/// Shared calculations for the "Mean Reversion Bands" construction (Bollinger basis + a fast ATR term):
-///   basis = SMA(Length)
-///   band  = Mult * stdev(Length) + AtrMult * ATR(AtrLength)
+/// Shared calculations for the "Mean Reversion Bands" construction — volume-weighted VWAP bands:
+///   basis = VWMA(hlc3, Length)                                   (rolling VWAP, Skender GetVwma)
+///   band  = Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)
 ///   upper = basis + band,  lower = basis - band
-/// The chart drawer (AtrRbBands) and the atrrb signal (SignalAtrRbLong/Short) both read these, so the
-/// chart and the alert stay in sync — change the parameters in GlobalData.Settings.Signal.AtrRb and both
-/// follow. A break is simply a wick or close outside the band (no lowest/highest filter; the signal
-/// supersede rule keeps only the latest break). The symmetric slide ("glijbaan") detection lives here too.
+/// where vwStdev is the volume-weighted standard deviation of hlc3 over the same window
+/// (sqrt(E_w[hlc3^2] - E_w[hlc3]^2)). This is NOT Bollinger (no SMA of close, no plain stdev): it was
+/// reverse-engineered from the reference chart and matches the green bands to ~pixel level.
+/// The chart drawer (AtrRbBands) and the atrrb signal (SignalAtrRbLong/Short) both read these via
+/// <see cref="ComputeBands"/>, so the chart and the alert stay in sync — change the parameters in
+/// GlobalData.Settings.Signal.AtrRb and both follow. A break is simply a wick or close outside the band
+/// (no lowest/highest filter; the signal supersede rule keeps only the latest break). The symmetric
+/// slide ("glijbaan") detection lives here too.
 /// </summary>
 public static class AtrRbBandsHelper
 {
-    // Number of candles to feed the SMA/stdev/ATR calculation. Matches the signal pipeline window.
+    // Number of candles to feed the VWMA/vw-stdev/ATR calculation. Matches the signal pipeline window.
     private const int CalculationCandles = 260;
+
+    /// <summary>One candle's band values; <see cref="HasValue"/> is false during the indicator warm-up.</summary>
+    public readonly struct BandValue
+    {
+        public readonly bool HasValue;
+        public readonly double Basis;   // VWMA(hlc3, Length)
+        public readonly double Upper;   // basis + Mult * vwStdev + AtrMult * ATR
+        public readonly double Lower;   // basis - Mult * vwStdev - AtrMult * ATR
+
+        public BandValue(double basis, double upper, double lower)
+        {
+            HasValue = true;
+            Basis = basis;
+            Upper = upper;
+            Lower = lower;
+        }
+    }
+
+    /// <summary>
+    /// Computes the volume-weighted VWAP band (basis/upper/lower) for every candle in <paramref name="candles"/>,
+    /// index-aligned with the input list (so result[i] belongs to candles[i]). Skender's volume-weighted
+    /// GetVwma is reused twice — once on hlc3 (the basis) and once on hlc3^2 (the second moment) — so the
+    /// volume-weighted variance is E_w[hlc3^2] - E_w[hlc3]^2. The single source of truth for both the chart
+    /// and the signal.
+    /// </summary>
+    public static BandValue[] ComputeBands(IReadOnlyList<CryptoCandle> candles)
+    {
+        var settings = GlobalData.Settings.Signal.AtrRb;
+        int n = candles.Count;
+        var result = new BandValue[n];
+        if (n == 0)
+            return result;
+
+        // hlc3 and hlc3^2 carried as volume-bearing Skender quotes; GetVwma then gives the volume-weighted
+        // mean of each. hlc3^2 needs decimal headroom (price^2 overflows the tick-int storage of CryptoCandle),
+        // which is why we build Skender Quote objects instead of reusing the candle struct.
+        var srcQuotes = new List<Quote>(n);
+        var sqQuotes = new List<Quote>(n);
+        foreach (var c in candles)
+        {
+            decimal hlc3 = (c.High + c.Low + c.Close) / 3m;
+            srcQuotes.Add(new Quote { Date = c.Date, Close = hlc3, Volume = c.Volume });
+            sqQuotes.Add(new Quote { Date = c.Date, Close = hlc3 * hlc3, Volume = c.Volume });
+        }
+
+        var vwmaSrc = (List<VwmaResult>)srcQuotes.GetVwma(settings.Length);
+        var vwmaSq = (List<VwmaResult>)sqQuotes.GetVwma(settings.Length);
+        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+
+        for (int i = 0; i < n; i++)
+        {
+            double? mean = vwmaSrc[i].Vwma;
+            double? second = vwmaSq[i].Vwma;
+            if (!mean.HasValue || !second.HasValue)
+                continue;
+
+            double variance = second.Value - mean.Value * mean.Value;
+            double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
+            double pad = settings.Mult * vwStdev + settings.AtrMult * (atrList[i].Atr ?? 0);
+            result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad);
+        }
+        return result;
+    }
 
     /// <summary>
     /// Returns true when the candle at <paramref name="openTime"/> breaks below the lower band — a wick
@@ -40,10 +107,9 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
-        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var bands = ComputeBands(candles);
         var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        return LowerBandBreakAt(candles, bbList, atrList, slAtrList, idx, out pctDeviation, out lowerBand);
+        return LowerBandBreakAt(candles, bands, slAtrList, idx, out pctDeviation, out lowerBand);
     }
 
     /// <summary>
@@ -65,10 +131,9 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
-        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var bands = ComputeBands(candles);
         var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        return UpperBandBreakAt(candles, bbList, atrList, slAtrList, idx, out pctDeviation, out upperBand);
+        return UpperBandBreakAt(candles, bands, slAtrList, idx, out pctDeviation, out upperBand);
     }
 
     /// <summary>
@@ -88,10 +153,9 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
-        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var bands = ComputeBands(candles);
         var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        if (!TryBand(bbList, atrList, idx, out _, out lowerBand))
+        if (!TryBand(bands, idx, out _, out lowerBand))
             return false;
         pctDeviation = StopLossPercent(slAtrList, candles, idx);
         return true;
@@ -110,36 +174,27 @@ public static class AtrRbBandsHelper
         if (idx < 0)
             return false;
 
-        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(settings.Length, settings.Mult);
-        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var bands = ComputeBands(candles);
         var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
-        if (!TryBand(bbList, atrList, idx, out upperBand, out _))
+        if (!TryBand(bands, idx, out upperBand, out _))
             return false;
         pctDeviation = StopLossPercent(slAtrList, candles, idx);
         return true;
     }
 
     /// <summary>
-    /// Computes the upper/lower band at <paramref name="idx"/> from pre-computed Bollinger (already
-    /// including Mult * stdev) and ATR results. band = bollinger +/- AtrMult * ATR.
+    /// Reads the pre-computed upper/lower band at <paramref name="idx"/> from a <see cref="ComputeBands"/>
+    /// result. Returns false while still in the indicator warm-up (no value yet).
     /// </summary>
-    public static bool TryBand(IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
-        int idx, out double upperBand, out double lowerBand)
+    public static bool TryBand(IReadOnlyList<BandValue> bands, int idx, out double upperBand, out double lowerBand)
     {
         upperBand = 0;
         lowerBand = 0;
-        if (idx < 0 || idx >= bbList.Count)
+        if (idx < 0 || idx >= bands.Count || !bands[idx].HasValue)
             return false;
 
-        double? bbUpper = bbList[idx].UpperBand;
-        double? bbLower = bbList[idx].LowerBand;
-        double? atr = atrList[idx].Atr;
-        if (!bbUpper.HasValue || !bbLower.HasValue || !atr.HasValue)
-            return false;
-
-        double pad = GlobalData.Settings.Signal.AtrRb.AtrMult * atr.Value;
-        upperBand = bbUpper.Value + pad;
-        lowerBand = bbLower.Value - pad;
+        upperBand = bands[idx].Upper;
+        lowerBand = bands[idx].Lower;
         return true;
     }
 
@@ -149,11 +204,11 @@ public static class AtrRbBandsHelper
     /// far cheaper than re-deriving them per candle when a whole window has to be evaluated.
     /// </summary>
     public static bool LowerBandBreakAt(IReadOnlyList<CryptoCandle> candles,
-        IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
-        IReadOnlyList<AtrResult> slAtrList, int idx, out double pctDeviation, out double lowerBand)
+        IReadOnlyList<BandValue> bands, IReadOnlyList<AtrResult> slAtrList, int idx,
+        out double pctDeviation, out double lowerBand)
     {
         pctDeviation = 0;
-        if (!TryBand(bbList, atrList, idx, out _, out lowerBand))
+        if (!TryBand(bands, idx, out _, out lowerBand))
             return false;
 
         if ((double)candles[idx].Low >= lowerBand && (double)candles[idx].Close >= lowerBand)
@@ -165,11 +220,11 @@ public static class AtrRbBandsHelper
 
     /// <summary>Core upper-band-break test. See <see cref="LowerBandBreakAt"/>.</summary>
     public static bool UpperBandBreakAt(IReadOnlyList<CryptoCandle> candles,
-        IReadOnlyList<BollingerBandsResult> bbList, IReadOnlyList<AtrResult> atrList,
-        IReadOnlyList<AtrResult> slAtrList, int idx, out double pctDeviation, out double upperBand)
+        IReadOnlyList<BandValue> bands, IReadOnlyList<AtrResult> slAtrList, int idx,
+        out double pctDeviation, out double upperBand)
     {
         pctDeviation = 0;
-        if (!TryBand(bbList, atrList, idx, out upperBand, out _))
+        if (!TryBand(bands, idx, out upperBand, out _))
             return false;
 
         if ((double)candles[idx].High <= upperBand && (double)candles[idx].Close <= upperBand)

@@ -1,5 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -10,10 +11,10 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.ViewModels.Chart;
 
 /// <summary>
-/// "Mean Reversion Bands" indicator (Bollinger basis + a fast ATR term), kept in sync with the atrrb
-/// signal via GlobalData.Settings.Signal.AtrRb:
-///   basis = SMA(Length)
-///   band  = Mult * stdev(Length) + AtrMult * ATR(AtrLength)
+/// "Mean Reversion Bands" indicator — volume-weighted VWAP bands, kept in sync with the atrrb signal by
+/// reusing <see cref="AtrRbBandsHelper.ComputeBands"/> (so chart and alert always agree):
+///   basis = VWMA(hlc3, Length)
+///   band  = Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)
 ///   upper = basis + band,  lower = basis - band
 /// A percentage label (the signal's StopLossAtrFactor * ATR%) is printed when a wick or close breaks a
 /// band, marking where the long/short alert can fire.
@@ -32,20 +33,12 @@ public class AtrRbBands
 
         var atrrb = GlobalData.Settings.Signal.AtrRb;
 
-        // Bollinger (basis + stdev band) and the fast ATR, indexed by date so we can join on the candle.
-        var bbByDate = new Dictionary<DateTime, BollingerBandsResult>();
-        foreach (var bb in candles.GetBollingerBands(atrrb.Length, atrrb.Mult))
-            bbByDate[bb.Date] = bb;
+        // Volume-weighted VWAP bands (basis/upper/lower), computed by the shared helper so the chart and
+        // the signal stay identical. Index-aligned with the candle list below.
+        var bands = AtrRbBandsHelper.ComputeBands(candles);
 
-        // Fast ATR (band shape) and the slow ATR over the band Length (used for the SL% label, so it
-        // stays stable through a rally — same as the signal's StopLossPercent).
-        var atrByDate = new Dictionary<DateTime, double>();
-        foreach (var atr in candles.GetAtr(atrrb.AtrLength))
-        {
-            if (atr.Atr.HasValue)
-                atrByDate[atr.Date] = atr.Atr.Value;
-        }
-
+        // Slow ATR over the band Length (used for the SL% label, so it stays stable through a rally —
+        // same as the signal's StopLossPercent).
         var slAtrByDate = new Dictionary<DateTime, double>();
         foreach (var atr in candles.GetAtr(atrrb.Length))
         {
@@ -65,9 +58,8 @@ public class AtrRbBands
             if (openTime < minDate || openTime > maxDate)
                 continue;
 
-            if (!bbByDate.TryGetValue(candle.Date, out var bb) || !atrByDate.TryGetValue(candle.Date, out double atr))
-                continue;
-            if (!bb.Sma.HasValue || !bb.UpperBand.HasValue || !bb.LowerBand.HasValue)
+            // bands is index-aligned with candles; skip the indicator warm-up.
+            if (!bands[i].HasValue)
                 continue;
 
             double x = openTime.Minutes;
@@ -75,19 +67,19 @@ public class AtrRbBands
             double high = (double)candle.High;
             double low = (double)candle.Low;
 
-            double pad = atrrb.AtrMult * atr;
-            double upper = bb.UpperBand.Value + pad;
-            double lower = bb.LowerBand.Value - pad;
+            double upper = bands[i].Upper;
+            double lower = bands[i].Lower;
 
             bandFill.Points.Add(new DataPoint(x, upper));
             bandFill.Points2.Add(new DataPoint(x, lower));
             upperLine.Points.Add(new DataPoint(x, upper));
             lowerLine.Points.Add(new DataPoint(x, lower));
-            basisLine.Points.Add(new DataPoint(x, bb.Sma.Value));
+            basisLine.Points.Add(new DataPoint(x, bands[i].Basis));
 
             // Break label = the SL distance the signal applies: StopLossAtrFactor * ATR(Length)%
             // (slow ATR over the band Length, so it stays stable through a volatile rally).
-            double slAtr = slAtrByDate.TryGetValue(candle.Date, out double sa) ? sa : atr;
+            if (!slAtrByDate.TryGetValue(candle.Date, out double slAtr))
+                continue;
             double slPct = atrrb.StopLossAtrFactor * (slAtr / close * 100);
 
             if (high > upper || close > upper)
