@@ -51,6 +51,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                 //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
                 //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
 
+                // Guard against empty/invalid kline updates. A minute without trades (or an incomplete
+                // update) can arrive with OHLC = 0; caching+flushing that produces the reported all-zero
+                // OHLC candles (and corrupts the higher timeframes). Skip it — a genuinely missing minute
+                // is later back-filled as a flat candle (previous close) by CandleTools.BulkAddMissingCandles.
+                if (kline.OpenPrice <= 0 || kline.HighPrice <= 0 || kline.LowPrice <= 0 || kline.ClosePrice <= 0)
+                    return;
+
                 // Prossible change in flow:
                 // Create some variables or temp candle
                 // Update that candle until OpenTime is different
@@ -171,6 +178,13 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
                                 if (candle.OpenTime <= expectedCandlesUpto)
                                 {
                                     candleCache.Remove(candle.OpenTime);
+
+                                    // Defensive: never flush an all-zero/invalid candle (covers both a 0
+                                    // feed value and a price that rounded to 0 via a too-small PriceDecimals).
+                                    // The missing minute is back-filled later as a flat candle.
+                                    if (candle.Close <= 0)
+                                        continue;
+
                                     Interlocked.Increment(ref TickerCount);
                                     if (TickerCount > 999999999)
                                         Interlocked.Exchange(ref TickerCount, 0);
