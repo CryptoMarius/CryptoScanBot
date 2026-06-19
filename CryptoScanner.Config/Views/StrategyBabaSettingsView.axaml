@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
-             x:DataType="vm:StrategyAtrRbSettingsViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyAtrRbSettingsView">
+             x:DataType="vm:StrategyBabaSettingsViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyBabaSettingsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Mean Reversion Bands (VWAP volume-weighted)">
         <StackPanel Margin="4" Spacing="4">

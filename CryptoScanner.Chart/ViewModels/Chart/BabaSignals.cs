@@ -7,22 +7,22 @@ using OxyPlot.Series;
 namespace CryptoScanner.ViewModels.Chart;
 
 /// <summary>
-/// Draws markers for the STORED AtrRb signals of the run (the real triggers the strategy produced),
-/// not a recompute of the bands. Use this to verify the chart against the strategy: every AtrRb
+/// Draws markers for the STORED Baba signals of the run (the real triggers the strategy produced),
+/// not a recompute of the bands. Use this to verify the chart against the strategy: every Baba
 /// position must have a matching marker here on its trigger candle (the position itself opens one
 /// candle later, on the entry band — see the delayed-entry rule). Placed at the signal's OpenDate (the
-/// trigger candle), so it lines up with the AtrRb band-break label drawn at that same candle.
+/// trigger candle), so it lines up with the Baba band-break label drawn at that same candle.
 /// Only signals of the chart's OWN interval are drawn — the strategy can run on several intervals and
 /// a (e.g.) 3m signal at 07:51 would land between the 10m candles and look "one candle too early".
 /// </summary>
-public class AtrRbSignals
+public class BabaSignals
 {
     internal static void Draw(PlotModel chart, List<CryptoSignal> signalList, CryptoInterval interval,
         CandleTime minDate, CandleTime maxDate, string group)
     {
         var seriesLong = new ScatterSeries
         {
-            Title = "atrrb sig ↑",
+            Title = "baba sig ↑",
             MarkerSize = 6,
             MarkerType = MarkerType.Triangle,
             MarkerFill = OxyColor.FromArgb(220, 0, 200, 90),
@@ -35,7 +35,7 @@ public class AtrRbSignals
 
         var seriesShort = new ScatterSeries
         {
-            Title = "atrrb sig ↓",
+            Title = "baba sig ↓",
             MarkerSize = 6,
             MarkerType = MarkerType.Diamond,
             MarkerFill = OxyColor.FromArgb(220, 220, 50, 50),
@@ -48,7 +48,7 @@ public class AtrRbSignals
 
         foreach (var signal in signalList)
         {
-            if (signal.Strategy != CryptoSignalStrategy.AtrRb)
+            if (signal.Strategy != CryptoSignalStrategy.Baba)
                 continue;
 
             // Only this chart's interval — otherwise a 1m/3m/5m signal is drawn on a 10m chart and
@@ -62,9 +62,9 @@ public class AtrRbSignals
                 continue;
 
             if (signal.Side == CryptoTradeSide.Long)
-                seriesLong.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(0.996m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↑"));
+                seriesLong.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(0.996m * signal.SignalPrice), double.NaN, double.NaN, tag: "baba sig ↑"));
             else
-                seriesShort.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(1.004m * signal.SignalPrice), double.NaN, double.NaN, tag: "atrrb sig ↓"));
+                seriesShort.Points.Add(new ScatterPoint(openDate.Minutes + interval.Duration, (double)(1.004m * signal.SignalPrice), double.NaN, double.NaN, tag: "baba sig ↓"));
         }
 
         chart.Series.Add(seriesLong);

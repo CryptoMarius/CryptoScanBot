@@ -4,15 +4,15 @@ using CryptoScanner.Config.ViewModels;
 
 namespace CryptoScanner.Config.Views;
 
-public partial class StrategyAtrRbSettingsView : UserControl
+public partial class StrategyBabaSettingsView : UserControl
 {
-    public StrategyAtrRbSettingsView()
+    public StrategyBabaSettingsView()
     {
         InitializeComponent();
 
         if (DataContext == null)
         {
-            DataContext = new StrategyAtrRbSettingsViewModel();
+            DataContext = new StrategyBabaSettingsViewModel();
         }
     }
 }

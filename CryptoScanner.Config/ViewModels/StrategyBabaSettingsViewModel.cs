@@ -4,7 +4,7 @@ using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Config.ViewModels;
 
-public partial class StrategyAtrRbSettingsViewModel : ObservableObject
+public partial class StrategyBabaSettingsViewModel : ObservableObject
 {
     [ObservableProperty]
     private int _length = 90;
@@ -55,7 +55,7 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     private bool _useSmcZone = false;
 
 
-    public void LoadConfig(string caption, SettingsSignalStrategyAtrRb settings)
+    public void LoadConfig(string caption, SettingsSignalStrategyBaba settings)
     {
         Length = settings.Length;
         Mult = settings.Mult;
@@ -75,7 +75,7 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         UseSmcZone = settings.UseSmcZone;
     }
 
-    public void SaveConfig(SettingsSignalStrategyAtrRb settings)
+    public void SaveConfig(SettingsSignalStrategyBaba settings)
     {
         settings.Length = Length;
         settings.Mult = Mult;

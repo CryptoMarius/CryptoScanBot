@@ -5,13 +5,13 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              xmlns:settings="using:CryptoScanner.Config.Views"
-             x:DataType="vm:StrategyAtrRbTabViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyAtrRbTabView">
+             x:DataType="vm:StrategyBabaTabViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyBabaTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
             <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategyAtrRbSettingsView Grid.Row="1" DataContext="{Binding StrategyAtrRbSettingsViewModel}" />
+            <settings:StrategyBabaSettingsView Grid.Row="1" DataContext="{Binding StrategyBabaSettingsViewModel}" />
         </Grid>
     </ScrollViewer>
 

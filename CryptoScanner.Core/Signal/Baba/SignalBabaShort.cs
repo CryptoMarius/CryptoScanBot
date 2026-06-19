@@ -1,7 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.AtrRb;
+namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>
 /// Mean Reversion Bands — short signal. Fires when price breaks the UPPER band (wick or close) while
@@ -9,7 +9,7 @@ namespace CryptoScanner.Core.Signal.AtrRb;
 /// melt-up). Entry on the band, or on the close when the close itself broke through; stop-loss =
 /// StopLossAtrFactor * ATR%.
 /// </summary>
-public class SignalAtrRbShort : SignalAtrRbBase
+public class SignalBabaShort : SignalBabaBase
 {
     private decimal? _entryPrice;
     private decimal? _slPercentage;
@@ -23,9 +23,9 @@ public class SignalAtrRbShort : SignalAtrRbBase
         _entryPrice = null;
         _slPercentage = null;
 
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
 
-        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last AtrRb signal.
+        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
         if (InCooldown())
         {
             ExtraText = "cooldown active";
@@ -45,7 +45,7 @@ public class SignalAtrRbShort : SignalAtrRbBase
         }
 
         // The (rarer, more expensive) upper-band break.
-        if (!AtrRbBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand))
+        if (!BabaBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand))
         {
             ExtraText = "no upper band break";
             return false;
@@ -54,7 +54,7 @@ public class SignalAtrRbShort : SignalAtrRbBase
         // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
         if (settings.UseSlideFilter)
         {
-            AtrRbBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out _, out bool slidingUp);
+            BabaBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out _, out bool slidingUp);
             if (slidingUp)
             {
                 ExtraText = "suppressed: up-slide active";

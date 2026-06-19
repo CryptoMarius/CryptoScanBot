@@ -1,13 +1,13 @@
 namespace CryptoScanner.Core.Settings.Strategy;
 
-// "atrrb" — Mean Reversion Bands (volume-weighted VWAP bands), reverse-engineered from the trading-course
+// "baba" — Mean Reversion Bands (volume-weighted VWAP bands), reverse-engineered from the trading-course
 // chart. The band is a rolling VWAP basis with a volume-weighted stdev envelope, plus an optional fast-ATR
 // term: VWMA(hlc3, Length) +/- (Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)). It is NOT a
 // Bollinger band (no SMA of close, no plain stdev). A long alert fires when price breaks the LOWER band
 // while RSI is oversold; a short on the UPPER band while RSI is overbought. These parameters drive BOTH the
-// chart drawer (AtrRbBands) and the signal (AtrRbBandsHelper), so the chart and the alert always stay in sync.
+// chart drawer (BabaBands) and the signal (BabaBandsHelper), so the chart and the alert always stay in sync.
 [Serializable]
-public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
+public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
 {
     // VWMA / volume-weighted-stdev window for the VWAP basis (fit against the reference: 50).
     public int Length { get; set; } = 50;
@@ -55,7 +55,7 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public bool UseFvgZone { get; set; } = false;
     public bool UseSmcZone { get; set; } = false;
 
-    public SettingsSignalStrategyAtrRb() : base()
+    public SettingsSignalStrategyBaba() : base()
     {
     }
 }

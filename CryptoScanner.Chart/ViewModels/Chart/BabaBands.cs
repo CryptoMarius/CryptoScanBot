@@ -11,15 +11,15 @@ using Skender.Stock.Indicators;
 namespace CryptoScanner.ViewModels.Chart;
 
 /// <summary>
-/// "Mean Reversion Bands" indicator — volume-weighted VWAP bands, kept in sync with the atrrb signal by
-/// reusing <see cref="AtrRbBandsHelper.ComputeBands"/> (so chart and alert always agree):
+/// "Mean Reversion Bands" indicator — volume-weighted VWAP bands, kept in sync with the baba signal by
+/// reusing <see cref="BabaBandsHelper.ComputeBands"/> (so chart and alert always agree):
 ///   basis = VWMA(hlc3, Length)
 ///   band  = Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)
 ///   upper = basis + band,  lower = basis - band
 /// A percentage label (the signal's StopLossAtrFactor * ATR%) is printed when a wick or close breaks a
 /// band, marking where the long/short alert can fire.
 /// </summary>
-public class AtrRbBands
+public class BabaBands
 {
     private static readonly OxyColor BandLineColor = OxyColor.FromArgb(255, 0, 150, 136); // teal
     private static readonly OxyColor BandFillColor = OxyColor.FromArgb(18, 0, 150, 136);  // teal, faint
@@ -31,25 +31,25 @@ public class AtrRbBands
         if (candles.Count == 0)
             return;
 
-        var atrrb = GlobalData.Settings.Signal.AtrRb;
+        var baba = GlobalData.Settings.Signal.Baba;
 
         // Volume-weighted VWAP bands (basis/upper/lower), computed by the shared helper so the chart and
         // the signal stay identical. Index-aligned with the candle list below.
-        var bands = AtrRbBandsHelper.ComputeBands(candles);
+        var bands = BabaBandsHelper.ComputeBands(candles);
 
         // Slow ATR over the band Length (used for the SL% label, so it stays stable through a rally —
         // same as the signal's StopLossPercent).
         var slAtrByDate = new Dictionary<DateTime, double>();
-        foreach (var atr in candles.GetAtr(atrrb.Length))
+        foreach (var atr in candles.GetAtr(baba.Length))
         {
             if (atr.Atr.HasValue)
                 slAtrByDate[atr.Date] = atr.Atr.Value;
         }
 
-        var bandFill = new AreaSeries { Title = "atrrb.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
-        var upperLine = new LineSeries { Title = "atrrb.upper", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
-        var lowerLine = new LineSeries { Title = "atrrb.lower", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
-        var basisLine = new LineSeries { Title = "atrrb.basis", Color = BasisColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
+        var bandFill = new AreaSeries { Title = "baba.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+        var upperLine = new LineSeries { Title = "baba.upper", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        var lowerLine = new LineSeries { Title = "baba.lower", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
+        var basisLine = new LineSeries { Title = "baba.basis", Color = BasisColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
 
         for (int i = 0; i < candles.Count; i++)
         {
@@ -80,7 +80,7 @@ public class AtrRbBands
             // (slow ATR over the band Length, so it stays stable through a volatile rally).
             if (!slAtrByDate.TryGetValue(candle.Date, out double slAtr))
                 continue;
-            double slPct = atrrb.StopLossAtrFactor * (slAtr / close * 100);
+            double slPct = baba.StopLossAtrFactor * (slAtr / close * 100);
 
             if (high > upper || close > upper)
                 AddLabel(chart, x, high, slPct, VerticalAlignment.Bottom, group);

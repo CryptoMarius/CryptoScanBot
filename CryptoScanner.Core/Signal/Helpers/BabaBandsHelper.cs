@@ -13,13 +13,13 @@ namespace CryptoScanner.Core.Signal.Helpers;
 /// where vwStdev is the volume-weighted standard deviation of hlc3 over the same window
 /// (sqrt(E_w[hlc3^2] - E_w[hlc3]^2)). This is NOT Bollinger (no SMA of close, no plain stdev): it was
 /// reverse-engineered from the reference chart and matches the green bands to ~pixel level.
-/// The chart drawer (AtrRbBands) and the atrrb signal (SignalAtrRbLong/Short) both read these via
+/// The chart drawer (BabaBands) and the baba signal (SignalBabaLong/Short) both read these via
 /// <see cref="ComputeBands"/>, so the chart and the alert stay in sync — change the parameters in
-/// GlobalData.Settings.Signal.AtrRb and both follow. A break is simply a wick or close outside the band
+/// GlobalData.Settings.Signal.Baba and both follow. A break is simply a wick or close outside the band
 /// (no lowest/highest filter; the signal supersede rule keeps only the latest break). The symmetric
 /// slide ("glijbaan") detection lives here too.
 /// </summary>
-public static class AtrRbBandsHelper
+public static class BabaBandsHelper
 {
     // Number of candles to feed the VWMA/vw-stdev/ATR calculation. Matches the signal pipeline window.
     private const int CalculationCandles = 260;
@@ -50,7 +50,7 @@ public static class AtrRbBandsHelper
     /// </summary>
     public static BandValue[] ComputeBands(IReadOnlyList<CryptoCandle> candles)
     {
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         int n = candles.Count;
         var result = new BandValue[n];
         if (n == 0)
@@ -98,7 +98,7 @@ public static class AtrRbBandsHelper
         pctDeviation = 0;
         lowerBand = 0;
 
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
         if (candles.Count < settings.Length + 1)
             return false;
@@ -122,7 +122,7 @@ public static class AtrRbBandsHelper
         pctDeviation = 0;
         upperBand = 0;
 
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
         if (candles.Count < settings.Length + 1)
             return false;
@@ -145,7 +145,7 @@ public static class AtrRbBandsHelper
         out double lowerBand, out double pctDeviation)
     {
         (lowerBand, pctDeviation) = (0, 0);
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
         if (candles.Count < settings.Length + 1)
             return false;
@@ -166,7 +166,7 @@ public static class AtrRbBandsHelper
         out double upperBand, out double pctDeviation)
     {
         (upperBand, pctDeviation) = (0, 0);
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
         if (candles.Count < settings.Length + 1)
             return false;
@@ -245,7 +245,7 @@ public static class AtrRbBandsHelper
         double? atr = (idx >= 0 && idx < slAtrList.Count) ? slAtrList[idx].Atr : null;
         if (!atr.HasValue)
             return 0;
-        return GlobalData.Settings.Signal.AtrRb.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
+        return GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr.Value / (double)candles[idx].Close * 100);
     }
 
     /// <summary>
@@ -261,7 +261,7 @@ public static class AtrRbBandsHelper
         slidingDown = false;
         slidingUp = false;
 
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
         int window = settings.SlideWindow;
         List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 2);
         int idx = candles.FindIndex(c => c.OpenTime == openTime);

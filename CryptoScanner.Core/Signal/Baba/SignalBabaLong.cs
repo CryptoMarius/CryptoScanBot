@@ -1,7 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Signal.Helpers;
 
-namespace CryptoScanner.Core.Signal.AtrRb;
+namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>
 /// Mean Reversion Bands — long signal. Fires when price breaks the LOWER band (wick or close) while
@@ -9,7 +9,7 @@ namespace CryptoScanner.Core.Signal.AtrRb;
 /// falling knife). Entry on the band, or on the close when the close itself broke through; stop-loss =
 /// StopLossAtrFactor * ATR%.
 /// </summary>
-public class SignalAtrRbLong : SignalAtrRbBase
+public class SignalBabaLong : SignalBabaBase
 {
     private decimal? _entryPrice;
     private decimal? _slPercentage;
@@ -23,9 +23,9 @@ public class SignalAtrRbLong : SignalAtrRbBase
         _entryPrice = null;
         _slPercentage = null;
 
-        var settings = GlobalData.Settings.Signal.AtrRb;
+        var settings = GlobalData.Settings.Signal.Baba;
 
-        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last AtrRb signal.
+        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
         if (InCooldown())
         {
             ExtraText = "cooldown active";
@@ -45,7 +45,7 @@ public class SignalAtrRbLong : SignalAtrRbBase
         }
 
         // The (rarer, more expensive) lower-band break.
-        if (!AtrRbBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double lowerBand))
+        if (!BabaBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double lowerBand))
         {
             ExtraText = "no lower band break";
             return false;
@@ -54,7 +54,7 @@ public class SignalAtrRbLong : SignalAtrRbBase
         // Symmetric slide filter: don't go long into an ongoing efficient DOWN-slide.
         if (settings.UseSlideFilter)
         {
-            AtrRbBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out bool slidingDown, out _);
+            BabaBandsHelper.ComputeSlide(SymbolInterval, CandleLast.Candle.OpenTime, out bool slidingDown, out _);
             if (slidingDown)
             {
                 ExtraText = "suppressed: down-slide active";
