@@ -132,6 +132,30 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private async void OnEditLabelClick(object? sender, RoutedEventArgs e)
+    {
+        // Single-row action: a label belongs to one run.
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+
+        if (rows.Count != 1)
+        {
+            viewModel.Status = "Select a single run to edit its label.";
+            return;
+        }
+
+        RunRow row = rows[0];
+        string? newLabel = await PromptTextAsync(owner, $"Edit label — run #{row.Id}", "Label (remark):", row.Label);
+        if (newLabel is null)   // cancelled / closed
+            return;
+
+        viewModel.UpdateLabel(row.Id, newLabel.Trim());
+    }
+
+
     private void OnExportSettingsClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
@@ -185,6 +209,79 @@ public partial class RunResultsView : UserControl
             return;
 
         viewModel.DeleteRuns(rows);
+    }
+
+
+    /// <summary>
+    /// Minimal modal single-line text-input dialog, built in code like <see cref="ConfirmAsync"/> so the
+    /// emulator needs no extra dialog dependency. Returns the entered text on OK (Enter), or null when
+    /// cancelled / closed / Escape. The box is pre-filled with <paramref name="initialText"/> and selected
+    /// so the user can immediately replace or extend it.
+    /// </summary>
+    private static async Task<string?> PromptTextAsync(Window owner, string title, string prompt, string initialText)
+    {
+        string? result = null;
+
+        var textBox = new TextBox { Text = initialText, MinWidth = 360, AcceptsReturn = false };
+        var okButton = new Button { Content = "OK", MinWidth = 80, IsDefault = true };
+        var cancelButton = new Button { Content = "Cancel", MinWidth = 80, IsCancel = true };
+
+        var dialog = new Window
+        {
+            Title = title,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            ShowInTaskbar = false,
+            Content = new StackPanel
+            {
+                Margin = new Thickness(16),
+                Spacing = 14,
+                Children =
+                {
+                    new TextBlock { Text = prompt },
+                    textBox,
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Spacing = 8,
+                        Children = { okButton, cancelButton },
+                    },
+                },
+            },
+        };
+
+        okButton.Click += (_, _) =>
+        {
+            result = textBox.Text ?? "";
+            dialog.Close();
+        };
+        cancelButton.Click += (_, _) =>
+        {
+            result = null;
+            dialog.Close();
+        };
+
+        // Pressing Enter in the text box confirms (IsDefault button isn't triggered from inside a TextBox).
+        textBox.KeyDown += (_, args) =>
+        {
+            if (args.Key == Key.Enter)
+            {
+                result = textBox.Text ?? "";
+                dialog.Close();
+            }
+        };
+
+        // Focus + select-all once shown so typing immediately replaces the current label.
+        dialog.Opened += (_, _) =>
+        {
+            textBox.Focus();
+            textBox.SelectAll();
+        };
+
+        await dialog.ShowDialog(owner);
+        return result;
     }
 
 

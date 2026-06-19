@@ -30,6 +30,11 @@ public class PositionRow
     public decimal? SlPercentage { get; set; }
     public string? EventText { get; set; }
 
+    // Part composition, persisted on Position: PartCount = number of filled DCA parts (entry excluded,
+    // a pending unfilled DCA excluded); ActiveDca = an open DCA is still standing. Used by PartsText.
+    public int PartCount { get; set; }
+    public bool ActiveDca { get; set; }
+
     // .NET numeric format of the quote currency (e.g. "N8"), set from the symbol's QuoteData when the
     // rows are loaded. Profit is in quote currency, so it is shown with the quote's own decimals.
     public string QuoteDisplayFormat { get; set; } = "N8";
@@ -65,6 +70,19 @@ public class PositionRow
 
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
     public string SlPercentageText => SlPercentage.HasValue ? SlPercentage.Value.ToString("N2") : "—";
+
+    // Number of parts (entry + filled DCAs), with a trailing "+" when an open DCA is still pending.
+    // Mirrors CryptoPosition.PartCountText() so the emulator overview matches the live open-positions grid.
+    public string PartsText
+    {
+        get
+        {
+            string text = (PartCount + 1).ToString(); // entry counts as 1
+            if (ActiveDca && !CloseTime.HasValue)
+                text += "+";
+            return text;
+        }
+    }
 }
 
 
@@ -105,7 +123,8 @@ public partial class RunPositionsViewModel : ObservableObject
 
             var rows = database.Connection.Query<PositionRow>(
                 "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
-                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, p.SlPercentage, p.EventText " +
+                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, p.SlPercentage, p.EventText, " +
+                "       p.PartCount, p.ActiveDca " +
                 "FROM Position p " +
                 "LEFT JOIN Symbol s ON s.Id = p.SymbolId " +
                 "LEFT JOIN Interval i ON i.Id = p.IntervalId " +

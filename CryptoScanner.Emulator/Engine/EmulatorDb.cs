@@ -237,6 +237,19 @@ public static class EmulatorDb
     }
 
 
+    /// <summary>
+    /// Updates the free-text Label (remark) of one run. Used by the Results tab's "Edit label…" action so
+    /// a run can be annotated or renamed after the fact. Only the Label column is touched.
+    /// </summary>
+    public static void UpdateLabel(int runId, string label)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        database.Connection.Execute(
+            "update EmulatorRun set Label = @label where Id = @id", new { id = runId, label });
+    }
+
+
     public static void DeleteRun(int runId) => DeleteRuns([runId]);
 
 

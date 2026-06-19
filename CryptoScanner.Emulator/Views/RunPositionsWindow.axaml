@@ -38,6 +38,7 @@
                 <DataGridTextColumn Header="Interval"    Binding="{Binding Interval}" Width="80"/>
                 <DataGridTextColumn Header="Side"        Binding="{Binding SideText}" Width="70"/>
                 <DataGridTextColumn Header="Strategy"    Binding="{Binding StrategyText}" Width="100"/>
+                <DataGridTextColumn Header="Parts"       Binding="{Binding PartsText}" Width="60"/>
                 <DataGridTextColumn Header="Status"      Binding="{Binding Status}" Width="80"/>
                 <DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="100"/>
                 <DataGridTextColumn Header="Percentage"  Binding="{Binding PercentageText}" Width="90"/>

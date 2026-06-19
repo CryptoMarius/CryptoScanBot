@@ -1,3 +1,5 @@
+using Avalonia.Threading;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace CryptoScanner.Emulator.ViewModels;
 
@@ -135,10 +138,88 @@ public partial class RunResultsViewModel : ObservableObject
     [ObservableProperty]
     private string _status = "";
 
+    // Ticks while the Results tab is alive; each tick refreshes only the active run's row (no-op when no
+    // run is running). 15s is plenty — the user wants "a bit more than the progress bar", not a live feed.
+    private readonly DispatcherTimer _liveTimer;
+
+    // Guards against a slow tick overlapping the next one (the DB work runs off the UI thread).
+    private bool _liveBusy;
+
+    // The run id refreshed on the previous tick. When it was set and the active run is now gone, the run
+    // just finished — so we refresh that row one last time to flip it to its finished state.
+    private int? _lastActiveRunId;
+
 
     public RunResultsViewModel()
     {
         Refresh();
+
+        _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+        _liveTimer.Tick += (_, _) => RefreshActiveRun();
+        _liveTimer.Start();
+    }
+
+
+    /// <summary>
+    /// Recomputes the currently-running emulator run's aggregates from its (still growing) signals and
+    /// positions and updates only that one row in the grid, so the Results tab shows live numbers during
+    /// a run instead of only the progress bar — without rebuilding the whole grid (other rows keep their
+    /// selection/scroll). No-op when no run is active. The DB work runs off the UI thread; a transient
+    /// lock while the engine is writing is ridden out by the 5s busy-timeout, or skipped until next tick.
+    /// </summary>
+    private async void RefreshActiveRun()
+    {
+        if (_liveBusy)
+            return;
+
+        int? activeId = GlobalData.CurrentEmulatorRunId;
+        // Refresh the active run, or — the tick right after it finished — that same run one final time so
+        // the row flips to its finished state (FinishedAt / Result / final stats).
+        int? targetId = activeId ?? _lastActiveRunId;
+        _lastActiveRunId = activeId;
+        if (targetId == null)
+            return;
+
+        _liveBusy = true;
+        try
+        {
+            int id = targetId.Value;
+            RunRow? fresh = await Task.Run(() =>
+            {
+                EmulatorDb.RecalculateRuns([id]); // persist live aggregates from current positions
+                return LoadRun(id);
+            });
+            if (fresh == null)
+                return;
+
+            // Back on the UI thread (await resumed on the dispatcher context).
+            RunRow? existing = Runs.FirstOrDefault(r => r.Id == fresh.Id);
+            if (existing != null)
+                Runs[Runs.IndexOf(existing)] = fresh;  // in-place: only this row re-renders
+            else
+                Runs.Insert(0, fresh);                 // run started after the grid loaded (newest first)
+        }
+        catch
+        {
+            // Transient DB lock / read error while the engine writes — skip, try again next tick.
+        }
+        finally
+        {
+            _liveBusy = false;
+        }
+    }
+
+
+    /// <summary>Loads a single run row (same projection as <see cref="Refresh"/>); null when not found.</summary>
+    private static RunRow? LoadRun(int runId)
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        return database.Connection.QueryFirstOrDefault<RunRow>(
+            "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
+            "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit, Invested " +
+            "FROM EmulatorRun WHERE Id = @runId",
+            new { runId });
     }
 
 
@@ -205,6 +286,26 @@ public partial class RunResultsViewModel : ObservableObject
         {
             Refresh();
             Status = $"Failed to delete run(s): {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
+    /// Stores a new free-text label (remark) for one run, then reloads the grid so the change shows.
+    /// The caller (the view) collects the text via an input dialog; an empty string clears the label.
+    /// </summary>
+    public void UpdateLabel(int runId, string label)
+    {
+        try
+        {
+            EmulatorDb.UpdateLabel(runId, label);
+            Refresh();
+            Status = $"Run #{runId} label updated.";
+        }
+        catch (Exception ex)
+        {
+            Refresh();
+            Status = $"Failed to update label: {ex.Message}";
         }
     }
 
