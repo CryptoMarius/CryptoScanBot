@@ -154,7 +154,7 @@ public partial class RunResultsViewModel : ObservableObject
     {
         Refresh();
 
-        _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+        _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
         _liveTimer.Tick += (_, _) => RefreshActiveRun();
         _liveTimer.Start();
     }
