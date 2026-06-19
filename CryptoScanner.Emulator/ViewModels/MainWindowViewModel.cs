@@ -426,7 +426,7 @@ public partial class MainWindowViewModel : ObservableObject
                 Progress = new Progress<TickRunProgress>(OnTickProgress),
                 // Temporarily serial: testing whether the parallel symbol order (under slot/capital
                 // contention) is what makes the emulator diverge from the serial live scanner.
-                RunParallel = false,
+                //RunParallel = true;
             };
 
             // Run the replay on a background thread. Previously RunAsync was awaited directly on
