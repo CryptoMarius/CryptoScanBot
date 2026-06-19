@@ -50,6 +50,11 @@ public partial class RunConfigViewModel : ObservableObject
     [ObservableProperty]
     private string _symbolFilter = "";
 
+    /// <summary>When on, the list shows ONLY the currently selected (active) symbols — so a large
+    /// selection is easy to review and switch off without hunting through the whole exchange list.</summary>
+    [ObservableProperty]
+    private bool _showOnlySelected;
+
     [ObservableProperty]
     private string _selectedSummary = "";
 
@@ -114,6 +119,8 @@ public partial class RunConfigViewModel : ObservableObject
 
     partial void OnSymbolFilterChanged(string value) => ApplyFilter();
 
+    partial void OnShowOnlySelectedChanged(bool value) => ApplyFilter();
+
 
     private void ApplyFilter()
     {
@@ -121,6 +128,8 @@ public partial class RunConfigViewModel : ObservableObject
         string f = SymbolFilter?.Trim() ?? "";
         if (f.Length > 0)
             query = query.Where(s => s.Name.Contains(f, StringComparison.OrdinalIgnoreCase));
+        if (ShowOnlySelected)
+            query = query.Where(s => s.IsSelected);
         FilteredSymbols = new ObservableCollection<SymbolSelectionItem>(query);
     }
 

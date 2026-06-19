@@ -41,7 +41,13 @@
                     ToolTip.Tip="Deselect every symbol currently shown by the filter"/>
         </Grid>
 
-        <TextBlock Grid.Row="3" Text="{Binding SelectedSummary}" Foreground="Gray" FontSize="11"/>
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+            <TextBlock Grid.Column="0" Text="{Binding SelectedSummary}" Foreground="Gray" FontSize="11"
+                       VerticalAlignment="Center"/>
+            <CheckBox Grid.Column="1" Content="Show only selected" IsChecked="{Binding ShowOnlySelected}"
+                      FontSize="11" Padding="4,0,0,0"
+                      ToolTip.Tip="Show only the currently selected (active) symbols, so you can review and switch them off without scrolling the whole list. Combine with 'None' to clear them all at once."/>
+        </Grid>
 
         <!-- Symbol checklist -->
         <Border Grid.Row="4" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
