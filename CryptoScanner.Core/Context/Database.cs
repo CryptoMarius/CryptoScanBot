@@ -849,8 +849,19 @@ public class CryptoDatabase : IDisposable
             using var transaction = databaseThread.BeginTransaction();
             {
                 // Database cleanup (there is no need for old signals <fixed 7 day's>)
+                var opendate = GlobalData.Clock.UtcNow.AddDays(-7);
+
+                // A position now keeps a reference to the signal it came from (Position.SignalId →
+                // Signal.Id, no ON DELETE). Clear that reference on any position pointing at a signal we
+                // are about to purge, otherwise the delete below trips the FOREIGN KEY constraint. The
+                // position itself stays; it just loses the link to the (gone) old signal.
+                databaseThread.Connection.Execute(
+                    "update position set SignalId = null where SignalId in " +
+                    "(select Id from signal where ExpirationDate < @opendate)",
+                    new { opendate });
+
                 databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate",
-                    new { opendate = GlobalData.Clock.UtcNow.AddDays(-7) });
+                    new { opendate });
 
                 // Database cleanup (there is no need for old zones older than the configured value)
                 foreach (var interval in GlobalData.IntervalList)
