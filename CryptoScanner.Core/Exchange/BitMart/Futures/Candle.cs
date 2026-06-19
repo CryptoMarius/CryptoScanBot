@@ -69,7 +69,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
                 if (kline.Timestamp == null)
                     continue;
 
-                if (CheckFutureCandleReceived(kline.Timestamp.Value, symbol, interval))
+                if (CheckFutureCandleReceived(kline.Timestamp.Value, symbol, interval, kline.ClosePrice))
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.Timestamp.Value,

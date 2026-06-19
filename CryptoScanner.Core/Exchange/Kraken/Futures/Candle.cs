@@ -62,7 +62,7 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         {
             foreach (var kline in result.Data.Klines)
             {
-                if (CheckFutureCandleReceived(kline.Timestamp, symbol, interval))
+                if (CheckFutureCandleReceived(kline.Timestamp, symbol, interval, kline.ClosePrice))
                     continue;
 
                 CryptoCandle candle = CandleTools.CreateCandle(symbol, interval, kline.Timestamp,

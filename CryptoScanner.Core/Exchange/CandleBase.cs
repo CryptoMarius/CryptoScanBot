@@ -287,13 +287,20 @@ public class CandleBase(ExchangeBase api)
     }
 
 
-    internal static bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval)
+    internal static bool CheckFutureCandleReceived(DateTime openTime, CryptoSymbol symbol, CryptoInterval interval,
+        decimal closePrice)
     {
         CandleTime candleTime = CandleTime.AlignFromDateTime(openTime, interval.Duration);
         CandleTime currentTime = CandleTime.AlignFromDateTime(DateTimeOffset.UtcNow.UtcDateTime, interval.Duration);
         if (candleTime + interval.Duration > currentTime)
         {
             ScannerLog.Logger.Debug($"Debug: future candle {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {candleTime.ToLocalTime()}");
+            return true;
+        }
+
+        if (closePrice <= 0)
+        {
+            ScannerLog.Logger.Debug($"Debug: candle with close price 0 {symbol.Name} {interval.Name} {openTime.ToLocalTime()} > {candleTime.ToLocalTime()}");
             return true;
         }
         return false;
