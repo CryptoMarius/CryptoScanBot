@@ -13,20 +13,47 @@ public class ThreadCheckFinishedPosition
     private readonly CancellationTokenSource cancellationToken = new();
     private readonly Dictionary<string, (CryptoPosition position, string? orderId, CryptoOrderStatus? status)> Queue = [];
 
+    // Reused DB connection(s) for the emulator's per-candle position checks (see AddToQueue). ONE PER
+    // THREAD: serial replay reuses a single connection; parallel replay (TickRunner.RunParallel) runs the
+    // symbol pipeline on several worker threads at once, and a SQLite connection is not thread-safe, so
+    // each thread gets its own. trackAllValues lets CloseEmulatorConnection dispose them all at run end.
+    private ThreadLocal<CryptoDatabase> _emulatorDatabase = NewEmulatorDatabase();
+
+    private static ThreadLocal<CryptoDatabase> NewEmulatorDatabase() => new(OpenDatabase, trackAllValues: true);
+
 
     public void Stop()
     {
         cancellationToken.Cancel();
+        CloseEmulatorConnection();
         GlobalData.AddTextToLogTab("Stop position check finished handler");
+    }
+
+    /// <summary>
+    /// Releases the reused emulator connection(s) — one per worker thread (see <see cref="AddToQueue"/>).
+    /// Called at the END of an emulator run (EmulatorDb.FinishRun), when the parallel replay has finished
+    /// so no thread is using them, so the DB file is not left with an open handle: the emulator deletes
+    /// the file on a Reset, which fails on Windows while a handle is open, and a stale handle would point
+    /// at the recreated file. A fresh (empty) set is installed for the next run.
+    /// </summary>
+    public void CloseEmulatorConnection()
+    {
+        ThreadLocal<CryptoDatabase> previous = _emulatorDatabase;
+        _emulatorDatabase = NewEmulatorDatabase();
+        foreach (CryptoDatabase database in previous.Values)
+            database.Dispose();
+        previous.Dispose();
     }
 
     public async Task AddToQueue(CryptoPosition position, string? orderId = null, CryptoOrderStatus? status = null)
     {
         if (GlobalData.IsEmulatorMode)
         {
-            using CryptoDatabase database = new();
-            database.Open();
-            await ProcessPosition(database, position, orderId, status);
+            // Opening a fresh CryptoDatabase (connection + PRAGMA setup) on every call dominated the run
+            // profile (positionCheck was ~52% of the pipeline). Reuse a per-thread connection instead:
+            // .Value opens one on first use on this thread and returns the same one afterwards. Per-thread
+            // (not one shared) because parallel replay runs this on several worker threads concurrently.
+            await ProcessPosition(_emulatorDatabase.Value!, position, orderId, status);
         }
         else
         {
@@ -64,6 +91,14 @@ public class ThreadCheckFinishedPosition
             }
         }
     }
+
+    private static CryptoDatabase OpenDatabase()
+    {
+        var database = new CryptoDatabase();
+        database.Open();
+        return database;
+    }
+
 
     //private static async Task<bool> UpdatePositionStatisticsAsync(CryptoPosition position)
     //{

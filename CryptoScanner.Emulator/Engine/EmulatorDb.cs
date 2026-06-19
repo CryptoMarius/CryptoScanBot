@@ -135,6 +135,10 @@ public static class EmulatorDb
 
         GlobalData.CurrentEmulatorRunId = null;
 
+        // Release the position-check handler's reused DB connection so the file is not left locked
+        // (a Reset deletes it, which fails on Windows while a handle is open). Reopened next run.
+        GlobalData.ThreadCheckPosition?.CloseEmulatorConnection();
+
         // Close the per-run log file opened in StartRun; subsequent lines go only to the shared logs.
         ScannerLog.StopRunLog();
     }
