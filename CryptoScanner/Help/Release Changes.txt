@@ -1,5 +1,11 @@
 CryptoScanBot release historie:
 
+xx-06-2025 2.5.8
+- BABA strategie (maar nog geen juiste sl%)
+- Dubbelklik actie voor chart of trading app hersteld
+- Aanpassingen aan de atrrb waaronder bands en sl en instellingen
+- Statistieken en Kolommen voor signalen verwijderd (beter voor de cpu)
+
 12-06-2025 2.5.7
 - Diverse aanpassingen aan de atrrb waaronder sl
 
