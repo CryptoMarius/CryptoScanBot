@@ -435,13 +435,18 @@ public class SignalCreate
         {
             // Pass it into the monitorings system (if trading)
             // (lower intervals have higher priority - via EventTime?)
-            // We dont use (nog) any exit signals, but that can be done as wll (somewhere in the future)
+            // We dont use any exit signals yet, but that can be done as well..
             if (!signal.IsInvalid && GlobalData.Settings.Trading.Active)
             {
                 if (TradingConfig.Trading[signal.Side].IntervalPeriod.ContainsKey(signal.Interval.IntervalPeriod))
                 {
                     if (TradingConfig.Trading[signal.Side].Strategy.ContainsKey(signal.Strategy))
                     {
+                        // Just clear all, only the last signal counts?
+                        // Not sure if this is the right way to go..
+                        // Should we cancel unfilled positions as well?
+                        Symbol.ClearSignals();
+                        
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
                         symbolInterval.SignalList.Add(signal);
 
@@ -488,11 +493,11 @@ public class SignalCreate
             Candle = candle,
             EmulatorRunId = GlobalData.CurrentEmulatorRunId,
             SignalPrice = candle.Close,
-            PriceMin = candle.Close, // statistics
-            PriceMax = candle.Close, // statistics
-            PriceMinPerc = 0, // statistics
-            PriceMaxPerc = 0, // statistics
-            SignalStatus = CryptoSignalStatus.Run,
+            //PriceMin = candle.Close, // statistics
+            //PriceMax = candle.Close, // statistics
+            //PriceMinPerc = 0, // statistics
+            //PriceMaxPerc = 0, // statistics
+            //SignalStatus = CryptoSignalStatus.Run,
             SignalVolume = Symbol.Volume,
             Side = CryptoTradeSide.Long,  // gets modified later
             Strategy = CryptoSignalStrategy.Jump,  // gets modified later

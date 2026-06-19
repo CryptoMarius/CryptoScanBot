@@ -97,10 +97,10 @@ public static class PositionTools
         position.AssignValues(signal); // Copy common indicator values
 
         // Reset the statistics
-        position.PriceMinPerc = 0;
-        position.PriceMaxPerc = 0;
-        position.PriceMin = signal.SignalPrice;
-        position.PriceMax = signal.SignalPrice;
+        //position.PriceMinPerc = 0;
+        //position.PriceMaxPerc = 0;
+        //position.PriceMin = signal.SignalPrice;
+        //position.PriceMax = signal.SignalPrice;
 
         // Forward any per-signal SL/TP override to the position (persisted; see CryptoPosition).
         position.SlPercentage = signal.SlPercentage;

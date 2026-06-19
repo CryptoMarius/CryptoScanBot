@@ -4,7 +4,7 @@ using CryptoScanner.Core.Signal.Bbma;
 using CryptoScanner.Core.Signal.WaveTrend;
 using CryptoScanner.Core.Signal.WtLbStoch;
 #endif
-using CryptoScanner.Core.Signal.AtrRb;
+using CryptoScanner.Core.Signal.Baba;
 using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
@@ -103,29 +103,29 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStobbShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.dlz",
-            Strategy = CryptoSignalStrategy.StobbDlz,
-            AnalyzeLongType = typeof(SignalStobbDlzLong),
-            AnalyzeShortType = typeof(SignalStobbDlzShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.dlz",
+        //    Strategy = CryptoSignalStrategy.StobbDlz,
+        //    AnalyzeLongType = typeof(SignalStobbDlzLong),
+        //    AnalyzeShortType = typeof(SignalStobbDlzShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.fvg",
-            Strategy = CryptoSignalStrategy.StobbFvg,
-            AnalyzeLongType = typeof(SignalStobbFvgLong),
-            AnalyzeShortType = typeof(SignalStobbFvgShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.fvg",
+        //    Strategy = CryptoSignalStrategy.StobbFvg,
+        //    AnalyzeLongType = typeof(SignalStobbFvgLong),
+        //    AnalyzeShortType = typeof(SignalStobbFvgShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.smc",
-            Strategy = CryptoSignalStrategy.StobbSmc,
-            AnalyzeLongType = typeof(SignalStobbSmcLong),
-            AnalyzeShortType = typeof(SignalStobbSmcShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.smc",
+        //    Strategy = CryptoSignalStrategy.StobbSmc,
+        //    AnalyzeLongType = typeof(SignalStobbSmcLong),
+        //    AnalyzeShortType = typeof(SignalStobbSmcShort),
+        //});
 
 
         Register(new AlgorithmDefinition()
@@ -136,29 +136,29 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStobbMultiShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi.dlz",
-            Strategy = CryptoSignalStrategy.StobbMultiDlz,
-            AnalyzeLongType = typeof(SignalStobbMultiDlzLong),
-            AnalyzeShortType = typeof(SignalStobbMultiDlzShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.multi.dlz",
+        //    Strategy = CryptoSignalStrategy.StobbMultiDlz,
+        //    AnalyzeLongType = typeof(SignalStobbMultiDlzLong),
+        //    AnalyzeShortType = typeof(SignalStobbMultiDlzShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi.fvg",
-            Strategy = CryptoSignalStrategy.StobbMultiFvg,
-            AnalyzeLongType = typeof(SignalStobbMultiFvgLong),
-            AnalyzeShortType = typeof(SignalStobbMultiFvgShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.multi.fvg",
+        //    Strategy = CryptoSignalStrategy.StobbMultiFvg,
+        //    AnalyzeLongType = typeof(SignalStobbMultiFvgLong),
+        //    AnalyzeShortType = typeof(SignalStobbMultiFvgShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stobb.multi.smc",
-            Strategy = CryptoSignalStrategy.StobbMultiSmc,
-            AnalyzeLongType = typeof(SignalStobbMultiSmcLong),
-            AnalyzeShortType = typeof(SignalStobbMultiSmcShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "stobb.multi.smc",
+        //    Strategy = CryptoSignalStrategy.StobbMultiSmc,
+        //    AnalyzeLongType = typeof(SignalStobbMultiSmcLong),
+        //    AnalyzeShortType = typeof(SignalStobbMultiSmcShort),
+        //});
 
         //***************************************************
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
@@ -172,29 +172,29 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.dlz",
-            Strategy = CryptoSignalStrategy.StoRsiDlz,
-            AnalyzeLongType = typeof(SignalStoRsiDlzLong),
-            AnalyzeShortType = typeof(SignalStoRsiDlzShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.dlz",
+        //    Strategy = CryptoSignalStrategy.StoRsiDlz,
+        //    AnalyzeLongType = typeof(SignalStoRsiDlzLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiDlzShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.fvg",
-            Strategy = CryptoSignalStrategy.StoRsiFvg,
-            AnalyzeLongType = typeof(SignalStoRsiFvgLong),
-            AnalyzeShortType = typeof(SignalStoRsiFvgShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.fvg",
+        //    Strategy = CryptoSignalStrategy.StoRsiFvg,
+        //    AnalyzeLongType = typeof(SignalStoRsiFvgLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiFvgShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.smc",
-            Strategy = CryptoSignalStrategy.StoRsiSmc,
-            AnalyzeLongType = typeof(SignalStoRsiSmcLong),
-            AnalyzeShortType = typeof(SignalStoRsiSmcShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.smc",
+        //    Strategy = CryptoSignalStrategy.StoRsiSmc,
+        //    AnalyzeLongType = typeof(SignalStoRsiSmcLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiSmcShort),
+        //});
 
 
         // another combined with a higher timeframe
@@ -206,29 +206,29 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi.dlz",
-            Strategy = CryptoSignalStrategy.StoRsiMultiDlz,
-            AnalyzeLongType = typeof(SignalStoRsiMultiDlzLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiDlzShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.multi.dlz",
+        //    Strategy = CryptoSignalStrategy.StoRsiMultiDlz,
+        //    AnalyzeLongType = typeof(SignalStoRsiMultiDlzLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiMultiDlzShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi.fvg",
-            Strategy = CryptoSignalStrategy.StoRsiMultiFvg,
-            AnalyzeLongType = typeof(SignalStoRsiMultiFvgLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiFvgShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.multi.fvg",
+        //    Strategy = CryptoSignalStrategy.StoRsiMultiFvg,
+        //    AnalyzeLongType = typeof(SignalStoRsiMultiFvgLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiMultiFvgShort),
+        //});
 
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi.smc",
-            Strategy = CryptoSignalStrategy.StoRsiMultiSmc,
-            AnalyzeLongType = typeof(SignalStoRsiMultiSmcLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiSmcShort),
-        });
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.multi.smc",
+        //    Strategy = CryptoSignalStrategy.StoRsiMultiSmc,
+        //    AnalyzeLongType = typeof(SignalStoRsiMultiSmcLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiMultiSmcShort),
+        //});
 
 
         //***************************************************
@@ -288,37 +288,37 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
         });
 
-        // NWE Repaining
-        Register(new AlgorithmDefinition()
-        {
-            Name = "nwe",
-            Strategy = CryptoSignalStrategy.Nwe,
-            AnalyzeLongType = typeof(SignalNwe),
-            AnalyzeShortType = typeof(SignalNwe),
-        });
+//        // NWE Repaining
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "nwe",
+//            Strategy = CryptoSignalStrategy.Nwe,
+//            AnalyzeLongType = typeof(SignalNwe),
+//            AnalyzeShortType = typeof(SignalNwe),
+//        });
 
-#if DEBUG
-        // NWE not repainting
-        Register(new AlgorithmDefinition()
-        {
-            Name = "nwe.np",
-            Strategy = CryptoSignalStrategy.NweNp,
-            AnalyzeLongType = typeof(SignalNweNp),
-            AnalyzeShortType = typeof(SignalNweNp),
-        });
-#endif
+//#if DEBUG
+//        // NWE not repainting
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "nwe.np",
+//            Strategy = CryptoSignalStrategy.NweNp,
+//            AnalyzeLongType = typeof(SignalNweNp),
+//            AnalyzeShortType = typeof(SignalNweNp),
+//        });
+//#endif
 
-#if DEBUG
-        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
-        Register(new AlgorithmDefinition()
-        {
-            Name = "nwe.bb",
-            Strategy = CryptoSignalStrategy.NweBb,
-            AnalyzeLongType = typeof(SignalNweBbLong),
-            AnalyzeShortType = typeof(SignalNweBbShort),
-        });
+//#if DEBUG
+//        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "nwe.bb",
+//            Strategy = CryptoSignalStrategy.NweBb,
+//            AnalyzeLongType = typeof(SignalNweBbLong),
+//            AnalyzeShortType = typeof(SignalNweBbShort),
+//        });
 
-#endif
+//#endif
 
         //#if DEBUG
         //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
@@ -377,17 +377,18 @@ public static class RegisterAlgorithms
 #endif
 
         //***************************************************
-        // AtrRb Bands — fires when price hits a macro band:
+        // Baba Bands — fires when price hits a macro band:
         // long on the lower band, short on the upper band.
         //***************************************************
         Register(new AlgorithmDefinition()
         {
-            Name = "atrrb",
-            Strategy = CryptoSignalStrategy.AtrRb,
-            AnalyzeLongType = typeof(SignalAtrRbLong),
-            AnalyzeShortType = typeof(SignalAtrRbShort),
+            Name = "baba",
+            Strategy = CryptoSignalStrategy.Baba,
+            AnalyzeLongType = typeof(SignalBabaLong),
+            AnalyzeShortType = typeof(SignalBabaShort),
         });
 
+#if DEBUG
         //***************************************************
         // CHoCH — fires on a Change of Character of the ZigZag-derived structure.
         // Primary / Secondary chooses which trend slot is read. The .pullback variants
@@ -424,6 +425,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalChochSecondaryPullbackLong),
             AnalyzeShortType = typeof(SignalChochSecondaryPullbackShort),
         });
+#endif
 
     }
 

@@ -992,7 +992,7 @@ public partial class ChartWindowViewModel : ObservableObject
 
         // Keep panel proportions in sync — oscillator panel is active when stoch OR rsi is
         // enabled, MACD and volume panels each have their own toggle.
-        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux || Session.ShowBbPercent, Session.ShowMacd, Session.ShowVolume);
+        AdjustPanels(Session.ShowStoch || Session.ShowRsi || Session.ShowLux, Session.ShowMacd, Session.ShowVolume);
 
         SettingsZigZag mainTrend = Session.TrendType == TrendType.Primary ? GlobalData.Settings.Trend.Primary : GlobalData.Settings.Trend.Secondary;
         var mainIndicator = TrendZigZagIndicatorList[(mainTrend.TrendType, mainTrend.UseHighLow)];
@@ -1038,11 +1038,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowNweRepainting))
             Nwe.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, true, group);
 
-        // Draw NWE × BB crossover markers — recomputed from the windowed candles via NweBbDetector
-        // (the live strategy's algorithm), so they also show in the emulator where no signals were stored.
-        group = "nwe.bb";
-        if (Toggle(model, group, Session.ShowNweBb))
-            NweBb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        //// Draw NWE × BB crossover markers — recomputed from the windowed candles via NweBbDetector
+        //// (the live strategy's algorithm), so they also show in the emulator where no signals were stored.
+        //group = "nwe.bb";
+        //if (Toggle(model, group, Session.ShowNweBb))
+        //    NweBb.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw Bollinger Bands
         group = "bb";
@@ -1054,16 +1054,16 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // Draw AtrRb Bands & Ribbon
-        group = "atrrb";
-        if (Toggle(model, group, Session.ShowAtrRbBands))
-            AtrRbBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        // Draw Baba Bands & Ribbon
+        group = "baba";
+        if (Toggle(model, group, Session.ShowBabaBands))
+            BabaBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // Draw the ACTUAL stored AtrRb signals (real triggers from the run) — these match the strategy
+        // Draw the ACTUAL stored Baba signals (real triggers from the run) — these match the strategy
         // exactly, unlike the recomputed band-break labels above.
-        group = "atrrb.signals";
-        if (Toggle(model, group, Session.ShowAtrRbSignals))
-            AtrRbSignals.Draw(model, SignalList, Interval, Session.MinDate, Session.MaxDate, group);
+        group = "baba.signals";
+        if (Toggle(model, group, Session.ShowBabaSignals))
+            BabaSignals.Draw(model, SignalList, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Experimental "glijbaan" (slide) detector overlay — additive, nothing else uses it yet.
         group = "slide";
@@ -1114,10 +1114,10 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowLux))
             Lux.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
-        // Draw Bollinger %B (pink) + band width (red widening / green narrowing) in the oscillator panel
-        group = "bbpercent";
-        if (Toggle(model, group, Session.ShowBbPercent))
-            Bollingerbands.DrawPercentWidth(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        //// Draw Bollinger %B (pink) + band width (red widening / green narrowing) in the oscillator panel
+        //group = "bbpercent";
+        //if (Toggle(model, group, Session.ShowBbPercent))
+        //    Bollingerbands.DrawPercentWidth(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
         // Draw MACD (line + signal + histogram) in dedicated sub-panel (auto-range "macd" Y axis)
         group = "macd";
@@ -1788,6 +1788,13 @@ public partial class ChartWindowViewModel : ObservableObject
                 DisplayOptionsChanged(null, null!);
                 FibSettingsChanged(null, null!);
                 TrendSettingsChanged(null, null!);
+
+                // Set the zoom (axis range) BEFORE the first paint. The draws above only flag the plot
+                // dirty; the first actual render happens on the next UI yield — the await in the finally
+                // below. If ZoomLast ran after that (as it used to), the chart painted once at full
+                // auto-scaled range and then a second time zoomed — a visible double build. Running it
+                // here, while still synchronous, means that single first paint already has the zoomed range.
+                ZoomLast();
             }
             finally
             {
@@ -1797,8 +1804,9 @@ public partial class ChartWindowViewModel : ObservableObject
                 Symbol.Data.ZoneLock.Release();
             }
 
-            ZoomLast();
-            PlotModel.InvalidatePlot(true);
+            // No extra InvalidatePlot here: ZoomLast already flagged the plot dirty (with the zoomed
+            // axis), so the next UI yield paints it exactly once. A second invalidate would just repaint
+            // the identical content.
 
             // TEMP diagnostic (shows in the emulator Log tab): is the data actually there and drawn?
             // candles=0 → CandleList not loaded; series=0 → nothing drawn; range tells the window used.

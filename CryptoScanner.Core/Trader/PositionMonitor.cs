@@ -464,7 +464,7 @@ public class PositionMonitor //: IDisposable
                                 // Check the assets, the symbol limits..
 
                                 // Bepaal het entry bedrag. Strategies that supplied an explicit entry
-                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. atrrb's band,
+                                // price (OverrideSignalPrice → signal.SignalPrice, e.g. baba's band,
                                 // CHoCH/BOS break) enter at that level; otherwise at the current market price.
                                 decimal entryPrice = (signal.EntryPriceOverridden && signal.SignalPrice > 0
                                     ? signal.SignalPrice

@@ -234,11 +234,11 @@ public class CryptoData2 : CryptoData
     public CryptoTrendIndicator TrendInterval { get; set; }
 
     // Statistics, the min and max differences against the signalprice
-    public decimal PriceMin { get; set; }
-    public float PriceMinPerc { get; set; }
-    public decimal PriceMax { get; set; }
-    public float PriceMaxPerc { get; set; }
-    public CryptoSignalStatus SignalStatus { get; set; }
+    //public decimal PriceMin { get; set; }
+    //public float PriceMinPerc { get; set; }
+    //public decimal PriceMax { get; set; }
+    //public float PriceMaxPerc { get; set; }
+    //public CryptoSignalStatus SignalStatus { get; set; }
 
     public float AvgBB { get; set; }
 
@@ -281,11 +281,11 @@ public class CryptoData2 : CryptoData
             Barometer4h = source2.Barometer4h;
             Barometer1d = source2.Barometer1d;
 
-            PriceMin = source2.PriceMin;
-            PriceMax = source2.PriceMax;
-            PriceMinPerc = source2.PriceMinPerc;
-            PriceMaxPerc = source2.PriceMaxPerc;
-            SignalStatus = source2.SignalStatus;
+            //PriceMin = source2.PriceMin;
+            //PriceMax = source2.PriceMax;
+            //PriceMinPerc = source2.PriceMinPerc;
+            //PriceMaxPerc = source2.PriceMaxPerc;
+            //SignalStatus = source2.SignalStatus;
 
             AvgBB = source2.AvgBB;
         }

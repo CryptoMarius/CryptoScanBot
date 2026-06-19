@@ -342,7 +342,7 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
-    <PackageReference Include="Tmds.DBus" Version="0.94.1" />
+    <PackageReference Include="Tmds.DBus" Version="0.94.2" />
   </ItemGroup>
 
   <ItemGroup>

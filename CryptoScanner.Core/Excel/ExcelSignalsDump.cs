@@ -85,10 +85,10 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
         WriteCell(sheet, columns++, row, "Barometer4h");
         WriteCell(sheet, columns++, row, "Barometer1d");
 
-        WriteCell(sheet, columns++, row, "MinPrice");
-        WriteCell(sheet, columns++, row, "MaxPrice");
-        WriteCell(sheet, columns++, row, "MinPricePerc");
-        WriteCell(sheet, columns++, row, "MaxPricePerc");
+        //WriteCell(sheet, columns++, row, "MinPrice");
+        //WriteCell(sheet, columns++, row, "MaxPrice");
+        //WriteCell(sheet, columns++, row, "MinPricePerc");
+        //WriteCell(sheet, columns++, row, "MaxPricePerc");
 
 
         foreach (CryptoSignal signal in SignalList.ToList())
@@ -138,12 +138,12 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             WriteCell(sheet, column++, row, signal.Barometer4h, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Barometer1d, CellStyleDecimalNormal);
 
-#if DEBUG
-            WriteCell(sheet, column++, row, signal.PriceMin, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, signal.PriceMax, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, signal.PriceMinPerc, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, signal.PriceMaxPerc, CellStyleDecimalNormal);
-#endif
+//#if DEBUG
+//            WriteCell(sheet, column++, row, signal.PriceMin, CellStyleDecimalNormal);
+//            WriteCell(sheet, column++, row, signal.PriceMax, CellStyleDecimalNormal);
+//            WriteCell(sheet, column++, row, signal.PriceMinPerc, CellStyleDecimalNormal);
+//            WriteCell(sheet, column++, row, signal.PriceMaxPerc, CellStyleDecimalNormal);
+//#endif
         }
 
         AutoSize(sheet, columns);

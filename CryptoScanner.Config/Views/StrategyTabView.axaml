@@ -40,8 +40,8 @@
 		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="false">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
-		<TabItem Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyAtrRbTabView DataContext="{Binding StrategyAtrRbTabViewModel}" />
+		<TabItem Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+			<settings:StrategyBabaTabView DataContext="{Binding StrategyBabaTabViewModel}" />
 		</TabItem>
 	</TabControl>
 

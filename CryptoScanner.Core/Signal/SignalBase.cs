@@ -63,7 +63,7 @@ public class SignalCreateBase
     /// <summary>
     /// Optional per-signal stop-loss distance, as a positive percentage from the entry. When non-null
     /// the trader uses this instead of the default percentage-based SL from Settings.Trading. Strategies
-    /// that size their SL off volatility (e.g. atrrb: factor * ATR%) populate this. A percentage is
+    /// that size their SL off volatility (e.g. baba: factor * ATR%) populate this. A percentage is
     /// reference-independent, so it works for market orders and maps straight onto Altrady.
     /// </summary>
     public virtual decimal? OverrideSlPercentage => null;

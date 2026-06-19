@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Core;
+﻿using System.Text.Json.Serialization;
+
+using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
@@ -46,19 +48,20 @@ public class ZoneSession
     public bool ShowDtb { get; set; } = false; // Double Top Double Bottom
     public bool ShowNwe { get; set; } = true; // NWE non repainting?
     public bool ShowNweRepainting { get; set; } = false;
-    public bool ShowNweBb { get; set; } = false;
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
-    public bool ShowAtrRbBands { get; set; } = false; // AtrRb Bands & Ribbon
-    public bool ShowAtrRbSignals { get; set; } = false; // stored AtrRb signals (real triggers)
+    // JSON keys kept as the former "AtrRb" names so previously saved chart sessions keep loading.
+    [JsonPropertyName("ShowAtrRbBands")]
+    public bool ShowBabaBands { get; set; } = false; // Baba Bands & Ribbon
+    [JsonPropertyName("ShowAtrRbSignals")]
+    public bool ShowBabaSignals { get; set; } = false; // stored Baba signals (real triggers)
     public bool ShowSlide { get; set; } = false; // experimental "glijbaan" (slide) detector overlay
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
     public bool ShowRsi { get; set; } = false;
     public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m
-    public bool ShowBbPercent { get; set; } = false; // Bollinger %B + band width in the oscillator panel
     public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
 

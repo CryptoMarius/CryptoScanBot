@@ -20,9 +20,6 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showLux = false;
 
     [ObservableProperty]
-    private bool _showBbPercent = false;
-
-    [ObservableProperty]
     private bool _showMacd = false;
 
     [ObservableProperty]
@@ -38,19 +35,16 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showNweRepainting = false;
 
     [ObservableProperty]
-    private bool _showNweBb = false;
-
-    [ObservableProperty]
     private bool _showBollingerBand = false;
 
     [ObservableProperty]
     private bool _showKeltnerChannel = false;
 
     [ObservableProperty]
-    private bool _showAtrRbBands = false;
+    private bool _showBabaBands = false;
 
     [ObservableProperty]
-    private bool _showAtrRbSignals = false;
+    private bool _showBabaSignals = false;
 
     [ObservableProperty]
     private bool _showSlide = false;
@@ -92,18 +86,16 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowStoch = session.ShowStoch;
         ShowRsi = session.ShowRsi;
         ShowLux = session.ShowLux;
-        ShowBbPercent = session.ShowBbPercent;
         ShowMacd = session.ShowMacd;
         ShowVolume = session.ShowVolume;
         ShowSmaLinesSbm = session.ShowSmaLinesSbm;
         ShowNwe = session.ShowNwe;
         ShowNweRepainting = session.ShowNweRepainting;
-        ShowNweBb = session.ShowNweBb;
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
-        ShowAtrRbBands = session.ShowAtrRbBands;
-        ShowAtrRbSignals = session.ShowAtrRbSignals;
+        ShowBabaBands = session.ShowBabaBands;
+        ShowBabaSignals = session.ShowBabaSignals;
         ShowSlide = session.ShowSlide;
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
@@ -125,18 +117,16 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowStoch = ShowStoch;
         session.ShowRsi = ShowRsi;
         session.ShowLux = ShowLux;
-        session.ShowBbPercent = ShowBbPercent;
         session.ShowMacd = ShowMacd;
         session.ShowVolume = ShowVolume;
         session.ShowSmaLinesSbm = ShowSmaLinesSbm;
         session.ShowNwe = ShowNwe;
         session.ShowNweRepainting = ShowNweRepainting;
-        session.ShowNweBb = ShowNweBb;
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
-        session.ShowAtrRbBands = ShowAtrRbBands;
-        session.ShowAtrRbSignals = ShowAtrRbSignals;
+        session.ShowBabaBands = ShowBabaBands;
+        session.ShowBabaSignals = ShowBabaSignals;
         session.ShowSlide = ShowSlide;
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;

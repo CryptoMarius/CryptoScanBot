@@ -416,7 +416,7 @@ public class CryptoDatabase : IDisposable
                 "PriceMaxPerc TEXT NULL," +
                 "SignalStatus TEXT NULL," +
 
-                // Optional per-signal SL/TP distances (% from entry) computed by the strategy (e.g. atrrb).
+                // Optional per-signal SL/TP distances (% from entry) computed by the strategy (e.g. baba).
                 // SlPrice/TpPrice are legacy columns kept for schema compatibility; the levels are now
                 // stored as SlPercentage / TpPercentage.
                 "SlPercentage TEXT NULL," +
@@ -559,7 +559,7 @@ public class CryptoDatabase : IDisposable
                 "PriceMaxPerc TEXT NULL," +
                 "SignalStatus TEXT NULL," +
 
-                // Optional per-position SL/TP distances (% from entry) carried over from the signal (e.g. atrrb).
+                // Optional per-position SL/TP distances (% from entry) carried over from the signal (e.g. baba).
                 // SlPrice/TpPrice are legacy columns kept for schema compatibility; the levels are now
                 // stored as SlPercentage / TpPercentage.
                 "SlPercentage TEXT NULL," +
