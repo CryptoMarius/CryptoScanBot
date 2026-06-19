@@ -45,11 +45,11 @@
                 <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="120"/>
                 <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="70"/>
                 <DataGridTextColumn Header="Pos"         Binding="{Binding PositionCount}" Width="55"/>
-                <DataGridTextColumn Header="Won"         Binding="{Binding PositionsWon}" Width="55"/>
-                <DataGridTextColumn Header="Lost"        Binding="{Binding PositionsLost}" Width="55"/>
-                <DataGridTextColumn Header="Win %"       Binding="{Binding WinPercentageText}" Width="70"/>
-                <DataGridTextColumn Header="Open"        Binding="{Binding PositionsOpen}" Width="55"/>
-                <DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="90"/>
+				<DataGridTextColumn Header="Open"        Binding="{Binding PositionsOpen}" Width="55"/>
+				<DataGridTextColumn Header="Won"         Binding="{Binding PositionsWon}" Width="55"/>
+				<DataGridTextColumn Header="Lost"        Binding="{Binding PositionsLost}" Width="55"/>
+				<DataGridTextColumn Header="Win %"       Binding="{Binding WinPercentageText}" Width="70"/>
+				<DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="90"/>
                 <DataGridTextColumn Header="Profit %"    Binding="{Binding ProfitPercentageText}" Width="80"/>
             </DataGrid.Columns>
         </DataGrid>
