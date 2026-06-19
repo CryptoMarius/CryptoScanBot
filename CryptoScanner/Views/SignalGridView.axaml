@@ -445,7 +445,7 @@
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
 
-			<!-- PriceMinPerc -->
+			<!-- PriceMinPerc
 			<DataGridTemplateColumn Header="Price min perc" Width="60" SortMemberPath="PriceMinPerc">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
@@ -453,8 +453,9 @@
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
+			 -->
 
-			<!-- PriceMaxPerc -->
+			<!-- PriceMaxPerc
 			<DataGridTemplateColumn Header="Price max perc" Width="60" SortMemberPath="PriceMaxPerc">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
@@ -462,8 +463,9 @@
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
+			 -->
 
-			<!-- SignalStatus -->
+			<!-- SignalStatus
 			<DataGridTemplateColumn Header="signal Status" Width="60" SortMemberPath="SignalStatus">
 				<DataGridTemplateColumn.CellTemplate>
 					<DataTemplate>
@@ -472,6 +474,7 @@
 					</DataTemplate>
 				</DataGridTemplateColumn.CellTemplate>
 			</DataGridTemplateColumn>
+			 -->
 
 		</DataGrid.Columns>
 	</DataGrid>

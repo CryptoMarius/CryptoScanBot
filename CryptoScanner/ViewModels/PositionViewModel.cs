@@ -1180,68 +1180,68 @@ public partial class PositionViewModel : BaseConvertersViewModel
         }
     }
 
-    //public double PriceMinPerc => Object.PriceMinPerc;
-    private string? _PriceMinPercText;
-    public string PriceMinPerc
-    {
-        get
-        {
-            _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
-            return _PriceMinPercText!;
-        }
-        set
-        {
-            _PriceMinPercText = null;
-            OnPropertyChanged(nameof(PriceMinPerc));
-        }
-    }
+    ////public double PriceMinPerc => Object.PriceMinPerc;
+    //private string? _PriceMinPercText;
+    //public string PriceMinPerc
+    //{
+    //    get
+    //    {
+    //        _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
+    //        return _PriceMinPercText!;
+    //    }
+    //    set
+    //    {
+    //        _PriceMinPercText = null;
+    //        OnPropertyChanged(nameof(PriceMinPerc));
+    //    }
+    //}
 
 
-    //public double PriceMaxPerc => Object.PriceMaxPerc;
-    private string? _PriceMaxPercText;
-    public string PriceMaxPerc
-    {
-        get
-        {
-            _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
-            return _PriceMaxPercText!;
-        }
-        set
-        {
-            _PriceMaxPercText = null;
-            OnPropertyChanged(nameof(PriceMaxPerc));
-        }
-    }
+    ////public double PriceMaxPerc => Object.PriceMaxPerc;
+    //private string? _PriceMaxPercText;
+    //public string PriceMaxPerc
+    //{
+    //    get
+    //    {
+    //        _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
+    //        return _PriceMaxPercText!;
+    //    }
+    //    set
+    //    {
+    //        _PriceMaxPercText = null;
+    //        OnPropertyChanged(nameof(PriceMaxPerc));
+    //    }
+    //}
 
-    //public CryptoSignalStatus SignalStatus => Object.SignalStatus;
-    private string? _SignalStatusText;
-    public string SignalStatus
-    {
-        get
-        {
-            _SignalStatusText ??= GetSignalStatusText(Object.SignalStatus);
-            return _SignalStatusText!;
-        }
-        set
-        {
-            _SignalStatusText = null;
-            OnPropertyChanged(nameof(SignalStatus));
-        }
-    }
-    private IBrush? _SignalStatusForeground;
-    public IBrush SignalStatusForeground
-    {
-        get
-        {
-            _SignalStatusForeground ??= GetSignalStatusColor(Object.SignalStatus);
-            return _SignalStatusForeground!;
-        }
-        set
-        {
-            _SignalStatusForeground = null;
-            OnPropertyChanged(nameof(SignalStatusForeground));
-        }
-    }
+    ////public CryptoSignalStatus SignalStatus => Object.SignalStatus;
+    //private string? _SignalStatusText;
+    //public string SignalStatus
+    //{
+    //    get
+    //    {
+    //        _SignalStatusText ??= GetSignalStatusText(Object.SignalStatus);
+    //        return _SignalStatusText!;
+    //    }
+    //    set
+    //    {
+    //        _SignalStatusText = null;
+    //        OnPropertyChanged(nameof(SignalStatus));
+    //    }
+    //}
+    //private IBrush? _SignalStatusForeground;
+    //public IBrush SignalStatusForeground
+    //{
+    //    get
+    //    {
+    //        _SignalStatusForeground ??= GetSignalStatusColor(Object.SignalStatus);
+    //        return _SignalStatusForeground!;
+    //    }
+    //    set
+    //    {
+    //        _SignalStatusForeground = null;
+    //        OnPropertyChanged(nameof(SignalStatusForeground));
+    //    }
+    //}
 
     public void NotifyColumnChanged(string column)
     {

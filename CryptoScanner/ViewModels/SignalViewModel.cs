@@ -762,171 +762,171 @@ public partial class SignalViewModel : BaseConvertersViewModel
         }
     }
 
-    //public double PriceMinPerc => Object.PriceMinPerc;
-    private string? _PriceMinPercText;
-    public string PriceMinPerc
-    {
-        get
-        {
-            _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
-            return _PriceMinPercText!;
-        }
-        set
-        {
-            _PriceMinPercText = null;
-            OnPropertyChanged(nameof(PriceMinPerc));
-        }
-    }
+    ////public double PriceMinPerc => Object.PriceMinPerc;
+    //private string? _PriceMinPercText;
+    //public string PriceMinPerc
+    //{
+    //    get
+    //    {
+    //        _PriceMinPercText ??= Object.PriceMinPerc.ToString("N2");
+    //        return _PriceMinPercText!;
+    //    }
+    //    set
+    //    {
+    //        _PriceMinPercText = null;
+    //        OnPropertyChanged(nameof(PriceMinPerc));
+    //    }
+    //}
 
 
-    //public double PriceMaxPerc => Object.PriceMaxPerc;
-    private string? _PriceMaxPercText;
-    public string PriceMaxPerc
-    {
-        get
-        {
-            _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
-            return _PriceMaxPercText!;
-        }
-        set
-        {
-            _PriceMaxPercText = null;
-            OnPropertyChanged(nameof(PriceMaxPerc));
-        }
-    }
+    ////public double PriceMaxPerc => Object.PriceMaxPerc;
+    //private string? _PriceMaxPercText;
+    //public string PriceMaxPerc
+    //{
+    //    get
+    //    {
+    //        _PriceMaxPercText ??= Object.PriceMaxPerc.ToString("N2");
+    //        return _PriceMaxPercText!;
+    //    }
+    //    set
+    //    {
+    //        _PriceMaxPercText = null;
+    //        OnPropertyChanged(nameof(PriceMaxPerc));
+    //    }
+    //}
 
-    //public CryptoSignalStatus SignalStatus => Object.SignalStatus;
-    private string? _SignalStatusText;
-    public string SignalStatus
-    {
-        get
-        {
-            _SignalStatusText ??= GetSignalStatusText(Object.SignalStatus);
-            return _SignalStatusText!;
-        }
-        set
-        {
-            _SignalStatusText = null;
-            _SignalStatusForeground = null;
-            OnPropertyChanged(nameof(SignalStatus));
-            OnPropertyChanged(nameof(SignalStatusForeground));
-        }
-    }
-    private IBrush? _SignalStatusForeground;
-    public IBrush SignalStatusForeground
-    {
-        get
-        {
-            _SignalStatusForeground ??= GetSignalStatusColor(Object.SignalStatus);
-            return _SignalStatusForeground!;
-        }
-        set
-        {
-            _SignalStatusForeground = null;
-            OnPropertyChanged(nameof(SignalStatusForeground));
-        }
-    }
+    ////public CryptoSignalStatus SignalStatus => Object.SignalStatus;
+    //private string? _SignalStatusText;
+    //public string SignalStatus
+    //{
+    //    get
+    //    {
+    //        _SignalStatusText ??= GetSignalStatusText(Object.SignalStatus);
+    //        return _SignalStatusText!;
+    //    }
+    //    set
+    //    {
+    //        _SignalStatusText = null;
+    //        _SignalStatusForeground = null;
+    //        OnPropertyChanged(nameof(SignalStatus));
+    //        OnPropertyChanged(nameof(SignalStatusForeground));
+    //    }
+    //}
+    //private IBrush? _SignalStatusForeground;
+    //public IBrush SignalStatusForeground
+    //{
+    //    get
+    //    {
+    //        _SignalStatusForeground ??= GetSignalStatusColor(Object.SignalStatus);
+    //        return _SignalStatusForeground!;
+    //    }
+    //    set
+    //    {
+    //        _SignalStatusForeground = null;
+    //        OnPropertyChanged(nameof(SignalStatusForeground));
+    //    }
+    //}
 
-    public bool UpdateSignalStatistics()
-    {
-        if (UpdateSignalStatisticsInternal())
-        {
-            // Update viewmodel to update prices..
-            PriceMinPerc = "";
-            PriceMaxPerc = "";
-            SignalStatus = "";
-            return true;
-        }
-        return false;
-    }
+    //public bool UpdateSignalStatistics()
+    //{
+    //    if (UpdateSignalStatisticsInternal())
+    //    {
+    //        // Update viewmodel to update prices..
+    //        PriceMinPerc = "";
+    //        PriceMaxPerc = "";
+    //        SignalStatus = "";
+    //        return true;
+    //    }
+    //    return false;
+    //}
 
-    internal bool UpdateSignalStatisticsInternal()
-    {
-        var signal = Object;
-        try
-        {
-            CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-            CryptoCandle candle = symbolInterval.CandleList.Values.LastOrDefault();
-            if (candle.OpenTime != 0)
-            {
-                var result = false;
+    //internal bool UpdateSignalStatisticsInternal()
+    //{
+    //    var signal = Object;
+    //    try
+    //    {
+    //        CryptoSymbolInterval symbolInterval = signal.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
+    //        CryptoCandle candle = symbolInterval.CandleList.Values.LastOrDefault();
+    //        if (candle.OpenTime != 0)
+    //        {
+    //            var result = false;
 
-                if (candle.Low < signal.PriceMin)
-                {
-                    signal.PriceMin = candle.Low;
-                    signal.PriceMinPerc = (float)(100 * (signal.PriceMin / signal.SignalPrice - 1));
-                    result = true;
-                }
-                if (candle.High > signal.PriceMax)
-                {
-                    signal.PriceMax = candle.High;
-                    signal.PriceMaxPerc = (float)(100 * (signal.PriceMax / signal.SignalPrice - 1));
-                    result = true;
-                }
+    //            if (candle.Low < signal.PriceMin)
+    //            {
+    //                signal.PriceMin = candle.Low;
+    //                signal.PriceMinPerc = (float)(100 * (signal.PriceMin / signal.SignalPrice - 1));
+    //                result = true;
+    //            }
+    //            if (candle.High > signal.PriceMax)
+    //            {
+    //                signal.PriceMax = candle.High;
+    //                signal.PriceMaxPerc = (float)(100 * (signal.PriceMax / signal.SignalPrice - 1));
+    //                result = true;
+    //            }
 
-                if (signal.SignalStatus == CryptoSignalStatus.Run)
-                {
-                    // Prefer the signal's own SL distance (e.g. atrrb's factor*ATR%) when it set one;
-                    // fall back to the global default. The signal's SlPercentage is the distance from
-                    // the entry (= SignalPrice), matching how the trader applies it.
-                    decimal stopLossPerc = (signal.SlPercentage ?? GlobalData.Settings.Trading.StopLossPercentage) / 100;
-                    if (stopLossPerc != 0.0m)
-                    {
-                        if (signal.Side == CryptoTradeSide.Long)
-                        {
-                            decimal stopLossPrice = signal.SignalPrice - stopLossPerc * signal.SignalPrice;
-                            if (signal.PriceMin <= stopLossPrice)
-                            {
-                                signal.SignalStatus = CryptoSignalStatus.Lost;
-                                result = true;
-                            }
-                        }
-                        else if (signal.Side == CryptoTradeSide.Short)
-                        {
-                            decimal stopLossPrice = signal.SignalPrice + stopLossPerc * signal.SignalPrice;
-                            if (signal.PriceMax >= stopLossPrice)
-                            {
-                                signal.SignalStatus = CryptoSignalStatus.Lost;
-                                result = true;
-                            }
-                        }
-                    }
-                    // still running? ;-)
-                    if (signal.SignalStatus == CryptoSignalStatus.Run)
-                    {
-                        decimal takeProfitPercentage = GlobalData.Settings.Trading.ProfitPercentage / 100;
-                        if (takeProfitPercentage != 0.0m)
-                        {
-                            if (signal.Side == CryptoTradeSide.Long)
-                            {
-                                decimal takeProfitPrice = signal.SignalPrice + takeProfitPercentage * signal.SignalPrice;
-                                if (signal.PriceMax > takeProfitPrice)
-                                {
-                                    signal.SignalStatus = CryptoSignalStatus.Win;
-                                    result = true;
-                                }
-                            }
-                            else if (signal.Side == CryptoTradeSide.Short)
-                            {
-                                decimal takeProfitPrice = signal.SignalPrice - takeProfitPercentage * signal.SignalPrice;
-                                if (signal.PriceMin < takeProfitPrice)
-                                {
-                                    signal.SignalStatus = CryptoSignalStatus.Win;
-                                    result = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                return result;
-            }
-        }
-        catch
-        {
-            // ignore errors
-        }
-        return false;
-    }
+    //            if (signal.SignalStatus == CryptoSignalStatus.Run)
+    //            {
+    //                // Prefer the signal's own SL distance (e.g. baba's factor*ATR%) when it set one;
+    //                // fall back to the global default. The signal's SlPercentage is the distance from
+    //                // the entry (= SignalPrice), matching how the trader applies it.
+    //                decimal stopLossPerc = (signal.SlPercentage ?? GlobalData.Settings.Trading.StopLossPercentage) / 100;
+    //                if (stopLossPerc != 0.0m)
+    //                {
+    //                    if (signal.Side == CryptoTradeSide.Long)
+    //                    {
+    //                        decimal stopLossPrice = signal.SignalPrice - stopLossPerc * signal.SignalPrice;
+    //                        if (signal.PriceMin <= stopLossPrice)
+    //                        {
+    //                            signal.SignalStatus = CryptoSignalStatus.Lost;
+    //                            result = true;
+    //                        }
+    //                    }
+    //                    else if (signal.Side == CryptoTradeSide.Short)
+    //                    {
+    //                        decimal stopLossPrice = signal.SignalPrice + stopLossPerc * signal.SignalPrice;
+    //                        if (signal.PriceMax >= stopLossPrice)
+    //                        {
+    //                            signal.SignalStatus = CryptoSignalStatus.Lost;
+    //                            result = true;
+    //                        }
+    //                    }
+    //                }
+    //                // still running? ;-)
+    //                if (signal.SignalStatus == CryptoSignalStatus.Run)
+    //                {
+    //                    decimal takeProfitPercentage = GlobalData.Settings.Trading.ProfitPercentage / 100;
+    //                    if (takeProfitPercentage != 0.0m)
+    //                    {
+    //                        if (signal.Side == CryptoTradeSide.Long)
+    //                        {
+    //                            decimal takeProfitPrice = signal.SignalPrice + takeProfitPercentage * signal.SignalPrice;
+    //                            if (signal.PriceMax > takeProfitPrice)
+    //                            {
+    //                                signal.SignalStatus = CryptoSignalStatus.Win;
+    //                                result = true;
+    //                            }
+    //                        }
+    //                        else if (signal.Side == CryptoTradeSide.Short)
+    //                        {
+    //                            decimal takeProfitPrice = signal.SignalPrice - takeProfitPercentage * signal.SignalPrice;
+    //                            if (signal.PriceMin < takeProfitPrice)
+    //                            {
+    //                                signal.SignalStatus = CryptoSignalStatus.Win;
+    //                                result = true;
+    //                            }
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //            return result;
+    //        }
+    //    }
+    //    catch
+    //    {
+    //        // ignore errors
+    //    }
+    //    return false;
+    //}
 
 
 

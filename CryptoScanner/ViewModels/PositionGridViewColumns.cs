@@ -80,10 +80,10 @@ public enum PositionColumnEnum
 
     MinimumEntry,
     // statistics
-    PriceMin,
-    PriceMax,
-    PriceMinPerc,
-    PriceMaxPerc,
+    //PriceMin,
+    //PriceMax,
+    //PriceMinPerc,
+    //PriceMaxPerc,
 
 }
 
@@ -174,10 +174,10 @@ public class PositionColumnComparer : IComparer
                     PositionColumnEnum.Barometer4h => ObjectCompare.Compare(a.Object.Barometer4h, b.Object.Barometer4h),
                     PositionColumnEnum.Barometer1d => ObjectCompare.Compare(a.Object.Barometer1d, b.Object.Barometer1d),
                     PositionColumnEnum.MinimumEntry => ObjectCompare.Compare(a.Object.MinEntry, b.Object.MinEntry),
-                    PositionColumnEnum.PriceMin => ObjectCompare.Compare(a.Object.PriceMin, b.Object.PriceMin),
-                    PositionColumnEnum.PriceMax => ObjectCompare.Compare(a.Object.PriceMax, b.Object.PriceMax),
-                    PositionColumnEnum.PriceMinPerc => ObjectCompare.Compare(a.Object.PriceMinPerc, b.Object.PriceMinPerc),
-                    PositionColumnEnum.PriceMaxPerc => ObjectCompare.Compare(a.Object.PriceMaxPerc, b.Object.PriceMaxPerc),
+                    //PositionColumnEnum.PriceMin => ObjectCompare.Compare(a.Object.PriceMin, b.Object.PriceMin),
+                    //PositionColumnEnum.PriceMax => ObjectCompare.Compare(a.Object.PriceMax, b.Object.PriceMax),
+                    //PositionColumnEnum.PriceMinPerc => ObjectCompare.Compare(a.Object.PriceMinPerc, b.Object.PriceMinPerc),
+                    //PositionColumnEnum.PriceMaxPerc => ObjectCompare.Compare(a.Object.PriceMaxPerc, b.Object.PriceMaxPerc),
                     _ => 0
                 };
 

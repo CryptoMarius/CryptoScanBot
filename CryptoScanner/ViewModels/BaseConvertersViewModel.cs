@@ -157,35 +157,35 @@ public partial class BaseConvertersViewModel : ObservableObject
         return BrushNeutral;
     }
 
-    internal static string GetSignalStatusText(CryptoSignalStatus status)
-    {
-        switch (status)
-        {
-            case CryptoSignalStatus.Lost:
-                return "lost";
-            case CryptoSignalStatus.Win:
-                return "win";
-            case CryptoSignalStatus.Run:
-                return "run";
-        }
-        return "";
-    }
+    //internal static string GetSignalStatusText(CryptoSignalStatus status)
+    //{
+    //    switch (status)
+    //    {
+    //        case CryptoSignalStatus.Lost:
+    //            return "lost";
+    //        case CryptoSignalStatus.Win:
+    //            return "win";
+    //        case CryptoSignalStatus.Run:
+    //            return "run";
+    //    }
+    //    return "";
+    //}
 
-    internal IBrush GetSignalStatusColor(CryptoSignalStatus status)
-    {
-        switch (status)
-        {
-            case CryptoSignalStatus.Lost:
-                return BrushRed;
-            case CryptoSignalStatus.Win:
-                return BrushGreen;
-            case CryptoSignalStatus.Run:
-                return BrushNeutral;
-            default:
-                break;
-        }
-        return BrushNeutral;
-    }
+    //internal IBrush GetSignalStatusColor(CryptoSignalStatus status)
+    //{
+    //    switch (status)
+    //    {
+    //        case CryptoSignalStatus.Lost:
+    //            return BrushRed;
+    //        case CryptoSignalStatus.Win:
+    //            return BrushGreen;
+    //        case CryptoSignalStatus.Run:
+    //            return BrushNeutral;
+    //        default:
+    //            break;
+    //    }
+    //    return BrushNeutral;
+    //}
 
     internal IBrush GetPositionStatusColor(CryptoPositionStatus status)
     {

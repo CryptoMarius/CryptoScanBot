@@ -161,7 +161,7 @@ public partial class SignalGridViewModel : ObservableObject
         }
     }
 
-    static CandleTime LastStatisticUpdate = CandleTime.MinValue;
+    //static CandleTime LastStatisticUpdate = CandleTime.MinValue;
 
     private void TimerClearAndUpdateSignalsTick(object? sender, EventArgs e)
     {
@@ -177,9 +177,9 @@ public partial class SignalGridViewModel : ObservableObject
                 if (Signals.Count > 0)
                 {
                     // Avoid frequent updates
-                    CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
-                    bool updateStats = x != LastStatisticUpdate;
-                    LastStatisticUpdate = x;
+                    //CandleTime x = CandleTime.AlignFromDateTime(DateTime.UtcNow, 1);
+                    //bool updateStats = x != LastStatisticUpdate;
+                    //LastStatisticUpdate = x;
 
                     for (int index = Signals.Count - 1; index >= 0; index--)
                     {
@@ -190,16 +190,16 @@ public partial class SignalGridViewModel : ObservableObject
                         if (expirationDate < DateTime.UtcNow)
                         {
                             Signals.RemoveAt(index);
-                            updateStats = true;
+                            //updateStats = true;
                         }
 
-                        if (updateStats)
-                        {
-                            if (signalInfo.UpdateSignalStatistics())
-                            {
-                                GlobalData.ThreadSaveObjects!.AddToQueue(signal);
-                            }
-                        }
+                        //if (updateStats)
+                        //{
+                        //    if (signalInfo.UpdateSignalStatistics())
+                        //    {
+                        //        GlobalData.ThreadSaveObjects!.AddToQueue(signal);
+                        //    }
+                        //}
                     }
                 }
             }
