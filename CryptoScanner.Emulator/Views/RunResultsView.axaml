@@ -29,6 +29,7 @@
                 <ContextMenu>
                     <MenuItem Header="Edit label…" Click="OnEditLabelClick"/>
                     <MenuItem Header="Show signals…" Click="OnShowSignalsClick"/>
+                    <MenuItem Header="Show settings (GUI)…" Click="OnShowSettingsGuiClick"/>
                     <MenuItem Header="Show settings JSON…" Click="OnShowJsonClick"/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
                     <MenuItem Header="Recalculate stats" Click="OnRecalculateClick"/>

@@ -7,7 +7,9 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
+using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.ViewModels;
 
 using System.Collections.Generic;
@@ -153,6 +155,61 @@ public partial class RunResultsView : UserControl
             return;
 
         viewModel.UpdateLabel(row.Id, newLabel.Trim());
+    }
+
+
+    private async void OnShowSettingsGuiClick(object? sender, RoutedEventArgs e)
+    {
+        // Single-run action: show one run's settings.
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+
+        if (rows.Count != 1)
+        {
+            viewModel.Status = "Select a single run to view its settings.";
+            return;
+        }
+
+        // This temporarily swaps GlobalData.Settings (see below). A running replay reads those settings on
+        // its worker threads, so refuse while a run is active to avoid corrupting it mid-flight.
+        if (GlobalData.CurrentEmulatorRunId != null)
+        {
+            viewModel.Status = "Cannot view a run's settings while a run is active — stop the run first.";
+            return;
+        }
+
+        RunRow row = rows[0];
+        SettingsBasic? runSettings = RunResultsViewModel.GetRunSettings(row.Id);
+        if (runSettings == null)
+        {
+            viewModel.Status = $"Run #{row.Id} has no stored settings.";
+            return;
+        }
+
+        // Show the familiar Configure UI populated with THIS run's settings, WITHOUT persisting anything:
+        // swap the run's settings into GlobalData.Settings (which the ConfigurationWindow binds to), open
+        // the dialog, then restore the originals in the finally. We never call SaveConfiguration, so
+        // whatever the user pokes at is discarded — no need to make every control read-only.
+        SettingsBasic original = GlobalData.Settings;
+        GlobalData.Settings = runSettings;
+        try
+        {
+            var window = new ConfigurationWindow
+            {
+                Title = $"Settings of run #{row.Id} (view only — changes are NOT saved)",
+            };
+            await window.ShowDialog<bool>(owner);
+        }
+        finally
+        {
+            GlobalData.Settings = original;
+            // Undo any live theme change the dialog may have applied while showing the run's settings.
+            App.ApplyThemeFromSettings();
+            viewModel.Status = $"Viewed settings of run #{row.Id} (no changes saved).";
+        }
     }
 
 

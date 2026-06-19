@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Json;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.Engine;
 
 using Dapper;
@@ -330,6 +332,27 @@ public partial class RunResultsViewModel : ObservableObject
         {
             Refresh();
             Status = $"Failed to recalculate run(s): {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
+    /// Deserializes the scanner-settings snapshot stored with the run into a <see cref="SettingsBasic"/>
+    /// (the same type as <c>GlobalData.Settings</c>), so the caller can show it in the Configure UI.
+    /// Returns null when the run has no stored snapshot or it cannot be parsed.
+    /// </summary>
+    public static SettingsBasic? GetRunSettings(int runId)
+    {
+        string? json = EmulatorDb.GetSettingsJson(runId);
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+        try
+        {
+            return JsonSerializer.Deserialize<SettingsBasic>(json, JsonTools.DeSerializerOptions);
+        }
+        catch
+        {
+            return null;
         }
     }
 
