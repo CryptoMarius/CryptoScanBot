@@ -64,6 +64,10 @@ public class PositionRow
     // falls back to the enum name for an unknown strategy).
     public string StrategyText => RegisterAlgorithms.GetAlgorithm((CryptoSignalStrategy)Strategy);
 
+    // Status is stored as the CryptoPositionStatus enum value (Waiting/Trading/Ready/Timeout/
+    // TakeOver/Altrady) — show its name instead of the raw int.
+    public string StatusText => ((CryptoPositionStatus)Status).ToString();
+
     // Percentage with 2 decimals; Profit in the quote currency's own decimals.
     public string PercentageText => Percentage.ToString("N2");
     public string ProfitText => Profit.ToString(QuoteDisplayFormat);

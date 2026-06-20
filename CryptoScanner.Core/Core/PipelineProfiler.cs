@@ -75,6 +75,18 @@ public static class PipelineProfiler
     public static long PosPersistTicks;      // the transaction block (Update part/step/position)
     public static long PosCalls;             // number of CalculatePositionResultsViaOrders calls
 
+    // Sub-breakdown of PositionMonitor.CheckThePosition — the OTHER path inside the positionCheck
+    // bucket (run via ThreadCheckFinishedPosition.ProcessPosition -> PositionOpenAsUsual, on every
+    // candle that has an open position, NOT gated behind ForceCheckPosition like
+    // CalculatePositionResultsViaOrders). Measurements showed CalculatePositionResultsViaOrders only
+    // accounts for ~1% of the positionCheck bucket, so this is where the remaining cost almost
+    // certainly sits: cancelling/repositioning stale orders, the DCA check, or placing/modifying the
+    // live buy/sell orders.
+    public static long CheckPosCancelTicks;  // CancelOrdersIfClosedOrTimeoutOrReposition
+    public static long CheckPosDcaTicks;     // CheckAddDcaFixedPercentage
+    public static long CheckPosHandleTicks;  // HandlePosition (place/modify orders, LockProfits)
+    public static long CheckPosCalls;        // number of CheckThePosition calls
+
 
     /// <summary>Clears all counters. Call once at the start of a run before enabling.</summary>
     public static void Reset()
@@ -105,6 +117,11 @@ public static class PipelineProfiler
         PosCalcProfitTicks = 0;
         PosPersistTicks = 0;
         PosCalls = 0;
+
+        CheckPosCancelTicks = 0;
+        CheckPosDcaTicks = 0;
+        CheckPosHandleTicks = 0;
+        CheckPosCalls = 0;
     }
 
 
@@ -193,5 +210,17 @@ public static class PipelineProfiler
         Interlocked.Add(ref PosCalcProfitTicks, calcProfit);
         Interlocked.Add(ref PosPersistTicks, persist);
         Interlocked.Increment(ref PosCalls);
+    }
+
+    /// <summary>Adds one CheckThePosition call's per-phase Stopwatch-tick deltas (the sub-breakdown
+    /// of the positionCheck bucket's "other" path, alongside CalculatePositionResultsViaOrders).</summary>
+    public static void RecordCheckPositionPhases(long cancel, long dca, long handle)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref CheckPosCancelTicks, cancel);
+        Interlocked.Add(ref CheckPosDcaTicks, dca);
+        Interlocked.Add(ref CheckPosHandleTicks, handle);
+        Interlocked.Increment(ref CheckPosCalls);
     }
 }

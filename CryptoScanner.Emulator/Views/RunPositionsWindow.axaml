@@ -30,7 +30,13 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="60"/>
+                <DataGridTemplateColumn Header="Id" Width="60" SortMemberPath="Id">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Created"     Binding="{Binding CreatedText}" Width="140"/>
                 <DataGridTextColumn Header="Closed"      Binding="{Binding ClosedText}" Width="140"/>
                 <DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
@@ -38,11 +44,41 @@
                 <DataGridTextColumn Header="Interval"    Binding="{Binding Interval}" Width="80"/>
                 <DataGridTextColumn Header="Side"        Binding="{Binding SideText}" Width="70"/>
                 <DataGridTextColumn Header="Strategy"    Binding="{Binding StrategyText}" Width="100"/>
-                <DataGridTextColumn Header="Parts"       Binding="{Binding PartsText}" Width="60"/>
-                <DataGridTextColumn Header="Status"      Binding="{Binding Status}" Width="80"/>
-                <DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="100"/>
-                <DataGridTextColumn Header="Percentage"  Binding="{Binding PercentageText}" Width="90"/>
-                <DataGridTextColumn Header="SL %"        Binding="{Binding SlPercentageText}" Width="70"/>
+                <DataGridTemplateColumn Header="Parts" Width="60" SortMemberPath="PartCount">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PartsText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Status" Width="80" SortMemberPath="Status">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Text="{Binding StatusText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profit" Width="100" SortMemberPath="Profit">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Percentage" Width="90" SortMemberPath="Percentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="SL %" Width="70" SortMemberPath="SlPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SlPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="EventText"   Binding="{Binding EventText}" Width="*"/>
             </DataGrid.Columns>
         </DataGrid>

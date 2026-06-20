@@ -37,22 +37,82 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Id"          Binding="{Binding Id}" Width="50"/>
+                <DataGridTemplateColumn Header="Id" Width="50" SortMemberPath="Id">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding Id}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="260"/>
                 <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="230"/>
                 <DataGridTextColumn Header="Started"     Binding="{Binding StartedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
                 <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="120"/>
-                <DataGridTextColumn Header="Signals"     Binding="{Binding SignalCount}" Width="70"/>
-                <DataGridTextColumn Header="Pos"         Binding="{Binding PositionCount}" Width="55"/>
-				<DataGridTextColumn Header="Open"        Binding="{Binding PositionsOpen}" Width="55"/>
-				<DataGridTextColumn Header="Won"         Binding="{Binding PositionsWon}" Width="55"/>
-				<DataGridTextColumn Header="Lost"        Binding="{Binding PositionsLost}" Width="55"/>
-				<DataGridTextColumn Header="Win %"       Binding="{Binding WinPercentageText}" Width="70"/>
-				<DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="90"/>
-                <DataGridTextColumn Header="Profit %"    Binding="{Binding ProfitPercentageText}" Width="80"/>
-				<DataGridTextColumn Header="Invested"    Binding="{Binding Invested}" Width="90"/>				
+                <DataGridTemplateColumn Header="Signals" Width="70" SortMemberPath="SignalCount">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalCount}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Pos" Width="55" SortMemberPath="PositionCount">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PositionCount}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Open" Width="55" SortMemberPath="PositionsOpen">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PositionsOpen}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Won" Width="55" SortMemberPath="PositionsWon">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PositionsWon}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Lost" Width="55" SortMemberPath="PositionsLost">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding PositionsLost}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Win %" Width="70" SortMemberPath="WinPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding WinPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profit" Width="90" SortMemberPath="Profit">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Profit %" Width="80" SortMemberPath="ProfitPercentage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding ProfitPercentageText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Invested" Width="90" SortMemberPath="Invested">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding InvestedText}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 			</DataGrid.Columns>
         </DataGrid>
 

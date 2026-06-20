@@ -1895,21 +1895,42 @@ public class PositionMonitor //: IDisposable
         // Pauzeren vanwege de trading regels of te lage barometer
         PauseBecauseOfTradingRules = !TradingRules.CheckTradingRules(GlobalData.ActiveExchange!.Data.PauseTrading, LastCandle1m.OpenTime, 1);
 
+        // Profiling: sub-breakdown of the positionCheck bucket's "other" path (see PipelineProfiler).
+        // Runs on every candle that has an open position (not gated behind ForceCheckPosition like
+        // CalculatePositionResultsViaOrders), so this is the candidate for the bulk of positionCheck.
+        long profCancelStart = Stopwatch.GetTimestamp();
+        long profDcaTicks = 0;
+        long profHandleTicks = 0;
+
         //Monitor.Enter(position);
         try
         {
             // Verwijder orders voor verschillende redenenen (timeout, barometer, tradingrules, positie gesloten, reposition enzovoort)
             await CancelOrdersIfClosedOrTimeoutOrReposition(position);
+            long profDcaStart = Stopwatch.GetTimestamp();
+            long profCancelTicks = profDcaStart - profCancelStart;
 
             if (!position.CloseTime.HasValue)
             {
                 // Pauzeren vanwege de trading regels of te lage barometer
                 if (!PauseBecauseOfTradingRules) // || PauseBecauseOfBarometer
                     await CheckAddDcaFixedPercentage(position);
+                long profHandleStart = Stopwatch.GetTimestamp();
+                profDcaTicks = profHandleStart - profDcaStart;
 
                 // Plaats of modificeer de buy of sell orders + optionele LockProfits
                 await HandlePosition(position);
+                profHandleTicks = Stopwatch.GetTimestamp() - profHandleStart;
             }
+            else
+            {
+                profDcaTicks = Stopwatch.GetTimestamp() - profDcaStart;
+            }
+
+            PipelineProfiler.RecordCheckPositionPhases(
+                cancel: profCancelTicks,
+                dca: profDcaTicks,
+                handle: profHandleTicks);
         }
         finally
         {

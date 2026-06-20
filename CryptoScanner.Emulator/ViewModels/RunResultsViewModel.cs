@@ -75,6 +75,7 @@ public class RunRow
     public string ProfitText => Profit.ToString("N2");
     public string ProfitPercentageText => ProfitPercentage.ToString("N2") + "%";
     public string WinPercentageText => WinPercentage.ToString("N2") + "%";
+    public string InvestedText => Invested.ToString("N2");
 
     // StartedAt/FinishedAt are stored as UTC (DateTime.UtcNow in EmulatorDb), but SQLite/Dapper
     // hands them back with Kind=Unspecified. SpecifyKind(..., Utc) tags them correctly so

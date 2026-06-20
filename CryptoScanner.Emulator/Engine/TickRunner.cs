@@ -316,6 +316,24 @@ public sealed class TickRunner
                 $"calcProfit {posCalc:F1}s ({posCalc / posMeasured:P0}), " +
                 $"persist {posPersist:F1}s ({posPersist / posMeasured:P0})");
         }
+
+        // Sub-breakdown of the positionCheck bucket's OTHER path: PositionMonitor.CheckThePosition,
+        // run via ThreadCheckFinishedPosition.ProcessPosition -> PositionOpenAsUsual on every candle
+        // that has an open position (not gated behind ForceCheckPosition like the PositionResults
+        // breakdown above). Cancel = stale/timeout/reposition order cleanup, dca = the fixed-percentage
+        // DCA check, handle = placing/modifying the live buy/sell orders (+ optional LockProfits).
+        double checkCancel = Seconds(PipelineProfiler.CheckPosCancelTicks);
+        double checkDca = Seconds(PipelineProfiler.CheckPosDcaTicks);
+        double checkHandle = Seconds(PipelineProfiler.CheckPosHandleTicks);
+        double checkMeasured = checkCancel + checkDca + checkHandle;
+        if (checkMeasured > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"CheckThePosition — measured {checkMeasured:F1}s over {PipelineProfiler.CheckPosCalls} call(s) | " +
+                $"cancel {checkCancel:F1}s ({checkCancel / checkMeasured:P0}), " +
+                $"dca {checkDca:F1}s ({checkDca / checkMeasured:P0}), " +
+                $"handle {checkHandle:F1}s ({checkHandle / checkMeasured:P0})");
+        }
     }
 
 
