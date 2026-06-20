@@ -209,13 +209,13 @@ public class SignalBbmaShort : SignalBbmaBase
         CryptoInterval interval5m = Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m).Interval;
 
         // Ensure 5m indicator data is available in IndicatorDataList
-        if (!IndicatorDataList.PrepareIndicators(Symbol, interval5m, CandleLast.Candle.OpenTime))
+        if (!IndicatorEngine.PrepareIndicators(Symbol, interval5m, CandleLast.Candle.OpenTime))
             return false;
 
         // Align current time down to the nearest 5m boundary
         CandleTime time5m = CandleLast.Candle.OpenTime - (CandleLast.Candle.OpenTime % interval5m.Duration);
 
-        if (!IndicatorDataList.TryGetCandle(interval5m, time5m, out MyData? current5m) || current5m == null)
+        if (!Symbol.GetSymbolInterval(interval5m.IntervalPeriod).TryGetCandle(time5m, out MyData? current5m) || current5m == null)
             return false;
 
         if (!GetPrevCandle(interval5m, current5m, out MyData? prev5m) || prev5m == null)
@@ -305,7 +305,7 @@ public class SignalBbmaShort : SignalBbmaBase
         // Use the current reentry candle time (CandleLast), not the extreme candle time (candleLtf).
         // When the 5m reentry candle at e.g. 17:55 closes at 18:00, the 15m candle 17:45→18:00
         // and the 1h candle 17:00→18:00 also close simultaneously — those are the correct MTF/HTF candles.
-        var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultMtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, mtf);
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
@@ -320,7 +320,7 @@ public class SignalBbmaShort : SignalBbmaBase
 
         // --------------------------
         // Highest timeframe (HTF)
-        var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultHtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, htf);
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {

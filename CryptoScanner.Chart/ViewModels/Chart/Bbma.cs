@@ -59,13 +59,13 @@ public class Bbma
         if (candles.Count == 0)
             return;
 
-        List<WmaResult> wmaList05Low = (List<WmaResult>)candles.Use(CandlePart.Low).GetWma(05);
-        List<WmaResult> wmaList05High = (List<WmaResult>)candles.Use(CandlePart.High).GetWma(05);
-        List<WmaResult> wmaList10Low = (List<WmaResult>)candles.Use(CandlePart.Low).GetWma(10);
-        List<WmaResult> wmaList10High = (List<WmaResult>)candles.Use(CandlePart.High).GetWma(10);
+        IReadOnlyList<WmaResult> wmaList05Low = candles.Select(c => (c.Timestamp, (double)c.Low)).GetWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList05High = candles.Select(c => (c.Timestamp, (double)c.High)).GetWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList10Low = candles.Select(c => (c.Timestamp, (double)c.Low)).GetWma(10).ToList();
+        IReadOnlyList<WmaResult> wmaList10High = candles.Select(c => (c.Timestamp, (double)c.High)).GetWma(10).ToList();
 
-        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)candles.GetBollingerBands(
-            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length, standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
+        IReadOnlyList<BollingerBandsResult> bollingerBandsList = candles.AsQuotes().ToBollingerBands(
+            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length, standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation).ToList();
 
         // Filled band between WMA5-High and WMA10-High — dark red background.
         // Filled band between WMA5-Low and WMA10-Low — dark green background.
@@ -247,7 +247,7 @@ public class Bbma
 
         foreach (var (wma5, wma10, bb) in Enumerable.Zip(wmaList05High, wmaList10High, bollingerBandsList))
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(wma5.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(wma5.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 if (wma5.Wma.HasValue && wma10.Wma.HasValue)
@@ -274,7 +274,7 @@ public class Bbma
 
         foreach (var (wma5, wma10, bb) in Enumerable.Zip(wmaList05Low, wmaList10Low, bollingerBandsList))
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(wma5.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(wma5.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 if (wma5.Wma.HasValue && wma10.Wma.HasValue)
@@ -307,23 +307,16 @@ public class Bbma
         // Add 200 extra bars beyond the view window so SMA200 (and all slower indicators) are
         // fully warmed up for every displayed candle. Without the extra history, SMA200 is null
         // for all displayed bars and the Sma200==null warmup gate skips all state calculations.
-        CryptoIndicatorDataList indicatorDataList = [];
         int count = (int)((maxDate.Minutes - minDate.Minutes + 1) / interval.Duration);
-        indicatorDataList.PrepareIndicators(symbol, interval, maxDate, count + 200);
+        IndicatorEngine.PrepareIndicators(symbol, interval, maxDate, count + 200);
 
-        // Build OmniView classifiers for this symbol/interval.
-        // GetPrevCandle uses IndicatorData (the base-interval CryptoIndicatorData) to walk back
-        // through history. IndicatorDataList is needed for multi-TF calls (not used in GetOmniState
-        // itself, but required by the base class initialiser).
+        // Build OmniView classifiers for this symbol/interval. GetPrevCandle / BuildTpwCache read the
+        // per-interval indicator data from symbolInterval.Data (filled by PrepareIndicators above).
         SignalBbmaOmniLong? longClassifier = null;
         SignalBbmaOmniShort? shortClassifier = null;
 
-        if (indicatorDataList.TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData)
-            && indicatorData != null)
+        if (symbolInterval.TryGetCandle(maxDate, out MyData? seedCandle) && seedCandle != null)
         {
-            // Use the last calculated candle as the classifier seed (always valid).
-            MyData seedCandle = new() { Candle = indicatorData.LastCandle, CandleData = indicatorData.LastCandleData };
-
             longClassifier = new SignalBbmaOmniLong
             {
                 Symbol = symbol,
@@ -332,8 +325,6 @@ public class Bbma
                 SignalSide = CryptoTradeSide.Long,
                 SignalStrategy = CryptoSignalStrategy.BbmaOmni,
                 CandleLast = seedCandle,
-                IndicatorData = indicatorData,
-                IndicatorDataList = indicatorDataList,
             };
             shortClassifier = new SignalBbmaOmniShort
             {
@@ -343,14 +334,12 @@ public class Bbma
                 SignalSide = CryptoTradeSide.Short,
                 SignalStrategy = CryptoSignalStrategy.BbmaOmni,
                 CandleLast = seedCandle,
-                IndicatorData = indicatorData,
-                IndicatorDataList = indicatorDataList,
             };
 
             // Build the forward-pass TPW caches (matches MQ5 tpwbuy/tpwsell exactly).
             // Both classifiers are available here, so cross-reset delegates are wired.
-            longClassifier.BuildTpwCache(indicatorData, d => shortClassifier.IsExtremeSellBar(d));
-            shortClassifier.BuildTpwCache(indicatorData, d => longClassifier.IsExtremeBuyBar(d));
+            longClassifier.BuildTpwCache(symbolInterval, d => shortClassifier.IsExtremeSellBar(d));
+            shortClassifier.BuildTpwCache(symbolInterval, d => longClassifier.IsExtremeBuyBar(d));
         }
 
         if (longClassifier != null && shortClassifier != null)
@@ -364,7 +353,7 @@ public class Bbma
             {
                 CandleTime openTime = candle.OpenTime;
 
-                if (!indicatorDataList.TryGetCandle(interval, candle.OpenTime, out MyData? newData) || newData == null)
+                if (!symbolInterval.TryGetCandle(candle.OpenTime, out MyData? newData) || newData == null)
                 {
                     prevData = null; // chain broken — no indicator data for this bar
                     continue;
@@ -505,11 +494,11 @@ public class Bbma
             Tag = group,
         };
 
-        List<EmaResult> emaList = (List<EmaResult>)candles.Use(CandlePart.Close).GetEma(50);
+        IReadOnlyList<EmaResult> emaList = candles.Select(c => (c.Timestamp, (double)c.Close)).GetEma(50).ToList();
 
         foreach (var ema in emaList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(ema.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(ema.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 if (ema.Ema.HasValue)

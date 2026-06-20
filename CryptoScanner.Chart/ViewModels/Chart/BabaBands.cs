@@ -40,10 +40,10 @@ public class BabaBands
         // Slow ATR over the band Length (used for the SL% label, so it stays stable through a rally —
         // same as the signal's StopLossPercent).
         var slAtrByDate = new Dictionary<DateTime, double>();
-        foreach (var atr in candles.GetAtr(baba.Length))
+        foreach (var atr in candles.AsQuotes().ToAtr(baba.Length))
         {
             if (atr.Atr.HasValue)
-                slAtrByDate[atr.Date] = atr.Atr.Value;
+                slAtrByDate[atr.Timestamp] = atr.Atr.Value;
         }
 
         var bandFill = new AreaSeries { Title = "baba.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };

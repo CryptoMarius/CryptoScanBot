@@ -47,14 +47,14 @@ public class Bollingerbands
         if (candles.Count == 0)
             return;
 
-        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)candles.GetBollingerBands(
+        IReadOnlyList<BollingerBandsResult> bollingerBandsList = candles.AsQuotes().ToBollingerBands(
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
-            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
+            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation).ToList();
 
 
         foreach (var bb in bollingerBandsList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? upperBand = bb.UpperBand;
@@ -90,7 +90,7 @@ public class Bollingerbands
     //    if (candles.Count == 0)
     //        return;
 
-    //    List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)candles.GetBollingerBands(
+    //    IReadOnlyList<BollingerBandsResult> bollingerBandsList = candles.AsQuotes().GetBollingerBands(
     //        lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
     //        standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 

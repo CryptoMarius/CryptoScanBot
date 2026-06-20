@@ -9,43 +9,17 @@ using System.Diagnostics;
 
 namespace CryptoScanner.Core.Signal;
 
-public class CryptoIndicatorData
+public static class IndicatorEngine
 {
-    public required CryptoCandle LastCandle;
-    public required CryptoData LastCandleData;
+    // How many candles of CryptoData to keep per symbol+interval (≈ the old 260 calculation window).
+    private const int CacheCandles = 300;
 
-    public required CryptoCandleList CandleList;
-    public Dictionary<CandleTime, CryptoData> Data = [];
-
-    public bool TryGetCandle(CandleTime time, out MyData? myData)
-    {
-        if (CandleList.TryGetValue(time, out CryptoCandle candle) &&
-            Data.TryGetValue(time, out CryptoData? indicator))
-        {
-            myData = new()
-            {
-                Candle = candle!,
-                CandleData = indicator!
-            };
-            return true;
-        }
-        else
-        {
-            myData = null;
-            return false;
-        }
-    }
-}
-
-
-public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIndicatorData?>
-{
     /// <summary>
-    /// Calculate all the indicators
+    /// Ensures indicator data exists for <paramref name="openTime"/> in the requested higher interval and
+    /// returns it as a MyData (candle + indicator data). Used for the multi-timeframe (MTF/HTF) strategies.
     /// </summary>
-    public (bool success, CryptoSymbolInterval higherInterval, MyData? candle, CryptoIndicatorData? indicatorData)
-        CalculateIndicatorsForInterval(
-            CryptoSymbol symbol, CryptoInterval interval,
+    public static (bool success, CryptoSymbolInterval higherInterval, MyData? candle)
+        CalculateIndicatorsForInterval(CryptoSymbol symbol, CryptoInterval interval,
             CandleTime openTime, CryptoIntervalPeriod higherIntervalPeriod)
     {
         CryptoSymbolInterval symbolHigherInterval = symbol.GetSymbolInterval(higherIntervalPeriod);
@@ -59,58 +33,83 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             if (!result.targetComplete)
                 result.targetStart -= higherInterval.Duration;
             if (!symbolHigherInterval.CandleList.TryGetValue(result.targetStart, out CryptoCandle _))
-                return (false, symbolHigherInterval, null, null);
+                return (false, symbolHigherInterval, null);
             targetStart = result.targetStart;
         }
 
         // Calculate the indicators if needed
         if (!PrepareIndicators(symbol, higherInterval, targetStart))
-            return (false, symbolHigherInterval, null, null);
+            return (false, symbolHigherInterval, null);
 
-        // Get the candle in the higher interval (combination of candle and indicator data)
-        if (!TryGetCandle(higherInterval, targetStart, out MyData? higherCandle))
-            return (false, symbolHigherInterval, null, null);
+        // Combine candle + indicator data from the (persistent) higher-interval state.
+        if (!symbolHigherInterval.TryGetCandle(targetStart, out MyData? higherCandle))
+            return (false, symbolHigherInterval, null);
 
-        // We need a reference to the indicatorData for some methods
-        if (!TryGetValue(higherInterval.IntervalPeriod, out CryptoIndicatorData? indicatorData))
-            return (false, symbolHigherInterval, null, null);
-
-        return (true, symbolHigherInterval, higherCandle, indicatorData);
+        return (true, symbolHigherInterval, higherCandle);
     }
 
 
-    public bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval,
+    /// <summary>
+    /// Ensures <see cref="CryptoSymbolInterval.Data"/> holds the indicator data for
+    /// <paramref name="candleOpenTime"/>. Filled either incrementally via the per-interval QuoteHub
+    /// (UseIndicatorHub) or via the per-candle batch — both produce identical CryptoData. Returns false
+    /// when there is not enough history yet.
+    /// </summary>
+    public static bool PrepareIndicators(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime candleOpenTime, int calculateCandles = -1)
     {
-        if (!TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? _))
-        {
-            long profCollectStart = Stopwatch.GetTimestamp();
-            List<CryptoCandle>? History = CollectCandles(symbol, interval, candleOpenTime, out string response, calculateCandles);
-            PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
-            if (History == null)
-            {
-                //GlobalData.AddTextToLogTab($"Analyse {response} {symbol.Name} Candle {interval.Name} {candleOpenTime.ToDateTime().ToLocalTime()} not calculated? {response}");
-                TryAdd(interval.IntervalPeriod, null);
-                return false;
-            }
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        if (symbolInterval.Data.ContainsKey(candleOpenTime))
+            return true;
 
-            CryptoIndicatorData? indicatorData = CalculateIndicators(symbol, interval, History, calculateCandles);
-            TryAdd(interval.IntervalPeriod, indicatorData);
-        }
-        return true;
+        if (GlobalData.Settings.Signal.UseIndicatorHub)
+            return PrepareViaHub(symbol, interval, symbolInterval, candleOpenTime);
+        return PrepareViaBatch(symbol, interval, symbolInterval, candleOpenTime, calculateCandles);
     }
 
-    // Get the candle and indicator data from a DIFFERENT interval
-    public bool TryGetCandle(CryptoInterval interval, CandleTime time, out MyData? myData)
+
+    /// <summary>
+    /// Incremental path: feed candles into the per-interval <see cref="IntervalIndicatorHub"/>. A full
+    /// warm-up (the whole CollectCandles window) runs on first use or when the hub fell out of sync (a gap);
+    /// otherwise only the single new candle is fed. The latest CryptoData lands in Data[candleOpenTime].
+    /// </summary>
+    private static bool PrepareViaHub(CryptoSymbol symbol, CryptoInterval interval,
+        CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
     {
-        // indicatorData can be null: PrepareIndicators stores null when candle collection fails (line 87).
-        // TryGetValue returns true (key exists) but the value is null — guard explicitly.
-        if (TryGetValue(interval.IntervalPeriod, out CryptoIndicatorData? indicatorData) && indicatorData != null)
+        bool warmup = symbolInterval.IndicatorHub == null
+            || symbolInterval.IndicatorHubLastAdded == null
+            || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime;
+
+        if (warmup)
         {
-            return indicatorData.TryGetCandle(time, out myData);
+            long profCollectStart = Stopwatch.GetTimestamp();
+            List<IQuote>? history = CollectCandles(symbol, interval, candleOpenTime, out _);
+            PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
+            if (history == null)
+                return false;
+
+            var hub = new IntervalIndicatorHub();
+            foreach (IQuote quote in history)
+            {
+                hub.Add(quote);
+                if (quote is CryptoCandle candle)
+                    symbolInterval.Data[candle.OpenTime] = hub.BuildCurrent();
+            }
+            symbolInterval.IndicatorHub = hub;
+            symbolInterval.IndicatorHubLastAdded = candleOpenTime;
         }
-        myData = null;
-        return false;
+        else
+        {
+            if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle candle))
+                return false;
+            symbolInterval.IndicatorHub!.Add(candle);
+            symbolInterval.Data[candleOpenTime] = symbolInterval.IndicatorHub.BuildCurrent();
+            symbolInterval.IndicatorHubLastAdded = candleOpenTime;
+        }
+
+        ApplyLux(symbol, symbolInterval, candleOpenTime);
+        PruneData(symbolInterval, candleOpenTime, interval);
+        return true;
     }
 
     // For the SMA 200 we want at least 200 + 60 (we calculate the last 60 entries)
@@ -119,8 +118,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     /// <summary>
     /// Make a list of candles up to openTime with at least maxCandles(260) candles
     /// </summary>
-    public static List<CryptoCandle>? CollectCandles(
-        CryptoSymbol symbol, CryptoInterval interval,
+    public static List<IQuote>? CollectCandles(CryptoSymbol symbol, CryptoInterval interval,
         CandleTime openTime, out string errorstr, int calculateCandles = -1)
     {
         // Retrieve the last candle in the requested interval
@@ -142,7 +140,7 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         if (symbol.IsBarometerSymbol())
             duration = 1; // alway's 1m!
 
-        List<CryptoCandle> candlesForHistory = [];
+        List<IQuote> candlesForHistory = [];
 
         // The time is already aligned (but it wont hurt to do it again)
         CandleTime periodEndTime = openTime - openTime % duration;
@@ -187,11 +185,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             errorstr = $"{symbol.Name} Not enough candles available for interval {interval.Name} count={candlesForHistory.Count} requested={maxCandles}";
             if (candlesForHistory.Count != 0)
             {
-                CryptoCandle x = candlesForHistory.Last();
-                errorstr += " last in history = " + x.DateLocal.ToString();
+                var x = candlesForHistory[^1]; //.Last();
+                errorstr += " last in history = " + x.Timestamp.ToLocalTime().ToString();
 
                 x = intervalCandles.Values.Last();
-                errorstr += " last in candlelist = " + x.DateLocal.ToString();
+                errorstr += " last in candlelist = " + x.Timestamp.ToLocalTime().ToString();
             }
             return null;
         }
@@ -204,60 +202,70 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
     /// <summary>
     /// Calculate all the indicators, we want to have data for the last 60 candles
     /// </summary>
-    private static CryptoIndicatorData? CalculateIndicators(CryptoSymbol symbol,
-        CryptoInterval interval, List<CryptoCandle> history, int calculateCandles = -1)
+    /// <summary>
+    /// Batch path: collect the candle window and (re)compute every indicator with the Skender batch calls,
+    /// writing one CryptoData per candle into <paramref name="symbolInterval"/>.Data. Field-for-field
+    /// identical to the hub path (UseIndicatorHub).
+    /// </summary>
+    private static bool PrepareViaBatch(CryptoSymbol symbol, CryptoInterval interval,
+        CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, int calculateCandles = -1)
     {
-        CryptoCandle candle = history[^1];
-        CryptoIndicatorData? indicatorData = null;
+        long profCollectStart = Stopwatch.GetTimestamp();
+        List<IQuote>? quotes = CollectCandles(symbol, interval, candleOpenTime, out _, calculateCandles);
+        PipelineProfiler.RecordPrepCollect(Stopwatch.GetTimestamp() - profCollectStart);
+        if (quotes == null)
+            return false;
+
+        var candle = quotes[^1];
 
         // Profiling: start of the Skender batch-calculation block (see PipelineProfiler).
         long profSkenderStart = Stopwatch.GetTimestamp();
 
-        //List<TemaResult> temaList = (List<TemaResult>)history.GetTema(9);
-        //List<EmaResult> emaList9 = (List<EmaResult>)history.GetEma(9);
+        //IReadOnlyList<TemaResult> temaList = quotes.ToTema(9);
+        //IReadOnlyList<EmaResult> emaList9 = quotes.ToEma(9);
 #if EXTRASTRATEGIES
-        List<EmaResult> emaList5 = (List<EmaResult>)history.GetEma(5);
-        //List<EmaResult> emaList8 = (List<EmaResult>)history.GetEma(8);
-        List<EmaResult> emaList26 = (List<EmaResult>)history.GetEma(26);
-        //List<EmaResult> emaList100 = (List<EmaResult>)history.GetEma(100);
-        //List<EmaResult> emaList200 = (List<EmaResult>)history.GetEma(200);
+        IReadOnlyList<EmaResult> emaList5 = quotes.ToEma(5);
+        //IReadOnlyList<EmaResult> emaList8 = quotes.ToEma(8);
+        IReadOnlyList<EmaResult> emaList26 = quotes.ToEma(26);
+        //IReadOnlyList<EmaResult> emaList100 = quotes.ToEma(100);
+        //IReadOnlyList<EmaResult> emaList200 = quotes.ToEma(200);
 #endif
 
 #if DEBUG
         // EMA 20 / 50 — required by the trend filter and several strategies (was conditional, now standard).
-        List<EmaResult> emaList20 = (List<EmaResult>)history.GetEma(20);
+        IReadOnlyList<EmaResult> emaList20 = quotes.ToEma(20);
 #endif
 
 #if EXTRASTRATEGIESSLOPEEMA
-        List<SlopeResult> slopeEma20List = (List<SlopeResult>)emaList20.GetSlope(SlopeCount);
-        List<SlopeResult> slopeEma50List = (List<SlopeResult>)emaList50.GetSlope(SlopeCount);
+        IReadOnlyList<SlopeResult> slopeEma20List = emaList20.GetSlope(SlopeCount);
+        IReadOnlyList<SlopeResult> slopeEma50List = emaList50.GetSlope(SlopeCount);
 #endif
 
 #if DEBUG
         // Linear Weighted Moving Average — used by BBMA experiments.
         // https://dotnet.stockindicators.dev/indicators/Wma/#content
-        List<EmaResult> emaList50 = (List<EmaResult>)history.GetEma(50);
-        List<WmaResult> wmaList05Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(05);
-        List<WmaResult> wmaList05High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(05);
-        List<WmaResult> wmaList10Low = (List<WmaResult>)history.Use(CandlePart.Low).GetWma(10);
-        List<WmaResult> wmaList10High = (List<WmaResult>)history.Use(CandlePart.High).GetWma(10);
+        IReadOnlyList<EmaResult> emaList50 = quotes.ToEma(50);
+        IReadOnlyList<WmaResult> wmaList05Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList05High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList10Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(10).ToList();
+        IReadOnlyList<WmaResult> wmaList10High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(10).ToList();
         // ATR(14) — BBMA Omni: RejectedEMA50 big-body filter, MHV gap sizing.
-        List<AtrResult> atrList14 = (List<AtrResult>)history.GetAtr(14);
+        IReadOnlyList<AtrResult> atrList14 = quotes.ToAtr(14);
 #endif
 
         // or collect items first (is this faster/better?), a lot more coding)
         //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
-        //List<WmaResult> wmaList05Low = (List<WmaResult>)historyLast05.Use(CandlePart.Low).GetWma(05);
-        //List<WmaResult> wmaList05High = (List<WmaResult>)historyLast05.Use(CandlePart.High).GetWma(05);
+        //IReadOnlyList<WmaResult> wmaList05Low = historyLast05.Use(CandlePart.Low).Cast<IReusable>().GetWma(05);
+        //IReadOnlyList<WmaResult> wmaList05High = historyLast05.Use(CandlePart.High).Cast<IReusable>().GetWma(05);
         //List<CryptoCandle> historyLast10 = (List<CryptoCandle>)history.TakeLast(10);
-        //List<WmaResult> wmaList10Low = (List<WmaResult>)historyLast10.Use(CandlePart.Low).GetWma(10);
-        //List<WmaResult> wmaList10High = (List<WmaResult>)historyLast10.Use(CandlePart.High).GetWma(10);
+        //IReadOnlyList<WmaResult> wmaList10Low = historyLast10.Use(CandlePart.Low).Cast<IReusable>().GetWma(10);
+        //IReadOnlyList<WmaResult> wmaList10High = historyLast10.Use(CandlePart.High).Cast<IReusable>().GetWma(10);
 
-        //List<SmaResult> smaList08 = (List<SmaResult>)history.GetSma(08);
-        List<SmaResult> smaList20 = (List<SmaResult>)history.GetSma(20);
-        List<SmaResult> smaList50 = (List<SmaResult>)history.GetSma(50);
-        List<SmaResult> smaList100 = (List<SmaResult>)history.GetSma(100);
-        List<SmaResult> smaList200 = (List<SmaResult>)history.GetSma(200);
+        //IReadOnlyList<SmaResult> smaList08 = quotes.GetSma(08);
+        IReadOnlyList<SmaResult> smaList20 = quotes.ToSma(20);
+        IReadOnlyList<SmaResult> smaList50 = quotes.ToSma(50);
+        IReadOnlyList<SmaResult> smaList100 = quotes.ToSma(100);
+        IReadOnlyList<SmaResult> smaList200 = quotes.ToSma(200);
 
         //// GetSlope looks buggy? (specially with sma(200) and count <> 200)
         //List<SlopeResult>? slopeSma20List = null;
@@ -266,10 +274,10 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         //List<SlopeResult>? slopeSma200List = null;
         //try
         //{
-        //    slopeSma20List = (List<SlopeResult>)smaList20.GetSlope(SlopeCount);
-        //    slopeSma50List = (List<SlopeResult>)smaList50.GetSlope(SlopeCount);
-        //    slopeSma100List = (List<SlopeResult>)smaList100.GetSlope(SlopeCount);
-        //    slopeSma200List = (List<SlopeResult>)smaList200.GetSlope(SlopeCount);
+        //    slopeSma20List = (IReadOnlyList<SlopeResult>)smaList20.GetSlope(SlopeCount);
+        //    slopeSma50List = (IReadOnlyList<SlopeResult>)smaList50.GetSlope(SlopeCount);
+        //    slopeSma100List = (IReadOnlyList<SlopeResult>)smaList100.GetSlope(SlopeCount);
+        //    slopeSma200List = (IReadOnlyList<SlopeResult>)smaList200.GetSlope(SlopeCount);
         //}
         //catch (Exception)
         //{
@@ -277,39 +285,39 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         //}
 
 
-        //List<WmaResult> wmaList30 = (List<WmaResult>)history.GetWma(30);
+        //IReadOnlyList<WmaResult> wmaList30 = quotes.GetWma(30);
 
 #if DEBUG
         // Keltner Channel: EMA20 centerline +/- ATR(10) * 2 (Skender defaults). Used by
         // the TTM Squeeze family (BB inside KC = squeeze). Matches the chart drawer.
-        //List<KeltnerResult> keltnerList = (List<KeltnerResult>)history.GetKeltner();
+        //IReadOnlyList<KeltnerResult> keltnerList = quotes.GetKeltner();
 #endif
 
-        //List<AtrResult> atrList = (List<AtrResult>)Indicator.GetAtr(History);
-        List<RsiResult> rsiList = (List<RsiResult>)history.GetRsi(
+        //IReadOnlyList<AtrResult> atrList = Indicator.GetAtr(History);
+        IReadOnlyList<RsiResult> rsiList = quotes.ToRsi(
             lookbackPeriods: GlobalData.Settings.General.SettingsRsi.Length);
-        List<MacdResult> macdList = (List<MacdResult>)history.GetMacd();
+        IReadOnlyList<MacdResult> macdList = quotes.ToMacd();
 
-        //List<SlopeResult> slopeMacdList = (List<SlopeResult>)macdList.GetSlope(SlopeCount);
-        //List<VwapResult> vwapList = (List<VwapResult>)History.GetVwap();
+        //IReadOnlyList<SlopeResult> slopeMacdList = macdList.GetSlope(SlopeCount);
+        //IReadOnlyList<VwapResult> vwapList = History.GetVwap();
         //#if EXTRASTRATEGIES
-        //        List<MacdResult> macdLtList = (List<MacdResult>)history.GetMacd(34, 144);
+        //        IReadOnlyList<MacdResult> macdLtList = quotes.GetMacd(34, 144);
         //#endif
 
-        //List<SlopeResult> slopeRsiList = (List<SlopeResult>)rsiList.GetSlope(SlopeCount);
+        //IReadOnlyList<SlopeResult> slopeRsiList = rsiList.GetSlope(SlopeCount);
 
         // (volgens de telegram groepen op 14,3,1 ipv de standaard 14,3,3)
-        List<StochResult> stochList = (List<StochResult>)history.GetStoch(
+        IReadOnlyList<StochResult> stochList = quotes.ToStoch(
             lookbackPeriods: GlobalData.Settings.General.SettingsStoch.Length,
             signalPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingD,
             smoothPeriods: GlobalData.Settings.General.SettingsStoch.SmoothingK);
         //14, 3, 1); // 18-11-22: omgedraaid naar 1, 3...
-        //List<SlopeResult> slopeStochList = (List<SlopeResult>)stochList.GetSlope(SlopeCount);
+        //IReadOnlyList<SlopeResult> slopeStochList = stochList.GetSlope(SlopeCount);
 
-        List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)history.GetParabolicSar();
+        IReadOnlyList<ParabolicSarResult> psarList = quotes.ToParabolicSar();
 
         // dan kan nu ook met de stdDev * setting.... Maar komt het wel overeen?
-        List<BollingerBandsResult> bollingerBandsList = (List<BollingerBandsResult>)history.GetBollingerBands(
+        IReadOnlyList<BollingerBandsResult> bollingerBandsList = quotes.ToBollingerBands(
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
@@ -321,11 +329,11 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
 
         // Fill the last 60 candles with the indicator data
         int iteration = 0;
-        for (int index = history.Count - 1; index >= 0; index--)
+        for (int index = quotes.Count - 1; index >= 0; index--)
         {
             // Maximaal 60 records aanvullen
             iteration++;
-            candle = history[index];
+            candle = quotes[index];
 
             CryptoData candleData = new();
             try
@@ -411,13 +419,8 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
 
-                indicatorData ??= new()
-                {
-                    LastCandle = candle,
-                    LastCandleData = candleData,
-                    CandleList = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList,
-                };
-                indicatorData.Data.Add(candle.OpenTime, candleData);
+                if (candle is CryptoCandle x)
+                    symbolInterval.Data[x.OpenTime] = candleData;
             }
             catch (Exception error)
             {
@@ -437,17 +440,8 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
         // Profiling: end of the fill loop, start of the Lux calculation.
         long profLuxStart = Stopwatch.GetTimestamp();
 
-        // I use the lux indicator frequently and combine its results in a single value
-        CryptoCandle? lastCandle = history[^1];
-        LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
-            CryptoIntervalPeriod.interval5m, indicatorData!.LastCandle.OpenTime + 5); //interval.Duration
-
-        int luxValue = 0;
-        if (luxOverBought > 0)
-            luxValue += luxOverBought;
-        if (luxOverSold > 0)
-            luxValue -= luxOverSold;
-        indicatorData!.LastCandleData.Lux5mValue = (short)luxValue;
+        // Lux indicator (non-Skender) for the latest candle, same as before.
+        ApplyLux(symbol, symbolInterval, candleOpenTime);
 
         // Profiling: attribute the three sub-buckets of this method to the profiler (thread-safe).
         PipelineProfiler.RecordIndicatorPhases(
@@ -455,7 +449,40 @@ public class CryptoIndicatorDataList : Dictionary<CryptoIntervalPeriod, CryptoIn
             fill: profLuxStart - profFillStart,
             lux: Stopwatch.GetTimestamp() - profLuxStart);
 
-        return indicatorData;
+        PruneData(symbolInterval, candleOpenTime, interval);
+        return true;
+    }
+
+
+    /// <summary>
+    /// Applies the Lux 5m value to the CryptoData of the latest candle (the non-Skender, recursive indicator
+    /// that the hub does not produce). Mirrors the original tail of CalculateIndicators.
+    /// </summary>
+    private static void ApplyLux(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
+    {
+        if (!symbolInterval.Data.TryGetValue(candleOpenTime, out CryptoData? data))
+            return;
+
+        LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
+            CryptoIntervalPeriod.interval5m, candleOpenTime + 5);
+
+        int luxValue = 0;
+        if (luxOverBought > 0)
+            luxValue += luxOverBought;
+        if (luxOverSold > 0)
+            luxValue -= luxOverSold;
+        data.Lux5mValue = (short)luxValue;
+    }
+
+
+    /// <summary>Keeps Data bounded to ~<see cref="CacheCandles"/> recent candles per symbol+interval.</summary>
+    private static void PruneData(CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, CryptoInterval interval)
+    {
+        if (symbolInterval.Data.Count <= CacheCandles)
+            return;
+        CandleTime cutoff = candleOpenTime - (uint)(CacheCandles * interval.Duration);
+        foreach (CandleTime key in symbolInterval.Data.Keys.Where(k => k < cutoff).ToList())
+            symbolInterval.Data.Remove(key);
     }
 }
 

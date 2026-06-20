@@ -25,12 +25,12 @@ public class Sma
         if (candles.Count == 0)
             return;
 
-        List<SmaResult> smaList = (List<SmaResult>)candles.GetSma(length);
+        IReadOnlyList<SmaResult> smaList = candles.AsQuotes().ToSma(length).ToList();
 
 
         foreach (var bb in smaList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(bb.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? value = bb.Sma;

@@ -29,17 +29,17 @@ public class SignalBabaBase : SignalCreateBase
     protected bool InCooldown()
     {
         return false;
-        var settings = GlobalData.Settings.Signal.Baba;
-        if (!settings.UseCooldown)
-            return false;
-        if (!LastSignalTime.TryGetValue(CooldownKey(), out CandleTime last))
-            return false;
-        // A candle BEFORE the recorded time means a new/earlier (re)run — stale state from a previous
-        // emulator run — so it is NOT a cooldown; the first signal of this run overwrites it again.
-        if (CandleLast.Candle.OpenTime.Minutes < last.Minutes)
-            return false;
-        uint elapsed = CandleLast.Candle.OpenTime.Minutes - last.Minutes;
-        return elapsed < (uint)(settings.CooldownBars * Interval.Duration);
+        //var settings = GlobalData.Settings.Signal.Baba;
+        //if (!settings.UseCooldown)
+        //    return false;
+        //if (!LastSignalTime.TryGetValue(CooldownKey(), out CandleTime last))
+        //    return false;
+        //// A candle BEFORE the recorded time means a new/earlier (re)run — stale state from a previous
+        //// emulator run — so it is NOT a cooldown; the first signal of this run overwrites it again.
+        //if (CandleLast.Candle.OpenTime.Minutes < last.Minutes)
+        //    return false;
+        //uint elapsed = CandleLast.Candle.OpenTime.Minutes - last.Minutes;
+        //return elapsed < (uint)(settings.CooldownBars * Interval.Duration);
     }
 
     /// <summary>Records that an Baba signal fired on the current candle, starting the cooldown.</summary>

@@ -25,11 +25,11 @@ public class PSar
         if (candles.Count == 0)
             return;
 
-        List<ParabolicSarResult> psarList = (List<ParabolicSarResult>)candles.GetParabolicSar();
+        IReadOnlyList<ParabolicSarResult> psarList = candles.AsQuotes().ToParabolicSar().ToList();
 
         foreach (var psar in psarList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(psar.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(psar.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? psarValue = psar.Sar;

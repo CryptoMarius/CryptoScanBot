@@ -42,12 +42,12 @@ public class KeltnerChannel
         if (candles.Count == 0)
             return;
 
-        List<KeltnerResult> keltnerList = (List<KeltnerResult>)candles.GetKeltner();
+        IReadOnlyList<KeltnerResult> keltnerList = candles.AsQuotes().ToKeltner().ToList();
 
 
         foreach (var kc in keltnerList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(kc.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(kc.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 double? upperBand = kc.UpperBand;

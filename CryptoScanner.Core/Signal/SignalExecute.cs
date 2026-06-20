@@ -104,7 +104,6 @@ public class SignalExecute
 
 
     public static async Task ExecuteAsync(CryptoSymbol symbol,
-        CryptoIndicatorDataList preparedIndicatorDataList,
         CandleTime lastCandle1mCloseTime)
     {
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
@@ -144,7 +143,11 @@ public class SignalExecute
 
                         if (RegisterAlgorithms.GetAlgorithm(entry.Key.strategy, out AlgorithmDefinition? strategyDefinition))
                         {
-                            if (preparedIndicatorDataList.TryGetValue(interval.IntervalPeriod, out var indicatorData) && indicatorData != null)
+                            // Indicator data now lives on the symbol's CryptoSymbolInterval.Data (filled by
+                            // IndicatorEngine.PrepareIndicators in SignalPrepare). The interval candle that
+                            // just closed has open time = close - duration.
+                            CandleTime candleOpenTime = lastCandle1mCloseTime - interval.Duration;
+                            if (symbol.GetSymbolInterval(interval.IntervalPeriod).TryGetCandle(candleOpenTime, out MyData? indicatorData) && indicatorData != null)
                             {
                                 //// Relative volume check: skip for informational strategies
                                 //if (entry.Key.checkBarometer)
@@ -163,10 +166,8 @@ public class SignalExecute
                                     Symbol = symbol,
                                     Interval = interval,
                                     Side = side,
-                                    Candle = indicatorData.LastCandle,
-                                    CandleData = indicatorData.LastCandleData,
-                                    IndicatorData = indicatorData,
-                                    IndicatorDataList = preparedIndicatorDataList,
+                                    Candle = indicatorData.Candle,
+                                    CandleData = indicatorData.CandleData,
                                 };
 
                                 string text = "";

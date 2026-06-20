@@ -97,12 +97,16 @@ public struct CryptoCandle : IQuote
     public decimal Low { get => _lowTicks * TickSize(); set => _lowTicks = (int)Math.Round(value / TickSize()); }
     private int _closeTicks;                   // 4 bytes
     public decimal Close { get => _closeTicks * TickSize(); set => _closeTicks = (int)Math.Round(value / TickSize()); }
+    public double Value { get => _closeTicks * (double)TickSize(); set => _closeTicks = (int)Math.Round(value / (double)TickSize()); }
 
     private double _volume;
     public decimal Volume { get { return (decimal)_volume; } set { _volume = (double)value; } } // float or double will suffice (but with rounding errors)
 
     public DateTime Date { get { return OpenTime.ToDateTime(); } }
     public DateTime DateLocal { get { return OpenTime.ToDateTime().ToLocalTime(); } }
+    public DateTime Timestamp { get { return OpenTime.ToDateTime(); } }
+
+
 
     // Better: Direct calculation
     public static byte CalculateDecimalsFromTickSize2(decimal tickSize)

@@ -35,9 +35,8 @@ public class SignalCreateBase
     // The requested candle and its indicator data (grouped)
     public required MyData CandleLast { get; set; }
 
-    // Prepared indicator data
-    public required CryptoIndicatorData IndicatorData { get; set; }
-    public required CryptoIndicatorDataList IndicatorDataList { get; set; }
+    // Indicator data for other intervals now lives on the symbol's CryptoSymbolInterval.Data
+    // (filled by IndicatorEngine.PrepareIndicators); read it via Symbol.GetSymbolInterval(...).TryGetCandle.
 
     public string ExtraText = "";
 
@@ -381,7 +380,7 @@ public class SignalCreateBase
         }
 
         CandleTime targetTime = oldCandle.Candle.OpenTime - Interval.Duration;
-        if (!IndicatorData.TryGetCandle(targetTime, out newCandle))
+        if (!SymbolInterval.TryGetCandle(targetTime, out newCandle))
         {
             ExtraText = $"No prev candle or data! {targetTime.ToDateTime().ToLocalTime()}";
             newCandle = null;
@@ -409,7 +408,7 @@ public class SignalCreateBase
         }
 
         CandleTime targetTime = oldData.Candle.OpenTime - interval.Duration;
-        if (!IndicatorDataList.TryGetCandle(interval, targetTime, out newData))
+        if (!Symbol.GetSymbolInterval(interval.IntervalPeriod).TryGetCandle(targetTime, out newData))
         {
             ExtraText = $"No prev candle or data! {targetTime.ToDateTime().ToLocalTime()}";
             newData = null;
@@ -436,7 +435,7 @@ public class SignalCreateBase
         }
 
         CandleTime targetTime = oldData.Candle.OpenTime + interval.Duration;
-        if (!IndicatorDataList.TryGetCandle(interval, targetTime, out newData))
+        if (!Symbol.GetSymbolInterval(interval.IntervalPeriod).TryGetCandle(targetTime, out newData))
         {
             ExtraText = $"No next candle or data! {targetTime.ToDateTime().ToLocalTime()}";
             newData = null;
@@ -588,7 +587,7 @@ public class SignalCreateBase
         MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
+            if (SymbolInterval.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -628,7 +627,7 @@ public class SignalCreateBase
         MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
+            if (SymbolInterval.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)
@@ -667,7 +666,7 @@ public class SignalCreateBase
         MyData? prevCandle = null;
         while (candleCount >= 0)
         {
-            if (IndicatorData.TryGetCandle(time, out MyData? lastCandle))
+            if (SymbolInterval.TryGetCandle(time, out MyData? lastCandle))
             {
                 //TimeDebug = CandleTools.GetUnixDate(lCandle.OpenTime);
                 if (prevCandle != null)

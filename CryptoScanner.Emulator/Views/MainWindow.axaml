@@ -5,7 +5,7 @@
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
         xmlns:views="using:CryptoScanner.Emulator.Views"
         mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
-        Width="1500" Height="1000"
+        Width="1600" Height="1000"
         x:Class="CryptoScanner.Emulator.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"

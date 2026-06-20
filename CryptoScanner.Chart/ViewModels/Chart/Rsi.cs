@@ -17,7 +17,7 @@ public class Rsi
         if (candles.Count == 0)
             return;
 
-        var rsiList = candles.GetRsi(14);
+        var rsiList = candles.AsQuotes().GetRsi(14);
 
         // RSI(14) line — white, thinner than stoch lines so it remains readable when overlaid
         var series = new LineSeries
@@ -31,7 +31,7 @@ public class Rsi
 
         foreach (var item in rsiList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(item.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(item.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 if (item.Rsi.HasValue)

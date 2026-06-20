@@ -13,6 +13,11 @@ public class SettingsSignal
     // Is het signal algoritme actief
     public bool Active { get; set; } = true;
 
+    // Use the incremental Skender v3 QuoteHub per symbol+interval (IntervalIndicatorHub) instead of the
+    // per-candle batch recompute. Both fill CryptoSymbolInterval.Data identically (verified field-for-field);
+    // the hub is far cheaper for the tick-by-tick replay. Toggle for A/B comparison and safe fallback.
+    public bool UseIndicatorHub { get; set; } = false;
+
     // Aantal dagen dat de munt moet bestaan
     public int SymbolMustExistsDays { get; set; } = 60;
     public bool LogSymbolMustExistsDays { get; set; } = false;

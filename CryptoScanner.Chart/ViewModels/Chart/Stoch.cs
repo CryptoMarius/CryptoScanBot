@@ -33,7 +33,7 @@ public class Stoch
         if (candles.Count == 0)
             return;
 
-        var stochList = candles.GetStoch(14, 3, 3);
+        var stochList = candles.AsQuotes().GetStoch(14, 3, 3);
 
         // %K — fast stochastic (blue)
         var seriesK = new LineSeries
@@ -58,7 +58,7 @@ public class Stoch
 
         foreach (var item in stochList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(item.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(item.Timestamp, interval.Duration);
             if (openTime >= minDate && openTime <= maxDate)
             {
                 if (item.K.HasValue)

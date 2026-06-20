@@ -1244,10 +1244,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute(
-                "alter table Signal add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
-            database.Connection.Execute(
-                "alter table Position add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+            database.Connection.Execute("alter table Signal add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
+            database.Connection.Execute("alter table Position add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
 
             // update version
             version.Version += 1;
@@ -1267,8 +1265,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute(
-                "alter table EmulatorRun add SettingsJson Text null", transaction);
+            database.Connection.Execute("alter table EmulatorRun add SettingsJson Text null", transaction);
 
             // update version
             version.Version += 1;

@@ -39,7 +39,7 @@ public class Macd
         if (!chart.Axes.Any(a => a.Key == AxisKey))
             return;
 
-        var macdList = candles.GetMacd();
+        var macdList = candles.AsQuotes().GetMacd();
 
         // Histogram bar takes up 90 % of one candle interval so adjacent bars don't touch.
         double halfWidth = 0.45 * interval.Duration;
@@ -110,7 +110,7 @@ public class Macd
         double? prevH = null;
         foreach (var item in macdList)
         {
-            CandleTime openTime = CandleTime.AlignFromDateTime(item.Date, interval.Duration);
+            CandleTime openTime = CandleTime.AlignFromDateTime(item.Timestamp, interval.Duration);
             if (openTime < minDate || openTime > maxDate)
             {
                 // Still track prevH outside the visible window so the first visible bar

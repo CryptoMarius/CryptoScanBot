@@ -17,13 +17,9 @@ public class SignalCreate
     public required CryptoInterval Interval { get; set; }
     public required CryptoTradeSide Side { get; set; }
 
-    // The last candle (in the requested interval)
+    // The last candle (in the requested interval) + its indicator data
     public required CryptoCandle Candle { get; set; }
     public required CryptoData CandleData { get; set; }
-
-    // Prepared indicator data
-    public required CryptoIndicatorData IndicatorData { get; set; }
-    public required CryptoIndicatorDataList IndicatorDataList { get; set; }
 
     // output
     //public List<CryptoSignal> SignalList { get; set; } = [];
@@ -45,7 +41,7 @@ public class SignalCreate
         MyData? prevCandle = null;
         while (candleCount-- > 0)
         {
-            if (IndicatorData.TryGetCandle(loopFrom, out MyData? candleLast))
+            if (Symbol.GetSymbolInterval(Interval.IntervalPeriod).TryGetCandle(loopFrom, out MyData? candleLast))
             {
                 // This was for the backtest.. need to reinstate is somewhere down the line
                 //if (unixFrom > 0 && candleLast.OpenTime > unixFrom)
@@ -445,7 +441,7 @@ public class SignalCreate
                         // Just clear all, only the last signal counts?
                         // Not sure if this is the right way to go..
                         // Should we cancel unfilled positions as well?
-                        Symbol.ClearSignals();
+                        //Symbol.ClearSignals();
                         
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
                         symbolInterval.SignalList.Add(signal);
@@ -522,7 +518,7 @@ public class SignalCreate
             {
                 try
                 {
-                    if (IndicatorData.Data.TryGetValue(Candle.OpenTime, out CryptoData? candleData))
+                    if (Symbol.GetSymbolInterval(Interval.IntervalPeriod).Data.TryGetValue(Candle.OpenTime, out CryptoData? candleData))
                     {
                         //public CandleIndicatorData? candleLastData { get; set; }
 
@@ -561,13 +557,11 @@ public class SignalCreate
         SignalCreateBase? algorithm = RegisterAlgorithms.GetAlgorithm(Side, strategyDefinition.Strategy);
         if (algorithm != null)
         {
-            MyData myData = new() { Candle = IndicatorData.LastCandle, CandleData = IndicatorData.LastCandleData };
+            MyData myData = new() { Candle = Candle, CandleData = CandleData };
             algorithm.Symbol = Symbol;
             algorithm.Interval = Interval;
             algorithm.SymbolInterval = Symbol.GetSymbolInterval(Interval.IntervalPeriod);
             algorithm.CandleLast = myData;
-            algorithm.IndicatorData = IndicatorData;
-            algorithm.IndicatorDataList = IndicatorDataList;
 
             AddToLiveData();
 

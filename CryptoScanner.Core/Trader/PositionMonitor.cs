@@ -27,7 +27,6 @@ public class PositionMonitor //: IDisposable
     public CryptoDatabase Database { get; set; } = new();
     public bool PauseBecauseOfTradingRules { get; set; } = false;
 
-    private CryptoIndicatorDataList IndicatorDataList { get; set; } = [];
 
     public PositionMonitor(CryptoSymbol symbol, CryptoCandle lastCandle1m)
     {
@@ -189,7 +188,7 @@ public class PositionMonitor //: IDisposable
 
 
 
-    private async Task CreateOrExtendPositionAsync(CryptoIndicatorDataList IndicatorDataList)
+    private async Task CreateOrExtendPositionAsync()
     {
         string? lastPrice = Symbol.LastPrice?.ToString(Symbol.PriceDisplayFormat);
         string text = "Monitor " + Symbol.Name + " price=" + lastPrice;
@@ -281,7 +280,7 @@ public class PositionMonitor //: IDisposable
 
                     // Get the most recent candle (and check a lot of things)
                     CandleTime openTime = LastCandle1mCloseTime - interval.Duration;
-                    var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, interval, openTime, symbolInterval.IntervalPeriod);
+                    var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, openTime, symbolInterval.IntervalPeriod);
                     if (!result.success)
                     {
                         GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} unable to prepare indicators for interval {interval.Name} (removed)");
@@ -302,8 +301,6 @@ public class PositionMonitor //: IDisposable
                     algorithm.Interval = signal.Interval;
                     algorithm.SymbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
                     algorithm.CandleLast = result.candle!;
-                    algorithm.IndicatorData = result.indicatorData!;
-                    algorithm.IndicatorDataList = IndicatorDataList;
 
 
                     if (algorithm.GiveUp(signal))
@@ -628,7 +625,7 @@ public class PositionMonitor //: IDisposable
 
 
             // Calculate indicators if needed
-            var result = IndicatorDataList.CalculateIndicatorsForInterval(Symbol, interval, candleInterval!.OpenTime, interval.IntervalPeriod);
+            var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, interval, candleInterval!.OpenTime, interval.IntervalPeriod);
             if (!result.success)
                 return (false, candleInterval);
         }
@@ -1978,11 +1975,11 @@ public class PositionMonitor //: IDisposable
             long profPrepareStart = Stopwatch.GetTimestamp();
 
             // Calculate all the indicators, queue the fvg and dlz zones etc
-            IndicatorDataList = SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
+            SignalPrepare.Execute(Symbol, LastCandle1m, LastCandle1mCloseTime);
             long profExecuteStart = Stopwatch.GetTimestamp();
 
             // Calculate signals and touch of the dlz and fvg zones
-            await SignalExecute.ExecuteAsync(Symbol, IndicatorDataList, LastCandle1mCloseTime);
+            await SignalExecute.ExecuteAsync(Symbol, LastCandle1mCloseTime);
             long profTradeStart = Stopwatch.GetTimestamp();
 
             //GlobalData.Logger.Trace($"NewCandleArrivedAsync.Positions " + traceText);
@@ -1998,7 +1995,7 @@ public class PositionMonitor //: IDisposable
             //TODO: Reuse the preparedIndicatorDataList in the CreateOrExtendPositionAsync?
             // Open or extend a position
             //if (signalList.Count > 0) // alway's?
-            await CreateOrExtendPositionAsync(IndicatorDataList);
+            await CreateOrExtendPositionAsync();
             long profPositionCheckStart = Stopwatch.GetTimestamp();
 
             // Check the positions

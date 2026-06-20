@@ -136,19 +136,12 @@ public class BbmaSignalSimulationTests : TestBase
         {
             CandleTime candleTime = candle.OpenTime;
 
-            // Fresh indicator list per candle = correct sliding window.
-            CryptoIndicatorDataList indicatorDataList = new();
-
-            // Calculate LTF indicators up to this candle.
-            if (!indicatorDataList.PrepareIndicators(symbol, ltf, candleTime))
+            // Calculate LTF indicators up to this candle (persisted on the symbol's CryptoSymbolInterval).
+            if (!IndicatorEngine.PrepareIndicators(symbol, ltf, candleTime))
                 continue;
 
-            if (!indicatorDataList.TryGetValue(ltf.IntervalPeriod, out CryptoIndicatorData? indicatorData)
-                || indicatorData == null)
-                continue;
-
-            // The current candle must have indicator data (it is the last of the 260-candle window).
-            if (!indicatorData.TryGetCandle(candleTime, out MyData? candleLast) || candleLast == null)
+            // The current candle must have indicator data.
+            if (!ltfSymbolInterval.TryGetCandle(candleTime, out MyData? candleLast) || candleLast == null)
                 continue;
 
             // Build algorithm instance — mirrors what SignalCreate.ExecuteAlgorithmAsync does.
@@ -161,8 +154,6 @@ public class BbmaSignalSimulationTests : TestBase
                     SignalSide = CryptoTradeSide.Long,
                     SignalStrategy = CryptoSignalStrategy.BbmaOmni,
                     CandleLast = candleLast,
-                    IndicatorData = indicatorData,
-                    IndicatorDataList = indicatorDataList,
                 }
                 : new SignalBbmaShort
                 {
@@ -172,8 +163,6 @@ public class BbmaSignalSimulationTests : TestBase
                     SignalSide = CryptoTradeSide.Short,
                     SignalStrategy = CryptoSignalStrategy.BbmaOmni,
                     CandleLast = candleLast,
-                    IndicatorData = indicatorData,
-                    IndicatorDataList = indicatorDataList,
                 };
 
             if (algorithm.IndicatorsOkay(candleLast) && algorithm.IsSignal())
@@ -211,13 +200,9 @@ public class BbmaSignalSimulationTests : TestBase
         foreach (CryptoCandle candle in candles)
         {
             CandleTime candleTime = candle.OpenTime;
-            CryptoIndicatorDataList indicatorDataList = new();
-
-            if (!indicatorDataList.PrepareIndicators(symbol, ltf, candleTime))
+            if (!IndicatorEngine.PrepareIndicators(symbol, ltf, candleTime))
                 continue;
-            if (!indicatorDataList.TryGetValue(ltf.IntervalPeriod, out CryptoIndicatorData? indicatorData) || indicatorData == null)
-                continue;
-            if (!indicatorData.TryGetCandle(candleTime, out MyData? myData) || myData == null)
+            if (!ltfSymbolInterval.TryGetCandle(candleTime, out MyData? myData) || myData == null)
                 continue;
 
             var cd = myData.CandleData;

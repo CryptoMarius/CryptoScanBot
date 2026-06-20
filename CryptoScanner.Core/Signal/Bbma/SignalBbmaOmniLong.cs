@@ -350,7 +350,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
     ///     When provided, a Sell Extreme on bar i-1 cross-resets tpwbuy to 0 (matches MQ5).
     ///     Pass null to skip cross-reset (IsSignal use-case — no Short classifier available).
     /// </param>
-    public void BuildTpwCache(CryptoIndicatorData indicatorData, Func<MyData, bool>? isExtremeSell = null)
+    public void BuildTpwCache(CryptoSymbolInterval indicatorData, Func<MyData, bool>? isExtremeSell = null)
     {
         TpwStateCache.Clear();
 
@@ -693,7 +693,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
 
         // Build the forward-pass TPW cache before any GetOmniState calls.
         // No cross-reset here (no Short classifier available in the scanner path).
-        BuildTpwCache(IndicatorData);
+        BuildTpwCache(SymbolInterval);
 
         //// BB width must be at least 1.5% (reusing the Stobb threshold like SignalBbmaLong does)
         //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
@@ -761,7 +761,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: found {stateLtfBack}");
 
         // --- MTF state at the current candle time ---
-        var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultMtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, mtf);
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
@@ -773,7 +773,7 @@ public class SignalBbmaOmniLong : SignalBbmaOmniBase
         //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name})={stateMtf}");
 
         // --- HTF state at the current candle time ---
-        var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultHtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, htf);
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {

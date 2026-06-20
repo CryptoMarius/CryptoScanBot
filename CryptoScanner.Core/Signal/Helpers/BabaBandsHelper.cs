@@ -64,13 +64,15 @@ public static class BabaBandsHelper
         foreach (var c in candles)
         {
             decimal hlc3 = (c.High + c.Low + c.Close) / 3m;
-            srcQuotes.Add(new Quote { Date = c.Date, Close = hlc3, Volume = c.Volume });
-            sqQuotes.Add(new Quote { Date = c.Date, Close = hlc3 * hlc3, Volume = c.Volume });
+            // v3 Quote is a positional record (Timestamp, Open, High, Low, Close, Volume); GetVwma only
+            // uses Close + Volume, so Open/High/Low are left 0.
+            srcQuotes.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3, c.Volume));
+            sqQuotes.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, c.Volume));
         }
 
-        var vwmaSrc = (List<VwmaResult>)srcQuotes.GetVwma(settings.Length);
-        var vwmaSq = (List<VwmaResult>)sqQuotes.GetVwma(settings.Length);
-        var atrList = (List<AtrResult>)candles.GetAtr(settings.AtrLength);
+        var vwmaSrc = (IReadOnlyList<VwmaResult>)srcQuotes.ToVwma(settings.Length);
+        var vwmaSq = (IReadOnlyList<VwmaResult>)sqQuotes.ToVwma(settings.Length);
+        var atrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.AtrLength);
 
         for (int i = 0; i < n; i++)
         {
@@ -108,7 +110,7 @@ public static class BabaBandsHelper
             return false;
 
         var bands = ComputeBands(candles);
-        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        var slAtrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.Length);
         return LowerBandBreakAt(candles, bands, slAtrList, idx, out pctDeviation, out lowerBand);
     }
 
@@ -132,7 +134,7 @@ public static class BabaBandsHelper
             return false;
 
         var bands = ComputeBands(candles);
-        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        var slAtrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.Length);
         return UpperBandBreakAt(candles, bands, slAtrList, idx, out pctDeviation, out upperBand);
     }
 
@@ -154,7 +156,7 @@ public static class BabaBandsHelper
             return false;
 
         var bands = ComputeBands(candles);
-        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        var slAtrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.Length);
         if (!TryBand(bands, idx, out _, out lowerBand))
             return false;
         pctDeviation = StopLossPercent(slAtrList, candles, idx);
@@ -175,7 +177,7 @@ public static class BabaBandsHelper
             return false;
 
         var bands = ComputeBands(candles);
-        var slAtrList = (List<AtrResult>)candles.GetAtr(settings.Length);
+        var slAtrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.Length);
         if (!TryBand(bands, idx, out upperBand, out _))
             return false;
         pctDeviation = StopLossPercent(slAtrList, candles, idx);

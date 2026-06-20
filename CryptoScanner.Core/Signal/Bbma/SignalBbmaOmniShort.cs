@@ -348,7 +348,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     ///     When provided, a Buy Extreme on bar i-1 cross-resets tpwsell to 0 (matches MQ5).
     ///     Pass null to skip cross-reset (IsSignal use-case — no Long classifier available).
     /// </param>
-    public void BuildTpwCache(CryptoIndicatorData indicatorData, Func<MyData, bool>? isExtremeBuy = null)
+    public void BuildTpwCache(CryptoSymbolInterval indicatorData, Func<MyData, bool>? isExtremeBuy = null)
     {
         TpwStateCache.Clear();
 
@@ -662,7 +662,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
 
         // Build the forward-pass TPW cache before any GetOmniState calls.
         // No cross-reset here (no Long classifier available in the scanner path).
-        BuildTpwCache(IndicatorData);
+        BuildTpwCache(SymbolInterval);
 
         //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         //{
@@ -723,7 +723,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         }
         //GlobalData.AddTextToLogTab($"{logPrefix} LTF walkback: found {stateLtfBack}");
 
-        var resultMtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultMtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, mtf);
         if (!resultMtf.success || resultMtf.candle == null || !IndicatorsOkay(resultMtf.candle))
         {
@@ -734,7 +734,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         OmniState stateMtf = GetOmniState(resultMtf.candle);
         //GlobalData.AddTextToLogTab($"{logPrefix} MTF ({resultMtf.higherInterval.Interval.Name})={stateMtf}");
 
-        var resultHtf = IndicatorDataList.CalculateIndicatorsForInterval(
+        var resultHtf = IndicatorEngine.CalculateIndicatorsForInterval(
             Symbol, Interval, CandleLast.Candle.OpenTime, htf);
         if (!resultHtf.success || resultHtf.candle == null || !IndicatorsOkay(resultHtf.candle))
         {

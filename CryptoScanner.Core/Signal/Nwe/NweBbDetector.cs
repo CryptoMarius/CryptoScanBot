@@ -54,7 +54,7 @@
 //            .ToDictionary(r => r.OpenTime);
 
 //        // BB with the same settings the live indicator cache uses; aligned 1:1 to candles by index.
-//        var bbList = (List<BollingerBandsResult>)candles.GetBollingerBands(
+//        var bbList = (IReadOnlyList<BollingerBandsResult>)candles.GetBollingerBands(
 //            lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
 //            standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 

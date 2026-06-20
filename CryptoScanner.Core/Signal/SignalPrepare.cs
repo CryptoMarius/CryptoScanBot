@@ -168,10 +168,9 @@ public class SignalPrepare
 
 
 
-    public static CryptoIndicatorDataList Execute(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
+    public static void Execute(CryptoSymbol symbol,
+        CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
-        CryptoIndicatorDataList indicatorDataList = [];
-
         // Prepare all the indicators on the requested intervals
         // The indexList contains only the checked intervals for the normal strategies
         if (Preparing.TryGetValue(SignalPrepareKind.Indicator, out SortedList<string, CryptoInterval>? indexList))
@@ -185,7 +184,7 @@ public class SignalPrepare
 
                     // To the start of the candle for that interval
                     CandleTime candleOpenTime = lastCandle1mCloseTime - interval.Duration;
-                    indicatorDataList.CalculateIndicatorsForInterval(symbol, interval, candleOpenTime, interval.IntervalPeriod);
+                    IndicatorEngine.PrepareIndicators(symbol, interval, candleOpenTime);
                 }
             }
         }
@@ -261,7 +260,5 @@ public class SignalPrepare
                 }
             }
         }
-
-        return indicatorDataList;
     }
 }

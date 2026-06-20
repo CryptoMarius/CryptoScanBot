@@ -1,4 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Indicators;
 
 namespace CryptoScanner.Core.Model;
 
@@ -44,4 +46,31 @@ public class CryptoSymbolInterval
     // Same ZigZag source data, different interpretation rules.
     public CryptoTrendData TrendBosPrimary = new();
     public CryptoTrendData TrendBosSecondary = new();
+
+    // **** experiment ****
+
+    // For the new QuoteHub from Dave Skender — incremental indicator state (see IntervalIndicatorHub).
+    public IntervalIndicatorHub? IndicatorHub = null;
+    public CandleTime? IndicatorHubLastAdded = null;
+    public Dictionary<CandleTime, CryptoData> Data = [];
+
+
+    public bool TryGetCandle(CandleTime time, out MyData? myData)
+    {
+        if (CandleList.TryGetValue(time, out CryptoCandle candle) &&
+            Data.TryGetValue(time, out CryptoData? indicator))
+        {
+            myData = new()
+            {
+                Candle = candle!,
+                CandleData = indicator!
+            };
+            return true;
+        }
+        else
+        {
+            myData = null;
+            return false;
+        }
+    }
 }
