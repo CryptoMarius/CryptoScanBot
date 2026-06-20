@@ -1,9 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Indicators;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Skender.Stock.Indicators;
 
@@ -105,8 +104,19 @@ public class IntervalIndicatorHubParityTests
         var wma10Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(10).ToList();
         var wma10High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(10).ToList();
 
+        // Baba VWAP bands — same BabaBandsHelper.ComputeBands the hub path (IntervalIndicatorHub) uses.
+        var baba = GlobalData.Settings.Signal.Baba;
+        BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(quotes.Cast<CryptoCandle>().ToList());
+        var atrBabaFast = quotes.GetAtr(baba.AtrLength).ToList();
+        var atrBabaSl = quotes.GetAtr(baba.Length).ToList();
+
         return new CryptoData
         {
+            AtrBaba = atrBabaFast[i].Atr,
+            BabaAtrSl = atrBabaSl[i].Atr,
+            BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
+            BabaUpper = babaBands[i].HasValue ? babaBands[i].Upper : null,
+            BabaLower = babaBands[i].HasValue ? babaBands[i].Lower : null,
             Sma20 = bb[i].Sma,
             BollingerBandsDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),
             BollingerBandsPercentage = 100 * (bb[i].UpperBand / bb[i].LowerBand - 1),
@@ -146,6 +156,11 @@ public class IntervalIndicatorHubParityTests
         Eq("StochOscillator", hub.StochOscillator, batch.StochOscillator, maxRel);
         Eq("StochSignal", hub.StochSignal, batch.StochSignal, maxRel);
         Eq("PSar", hub.PSar, batch.PSar, maxRel);
+        Eq("AtrBaba", hub.AtrBaba, batch.AtrBaba, maxRel);
+        Eq("BabaAtrSl", hub.BabaAtrSl, batch.BabaAtrSl, maxRel);
+        Eq("BabaBasis", hub.BabaBasis, batch.BabaBasis, maxRel);
+        Eq("BabaUpper", hub.BabaUpper, batch.BabaUpper, maxRel);
+        Eq("BabaLower", hub.BabaLower, batch.BabaLower, maxRel);
 #if DEBUG
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);

@@ -71,6 +71,7 @@ public sealed class TickRunner
     public async Task RunAsync(EmulatorRunConfig config, CancellationToken ct)
     {
         var exchange = GlobalData.ActiveExchange!;
+        GlobalData.Settings.Signal.UseIndicatorHub = true;
 
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
@@ -296,6 +297,24 @@ public sealed class TickRunner
                 $"trend {trend:F1}s over {PipelineProfiler.TrendCalls} call(s), " +
                 $"fvgInline {fvgInline:F1}s, " +
                 $"smcInline {smcInline:F1}s");
+        }
+
+        // Sub-breakdown of the positionCheck bucket: where inside CalculatePositionResultsViaOrders
+        // the time goes — the DB load of orders/trades, the per-order processing loop, the
+        // profit/break-even recalculation, or the final persist transaction.
+        double posLoad = Seconds(PipelineProfiler.PosLoadOrdersTicks);
+        double posLoop = Seconds(PipelineProfiler.PosOrderLoopTicks);
+        double posCalc = Seconds(PipelineProfiler.PosCalcProfitTicks);
+        double posPersist = Seconds(PipelineProfiler.PosPersistTicks);
+        double posMeasured = posLoad + posLoop + posCalc + posPersist;
+        if (posMeasured > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"PositionResults — measured {posMeasured:F1}s over {PipelineProfiler.PosCalls} call(s) | " +
+                $"loadOrders {posLoad:F1}s ({posLoad / posMeasured:P0}), " +
+                $"orderLoop {posLoop:F1}s ({posLoop / posMeasured:P0}), " +
+                $"calcProfit {posCalc:F1}s ({posCalc / posMeasured:P0}), " +
+                $"persist {posPersist:F1}s ({posPersist / posMeasured:P0})");
         }
     }
 

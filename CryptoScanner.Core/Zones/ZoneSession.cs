@@ -1,8 +1,8 @@
-﻿using System.Text.Json.Serialization;
-
-using CryptoScanner.Core.Core;
+﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Zones;
 

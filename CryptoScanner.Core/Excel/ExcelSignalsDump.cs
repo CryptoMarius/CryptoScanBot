@@ -138,12 +138,12 @@ public class ExcelSignalsDump() : ExcelBase("Signals")
             WriteCell(sheet, column++, row, signal.Barometer4h, CellStyleDecimalNormal);
             WriteCell(sheet, column++, row, signal.Barometer1d, CellStyleDecimalNormal);
 
-//#if DEBUG
-//            WriteCell(sheet, column++, row, signal.PriceMin, CellStyleDecimalNormal);
-//            WriteCell(sheet, column++, row, signal.PriceMax, CellStyleDecimalNormal);
-//            WriteCell(sheet, column++, row, signal.PriceMinPerc, CellStyleDecimalNormal);
-//            WriteCell(sheet, column++, row, signal.PriceMaxPerc, CellStyleDecimalNormal);
-//#endif
+            //#if DEBUG
+            //            WriteCell(sheet, column++, row, signal.PriceMin, CellStyleDecimalNormal);
+            //            WriteCell(sheet, column++, row, signal.PriceMax, CellStyleDecimalNormal);
+            //            WriteCell(sheet, column++, row, signal.PriceMinPerc, CellStyleDecimalNormal);
+            //            WriteCell(sheet, column++, row, signal.PriceMaxPerc, CellStyleDecimalNormal);
+            //#endif
         }
 
         AutoSize(sheet, columns);

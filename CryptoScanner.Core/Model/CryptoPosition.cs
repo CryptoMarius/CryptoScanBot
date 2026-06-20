@@ -81,7 +81,6 @@ public partial class CryptoPosition : CryptoData2
     /// --------------------------------------------------------------
     /// added from the signal...
     /// --------------------------------------------------------------
-    public int? SignalId { get; set; }
     public DateTime SignalEventTime { get; set; } // close date candle which triggered the signal
 
     public string? EventText { get; set; }

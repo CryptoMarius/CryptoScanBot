@@ -18,7 +18,7 @@ public class CryptoData
     public double? BollingerBandsLowerBand { get { return Sma20 - BollingerBandsDeviation; } }
     public double? BollingerBandsPercentage { get; set; }
 
-#if DEBUG
+    //#if DEBUG
     // Keltner Channel (EMA centerline +/- ATR * multiplier). Not persisted to DB; only used
     // by signal classes that combine BB with KC (TTM Squeeze family).
     // To re-enable: uncomment these properties AND un-comment the keltnerList calculation
@@ -30,7 +30,7 @@ public class CryptoData
     //[Computed]
     //public double? KeltnerCenterLine { get; set; }
     //public double? KeltnerCenterLineSlope { get; set; }
-#endif
+    //#endif
 
     // MACD indicator values
     public double? MacdValue { get; set; } // blue - Oscillator
@@ -56,7 +56,7 @@ public class CryptoData
     //public double? SlopeStoch { get; set; }
 
     // EMA (Exponential Moving Average) indicator values
-#if DEBUG
+    //#if DEBUG
     //[Computed]
     //public double? Ema5 { get; set; }
     ////public double? Ema8 { get; set; }
@@ -71,7 +71,7 @@ public class CryptoData
     //public double? SlopeEma200 { get; set; }
     //[Computed]
     //public double? Tema { get; set; }
-#endif
+    //#endif
 
     // SMA (Simple Moving Average) indicator values
     //public double? Sma8 { get; set; }
@@ -113,6 +113,21 @@ public class CryptoData
     [Computed]
     public short? Lux5mValue { get; set; }
 
+    // Baba VWAP bands — basis = VWMA(hlc3, Length), Upper/Lower = basis +/- (Mult * vwStdev + AtrMult *
+    // ATR(AtrLength)). AtrBaba is that fast pad ATR; BabaAtrSl is the SLOW ATR(Length) used for the
+    // stop-loss %. Computed once per candle by IndicatorEngine (hub or batch) and shared by
+    // SignalBabaLong/Short via BabaBandsHelper, so the band itself is never computed twice per candle.
+    [Computed]
+    public double? AtrBaba { get; set; }
+    [Computed]
+    public double? BabaBasis { get; set; }
+    [Computed]
+    public double? BabaUpper { get; set; }
+    [Computed]
+    public double? BabaLower { get; set; }
+    [Computed]
+    public double? BabaAtrSl { get; set; }
+
     /// <summary>
     /// Copy common indicator values
     /// </summary>
@@ -122,11 +137,11 @@ public class CryptoData
         BollingerBandsDeviation = source.BollingerBandsDeviation;
         BollingerBandsPercentage = source.BollingerBandsPercentage;
 
-#if DEBUG
+        //#if DEBUG
         //KeltnerUpperBand = source.KeltnerUpperBand;
         //KeltnerCenterLine = source.KeltnerCenterLine;
         //KeltnerLowerBand = source.KeltnerLowerBand;
-#endif
+        //#endif
 
         // MACD indicator values
         MacdValue = source.MacdValue;
@@ -185,6 +200,11 @@ public class CryptoData
         PSar = source.PSar;
 
         Lux5mValue = source.Lux5mValue;
+        AtrBaba = source.AtrBaba;
+        BabaBasis = source.BabaBasis;
+        BabaUpper = source.BabaUpper;
+        BabaLower = source.BabaLower;
+        BabaAtrSl = source.BabaAtrSl;
     }
 }
 

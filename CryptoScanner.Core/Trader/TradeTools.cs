@@ -7,6 +7,7 @@ using CryptoScanner.Core.Model;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
+using System.Diagnostics;
 using System.Text;
 
 namespace CryptoScanner.Core.Trader;
@@ -296,16 +297,16 @@ public class TradeTools
         if (BreakEvenPriceOld != position.BreakEvenPrice)
         {
             ScannerLog.Logger.Trace($"{position.Symbol.Name} aanpassing BE van {BreakEvenPriceOld} naar {position.BreakEvenPrice}");
-            ScannerLog.Logger.Trace(stringBuilderOld);
-            StringBuilder stringBuilderNew = position.DumpPosition();
-            ScannerLog.Logger.Debug(stringBuilderNew);
+            //ScannerLog.Logger.Trace(stringBuilderOld);
+            //StringBuilder stringBuilderNew = position.DumpPosition();
+            //ScannerLog.Logger.Debug(stringBuilderNew);
         }
     }
 
 
     private static void CalculateOrderFeeFromTrades(CryptoPosition position, CryptoPositionStep step)
     {
-        ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check step={step.OrderId}");
+        //ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check step={step.OrderId}");
 
         if (!position.HasOrdersAndTradesLoaded)
             ScannerLog.Logger.Warn($"{position.Symbol.Name} CalculateOrderFeeFromTrades called without orders/trades loaded");
@@ -321,7 +322,7 @@ public class TradeTools
         {
             if (trade != null && trade.OrderId == step.OrderId)
             {
-                ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check trade={trade.TradeId} order={trade.OrderId}");
+                //ScannerLog.Logger.Trace($"CalculateOrderFeeFromTrades: Positie {position.Symbol.Name} check trade={trade.TradeId} order={trade.OrderId}");
                 if (trade.CommissionAsset == position.Symbol.Base) // fee in base quantity
                 {
                     decimal value = trade.Commission * trade.Price;
@@ -362,15 +363,23 @@ public class TradeTools
 
         bool markedAsReady = false;
         bool orderStatusChanged = false;
+
+        // Profiling: sub-breakdown of the positionCheck bucket (see PipelineProfiler). Tracks where
+        // inside this method the time actually goes — the DB load, the per-order loop, the
+        // profit/break-even recalculation, or the final persist transaction.
+        long profLoadStart = Stopwatch.GetTimestamp();
         int count = await LoadOrdersFromDatabaseAndExchangeAsync(database, position);
+        long profLoadOrdersTicks = Stopwatch.GetTimestamp() - profLoadStart;
+
         if (count > 0)
             forceCalculation = true;
         var oldPositionStatus = position.Status;
 
-        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation}");
+        //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} {position.Status} force={forceCalculation}");
 
 
         // Build the filled quantity via the present orders & calculate fees
+        long profOrderLoopStart = Stopwatch.GetTimestamp();
         DateTime? lastDateTime = null;
         foreach (CryptoOrder order in position.OrderList.Values.ToList())
         {
@@ -383,7 +392,7 @@ public class TradeTools
                 if (step.Status != order.Status || step.QuoteQuantityFilled != order.QuoteQuantityFilled || forceCalculation)
                 {
                     orderStatusChanged = true;
-                    ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side}");
+                    //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} {order.Side}");
 
                     CryptoPositionPart part = PositionTools.FindPositionPart(position, step.PositionPartId) ?? throw new Exception("Problem finding parent part");
                     string msgInfo = $"{position.Symbol.Name} " +
@@ -509,7 +518,7 @@ public class TradeTools
                         {
                             // Statistics position
                             position.Reposition = true;
-                            ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
+                            //ScannerLog.Logger.Trace($"TradeTools.CalculatePositionResultsViaOrders: {position.Symbol.Name} take profit -> position.Reposition = true");
                         }
 
                         // Sluit de part als het gevuld is (probleem igv meerdere entries)
@@ -534,7 +543,7 @@ public class TradeTools
                                 position.Status = CryptoPositionStatus.Trading;
                             }
 
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order{order.OrderId} -> IsFilled (entry)");
+                            //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order{order.OrderId} -> IsFilled (entry)");
                         }
 
 
@@ -542,7 +551,7 @@ public class TradeTools
                         if (step.Side == takeProfitOrderSide)
                         {
                             part.CloseTime = order.UpdateTime;
-                            ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> IsFilled (takeprofit)");
+                            //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> IsFilled (takeprofit)");
                         }
 
                         // Geen melding geven bij afgesloten orders
@@ -569,16 +578,20 @@ public class TradeTools
                     if (step.Status < CryptoOrderStatus.Canceled)
                     {
                         step.Status = order.Status;
-                        ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> set status to {order.Status}");
+                        //ScannerLog.Logger.Trace($"CalculatePositionResultsViaOrders: Positie {position.Symbol.Name} check order {order.OrderId} -> set status to {order.Status}");
                     }
                 }
             }
         }
+        long profOrderLoopTicks = Stopwatch.GetTimestamp() - profOrderLoopStart;
 
-
+        long profCalcProfitTicks = 0;
+        long profPersistTicks = 0;
         if (orderStatusChanged || forceCalculation)
         {
+            long profCalcStart = Stopwatch.GetTimestamp();
             CalculateProfitAndBreakEvenPrice(position);
+            profCalcProfitTicks = Stopwatch.GetTimestamp() - profCalcStart;
 
             if (lastDateTime == null)
                 lastDateTime = GlobalData.Clock.UtcNow;
@@ -598,18 +611,18 @@ public class TradeTools
                     position.UpdateTime = lastDateTime;
                     position.Status = CryptoPositionStatus.Timeout;
 
-#if DEBUG
-                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} changed to {position.Status}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
-                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
-#endif
+                    //#if DEBUG
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: Position {position.Symbol.Name} changed to {position.Status}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Quantity={position.Quantity}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Dust={position.RemainingDust}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Remaining={remaining}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.LastPrice={position.Symbol.LastPrice}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuantityMinimum={position.Symbol.QuantityMinimum}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? Symbol.QuoteValueMinimum={position.Symbol.QuoteValueMinimum}");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining} <= 0)");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({position.Quantity} < {position.Symbol.QuantityMinimum})");
+                    //                    GlobalData.AddTextToLogTab($"TradeTools: debug ? closing if ({remaining * position.Symbol.LastPrice} < {position.Symbol.QuoteValueMinimum})");
+                    //#endif
                 }
             }
 
@@ -672,6 +685,7 @@ public class TradeTools
             // Persist position state (only when something actually changed — saves are expensive)
             if (orderStatusChanged || markedAsReady)
             {
+                long profPersistStart = Stopwatch.GetTimestamp();
                 using var transaction = database.BeginTransaction();
                 try
                 {
@@ -690,6 +704,7 @@ public class TradeTools
                     ScannerLog.Logger.Error(ex, $"{position.Symbol.Name} CalculatePositionResultsViaOrders failed to persist position state");
                     throw;
                 }
+                profPersistTicks = Stopwatch.GetTimestamp() - profPersistStart;
             }
 
 
@@ -702,6 +717,12 @@ public class TradeTools
             }
 
         }
+
+        PipelineProfiler.RecordPositionResultPhases(
+            loadOrders: profLoadOrdersTicks,
+            orderLoop: profOrderLoopTicks,
+            calcProfit: profCalcProfitTicks,
+            persist: profPersistTicks);
     }
 
 
@@ -716,7 +737,7 @@ public class TradeTools
             if (!position.HasOrdersAndTradesLoaded)
             {
                 //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
-                ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
+                //ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
 
                 // Vanwege tijd afrondingen (msec)
                 DateTime from = position.CreateTime.AddMinutes(-1);

@@ -38,7 +38,6 @@ public class CommandSignalDeleteAll : CommandBase
             databaseThread.Connection.Open();
 
             using var transaction = databaseThread.BeginTransaction();
-            databaseThread.Connection.Execute("update position set SignalId=null", transaction);
             databaseThread.Connection.Execute("delete from Signal", transaction);
             transaction.Commit();
 

@@ -553,7 +553,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Clear symbols and refresh
         exchange.Clear();
         GlobalData.LoadSymbols();
-        
+
         // Force paper-trading. The user's settings.json is otherwise authoritative;
         // overriding here protects against accidental RealTrading after a Configure edit.
         GlobalData.Settings.Signal.Active = true;

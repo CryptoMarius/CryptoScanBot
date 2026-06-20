@@ -674,7 +674,7 @@ public class PositionMonitor //: IDisposable
         return price;
     }
 
-    private decimal CalculateEntryOrDcaPrice(CryptoPosition position, CryptoPositionPart part, 
+    private decimal CalculateEntryOrDcaPrice(CryptoPosition position, CryptoPositionPart part,
         CryptoEntryOrDcaPricing buyOrderPricing, decimal defaultPrice)
     {
         // Wat wordt de prijs? (hoe graag willen we in de trade?)
@@ -701,23 +701,23 @@ public class PositionMonitor //: IDisposable
             case CryptoEntryOrDcaPricing.MarketPrice:
                 price = part.Symbol.LastPrice ?? 0;
                 break;
-            //case CryptoEntryOrDcaPricing.SignalPriceWithPullback:
-            //    // Take SignalPrice and pull it back by the configured percentage toward the
-            //    // direction price would need to retrace for a fill — down for long, up for
-            //    // short. Lands the entry inside the zone for smc.rejection / dlz.near style
-            //    // signals where SignalPrice (= rejection close) is already outside the zone.
-            //    {
-            //        decimal pullbackPct = part.Purpose == CryptoPartPurpose.Entry
-            //            ? GlobalData.Settings.Trading.EntryPullbackPercentage
-            //            : GlobalData.Settings.Trading.DcaPullbackPercentage;
-            //        price = defaultPrice;
-            //        if (position.Side == CryptoTradeSide.Long)
-            //            price = price * (100m - pullbackPct) / 100m;
-            //        else
-            //            price = price * (100m + pullbackPct) / 100m;
-            //        price = CorrectBuyOrDcaPrice(position, price);
-            //    }
-            //    break;
+                //case CryptoEntryOrDcaPricing.SignalPriceWithPullback:
+                //    // Take SignalPrice and pull it back by the configured percentage toward the
+                //    // direction price would need to retrace for a fill — down for long, up for
+                //    // short. Lands the entry inside the zone for smc.rejection / dlz.near style
+                //    // signals where SignalPrice (= rejection close) is already outside the zone.
+                //    {
+                //        decimal pullbackPct = part.Purpose == CryptoPartPurpose.Entry
+                //            ? GlobalData.Settings.Trading.EntryPullbackPercentage
+                //            : GlobalData.Settings.Trading.DcaPullbackPercentage;
+                //        price = defaultPrice;
+                //        if (position.Side == CryptoTradeSide.Long)
+                //            price = price * (100m - pullbackPct) / 100m;
+                //        else
+                //            price = price * (100m + pullbackPct) / 100m;
+                //        price = CorrectBuyOrDcaPrice(position, price);
+                //    }
+                //    break;
                 // De optie is vervallen maar blijft interessant, echter welke BB gebruik je dan (de actuele denk ik?, dus rekening houden met BE enzovoort)
                 // voorlopig even afgesterd
                 //case BuyPriceMethod.Sma20:
@@ -1730,7 +1730,7 @@ public class PositionMonitor //: IDisposable
                     //  xx = xx; does not change (afaict)????
 
                     // And place the (single/combined) take profit order to minimize dust)
-                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart, 
+                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart,
                         tp.price, tp.stop, tp.limit, LastCandle1mCloseTimeDate, text);
                 }
                 else

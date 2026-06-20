@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
@@ -107,7 +108,7 @@ public static class IndicatorEngine
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
         }
 
-        ApplyLux(symbol, symbolInterval, candleOpenTime);
+        //ApplyLux(symbol, symbolInterval, candleOpenTime);
         PruneData(symbolInterval, candleOpenTime, interval);
         return true;
     }
@@ -321,6 +322,13 @@ public static class IndicatorEngine
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
+        // Baba VWAP bands — same BabaBandsHelper.ComputeBands the chart and IntervalIndicatorHub use, so
+        // the batch path and the hub path (UseIndicatorHub) agree field-for-field.
+        var baba = GlobalData.Settings.Signal.Baba;
+        BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(quotes.Cast<CryptoCandle>().ToList());
+        IReadOnlyList<AtrResult> atrBabaFastList = quotes.ToAtr(baba.AtrLength);
+        IReadOnlyList<AtrResult> atrBabaSlList = quotes.ToAtr(baba.Length);
+
         //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
 
@@ -418,6 +426,15 @@ public static class IndicatorEngine
 
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
+
+                if (babaBands[index].HasValue)
+                {
+                    candleData.BabaBasis = babaBands[index].Basis;
+                    candleData.BabaUpper = babaBands[index].Upper;
+                    candleData.BabaLower = babaBands[index].Lower;
+                }
+                candleData.AtrBaba = atrBabaFastList[index].Atr;
+                candleData.BabaAtrSl = atrBabaSlList[index].Atr;
 
                 if (candle is CryptoCandle x)
                     symbolInterval.Data[x.OpenTime] = candleData;

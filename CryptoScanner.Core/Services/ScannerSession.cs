@@ -14,8 +14,6 @@ using CryptoScanner.Core.Telegram;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 
-using Dapper.Contrib.Extensions;
-
 using System.Text.RegularExpressions;
 using System.Timers;
 

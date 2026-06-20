@@ -30,6 +30,19 @@ public sealed class IntervalIndicatorHub
     private readonly StochHub _stoch;
     private readonly ParabolicSarHub _psar;
 
+    private readonly AtrHub _atrBaba;     // ATR(AtrLength) — the band's fast pad term
+    private readonly AtrHub _atrBabaSl;   // ATR(Length) — the stop-loss %, stays stable through a rally
+
+    // Baba VWAP band basis/variance — hlc3 and hlc3^2 fed into their OWN quote hubs (Close = hlc3 / hlc3^2,
+    // not the real OHLC) because GetVwma only reads Close+Volume. Mirrors BabaBandsHelper.ComputeBands so
+    // the hub and batch paths agree, and so SignalBabaLong/Short share one calculation instead of two.
+    private readonly QuoteHub _babaSrcHub = new();   // Close = hlc3
+    private readonly QuoteHub _babaSqHub = new();    // Close = hlc3^2
+    private readonly VwmaHub _babaVwmaSrc;
+    private readonly VwmaHub _babaVwmaSq;
+    private readonly double _babaMult;
+    private readonly double _babaAtrMult;
+
 #if DEBUG
     private readonly EmaHub _ema50;
     private readonly AtrHub _atr14;
@@ -38,6 +51,7 @@ public sealed class IntervalIndicatorHub
     private readonly WmaHub _wma10Low;
     private readonly WmaHub _wma10High;
 #endif
+
 
     public IntervalIndicatorHub()
     {
@@ -53,6 +67,14 @@ public sealed class IntervalIndicatorHub
         _macd = _quoteHub.ToMacdHub(12, 26, 9);
         _stoch = _quoteHub.ToStochHub(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
         _psar = _quoteHub.ToParabolicSarHub(0.02, 0.2);
+
+        var baba = GlobalData.Settings.Signal.Baba;
+        _atrBaba = _quoteHub.ToAtrHub(baba.AtrLength);
+        _atrBabaSl = _quoteHub.ToAtrHub(baba.Length);
+        _babaVwmaSrc = _babaSrcHub.ToVwmaHub(baba.Length);
+        _babaVwmaSq = _babaSqHub.ToVwmaHub(baba.Length);
+        _babaMult = baba.Mult;
+        _babaAtrMult = baba.AtrMult;
 
 #if DEBUG
         _ema50 = _quoteHub.ToEmaHub(50);
@@ -72,6 +94,10 @@ public sealed class IntervalIndicatorHub
     public void Add(IQuote candle)
     {
         _quoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
+
+        decimal hlc3 = (candle.High + candle.Low + candle.Close) / 3m;
+        _babaSrcHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3, candle.Volume));
+        _babaSqHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, candle.Volume));
     }
 
     /// <summary>
@@ -92,13 +118,13 @@ public sealed class IntervalIndicatorHub
             data.BollingerBandsPercentage = 100 * (r.UpperBand / r.LowerBand - 1);
         }
 
-        if (_sma50.Results.Count > 0) 
+        if (_sma50.Results.Count > 0)
             data.Sma50 = _sma50.Results[^1].Sma;
-        if (_sma100.Results.Count > 0) 
+        if (_sma100.Results.Count > 0)
             data.Sma100 = _sma100.Results[^1].Sma;
-        if (_sma200.Results.Count > 0) 
+        if (_sma200.Results.Count > 0)
             data.Sma200 = _sma200.Results[^1].Sma;
-        if (_rsi.Results.Count > 0) 
+        if (_rsi.Results.Count > 0)
             data.Rsi = _rsi.Results[^1].Rsi;
 
         if (_macd.Results.Count > 0)
@@ -119,18 +145,40 @@ public sealed class IntervalIndicatorHub
         if (_psar.Results.Count > 0 && _psar.Results[^1].Sar != null)
             data.PSar = _psar.Results[^1].Sar;
 
+        if (_atrBaba.Results.Count > 0 && _atrBaba.Results[^1].Atr != null)
+            data.AtrBaba = _atrBaba.Results[^1].Atr;
+        if (_atrBabaSl.Results.Count > 0 && _atrBabaSl.Results[^1].Atr != null)
+            data.BabaAtrSl = _atrBabaSl.Results[^1].Atr;
+
+        // Baba VWAP band — identical math to BabaBandsHelper.ComputeBands: variance = E_w[hlc3^2] - E_w[hlc3]^2.
+        var babaSrc = _babaVwmaSrc.Results;
+        var babaSq = _babaVwmaSq.Results;
+        if (babaSrc.Count > 0 && babaSq.Count > 0)
+        {
+            double? mean = babaSrc[^1].Vwma;
+            double? second = babaSq[^1].Vwma;
+            if (mean.HasValue && second.HasValue)
+            {
+                double variance = second.Value - mean.Value * mean.Value;
+                double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
+                double pad = _babaMult * vwStdev + _babaAtrMult * (data.AtrBaba ?? 0);
+                data.BabaBasis = mean.Value;
+                data.BabaUpper = mean.Value + pad;
+                data.BabaLower = mean.Value - pad;
+            }
+        }
 #if DEBUG
-        if (_ema50.Results.Count > 0) 
+        if (_ema50.Results.Count > 0)
             data.Ema50 = _ema50.Results[^1].Ema;
-        if (_atr14.Results.Count > 0) 
+        if (_atr14.Results.Count > 0)
             data.Atr14 = _atr14.Results[^1].Atr;
-        if (_wma05Low.Results.Count > 0) 
+        if (_wma05Low.Results.Count > 0)
             data.Wma05Low = _wma05Low.Results[^1].Wma;
-        if (_wma05High.Results.Count > 0) 
+        if (_wma05High.Results.Count > 0)
             data.Wma05High = _wma05High.Results[^1].Wma;
-        if (_wma10Low.Results.Count > 0) 
+        if (_wma10Low.Results.Count > 0)
             data.Wma10Low = _wma10Low.Results[^1].Wma;
-        if (_wma10High.Results.Count > 0) 
+        if (_wma10High.Results.Count > 0)
             data.Wma10High = _wma10High.Results[^1].Wma;
 #endif
 

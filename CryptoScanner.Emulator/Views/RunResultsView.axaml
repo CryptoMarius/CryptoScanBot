@@ -52,7 +52,8 @@
 				<DataGridTextColumn Header="Win %"       Binding="{Binding WinPercentageText}" Width="70"/>
 				<DataGridTextColumn Header="Profit"      Binding="{Binding ProfitText}" Width="90"/>
                 <DataGridTextColumn Header="Profit %"    Binding="{Binding ProfitPercentageText}" Width="80"/>
-            </DataGrid.Columns>
+				<DataGridTextColumn Header="Invested"    Binding="{Binding Invested}" Width="90"/>				
+			</DataGrid.Columns>
         </DataGrid>
 
         <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="Gray" FontSize="11"/>

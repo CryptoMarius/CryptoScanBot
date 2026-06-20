@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Data;
 
 using System.Reflection;
-using System.Text;
 
 namespace CryptoScanner.Commands;
 

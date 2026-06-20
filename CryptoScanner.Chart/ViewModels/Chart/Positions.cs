@@ -9,10 +9,6 @@ namespace CryptoScanner.ViewModels.Chart;
 
 public class Positions
 {
-    // Gap between the candle wick and the end of the vertical open-time line, as a fraction of the
-    // wick price. Keeps the line clear of the wick so the candle stays readable. Tune to taste.
-    private const decimal WickGapPercentage = 0.015m;
-
     // Color convention: Buy orders = green, Sell orders = red.
     // This naturally handles all cases: long entry/DCA (buy=green), long TP (sell=red),
     // short entry/DCA (sell=red), short TP (buy=green).
@@ -28,7 +24,7 @@ public class Positions
         {
             Color = color,
             LineStyle = LineStyle.Dot,
-            StrokeThickness = 0.8,
+            StrokeThickness = 1.0,
             Font = Const.OxyFontName,
             YAxisKey = "price",
             Tag = group
@@ -48,7 +44,7 @@ public class Positions
         {
             Color = color,
             LineStyle = LineStyle.DashDashDot,
-            StrokeThickness = 0.8,
+            StrokeThickness = 1.0,
             Font = Const.OxyFontName,
             YAxisKey = "price",
             Tag = group
@@ -102,19 +98,18 @@ public class Positions
         {
             double xStart = CandleTime.FromDateTime(position.CreateTime).Minutes;
             double xEnd = position.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(position.CloseTime!.Value).Minutes;
+            double firstEntry = xStart;
 
-            decimal yStart = position.Side == CryptoTradeSide.Long
-                ? (position.EntryPrice!.Value * 0.5m)
-                : (position.EntryPrice!.Value * 2.0m);
-            decimal yEnd = position.EntryPrice.Value;
+            decimal yTop = position.EntryPrice!.Value;
+            decimal yBottom = position.EntryPrice.Value;
 
             // Steps: first entry-side step = "entry", subsequent = "dca#1", "dca#2", ...
             foreach (CryptoPositionPart positionPart in position.PartList.Values)
             {
                 foreach (var step in positionPart.StepList.Values)
                 {
-                    if (step.Status > CryptoOrderStatus.Filled)
-                        continue;
+                    //if (step.Status > CryptoOrderStatus.Filled)
+                    //    continue;
 
                     CandleTime stepTime = step.CloseTime.HasValue
                         ? CandleTime.FromDateTime(step.CloseTime.Value)
@@ -132,22 +127,26 @@ public class Positions
                     {
                         case CryptoPartPurpose.Entry:
                             DrawHorizontalLine(chart, xStart, xEnd, step.Price, stepColor, "entry", xLabelOffset, group);
+                            if (firstEntry == xStart && step.CloseTime.HasValue)
+                                firstEntry = CandleTime.FromDateTime(step.CloseTime.Value).Minutes;
                             break;
                         case CryptoPartPurpose.Dca:
+                            double x2 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndDca = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, xStart, xEndDca, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
+                            DrawHorizontalLine(chart, x2, xEndDca, step.Price, stepColor, $"dca-{positionPart.PartNumber}", xLabelOffset, group);
                             break;
                         case CryptoPartPurpose.TakeProfit:
+                            double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, xStart, xEndTp, step.Price, stepColor, "take profit", xLabelOffset, group);
+                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, "take profit", xLabelOffset, group);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
                             if (step.StopPrice.HasValue)
-                                DrawHorizontalLine(chart, xStart, xEnd, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
+                                DrawHorizontalLine(chart, x1, xEndTp, step.StopPrice.Value, stepColor, "stop price", xLabelOffset, group);
 
                             if (step.StopLimitPrice.HasValue)
-                                DrawHorizontalLine(chart, xStart, xEnd, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
+                                DrawHorizontalLine(chart, x1, xEndTp, step.StopLimitPrice.Value, stepColor, "stop limit", xLabelOffset, group);
                             break;
                     }
 
@@ -161,13 +160,17 @@ public class Positions
                     // Extend the vertical line if needed
                     if (position.Side == CryptoTradeSide.Long)
                     {
-                        if (step.Price > yEnd)
-                            yEnd = step.Price;
+                        if (step.Price > yTop)
+                            yTop = step.Price;
+                        if (step.Price < yBottom)
+                            yBottom = step.Price;
                     }
                     else
                     {
-                        if (step.Price < yEnd)
-                            yEnd = step.Price;
+                        if (step.Price < yTop)
+                            yTop = step.Price;
+                        if (step.Price < yBottom)
+                            yBottom = step.Price;
                     }
                 }
             }
@@ -177,30 +180,37 @@ public class Positions
             // TODO: Draw line to the TP above the entry
             OxyColor positionColor = position.Side == CryptoTradeSide.Long ? OxyColors.DarkGreen : OxyColors.DarkRed;
 
-            // Stop the vertical line at the wick of the candle at the open time instead of running it
-            // through the candle (which made it impossible to see where the wick begins/ends). Look up
-            // the candle of the CHART interval (aligned to its grid) and end the line at its Low (long,
-            // line approaches from below) or High (short, approaches from above). Fall back to the entry
-            // price when the candle is not in memory.
+
+
+            // Allow a clear gap around the wicks so it does not cover any part of the wicks
             CandleTime openCandleTime = CandleTime.AlignFromDateTime(position.CreateTime, interval.Duration);
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-            decimal lineEnd;
-            if (symbolInterval.CandleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
-                // Stop a clear gap (WickGapPercentage) short of the wick: below the low (long) or above
-                // the high (short), so the line never touches the candle.
-                lineEnd = position.Side == CryptoTradeSide.Long
-                    ? openCandle.Low * (1m - WickGapPercentage)
-                    : openCandle.High * (1m + WickGapPercentage);
-            else
-                lineEnd = position.EntryPrice!.Value;
 
-            DrawVerticalLine(chart, position.CreateTime, yStart, lineEnd, positionColor, group);
+            decimal entry = position.EntryPrice!.Value;
+            decimal candleAbove = entry;
+            decimal candleBelow = entry;
+            if (symbolInterval.CandleList.TryGetValue(openCandleTime, out CryptoCandle openCandle))
+            {
+                candleAbove = openCandle.High + 0.01m * openCandle.High;
+                candleBelow = openCandle.Low - 0.01m * openCandle.Low;
+            }
+            // start the vertical line 10% below/above price..
+            decimal boxAbove = entry * 1.1m;
+            if (boxAbove < yTop)
+                boxAbove = yTop;
+
+            decimal boxBelow = entry * 0.9m;
+            if (boxBelow > yBottom)
+                boxBelow = yBottom;
+
+            DrawVerticalLine(chart, position.CreateTime, boxAbove, candleAbove, positionColor, group);
+            DrawVerticalLine(chart, position.CreateTime, boxBelow, candleBelow, positionColor, group);
 
             // Break-even and take-profit levels, only while the position is open
             if (position.CloseTime == null)
             {
                 if (position.BreakEvenPrice > 0)
-                    DrawHorizontalLine(chart, xStart, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group);
+                    DrawHorizontalLine(chart, firstEntry, xEnd, position.BreakEvenPrice, OxyColors.Gray, "breakeven", xLabelOffset, group);
             }
 
         }

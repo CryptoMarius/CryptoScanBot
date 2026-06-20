@@ -442,7 +442,7 @@ public class SignalCreate
                         // Not sure if this is the right way to go..
                         // Should we cancel unfilled positions as well?
                         //Symbol.ClearSignals();
-                        
+
                         CryptoSymbolInterval symbolInterval = Symbol.GetSymbolInterval(signal.Interval.IntervalPeriod);
                         symbolInterval.SignalList.Add(signal);
 

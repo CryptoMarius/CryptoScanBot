@@ -25,12 +25,12 @@ public class SignalBabaShort : SignalBabaBase
 
         var settings = GlobalData.Settings.Signal.Baba;
 
-        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
-        if (InCooldown())
-        {
-            ExtraText = "cooldown active";
-            return false;
-        }
+        //// Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
+        //if (InCooldown())
+        //{
+        //    ExtraText = "cooldown active";
+        //    return false;
+        //}
 
         // Cheap RSI confluence first (precomputed lookup): a sell needs overbought. The OB/OS levels come
         // from the general RSI settings (Indicators tab), so all strategies share the same thresholds.
@@ -44,12 +44,21 @@ public class SignalBabaShort : SignalBabaBase
             }
         }
 
-        // The (rarer, more expensive) upper-band break.
-        if (!BabaBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand))
+        //// The (rarer, more expensive) upper-band break.
+        if (!CandleLast.CandleData!.BabaUpper.HasValue)
+            return false;
+        double upperBand = CandleLast.CandleData.BabaUpper.Value;
+        if ((double)CandleLast.Candle.High <= upperBand && (double)CandleLast.Candle.Close <= upperBand)
         {
             ExtraText = "no upper band break";
             return false;
         }
+
+        //Stoploss percentage
+        if (CandleLast.CandleData.BabaAtrSl is not double atr)
+            return false;
+        double pctDeviation = GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
+
 
         // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
         if (settings.UseSlideFilter)
@@ -74,12 +83,13 @@ public class SignalBabaShort : SignalBabaBase
         decimal band = (decimal)upperBand;
 
         // Entry = the most extreme (HIGHEST) of the wick (High), the Close and the band.
-        _entryPrice = Math.Max(candle.High, Math.Max(candle.Close, band));
+        //_entryPrice = Math.Max(candle.High, Math.Max(candle.Close, band));
+        _entryPrice = Math.Max(candle.Close, band);
 
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
-        MarkSignalFired();
+        //MarkSignalFired();
         ExtraText = $"hit upper band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
         return true;
     }

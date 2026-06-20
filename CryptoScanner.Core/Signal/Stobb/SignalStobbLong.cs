@@ -102,7 +102,7 @@ public class SignalStobbLong : SignalStobbBase
         if (settings.CheckTrendSecondaryDirection)
         {
             if (!CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
-            return false;
+                return false;
         }
 
 

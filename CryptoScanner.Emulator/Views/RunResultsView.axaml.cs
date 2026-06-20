@@ -12,9 +12,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Emulator.ViewModels;
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace CryptoScanner.Emulator.Views;
 

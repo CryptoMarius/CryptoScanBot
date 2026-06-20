@@ -158,17 +158,17 @@ public class CandleDatabase : IDisposable
             "INSERT OR REPLACE INTO SymbolInterval (SymbolId, IntervalId, LastSync) " +
             "VALUES ($SymbolId, $IntervalId, $LastSync)";
 
-        var pSymbol = cmd.CreateParameter(); 
-        pSymbol.ParameterName = "$SymbolId"; 
-        pSymbol.Value = symbol.Id; 
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = symbol.Id;
         cmd.Parameters.Add(pSymbol);
 
         var pInterval = cmd.CreateParameter();
-        pInterval.ParameterName = "$IntervalId"; 
-        pInterval.Value = symbolInterval.Interval.Id; 
+        pInterval.ParameterName = "$IntervalId";
+        pInterval.Value = symbolInterval.Interval.Id;
         cmd.Parameters.Add(pInterval);
 
-        var pLastSync = cmd.CreateParameter(); 
+        var pLastSync = cmd.CreateParameter();
         pLastSync.ParameterName = "$LastSync";
         pLastSync.Value = symbolInterval.LastCandleSynchronized.HasValue
             ? (long)symbolInterval.LastCandleSynchronized.Value.Minutes
@@ -188,10 +188,10 @@ public class CandleDatabase : IDisposable
     {
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT IntervalId, LastSync FROM SymbolInterval WHERE SymbolId = $SymbolId";
-        
-        var pSymbol = cmd.CreateParameter(); 
-        pSymbol.ParameterName = "$SymbolId"; 
-        pSymbol.Value = symbol.Id; 
+
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = symbol.Id;
         cmd.Parameters.Add(pSymbol);
 
         Dictionary<int, CryptoSymbolInterval> intervalsId = [];
@@ -243,17 +243,17 @@ public class CandleDatabase : IDisposable
             cmd.CommandText += " and OpenTime <= $OpenTime ";
         cmd.CommandText += "ORDER BY OpenTime";
 
-        var pSymbol = cmd.CreateParameter(); 
-        pSymbol.ParameterName = "$SymbolId"; 
-        pSymbol.Value = symbol.Id; 
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = symbol.Id;
         cmd.Parameters.Add(pSymbol);
-        
-        var pInterval = cmd.CreateParameter(); 
-        pInterval.ParameterName = "$IntervalId"; 
+
+        var pInterval = cmd.CreateParameter();
+        pInterval.ParameterName = "$IntervalId";
         cmd.Parameters.Add(pInterval);
 
-        var pMinOpenTime = cmd.CreateParameter(); 
-        pMinOpenTime.ParameterName = "$MinOpenTime"; 
+        var pMinOpenTime = cmd.CreateParameter();
+        pMinOpenTime.ParameterName = "$MinOpenTime";
         cmd.Parameters.Add(pMinOpenTime);
 
         if (GlobalData.IsEmulatorMode)
@@ -320,7 +320,7 @@ public class CandleDatabase : IDisposable
     /// candles that are already in memory (loaded earlier via the bounded startup path)
     /// are silently skipped.
     /// </summary>
-    public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol, 
+    public static void LoadCandlesForSymbolInterval(SqliteConnection connection, CryptoSymbol symbol,
         CryptoSymbolInterval symbolInterval)
     {
         using var cmd = connection.CreateCommand();
@@ -334,13 +334,13 @@ public class CandleDatabase : IDisposable
         cmd.CommandText += "ORDER BY OpenTime";
 
         var pSymbol = cmd.CreateParameter();
-        pSymbol.ParameterName = "$SymbolId"; 
-        pSymbol.Value = symbol.Id; 
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = symbol.Id;
         cmd.Parameters.Add(pSymbol);
 
-        var pInterval = cmd.CreateParameter(); 
-        pInterval.ParameterName = "$IntervalId"; 
-        pInterval.Value = symbolInterval.Interval.Id; 
+        var pInterval = cmd.CreateParameter();
+        pInterval.ParameterName = "$IntervalId";
+        pInterval.Value = symbolInterval.Interval.Id;
         cmd.Parameters.Add(pInterval);
 
         if (GlobalData.IsEmulatorMode)
@@ -405,24 +405,24 @@ public class CandleDatabase : IDisposable
             cmd.CommandText += " and OpenTime <= $OpenTime ";
         cmd.CommandText += " ORDER BY OpenTime";
 
-        var pSymbol = cmd.CreateParameter(); 
-        pSymbol.ParameterName = "$SymbolId"; 
-        pSymbol.Value = symbol.Id; 
+        var pSymbol = cmd.CreateParameter();
+        pSymbol.ParameterName = "$SymbolId";
+        pSymbol.Value = symbol.Id;
         cmd.Parameters.Add(pSymbol);
 
-        var pInterval = cmd.CreateParameter(); 
-        pInterval.ParameterName = "$IntervalId"; 
-        pInterval.Value = interval.Id; 
+        var pInterval = cmd.CreateParameter();
+        pInterval.ParameterName = "$IntervalId";
+        pInterval.Value = interval.Id;
         cmd.Parameters.Add(pInterval);
 
-        var pFrom = cmd.CreateParameter(); 
-        pFrom.ParameterName = "$From"; 
-        pFrom.Value = (long)fromMinutes; 
+        var pFrom = cmd.CreateParameter();
+        pFrom.ParameterName = "$From";
+        pFrom.Value = (long)fromMinutes;
         cmd.Parameters.Add(pFrom);
 
-        var pTo = cmd.CreateParameter(); 
-        pTo.ParameterName = "$To"; 
-        pTo.Value = (long)toMinutes; 
+        var pTo = cmd.CreateParameter();
+        pTo.ParameterName = "$To";
+        pTo.Value = (long)toMinutes;
         cmd.Parameters.Add(pTo);
 
         if (GlobalData.IsEmulatorMode)
@@ -500,7 +500,7 @@ public class CandleDatabase : IDisposable
                 // Honour the same minimal-volume gating as the file loader.
                 // Skipped in the emulator (the user explicitly chose these symbols) so a low-volume
                 // symbol's candles are kept on load instead of being cleared.
-                if (!GlobalData.IsEmulatorMode&& !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
+                if (!GlobalData.IsEmulatorMode && !symbol.IsBarometerSymbol() && !symbol.EnoughVolume() && !symbol.IsTrading())
                 {
                     if (symbol.ClearCandles())
                         ScannerLog.Logger.Trace($"Cleared candles for {symbol.Name}");
@@ -553,9 +553,9 @@ public class CandleDatabase : IDisposable
 
         var pSymbol = cmd.CreateParameter(); pSymbol.ParameterName = "$SymbolId"; cmd.Parameters.Add(pSymbol);
         var pInterval = cmd.CreateParameter(); pInterval.ParameterName = "$IntervalId"; cmd.Parameters.Add(pInterval);
-        
-        var pOpenTime = cmd.CreateParameter(); 
-        pOpenTime.ParameterName = "$OpenTime"; 
+
+        var pOpenTime = cmd.CreateParameter();
+        pOpenTime.ParameterName = "$OpenTime";
         cmd.Parameters.Add(pOpenTime);
 
         var pTickDecimals = cmd.CreateParameter(); pTickDecimals.ParameterName = "$Ticks"; cmd.Parameters.Add(pTickDecimals);

@@ -479,7 +479,6 @@ public class CryptoDatabase : IDisposable
                 /// --------------------------------------------------------------
                 /// added from the signal...
                 /// --------------------------------------------------------------
-                "SignalId INTEGER NULL," +
                 "SignalEventTime TEXT NOT NULL," +
                 "SignalPrice TEXT NOT NULL," +
                 "SignalVolume TEXT NULL," +
@@ -568,7 +567,6 @@ public class CryptoDatabase : IDisposable
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +
                 "FOREIGN KEY(IntervalId) REFERENCES Interval(Id)," +
-                "FOREIGN KEY(SignalId) REFERENCES Signal(Id)," +
                 "FOREIGN KEY(EmulatorRunId) REFERENCES EmulatorRun(Id)" +
             ")", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionId ON Position(Id)", transaction);
@@ -576,7 +574,6 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX IdxPositionSymbolId ON Position(SymbolId)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionCreateTime ON Position(CreateTime)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionCloseTime ON Position(CloseTime)", transaction);
-            connection.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionEmulatorRunId ON Position(EmulatorRunId)", transaction);
         }
     }
@@ -850,15 +847,6 @@ public class CryptoDatabase : IDisposable
             {
                 // Database cleanup (there is no need for old signals <fixed 7 day's>)
                 var opendate = GlobalData.Clock.UtcNow.AddDays(-7);
-
-                // A position now keeps a reference to the signal it came from (Position.SignalId →
-                // Signal.Id, no ON DELETE). Clear that reference on any position pointing at a signal we
-                // are about to purge, otherwise the delete below trips the FOREIGN KEY constraint. The
-                // position itself stays; it just loses the link to the (gone) old signal.
-                databaseThread.Connection.Execute(
-                    "update position set SignalId = null where SignalId in " +
-                    "(select Id from signal where ExpirationDate < @opendate)",
-                    new { opendate });
 
                 databaseThread.Connection.Execute("delete from signal where ExpirationDate < @opendate",
                     new { opendate });

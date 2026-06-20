@@ -9,17 +9,10 @@ using CryptoScanner.Core.Signal.Choch;
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
 using CryptoScanner.Core.Signal.Jump;
-using CryptoScanner.Core.Signal.Nwe;
 using CryptoScanner.Core.Signal.Sbm;
 using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
-using CryptoScanner.Core.Signal.StobbDlz;
-using CryptoScanner.Core.Signal.StobbFvg;
-using CryptoScanner.Core.Signal.StobbSmc;
 using CryptoScanner.Core.Signal.Storsi;
-using CryptoScanner.Core.Signal.StorsiDlz;
-using CryptoScanner.Core.Signal.StorsiFvg;
-using CryptoScanner.Core.Signal.StorsiSmc;
 using CryptoScanner.Core.Signal.Trend;
 
 namespace CryptoScanner.Core.Signal;
@@ -288,37 +281,37 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
         });
 
-//        // NWE Repaining
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "nwe",
-//            Strategy = CryptoSignalStrategy.Nwe,
-//            AnalyzeLongType = typeof(SignalNwe),
-//            AnalyzeShortType = typeof(SignalNwe),
-//        });
+        //        // NWE Repaining
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "nwe",
+        //            Strategy = CryptoSignalStrategy.Nwe,
+        //            AnalyzeLongType = typeof(SignalNwe),
+        //            AnalyzeShortType = typeof(SignalNwe),
+        //        });
 
-//#if DEBUG
-//        // NWE not repainting
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "nwe.np",
-//            Strategy = CryptoSignalStrategy.NweNp,
-//            AnalyzeLongType = typeof(SignalNweNp),
-//            AnalyzeShortType = typeof(SignalNweNp),
-//        });
-//#endif
+        //#if DEBUG
+        //        // NWE not repainting
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "nwe.np",
+        //            Strategy = CryptoSignalStrategy.NweNp,
+        //            AnalyzeLongType = typeof(SignalNweNp),
+        //            AnalyzeShortType = typeof(SignalNweNp),
+        //        });
+        //#endif
 
-//#if DEBUG
-//        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "nwe.bb",
-//            Strategy = CryptoSignalStrategy.NweBb,
-//            AnalyzeLongType = typeof(SignalNweBbLong),
-//            AnalyzeShortType = typeof(SignalNweBbShort),
-//        });
+        //#if DEBUG
+        //        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "nwe.bb",
+        //            Strategy = CryptoSignalStrategy.NweBb,
+        //            AnalyzeLongType = typeof(SignalNweBbLong),
+        //            AnalyzeShortType = typeof(SignalNweBbShort),
+        //        });
 
-//#endif
+        //#endif
 
         //#if DEBUG
         //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover

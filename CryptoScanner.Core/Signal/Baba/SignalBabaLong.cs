@@ -25,12 +25,12 @@ public class SignalBabaLong : SignalBabaBase
 
         var settings = GlobalData.Settings.Signal.Baba;
 
-        // Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
-        if (InCooldown())
-        {
-            ExtraText = "cooldown active";
-            return false;
-        }
+        //// Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
+        //if (InCooldown())
+        //{
+        //    ExtraText = "cooldown active";
+        //    return false;
+        //}
 
         // Cheap RSI confluence first (precomputed lookup): a buy needs oversold. The OB/OS levels come
         // from the general RSI settings (Indicators tab), so all strategies share the same thresholds.
@@ -44,12 +44,21 @@ public class SignalBabaLong : SignalBabaBase
             }
         }
 
-        // The (rarer, more expensive) lower-band break.
-        if (!BabaBandsHelper.IsLowerBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double lowerBand))
+        //// The (rarer, more expensive) lower-band break.
+        if (!CandleLast.CandleData!.BabaLower.HasValue)
+            return false;
+        double lowerBand = CandleLast.CandleData.BabaLower.Value;
+        if ((double)CandleLast.Candle.Low >= lowerBand && (double)CandleLast.Candle.Close >= lowerBand)
         {
             ExtraText = "no lower band break";
             return false;
         }
+
+        // Stoploss percentage
+        if (CandleLast.CandleData.BabaAtrSl is not double atr)
+            return false;
+        double pctDeviation = GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
+
 
         // Symmetric slide filter: don't go long into an ongoing efficient DOWN-slide.
         if (settings.UseSlideFilter)
@@ -74,12 +83,13 @@ public class SignalBabaLong : SignalBabaBase
         decimal band = (decimal)lowerBand;
 
         // Entry = the most extreme (LOWEST) of the wick (Low), the Close and the band.
-        _entryPrice = Math.Min(candle.Low, Math.Min(candle.Close, band));
+        //_entryPrice = Math.Min(candle.Low, Math.Min(candle.Close, band));
+        _entryPrice = Math.Max(candle.Close, band);
 
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
-        MarkSignalFired();
+        //MarkSignalFired();
         ExtraText = $"hit lower band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
         return true;
     }

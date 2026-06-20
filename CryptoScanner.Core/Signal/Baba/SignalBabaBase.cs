@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -18,35 +16,35 @@ public class SignalBabaBase : SignalCreateBase
     // Shared last-signal time per symbol+interval — long and short share one cooldown, like the Pine
     // script. Static so both side instances (and rescans) see the same state; this survives the signal
     // leaving the SignalList (a position-bound signal is removed, but the cooldown must still apply).
-    private static readonly ConcurrentDictionary<string, CandleTime> LastSignalTime = new();
+    //private static readonly ConcurrentDictionary<string, CandleTime> LastSignalTime = new();
 
-    private string CooldownKey() => $"{Symbol.Name}|{Interval.IntervalPeriod}";
+    //private string CooldownKey() => $"{Symbol.Name}|{Interval.IntervalPeriod}";
 
     /// <summary>
     /// True while still within the cooldown window after the last Baba signal on this symbol+interval
     /// (shared long &amp; short): CooldownBars candles must pass before a new signal may fire.
     /// </summary>
-    protected bool InCooldown()
-    {
-        return false;
-        //var settings = GlobalData.Settings.Signal.Baba;
-        //if (!settings.UseCooldown)
-        //    return false;
-        //if (!LastSignalTime.TryGetValue(CooldownKey(), out CandleTime last))
-        //    return false;
-        //// A candle BEFORE the recorded time means a new/earlier (re)run — stale state from a previous
-        //// emulator run — so it is NOT a cooldown; the first signal of this run overwrites it again.
-        //if (CandleLast.Candle.OpenTime.Minutes < last.Minutes)
-        //    return false;
-        //uint elapsed = CandleLast.Candle.OpenTime.Minutes - last.Minutes;
-        //return elapsed < (uint)(settings.CooldownBars * Interval.Duration);
-    }
+    //protected bool InCooldown()
+    //{
+    //    return false;
+    //    //var settings = GlobalData.Settings.Signal.Baba;
+    //    //if (!settings.UseCooldown)
+    //    //    return false;
+    //    //if (!LastSignalTime.TryGetValue(CooldownKey(), out CandleTime last))
+    //    //    return false;
+    //    //// A candle BEFORE the recorded time means a new/earlier (re)run — stale state from a previous
+    //    //// emulator run — so it is NOT a cooldown; the first signal of this run overwrites it again.
+    //    //if (CandleLast.Candle.OpenTime.Minutes < last.Minutes)
+    //    //    return false;
+    //    //uint elapsed = CandleLast.Candle.OpenTime.Minutes - last.Minutes;
+    //    //return elapsed < (uint)(settings.CooldownBars * Interval.Duration);
+    //}
 
-    /// <summary>Records that an Baba signal fired on the current candle, starting the cooldown.</summary>
-    protected void MarkSignalFired()
-    {
-        LastSignalTime[CooldownKey()] = CandleLast.Candle.OpenTime;
-    }
+    ///// <summary>Records that an Baba signal fired on the current candle, starting the cooldown.</summary>
+    //protected void MarkSignalFired()
+    //{
+    //    LastSignalTime[CooldownKey()] = CandleLast.Candle.OpenTime;
+    //}
 
     /// <summary>
     /// Delayed entry (per the Baba playbook):

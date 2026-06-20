@@ -174,7 +174,7 @@ public static class StochHelper
     /// <summary>
     /// Calculate the Stoch surface area of the oversold part from limit to stoch
     /// </summary>
-    public static double StochOversoldSurface(this SignalCreateBase myBase, 
+    public static double StochOversoldSurface(this SignalCreateBase myBase,
         CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;
@@ -203,7 +203,7 @@ public static class StochHelper
     /// <summary>
     /// Calculate the Stoch surface area of the overbought part from limit to stoch
     /// </summary>
-    public static double StochOverboughtSurface(this SignalCreateBase myBase, 
+    public static double StochOverboughtSurface(this SignalCreateBase myBase,
         CryptoSymbolInterval symbolInterval, MyData? candle, int candleCount, double limit)
     {
         double surface = 0;

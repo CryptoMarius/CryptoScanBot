@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Threading;
 
 namespace CryptoScanner.Core.Core;
 
@@ -65,6 +64,17 @@ public static class PipelineProfiler
     public static long FvgInlineTicks;
     public static long SmcInlineTicks;
 
+    // Sub-breakdown of the positionCheck bucket, accumulated inside
+    // TradeTools.CalculatePositionResultsViaOrders. Tells us whether positionCheck's cost is the DB
+    // load of orders/trades (only done once per position, then cached), the per-order processing loop
+    // (fee calc, paper-asset bookkeeping, step status), the profit/break-even recalculation, or the
+    // final DB persist (the transaction that updates step/part/position rows).
+    public static long PosLoadOrdersTicks;   // LoadOrdersFromDatabaseAndExchangeAsync
+    public static long PosOrderLoopTicks;    // the foreach order loop
+    public static long PosCalcProfitTicks;   // CalculateProfitAndBreakEvenPrice
+    public static long PosPersistTicks;      // the transaction block (Update part/step/position)
+    public static long PosCalls;             // number of CalculatePositionResultsViaOrders calls
+
 
     /// <summary>Clears all counters. Call once at the start of a run before enabling.</summary>
     public static void Reset()
@@ -89,6 +99,12 @@ public static class PipelineProfiler
         TrendCalls = 0;
         FvgInlineTicks = 0;
         SmcInlineTicks = 0;
+
+        PosLoadOrdersTicks = 0;
+        PosOrderLoopTicks = 0;
+        PosCalcProfitTicks = 0;
+        PosPersistTicks = 0;
+        PosCalls = 0;
     }
 
 
@@ -164,5 +180,18 @@ public static class PipelineProfiler
         if (!Enabled)
             return;
         Interlocked.Add(ref SmcInlineTicks, ticks);
+    }
+
+    /// <summary>Adds one CalculatePositionResultsViaOrders call's per-phase Stopwatch-tick deltas
+    /// (the sub-breakdown of the positionCheck bucket).</summary>
+    public static void RecordPositionResultPhases(long loadOrders, long orderLoop, long calcProfit, long persist)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref PosLoadOrdersTicks, loadOrders);
+        Interlocked.Add(ref PosOrderLoopTicks, orderLoop);
+        Interlocked.Add(ref PosCalcProfitTicks, calcProfit);
+        Interlocked.Add(ref PosPersistTicks, persist);
+        Interlocked.Increment(ref PosCalls);
     }
 }

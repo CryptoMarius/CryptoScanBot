@@ -8,8 +8,6 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Emulator.ViewModels;
 using CryptoScanner.Views;
 
-using System.Linq;
-
 namespace CryptoScanner.Emulator.Views;
 
 public partial class RunPositionsWindow : Window

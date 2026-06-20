@@ -1,6 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using CryptoScanner.Core.Settings.Strategy;
 
-using CryptoScanner.Core.Settings.Strategy;
+using System.Text.Json.Serialization;
 
 namespace CryptoScanner.Core.Settings;
 
