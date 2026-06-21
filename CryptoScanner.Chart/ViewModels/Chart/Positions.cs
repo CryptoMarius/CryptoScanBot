@@ -24,7 +24,7 @@ public class Positions
         {
             Color = color,
             LineStyle = LineStyle.Dot,
-            StrokeThickness = 1.0,
+            StrokeThickness = 2.0,
             Font = Const.OxyFontName,
             YAxisKey = "price",
             Tag = group
@@ -44,7 +44,7 @@ public class Positions
         {
             Color = color,
             LineStyle = LineStyle.DashDashDot,
-            StrokeThickness = 1.0,
+            StrokeThickness = 2.0,
             Font = Const.OxyFontName,
             YAxisKey = "price",
             Tag = group

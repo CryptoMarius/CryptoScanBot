@@ -27,6 +27,7 @@ public class PositionRow
     public int Status { get; set; }
     public decimal Profit { get; set; }
     public decimal Percentage { get; set; }
+    public decimal? SignalPrice { get; set; }
     public decimal? SlPercentage { get; set; }
     public string? EventText { get; set; }
 
@@ -74,6 +75,11 @@ public class PositionRow
 
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
     public string SlPercentageText => SlPercentage.HasValue ? SlPercentage.Value.ToString("N2") : "—";
+
+    // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
+    public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString("N2") : "—";
+
+    
 
     // Number of parts (entry + filled DCAs), with a trailing "+" when an open DCA is still pending.
     // Mirrors CryptoPosition.PartCountText() so the emulator overview matches the live open-positions grid.
@@ -127,7 +133,8 @@ public partial class RunPositionsViewModel : ObservableObject
 
             var rows = database.Connection.Query<PositionRow>(
                 "SELECT p.Id, p.CreateTime, p.CloseTime, s.Name as Symbol, i.Name as Interval, " +
-                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, p.SlPercentage, p.EventText, " +
+                "       p.Side, p.Strategy, p.Status, p.Profit, p.Percentage, " +
+                "       p.SignalPrice, p.SlPercentage, p.EventText, " +
                 "       p.PartCount, p.ActiveDca " +
                 "FROM Position p " +
                 "LEFT JOIN Symbol s ON s.Id = p.SymbolId " +

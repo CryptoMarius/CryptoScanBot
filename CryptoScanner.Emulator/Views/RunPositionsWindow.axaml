@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
         mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="500"
-   	    Width="1300" Height="1000"
+   	    Width="1500" Height="1000"
         x:Class="CryptoScanner.Emulator.Views.RunPositionsWindow"
         x:DataType="vm:RunPositionsViewModel"
         Title="Run positions"
@@ -72,7 +72,14 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="SL %" Width="70" SortMemberPath="SlPercentage">
+				<DataGridTemplateColumn Header="Price" Width="90" SortMemberPath="SignalPrice">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalPriceText}"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="SL %" Width="70" SortMemberPath="SlPercentage">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SlPercentageText}"/>

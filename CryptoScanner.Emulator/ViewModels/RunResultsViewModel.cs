@@ -43,6 +43,7 @@ public class RunRow
     public int PositionsOpen { get; set; }
     public int PositionsWon { get; set; }
     public int PositionsLost { get; set; }
+    public int PositionsTimeout { get; set; }
     public decimal Profit { get; set; }
 
     // Summed invested capital of the run's closed positions. Nullable in the DB for legacy runs
@@ -58,8 +59,10 @@ public class RunRow
 
     /// <summary>
     /// Win rate over the closed positions: 100 * Won / (Won + Lost). Derived from the already-stored
-    /// PositionsWon / PositionsLost counters (no separate DB column needed). Returns 0 when the run
-    /// has no closed positions. This is the number the grid's "Win %" column binds to.
+    /// PositionsWon / PositionsLost counters (no separate DB column needed). Positions whose entry
+    /// order never filled (PositionsTimeout) are excluded from both, so they don't drag the win rate
+    /// down. Returns 0 when the run has no closed (won/lost) positions. This is the number the grid's
+    /// "Win %" column binds to.
     /// </summary>
     public decimal WinPercentage => (PositionsWon + PositionsLost) > 0
         ? 100m * PositionsWon / (PositionsWon + PositionsLost)
@@ -216,7 +219,7 @@ public partial class RunResultsViewModel : ObservableObject
         database.Open();
         return database.Connection.QueryFirstOrDefault<RunRow>(
             "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
-            "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit, Invested " +
+            "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, PositionsTimeout, Profit, Invested " +
             "FROM EmulatorRun WHERE Id = @runId",
             new { runId });
     }
@@ -239,7 +242,7 @@ public partial class RunResultsViewModel : ObservableObject
 
             var rows = database.Connection.Query<RunRow>(
                 "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
-                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, Profit, Invested " +
+                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, PositionsTimeout, Profit, Invested " +
                 "FROM EmulatorRun ORDER BY StartedAt DESC");
 
             foreach (var row in rows)

@@ -57,7 +57,7 @@ public static class CandleTools
             candle.High = high;
             candle.Low = low;
             candle.Close = close;
-            // Candles are getting removed are some time..
+            // Candles are getting removed are some key..
             if (quoteVolume > candle.Volume)
                 candle.Volume = quoteVolume;
             candles[candleOpenUnix] = candle;
@@ -296,11 +296,11 @@ public static class CandleTools
     }
 
 
+    /// <summary>
+    /// Remove the outdated candle and data (from GetCandleFetchStart)
+    /// </summary>
     public static async Task CleanCandleDataAsync(CryptoSymbol symbol, CandleTime? lastCandle1mCloseTime)
     {
-        // We nemen aardig wat geheugen in beslag door alles in het geheugen te berekenen, probeer in
-        // ieder geval de CandleData te clearen. Vanaf x candles terug tot de eerste de beste die null is.
-
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             if (lastCandle1mCloseTime == null || lastCandle1mCloseTime % interval.Duration == 0)
@@ -309,54 +309,33 @@ public static class CandleTools
                 await symbol.Data.CandleLock.WaitAsync();
                 try
                 {
-                    CryptoCandleList candles = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList;
-                    //if (candles.Count > 0)
+                    var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                    CandleTime startFetchUnix = GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
+
+                    // Remove old candle objects
+                    while (symbolInterval.CandleList.Count > 0)
                     {
-                        //CandleTime firstOpenTime = candles.Keys.First();
-                        //lastCandle1mCloseTime ??= candles.Keys.Last();
-                        //CandleTime unix = lastCandle1mCloseTime.Value - 62 * interval.Duration;
-
-                        //// Remove old indicator data
-                        //while (unix >= firstOpenTime)
-                        //{
-                        //    if (candles.TryGetValue(unix, out CryptoCandle? c))
-                        //    {
-                        //        if (c != null && c.CandleData != null)
-                        //        {
-                        //            c.CandleData = null;
-                        //            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candledata {c.DateLocal} removed");
-                        //        }
-                        //        else break;
-                        //    }
-                        //    unix -= interval.Duration;
-                        //}
-
-
-                        //// Remove old indicator data
-                        //for (int i = candles.Count - 62; i > 0; i--)
-                        //{
-                        //    CryptoCandle c = candles.Values[i];
-                        //    if (c != null && c.CandleData != null)
-                        //        c.CandleData = null;
-                        //    else break;
-                        //}
-
-
-                        // Remove old candles
-                        CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
-                        //DateTime startFetchUnixDate = CandleTools.GetUnixDate(startFetchUnix);
-                        while (candles.Count > 0)
+                        CandleTime key = symbolInterval.CandleList.Keys.First();
+                        if (key < startFetchUnix)
                         {
-                            CryptoCandle c = candles.Values.First();
-                            if (c.OpenTime < startFetchUnix)
-                            {
-                                candles.Remove(c.OpenTime);
-                                //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
-
-                            }
-                            else break;
+                            symbolInterval.CandleList.Remove(key);
+                            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
                         }
+                        else break;
                     }
+
+                    // Remove old candle indicator data
+                    while (symbolInterval.Data.Count > 0)
+                    {
+                        CandleTime key = symbolInterval.Data.Keys.First();
+                        if (key < startFetchUnix)
+                        {
+                            symbolInterval.Data.Remove(key);
+                            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+                        }
+                        else break;
+                    }
+
                 }
                 finally
                 {
@@ -370,7 +349,7 @@ public static class CandleTools
 
     /// <summary>
     /// Determine the (worst case) fetch date per interval
-    /// currentTime = the current time + 1 minute extra
+    /// currentTime = the current key + 1 minute extra
     /// </summary>
     public static void DetermineFetchStartDate(CryptoSymbol symbol)
     {
@@ -411,7 +390,7 @@ public static class CandleTools
             if (symbolInterval.LastCandleSynchronized.HasValue)
             {
                 CandleTime synchronizedTime = symbolInterval.LastCandleSynchronized.Value;
-                // Huray, retrieve less candles, less work, less waiting time..
+                // Huray, retrieve less candles, less work, less waiting key..
                 if (synchronizedTime > fetchFrom[interval.IntervalPeriod])
                     fetchFrom[interval.IntervalPeriod] = synchronizedTime;
             }

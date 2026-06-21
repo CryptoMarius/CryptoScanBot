@@ -19,7 +19,9 @@ public class MarketTrend
         long profTrendStart = Stopwatch.GetTimestamp();
         try
         {
+            long profLockStart = Stopwatch.GetTimestamp();
             await symbol.Data.TrendLock.WaitAsync();
+            PipelineProfiler.RecordTrendLockWait(Stopwatch.GetTimestamp() - profLockStart);
             try
             {
                 // Take the last 1m endtime as timing (

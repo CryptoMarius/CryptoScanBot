@@ -92,6 +92,7 @@ public static class PositionTools
 
     public static void AddSignalProperties(CryptoPosition position, CryptoSignal signal)
     {
+        position.SignalId = signal.Id;
         position.SignalEventTime = signal.CloseDate;
         position.AssignValues(signal); // Copy common indicator values
 

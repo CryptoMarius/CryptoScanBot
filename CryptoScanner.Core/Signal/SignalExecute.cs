@@ -103,8 +103,7 @@ public class SignalExecute
     }
 
 
-    public static async Task ExecuteAsync(CryptoSymbol symbol,
-        CandleTime lastCandle1mCloseTime)
+    public static async Task ExecuteAsync(CryptoSymbol symbol, CandleTime lastCandle1mCloseTime)
     {
         //GlobalData.Logger.Info($"CreateSignals(start):" + LastCandle1m.OhlcText(symbol, GlobalData.IntervalList[0], symbol.PriceDisplayFormat, true, false, true));
 

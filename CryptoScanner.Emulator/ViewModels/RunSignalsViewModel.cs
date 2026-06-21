@@ -96,9 +96,11 @@ public partial class RunSignalsViewModel : ObservableObject
                 "       p.Id as PositionId, p.CreateTime as PositionCreateTime, p.Status as PositionStatus, " +
                 "       p.Profit, p.Percentage " +
                 "FROM Signal s " +
-                "LEFT JOIN Symbol sym ON sym.Id = s.SymbolId " +
-                "LEFT JOIN Interval i ON i.Id = s.IntervalId " +
-                "LEFT JOIN Position p ON p.SignalEventTime = s.CloseDate and P.IntervalId=s.IntervalId " +
+                "inner JOIN Symbol sym ON sym.Id = s.SymbolId " +
+                "inner JOIN Interval i ON i.Id = s.IntervalId " +
+                "left JOIN position p ON p.SignalId = s.SignalId " +
+                //"LEFT JOIN Position p ON p.SignalEventTime = s.CloseDate and P.IntervalId=s.IntervalId " +
+                //"       AND p.SymbolId = s.SymbolId AND p.EmulatorRunId = s.EmulatorRunId " +
                 "WHERE s.EmulatorRunId = @runId " +
                 "ORDER BY s.OpenDate",
                 new { runId });

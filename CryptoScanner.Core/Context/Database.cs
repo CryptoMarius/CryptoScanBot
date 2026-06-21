@@ -479,6 +479,7 @@ public class CryptoDatabase : IDisposable
                 /// --------------------------------------------------------------
                 /// added from the signal...
                 /// --------------------------------------------------------------
+                "SignalId INTEGER NULL," + // NO FK!
                 "SignalEventTime TEXT NOT NULL," +
                 "SignalPrice TEXT NOT NULL," +
                 "SignalVolume TEXT NULL," +
@@ -575,6 +576,7 @@ public class CryptoDatabase : IDisposable
             connection.Connection.Execute("CREATE INDEX IdxPositionCreateTime ON Position(CreateTime)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionCloseTime ON Position(CloseTime)", transaction);
             connection.Connection.Execute("CREATE INDEX IdxPositionEmulatorRunId ON Position(EmulatorRunId)", transaction);
+            connection.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
         }
     }
 
@@ -890,6 +892,7 @@ public class CryptoDatabase : IDisposable
                 "PositionsOpen INTEGER NOT NULL DEFAULT 0," +
                 "PositionsWon INTEGER NOT NULL DEFAULT 0," +
                 "PositionsLost INTEGER NOT NULL DEFAULT 0," +
+                "PositionsTimeout INTEGER NOT NULL DEFAULT 0," +
                 "Profit TEXT NULL," +
                 "Invested TEXT NULL" +
             ")");

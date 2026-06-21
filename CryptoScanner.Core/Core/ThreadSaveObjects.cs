@@ -6,6 +6,7 @@ using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace CryptoScanner.Core.Core;
@@ -154,14 +155,24 @@ public class ThreadSaveObjects
         if (list.Count == 0)
             return;
 
+        // Profiling: break the emulator's per-tick synchronous persist down into connection-open,
+        // the actual Insert/Update/Delete loop, and the commit — so PipelineProfiler can report real
+        // database activity instead of it being invisible inside the "trade" pipeline bucket. No-op
+        // (PipelineProfiler.Enabled == false) on the live scanner, which never calls Flush() anyway
+        // (it uses Execute() instead).
+        long t0 = Stopwatch.GetTimestamp();
         using CryptoDatabase databaseThread = new();
         databaseThread.Open();
+        long t1 = Stopwatch.GetTimestamp();
         var transaction = databaseThread.BeginTransaction();
         try
         {
             foreach (var o in list)
                 WriteObject(databaseThread, transaction, o);
+            long t2 = Stopwatch.GetTimestamp();
             transaction.Commit();
+            long t3 = Stopwatch.GetTimestamp();
+            PipelineProfiler.RecordDbFlush(t1 - t0, t2 - t1, t3 - t2, list.Count);
         }
         catch (Exception error)
         {

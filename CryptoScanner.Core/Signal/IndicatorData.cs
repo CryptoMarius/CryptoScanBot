@@ -108,8 +108,7 @@ public static class IndicatorEngine
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
         }
 
-        //ApplyLux(symbol, symbolInterval, candleOpenTime);
-        PruneData(symbolInterval, candleOpenTime, interval);
+        ApplyLux(symbol, symbolInterval, candleOpenTime);
         return true;
     }
 
@@ -466,7 +465,6 @@ public static class IndicatorEngine
             fill: profLuxStart - profFillStart,
             lux: Stopwatch.GetTimestamp() - profLuxStart);
 
-        PruneData(symbolInterval, candleOpenTime, interval);
         return true;
     }
 
@@ -491,16 +489,4 @@ public static class IndicatorEngine
         data.Lux5mValue = (short)luxValue;
     }
 
-
-    /// <summary>Keeps Data bounded to ~<see cref="CacheCandles"/> recent candles per symbol+interval.</summary>
-    private static void PruneData(CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime, CryptoInterval interval)
-    {
-        if (symbolInterval.Data.Count <= CacheCandles)
-            return;
-        CandleTime cutoff = candleOpenTime - (uint)(CacheCandles * interval.Duration);
-        foreach (CandleTime key in symbolInterval.Data.Keys.Where(k => k < cutoff).ToList())
-            symbolInterval.Data.Remove(key);
-    }
 }
-
-

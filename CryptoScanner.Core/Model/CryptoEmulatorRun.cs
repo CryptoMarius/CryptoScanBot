@@ -44,12 +44,15 @@ public class CryptoEmulatorRun
     public int SignalCount { get; set; }
     public int PositionCount { get; set; }
 
-    // Outcome breakdown, computed at run end. Open = still running (no CloseTime); Won/Lost split
-    // the closed positions on their realised profit. Profit is the summed realised result of the
-    // closed positions — the number the whole backtest is ultimately about.
+    // Outcome breakdown, computed at run end. Open = still running (no CloseTime); Won/Lost/Timeout
+    // partition the closed positions: Timeout = the entry order never filled (status Timeout), so it
+    // never became a real trade and is excluded from Won/Lost; the rest split on their realised profit.
+    // Profit is the summed realised result of the closed positions — the number the whole backtest is
+    // ultimately about.
     public int PositionsOpen { get; set; }
     public int PositionsWon { get; set; }
     public int PositionsLost { get; set; }
+    public int PositionsTimeout { get; set; }
     public decimal Profit { get; set; }
 
     // Summed invested amount of the closed positions (same scope as Profit). Lets the Results grid

@@ -1,6 +1,7 @@
 using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
 using Dapper;
@@ -146,26 +147,31 @@ public static class EmulatorDb
 
     /// <summary>
     /// Fills a run's stored aggregates from its current signals and positions: signal/position
-    /// counts, the open/won/lost split, and the realised Profit and Invested totals over the CLOSED
-    /// positions. Profit/Invested are stored as TEXT (decimal), so they are CAST to REAL for the
+    /// counts, the open/won/lost/timeout split, and the realised Profit and Invested totals over the
+    /// CLOSED positions. Profit/Invested are stored as TEXT (decimal), so they are CAST to REAL for the
     /// numeric comparison and SUM. Caller is responsible for persisting the run (Update).
     /// </summary>
     private static void ComputeRunStats(CryptoDatabase database, CryptoEmulatorRun run)
     {
         int id = run.Id;
+        int timeoutStatus = (int)CryptoPositionStatus.Timeout;
 
         run.SignalCount = database.Connection.ExecuteScalar<int>(
             "select count(*) from signal where EmulatorRunId = @id", new { id });
         run.PositionCount = database.Connection.ExecuteScalar<int>(
             "select count(*) from position where EmulatorRunId = @id", new { id });
 
-        // Outcome split. Open = no CloseTime yet; closed positions are won/lost on their realised Profit.
+        // Outcome split. Open = no CloseTime yet. Timeout = the entry order never filled (status
+        // Timeout) — it never became a real trade, so it is excluded from Won/Lost and counted on its
+        // own. The remaining closed positions are won/lost on their realised Profit.
         run.PositionsOpen = database.Connection.ExecuteScalar<int>(
             "select count(*) from position where EmulatorRunId = @id and CloseTime is null", new { id });
+        run.PositionsTimeout = database.Connection.ExecuteScalar<int>(
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status = @timeoutStatus", new { id, timeoutStatus });
         run.PositionsWon = database.Connection.ExecuteScalar<int>(
-            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and CAST(Profit as REAL) > 0", new { id });
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status != @timeoutStatus and CAST(Profit as REAL) > 0", new { id, timeoutStatus });
         run.PositionsLost = database.Connection.ExecuteScalar<int>(
-            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and (Profit is null or CAST(Profit as REAL) <= 0)", new { id });
+            "select count(*) from position where EmulatorRunId = @id and CloseTime is not null and Status != @timeoutStatus and (Profit is null or CAST(Profit as REAL) <= 0)", new { id, timeoutStatus });
 
         double profit = database.Connection.ExecuteScalar<double?>(
             "select sum(CAST(Profit as REAL)) from position where EmulatorRunId = @id and CloseTime is not null", new { id }) ?? 0.0;

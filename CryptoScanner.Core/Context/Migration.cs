@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 69;
+    public readonly static int CurrentDatabaseVersion = 70;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1400,6 +1400,26 @@ public class Migration
             using var transaction = database.BeginTransaction();
             try { database.Connection.Execute("drop INDEX IdxPositionSignalId", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position drop column SignalId", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 21-06-2026 Emulator run timeout column: positions whose entry order never filled (status
+        // Timeout) are now counted separately instead of falling into PositionsLost, since they never
+        // became a real trade. Same migration on the live DB; the column rides along unused there.
+        if (CurrentVersion > version.Version && version.Version == 69)
+        {
+            using var transaction = database.BeginTransaction();
+            database.Connection.Execute("alter table EmulatorRun add PositionsTimeout Integer not null default 0", transaction);
+
+            // Its back, but without a fk
+            database.Connection.Execute("alter table Position add SignalId Integer null", transaction);
+            database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
 
             // update version
             version.Version += 1;

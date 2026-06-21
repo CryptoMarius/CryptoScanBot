@@ -1,5 +1,8 @@
-﻿using CryptoScanner.Core.Enums;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+
+using System.Diagnostics;
 
 namespace CryptoScanner.Core.Trend;
 
@@ -42,7 +45,11 @@ public class TrendTools
         CryptoSymbol symbol, CryptoInterval interval, CandleTime min, CandleTime max)
     {
         CandleTime? zigZagLastCandleAdded = null;
+        long candlesFed = 0;
 
+        // Profiling: candle-lock wait + the ingest loop + FinishBatch, plus how many candles were
+        // actually fed into the ZigZag indicator — see PipelineProfiler.RecordTrendIngest.
+        long profIngestStart = Stopwatch.GetTimestamp();
         CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
         await symbol.Data.CandleLock.WaitAsync();
         try
@@ -56,6 +63,7 @@ public class TrendTools
                     //foreach (var indicator in accountSymbolIntervalData.ZigZagIndicators!)
                     indicator.Calculate(candle, true);
                     zigZagLastCandleAdded = loop;
+                    candlesFed++;
                 }
                 loop += interval.Duration;
             }
@@ -64,6 +72,7 @@ public class TrendTools
         finally
         {
             symbol.Data.CandleLock.Release();
+            PipelineProfiler.RecordTrendIngest(Stopwatch.GetTimestamp() - profIngestStart, candlesFed);
         }
 
         return zigZagLastCandleAdded;

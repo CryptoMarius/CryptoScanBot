@@ -51,16 +51,31 @@
 
         <!-- Symbol checklist -->
         <Border Grid.Row="4" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
-            <ScrollViewer VerticalScrollBarVisibility="Visible">
-                <ItemsControl ItemsSource="{Binding FilteredSymbols}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:SymbolSelectionItem">
-                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
-                                      Padding="4,1" MinHeight="18"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+            <DataGrid ItemsSource="{Binding FilteredSymbols}"
+                      CanUserReorderColumns="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="True"
+                      AutoGenerateColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="" Width="34" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:SymbolSelectionItem">
+                                <CheckBox IsChecked="{Binding IsSelected}" HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Symbol" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTemplateColumn Header="Volume" Width="120" SortMemberPath="Volume">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:SymbolSelectionItem">
+                                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding VolumeText}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
 
         <!-- Validation -->

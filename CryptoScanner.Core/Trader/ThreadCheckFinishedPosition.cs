@@ -4,6 +4,8 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
 
+using System.Diagnostics;
+
 namespace CryptoScanner.Core.Trader;
 
 
@@ -224,91 +226,127 @@ public class ThreadCheckFinishedPosition
     private async Task ProcessPosition(CryptoDatabase database, CryptoPosition position, string? orderId, CryptoOrderStatus? status)
     {
         //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} pickup {position.Status} check={position.ForceCheckPosition} {reason}");
+
+        // Profiling: ProcessPosition is the body AddToQueue runs synchronously in emulator mode, i.e.
+        // the entire "positionCheck" bucket in PipelineProfiler. Splits it into the ForceCheckPosition
+        // recalculation, the status==New short-circuit, and the two terminal branches (Ready/Timeout/
+        // TakeOver cleanup vs. the normal Waiting/Trading check) so the gap between the positionCheck
+        // total and the already-instrumented PositionResults/CheckThePosition sub-buckets is explained.
+        // ppTotalStart/finally covers every exit path (early returns and the catch block included).
+        long ppTotalStart = Stopwatch.GetTimestamp();
+        long ppForceCheckTicks = 0;
+        long ppStatusNewTicks = 0;
+        long ppReadyTicks = 0;
+        long ppOpenAsUsualTicks = 0;
         try
         {
-            if (!GlobalData.IsEmulatorMode)
-                await position.ProcessPositionSemaphore.WaitAsync();
             try
             {
-                // Geef de exchange en de aansturende code de kans om de administratie af te ronden
-                // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
-                if (!GlobalData.IsEmulatorMode && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.Clock.UtcNow)
+                if (!GlobalData.IsEmulatorMode)
+                    await position.ProcessPositionSemaphore.WaitAsync();
+                try
                 {
-                    //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
-                    await AddToQueue(position, orderId, status); // opnieuw, na een vertraging
-                    await Task.Delay(500);
-                    return;
-                }
-
-
-                //GlobalData.AddTextToLogTab($"ThreadCheckFinishedPosition: Positie {position.Symbol.Name} controleren! {position.Status} {position.DelayUntil}");
-                ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId}");
-
-
-                // een extra orderid en een status erbij (nullable)
-
-                // OrderStatus:
-                // status = New                     -> de order ophalen
-                // status = PartiallyFilled         -> positie tenminste trading, verder geheel negeren
-                // status = Filled                  -> positie tenminste trading, order ophalen, trade(s) ophalen, status, herberekenen, eventueel closen
-                // status = PartiallyFilledClosed   -> positie tenminste trading, order ophalen, trade(s) ophalen, status, bijwerken step, herberekenen, eventueel closen
-                // status = Canceled                -> door trader of gebruiker?, eventueel closen als takeover.
-
-                // PositieStatus:
-                // Status = Ready                   -> orders ophalen, trades ophalen, herberekenen, indien geen wijzigingen verplaatsen naar closed
-
-
-                // het nieuwe idee
-                if (status.HasValue)
-                {
-                    // De positie status aanpassen
-                    switch (status)
+                    // Geef de exchange en de aansturende code de kans om de administratie af te ronden
+                    // We wachten hier dus bewust voor de zekerheid een redelijk lange periode.
+                    if (!GlobalData.IsEmulatorMode && position.DelayUntil.HasValue && position.DelayUntil.Value >= GlobalData.Clock.UtcNow)
                     {
-                        //case CryptoOrderStatus.New: // only a takeprofit order
-                        case CryptoOrderStatus.Filled:
-                        case CryptoOrderStatus.PartiallyFilled:
-                        case CryptoOrderStatus.PartiallyAndClosed:
-                            if (position.Status == CryptoPositionStatus.Waiting)
-                            {
-                                position.Status = CryptoPositionStatus.Trading;
-                                position.ForceCheckPosition = true;
-                            }
-                            break;
+                        //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} delay {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {reason}");
+                        await AddToQueue(position, orderId, status); // opnieuw, na een vertraging
+                        await Task.Delay(500);
+                        return;
+                    }
+
+
+                    //GlobalData.AddTextToLogTab($"ThreadCheckFinishedPosition: Positie {position.Symbol.Name} controleren! {position.Status} {position.DelayUntil}");
+                    //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId}");
+
+
+                    // een extra orderid en een status erbij (nullable)
+
+                    // OrderStatus:
+                    // status = New                     -> de order ophalen
+                    // status = PartiallyFilled         -> positie tenminste trading, verder geheel negeren
+                    // status = Filled                  -> positie tenminste trading, order ophalen, trade(s) ophalen, status, herberekenen, eventueel closen
+                    // status = PartiallyFilledClosed   -> positie tenminste trading, order ophalen, trade(s) ophalen, status, bijwerken step, herberekenen, eventueel closen
+                    // status = Canceled                -> door trader of gebruiker?, eventueel closen als takeover.
+
+                    // PositieStatus:
+                    // Status = Ready                   -> orders ophalen, trades ophalen, herberekenen, indien geen wijzigingen verplaatsen naar closed
+
+
+                    // het nieuwe idee
+                    if (status.HasValue)
+                    {
+                        // De positie status aanpassen
+                        switch (status)
+                        {
+                            //case CryptoOrderStatus.New: // only a takeprofit order
+                            case CryptoOrderStatus.Filled:
+                            case CryptoOrderStatus.PartiallyFilled:
+                            case CryptoOrderStatus.PartiallyAndClosed:
+                                if (position.Status == CryptoPositionStatus.Waiting)
+                                {
+                                    position.Status = CryptoPositionStatus.Trading;
+                                    position.ForceCheckPosition = true;
+                                }
+                                break;
+                        }
+                    }
+
+
+                    // Controleer orders, trades en herbereken de quantity, commissie etc
+                    if (position.ForceCheckPosition)
+                    {
+                        position.ForceCheckPosition = false;
+                        long forceCheckStart = Stopwatch.GetTimestamp();
+                        await TradeTools.CalculatePositionResultsViaOrders(database, position, forceCalculation: true);
+                        ppForceCheckTicks = Stopwatch.GetTimestamp() - forceCheckStart;
+                    }
+
+
+                    // With status new it is enoughh to Calculate the position (fetch and check orders), there is nothing that will change..
+                    if (status.HasValue && status == CryptoOrderStatus.New)
+                    {
+                        long statusNewStart = Stopwatch.GetTimestamp();
+                        //ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId} status ==CryptoOrderStatus.New");
+                        ppStatusNewTicks = Stopwatch.GetTimestamp() - statusNewStart;
+                        return;
+                    }
+
+                    if (position.Status >= CryptoPositionStatus.Ready) // (Ready, Timeout and TakeOver)
+                    {
+                        long readyStart = Stopwatch.GetTimestamp();
+                        await PositionReadyCancelAllOrderAndMove(database, position);
+                        ppReadyTicks = Stopwatch.GetTimestamp() - readyStart;
+                    }
+                    else
+                    {
+                        long openAsUsualStart = Stopwatch.GetTimestamp();
+                        await PositionOpenAsUsual(position, orderId); // Waiting and Trading
+                        ppOpenAsUsualTicks = Stopwatch.GetTimestamp() - openAsUsualStart;
                     }
                 }
-
-
-                // Controleer orders, trades en herbereken de quantity, commissie etc
-                if (position.ForceCheckPosition)
+                finally
                 {
-                    position.ForceCheckPosition = false;
-                    await TradeTools.CalculatePositionResultsViaOrders(database, position, forceCalculation: true);
+                    if (!GlobalData.IsEmulatorMode)
+                        position.ProcessPositionSemaphore.Release();
                 }
 
-
-                // With status new it is enoughh to Calculate the position (fetch and check orders), there is nothing that will change..
-                if (status.HasValue && status == CryptoOrderStatus.New)
-                {
-                    ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} checking {position.Status} check={position.ForceCheckPosition} {orderId} status ==CryptoOrderStatus.New");
-                    return;
-                }
-
-                if (position.Status >= CryptoPositionStatus.Ready) // (Ready, Timeout and TakeOver)
-                    await PositionReadyCancelAllOrderAndMove(database, position);
-                else
-                    await PositionOpenAsUsual(position, orderId); // Waiting and Trading
             }
-            finally
+            catch (Exception error)
             {
-                if (!GlobalData.IsEmulatorMode)
-                    position.ProcessPositionSemaphore.Release();
+                ScannerLog.Logger.Error(error, "");
+                GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
             }
-
         }
-        catch (Exception error)
+        finally
         {
-            ScannerLog.Logger.Error(error, "");
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} ERROR position ThreadCheckFinishedPosition thread {error.Message}");
+            PipelineProfiler.RecordProcessPosition(
+                total: Stopwatch.GetTimestamp() - ppTotalStart,
+                forceCheck: ppForceCheckTicks,
+                statusNew: ppStatusNewTicks,
+                ready: ppReadyTicks,
+                openAsUsual: ppOpenAsUsualTicks);
         }
     }
 

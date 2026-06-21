@@ -64,6 +64,19 @@ public static class PipelineProfiler
     public static long FvgInlineTicks;
     public static long SmcInlineTicks;
 
+    // Sub-breakdown of the TrendTicks carve-out, accumulated inside MarketTrend.CalculateMarketTrendAsync
+    // / TrendCalculator.CalculateBothAsync / TrendTools.AddCandlesToIndicatorsAsync. Tells us whether the
+    // dominant trend cost is the per-symbol lock wait, the candle ingestion into the ZigZag indicator
+    // (and how many candles that actually processes per call — confirms whether the emulator-mode window
+    // clamp in TrendCalculator is doing its job), or the Dow/BOS interpretation passes.
+    public static long TrendLockWaitTicks;     // CalculateMarketTrendAsync: time blocked on symbol.Data.TrendLock
+    public static long TrendCalcBothTicks;     // TrendCalculator.CalculateBothAsync, total (all exit paths)
+    public static long TrendCalcBothCalls;     // number of CalculateBothAsync calls (one per stale interval)
+    public static long TrendIngestTicks;       // AddCandlesToIndicatorsAsync: candle-lock wait + ingest loop + FinishBatch
+    public static long TrendIngestCandles;     // total candles fed into the ZigZag indicator across all calls
+    public static long TrendDowTicks;          // TrendInterval.InterpretZigZagPoints
+    public static long TrendBosTicks;          // TrendIntervalBos.InterpretZigZagPoints
+
     // Sub-breakdown of the positionCheck bucket, accumulated inside
     // TradeTools.CalculatePositionResultsViaOrders. Tells us whether positionCheck's cost is the DB
     // load of orders/trades (only done once per position, then cached), the per-order processing loop
@@ -86,6 +99,39 @@ public static class PipelineProfiler
     public static long CheckPosDcaTicks;     // CheckAddDcaFixedPercentage
     public static long CheckPosHandleTicks;  // HandlePosition (place/modify orders, LockProfits)
     public static long CheckPosCalls;        // number of CheckThePosition calls
+
+    // Cross-check on the two outer edges of NewCandleArrivedAsync's positionCheck bucket.
+    // PcAddToQueueTicks wraps the exact same statement profPositionCheckStart/Record already time via
+    // subtraction, so the two should match — a guard against an arithmetic slip in the diff-based
+    // timestamps above. PcCleanCandleTicks covers the CandleTools.CleanCandleDataAsync tail that
+    // previously ran AFTER PipelineProfiler.Record and so fell outside every bucket; it is gated
+    // behind !IsEmulatorMode, so it stays 0 in emulator runs and only fires on the live scanner.
+    public static long PcAddToQueueTicks;
+    public static long PcCleanCandleTicks;
+
+    // Sub-breakdown of ThreadCheckFinishedPosition.ProcessPosition — the body AddToQueue runs
+    // synchronously in emulator mode, i.e. what the positionCheck bucket above actually measures.
+    // PositionResults and CheckThePosition (above) are only two of its branches; PpReadyTicks
+    // (PositionReadyCancelAllOrderAndMove) was never instrumented, so this is what reveals whether
+    // that uninstrumented branch is the source of the gap between positionCheck and those two.
+    public static long PpTotalTicks;
+    public static long PpCalls;
+    public static long PpForceCheckTicks;    // TradeTools.CalculatePositionResultsViaOrders call site
+    public static long PpStatusNewTicks;     // the status==New short-circuit (trace + return)
+    public static long PpReadyTicks;         // PositionReadyCancelAllOrderAndMove
+    public static long PpReadyCalls;
+    public static long PpOpenAsUsualTicks;   // PositionOpenAsUsual
+    public static long PpOpenAsUsualCalls;
+
+    // Sub-breakdown of the actual database activity, accumulated inside ThreadSaveObjects.Flush() —
+    // the emulator's per-tick synchronous persist (see PersistAndCalculateZonesAsync). Separate from
+    // PosLoadOrdersTicks/PosPersistTicks (also real DB time, but nested inside the positionCheck bucket
+    // instead) so TickRunner can report one consolidated "database total" line across the whole run.
+    public static long DbFlushOpenTicks;     // CryptoDatabase.Open() (connection open + PRAGMA)
+    public static long DbFlushWriteTicks;    // the foreach WriteObject loop (the actual Insert/Update/Delete calls)
+    public static long DbFlushCommitTicks;   // transaction.Commit()
+    public static long DbFlushCalls;         // number of non-empty Flush() calls
+    public static long DbFlushItems;         // total queued objects written across all flushes
 
 
     /// <summary>Clears all counters. Call once at the start of a run before enabling.</summary>
@@ -112,6 +158,14 @@ public static class PipelineProfiler
         FvgInlineTicks = 0;
         SmcInlineTicks = 0;
 
+        TrendLockWaitTicks = 0;
+        TrendCalcBothTicks = 0;
+        TrendCalcBothCalls = 0;
+        TrendIngestTicks = 0;
+        TrendIngestCandles = 0;
+        TrendDowTicks = 0;
+        TrendBosTicks = 0;
+
         PosLoadOrdersTicks = 0;
         PosOrderLoopTicks = 0;
         PosCalcProfitTicks = 0;
@@ -122,6 +176,24 @@ public static class PipelineProfiler
         CheckPosDcaTicks = 0;
         CheckPosHandleTicks = 0;
         CheckPosCalls = 0;
+
+        PcAddToQueueTicks = 0;
+        PcCleanCandleTicks = 0;
+
+        PpTotalTicks = 0;
+        PpCalls = 0;
+        PpForceCheckTicks = 0;
+        PpStatusNewTicks = 0;
+        PpReadyTicks = 0;
+        PpReadyCalls = 0;
+        PpOpenAsUsualTicks = 0;
+        PpOpenAsUsualCalls = 0;
+
+        DbFlushOpenTicks = 0;
+        DbFlushWriteTicks = 0;
+        DbFlushCommitTicks = 0;
+        DbFlushCalls = 0;
+        DbFlushItems = 0;
     }
 
 
@@ -183,6 +255,52 @@ public static class PipelineProfiler
         Interlocked.Increment(ref TrendCalls);
     }
 
+    /// <summary>Adds the lock-wait time CalculateMarketTrendAsync spends blocked on symbol.Data.TrendLock,
+    /// before it gets to do (or skip, if cached) any actual recompute.</summary>
+    public static void RecordTrendLockWait(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref TrendLockWaitTicks, ticks);
+    }
+
+    /// <summary>Adds one TrendCalculator.CalculateBothAsync call (one per stale interval inside a
+    /// CalculateMarketTrendAsync recompute) — total time regardless of exit path.</summary>
+    public static void RecordTrendCalcBoth(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref TrendCalcBothTicks, ticks);
+        Interlocked.Increment(ref TrendCalcBothCalls);
+    }
+
+    /// <summary>Adds one TrendTools.AddCandlesToIndicatorsAsync call: candle-lock wait + the ingest
+    /// loop (indicator.Calculate per candle) + FinishBatch, plus how many candles it actually fed in —
+    /// confirms whether the emulator-mode window clamp keeps this bounded.</summary>
+    public static void RecordTrendIngest(long ticks, long candleCount)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref TrendIngestTicks, ticks);
+        Interlocked.Add(ref TrendIngestCandles, candleCount);
+    }
+
+    /// <summary>Adds one TrendInterval.InterpretZigZagPoints (Dow theory) call.</summary>
+    public static void RecordTrendDow(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref TrendDowTicks, ticks);
+    }
+
+    /// <summary>Adds one TrendIntervalBos.InterpretZigZagPoints (BOS/CHoCH) call.</summary>
+    public static void RecordTrendBos(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref TrendBosTicks, ticks);
+    }
+
     /// <summary>Adds the inline FVG (ScanForNew) carve-out.</summary>
     public static void RecordFvgInline(long ticks)
     {
@@ -222,5 +340,58 @@ public static class PipelineProfiler
         Interlocked.Add(ref CheckPosDcaTicks, dca);
         Interlocked.Add(ref CheckPosHandleTicks, handle);
         Interlocked.Increment(ref CheckPosCalls);
+    }
+
+    /// <summary>Cross-check wrap of the exact statement the positionCheck bucket already times via
+    /// subtraction (see <see cref="Record"/>) — the two totals should match.</summary>
+    public static void RecordAddToQueue(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref PcAddToQueueTicks, ticks);
+    }
+
+    /// <summary>Wraps the CandleTools.CleanCandleDataAsync tail of NewCandleArrivedAsync, which runs
+    /// AFTER <see cref="Record"/> and previously fell outside every bucket.</summary>
+    public static void RecordCleanCandle(long ticks)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref PcCleanCandleTicks, ticks);
+    }
+
+    /// <summary>Adds one ThreadCheckFinishedPosition.ProcessPosition call's total duration plus its
+    /// branch breakdown (the body the positionCheck bucket measures in emulator mode).</summary>
+    public static void RecordProcessPosition(long total, long forceCheck, long statusNew, long ready, long openAsUsual)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref PpTotalTicks, total);
+        Interlocked.Increment(ref PpCalls);
+        Interlocked.Add(ref PpForceCheckTicks, forceCheck);
+        Interlocked.Add(ref PpStatusNewTicks, statusNew);
+        if (ready > 0)
+        {
+            Interlocked.Add(ref PpReadyTicks, ready);
+            Interlocked.Increment(ref PpReadyCalls);
+        }
+        if (openAsUsual > 0)
+        {
+            Interlocked.Add(ref PpOpenAsUsualTicks, openAsUsual);
+            Interlocked.Increment(ref PpOpenAsUsualCalls);
+        }
+    }
+
+    /// <summary>Adds one ThreadSaveObjects.Flush() call's per-phase Stopwatch-tick deltas — the
+    /// emulator's actual per-tick database write activity.</summary>
+    public static void RecordDbFlush(long open, long write, long commit, long itemCount)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref DbFlushOpenTicks, open);
+        Interlocked.Add(ref DbFlushWriteTicks, write);
+        Interlocked.Add(ref DbFlushCommitTicks, commit);
+        Interlocked.Increment(ref DbFlushCalls);
+        Interlocked.Add(ref DbFlushItems, itemCount);
     }
 }

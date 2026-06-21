@@ -9,6 +9,10 @@ public class ScannerLog
     // The global logger class
     public static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
+    // Matches NLog's FileTarget default layout ("${longdate}|${level:uppercase=true}|${logger}|${message}")
+    // plus the simulated-time field (${simtime}, registered in InitializeLogging) inserted right after ${longdate}.
+    private const string LogLayout = "${longdate}|sim=${simtime}|${level:uppercase=true}|${logger}|${message}";
+
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {
         string logName = GlobalData.LogName == "" ? Constants.AppName : GlobalData.LogName;
@@ -23,6 +27,7 @@ public class ScannerLog
             ArchiveEvery = NLog.Targets.FileArchivePeriod.Day,
             ArchiveFileName = filename + " {#}" + extra + ".log",
             ArchiveSuffixFormat = @"_{1:yyyyMMdd}",
+            Layout = LogLayout,
         };
 
     }
@@ -58,6 +63,7 @@ public class ScannerLog
             // run gets its own file. (After a DB reset the ids restart at 1; NLog then appends to the
             // existing "Run 1.log" rather than deleting it, so earlier content is preserved.)
             FileName = filename,
+            Layout = LogLayout,
         };
 
         var config = LogManager.Configuration;
@@ -88,6 +94,14 @@ public class ScannerLog
 
     public static void InitializeLogging()
     {
+        // ${simtime} renders GlobalData.Clock's current time (real wall-clock for the live scanner,
+        // the replay's simulated candle time for the emulator) instead of the actual system clock that
+        // NLog's built-in ${longdate} always uses. Used alongside ${longdate} in LogLayout below (not
+        // a replacement) so log lines keep showing both: how fast the run is really progressing AND
+        // which point in the (possibly simulated) timeline a line refers to.
+        LogManager.Setup().SetupExtensions(ext =>
+            ext.RegisterLayoutRenderer("simtime", _ => GlobalData.Clock.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ffff")));
+
         // Create configuration object
         var config = new NLog.Config.LoggingConfiguration();
 

@@ -90,7 +90,7 @@ public class SignalBabaShort : SignalBabaBase
             _slPercentage = (decimal)pctDeviation;
 
         //MarkSignalFired();
-        ExtraText = $"hit upper band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
+        ExtraText = $"hit lower band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")} {_entryPrice}";
         return true;
     }
 }

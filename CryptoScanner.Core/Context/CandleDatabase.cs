@@ -195,8 +195,8 @@ public class CandleDatabase : IDisposable
         cmd.Parameters.Add(pSymbol);
 
         Dictionary<int, CryptoSymbolInterval> intervalsId = [];
-        foreach (CryptoSymbolInterval si in symbol.Data.SymbolIntervalList)
-            intervalsId[si.Interval.Id] = si;
+        foreach (CryptoSymbolInterval symbolInterval in symbol.Data.SymbolIntervalList)
+            intervalsId[symbolInterval.Interval.Id] = symbolInterval;
 
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -939,10 +939,10 @@ public class CandleDatabase : IDisposable
         //    of buffer: the exchange typically returns the candle whose period contains
         //    fetcher startTime (one period before the floored boundary), so without the
         //    buffer that candle still falls just outside on every midnight rollover.
-        foreach (var si in symbol.Data.SymbolIntervalList)
+        foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, si.Interval, GlobalData.Clock.UtcNow);
-            uint duration = si.Interval.Duration;
+            CandleTime start = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
+            uint duration = symbolInterval.Interval.Duration;
             if (duration > 1)
             {
                 uint aligned = start.Minutes - (start.Minutes % duration);
@@ -950,7 +950,7 @@ public class CandleDatabase : IDisposable
                     aligned -= duration;
                 start = new CandleTime(aligned);
             }
-            AddRange(result, si.Interval.Id, start, now);
+            AddRange(result, symbolInterval.Interval.Id, start, now);
         }
 
         // 2) Per pivot zone — keep its entire LIFETIME on the zone interval itself + all

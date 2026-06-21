@@ -84,13 +84,13 @@ public class SignalBabaLong : SignalBabaBase
 
         // Entry = the most extreme (LOWEST) of the wick (Low), the Close and the band.
         //_entryPrice = Math.Min(candle.Low, Math.Min(candle.Close, band));
-        _entryPrice = Math.Max(candle.Close, band);
+        _entryPrice = Math.Min(candle.Close, band);
 
         if (settings.UseStopLoss)
             _slPercentage = (decimal)pctDeviation;
 
         //MarkSignalFired();
-        ExtraText = $"hit lower band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")}";
+        ExtraText = $"hit lower band {pctDeviation:N2}%{(zoneInfo != "" ? " @ " + zoneInfo : "")} {_entryPrice}";
         return true;
     }
 }

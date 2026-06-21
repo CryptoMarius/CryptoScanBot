@@ -10,20 +10,26 @@ using System.ComponentModel;
 namespace CryptoScanner.Emulator.ViewModels;
 
 /// <summary>
-/// One selectable symbol in the run-parameters dialog: the name plus a checkbox state. Raises
-/// change notification on <see cref="IsSelected"/> so the parent VM can keep the "N selected"
-/// counter live.
+/// One selectable symbol in the run-parameters dialog: the name, its current 24h volume, plus a
+/// checkbox state. Raises change notification on <see cref="IsSelected"/> so the parent VM can keep
+/// the "N selected" counter live.
 /// </summary>
 public partial class SymbolSelectionItem : ObservableObject
 {
     public string Name { get; }
 
+    // 24h quote volume, as already tracked on CryptoSymbol.Volume. 0 for a symbol that came only from
+    // a saved run config and isn't (yet) known on the active exchange (e.g. Fetch symbols not run).
+    public double Volume { get; }
+    public string VolumeText => Volume.ToString("N0");
+
     [ObservableProperty]
     private bool _isSelected;
 
-    public SymbolSelectionItem(string name, bool isSelected)
+    public SymbolSelectionItem(string name, bool isSelected, double volume = 0)
     {
         Name = name;
+        Volume = volume;
         _isSelected = isSelected;
     }
 }
@@ -84,10 +90,10 @@ public partial class RunConfigViewModel : ObservableObject
 
         if (GlobalData.ActiveExchange != null)
         {
-            foreach (string name in GlobalData.ActiveExchange.SymbolListName.Keys)
+            foreach (var (name, symbol) in GlobalData.ActiveExchange.SymbolListName)
             {
                 if (seen.Add(name))
-                    AddSymbol(name, selected.Contains(name));
+                    AddSymbol(name, selected.Contains(name), symbol.Volume);
             }
         }
         foreach (string name in config.Symbols)
@@ -102,9 +108,9 @@ public partial class RunConfigViewModel : ObservableObject
     }
 
 
-    private void AddSymbol(string name, bool isSelected)
+    private void AddSymbol(string name, bool isSelected, double volume = 0)
     {
-        var item = new SymbolSelectionItem(name, isSelected);
+        var item = new SymbolSelectionItem(name, isSelected, volume);
         item.PropertyChanged += OnSymbolItemChanged;
         _allSymbols.Add(item);
     }

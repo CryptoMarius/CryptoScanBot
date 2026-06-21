@@ -299,6 +299,29 @@ public sealed class TickRunner
                 $"smcInline {smcInline:F1}s");
         }
 
+        // Sub-breakdown of the trend carve-out: where inside CalculateMarketTrendAsync the time goes —
+        // the per-symbol lock wait, CalculateBothAsync (one call per stale interval), and inside that,
+        // the candle-ingest loop (+ how many candles it actually processed, confirming the emulator
+        // window clamp) versus the Dow/BOS interpretation passes.
+        double trendLockWait = Seconds(PipelineProfiler.TrendLockWaitTicks);
+        double trendCalcBoth = Seconds(PipelineProfiler.TrendCalcBothTicks);
+        double trendIngest = Seconds(PipelineProfiler.TrendIngestTicks);
+        double trendDow = Seconds(PipelineProfiler.TrendDowTicks);
+        double trendBos = Seconds(PipelineProfiler.TrendBosTicks);
+        if (trendCalcBoth > 0)
+        {
+            long ingestCandles = PipelineProfiler.TrendIngestCandles;
+            double avgCandlesPerCall = PipelineProfiler.TrendCalcBothCalls > 0
+                ? (double)ingestCandles / PipelineProfiler.TrendCalcBothCalls : 0;
+            GlobalData.AddTextToLogTab(
+                $"Trend internals — {trend:F1}s over {PipelineProfiler.TrendCalls} call(s) | " +
+                $"lockWait {trendLockWait:F1}s ({trendLockWait / trend:P0}), " +
+                $"calculateBoth {trendCalcBoth:F1}s ({trendCalcBoth / trend:P0}) over {PipelineProfiler.TrendCalcBothCalls} call(s) | " +
+                $"ingest {trendIngest:F1}s ({trendIngest / trendCalcBoth:P0}) over {ingestCandles} candle(s) ({avgCandlesPerCall:F0}/call), " +
+                $"dow {trendDow:F1}s ({trendDow / trendCalcBoth:P0}), " +
+                $"bos {trendBos:F1}s ({trendBos / trendCalcBoth:P0})");
+        }
+
         // Sub-breakdown of the positionCheck bucket: where inside CalculatePositionResultsViaOrders
         // the time goes — the DB load of orders/trades, the per-order processing loop, the
         // profit/break-even recalculation, or the final persist transaction.
@@ -333,6 +356,64 @@ public sealed class TickRunner
                 $"cancel {checkCancel:F1}s ({checkCancel / checkMeasured:P0}), " +
                 $"dca {checkDca:F1}s ({checkDca / checkMeasured:P0}), " +
                 $"handle {checkHandle:F1}s ({checkHandle / checkMeasured:P0})");
+        }
+
+        // Cross-check of the positionCheck bucket itself: a dedicated wrap of the exact same statement
+        // (PositionMonitor.NewCandleArrivedAsync's AddToQueue call) that positionCheck above derives via
+        // subtraction. The two totals should match closely; a gap here would mean the diff-based
+        // timestamps are off. cleanCandle is the method's tail (CleanCandleDataAsync), gated behind
+        // !IsEmulatorMode so it stays ~0s in emulator runs.
+        double addToQueue = Seconds(PipelineProfiler.PcAddToQueueTicks);
+        double cleanCandle = Seconds(PipelineProfiler.PcCleanCandleTicks);
+        if (addToQueue > 0 || cleanCandle > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"PositionCheck cross-check — addToQueue {addToQueue:F1}s (vs. positionCheck bucket {posCheck:F1}s), " +
+                $"cleanCandle {cleanCandle:F1}s (live scanner only)");
+        }
+
+        // Sub-breakdown of ThreadCheckFinishedPosition.ProcessPosition — the body AddToQueue runs
+        // synchronously in emulator mode, i.e. what addToQueue/positionCheck above actually measures.
+        // forceCheck and PositionResults should track each other (same call site); ready was never
+        // instrumented before, so this is what should explain the gap between positionCheck and
+        // PositionResults + CheckThePosition.
+        double ppTotal = Seconds(PipelineProfiler.PpTotalTicks);
+        double ppForceCheck = Seconds(PipelineProfiler.PpForceCheckTicks);
+        double ppStatusNew = Seconds(PipelineProfiler.PpStatusNewTicks);
+        double ppReady = Seconds(PipelineProfiler.PpReadyTicks);
+        double ppOpenAsUsual = Seconds(PipelineProfiler.PpOpenAsUsualTicks);
+        if (ppTotal > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"ProcessPosition — measured {ppTotal:F1}s over {PipelineProfiler.PpCalls} call(s) | " +
+                $"forceCheck {ppForceCheck:F1}s ({ppForceCheck / ppTotal:P0}), " +
+                $"statusNew {ppStatusNew:F1}s ({ppStatusNew / ppTotal:P0}), " +
+                $"ready {ppReady:F1}s ({ppReady / ppTotal:P0}) over {PipelineProfiler.PpReadyCalls} call(s), " +
+                $"openAsUsual {ppOpenAsUsual:F1}s ({ppOpenAsUsual / ppTotal:P0}) over {PipelineProfiler.PpOpenAsUsualCalls} call(s)");
+        }
+
+        // Real database activity, consolidated from every instrumented call site regardless of which
+        // pipeline bucket it is nested in: the per-tick Flush() (signals/positions/zones), the order+
+        // trade load on ForceCheckPosition, and the final position-result persist transaction.
+        double dbOpen = Seconds(PipelineProfiler.DbFlushOpenTicks);
+        double dbWrite = Seconds(PipelineProfiler.DbFlushWriteTicks);
+        double dbCommit = Seconds(PipelineProfiler.DbFlushCommitTicks);
+        double dbFlushMeasured = dbOpen + dbWrite + dbCommit;
+        if (dbFlushMeasured > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Flush (DB) — {dbFlushMeasured:F1}s over {PipelineProfiler.DbFlushCalls} flush(es), {PipelineProfiler.DbFlushItems} item(s) | " +
+                $"open {dbOpen:F1}s ({dbOpen / dbFlushMeasured:P0}), " +
+                $"write {dbWrite:F1}s ({dbWrite / dbFlushMeasured:P0}), " +
+                $"commit {dbCommit:F1}s ({dbCommit / dbFlushMeasured:P0})");
+        }
+
+        double dbTotal = dbFlushMeasured + posLoad + posPersist;
+        if (dbTotal > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Database total — {dbTotal:F1}s across the run | " +
+                $"flush {dbFlushMeasured:F1}s, loadOrders {posLoad:F1}s, persist {posPersist:F1}s");
         }
     }
 

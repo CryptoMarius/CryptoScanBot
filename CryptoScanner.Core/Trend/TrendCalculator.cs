@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 
+using System.Diagnostics;
 using System.Text;
 
 namespace CryptoScanner.Core.Trend;
@@ -103,75 +104,91 @@ public class TrendCalculator
         CryptoCandleList candleList, CryptoTrendData dowTrend, CryptoTrendData bosTrend,
         SettingsZigZag trendSettings, StringBuilder? log = null)
     {
-        log?.AppendLine("");
-        log?.AppendLine("----");
-        log?.AppendLine($"{symbol.Name} Interval {interval.Name} [Dow + BOS]");
-        log?.AppendLine("");
+        //return;
 
-        // No candles → reset both slots and bail. Mirrors the old behaviour of the two
-        // separate CalculateAsync methods.
-        if (candleList.Count == 0)
+        // Profiling: time the whole call (any exit path) — see PipelineProfiler. This is the
+        // per-stale-interval unit of work inside MarketTrend.CalculateMarketTrendAsync's foreach loop.
+        long profCalcBothStart = Stopwatch.GetTimestamp();
+        try
         {
-            dowTrend.Reset();
-            bosTrend.Reset();
-            return;
+            log?.AppendLine("");
+            log?.AppendLine("----");
+            log?.AppendLine($"{symbol.Name} Interval {interval.Name} [Dow + BOS]");
+            log?.AppendLine("");
+
+            // No candles → reset both slots and bail. Mirrors the old behaviour of the two
+            // separate CalculateAsync methods.
+            if (candleList.Count == 0)
+            {
+                dowTrend.Reset();
+                bosTrend.Reset();
+                return;
+            }
+
+            CandleTime minDate = CandleTime.MinValue;
+            CandleTime maxDate = CandleTime.MinValue;
+            if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
+            {
+                log?.AppendLine($"{symbol.Name} {interval.Name} (date period problem)");
+                return;
+            }
+
+            // Emulator only: bound the ZigZag window to the same span the live scanner retains
+            // (GetCandleFetchStart). The live scanner trims its CandleList to that window via
+            // CleanCandleDataAsync, so it never builds the trend over more than ~500 candles per interval
+            // (deliberately sized for the trend calculation). The emulator disables that cleanup, so its
+            // CandleList grows unbounded and the trend was being rebuilt over the entire multi-week
+            // history on every recompute — the single dominant run cost, AND over far more history than
+            // live ever sees. Clamping minDate up makes the emulator trend both fast and faithful to live.
+            // Gated on IsEmulatorMode so the live path is provably untouched (no edge case where live's
+            // list happens to hold more than this window).
+            if (GlobalData.IsEmulatorMode)
+            {
+                CandleTime windowStart = CandleTools.GetCandleFetchStart(symbol, interval, maxDate.ToDateTime());
+                if (minDate < windowStart)
+                    minDate = windowStart;
+            }
+
+            // Build the ZigZag indicator ONCE and feed it to both interpretations.
+            ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
+            await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
+
+            // --- Dow theory interpretation -------------------------------------------------
+            long profDowStart = Stopwatch.GetTimestamp();
+            CryptoTrendIndicator dowIndicator = TrendInterval.InterpretZigZagPoints(indicator, log);
+            PipelineProfiler.RecordTrendDow(Stopwatch.GetTimestamp() - profDowStart);
+            dowTrend.PrevTrend = dowTrend.Trend;
+            dowTrend.PrevTime = dowTrend.Time;
+            dowTrend.Trend = dowIndicator;
+            dowTrend.Time = maxDate;
+            WritePivotData(indicator, dowTrend);
+
+            // --- BOS/CHoCH interpretation --------------------------------------------------
+            long profBosStart = Stopwatch.GetTimestamp();
+            CryptoTrendIndicator bosIndicator = TrendIntervalBos.InterpretZigZagPoints(indicator, log,
+                out var lastEvent, out var lastEventTime, out var lastEventPrice);
+            PipelineProfiler.RecordTrendBos(Stopwatch.GetTimestamp() - profBosStart);
+            bosTrend.PrevTrend = bosTrend.Trend;
+            bosTrend.PrevTime = bosTrend.Time;
+            bosTrend.Trend = bosIndicator;
+            bosTrend.Time = maxDate;
+            bosTrend.LastStructureEvent = lastEvent;
+            bosTrend.LastStructureEventTime = lastEventTime;
+            bosTrend.LastStructureEventPrice = lastEventPrice;
+            WritePivotData(indicator, bosTrend);
+
+            if (GlobalData.Settings.General.DebugTrendCalculation)
+            {
+                string text = $"{symbol.Name} {interval.Name} [Dow+BOS] candles={candleList.Count} " +
+                    $"calculated at {dowTrend.Time?.ToDateTime()} " +
+                    $"zigzagcount={indicator.ZigZagList.Count} dow={dowTrend.Trend} bos={bosTrend.Trend}";
+                log?.AppendLine(text);
+                ScannerLog.Logger.Debug("TrendCalculator.CalculateBoth " + text);
+            }
         }
-
-        CandleTime minDate = CandleTime.MinValue;
-        CandleTime maxDate = CandleTime.MinValue;
-        if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
+        finally
         {
-            log?.AppendLine($"{symbol.Name} {interval.Name} (date period problem)");
-            return;
-        }
-
-        // Emulator only: bound the ZigZag window to the same span the live scanner retains
-        // (GetCandleFetchStart). The live scanner trims its CandleList to that window via
-        // CleanCandleDataAsync, so it never builds the trend over more than ~500 candles per interval
-        // (deliberately sized for the trend calculation). The emulator disables that cleanup, so its
-        // CandleList grows unbounded and the trend was being rebuilt over the entire multi-week
-        // history on every recompute — the single dominant run cost, AND over far more history than
-        // live ever sees. Clamping minDate up makes the emulator trend both fast and faithful to live.
-        // Gated on IsEmulatorMode so the live path is provably untouched (no edge case where live's
-        // list happens to hold more than this window).
-        if (GlobalData.IsEmulatorMode)
-        {
-            CandleTime windowStart = CandleTools.GetCandleFetchStart(symbol, interval, maxDate.ToDateTime());
-            if (minDate < windowStart)
-                minDate = windowStart;
-        }
-
-        // Build the ZigZag indicator ONCE and feed it to both interpretations.
-        ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
-        await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
-
-        // --- Dow theory interpretation -------------------------------------------------
-        CryptoTrendIndicator dowIndicator = TrendInterval.InterpretZigZagPoints(indicator, log);
-        dowTrend.PrevTrend = dowTrend.Trend;
-        dowTrend.PrevTime = dowTrend.Time;
-        dowTrend.Trend = dowIndicator;
-        dowTrend.Time = maxDate;
-        WritePivotData(indicator, dowTrend);
-
-        // --- BOS/CHoCH interpretation --------------------------------------------------
-        CryptoTrendIndicator bosIndicator = TrendIntervalBos.InterpretZigZagPoints(indicator, log,
-            out var lastEvent, out var lastEventTime, out var lastEventPrice);
-        bosTrend.PrevTrend = bosTrend.Trend;
-        bosTrend.PrevTime = bosTrend.Time;
-        bosTrend.Trend = bosIndicator;
-        bosTrend.Time = maxDate;
-        bosTrend.LastStructureEvent = lastEvent;
-        bosTrend.LastStructureEventTime = lastEventTime;
-        bosTrend.LastStructureEventPrice = lastEventPrice;
-        WritePivotData(indicator, bosTrend);
-
-        if (GlobalData.Settings.General.DebugTrendCalculation)
-        {
-            string text = $"{symbol.Name} {interval.Name} [Dow+BOS] candles={candleList.Count} " +
-                $"calculated at {dowTrend.Time?.ToDateTime()} " +
-                $"zigzagcount={indicator.ZigZagList.Count} dow={dowTrend.Trend} bos={bosTrend.Trend}";
-            log?.AppendLine(text);
-            ScannerLog.Logger.Debug("TrendCalculator.CalculateBoth " + text);
+            PipelineProfiler.RecordTrendCalcBoth(Stopwatch.GetTimestamp() - profCalcBothStart);
         }
     }
 }

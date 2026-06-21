@@ -229,6 +229,10 @@ public class LuxIndicator
     public static void Calculate(CryptoSymbol symbol, out int luxOverSold, out int luxOverBought,
         CryptoIntervalPeriod cryptoIntervalPeriod, CandleTime candleCloseTime)
     {
+        //luxOverBought = 0;
+        //luxOverSold = 0;
+        //return;
+
         CalculateNew(symbol, out luxOverSold, out luxOverBought, cryptoIntervalPeriod, candleCloseTime);
 
         //// Debug, same results for old and new? No?
