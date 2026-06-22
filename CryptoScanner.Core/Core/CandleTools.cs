@@ -2,6 +2,7 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Core;
 
@@ -336,6 +337,14 @@ public static class CandleTools
                         else break;
                     }
 
+                    // The cached ZigZag indicators (trend + DLZ) live for the whole run and are fed
+                    // incrementally, so without this their PivotList/ZigZagList keep referencing
+                    // CryptoCandle objects forever — keeping candles alive even after they are removed
+                    // from CandleList/Data above. Trim them to the same window.
+                    foreach (ZigZagIndicator indicator in symbolInterval.ZigZagIndicators.Values)
+                        indicator.TrimBefore(startFetchUnix);
+                    foreach (ZigZagIndicator indicator in symbolInterval.DlzZigZagIndicators.Values)
+                        indicator.TrimBefore(startFetchUnix);
                 }
                 finally
                 {

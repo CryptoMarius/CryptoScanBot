@@ -438,4 +438,73 @@ public class ZigZagIndicator
         OptimizeList();
     }
 
+
+    /// <summary>
+    /// Drops pivot/zigzag points whose candle is older than <paramref name="cutoff"/> — the same
+    /// window CandleTools.CleanCandleDataAsync uses to trim CandleList/Data. Without this, PivotList
+    /// and ZigZagList keep referencing CryptoCandle objects forever (the indicator instance itself is
+    /// cached for the whole run, see CryptoSymbolInterval.ZigZagIndicators), so candles already removed
+    /// from CandleList stay alive and unreachable for the GC purely because of these lists.
+    /// Never removes past LastSwingLow/LastSwingHigh (or ZigZagList's own optimize window) so PivotIndex
+    /// based lookups (GetLowFromBuffer/GetHighFromBuffer) stay valid.
+    /// </summary>
+    public void TrimBefore(CandleTime cutoff)
+    {
+        TrimPivotList(cutoff);
+        TrimZigZagList(cutoff);
+    }
+
+
+    private void TrimPivotList(CandleTime cutoff)
+    {
+        int safeLimit = PivotList.Count;
+        if (LastSwingLow != null)
+            safeLimit = Math.Min(safeLimit, LastSwingLow.PivotIndex);
+        if (LastSwingHigh != null)
+            safeLimit = Math.Min(safeLimit, LastSwingHigh.PivotIndex);
+
+        int removeCount = 0;
+        while (removeCount < safeLimit && PivotList[removeCount].Candle.OpenTime < cutoff)
+            removeCount++;
+
+        if (removeCount == 0)
+            return;
+
+        PivotList.RemoveRange(0, removeCount);
+        // PivotIndex values are positions into PivotList — shift them after the removal above,
+        // both on the remaining pivots and on every ZigZagList entry that points back into PivotList.
+        // BackupIndex must shift too: Restore() copies it back into PivotIndex (see ZigZagResult),
+        // so a stale BackupIndex would undo the shift on the next RestoreSwingPoint/RecalculateSwingLowAndHigh.
+        foreach (ZigZagResult pivot in PivotList)
+        {
+            pivot.PivotIndex -= removeCount;
+            if (pivot.BackupIndex.HasValue)
+                pivot.BackupIndex -= removeCount;
+        }
+        foreach (ZigZagResult zigZag in ZigZagList)
+        {
+            zigZag.PivotIndex -= removeCount;
+            if (zigZag.BackupIndex.HasValue)
+                zigZag.BackupIndex -= removeCount;
+        }
+    }
+
+
+    private void TrimZigZagList(CandleTime cutoff)
+    {
+        // Keep whatever OptimizeList still scans (its own trailing window) plus the live swing points.
+        int safeLimit = Math.Max(0, ZigZagList.Count - 10);
+        if (LastSwingLow != null)
+            safeLimit = Math.Min(safeLimit, ZigZagList.IndexOf(LastSwingLow));
+        if (LastSwingHigh != null)
+            safeLimit = Math.Min(safeLimit, ZigZagList.IndexOf(LastSwingHigh));
+
+        int removeCount = 0;
+        while (removeCount < safeLimit && ZigZagList[removeCount].Candle.OpenTime < cutoff)
+            removeCount++;
+
+        if (removeCount > 0)
+            ZigZagList.RemoveRange(0, removeCount);
+    }
+
 }
