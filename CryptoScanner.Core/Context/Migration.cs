@@ -1384,8 +1384,9 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 67)
         {
             using var transaction = database.BeginTransaction();
-            database.Connection.Execute("alter table Position add SignalId Integer null REFERENCES Signal(Id)", transaction);
-            database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
+            // not needed any more
+            //database.Connection.Execute("alter table Position add SignalId Integer null REFERENCES Signal(Id)", transaction);
+            //database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
             // update version
             version.Version += 1;
             database.Connection.Update(version, transaction);
@@ -1398,8 +1399,9 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 68)
         {
             using var transaction = database.BeginTransaction();
-            try { database.Connection.Execute("drop INDEX IdxPositionSignalId", transaction); } catch { } // ignore
-            try { database.Connection.Execute("alter table Position drop column SignalId", transaction); } catch { } // ignore
+            // not needed any more
+            //try { database.Connection.Execute("drop INDEX IdxPositionSignalId", transaction); } catch { } // ignore
+            //try { database.Connection.Execute("alter table Position drop column SignalId", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1418,7 +1420,7 @@ public class Migration
             database.Connection.Execute("alter table EmulatorRun add PositionsTimeout Integer not null default 0", transaction);
 
             // Its back, but without a fk
-            database.Connection.Execute("alter table Position add SignalId Integer null", transaction);
+            try { database.Connection.Execute("alter table Position add SignalId Integer null", transaction); } catch { } // ignore
             database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
 
             // update version
