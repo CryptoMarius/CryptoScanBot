@@ -17,7 +17,7 @@ public class Rsi
         if (candles.Count == 0)
             return;
 
-        var rsiList = candles.AsQuotes().GetRsi(14);
+        var rsiList = candles.AsQuotes().ToRsi(14);
 
         // RSI(14) line — white, thinner than stoch lines so it remains readable when overlaid
         var series = new LineSeries

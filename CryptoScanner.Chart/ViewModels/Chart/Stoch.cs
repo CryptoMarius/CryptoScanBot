@@ -33,7 +33,7 @@ public class Stoch
         if (candles.Count == 0)
             return;
 
-        var stochList = candles.AsQuotes().GetStoch(14, 3, 3);
+        var stochList = candles.AsQuotes().ToStoch(14, 3, 3);
 
         // %K — fast stochastic (blue)
         var seriesK = new LineSeries

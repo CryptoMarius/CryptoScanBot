@@ -39,7 +39,7 @@ public class Macd
         if (!chart.Axes.Any(a => a.Key == AxisKey))
             return;
 
-        var macdList = candles.AsQuotes().GetMacd();
+        var macdList = candles.AsQuotes().ToMacd();
 
         // Histogram bar takes up 90 % of one candle interval so adjacent bars don't touch.
         double halfWidth = 0.45 * interval.Duration;
