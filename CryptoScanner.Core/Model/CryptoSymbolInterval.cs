@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Indicators;
+using CryptoScanner.Core.Trend;
 
 namespace CryptoScanner.Core.Model;
 
@@ -46,6 +47,27 @@ public class CryptoSymbolInterval
     // Same ZigZag source data, different interpretation rules.
     public CryptoTrendData TrendBosPrimary = new();
     public CryptoTrendData TrendBosSecondary = new();
+
+    // Cached ZigZag indicators, keyed by (TrendType, UseHighLow), shared across repeated calls to
+    // TrendCalculator.CalculateBothAsync so candles are fed once instead of being replayed from
+    // scratch on every stale-interval check (see ZigZagIndicator.LastFedCandleTime).
+    public TrendZigZagIndicatorList ZigZagIndicators { get; } = [];
+
+    // Cached ZigZag indicators used by ZoneDlz, keyed the same way as ZigZagIndicators above but
+    // kept in a separate dictionary because DLZ's candle window (Settings.Signal.ZonesDlz.CandleCount)
+    // can be larger than the trend window — sharing one cache entry between the two would either
+    // shortchange DLZ's depth or force the trend calculation to carry history it doesn't need.
+    public TrendZigZagIndicatorList DlzZigZagIndicators { get; } = [];
+
+    public void ResetTrendData()
+    {
+        TrendPrimary.Reset();
+        TrendSecondary.Reset();
+        TrendBosPrimary.Reset();
+        TrendBosSecondary.Reset();
+        ZigZagIndicators.Clear();
+        DlzZigZagIndicators.Clear();
+    }
 
     // **** experiment ****
 

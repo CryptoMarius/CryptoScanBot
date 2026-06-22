@@ -225,8 +225,10 @@ public class CandleDatabase : IDisposable
     /// </summary>
     public static void LoadCandlesForSymbol(SqliteConnection connection, CryptoSymbol symbol)
     {
-        // Reset the previous collected trend data (once a day is preferred)
-        symbol.Data.ResetTrendData();
+        // Reset the previous collected trend data (once a day is preferred). Full reset (incl.
+        // per-interval cached ZigZag indicators) because CandleList objects are about to be replaced
+        // below, and a cached ZigZagResult.Candle would otherwise keep referencing a stale candle.
+        symbol.Data.ResetTrendDataAndCaches();
 
         // Per-interval SELECT bounded by GetCandleFetchStart so we don't materialise the
         // bulk DLZ-zoom candles at startup — those stay in the DB and only flow into memory
@@ -400,8 +402,12 @@ public class CandleDatabase : IDisposable
             "FROM Candle " +
             "WHERE SymbolId = $SymbolId AND IntervalId = $IntervalId " +
             "  AND OpenTime BETWEEN $From AND $To ";
-        // Do not read future candles
-        if (GlobalData.IsEmulatorMode)
+        // Do not read future candles, but only while a run is actually replaying. CurrentEmulatorRunId
+        // is null once a run finishes (or before one starts), and GlobalData.Clock then stays frozen at
+        // the last replayed minute. Without this guard, opening a position's chart after the run ended
+        // (or for an older run, with the clock parked at a different run's end time) would silently clip
+        // or empty the requested range against a stale "now" that has nothing to do with the query.
+        if (GlobalData.IsEmulatorMode && GlobalData.CurrentEmulatorRunId.HasValue)
             cmd.CommandText += " and OpenTime <= $OpenTime ";
         cmd.CommandText += " ORDER BY OpenTime";
 
@@ -425,7 +431,7 @@ public class CandleDatabase : IDisposable
         pTo.Value = (long)toMinutes;
         cmd.Parameters.Add(pTo);
 
-        if (GlobalData.IsEmulatorMode)
+        if (GlobalData.IsEmulatorMode && GlobalData.CurrentEmulatorRunId.HasValue)
         {
             var pOpenTime = cmd.CreateParameter();
             pOpenTime.ParameterName = "$OpenTime";

@@ -102,4 +102,19 @@ public class CryptoSymbolData
         TrendBosSecondary.Reset();
     }
 
+    // Full reset including the per-interval trend state and cached ZigZag indicators
+    // (CryptoSymbolInterval.ResetTrendData — TrendPrimary/Secondary/TrendBosPrimary/Secondary live
+    // there too, separate from the symbol-level aggregate above). Deliberately NOT folded into
+    // ResetTrendData() itself: that method is also called from ZoneDlz.LoadZonesForSymbol, which runs
+    // on every zone-queue drain (hot path) — cascading a full per-interval ZigZag-cache wipe into that
+    // call would defeat the trend cache almost as fast as it warms up. Use this version only for genuine
+    // fresh-start scenarios: emulator run start, and candle history (re)load (where CandleList objects
+    // are replaced, so any cached ZigZagResult.Candle references would otherwise go stale).
+    public void ResetTrendDataAndCaches()
+    {
+        ResetTrendData();
+        foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
+            symbolInterval.ResetTrendData();
+    }
+
 }

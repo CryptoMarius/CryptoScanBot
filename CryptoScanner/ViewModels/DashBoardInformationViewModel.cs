@@ -305,6 +305,8 @@ public partial class DashBoardInformationViewModel : ObservableObject
         List<DashboardSymbolViewModel> list = [];
 
         string quote = SelectedQuote;
+        if (string.IsNullOrEmpty(quote))
+            return;
         var exchange = GlobalData.ActiveExchange;
         if (GlobalData.Settings.QuoteCoins.TryGetValue(quote, out CryptoQuoteData? quoteData) && exchange != null)
         {

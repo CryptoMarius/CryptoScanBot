@@ -44,7 +44,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="260"/>
+                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="350"/>
                 <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="230"/>
                 <DataGridTextColumn Header="Started"     Binding="{Binding StartedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedLocal}" Width="130"/>

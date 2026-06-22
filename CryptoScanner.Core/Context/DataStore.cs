@@ -149,8 +149,10 @@ public class DataStore
         string oldFileName = Path.Combine(exchangeStoragePath, symbol.Quote.ToLower(), symbol.Base.ToLower());
         string newFileName = Path.ChangeExtension(oldFileName, ".compressed");
 
-        // Reset the previous collected trend data (once a day is preferred)
-        symbol.Data.ResetTrendData();
+        // Reset the previous collected trend data (once a day is preferred). Full reset (incl.
+        // per-interval cached ZigZag indicators) because CandleList objects are about to be replaced
+        // below, and a cached ZigZagResult.Candle would otherwise keep referencing a stale candle.
+        symbol.Data.ResetTrendDataAndCaches();
 
         string fileName = string.Empty;
         bool fileWasRead = false;

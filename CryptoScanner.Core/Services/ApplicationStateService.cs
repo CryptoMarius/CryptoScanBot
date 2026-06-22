@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 
 using CryptoScanner.Core.Core;
 
@@ -347,16 +348,30 @@ public class ApplicationStateService
             if (Enum.TryParse<Avalonia.Controls.WindowState>(state.State, out var windowState))
             {
                 // Is saved position on ANY available screen?
-                if (IsPositionOnScreen(window, state.X, state.Y))
+                Screen? targetScreen;
+                if (IsPositionOnScreen(window, state.X, state.Y, out targetScreen))
                 {
                     window.Position = new PixelPoint((int)state.X, (int)state.Y);
                 }
                 else
                 {
                     window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    targetScreen = window.Screens.Primary ?? window.Screens.All.FirstOrDefault();
                 }
-                window.Width = state.Width;
-                window.Height = state.Height;
+
+                // Clamp to the working area of the target screen, so a size saved on a large
+                // display doesn't end up partially off-screen when restored on a smaller one
+                double width = state.Width;
+                double height = state.Height;
+                if (targetScreen != null)
+                {
+                    double scaling = targetScreen.Scaling > 0 ? targetScreen.Scaling : 1.0;
+                    width = Math.Min(width, targetScreen.WorkingArea.Width / scaling);
+                    height = Math.Min(height, targetScreen.WorkingArea.Height / scaling);
+                }
+
+                window.Width = width;
+                window.Height = height;
                 window.WindowState = windowState;
             }
         }
@@ -372,8 +387,9 @@ public class ApplicationStateService
         return state;
     }
 
-    private static bool IsPositionOnScreen(Window window, double x, double y)
+    private static bool IsPositionOnScreen(Window window, double x, double y, out Screen? matchedScreen)
     {
+        matchedScreen = null;
         try
         {
             var point = new PixelPoint((int)x, (int)y);
@@ -384,6 +400,7 @@ public class ApplicationStateService
             {
                 if (screen.WorkingArea.Contains(point))
                 {
+                    matchedScreen = screen;
                     return true;
                 }
             }

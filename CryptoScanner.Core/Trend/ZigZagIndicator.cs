@@ -27,6 +27,12 @@ public class ZigZagIndicator
     public ZigZagResult? LastSwingHigh = null; // the last High Primary
     public ZigZagResult? LastSwingPoint = null; // the last Primary added
 
+    // Marks the last candle fed into this instance. Lets a caller that caches this indicator across
+    // calls (e.g. TrendCalculator, ZoneDlz) feed only the candles since the last call instead of
+    // rebuilding from scratch every time — Calculate() is already incremental per candle, so resuming
+    // is safe as long as candles are fed in order with no gap.
+    public CandleTime? LastFedCandleTime { get; set; }
+
     private readonly ZigZagLanceBeggs ZigZagLanceBeggs;
 
 

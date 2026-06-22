@@ -89,6 +89,10 @@ public class TradeTools
         CryptoPositionPart? partTp = null;
         int steps = 0;
         int stepCanceled = 0;
+        // Counts pending (not yet filled) Dca parts seen so far in the loop below, so each one gets
+        // its own PartNumber (= DcaList index + 1) instead of colliding on the same "next" number -
+        // needed now that multiple Dca parts can be open at once (place-all-dca-levels-at-once).
+        int pendingDcaCount = 0;
 
         foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
@@ -196,7 +200,8 @@ public class TradeTools
                 else
                 {
                     position.ActiveDca = true;
-                    part.PartNumber = position.PartCount + 1;
+                    pendingDcaCount++;
+                    part.PartNumber = position.PartCount + pendingDcaCount;
                 }
             }
             // fix..

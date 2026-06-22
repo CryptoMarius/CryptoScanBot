@@ -162,11 +162,12 @@ public class PositionMonitor //: IDisposable
                         }
 
                         // We zijn aan het trailen, dus openen we geen nieuwe DCA
-                        if (stepX.Trailing == CryptoTrailing.Trailing && stepX.OrderType == CryptoOrderType.StopLimit)
-                        {
-                            reaction = "de positie heeft al een openstaande trailing DCA";
-                            return false;
-                        }
+                        // (trailing DCA is niet meer ondersteund, zie CryptoTrailing)
+                        //if (stepX.Trailing == CryptoTrailing.Trailing && stepX.OrderType == CryptoOrderType.StopLimit)
+                        //{
+                        //    reaction = "de positie heeft al een openstaande trailing DCA";
+                        //    return false;
+                        //}
                     }
                 }
 
@@ -998,69 +999,69 @@ public class PositionMonitor //: IDisposable
                 if (step == null && part.Quantity == 0) // entry
                     entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
                 break;
-            case CryptoEntryOrDcaStrategy.TrailViaKcPsar:
-                trailing = CryptoTrailing.Trailing;
-                entryOrderType = CryptoOrderType.StopLimit;
-                // Trailing is afwijkend ten opzichte van de sell (zoveel mogelijk gelijk maken)
+            //case CryptoEntryOrDcaStrategy.TrailViaKcPsar:
+            //    trailing = CryptoTrailing.Trailing;
+            //    entryOrderType = CryptoOrderType.StopLimit;
+            //    // Trailing is afwijkend ten opzichte van de sell (zoveel mogelijk gelijk maken)
 
-                // todo: Gaat deze vergelijking goed als er ook dust aanwezig kan zijn?
-                // Moet de bestaande verplaatst worden (cq annuleren + opnieuw plaatsen)?
-                //if (step != null && part.Quantity == 0 && step.Trailing == CryptoTrailing.Trailing)
-                //{
-                //    if (position.Side == CryptoTradeSide.Long)
-                //    {
-                //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-                //        if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
-                //        {
-                //            entryPrice = x;
-                //            await TradeTools.CancelOrder(Database, position, part, step,
-                //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-                //        }
-                //    }
-                //    else
-                //    {
-                //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-                //        if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
-                //        {
-                //            entryPrice = x;
-                //            await TradeTools.CancelOrder(Database, position, part, step,
-                //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
-                //        }
-                //    }
-                //}
+            //    // todo: Gaat deze vergelijking goed als er ook dust aanwezig kan zijn?
+            //    // Moet de bestaande verplaatst worden (cq annuleren + opnieuw plaatsen)?
+            //    //if (step != null && part.Quantity == 0 && step.Trailing == CryptoTrailing.Trailing)
+            //    //{
+            //    //    if (position.Side == CryptoTradeSide.Long)
+            //    //    {
+            //    //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
+            //    //        if (x < step.StopPrice && Symbol.LastPrice < x && candleInterval.High < x)
+            //    //        {
+            //    //            entryPrice = x;
+            //    //            await TradeTools.CancelOrder(Database, position, part, step,
+            //    //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
+            //    //        }
+            //    //    }
+            //    //    else
+            //    //    {
+            //    //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
+            //    //        if (x > step.StopPrice && Symbol.LastPrice > x && candleInterval.Low > x)
+            //    //        {
+            //    //            entryPrice = x;
+            //    //            await TradeTools.CancelOrder(Database, position, part, step,
+            //    //                LastCandle1mCloseTimeDate, CryptoOrderStatus.TrailingChange, "adjusting trailing");
+            //    //        }
+            //    //    }
+            //    //}
 
-                //if (step == null && part.Quantity == 0) // entry
-                //{
-                //    if (position.Side == CryptoTradeSide.Long)
-                //    {
-                //        // Alleen in een neergaande "trend" beginnen we met trailen (niet in een opgaande)
-                //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten (maar of dit okay is?)
-                //        if (Symbol.LastPrice >= (decimal?)candleInterval.CandleData?.PSar)
-                //            return;
+            //    //if (step == null && part.Quantity == 0) // entry
+            //    //{
+            //    //    if (position.Side == CryptoTradeSide.Long)
+            //    //    {
+            //    //        // Alleen in een neergaande "trend" beginnen we met trailen (niet in een opgaande)
+            //    //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing sell starten (maar of dit okay is?)
+            //    //        if (Symbol.LastPrice >= (decimal?)candleInterval.CandleData?.PSar)
+            //    //            return;
 
-                //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
-                //        if (Symbol.LastPrice < x && candleInterval.High < x)
-                //        {
-                //            logText = "trailing";
-                //            entryPrice = x;
-                //        }
-                //    }
-                //    else
-                //    {
-                //        // Alleen in een opgaande "trend" beginnen we met trailen (niet in een neergaande)
-                //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing buy starten (maar of dit okay is?)
-                //        if (Symbol.LastPrice <= (decimal?)candleInterval.CandleData?.PSar)
-                //            return;
+            //    //        decimal x = (decimal)Math.Max(candleInterval.CandleData?.KeltnerUpperBand ?? 0, candleInterval.CandleData?.PSar ?? 0) + Symbol.PriceTickSize;
+            //    //        if (Symbol.LastPrice < x && candleInterval.High < x)
+            //    //        {
+            //    //            logText = "trailing";
+            //    //            entryPrice = x;
+            //    //        }
+            //    //    }
+            //    //    else
+            //    //    {
+            //    //        // Alleen in een opgaande "trend" beginnen we met trailen (niet in een neergaande)
+            //    //        // Dit is een fix om te voorkomen dat we direct na het kopen een trailing buy starten (maar of dit okay is?)
+            //    //        if (Symbol.LastPrice <= (decimal?)candleInterval.CandleData?.PSar)
+            //    //            return;
 
-                //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
-                //        if (Symbol.LastPrice > x && candleInterval.Low > x)
-                //        {
-                //            logText = "trailing";
-                //            entryPrice = x;
-                //        }
-                //    }
-                //}
-                break;
+            //    //        decimal x = (decimal)Math.Min(candleInterval.CandleData?.KeltnerLowerBand ?? 0, candleInterval.CandleData?.PSar ?? 0) - Symbol.PriceTickSize;
+            //    //        if (Symbol.LastPrice > x && candleInterval.Low > x)
+            //    //        {
+            //    //            logText = "trailing";
+            //    //            entryPrice = x;
+            //    //        }
+            //    //    }
+            //    //}
+            //    break;
             default:
                 throw new Exception($"{strategy} niet ondersteund");
         }
@@ -1097,9 +1098,13 @@ public class PositionMonitor //: IDisposable
                 // Een gewijzigde dca list is een probleem (qua aantallen en percentages), als we een nieuwe
                 // DCA proberen te plaatsen dan moet er uiteindelijk wel een probleem gaan ontstaan (dure vergissing)
                 // TODO: Wat is een betere oplossing?
-                if (position.EntryAmount.HasValue && position.PartCount < GlobalData.Settings.Trading.DcaList.Count)
+                // Use part.PartNumber (1-based dca level, see TradeTools.CalculateProfitAndBreakEvenPrice) instead of
+                // position.PartCount: PartCount only counts already-FILLED dca's, but multiple dca parts can now be
+                // open (pending) at the same time when they are all placed at once, so each needs its own factor.
+                int dcaLevelIndex = part.PartNumber - 1;
+                if (position.EntryAmount.HasValue && dcaLevelIndex >= 0 && dcaLevelIndex < GlobalData.Settings.Trading.DcaList.Count)
                 {
-                    var dcaEntry = GlobalData.Settings.Trading.DcaList[position.PartCount];
+                    var dcaEntry = GlobalData.Settings.Trading.DcaList[dcaLevelIndex];
                     entryValue = (decimal)position.EntryAmount * dcaEntry.Factor;
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} dca {part.PartNumber} value={entryValue}");
                 }
@@ -1382,32 +1387,42 @@ public class PositionMonitor //: IDisposable
     //}
 
 
+    /// Determine which fixed-percentage DCA levels (GlobalData.Settings.Trading.DcaList) still need to be
+    /// created for this position - i.e. levels that have no Dca part yet, filled or still open/pending.
+    /// Returns the (fixed % from the original entry price) target price for each missing level, in order.
+    private List<decimal> GetMissingFixedPercentageDcaPrices(CryptoPosition position)
+    {
+        List<decimal> prices = [];
+
+        // Een DCA zonder een voorgaande entry is onmogelijk
+        if (!position.EntryPrice.HasValue || position.EntryPrice.Value == 0 || position.Invested == 0)
+            return prices;
+
+        // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren, zie CanOpenAdditionalDca)
+        int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
+
+        decimal entryPrice = position.EntryPrice.Value;
+        for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
+        {
+            var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+            decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
+            prices.Add(position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice);
+        }
+        return prices;
+    }
+
+
     private async Task CheckAddDcaFixedPercentage(CryptoPosition position)
     {
-        // Een DCA plaatsen na een bepaalde perc en de cooldowntijd
+        // Alle resterende DCA-niveaus in 1x plaatsen zodra de entry gevuld is (in plaats van steeds te
+        // wachten tot de vorige DCA gevuld is) - elk niveau krijgt zijn eigen part op zijn vaste %-prijs
+        // vanaf de entry, en wordt direct als losse open limit-order neergezet.
         if (position.Status == CryptoPositionStatus.Trading && GlobalData.Settings.Trading.DcaStrategy == CryptoEntryOrDcaStrategy.FixedPercentage)
         {
-            if (CanOpenAdditionalDca(position, out CryptoPositionStep? _, out decimal _, out decimal dcaPrice, out string _))
+            List<decimal> missingPrices = GetMissingFixedPercentageDcaPrices(position);
+            if (missingPrices.Count > 0)
             {
-                //decimal adjust = GlobalData.Settings.Trading.DcaPercentage * step.Price / 100m;
-
-                // Corrigeer de prijs indien de koers ondertussen lager of hoger ligt
-                decimal price = dcaPrice;
-                if (position.Side == CryptoTradeSide.Long)
-                {
-                    //price = step.Price - adjust;
-                    if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice < price)
-                        price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
-                }
-                else
-                {
-                    //price = step.Price + adjust;
-                    if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice > price)
-                        price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
-                }
-
-
-                string text = $"{position.Symbol.Name} + DCA bijplaatsen op {price.ToString0(position.Symbol.PriceDisplayFormat)}";
+                string text = $"{position.Symbol.Name} + {missingPrices.Count} DCA('s) bijplaatsen";
 
                 // Zo laat mogelijk controleren vanwege extra calls naar de exchange
                 var (success, reaction) = AssetTools.FetchAssets(GlobalData.ActiveExchange);
@@ -1426,10 +1441,30 @@ public class PositionMonitor //: IDisposable
                     return;
                 }
 
+                foreach (decimal dcaPrice in missingPrices)
+                {
+                    // Corrigeer de prijs indien de koers ondertussen al lager of hoger ligt dan dit niveau
+                    decimal price = dcaPrice;
+                    if (position.Side == CryptoTradeSide.Long)
+                    {
+                        if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice < price)
+                            price = (decimal)position.Symbol.LastPrice - position.Symbol.PriceTickSize;
+                    }
+                    else
+                    {
+                        if (position.Symbol.LastPrice.HasValue && position.Symbol.LastPrice > price)
+                            price = (decimal)position.Symbol.LastPrice + position.Symbol.PriceTickSize;
+                    }
 
-                // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
-                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
-                    CryptoEntryOrDcaStrategy.FixedPercentage, price, LastCandle1mCloseTimeDate);
+                    // De positie uitbreiden nalv een nieuw signaal (de xe bijkoop wordt altijd een aparte DCA)
+                    PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, position.Interval!, position.Strategy,
+                        CryptoEntryOrDcaStrategy.FixedPercentage, price, LastCandle1mCloseTimeDate);
+                }
+
+                // De net aangemaakte parts hebben nog geen correct PartNumber (= dca niveau) totdat dit
+                // herberekend is, en HandlePosition (dat zo na deze aanroep de orders plaatst) heeft dat
+                // PartNumber meteen nodig om per niveau de juiste Factor te bepalen.
+                await TradeTools.CalculatePositionResultsViaOrders(Database, position, forceCalculation: true);
             }
         }
     }
@@ -1674,14 +1709,15 @@ public class PositionMonitor //: IDisposable
                 var (success, candleInterval) = await PrepareAsync(position, part);
                 if (success)
                 {
-                    if (!PauseBecauseOfTradingRules && candleInterval.OpenTime != 0)
+                    if (candleInterval.OpenTime != 0)
                     {
-                        // Check entry
-                        if (part.Purpose == CryptoPartPurpose.Entry)
+                        // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
+                        if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
                             await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.EntryStrategy,
                                 GlobalData.Settings.Trading.EntryOrderPrice, GlobalData.Settings.Trading.EntryOrderType);
 
-                        // Check DCA
+                        // Check DCA - always allowed, even during a TradingRules pause (averaging into an
+                        // existing position is not gated by the market-wide pause, see CheckThePosition)
                         if (part.Purpose == CryptoPartPurpose.Dca)
                             await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStrategy,
                                 GlobalData.Settings.Trading.DcaOrderPrice, GlobalData.Settings.Trading.DcaOrderType);
@@ -1923,9 +1959,10 @@ public class PositionMonitor //: IDisposable
 
             if (!position.CloseTime.HasValue)
             {
-                // Pauzeren vanwege de trading regels of te lage barometer
-                if (!PauseBecauseOfTradingRules) // || PauseBecauseOfBarometer
-                    await CheckAddDcaFixedPercentage(position);
+                // Een DCA op een bestaande positie altijd direct toestaan, ook tijdens een
+                // marktbrede TradingRules-pauze (bv. snelle BTC-beweging) - alleen nieuwe
+                // entries worden door die pauze geblokkeerd, niet het bijkopen op een lopende positie.
+                await CheckAddDcaFixedPercentage(position);
                 long profHandleStart = Stopwatch.GetTimestamp();
                 profDcaTicks = profHandleStart - profDcaStart;
 

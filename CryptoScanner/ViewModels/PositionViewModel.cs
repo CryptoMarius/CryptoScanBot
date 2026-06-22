@@ -1250,7 +1250,7 @@ public partial class PositionViewModel : BaseConvertersViewModel
 
     public void Refresh()
     {
-        // Reset alle private fields
+        // Reset alle private fields zodat de getters opnieuw berekenen
         var fields = GetType()
             .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
             .Where(f => f.FieldType == typeof(string) || f.FieldType == typeof(IBrush));
@@ -1260,9 +1260,10 @@ public partial class PositionViewModel : BaseConvertersViewModel
             field.SetValue(this, null);
         }
 
-        foreach (var field in fields)
-        {
-            OnPropertyChanged(field.Name);
-        }
+        // Een lege/null property naam betekent voor INotifyPropertyChanged "alle properties zijn gewijzigd",
+        // zodat alle gebonden cellen (Side, Status, CurrentProfit, etc.) opnieuw worden uitgelezen.
+        // (Eerder werd hier per-field OnPropertyChanged(field.Name) aangeroepen, wat de naam van het
+        // backing field doorgaf in plaats van de property naam, waardoor de binding nooit triggerde.)
+        OnPropertyChanged(string.Empty);
     }
 }

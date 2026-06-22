@@ -13,8 +13,9 @@
         <converters:BarometerColorConverter x:Key="BarometerColorConverter" />
     </UserControl.Resources>
   
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
     <Grid ColumnDefinitions="80,1,Auto,1,Auto,1,Auto,1,Auto,1,Auto,1">
-        
+
         <!-- Column=0, Traffic Lights -->
         <StackPanel Grid.Column="0" Orientation="Vertical" MinWidth="80" Margin="20,0,2,0">
             <TextBlock Text="Status" FontWeight="Bold" FontSize="16" HorizontalAlignment="Left" Margin="0,0,0,2"/>
@@ -286,4 +287,5 @@
         <!-- Separator -->
         <Border Grid.Column="11" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Width="1" Margin="10,0"/>
     </Grid>
+    </ScrollViewer>
 </UserControl>

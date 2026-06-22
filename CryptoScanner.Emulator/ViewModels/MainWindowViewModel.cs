@@ -259,13 +259,18 @@ public partial class MainWindowViewModel : ObservableObject
                     // step sees the full picture instead of only the bounded startup load.
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-                    foreach (CryptoInterval interval in GlobalData.IntervalList)
+                    foreach (CryptoInterval interval in activeIntervals)
                     {
-                        // Per-interval warmup window — 1m=24h, higher=270×duration. Each interval
-                        // pulled in its OWN resolution: a 1w warmup is 270 weekly candles (~5y),
-                        // not 5 years of 1m bars. minDate..maxDate is the window we WANT;
-                        // ZoneCandleEngine.FetchFrom figures out how much of it we already have and
-                        // fetches only the rest.
+                        // Per-interval warmup window — 1m=24h, higher=270×duration — prepended to the
+                        // FULL run window (FromDate..ToDate), in that interval's OWN resolution: a 1w
+                        // warmup is 270 weekly candles (~5y), not 5 years of 1m bars. minDate..maxDate
+                        // is the window we WANT; ZoneCandleEngine.FetchFrom figures out how much of it
+                        // we already have and fetches/synthesizes only the rest. Higher intervals used
+                        // to stop at FromDate (warmup-only) on the assumption that a replay run would
+                        // synthesize the rest from 1m as a side effect — but that synthesis only ever
+                        // gets persisted for the sub-range some past run actually replayed, so anything
+                        // outside that left permanent holes in candles.db. Fetching the full range here
+                        // closes those holes for good.
                         uint warmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval);
                         DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
 
@@ -273,10 +278,6 @@ public partial class MainWindowViewModel : ObservableObject
                             CandleTime.AlignFromDateTime(intervalFromUtc, interval.Duration), interval.Duration);
                         CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
                             CandleTime.AlignFromDateTime(config.ToDate, interval.Duration), interval.Duration);
-
-                        if (interval.IntervalPeriod > CryptoIntervalPeriod.interval1m)
-                            maxDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(config.FromDate, interval.Duration), interval.Duration);
 
                         if (maxDate <= minDate)
                             continue;
@@ -599,7 +600,7 @@ public partial class MainWindowViewModel : ObservableObject
             CurrentSymbol = p.SymbolName;
             ProgressMaximum = Math.Max(1, p.TotalBars);
             ProgressValue = p.ProcessedBars;
-            Status = $"{p.SymbolName}: {p.ProcessedBars}/{p.TotalBars}";
+            Status = $"{p.SymbolName}: {100 * p.ProcessedBars / p.TotalBars:N0}%";
         });
     }
 }

@@ -509,23 +509,40 @@ public partial class ChartWindowViewModel : ObservableObject
         if (e.PropertyName == nameof(ChartSymbolSelectorViewModel.SelectedSymbol) ||
             e.PropertyName == nameof(ChartSymbolSelectorViewModel.SelectedInterval))
         {
-            if (IsCalculating)
-            {
-                // A refresh is already running; remember to retry once it finishes.
-                // The retry picks up the latest ViewModel state via PickupUserInput().
-                _pendingRefresh = true;
-                return;
-            }
-            // Defer to the next dispatcher cycle. Otherwise, when CommandShowChart sets
-            // SelectedBase/Quote/Interval just before calling Window.Show(), this handler
-            // would start the async refresh synchronously — and it would still be busy
-            // mutating PlotModel.Series when ExecuteInitialLayoutPass runs the first
-            // render, throwing NRE in OxyPlot.PlotElementUtilities.GetClippingRect.
-            // The Post queues the refresh AFTER Show()'s layout pass completes.
-            Avalonia.Threading.Dispatcher.UIThread.Post(
-                () => _ = RefreshCommand.ExecuteAsync(null),
-                Avalonia.Threading.DispatcherPriority.Background);
+            RequestRefresh();
         }
+    }
+
+    /// <summary>
+    /// Queue a refresh of the chart's candles/signals/positions for the current symbol, interval
+    /// and window. Called from <see cref="OnSymbolChanged"/> when the user changes the symbol or
+    /// interval combo box, AND explicitly by <see cref="CryptoScanner.Views.ChartWindowLauncher"/>
+    /// after it reuses an already-open window for a different position. That second caller is
+    /// required because SelectedBase/Quote/Interval's generated setters skip the PropertyChanged
+    /// notification when the new value equals the current one (e.g. picking a different position
+    /// on the same symbol+interval, common when browsing a run's position grid) — without this
+    /// explicit call OnSymbolChanged would never fire, so the WindowStart/WindowEnd/WindowEmulatorRunId
+    /// that were just updated would silently never be picked up and the chart would keep showing
+    /// the previous position's candles.
+    /// </summary>
+    public void RequestRefresh()
+    {
+        if (IsCalculating)
+        {
+            // A refresh is already running; remember to retry once it finishes.
+            // The retry picks up the latest ViewModel state via PickupUserInput().
+            _pendingRefresh = true;
+            return;
+        }
+        // Defer to the next dispatcher cycle. Otherwise, when CommandShowChart sets
+        // SelectedBase/Quote/Interval just before calling Window.Show(), this handler
+        // would start the async refresh synchronously — and it would still be busy
+        // mutating PlotModel.Series when ExecuteInitialLayoutPass runs the first
+        // render, throwing NRE in OxyPlot.PlotElementUtilities.GetClippingRect.
+        // The Post queues the refresh AFTER Show()'s layout pass completes.
+        Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _ = RefreshCommand.ExecuteAsync(null),
+            Avalonia.Threading.DispatcherPriority.Background);
     }
 
     [RelayCommand]

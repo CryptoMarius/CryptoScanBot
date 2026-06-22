@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Context;
+﻿using Avalonia.Threading;
+
+using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -80,11 +82,11 @@ public class CommandPositionRemoveAdditionalDca : CommandBase
                         }
                     }
 
-                    // TODO: i'm afraid the view wil not be updated ...
-                    // We need a reference to the view model to update the binding (still there, but need to parse the damned parameter again)
+                    // Refresh() raises INotifyPropertyChanged, which Avalonia's bindings must receive on the UI thread.
+                    // This command runs fire-and-forget on a background thread, so the call needs to be dispatched explicitly.
                     //Grid.InvalidateRow(rowIndex);
                     if (dto.PositionViewModel != null)
-                        dto.PositionViewModel.Refresh();
+                        await Dispatcher.UIThread.InvokeAsync(dto.PositionViewModel.Refresh);
                 }
             }
             catch (Exception error)

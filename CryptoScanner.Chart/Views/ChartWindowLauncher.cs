@@ -44,6 +44,15 @@ public static class ChartWindowLauncher
         {
             ApplySymbol(_chartWindow, symbolBase, symbolQuote, intervalName, windowStart, windowEnd, emulatorRunId);
 
+            // Force a refresh even when SelectedBase/Quote/Interval above didn't actually change
+            // value (e.g. picking a different position on the same symbol+interval, common when
+            // browsing a run's position grid). Those properties only raise PropertyChanged on a
+            // real change, so OnSymbolChanged would otherwise never fire and the WindowStart/
+            // WindowEnd/WindowEmulatorRunId just set in ApplySymbol would silently never be picked
+            // up — leaving the previous position's candles on screen.
+            if (_chartWindow.DataContext is ChartWindowViewModel vm)
+                vm.RequestRefresh();
+
             // Restore if minimized, then bring to the front.
             if (_chartWindow.WindowState == WindowState.Minimized)
                 _chartWindow.WindowState = WindowState.Normal;

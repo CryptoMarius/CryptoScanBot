@@ -56,7 +56,10 @@ public static class EmulatorDb
             symbol.Data.ResetFvgData();
             symbol.Data.ResetDlzData();
             symbol.Data.ResetSmcData();
-            symbol.Data.ResetTrendData();
+            // Full reset (incl. per-interval cached ZigZag indicators): a new run reusing this symbol
+            // object must not inherit cached pivots/trend from a previous run, which may have replayed
+            // a different period or used different settings (TrendType/UseHighLow/CandleCount).
+            symbol.Data.ResetTrendDataAndCaches();
         }
     }
 

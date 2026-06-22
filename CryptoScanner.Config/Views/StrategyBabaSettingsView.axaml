@@ -2,99 +2,115 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="420"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="540"
              xmlns:vm="using:CryptoScanner.Config.ViewModels"
              x:DataType="vm:StrategyBabaSettingsViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyBabaSettingsView">
 
-    <HeaderedContentControl Classes="groupbox" Header="Mean Reversion Bands (VWAP volume-weighted)">
-        <StackPanel Margin="4" Spacing="4">
+    <StackPanel Spacing="8">
 
-            <!-- VWMA / vw-stdev length -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="VWMA / volume-weighted-stdev window for the VWAP basis (fit ≈ 50).">
-                <TextBlock Grid.Column="0" Text="Length (VWAP/vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding Length, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+        <HeaderedContentControl Classes="groupbox" Header="Mean Reversion Bands (VWAP volume-weighted)">
+            <StackPanel Margin="4" Spacing="4">
 
-            <!-- vw-stdev multiplier -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Volume-weighted-stdev multiplier: basis ± Mult × vwStdev (the VWAP-band width; fit ≈ 2.5). Higher = wider band = fewer signals.">
-                <TextBlock Grid.Column="0" Text="Multiplier (vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding Mult, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- VWMA / vw-stdev length -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="VWMA / volume-weighted-stdev window for the VWAP basis (fit ≈ 50).">
+                    <TextBlock Grid.Column="0" Text="Length (VWAP/vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding Length, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- ATR length -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Fast ATR length added on top of the vw-stdev band (optional angular shape).">
-                <TextBlock Grid.Column="0" Text="ATR length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding AtrLength, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- vw-stdev multiplier -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Volume-weighted-stdev multiplier: basis ± Mult × vwStdev (the VWAP-band width; fit ≈ 2.5). Higher = wider band = fewer signals.">
+                    <TextBlock Grid.Column="0" Text="Multiplier (vw-stdev):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding Mult, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- ATR multiplier -->
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Multiplier on the fast ATR term: band = Mult × vwStdev + AtrMult × ATR. 0 = pure VWAP bands; higher = more angular and wider.">
-                <TextBlock Grid.Column="0" Text="ATR multiplier:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding AtrMult, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- ATR length -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Fast ATR length added on top of the vw-stdev band (optional angular shape).">
+                    <TextBlock Grid.Column="0" Text="ATR length:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding AtrLength, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
-            <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
-                      Content="Require RSI overbought/oversold" FontSize="12"
-                      ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
+                <!-- ATR multiplier -->
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Multiplier on the fast ATR term: band = Mult × vwStdev + AtrMult × ATR. 0 = pure VWAP bands; higher = more angular and wider.">
+                    <TextBlock Grid.Column="0" Text="ATR multiplier:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding AtrMult, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- Stop-loss -->
-            <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
-                      Content="Use stop-loss" FontSize="12"
-                      ToolTip.Tip="When on, the signal passes its own percentage based stop-loss (factor × ATR%) to the trader. When off, the trader uses its default stop-loss."/>
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Multiplier on the ATR for the stop-loss distance: SL distance = factor × ATR(ATR length)%.">
-                <TextBlock Grid.Column="0" Text="Stop-loss ATR factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding StopLossAtrFactor, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
+                <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
+                          Content="Require RSI overbought/oversold" FontSize="12"
+                          ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
 
-            <!-- Cooldown -->
-            <CheckBox IsChecked="{Binding UseCooldown, Mode=TwoWay}"
-                      Content="Cooldown after a signal" FontSize="12"
-                      ToolTip.Tip="After a signal fires, wait the configured number of candles before a new one may appear (shared across long &amp; short)."/>
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Number of candles to wait after a signal before a new one may appear.">
-                <TextBlock Grid.Column="0" Text="Cooldown (candles):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding CooldownBars, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Cooldown -->
+                <CheckBox IsChecked="{Binding UseCooldown, Mode=TwoWay}"
+                          Content="Cooldown after a signal" FontSize="12"
+                          ToolTip.Tip="After a signal fires, wait the configured number of candles before a new one may appear (shared across long &amp; short)."/>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Number of candles to wait after a signal before a new one may appear.">
+                    <TextBlock Grid.Column="0" Text="Cooldown (candles):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding CooldownBars, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
 
-            <!-- Slide (glijbaan) filter -->
-            <CheckBox IsChecked="{Binding UseSlideFilter, Mode=TwoWay}"
-                      Content="Suppress signals into an ongoing slide" FontSize="12"
-                      ToolTip.Tip="Skip LONG signals during a DOWN-slide and SHORT signals during an UP-slide (don't trade into an efficient one-way move). Symmetric."/>
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Lookback window (bars) over which the slide is measured.">
-                <TextBlock Grid.Column="0" Text="Slide window:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding SlideWindow, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Minimum Kaufman efficiency (0..1): net move / total path. Higher = stricter (only very straight slides count).">
-                <TextBlock Grid.Column="0" Text="Slide min efficiency:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding SlideMinEfficiency, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Minimum net move over the window, in percent, for it to count as a slide.">
-                <TextBlock Grid.Column="0" Text="Slide min move %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1" Text="{Binding SlideMinMovePercent, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                <!-- Zone confirmation (OR over enabled types) -->
+                <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
+                          Content="Require DLZ zone rejection" FontSize="12"
+                          ToolTip.Tip="Only fire when the band break was also a rejection at a DLZ zone."/>
+                <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
+                          Content="Require FVG zone rejection" FontSize="12"
+                          ToolTip.Tip="Only fire when the band break was also a rejection at an FVG zone."/>
+                <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
+                          Content="Require SMC zone rejection" FontSize="12"
+                          ToolTip.Tip="Only fire when the band break was also a rejection at an SMC order block."/>
 
-            <!-- Zone confirmation (OR over enabled types) -->
-            <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
-                      Content="Require DLZ zone rejection" FontSize="12"
-                      ToolTip.Tip="Only fire when the band break was also a rejection at a DLZ zone."/>
-            <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
-                      Content="Require FVG zone rejection" FontSize="12"
-                      ToolTip.Tip="Only fire when the band break was also a rejection at an FVG zone."/>
-            <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
-                      Content="Require SMC zone rejection" FontSize="12"
-                      ToolTip.Tip="Only fire when the band break was also a rejection at an SMC order block."/>
+            </StackPanel>
+        </HeaderedContentControl>
 
-        </StackPanel>
-    </HeaderedContentControl>
+        <HeaderedContentControl Classes="groupbox" Header="Stop-loss">
+            <StackPanel Margin="4" Spacing="4">
+
+                <!-- Stop-loss -->
+                <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
+                          Content="Use stop-loss" FontSize="12"
+                          ToolTip.Tip="When on, the signal passes its own percentage based stop-loss (factor × ATR%) to the trader. When off, the trader uses its default stop-loss."/>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Multiplier on the ATR for the stop-loss distance: SL distance = factor × ATR(ATR length)%.">
+                    <TextBlock Grid.Column="0" Text="Stop-loss ATR factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding StopLossAtrFactor, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+        <HeaderedContentControl Classes="groupbox" Header="Slide filter">
+            <StackPanel Margin="4" Spacing="4">
+
+                <!-- Slide (glijbaan) filter -->
+                <CheckBox IsChecked="{Binding UseSlideFilter, Mode=TwoWay}"
+                          Content="Suppress signals into an ongoing slide" FontSize="12"
+                          ToolTip.Tip="Skip LONG signals during a DOWN-slide and SHORT signals during an UP-slide (don't trade into an efficient one-way move). Symmetric."/>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Lookback window (bars) over which the slide is measured.">
+                    <TextBlock Grid.Column="0" Text="Slide window:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding SlideWindow, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Minimum Kaufman efficiency (0..1): net move / total path. Higher = stricter (only very straight slides count).">
+                    <TextBlock Grid.Column="0" Text="Slide min efficiency:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding SlideMinEfficiency, Mode=TwoWay, StringFormat=N2}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                      ToolTip.Tip="Minimum net move over the window, in percent, for it to count as a slide.">
+                    <TextBlock Grid.Column="0" Text="Slide min move %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding SlideMinMovePercent, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                </Grid>
+
+            </StackPanel>
+        </HeaderedContentControl>
+
+    </StackPanel>
 
 </UserControl>

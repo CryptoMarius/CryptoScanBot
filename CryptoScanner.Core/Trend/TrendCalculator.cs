@@ -149,9 +149,33 @@ public class TrendCalculator
                     minDate = windowStart;
             }
 
-            // Build the ZigZag indicator ONCE and feed it to both interpretations.
-            ZigZagIndicator indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
-            await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
+            // Reuse the cached ZigZag indicator across calls instead of rebuilding it from the full
+            // window every time. ZigZagIndicator.Calculate() is already incremental per candle — the
+            // instance just needs to survive between calls (cached on CryptoSymbolInterval, keyed by
+            // (TrendType, UseHighLow)). Cold (re)build happens once, on first use for this key or after
+            // the cache was cleared (e.g. emulator run start) — identical to today's behaviour. Every
+            // call after that feeds only the candles since the last call instead of replaying
+            // [minDate, maxDate] again, which is the dominant cost MarketTrend pays per stale interval.
+            CryptoSymbolInterval symbolIntervalForCache = symbol.GetSymbolInterval(interval.IntervalPeriod);
+            var zigZagCacheKey = (trendSettings.TrendType, trendSettings.UseHighLow);
+            ZigZagIndicator? indicator;
+            if (!symbolIntervalForCache.ZigZagIndicators.TryGetValue(zigZagCacheKey, out indicator)
+                || indicator.LastFedCandleTime == null)
+            {
+                indicator = new(trendSettings.TrendType, trendSettings.UseHighLow, 1.0m);
+                symbolIntervalForCache.ZigZagIndicators[zigZagCacheKey] = indicator;
+                CandleTime? lastFed = await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, minDate, maxDate);
+                if (lastFed != null)
+                    indicator.LastFedCandleTime = lastFed;
+            }
+            else if (indicator.LastFedCandleTime!.Value < maxDate)
+            {
+                CandleTime feedFrom = indicator.LastFedCandleTime.Value + interval.Duration;
+                CandleTime? lastFed = await TrendTools.AddCandlesToIndicatorsAsync(indicator, symbol, interval, feedFrom, maxDate);
+                if (lastFed != null)
+                    indicator.LastFedCandleTime = lastFed;
+            }
+            // else: already up to date (e.g. a second stale-check on the same minute) — reuse as is.
 
             // --- Dow theory interpretation -------------------------------------------------
             long profDowStart = Stopwatch.GetTimestamp();

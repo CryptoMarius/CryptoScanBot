@@ -633,12 +633,29 @@ public class ZoneDlz
                 //        $"dlz zones long = {zones.LongOpen.Count} " +
                 //        $"dlz zones short = {zones.ShortOpen.Count} ");
 
+                // Reuse the cached ZigZag indicator across calls (one per queue-drain) instead of
+                // rebuilding it from the full [minDate, maxDate] window every time — same technique as
+                // TrendCalculator.CalculateBothAsync, but cached separately (DlzZigZagIndicators) because
+                // ZonesDlz.CandleCount can size a wider window than the trend calculation needs.
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
-                TrendZigZagIndicatorList trendZigZagIndicatorList = [];
-                trendZigZagIndicatorList.Add((trend.TrendType, trend.UseHighLow), new(trend.TrendType, trend.UseHighLow, 1.0m));
-                var trendZigZagIndicator = trendZigZagIndicatorList[(trend.TrendType, trend.UseHighLow)];
+                var dlzCacheKey = (trend.TrendType, trend.UseHighLow);
+                TrendZigZagIndicatorList trendZigZagIndicatorList = symbolIntervalData.DlzZigZagIndicators;
+                if (!trendZigZagIndicatorList.TryGetValue(dlzCacheKey, out ZigZagIndicator? trendZigZagIndicator)
+                    || trendZigZagIndicator.LastFedCandleTime == null)
+                {
+                    trendZigZagIndicator = new(trend.TrendType, trend.UseHighLow, 1.0m);
+                    trendZigZagIndicatorList[dlzCacheKey] = trendZigZagIndicator;
+                    await CalculatePivots(symbol, interval, minDate, maxDate, trendZigZagIndicatorList);
+                    trendZigZagIndicator.LastFedCandleTime = maxDate;
+                }
+                else if (trendZigZagIndicator.LastFedCandleTime!.Value < maxDate)
+                {
+                    CandleTime feedFrom = trendZigZagIndicator.LastFedCandleTime.Value + interval.Duration;
+                    await CalculatePivots(symbol, interval, feedFrom, maxDate, trendZigZagIndicatorList);
+                    trendZigZagIndicator.LastFedCandleTime = maxDate;
+                }
+                // else: already up to date — reuse the indicator as is, no feed needed.
 
-                await CalculatePivots(symbol, interval, minDate, maxDate, trendZigZagIndicatorList);
                 await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
                 CalculateIntroZone(symbol, interval, trendZigZagIndicator);
 
