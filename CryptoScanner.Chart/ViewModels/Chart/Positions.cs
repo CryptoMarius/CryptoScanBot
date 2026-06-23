@@ -138,7 +138,7 @@ public class Positions
                         case CryptoPartPurpose.TakeProfit:
                             double x1 = CandleTime.FromDateTime(step.CreateTime).Minutes;
                             double xEndTp = step.CloseTime == null ? maxDate.Minutes + 2 : CandleTime.FromDateTime(step.CloseTime!.Value).Minutes;
-                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, "take profit", xLabelOffset, group);
+                            DrawHorizontalLine(chart, x1, xEndTp, step.Price, stepColor, $"take profit-{positionPart.PartNumber}", xLabelOffset, group);
 
                             //if (step.CloseTime.HasValue && step.StopPrice.HasValue && step.AveragePrice == step.StopPrice)
                             //    stepColor = OxyColors.Yellow; // just to see for now (orange ain't much different then red)
