@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Json;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 
 using Newtonsoft.Json.Linq;
 
@@ -146,21 +147,24 @@ public class AltradyWebhook
             //quote_amount(number, optional): Specifies quote amount of the entry order, if left blank, the signal bot setting will be used. ,
             //base_amount(number, optional): Specifies base amount of the entry order, if left blank, the signal bot setting will be used. ,
 
-            // TP body (just 1)
+            // TP body (multiple)
+            if (GlobalData.Settings.Trading.TpList.Count > 0)
             {
                 dynamic tp_orders = new JArray();
                 request.take_profit = tp_orders;
 
-                dynamic tp = new JObject();
-                tp_orders.Add(tp);
+                foreach (CryptoTpEntry entry in GlobalData.Settings.Trading.TpList)
+                {
+                    dynamic tp = new JObject();
+                    tp_orders.Add(tp);
 
-                // Prefer the strategy-computed TP distance (position.TpPercentage); else the default.
-                tp.price_percentage = position.TpPercentage ?? GlobalData.Settings.Trading.ProfitPercentage;
-                tp.position_percentage = 100;
+                    tp.position_percentage = entry.Factor;
+                    tp.price_percentage = entry.Percentage;
+                }
             }
+        
 
             // DCA body (multiple)
-            // Is going to be expensive with my 5 dca setup... ;-)
             decimal stopLossPercentage = 0;
             if (GlobalData.Settings.Trading.DcaList.Count > 0)
             {
@@ -172,8 +176,9 @@ public class AltradyWebhook
                     dynamic dca = new JObject();
                     dca_orders.Add(dca);
 
+                    // dcaItem.Factor is already a percentage (100 = 1x, 200 = 2x, ...)
+                    dca.quantity_percentage = dcaItem.Factor;
                     dca.price_percentage = dcaItem.Percentage;
-                    dca.quantity_percentage = 100 * dcaItem.Factor;
 
                     if (dcaItem.Percentage > stopLossPercentage)
                         stopLossPercentage = dcaItem.Percentage;
