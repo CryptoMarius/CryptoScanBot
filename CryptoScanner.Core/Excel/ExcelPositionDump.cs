@@ -76,7 +76,8 @@ public class ExcelPositionDump(CryptoPosition position) : ExcelBase(position.Sym
             // Past er niet echt tussen..
             column++;
 
-            WriteCell(sheet, column++, row, part.EntryMethod == CryptoEntryOrDcaStrategy.AfterNextSignal ? part.Strategy.ToString() : "Fixed");
+            //WriteCell(sheet, column++, row, part.EntryMethod == CryptoEntryOrDcaStrategy.AfterNextSignal ? part.Strategy.ToString() : "Fixed");
+            WriteCell(sheet, column++, row, "Fixed");
             WriteCell(sheet, column++, row, part.Interval != null ? part.Interval.Name : position.Interval!.Name);
 
             foreach (CryptoPositionStep step in part.StepList.Values.ToList())
