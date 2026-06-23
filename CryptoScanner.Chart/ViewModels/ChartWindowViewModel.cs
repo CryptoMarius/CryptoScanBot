@@ -1000,6 +1000,10 @@ public partial class ChartWindowViewModel : ObservableObject
     }
 
     private CandleTime lastCandleTime = CandleTime.MinValue;
+    private DateTime? _previousWindowStart;
+    private DateTime? _previousWindowEnd;
+    private int? _previousWindowEmulatorRunId;
+
     private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Display options changed
@@ -1494,13 +1498,16 @@ public partial class ChartWindowViewModel : ObservableObject
 
 
     // Candles of context drawn on each side of the position's lifetime when opening from a position.
-    private const int WindowMarginCandles = 200;
+    // Public so the emulator's "Fetch candles" step (MainWindowViewModel.FetchCandlesAsync) can fetch
+    // enough history per interval up front for the chart to ever need — see WindowCalcWarmupCandles.
+    public const int WindowMarginCandles = 200;
 
     // Extra candles loaded BEFORE the visible window purely to warm up the indicators. The longest
     // lookback we draw is SMA(200), so the windowed candle list starts this many candles before
     // MinDate; every indicator value at MinDate is then fully warmed up, identical to computing over
     // the whole history — but without paying for the whole history.
-    private const int WindowCalcWarmupCandles = 300;
+    // Public for the same reason as WindowMarginCandles above.
+    public const int WindowCalcWarmupCandles = 300;
 
     /// <summary>
     /// The single windowed candle list every drawer computes AND renders from. Built once per refresh
@@ -1560,7 +1567,9 @@ public partial class ChartWindowViewModel : ObservableObject
         // Reset dates if symbol/interval changed
         string displayedSymbol = optionsInChart["symbol"];
         string displayedInterval = optionsInChart["interval"];
-        if (displayedSymbol != symbol.Name || displayedInterval != interval.Name || Session.ForceCalculation)
+        bool windowChanged = _previousWindowStart != WindowStart || _previousWindowEnd != WindowEnd || _previousWindowEmulatorRunId != WindowEmulatorRunId;
+
+        if (displayedSymbol != symbol.Name || displayedInterval != interval.Name || Session.ForceCalculation || windowChanged)
         {
             ClearOptions(symbol.Name, interval.Name);
             Symbol = symbol;
@@ -1591,6 +1600,7 @@ public partial class ChartWindowViewModel : ObservableObject
             }
 
             UpdateAxisTicks(chart.Axes[0]);
+            lastCandleTime = CandleTime.MinValue;
         }
 
         // Reset the min and maxdate so the refresh draws the new candles and attributes.
@@ -1634,6 +1644,10 @@ public partial class ChartWindowViewModel : ObservableObject
             optionsInChart.TryAdd("positions", "");
             optionsInChart["positions"] = "";
         }
+
+        _previousWindowStart = WindowStart;
+        _previousWindowEnd = WindowEnd;
+        _previousWindowEmulatorRunId = WindowEmulatorRunId;
 
         return (true, "");
     }
