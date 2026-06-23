@@ -86,13 +86,18 @@ public class TradeTools
 
         decimal totalValue = 0;
         decimal totalQuantity = 0;
-        CryptoPositionPart? partTp = null;
+        // Commission from Entry+Dca parts only (excludes TP parts) - used for TpGridAnchorPrice,
+        // see below.
+        decimal entryDcaCommission = 0;
+        // One entry per TP level (multi-level take profit; a legacy/single-TP position just has one)
+        List<CryptoPositionPart> tpParts = [];
         int steps = 0;
         int stepCanceled = 0;
-        // Counts pending (not yet filled) Dca parts seen so far in the loop below, so each one gets
-        // its own PartNumber (= DcaList index + 1) instead of colliding on the same "next" number -
-        // needed now that multiple Dca parts can be open at once (place-all-dca-levels-at-once).
-        int pendingDcaCount = 0;
+        // Counts how many parts of each Purpose have been seen so far in this loop, so every part gets
+        // a sequential, 1-based number within its own purpose (Entry 1, Dca 1/2/3, TP 1/2/3, ...) - same
+        // rule as PositionTools.NextPartNumber uses when a new part is created. PartList is in creation
+        // order (sorted by Id), so this reproduces the DcaList/TpList configuration order.
+        Dictionary<CryptoPartPurpose, int> partNumberByPurpose = [];
 
         foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
@@ -187,29 +192,24 @@ public class TradeTools
                     part.BreakEvenPrice = (part.Invested - part.Returned - part.Commission) / part.Quantity;
             }
 
-            // De parts opnieuw instellen
-            if (part.Purpose == CryptoPartPurpose.Entry)
-                part.PartNumber = 0;
+            // De parts opnieuw instellen: ieder Purpose krijgt zijn eigen oplopende reeks, beginnend bij 1
+            partNumberByPurpose.TryGetValue(part.Purpose, out int previousPartNumber);
+            part.PartNumber = previousPartNumber + 1;
+            partNumberByPurpose[part.Purpose] = part.PartNumber;
+
+            // PartCount/ActiveDca staan los van de nummering hierboven - dat is het aantal daadwerkelijk
+            // gevulde DCA's (gebruikt voor de DCA-slotcontrole en DcaList-lookup), geen volgnummer.
             if (part.Purpose == CryptoPartPurpose.Dca)
             {
                 if (part.Invested > 0)
-                {
                     position.PartCount++;
-                    part.PartNumber = position.PartCount;
-                }
                 else
-                {
                     position.ActiveDca = true;
-                    pendingDcaCount++;
-                    part.PartNumber = position.PartCount + pendingDcaCount;
-                }
             }
-            // fix..
             if (part.Purpose == CryptoPartPurpose.TakeProfit)
-            {
-                part.PartNumber = 9999;
-                partTp = part;
-            }
+                tpParts.Add(part);
+            else if (part.Purpose == CryptoPartPurpose.Entry || part.Purpose == CryptoPartPurpose.Dca)
+                entryDcaCommission += part.Commission;
 
 
             //string t = string.Format("{0} CalculateProfit sell invested={1} profit={2} bought={3} sold={4} steps={5}",
@@ -233,11 +233,19 @@ public class TradeTools
         // The last 2 conditions will close the position if all entry orders are canceled (timeout etc) but the position was never closed..
 
         // Reset closetime if there is quantity left (it should not have been closed)
-        if (partTp != null && position.Quantity > position.RemainingDust && partTp.CloseTime.HasValue)
-        {
-            partTp.CloseTime = null;
-            GlobalData.AddTextToLogTab($"{position.Symbol.Name} resetting closeTime of part {partTp.PartNumber} (debug, fixing position?)");
-        }
+        // TODO: I reoved this, but it probably had a reason..
+        // Exchange only or papertrade (we will find out)
+        //if (position.Quantity > position.RemainingDust)
+        //{
+        //    foreach (CryptoPositionPart tpPart in tpParts)
+        //    {
+        //        if (tpPart.CloseTime.HasValue)
+        //        {
+        //            tpPart.CloseTime = null;
+        //            GlobalData.AddTextToLogTab($"{position.Symbol.Name} resetting closeTime of part {tpPart.PartNumber} (debug, fixing position?)");
+        //        }
+        //    }
+        //}
 
         // Reset status if there is a timeout (status Trading should not have been set) - nothing wil happen otherwise
         if (position.Quantity == 0 && position.Reserved == 0 && steps > 0 && steps == stepCanceled && position.Status == CryptoPositionStatus.Trading)
@@ -263,6 +271,18 @@ public class TradeTools
             avgPrice = totalValue / totalQuantity;
         decimal predictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * position.Quantity / 100m;
 
+        // Fixed TP/DCA grid anchor: same shape as BreakEvenPrice below, but built from totalValue/
+        // totalQuantity/entryDcaCommission - which only include Entry+Dca fills (Returned is
+        // structurally 0 for those parts, so it is dropped here) - so a sibling TP filling never
+        // moves it. Only a new DCA fill shifts it (averaging the cost basis), same as the fixed
+        // grid in PositionMonitor.GetMissingFixedPercentageDcaPrices already assumes.
+        if (totalQuantity > 0 && position.Status == CryptoPositionStatus.Trading)
+        {
+            decimal entryPredictedCommission = avgPrice * (decimal)position.Exchange.FeeRate * totalQuantity / 100m;
+            position.TpGridAnchorPrice = position.Side == CryptoTradeSide.Long
+                ? (totalValue + entryDcaCommission + entryPredictedCommission) / totalQuantity
+                : (totalValue - entryDcaCommission - entryPredictedCommission) / totalQuantity;
+        }
 
         decimal BreakEvenPriceOld = position.BreakEvenPrice;
         if (position.Side == CryptoTradeSide.Long)
@@ -812,7 +832,8 @@ public class TradeTools
 
 
     public static async Task PlaceTakeProfitOrderAtPrice(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
-        decimal takeProfitPrice, decimal? tpStop, decimal? tpLimit, DateTime currentTime, string extraText)
+        decimal takeProfitPrice, decimal? tpStop, decimal? tpLimit, DateTime currentTime, string extraText,
+        decimal quantity, bool includeDust = true)
     {
         CryptoSymbol symbol = position.Symbol;
 
@@ -840,14 +861,15 @@ public class TradeTools
         }
 
 
-        // This is the amount we want in the TP
+        // This is the amount we want in the TP (the caller's share for this TP level/part, not
+        // necessarily the whole position - see PositionMonitor multi-level TP handling)
         decimal remainingDust;
-        decimal takeProfitQuantity = position.Quantity;
-        decimal takeProfitQuantityOriginal = position.Quantity;
+        decimal takeProfitQuantity = quantity;
+        decimal takeProfitQuantityOriginal = quantity;
         if (position.Symbol.Exchange.TradingType == CryptoTradingType.Futures)
         {
             remainingDust = 0; // Futures deals with contracts and can never has dust
-            takeProfitQuantity = position.Quantity;
+            takeProfitQuantity = quantity;
         }
         else
         {
@@ -856,7 +878,9 @@ public class TradeTools
 
             // DEBUG --- ADD DUST to TP (short are excluded for now <how does that work?>)
             //TODO: Short? / Margin?
-            if (GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long &&
+            // Only the level that absorbs the remainder (includeDust) should also absorb leftover
+            // exchange dust - otherwise it would get added to every TP level's order.
+            if (includeDust && GlobalData.Settings.Trading.AddDustToTp && position.Side == CryptoTradeSide.Long &&
                 position.Symbol.Exchange.TradingType != CryptoTradingType.Futures)
             {
                 StringBuilder stringBuilder = new();
@@ -874,7 +898,9 @@ public class TradeTools
                 {
                     stringBuilder.AppendLine($"yes we can add extra dust={dust} value dust ={dust * symbol.LastPrice}");
 
-                    decimal takeProfitQuantityWithExtraDust = info.BaseFree;
+                    // quantity + dust == position.Quantity + (BaseFree - position.Quantity) == BaseFree
+                    // when this level covers the whole position (single-level TP), same as before.
+                    decimal takeProfitQuantityWithExtraDust = quantity + dust;
                     takeProfitQuantityWithExtraDust = takeProfitQuantityWithExtraDust.Clamp(symbol.QuantityMinimum, symbol.QuantityMaximum, symbol.QuantityTickSize);
                     stringBuilder.AppendLine($"new rounded quantity={takeProfitQuantityWithExtraDust} value={takeProfitQuantityWithExtraDust * symbol.LastPrice}...");
 

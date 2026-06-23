@@ -102,19 +102,31 @@ public static class PositionTools
         //position.PriceMin = signal.SignalPrice;
         //position.PriceMax = signal.SignalPrice;
 
-        // Forward any per-signal SL/TP override to the position (persisted; see CryptoPosition).
+        // Forward any per-signal SL override to the position (persisted; see CryptoPosition).
         position.SlPercentage = signal.SlPercentage;
-        position.TpPercentage = signal.TpPercentage;
     }
 
-    public static CryptoPositionPart ExtendPosition(CryptoDatabase database, CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
-        CryptoSignalStrategy strategy, CryptoEntryOrDcaStrategy stepInMethod, decimal signalPrice, DateTime currentDate, bool manualOrder = false)
+    /// <summary>
+    /// The 1-based sequence number a new part of the given Purpose would get if created right now -
+    /// "Entry 1", "Dca 1/2/3...", "TP 1/2/3...". PartList is in creation order (sorted by Id), so
+    /// counting existing same-purpose parts reproduces the DcaList/TpList configuration order.
+    /// TradeTools.CalculateProfitAndBreakEvenPrice applies the same rule when it renumbers parts.
+    /// </summary>
+    public static int NextPartNumber(CryptoPosition position, CryptoPartPurpose purpose)
+    {
+        return position.PartList.Values.Count(p => p.Purpose == purpose) + 1;
+    }
+
+    public static CryptoPositionPart ExtendPosition(CryptoDatabase database,
+        CryptoPosition position, CryptoPartPurpose purpose, CryptoInterval interval,
+        CryptoSignalStrategy strategy, CryptoEntryOrDcaStrategy stepInMethod,
+        decimal signalPrice, DateTime currentDate, bool manualOrder = false)
     {
         CryptoPositionPart part = new()
         {
             Position = position,
             Purpose = purpose,
-            PartNumber = position.PartList.Count, //position.PartCount + 1, //
+            PartNumber = NextPartNumber(position, purpose),
             Strategy = strategy,
             Interval = interval,
             IntervalId = interval.Id,
@@ -141,7 +153,7 @@ public static class PositionTools
         // Nieuwe parts kunnen hierdoor via de cooldown worden uitgesteld
         position.Symbol.LastTradeDate = currentDate;
 
-        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} plaatsen op {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
+        GlobalData.AddTextToLogTab($"{position.Symbol.Name} {purpose} {stepInMethod} placing {signalPrice.ToString0(position.Symbol.PriceDisplayFormat)}");
         return part;
     }
 

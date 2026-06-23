@@ -11,7 +11,9 @@ public class ScannerLog
 
     // Matches NLog's FileTarget default layout ("${longdate}|${level:uppercase=true}|${logger}|${message}")
     // plus the simulated-time field (${simtime}, registered in InitializeLogging) inserted right after ${longdate}.
-    private const string LogLayout = "${longdate}|sim=${simtime}|${level:uppercase=true}|${logger}|${message}";
+    // ${onexception} appends the full exception (incl. stacktrace) only on calls like Logger.Error(ex, "...") -
+    // without it, every Logger.Error(exception, ...) call in the codebase silently drops the stacktrace.
+    private const string LogLayout = "${longdate}|sim=${simtime}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";
 
     static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
     {

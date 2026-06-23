@@ -33,6 +33,11 @@ public class CryptoPositionPart
     public CryptoPartPurpose Purpose { get; set; }
     public CryptoSignalStrategy Strategy { get; set; }
 
+    // When Purpose == TakeProfit, this IS the configured TP level (1-based: "TP 1" = SettingsTrading
+    // TpList[0], "TP 2" = TpList[1], ...), set once at creation and never renumbered - combined with
+    // Purpose that's enough to identify which level a part belongs to. For Entry/Dca it is the
+    // creation-order/DCA sequence number (recalculated in TradeTools.CalculateProfitAndBreakEvenPrice
+    // based on fill state).
     public int PartNumber { get; set; }
     public DateTime CreateTime { get; set; }
     public DateTime? CloseTime { get; set; }

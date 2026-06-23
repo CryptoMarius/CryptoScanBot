@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.CoreTests;
 
 using Dapper.Contrib.Extensions;
@@ -123,7 +124,7 @@ public class PaperAssetsTests : TestBase
 
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 10;
         GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
-        GlobalData.Settings.Trading.ProfitPercentage = 1m;
+        GlobalData.Settings.Trading.TpList = [new CryptoTpEntry { Percentage = 1m, Factor = 100m }];
 
         CryptoSymbol symbol = CreateTestSymbol(database);
 

@@ -15,15 +15,16 @@ public partial class TraderEntryViewModel : ObservableObject
 
     private readonly Dictionary<string, CryptoEntryOrDcaStrategy> _strategyList = new()
     {
+        { "Fixed percentages", CryptoEntryOrDcaStrategy.FixedPercentage},
         //{ "Direct na het signaal", CryptoEntryOrDcaStrategy.Immediately },
-        { "Na een signaal (sbm/stobb/enz)", CryptoEntryOrDcaStrategy.AfterNextSignal },
+        //{ "Na een signaal (sbm/stobb/enz)", CryptoEntryOrDcaStrategy.AfterNextSignal },
         //{ "Trace via de Keltner Channel en PSAR", CryptoEntryOrDcaStrategy.TrailViaKcPsar }
     };
 
     private readonly Dictionary<string, CryptoEntryOrDcaPricing> _pricingList = new()
     {
         { "Market order", CryptoEntryOrDcaPricing.MarketPrice },
-        { "Limit order op signaal prijs", CryptoEntryOrDcaPricing.SignalPrice },
+        { "Limit order on signaal price", CryptoEntryOrDcaPricing.SignalPrice },
         //{ "Limit order met pullback (%)", CryptoEntryOrDcaPricing.SignalPriceWithPullback },
         //{ "Limit order op bied prijs", CryptoEntryOrDcaPricing.BidPrice },
         //{ "Limit order op vraag prijs", CryptoEntryOrDcaPricing.AskPrice }
@@ -33,7 +34,7 @@ public partial class TraderEntryViewModel : ObservableObject
     private CryptoOrderType _entryOrderType = CryptoOrderType.Market; // enum (EXACT match)
 
     [ObservableProperty]
-    private CryptoEntryOrDcaStrategy _entryStrategy = CryptoEntryOrDcaStrategy.AfterNextSignal; // enum (EXACT match)
+    private CryptoEntryOrDcaStrategy _entryStrategy = CryptoEntryOrDcaStrategy.FixedPercentage; // enum (EXACT match)
 
     [ObservableProperty]
     private CryptoEntryOrDcaPricing _entryOrderPrice = CryptoEntryOrDcaPricing.SignalPrice; // enum (EXACT match)

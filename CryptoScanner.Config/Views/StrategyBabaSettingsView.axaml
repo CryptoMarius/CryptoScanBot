@@ -45,16 +45,6 @@
                           Content="Require RSI overbought/oversold" FontSize="12"
                           ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
 
-                <!-- Cooldown -->
-                <CheckBox IsChecked="{Binding UseCooldown, Mode=TwoWay}"
-                          Content="Cooldown after a signal" FontSize="12"
-                          ToolTip.Tip="After a signal fires, wait the configured number of candles before a new one may appear (shared across long &amp; short)."/>
-                <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Number of candles to wait after a signal before a new one may appear.">
-                    <TextBlock Grid.Column="0" Text="Cooldown (candles):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding CooldownBars, Mode=TwoWay}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                </Grid>
-
                 <!-- Zone confirmation (OR over enabled types) -->
                 <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
                           Content="Require DLZ zone rejection" FontSize="12"

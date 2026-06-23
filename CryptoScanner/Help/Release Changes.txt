@@ -1,5 +1,11 @@
 CryptoScanBot release historie:
 
+xx-06-2025 2.5.9
+- Memory leaks opgelost
+- Meerdere take profits in de trader kunnen opgeven
+- De factor bij de dca en de tp is nu een percentage (om het gelijk te houden met Altrady)
+
+
 22-06-2025 2.5.8
 - BABA strategie (nog geen juiste sl%)
 - Dubbelklik actie voor chart of trading app hersteld

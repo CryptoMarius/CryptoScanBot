@@ -37,8 +37,8 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
 
     // Cooldown: after a signal fires, wait CooldownBars candles before a new one may appear on the same
     // symbol+interval (shared across long & short, like the Pine script). Counted from the last signal.
-    public bool UseCooldown { get; set; } = true;
-    public int CooldownBars { get; set; } = 10;
+    //public bool UseCooldown { get; set; } = true;
+    //public int CooldownBars { get; set; } = 10;
 
     // When true the signal hands its own (percentage based) stop-loss to the trader via
     // OverrideSlPercentage. When false the signal returns null for the SL, so the trader falls back

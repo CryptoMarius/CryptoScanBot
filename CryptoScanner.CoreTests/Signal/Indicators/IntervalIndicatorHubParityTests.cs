@@ -89,16 +89,16 @@ public class IntervalIndicatorHubParityTests
     private static CryptoData BatchCryptoData(IReadOnlyList<IQuote> quotes, int i)
     {
         var g = GlobalData.Settings.General;
-        var bb = quotes.GetBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
-        var sma50 = quotes.GetSma(50).ToList();
-        var sma100 = quotes.GetSma(100).ToList();
-        var sma200 = quotes.GetSma(200).ToList();
-        var rsi = quotes.GetRsi(g.SettingsRsi.Length).ToList();
-        var macd = quotes.GetMacd(12, 26, 9).ToList();
-        var stoch = quotes.GetStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
-        var psar = quotes.GetParabolicSar(0.02, 0.2).ToList();
-        var ema50 = quotes.GetEma(50).ToList();
-        var atr14 = quotes.GetAtr(14).ToList();
+        var bb = quotes.ToBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
+        var sma50 = quotes.ToSma(50).ToList();
+        var sma100 = quotes.ToSma(100).ToList();
+        var sma200 = quotes.ToSma(200).ToList();
+        var rsi = quotes.ToRsi(g.SettingsRsi.Length).ToList();
+        var macd = quotes.ToMacd(12, 26, 9).ToList();
+        var stoch = quotes.ToStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
+        var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
+        var ema50 = quotes.ToEma(50).ToList();
+        var atr14 = quotes.ToAtr(14).ToList();
         var wma05Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(5).ToList();
         var wma05High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(5).ToList();
         var wma10Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(10).ToList();
@@ -107,8 +107,8 @@ public class IntervalIndicatorHubParityTests
         // Baba VWAP bands — same BabaBandsHelper.ComputeBands the hub path (IntervalIndicatorHub) uses.
         var baba = GlobalData.Settings.Signal.Baba;
         BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(quotes.Cast<CryptoCandle>().ToList());
-        var atrBabaFast = quotes.GetAtr(baba.AtrLength).ToList();
-        var atrBabaSl = quotes.GetAtr(baba.Length).ToList();
+        var atrBabaFast = quotes.ToAtr(baba.AtrLength).ToList();
+        var atrBabaSl = quotes.ToAtr(baba.Length).ToList();
 
         return new CryptoData
         {

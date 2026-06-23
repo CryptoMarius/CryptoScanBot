@@ -67,13 +67,6 @@ public class SignalCreateBase
     /// </summary>
     public virtual decimal? OverrideSlPercentage => null;
 
-    /// <summary>
-    /// Optional per-signal take-profit distance, as a positive percentage from the entry. When non-null
-    /// the trader uses this instead of the default percentage-based TP from Settings.Trading. Typically
-    /// derived from <see cref="OverrideSlPercentage"/> via a risk:reward multiple.
-    /// </summary>
-    public virtual decimal? OverrideTpPercentage => null;
-
 
     public virtual bool AdditionalChecks(MyData candle, out string response)
     {

@@ -17,6 +17,7 @@ using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
 using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.Views;
+using CryptoScanner.ViewModels;
 
 namespace CryptoScanner.Emulator.ViewModels;
 
@@ -183,7 +184,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// For every symbol listed in emulator-run.json, fetch the candles needed for the backtest
-    /// window per active interval. Reuses the DLZ "inzoomen" routine
+    /// window, per interval. Reuses the DLZ "inzoomen" routine
     /// <see cref="Zones.ZoneCandleEngine.FetchFrom"/> exactly the way
     /// <see cref="Zones.ZoneDlz.LoadHistoricCandles"/> does: we only compute the wanted range
     /// (a <c>minDate</c> + <c>candleFetchCount</c>) and hand the rest to that routine. It already
@@ -193,8 +194,14 @@ public partial class MainWindowViewModel : ObservableObject
     /// missing (from the first gap onward). No hand-rolled coverage logic here — reusing that
     /// routine IS the point.
     ///
-    /// Only the intervals <see cref="IndicatorWarmup.ResolveActiveIntervals"/> reports are
-    /// fetched — pulling 1d/1w candles for a strategy that never touches them is wasted work.
+    /// Every known interval in <see cref="GlobalData.IntervalList"/> is fetched — not just the
+    /// strategy's active (signal) intervals — so candles.db always has every interval a position
+    /// could be shown on (e.g. a webhook position on 3m/5m), regardless of whether the strategy's
+    /// indicators ever touch it. <see cref="Zones.ZoneCandleEngine.FetchFrom"/> already does the
+    /// right thing per interval: fetch directly if the exchange supports it, otherwise recurse
+    /// into <see cref="CryptoInterval.ConstructFrom"/> and build it via
+    /// <see cref="CandleTools.BulkCalculateCandles"/> — so there is no separate "derive from 1m"
+    /// path here, just one straight loop over every interval.
     /// </summary>
     [RelayCommand]
     private async Task FetchCandlesAsync()
@@ -226,10 +233,10 @@ public partial class MainWindowViewModel : ObservableObject
         int total = config.Symbols.Count;
         int symbolIdx = 0;
 
-        List<CryptoInterval> activeIntervals = IndicatorWarmup.ResolveActiveIntervals();
-        string intervalNames = string.Join(", ", activeIntervals.Select(i => i.Name));
+        List<CryptoInterval> intervals = GlobalData.IntervalList;
+        string intervalNames = string.Join(", ", intervals.Select(i => i.Name));
         GlobalData.AddTextToLogTab(
-            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, active intervals: {intervalNames}");
+            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, intervals: {intervalNames}");
 
         try
         {
@@ -259,7 +266,7 @@ public partial class MainWindowViewModel : ObservableObject
                     // step sees the full picture instead of only the bounded startup load.
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-                    foreach (CryptoInterval interval in activeIntervals)
+                    foreach (CryptoInterval interval in intervals)
                     {
                         // Per-interval warmup window — 1m=24h, higher=270×duration — prepended to the
                         // FULL run window (FromDate..ToDate), in that interval's OWN resolution: a 1w
@@ -271,11 +278,22 @@ public partial class MainWindowViewModel : ObservableObject
                         // gets persisted for the sub-range some past run actually replayed, so anything
                         // outside that left permanent holes in candles.db. Fetching the full range here
                         // closes those holes for good.
-                        uint warmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval);
-                        DateTime intervalFromUtc = config.FromDate.AddMinutes(-warmupMinutes);
+                        //
+                        // The warmup must cover whichever is bigger: what the indicators need
+                        // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
+                        // WindowCalcWarmupCandles, the most a position's chart can ever ask for via
+                        // LoadWindowCandlesFromDb). Without this, a position near the start of the run
+                        // window would have plenty of indicator warmup but still run out of candles the
+                        // moment its chart is opened on a higher interval — the chart's margin in bar
+                        // count is fixed, so on a higher interval it reaches further back in calendar
+                        // time than the indicator warmup ever needed to.
+                        uint chartMarginMinutes = (uint)((ChartWindowViewModel.WindowMarginCandles
+                            + ChartWindowViewModel.WindowCalcWarmupCandles) * interval.Duration);
+                        uint warmupMinutes = Math.Max(IndicatorWarmup.ComputeWarmupMinutes(interval), chartMarginMinutes);
+                        DateTime from = config.FromDate.AddMinutes(-warmupMinutes);
 
                         CandleTime minDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(intervalFromUtc, interval.Duration), interval.Duration);
+                            CandleTime.AlignFromDateTime(from, interval.Duration), interval.Duration);
                         CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
                             CandleTime.AlignFromDateTime(config.ToDate, interval.Duration), interval.Duration);
 
@@ -287,8 +305,8 @@ public partial class MainWindowViewModel : ObservableObject
                         // at "now"), so passing the count keeps us inside the DLZ contract.
                         int candleFetchCount = (int)((maxDate.Minutes - minDate.Minutes) / interval.Duration);
 
-                        GlobalData.AddTextToLogTab(
-                            $"Fetch candles: {symbol.Name} {interval.Name} — want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
+                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — " +
+                            $"want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
 
                         try
                         {
@@ -427,7 +445,7 @@ public partial class MainWindowViewModel : ObservableObject
                 Progress = new Progress<TickRunProgress>(OnTickProgress),
                 // Temporarily serial: testing whether the parallel symbol order (under slot/capital
                 // contention) is what makes the emulator diverge from the serial live scanner.
-                //RunParallel = true;
+                RunParallel = true,
             };
 
             // Run the replay on a background thread. Previously RunAsync was awaited directly on

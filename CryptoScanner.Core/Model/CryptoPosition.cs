@@ -58,6 +58,11 @@ public partial class CryptoPosition : CryptoData2
     public decimal RemainingDust { get; set; }
     // The Break Even Price
     public decimal BreakEvenPrice { get; set; }
+    // Fixed anchor for the fixed-percentage TP/DCA grid (PositionMonitor.CalculateTpPrice /
+    // GetMissingFixedPercentageDcaPrices). Same formula as BreakEvenPrice, but built only from
+    // Entry+Dca fills (see TradeTools.CalculateProfitAndBreakEvenPrice) - a sibling TP filling never
+    // moves it, only a new DCA does (unlike BreakEvenPrice, which also reacts to a TP fill).
+    public decimal TpGridAnchorPrice { get; set; }
 
     // Hulpmiddelen voor statistiek en dca (niet noodzakelijk)
     public decimal? EntryPrice { get; set; }
@@ -86,12 +91,11 @@ public partial class CryptoPosition : CryptoData2
 
     public string? EventText { get; set; }
 
-    // Optional per-signal SL and TP distances, each a positive percentage from the entry, populated
-    // from CryptoSignal at position creation time. When non-null, PositionMonitor.CalculateTpPrices /
-    // the Altrady webhook use these instead of the percentage-based defaults in Settings.Trading.
-    // Persisted, so the levels survive an app restart instead of falling back to the default strategy.
+    // Optional per-signal SL distance, a positive percentage from the entry, populated from
+    // CryptoSignal at position creation time. When non-null, PositionMonitor.CalculateSlPrices /
+    // the Altrady webhook use this instead of the percentage-based default in Settings.Trading.
+    // Persisted, so the level survives an app restart instead of falling back to the default strategy.
     public decimal? SlPercentage { get; set; }
-    public decimal? TpPercentage { get; set; }
 
     // Sticky flag (in-memory only): set once the position reached the SL-protection profit threshold and
     // the stop was pulled to break-even, so CalculateTpPrices keeps it at BE and never loosens it again.

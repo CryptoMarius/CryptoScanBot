@@ -16,8 +16,9 @@ public partial class DcaItemViewModel : ObservableObject
     [ObservableProperty]
     private decimal _percentage = 1.5m; // decimal (EXACT match)
 
+    // Percentage of the entry amount (100 = 1x, 200 = 2x, ...)
     [ObservableProperty]
-    private decimal _factor = 2m; // decimal (EXACT match)
+    private decimal _factor = 200m; // decimal (EXACT match)
 
     public string Header => $"DCA {Index}";
 
@@ -109,7 +110,7 @@ public partial class TraderDcaViewModel : ObservableObject
     private void AddDca()
     {
         decimal newPercentage = 6m;
-        decimal newFactor = 2m;
+        decimal newFactor = 200m;
 
         // Use last item's values + increment
         if (DcaItems.Count > 0)

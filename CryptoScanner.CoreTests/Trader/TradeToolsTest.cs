@@ -3,6 +3,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.CoreTests;
 
@@ -27,7 +28,7 @@ public class TradeToolsTest : TestBase
 
         GlobalData.Settings.Trading.GlobalBuyCooldownTime = 10;
         GlobalData.Settings.Trading.TakeProfitStrategy = CryptoTakeProfitStrategy.FixedPercentage;
-        GlobalData.Settings.Trading.ProfitPercentage = 1m;
+        GlobalData.Settings.Trading.TpList = [new CryptoTpEntry { Percentage = 1m, Factor = 100m }];
 
 
         // Gebaseerd op een entry in MASKUSDT waarin dust en BE een probleem is/was?

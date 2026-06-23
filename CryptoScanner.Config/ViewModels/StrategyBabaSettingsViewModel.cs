@@ -34,12 +34,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
     private double _slideMinMovePercent = 1.0;
 
     [ObservableProperty]
-    private bool _useCooldown = true;
-
-    [ObservableProperty]
-    private int _cooldownBars = 10;
-
-    [ObservableProperty]
     private bool _useStopLoss = true;
 
     [ObservableProperty]
@@ -66,8 +60,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         SlideWindow = settings.SlideWindow;
         SlideMinEfficiency = settings.SlideMinEfficiency;
         SlideMinMovePercent = settings.SlideMinMovePercent;
-        UseCooldown = settings.UseCooldown;
-        CooldownBars = settings.CooldownBars;
         UseStopLoss = settings.UseStopLoss;
         StopLossAtrFactor = settings.StopLossAtrFactor;
         UseDlzZone = settings.UseDlzZone;
@@ -86,8 +78,6 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         settings.SlideWindow = SlideWindow;
         settings.SlideMinEfficiency = SlideMinEfficiency;
         settings.SlideMinMovePercent = SlideMinMovePercent;
-        settings.UseCooldown = UseCooldown;
-        settings.CooldownBars = CooldownBars;
         settings.UseStopLoss = UseStopLoss;
         settings.StopLossAtrFactor = StopLossAtrFactor;
         settings.UseDlzZone = UseDlzZone;

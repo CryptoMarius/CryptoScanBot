@@ -60,7 +60,22 @@ public class SettingsTradingShort : SettingsTradingBase
 [Serializable]
 public class CryptoDcaEntry
 {
+    // Entry amount multiplier for this DCA step, expressed as a percentage: 100 = invest the same
+    // amount again (1x), 200 = invest twice the amount (2x), 400 = invest four times the amount (4x).
     public decimal Factor { get; set; }
+    public decimal Percentage { get; set; }
+}
+
+
+[Serializable]
+public class CryptoTpEntry
+{
+    // Share of the position quantity closed at this level, expressed as a percentage: 100 = close
+    // the entire (remaining) position, 33 = close 33% of it. The LAST entry in SettingsTrading.TpList
+    // always absorbs whatever remains (the "rest"), regardless of the value entered here - it only
+    // matters for non-last entries.
+    public decimal Factor { get; set; }
+    // Profit distance (%) from the break-even price for this TP level
     public decimal Percentage { get; set; }
 }
 
@@ -141,7 +156,7 @@ public class SettingsTrading
     // Entry
     public CryptoOrderType EntryOrderType { get; set; } = CryptoOrderType.Market;
     public CryptoEntryOrDcaPricing EntryOrderPrice { get; set; } = CryptoEntryOrDcaPricing.SignalPrice; // alway's
-    public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.AfterNextSignal; // Alway's for now, but can be trailing
+    public CryptoEntryOrDcaStrategy EntryStrategy { get; set; } = CryptoEntryOrDcaStrategy.FixedPercentage; // Alway's for now, but can be trailing
     // Verwijder de order indien niet na zoveel candles gevuld
     public int EntryRemoveTime { get; set; } = 5;
     // Pullback (in %) applied when EntryOrderPrice == SignalPriceWithPullback. Positive value:
@@ -168,13 +183,10 @@ public class SettingsTrading
     public CryptoOrderType TakeProfitOrderType { get; set; } = CryptoOrderType.Limit;
     public CryptoTakeProfitStrategy TakeProfitStrategy { get; set; } = CryptoTakeProfitStrategy.FixedPercentage;
 
-    // Het verkoop bedrag = buy bedrag * (100+profit / 100)
-    public decimal ProfitPercentage { get; set; } = 1.01m;
     // Allow previous (small) dust to be added to the TP
     public bool AddDustToTp { get; set; } = true;
     // Zet een OCO zodra we in de winst zijn (kan het geen verlies trade meer worden, samen met tracing)
     //public bool LockProfits { get; set; } = false;
-
 
     //***************************
     // Stop loss
@@ -202,16 +214,13 @@ public class SettingsTrading
 
     public List<PauseTradingRule> PauseTradingRules { get; set; } = [];
 
-    // De lijst met bijkopen
+    // Multi-level dca (e.g. 33% at +1%, 33% at +2%, rest at +3%)
     public List<CryptoDcaEntry> DcaList { get; set; } = [];
 
-    // Instap condities indien de "trend" positief is (up/down)
-    //public List<string> TrendOn { get; set; } = new();
+    // Multi-level take profit (e.g. 33% at +1%, 33% at +2%, rest at +3%). Defaults to a single
+    // level (0.75%, 100% of the position).
+    public List<CryptoTpEntry> TpList { get; set; } = [new CryptoTpEntry { Percentage = 0.75m, Factor = 100m }];
 
-    //***************************
-    // Hervatten van trading als er positieve signalen zijn (automatisch)
-    // (misschien als meerdere munten weer omhoog gaan?)
-    // TODO: Hier eens over nadenken..
 
 
     public SettingsTrading()
@@ -246,12 +255,12 @@ public class SettingsTrading
 
         DcaList.Add(new CryptoDcaEntry()
         {
-            Factor = 2,
+            Factor = 200m, // 2x the entry amount
             Percentage = 1.5m,
         });
         DcaList.Add(new CryptoDcaEntry()
         {
-            Factor = 4,
+            Factor = 400m, // 4x the entry amount
             Percentage = 4.5m,
         });
     }

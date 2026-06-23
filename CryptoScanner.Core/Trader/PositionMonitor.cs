@@ -5,6 +5,7 @@ using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Exchange.Altrady;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 
 using Dapper.Contrib.Extensions;
@@ -809,31 +810,31 @@ public class PositionMonitor //: IDisposable
     //}
 
 
-    private (decimal price, decimal? stop, decimal? limit) CalculateTpPrices(CryptoPosition position)
+
+    /// <summary>
+    /// Absolute TP price for one level's profit distance (%), anchored on
+    /// position.TpGridAnchorPrice (Entry+Dca fills only, fee-corrected) - NOT on
+    /// position.BreakEvenPrice, which also shifts every time a sibling TP level fills (it banks the
+    /// realized profit into Returned and shrinks Quantity), causing every still-open TP level to be
+    /// repriced and re-placed. TpGridAnchorPrice does shift on a new DCA fill, same as
+    /// GetMissingFixedPercentageDcaPrices below already assumes.
+    /// multiplier = +1 long / -1 short, so the TP sits above for a long, below for a short.
+    /// </summary>
+    private decimal CalculateTpPrice(CryptoPosition position, decimal percentage)
+    {
+        int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
+        decimal entryAnchor = position.TpGridAnchorPrice;
+        decimal price = entryAnchor + (multiplier * entryAnchor * (percentage / 100));
+        return price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
+    }
+
+    private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
         int multiplier;
         if (position.Side == CryptoTradeSide.Long)
             multiplier = +1;
         else
             multiplier = -1;
-        decimal breakEven = position.BreakEvenPrice;
-
-
-
-        // Take-profit: use the per-signal override (distance % from the entry) when set, otherwise fall
-        // back to the percentage-based default (or the TrailViaKcPsar wide initial value). Anchored on
-        // the break-even, so the target stays the configured profit above/below the averaged entry even
-        // after a DCA. multiplier = +1 long / -1 short, so the TP sits above for a long, below for a short.
-        decimal price;
-        if (position.TpPercentage is decimal tpPct)
-        {
-            price = breakEven + (multiplier * breakEven * (tpPct / 100));
-        }
-        else if (GlobalData.Settings.Trading.TakeProfitStrategy == CryptoTakeProfitStrategy.TrailViaKcPsar)
-            price = breakEven + (multiplier * breakEven * (2.0m / 100)); // In eerste instantie flink hoog!
-        else
-            price = breakEven + (multiplier * breakEven * (GlobalData.Settings.Trading.ProfitPercentage / 100));
-        price = price.Clamp(Symbol.PriceMinimum, Symbol.PriceMaximum, Symbol.PriceTickSize);
 
         decimal? stop = null;
         decimal? limit = null;
@@ -928,10 +929,10 @@ public class PositionMonitor //: IDisposable
             limit = dcaLimit.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         }
 
-        // This does not work, it sets the sl directly after an entry hitting the sl to quick
-        // SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
-        // pull the stop up to break-even and keep it there (sticky — the flag never resets, so a later
-        // pullback cannot loosen it). Paper-trade only, like the stop-loss handling above.
+        //// This does not work, it sets the sl directly after an entry hitting the sl to quick
+        //// SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
+        //// pull the stop up to break-even and keep it there (sticky — the flag never resets, so a later
+        //// pullback cannot loosen it). Paper-trade only, like the stop-loss handling above.
         //if (GlobalData.Settings.Trading.MoveSlToBreakEven
         //    && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade
         //    && breakEven > 0)
@@ -964,12 +965,12 @@ public class PositionMonitor //: IDisposable
         //    }
         //}
 
-        return (price, stop, limit);
+        return (stop, limit);
     }
 
 
-    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, CryptoCandle candleInterval,
-        CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing, CryptoOrderType orderType)
+    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, 
+        CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing)
     {
         // Controleer de entry
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -979,26 +980,26 @@ public class PositionMonitor //: IDisposable
         // defaults
         string logText = "placing";
         decimal? entryPrice = null;
-        CryptoOrderType entryOrderType = orderType;
+        CryptoOrderType entryOrderType; // = orderType;
         CryptoTrailing trailing = CryptoTrailing.None;
 
-        switch (strategy)
+        //switch (strategy)
         {
-            case CryptoEntryOrDcaStrategy.AfterNextSignal:
-                //entryOrderType = CryptoOrderType.Limit;
-                //if (orderMethod == CryptoEntryOrDcaPrice.MarketPrice)
-                //    entryOrderType = CryptoOrderType.Market;
-                if (entryOrderType == CryptoOrderType.Market)
-                    orderPricing = CryptoEntryOrDcaPricing.MarketPrice;
-                if (step == null && part.Quantity == 0) // entry
-                    entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
-                break;
-            case CryptoEntryOrDcaStrategy.FixedPercentage:
+            //case CryptoEntryOrDcaStrategy.AfterNextSignal:
+            //    //entryOrderType = CryptoOrderType.Limit;
+            //    //if (orderMethod == CryptoEntryOrDcaPrice.MarketPrice)
+            //    //    entryOrderType = CryptoOrderType.Market;
+            //    if (entryOrderType == CryptoOrderType.Market)
+            //        orderPricing = CryptoEntryOrDcaPricing.MarketPrice;
+            //    if (step == null && part.Quantity == 0) // entry
+            //        entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
+            //    break;
+            //case CryptoEntryOrDcaStrategy.FixedPercentage:
                 // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
                 entryOrderType = CryptoOrderType.Limit;
                 if (step == null && part.Quantity == 0) // entry
                     entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
-                break;
+                //break;
             //case CryptoEntryOrDcaStrategy.TrailViaKcPsar:
             //    trailing = CryptoTrailing.Trailing;
             //    entryOrderType = CryptoOrderType.StopLimit;
@@ -1062,8 +1063,8 @@ public class PositionMonitor //: IDisposable
             //    //    }
             //    //}
             //    break;
-            default:
-                throw new Exception($"{strategy} niet ondersteund");
+            //default:
+            //    throw new Exception($"{strategy} niet ondersteund");
         }
 
 
@@ -1105,7 +1106,8 @@ public class PositionMonitor //: IDisposable
                 if (position.EntryAmount.HasValue && dcaLevelIndex >= 0 && dcaLevelIndex < GlobalData.Settings.Trading.DcaList.Count)
                 {
                     var dcaEntry = GlobalData.Settings.Trading.DcaList[dcaLevelIndex];
-                    entryValue = (decimal)position.EntryAmount * dcaEntry.Factor;
+                    // dcaEntry.Factor is a percentage of the entry amount (100 = 1x, 200 = 2x, ...)
+                    entryValue = (decimal)position.EntryAmount * dcaEntry.Factor / 100m;
                     GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.PartCount} dca {part.PartNumber} value={entryValue}");
                 }
                 else
@@ -1395,13 +1397,13 @@ public class PositionMonitor //: IDisposable
         List<decimal> prices = [];
 
         // Een DCA zonder een voorgaande entry is onmogelijk
-        if (!position.EntryPrice.HasValue || position.EntryPrice.Value == 0 || position.Invested == 0)
+        if (!position.EntryPrice.HasValue || position.TpGridAnchorPrice == 0 || position.Invested == 0)
             return prices;
 
         // Afgesloten DCA parts sluiten we uit (omdat we zogenaamde jojo's uitvoeren, zie CanOpenAdditionalDca)
         int existingDcaParts = position.PartList.Values.Count(p => p.Purpose == CryptoPartPurpose.Dca && !p.CloseTime.HasValue);
 
-        decimal entryPrice = position.EntryPrice.Value;
+        decimal entryPrice = position.TpGridAnchorPrice;
         for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
         {
             var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
@@ -1698,7 +1700,7 @@ public class PositionMonitor //: IDisposable
     public async Task HandlePosition(CryptoPosition position)
     {
         //GlobalData.Logger.Info($"position:" + LastCandle1m.OhlcText(Symbol, GlobalData.IntervalList[0], Symbol.PriceDisplayFormat, true, false, true));
-        CryptoPositionPart? takeProfitPart = null;
+        Dictionary<int, CryptoPositionPart> takeProfitPartsByLevel = [];
 
         foreach (CryptoPositionPart part in position.PartList.Values.ToList())
         {
@@ -1706,23 +1708,23 @@ public class PositionMonitor //: IDisposable
             if (!part.CloseTime.HasValue && part.Purpose != CryptoPartPurpose.TakeProfit)
             {
                 // Prepare checks if we have a valid candle in the interval (from the part or position)
-                var (success, candleInterval) = await PrepareAsync(position, part);
-                if (success)
-                {
-                    if (candleInterval.OpenTime != 0)
-                    {
+                //var (success, candleInterval) = await PrepareAsync(position, part);
+                //if (success)
+                //{
+                    //if (candleInterval.OpenTime != 0)
+                    //{
                         // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
                         if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
-                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.EntryStrategy,
-                                GlobalData.Settings.Trading.EntryOrderPrice, GlobalData.Settings.Trading.EntryOrderType);
+                            await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryStrategy,
+                                GlobalData.Settings.Trading.EntryOrderPrice);
 
                         // Check DCA - always allowed, even during a TradingRules pause (averaging into an
                         // existing position is not gated by the market-wide pause, see CheckThePosition)
                         if (part.Purpose == CryptoPartPurpose.Dca)
-                            await HandleEntryPart(position, part, candleInterval, GlobalData.Settings.Trading.DcaStrategy,
-                                GlobalData.Settings.Trading.DcaOrderPrice, GlobalData.Settings.Trading.DcaOrderType);
-                    }
-                }
+                            await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaStrategy,
+                                GlobalData.Settings.Trading.DcaOrderPrice);
+                    //}
+                //}
 
 
                 //if (GlobalData.Settings.Trading.LockProfits)
@@ -1740,48 +1742,106 @@ public class PositionMonitor //: IDisposable
                 //}
 
             }
-            // remember the tp part
+            // remember the tp parts, one per configured TP level - PartNumber is the 1-based level
+            // ("TP 1", "TP 2", ...); convert back to the 0-based index used for TpList/levels lookups.
             if (part.Purpose == CryptoPartPurpose.TakeProfit)
-                takeProfitPart = part;
+                takeProfitPartsByLevel[part.PartNumber - 1] = part;
         }
 
 
         if (position.Quantity > 0)
         {
-            // Always create a separate take profit part (if it didn't exist)
             CryptoOrderSide takeProfitOrderSide = position.GetTakeProfitOrderSide();
-            takeProfitPart ??= PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
-                position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.Clock.UtcNow);
-            CryptoPositionStep? takeProfitOrder = PositionTools.FindPositionPartStep(takeProfitPart, takeProfitOrderSide, false);
+            List<CryptoTpEntry> levels = GlobalData.Settings.Trading.TpList;
 
-            (decimal price, decimal? stop, decimal? limit) tp = CalculateTpPrices(position);
-            if (takeProfitOrder == null || takeProfitOrder.Price != tp.price || takeProfitOrder.StopPrice != tp.stop || takeProfitOrder.StopLimitPrice != tp.limit)
+            // A level stays "open" until its part exists and has been fully filled (CloseTime set).
+            List<int> openLevelIndexes = [];
+            for (int i = 0; i < levels.Count; i++)
             {
-                if (takeProfitOrder != null)
-                    GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction: {takeProfitOrder.Price:N6} to {tp.price.ToString0()}");
+                bool closed = takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? existing) && existing.CloseTime.HasValue;
+                if (!closed)
+                    openLevelIndexes.Add(i);
+            }
 
-                string text = $"placing ";
-                // position.Quantity is not clamped
-                decimal quantity = position.Quantity.Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
-                if (takeProfitOrder != null && takeProfitOrder.Quantity != quantity)
-                    text = $"modyfying ";
-
-                // Cancel all open take profit orders
-                if (await CancelAllOrders(position, takeProfitOrderSide))
+            if (openLevelIndexes.Count > 0)
+            {
+                // Always create a separate take profit part per level (if it didn't exist yet)
+                foreach (int i in openLevelIndexes)
                 {
-                    // Calculate the BE price (without the previous commission for the TP order)
-                    //decimal xx = position.BreakEvenPrice;
-                    TradeTools.CalculateProfitAndBreakEvenPrice(position);
-                    tp = CalculateTpPrices(position);
-                    //if (xx != position.BreakEvenPrice)
-                    //  xx = xx; does not change (afaict)????
-
-                    // And place the (single/combined) take profit order to minimize dust)
-                    await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, takeProfitPart,
-                        tp.price, tp.stop, tp.limit, LastCandle1mCloseTimeDate, text);
+                    if (!takeProfitPartsByLevel.ContainsKey(i))
+                        takeProfitPartsByLevel[i] = PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.TakeProfit, position.Interval!,
+                            position.Strategy, CryptoEntryOrDcaStrategy.FixedPercentage, 0, GlobalData.Clock.UtcNow);
                 }
-                else
-                    GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
+
+                decimal openFractionSum = openLevelIndexes.Sum(i => levels[i].Factor);
+                int lastOpenIndex = openLevelIndexes[^1];
+
+                // Splits the CURRENT remaining position quantity across the still-open levels, weighted
+                // by their configured share. Re-normalizing the fractions against the live (shrinking
+                // when a sibling level fills, or growing on a DCA) quantity keeps each already-open
+                // level's absolute target stable - only the last open level absorbs the exact
+                // remainder/dust, same role the single combined TP order used to have.
+                List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> ComputeTargets()
+                {
+                    decimal allocated = 0;
+                    List<(int, CryptoPositionPart, decimal, decimal)> result = [];
+                    foreach (int i in openLevelIndexes)
+                    {
+                        CryptoPositionPart part = takeProfitPartsByLevel[i];
+                        decimal quantity;
+                        if (i == lastOpenIndex)
+                            quantity = position.Quantity - allocated; // remainder, absorbs dust/rounding
+                        else
+                        {
+                            decimal fraction = openFractionSum > 0 ? levels[i].Factor / openFractionSum : 0;
+                            quantity = (position.Quantity * fraction).Clamp(Symbol.QuantityMinimum, Symbol.QuantityMaximum, Symbol.QuantityTickSize);
+                            allocated += quantity;
+                        }
+                        decimal price = CalculateTpPrice(position, levels[i].Percentage);
+                        result.Add((i, part, price, quantity));
+                    }
+                    return result;
+                }
+
+                List<(int Level, CryptoPositionPart Part, decimal Price, decimal Quantity)> targets = ComputeTargets();
+                (decimal? stop, decimal? limit) sl = CalculateSlPrices(position);
+
+                bool anyChange = false;
+                Dictionary<int, bool> hadExistingOrder = [];
+                foreach (var t in targets)
+                {
+                    CryptoPositionStep? order = PositionTools.FindPositionPartStep(t.Part, takeProfitOrderSide, false);
+                    hadExistingOrder[t.Level] = order != null;
+                    if (order == null || order.Price != t.Price || order.Quantity != t.Quantity || order.StopPrice != sl.stop || order.StopLimitPrice != sl.limit)
+                    {
+                        if (order != null)
+                            GlobalData.AddTextToLogTab($"{Symbol.Name} SELL correction TP{t.Level + 1}: {order.Price:N6} to {t.Price.ToString0()}");
+                        anyChange = true;
+                    }
+                }
+
+                if (anyChange)
+                {
+                    // Cancel all open take profit orders (across every level)
+                    if (await CancelAllOrders(position, takeProfitOrderSide))
+                    {
+                        // Calculate the BE price (without the previous commission for the TP order)
+                        TradeTools.CalculateProfitAndBreakEvenPrice(position);
+                        targets = ComputeTargets();
+                        sl = CalculateSlPrices(position);
+
+                        foreach (var t in targets)
+                        {
+                            string text = hadExistingOrder.GetValueOrDefault(t.Level) ? $"modifying TP{t.Level + 1} " : $"placing TP{t.Level + 1} ";
+
+                            // And place the take profit order for this level (last open level minimizes dust)
+                            await TradeTools.PlaceTakeProfitOrderAtPrice(Database, position, t.Part,
+                                t.Price, sl.stop, sl.limit, LastCandle1mCloseTimeDate, text, t.Quantity, includeDust: t.Level == lastOpenIndex);
+                        }
+                    }
+                    else
+                        GlobalData.AddTextToLogTab($"Monitor {Symbol.Name} Niet alle orders konden verwijderd worden!!!! (partial filled or error?)");
+                }
             }
         }
 
