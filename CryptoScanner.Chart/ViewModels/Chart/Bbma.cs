@@ -59,10 +59,10 @@ public class Bbma
         if (candles.Count == 0)
             return;
 
-        IReadOnlyList<WmaResult> wmaList05Low = candles.Select(c => (c.Timestamp, (double)c.Low)).GetWma(05).ToList();
-        IReadOnlyList<WmaResult> wmaList05High = candles.Select(c => (c.Timestamp, (double)c.High)).GetWma(05).ToList();
-        IReadOnlyList<WmaResult> wmaList10Low = candles.Select(c => (c.Timestamp, (double)c.Low)).GetWma(10).ToList();
-        IReadOnlyList<WmaResult> wmaList10High = candles.Select(c => (c.Timestamp, (double)c.High)).GetWma(10).ToList();
+        IReadOnlyList<WmaResult> wmaList05Low = candles.AsQuotes().Use(CandlePart.Low).ToWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList05High = candles.AsQuotes().Use(CandlePart.High).ToWma(05).ToList();
+        IReadOnlyList<WmaResult> wmaList10Low = candles.AsQuotes().Use(CandlePart.Low).ToWma(10).ToList();
+        IReadOnlyList<WmaResult> wmaList10High = candles.AsQuotes().Use(CandlePart.High).ToWma(10).ToList();
 
         IReadOnlyList<BollingerBandsResult> bollingerBandsList = candles.AsQuotes().ToBollingerBands(
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length, standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation).ToList();
@@ -494,7 +494,7 @@ public class Bbma
             Tag = group,
         };
 
-        IReadOnlyList<EmaResult> emaList = candles.Select(c => (c.Timestamp, (double)c.Close)).GetEma(50).ToList();
+        IReadOnlyList<EmaResult> emaList = candles.AsQuotes().ToEma(50).ToList();
 
         foreach (var ema in emaList)
         {
