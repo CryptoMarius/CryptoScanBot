@@ -245,21 +245,13 @@ public static class IndicatorEngine
         // Linear Weighted Moving Average — used by BBMA experiments.
         // https://dotnet.stockindicators.dev/indicators/Wma/#content
         IReadOnlyList<EmaResult> emaList50 = quotes.ToEma(50);
-        IReadOnlyList<WmaResult> wmaList05Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(05).ToList();
-        IReadOnlyList<WmaResult> wmaList05High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(05).ToList();
-        IReadOnlyList<WmaResult> wmaList10Low = quotes.Select(q => (q.Timestamp, (double)q.Low)).GetWma(10).ToList();
-        IReadOnlyList<WmaResult> wmaList10High = quotes.Select(q => (q.Timestamp, (double)q.High)).GetWma(10).ToList();
+        IReadOnlyList<WmaResult> wmaList05Low = quotes.Use(CandlePart.Low).ToWma(05);
+        IReadOnlyList<WmaResult> wmaList05High = quotes.Use(CandlePart.High).ToWma(05);
+        IReadOnlyList<WmaResult> wmaList10Low = quotes.Use(CandlePart.Low).ToWma(10);
+        IReadOnlyList<WmaResult> wmaList10High = quotes.Use(CandlePart.High).ToWma(10);
         // ATR(14) — BBMA Omni: RejectedEMA50 big-body filter, MHV gap sizing.
         IReadOnlyList<AtrResult> atrList14 = quotes.ToAtr(14);
 #endif
-
-        // or collect items first (is this faster/better?), a lot more coding)
-        //List<CryptoCandle> historyLast05 = (List<CryptoCandle>)history.TakeLast(05);
-        //IReadOnlyList<WmaResult> wmaList05Low = historyLast05.Use(CandlePart.Low).Cast<IReusable>().GetWma(05);
-        //IReadOnlyList<WmaResult> wmaList05High = historyLast05.Use(CandlePart.High).Cast<IReusable>().GetWma(05);
-        //List<CryptoCandle> historyLast10 = (List<CryptoCandle>)history.TakeLast(10);
-        //IReadOnlyList<WmaResult> wmaList10Low = historyLast10.Use(CandlePart.Low).Cast<IReusable>().GetWma(10);
-        //IReadOnlyList<WmaResult> wmaList10High = historyLast10.Use(CandlePart.High).Cast<IReusable>().GetWma(10);
 
         //IReadOnlyList<SmaResult> smaList08 = quotes.GetSma(08);
         IReadOnlyList<SmaResult> smaList20 = quotes.ToSma(20);
