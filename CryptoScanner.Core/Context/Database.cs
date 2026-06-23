@@ -464,6 +464,7 @@ public class CryptoDatabase : IDisposable
                 "ActiveDca INTEGER NOT NULL," +
                 "Profit TEXT NULL," +
                 "BreakEvenPrice TEXT NULL," +
+                "TpGridAnchorPrice TEXT NULL," +
 
                 "Invested TEXT NULL," +
                 "Commission TEXT NULL," +

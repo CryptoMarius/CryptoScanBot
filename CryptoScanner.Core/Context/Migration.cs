@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 70;
+    public readonly static int CurrentDatabaseVersion = 71;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1422,6 +1422,23 @@ public class Migration
             // Its back, but without a fk
             try { database.Connection.Execute("alter table Position add SignalId Integer null", transaction); } catch { } // ignore
             database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 23-06-2026 Fixed TP/DCA grid anchor price (TpGridAnchorPrice), separate from
+        // BreakEvenPrice: the fixed-percentage TP/DCA grid needs an anchor that shifts when a DCA
+        // fills (averaging the cost basis) but stays put when a sibling TP fills (BreakEvenPrice
+        // banks the realized profit into Returned/Quantity, which moved every still-open TP level).
+        if (CurrentVersion > version.Version && version.Version == 70)
+        {
+            using var transaction = database.BeginTransaction();
+            database.Connection.Execute("alter table Position add TpGridAnchorPrice Text null", transaction);
 
             // update version
             version.Version += 1;

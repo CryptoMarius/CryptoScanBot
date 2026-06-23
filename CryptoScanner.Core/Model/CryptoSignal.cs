@@ -42,13 +42,12 @@ public partial class CryptoSignal : CryptoData2
 
     public string? EventText { get; set; }
 
-    // Optional per-signal SL and TP distances, each a positive percentage from the entry, set by
-    // strategies that compute their own levels (e.g. baba). Persisted, and also copied to the
-    // resulting position at creation time via PositionTools.AddSignalProperties. A percentage is
+    // Optional per-signal SL distance, a positive percentage from the entry, set by strategies
+    // that compute their own level (e.g. baba). Persisted, and also copied to the resulting
+    // position at creation time via PositionTools.AddSignalProperties. A percentage is
     // reference-independent (works for market orders and maps straight onto Altrady); the absolute
-    // stop/target price is derived where needed.
+    // stop price is derived where needed.
     public decimal? SlPercentage { get; set; }
-    public decimal? TpPercentage { get; set; }
 
     // In-memory only: set when the strategy supplied an explicit entry price via OverrideSignalPrice
     // (so SignalPrice is a deliberate entry level, not just the signal candle's close). The trader then
