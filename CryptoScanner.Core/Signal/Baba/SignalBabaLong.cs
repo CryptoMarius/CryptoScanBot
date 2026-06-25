@@ -25,6 +25,12 @@ public class SignalBabaLong : SignalBabaBase
 
         var settings = GlobalData.Settings.Signal.Baba;
 
+        if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
+        {
+            ExtraText = $"bb.width out of range {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
+            return false;
+        }
+
         //// Cooldown gate (cheapest): no new signal within CooldownBars candles of the last Baba signal.
         //if (InCooldown())
         //{
