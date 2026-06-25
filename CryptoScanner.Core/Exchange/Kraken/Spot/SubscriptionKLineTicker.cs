@@ -53,48 +53,54 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
         {
-            Task taskKline = Task.Run(async () =>
+            //var kline = data;
+            //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
+            //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
+            if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
             {
-                //var kline = data;
-                //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
-                //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
-                if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
+                // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the
+                // socket delivers messages, so a burst of pushes for the same still-open candle
+                // can never have an older message overwrite a newer one's OHLC.
+                cacheListSemaphore.Wait();
+                try
                 {
-                    await cacheListSemaphore.WaitAsync();
-                    try
+                    foreach (KrakenKlineUpdate kline in data.Data)
                     {
-                        foreach (KrakenKlineUpdate kline in data.Data)
+                        CandleTime candleOpen = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
+                        CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                        decimal quoteVolume = kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice);
+                        if (candleCache.TryGetValue(candleOpen, out CryptoCandle candle))
                         {
-                            // Add or update the local cache
-                            bool addCandle = false;
-                            CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
-                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
-                            {
-                                addCandle = true;
-                                candle = new() { OpenTime = candleOpenUnix };
-                            }
-                            candle.TickDecimals = symbol.PriceDecimals;
-                            candle!.Open = kline.OpenPrice;
-                            candle.High = kline.HighPrice;
-                            candle.Low = kline.LowPrice;
+                            candle.High = Math.Max(candle.High, kline.HighPrice);
+                            candle.Low = Math.Min(candle.Low, kline.LowPrice);
                             candle.Close = kline.ClosePrice;
-                            //candle.Volume = kline.Volume;
-                            candle.Volume = kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice);
-                            if (addCandle)
-                                candleCache.TryAdd(candleOpenUnix, candle);
-                            else
-                                candleCache[candleOpenUnix] = candle;
-                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)} count={candleCache.Count}");
+                            candle.Volume = Math.Max(candle.Volume, quoteVolume);
+                            // CryptoCandle is a struct: TryGetValue returned a copy, write it back.
+                            candleCache[candleOpen] = candle;
                         }
-                    }
-                    finally
-                    {
-                        cacheListSemaphore.Release();
+                        else
+                        {
+                            candle = new()
+                            {
+                                TickDecimals = symbol.PriceDecimals,
+                                OpenTime = candleOpen,
+                                Open = kline.OpenPrice,
+                                High = kline.HighPrice,
+                                Low = kline.LowPrice,
+                                Close = kline.ClosePrice,
+                                Volume = quoteVolume,
+                            };
+                            candleCache.TryAdd(candleOpen, candle);
+                        }
+                        //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)} count={candleCache.Count}");
                     }
                 }
+                finally
+                {
+                    cacheListSemaphore.Release();
+                }
+            }
 
-            });
         }, ct: ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 

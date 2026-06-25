@@ -51,52 +51,51 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // Build 1m candles from the trade stream (Kraken Futures has no kline feed).
         var subscriptionResult = await api.SubscribeToTradeUpdatesAsync(symbols, data =>
         {
-            Task taskTrade = Task.Run(async () =>
+            // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the socket
+            // delivers messages, so trades for the same still-open candle are always applied in order.
+            if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
             {
-                if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
+                cacheListSemaphore.Wait();
+                try
                 {
-                    await cacheListSemaphore.WaitAsync();
-                    try
+                    CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                    foreach (KrakenFuturesTradeUpdate trade in data.Data)
                     {
-                        CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                        foreach (KrakenFuturesTradeUpdate trade in data.Data)
-                        {
-                            decimal quoteVolume = trade.Price * trade.Quantity;
-                            CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(trade.Timestamp, 1);
+                        decimal quoteVolume = trade.Price * trade.Quantity;
+                        CandleTime candleOpen = CandleTime.AlignFromDateTime(trade.Timestamp, 1);
 
-                            // CryptoCandle is a struct → read a copy, update it, write it back.
-                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
+                        // CryptoCandle is a struct → read a copy, update it, write it back.
+                        if (!candleCache.TryGetValue(candleOpen, out CryptoCandle candle))
+                        {
+                            candle = new()
                             {
-                                candle = new()
-                                {
-                                    OpenTime = candleOpenUnix,
-                                    TickDecimals = symbol.PriceDecimals,
-                                    Open = trade.Price,
-                                    High = trade.Price,
-                                    Low = trade.Price,
-                                    Close = trade.Price,
-                                    Volume = quoteVolume
-                                };
-                                candleCache.TryAdd(candleOpenUnix, candle);
-                            }
-                            else
-                            {
-                                if (trade.Price > candle.High)
-                                    candle.High = trade.Price;
-                                if (trade.Price < candle.Low)
-                                    candle.Low = trade.Price;
-                                candle.Close = trade.Price;
-                                candle.Volume += quoteVolume;
-                                candleCache[candleOpenUnix] = candle;
-                            }
+                                OpenTime = candleOpen,
+                                TickDecimals = symbol.PriceDecimals,
+                                Open = trade.Price,
+                                High = trade.Price,
+                                Low = trade.Price,
+                                Close = trade.Price,
+                                Volume = quoteVolume
+                            };
+                            candleCache.TryAdd(candleOpen, candle);
+                        }
+                        else
+                        {
+                            if (trade.Price > candle.High)
+                                candle.High = trade.Price;
+                            if (trade.Price < candle.Low)
+                                candle.Low = trade.Price;
+                            candle.Close = trade.Price;
+                            candle.Volume += quoteVolume;
+                            candleCache[candleOpen] = candle;
                         }
                     }
-                    finally
-                    {
-                        cacheListSemaphore.Release();
-                    }
                 }
-            });
+                finally
+                {
+                    cacheListSemaphore.Release();
+                }
+            }
         }, ct: ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         // Timer: ~6s after each minute, flush the completed 1m candles to the analysis pipeline. The

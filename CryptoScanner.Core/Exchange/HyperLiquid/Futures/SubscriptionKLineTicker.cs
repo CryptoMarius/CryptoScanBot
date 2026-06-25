@@ -45,106 +45,75 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
         {
-            Task taskKline = Task.Run(async () =>
+            HyperLiquidKline kline = data.Data;
+            //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
+            //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
+
+            // Guard against empty/invalid kline updates. A minute without trades (or an incomplete
+            // update) can arrive with OHLC = 0; caching+flushing that produces the reported all-zero
+            // OHLC candles (and corrupts the higher timeframes). Skip it — a genuinely missing minute
+            // is later back-filled as a flat candle (previous close) by CandleTools.BulkAddMissingCandles.
+            if (kline.OpenPrice <= 0 || kline.HighPrice <= 0 || kline.LowPrice <= 0 || kline.ClosePrice <= 0)
+                return;
+
+            // Prossible change in flow:
+            // Create some variables or temp candle
+            // Update that candle until OpenTime is different
+            // The last 1m candle added can be cached (avoiding the Last())
+            // Then: Add the in between candles and the tempcandle
+            // Finally add the tempcandle to the Analysis Queue / Monitoring Queue
+
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
-                HyperLiquidKline kline = data.Data;
-                //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
-                //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
-
-                // Guard against empty/invalid kline updates. A minute without trades (or an incomplete
-                // update) can arrive with OHLC = 0; caching+flushing that produces the reported all-zero
-                // OHLC candles (and corrupts the higher timeframes). Skip it — a genuinely missing minute
-                // is later back-filled as a flat candle (previous close) by CandleTools.BulkAddMissingCandles.
-                if (kline.OpenPrice <= 0 || kline.HighPrice <= 0 || kline.LowPrice <= 0 || kline.ClosePrice <= 0)
-                    return;
-
-                // Prossible change in flow:
-                // Create some variables or temp candle
-                // Update that candle until OpenTime is different
-                // The last 1m candle added can be cached (avoiding the Last())
-                // Then: Add the in between candles and the tempcandle
-                // Finally add the tempcandle to the Analysis Queue / Monitoring Queue
-
-                if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+                var tick = data.Data;
+                if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
                 {
-                    var tick = data.Data;
-                    if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
+                    // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the
+                    // socket delivers messages. The previous fire-and-forget Task.Run gave no
+                    // ordering guarantee, so a burst of pushes for the same still-open candle could
+                    // have an older message finish processing after a newer one and overwrite its
+                    // OHLC with stale values.
+                    cacheListSemaphore.Wait();
+                    try
                     {
-                        await cacheListSemaphore.WaitAsync();
-                        try
+                        CandleTime candleOpen = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
+                        CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                        if (candleCache.TryGetValue(candleOpen, out CryptoCandle candle))
                         {
-                            // Add or update the local cache
-                            bool addCandle = false;
-                            CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.OpenTime, 1);
-                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                            if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
-                            {
-                                addCandle = true;
-                                candle = new() { OpenTime = candleOpenUnix };
-                                //CryptoSymbolInterval symbolPeriod = symbol.GetSymbolInterval(interval.IntervalPeriod);
-
-                                //// do something with the cached data, this assumes we always get a candle (even if it is flat or empty)
-                                //CryptoCandle? candleLast = null;
-                                //foreach (CryptoCandle c in candleCache.Values.ToList())
-                                //{
-                                //    // Only the ready candles (might change the flow?)
-                                //    if (c.OpenTime < candleOpenUnix)
-                                //    {
-                                //        candleCache.Remove(c.OpenTime);
-                                //        Interlocked.Increment(ref TickerCount);
-                                //        if (TickerCount > 999999999)
-                                //            Interlocked.Exchange(ref TickerCount, 0);
-
-                                //        //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                                //        //GlobalData.AddTextToLogTab($"{symbol.Name} Candle start processing {c.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true)}");
-                                //        await CandleTools.Process1mCandleAsync(symbol, c.Date,
-                                //            c.Open, c.High, c.Low, c.Close,
-                                //            0, c.Volume);
-                                //        candleLast = c;
-                                //    }
-                                //    else break;
-                                //}
-
-                                //// Add the last candle in the analysis queue
-                                //long expectedCandlesUpto = CandleTools.GetUnixTime(DateTime.UtcNow, 60) - interval.Duration;
-                                //if (candleLast != null && candleLast.OpenTime == expectedCandlesUpto)
-                                //{
-                                //    // Last known price(s)
-                                //    if (!GlobalData.IsEmulatorMode)
-                                //    {
-                                //        symbol.LastPrice = candleLast.Close;
-                                //    }
-
-                                //    //GlobalData.AddTextToLogTab("Aanbieden analyze " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
-                                //    GlobalData.ThreadMonitorCandle?.AddToQueue(symbol, candleLast);
-                                //}
-                            }
-                            candle.TickDecimals = symbol.PriceDecimals;
-                            candle.Open = kline.OpenPrice;
-                            candle.High = kline.HighPrice;
-                            candle.Low = kline.LowPrice;
+                            candle.High = Math.Max(candle.High, kline.HighPrice);
+                            candle.Low = Math.Min(candle.Low, kline.LowPrice);
                             candle.Close = kline.ClosePrice;
-                            candle.Volume = kline.Volume;
-                            //kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice
-                            if (addCandle)
-                                candleCache.TryAdd(candleOpenUnix, candle);
-                            else
-                                candleCache[candleOpenUnix] = candle;
-                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
+                            candle.Volume = Math.Max(candle.Volume, kline.Volume);
+                            candleCache[candleOpen] = candle;
                         }
-                        finally
+                        else
                         {
-                            cacheListSemaphore.Release();
+                            candle = new()
+                            {
+                                TickDecimals = symbol.PriceDecimals,
+                                OpenTime = candleOpen,
+                                Open = kline.OpenPrice,
+                                High = kline.HighPrice,
+                                Low = kline.LowPrice,
+                                Close = kline.ClosePrice,
+                                Volume = kline.Volume,
+                            };
+                            candleCache.TryAdd(candleOpen, candle);
                         }
+                        //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
+                    }
+                    finally
+                    {
+                        cacheListSemaphore.Release();
                     }
                 }
-            });
+            }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         // Debug...
         //GlobalData.AddTextToLogTab("New candle " + candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true));
-        //            //var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime, 
-        //            //    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice, 
+        //            //var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+        //            //    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
         //            //    kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
         // Implementatie kline timer (fix)
         // Omdat er niet altijd een nieuwe candle aangeboden wordt (zoals "flut" munt TOMOUSDT)

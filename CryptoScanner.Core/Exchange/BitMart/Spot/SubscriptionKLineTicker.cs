@@ -46,57 +46,63 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // This stream produces a continuous stream of data (with incomplete candle, so we need a cache and timers)
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, KlineStreamInterval.OneMinute, data =>
         {
-            Task taskKline = Task.Run(async () =>
+            //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
+            //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
+
+            // Prossible change in flow:
+            // Create some variables or temp candle
+            // Update that candle until OpenTime is different
+            // The last 1m candle added can be cached (avoiding the Last())
+            // Then: Add the in between candles and the tempcandle
+            // Finally add the tempcandle to the Analysis Queue / Monitoring Queue
+
+            if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
             {
-                //string json = JsonSerializer.Serialize(data.Data, JsonTools.JsonSerializerNotIndented);
-                //GlobalData.AddTextToLogTab($"kline ticker {data.ScannerSymbol} {json}");
-
-                // Prossible change in flow:
-                // Create some variables or temp candle
-                // Update that candle until OpenTime is different
-                // The last 1m candle added can be cached (avoiding the Last())
-                // Then: Add the in between candles and the tempcandle
-                // Finally add the tempcandle to the Analysis Queue / Monitoring Queue
-
-                if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+                // Handled synchronously (Wait, not WaitAsync/Task.Run), in the exact order the
+                // socket delivers messages, so a burst of pushes for the same still-open candle
+                // can never have an older message overwrite a newer one's OHLC.
+                cacheListSemaphore.Wait();
+                try
                 {
-                    await cacheListSemaphore.WaitAsync();
-                    try
+                    //BitMartKline kline = data.Kline;
+                    foreach (BitMartKlineUpdate kline in data.Data)
                     {
-                        //BitMartKline kline = data.Kline;
-                        foreach (BitMartKlineUpdate kline in data.Data)
+                        if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
                         {
-                            if (exchange.SymbolListExchangeName.TryGetValue(data.Symbol!, out CryptoSymbol? symbol))
+                            CandleTime candleOpen = CandleTime.AlignFromDateTime(kline.Kline.OpenTime, 1);
+                            CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
+                            if (candleCache.TryGetValue(candleOpen, out CryptoCandle candle))
                             {
-                                // Add or update the local cache
-                                bool addCandle = false;
-                                CandleTime candleOpenUnix = CandleTime.AlignFromDateTime(kline.Kline.OpenTime, 1);
-                                CryptoCandleList candleCache = symbolCandleCache[symbol.ExchangeName];
-                                if (!candleCache.TryGetValue(candleOpenUnix, out CryptoCandle candle))
-                                {
-                                    addCandle = true;
-                                    candle = new() { OpenTime = candleOpenUnix };
-                                }
-                                candle.TickDecimals = symbol.PriceDecimals;
-                                candle.Open = kline.Kline.OpenPrice;
-                                candle.High = kline.Kline.HighPrice;
-                                candle.Low = kline.Kline.LowPrice;
+                                candle.High = Math.Max(candle.High, kline.Kline.HighPrice);
+                                candle.Low = Math.Min(candle.Low, kline.Kline.LowPrice);
                                 candle.Close = kline.Kline.ClosePrice;
-                                candle.Volume = kline.Kline.Volume;
-                                if (addCandle)
-                                    candleCache.TryAdd(candleOpenUnix, candle);
-                                else
-                                    candleCache[candleOpenUnix] = candle;
-                                //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
+                                candle.Volume = Math.Max(candle.Volume, kline.Kline.Volume);
+                                // CryptoCandle is a struct: TryGetValue returned a copy, write it back.
+                                candleCache[candleOpen] = candle;
                             }
+                            else
+                            {
+                                candle = new()
+                                {
+                                    TickDecimals = symbol.PriceDecimals,
+                                    OpenTime = candleOpen,
+                                    Open = kline.Kline.OpenPrice,
+                                    High = kline.Kline.HighPrice,
+                                    Low = kline.Kline.LowPrice,
+                                    Close = kline.Kline.ClosePrice,
+                                    Volume = kline.Kline.Volume,
+                                };
+                                candleCache.TryAdd(candleOpen, candle);
+                            }
+                            //GlobalData.AddTextToLogTab($"kline received {candle.OhlcText(ScannerSymbol, interval, ScannerSymbol.PriceDisplayFormat, true, true)}");
                         }
                     }
-                    finally
-                    {
-                        cacheListSemaphore.Release();
-                    }
                 }
-            });
+                finally
+                {
+                    cacheListSemaphore.Release();
+                }
+            }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
 
