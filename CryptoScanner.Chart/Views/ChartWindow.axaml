@@ -100,6 +100,7 @@
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowDtb, Mode=TwoWay}" Content="DTB" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBollingerBand, Mode=TwoWay}" Content="Bollinger Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowKeltnerChannel, Mode=TwoWay}" Content="Keltner Channel" FontSize="12"/>
+                        <CheckBox IsChecked="{Binding DisplayOptions.ShowAtrRbBands, Mode=TwoWay}" Content="ATR Reversal Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBabaBands, Mode=TwoWay}" Content="Baba Bands" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowBabaSignals, Mode=TwoWay}" Content="Baba signals (actual)" FontSize="12"/>
                         <CheckBox IsChecked="{Binding DisplayOptions.ShowSlide, Mode=TwoWay}" Content="Baba slide (experimental)" FontSize="12"/>

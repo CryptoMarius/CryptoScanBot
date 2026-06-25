@@ -73,8 +73,9 @@ public class SettingsSignal
 
     // baba — Baba Bands & Ribbon: macro band break (long on lower, short on upper)
     // JSON key kept as "AtrRb" (the strategy's former name) so previously saved settings keep loading.
-    [JsonPropertyName("AtrRb")]
     public SettingsSignalStrategyBaba Baba = new();
+    // Old (better version?)
+    public SettingsSignalStrategyAtrRb AtrRb = new();
 
 
     // Logging

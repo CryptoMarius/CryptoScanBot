@@ -52,6 +52,9 @@ public enum CryptoSignalStrategy
     // Baba Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
     Baba = 28,
+    // AtrRb Bands macro-band hit — long on the lower band, short on the upper band
+    // (the same events the chart prints as percentage labels).
+    AtrRb = 29,
 
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally

@@ -48,6 +48,13 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     // Multiplier applied to the ATR when deriving the stop-loss distance: SL distance = factor * ATR(AtrLength)%.
     public double StopLossAtrFactor { get; set; } = 2.0;
 
+    // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
+    // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
+    // [BBMinPercentage, BBMaxPercentage]. A bound of 0 disables that side (so the default 0 max =
+    // no upper limit). Both the atrrb signal and the chart drawer read these, so they stay in sync.
+    public double BBMinPercentage { get; set; } = 1.50;
+    public double BBMaxPercentage { get; set; } = 0.0;
+
     // Zone confirmations — when any of these is enabled, the band break must ALSO be a rejection at
     // one of the enabled zone types (OR). All disabled = no zone filter. Same logic/extensions as the
     // StoRsi zone checkboxes (WasRejectedAtDlz/Fvg/SmcZone).

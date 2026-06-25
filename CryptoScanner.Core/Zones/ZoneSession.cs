@@ -51,10 +51,8 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
-    // JSON keys kept as the former "AtrRb" names so previously saved chart sessions keep loading.
-    [JsonPropertyName("ShowAtrRbBands")]
+    public bool ShowAtrRbBands { get; set; } = false;
     public bool ShowBabaBands { get; set; } = false; // Baba Bands & Ribbon
-    [JsonPropertyName("ShowAtrRbSignals")]
     public bool ShowBabaSignals { get; set; } = false; // stored Baba signals (real triggers)
     public bool ShowSlide { get; set; } = false; // experimental "glijbaan" (slide) detector overlay
     public bool ShowSmaLinesSbm { get; set; } = false;

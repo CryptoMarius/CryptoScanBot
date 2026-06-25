@@ -43,6 +43,9 @@
 		<TabItem Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBabaTabView DataContext="{Binding StrategyBabaTabViewModel}" />
 		</TabItem>
+		<TabItem Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+			<settings:StrategyAtrRbTabView DataContext="{Binding StrategyAtrRbTabViewModel}" />
+		</TabItem>
 	</TabControl>
 
 </UserControl>

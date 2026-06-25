@@ -1075,6 +1075,11 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
+        // Draw AtrRb Bands & Ribbon
+        group = "atrrb";
+        if (Toggle(model, group, Session.ShowAtrRbBands))
+            AtrRbBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+
         // Draw Baba Bands & Ribbon
         group = "baba";
         if (Toggle(model, group, Session.ShowBabaBands))

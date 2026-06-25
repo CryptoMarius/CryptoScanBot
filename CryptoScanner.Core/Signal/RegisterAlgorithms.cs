@@ -14,6 +14,7 @@ using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
+using CryptoScanner.Core.Signal.AtrRb;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -379,6 +380,18 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.Baba,
             AnalyzeLongType = typeof(SignalBabaLong),
             AnalyzeShortType = typeof(SignalBabaShort),
+        });
+
+        //***************************************************
+        // AtrRb Bands — fires when price hits a macro band:
+        // long on the lower band, short on the upper band.
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "atrrb",
+            Strategy = CryptoSignalStrategy.AtrRb,
+            AnalyzeLongType = typeof(SignalAtrRbLong),
+            AnalyzeShortType = typeof(SignalAtrRbShort),
         });
 
 #if DEBUG

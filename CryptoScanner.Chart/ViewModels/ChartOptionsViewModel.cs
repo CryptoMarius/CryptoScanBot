@@ -41,6 +41,9 @@ public partial class ChartOptionsViewModel : ObservableObject
     private bool _showKeltnerChannel = false;
 
     [ObservableProperty]
+    private bool _showAtrRbBands = false;
+
+    [ObservableProperty]
     private bool _showBabaBands = false;
 
     [ObservableProperty]
@@ -94,6 +97,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
+        ShowAtrRbBands = session.ShowAtrRbBands;
         ShowBabaBands = session.ShowBabaBands;
         ShowBabaSignals = session.ShowBabaSignals;
         ShowSlide = session.ShowSlide;
@@ -125,6 +129,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
+        session.ShowAtrRbBands = ShowAtrRbBands;
         session.ShowBabaBands = ShowBabaBands;
         session.ShowBabaSignals = ShowBabaSignals;
         session.ShowSlide = ShowSlide;

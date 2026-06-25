@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="260"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             x:DataType="vm:StrategyAtrRbSettingsViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyAtrRbSettingsView">
+
+    <HeaderedContentControl Classes="groupbox" Header="Settings">
+        <StackPanel Margin="4" Spacing="4">
+
+            <!-- EMA/ATR length (band basis) -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="EMA/ATR length used for the band basis (Pine default 20).">
+                <TextBlock Grid.Column="0" Text="Length (EMA/ATR):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding Length, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Macro outer-band multiplier -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Macro outer-band multiplier: basis ± ATR × OuterMult (the wide cloud; Pine ≈ 4.2). Higher = wider bands = fewer signals.">
+                <TextBlock Grid.Column="0" Text="Outer mult:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding OuterMult, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Inner ribbon multiplier (chart only) -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Inner ribbon multiplier: basis ± ATR × InnerMult. Affects only the chart ribbon, not the signal (default 1.0).">
+                <TextBlock Grid.Column="0" Text="Inner mult (chart):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding InnerMult, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Break lookback -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="The break must be the lowest Low (long) / highest High (short) within this trailing number of bars (avoids label/signal spam). Pine default 5.">
+                <TextBlock Grid.Column="0" Text="Break lookback (bars):" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BreakLookback, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Hand the signal's own (percentage based) stop-loss to the trader -->
+            <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
+                      Content="Use stop-loss" FontSize="12"
+                      ToolTip.Tip="When on, the signal passes its own percentage based stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss."/>
+
+            <!-- Stop-loss ATR factor -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Multiplier on the ATR for the stop-loss distance: SL distance = factor × ATR(Length). Default 2.0 (the original 2× ATR). Typical values: 1, 2, 2.5, 3.">
+                <TextBlock Grid.Column="0" Text="Stop-loss ATR factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding StopLossAtrFactor, Mode=TwoWay, StringFormat=N1}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Bollinger-band width gate (min) -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Minimum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. 0 disables the lower bound. Applies to both the signal and the chart labels.">
+                <TextBlock Grid.Column="0" Text="BB width min %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BBMinPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Bollinger-band width gate (max) -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Maximum Bollinger-band width (BB% = 100 × (upper/lower − 1)) for a break to be flagged. 0 disables the upper bound. Applies to both the signal and the chart labels.">
+                <TextBlock Grid.Column="0" Text="BB width max %:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding BBMaxPercentage, Mode=TwoWay, StringFormat=N2}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>
