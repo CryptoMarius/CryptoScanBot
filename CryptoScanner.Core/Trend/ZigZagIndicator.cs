@@ -462,6 +462,16 @@ public class ZigZagIndicator
             safeLimit = Math.Min(safeLimit, LastSwingLow.PivotIndex);
         if (LastSwingHigh != null)
             safeLimit = Math.Min(safeLimit, LastSwingHigh.PivotIndex);
+        // RecalculateSwingLowAndHigh (called from OptimizeList) can later restore any non-dummy
+        // ZigZagList entry as the new LastSwingLow/LastSwingHigh, not just the ones active right now.
+        // So the shift below must never push any ZigZagList entry's PivotIndex/BackupIndex below 0,
+        // otherwise that entry blows up GetLowFromBuffer/GetHighFromBuffer once it becomes a swing point.
+        foreach (ZigZagResult zigZag in ZigZagList)
+        {
+            safeLimit = Math.Min(safeLimit, zigZag.PivotIndex);
+            if (zigZag.BackupIndex.HasValue)
+                safeLimit = Math.Min(safeLimit, zigZag.BackupIndex.Value);
+        }
 
         int removeCount = 0;
         while (removeCount < safeLimit && PivotList[removeCount].Candle.OpenTime < cutoff)
