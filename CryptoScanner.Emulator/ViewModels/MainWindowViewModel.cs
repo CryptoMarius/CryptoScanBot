@@ -414,6 +414,107 @@ public partial class MainWindowViewModel : ObservableObject
         GlobalData.Settings.General.ActivateExchangeName = config.ExchangeName;
 
         IsRunning = true;
+        try
+        {
+            await RunOnceAsync(config);
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+
+    /// <summary>
+    /// Runs every registered algorithm 1-by-1 with the same symbols/period from emulator-run.json,
+    /// each time as a long+short analyzer/trader run (so a single algorithm's full signal set is
+    /// exercised on its own, without competing with the others for slots/capital). Every algorithm
+    /// gets its own EmulatorRun row; the row's label is "{algorithm name} {rest of the configured
+    /// label}" so the algorithm name is always the run label's first word, per the user's request.
+    /// Stops the whole batch (instead of moving to the next algorithm) if the user hits Stop mid-run.
+    /// </summary>
+    [RelayCommand]
+    private async Task RunAllAlgorithmsAsync()
+    {
+        if (IsRunning)
+            return;
+
+        EmulatorRunConfig baseConfig;
+        try
+        {
+            baseConfig = RunConfigFile.Load();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to read run config: {ex.Message}";
+            return;
+        }
+
+        if (baseConfig.Symbols.Count == 0)
+        {
+            Status = "Run config has no symbols — edit emulator-run.json first.";
+            return;
+        }
+
+        if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
+        {
+            Status = "Run needs an exchange";
+            return;
+        }
+
+        GlobalData.ActiveExchange = exchange;
+        GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
+        GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+
+        // The configured label's first word is replaced per-algorithm below; anything after the
+        // first word (extra notes the user typed) is kept and appended to every algorithm's label.
+        string[] labelParts = baseConfig.Label.Split(' ', 2, StringSplitOptions.None);
+        string labelRest = labelParts.Length > 1 ? labelParts[1] : "";
+
+        IsRunning = true;
+        try
+        {
+            foreach (AlgorithmDefinition algorithm in RegisterAlgorithms.AlgorithmDefinitionList.Values)
+            {
+                // Isolate the analyzer and trader to this single algorithm, both sides — so the
+                // batch run measures each algorithm on its own, the same way a manual single-algo
+                // run would be set up by hand.
+                GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
+                GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
+                GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
+                GlobalData.Settings.Trading.Short.Strategy = [algorithm.Name];
+
+                EmulatorRunConfig algoConfig = new()
+                {
+                    ExchangeName = baseConfig.ExchangeName,
+                    Symbols = baseConfig.Symbols,
+                    FromDate = baseConfig.FromDate,
+                    ToDate = baseConfig.ToDate,
+                    Label = labelRest.Length > 0 ? $"{algorithm.Name} {labelRest}" : algorithm.Name,
+                };
+
+                bool completed = await RunOnceAsync(algoConfig);
+                if (!completed)
+                    break; // Stop was pressed (or the run failed) — abandon the rest of the batch.
+            }
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+
+    /// <summary>
+    /// Drives a single replay end-to-end: applies the run overrides, opens an EmulatorRun row,
+    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run)
+    /// and <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) — neither touches
+    /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch command
+    /// keeps it true across multiple calls.
+    /// </summary>
+    /// <returns>True if the run completed normally; false if it was cancelled or failed.</returns>
+    private async Task<bool> RunOnceAsync(EmulatorRunConfig config)
+    {
         ProgressValue = 0;
         Status = $"Starting run \"{config.Label}\"";
 
@@ -426,6 +527,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         _cts = new CancellationTokenSource();
         CryptoEmulatorRun? run = null;
+        bool completed = false;
 
         try
         {
@@ -472,6 +574,7 @@ public partial class MainWindowViewModel : ObservableObject
                 EmulatorDb.FinishRun("completed");
                 Status = $"Run \"{config.Label}\" completed.";
                 GlobalData.AddTextToLogTab($"Run #{run.Id} completed");
+                completed = true;
             }
         }
         catch (OperationCanceledException)
@@ -511,10 +614,11 @@ public partial class MainWindowViewModel : ObservableObject
             // the fresh numbers into the Results tab so it reflects this run immediately.
             RunResults.Refresh();
 
-            IsRunning = false;
             _cts?.Dispose();
             _cts = null;
         }
+
+        return completed;
     }
 
 
@@ -566,6 +670,11 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Clear positions, assets etc
         exchange.Data.Clear();
+
+        // Clear the live-dashboard dedupe queue so a previous run's (symbol, interval) entries
+        // do not suppress that combination's first live update in this run.
+        GlobalData.LiveDataQueue.Clear();
+        GlobalData.LiveDataQueueAdded.Clear();
 
         exchange.GetApiInstance().ExchangeDefaults();
 

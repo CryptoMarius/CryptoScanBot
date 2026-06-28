@@ -47,6 +47,9 @@
                             <MenuItem Header="Start"
                                       Command="{Binding StartCommand}"
                                       IsEnabled="{Binding !IsRunning}"/>
+                            <MenuItem Header="Run all algorithms"
+                                      Command="{Binding RunAllAlgorithmsCommand}"
+                                      IsEnabled="{Binding !IsRunning}"/>
                             <MenuItem Header="Stop"
                                       Command="{Binding StopCommand}"
                                       IsEnabled="{Binding IsRunning}"/>
@@ -90,6 +93,10 @@
                                 Command="{Binding StartCommand}"
                                 IsVisible="{Binding !IsRunning}"
                                 Background="#3A8D3A" Foreground="White"/>
+                        <Button Content="Run all algorithms"
+                                Command="{Binding RunAllAlgorithmsCommand}"
+                                IsVisible="{Binding !IsRunning}"
+                                ToolTip.Tip="Runs every registered algorithm one by one (long+short) with the symbols/period from emulator-run.json. Each algorithm gets its own EmulatorRun row labelled with its name."/>
                         <Button Content="Stop"
                                 Command="{Binding StopCommand}"
                                 IsVisible="{Binding IsRunning}"
