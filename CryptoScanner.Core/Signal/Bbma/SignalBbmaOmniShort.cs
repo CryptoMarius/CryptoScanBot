@@ -17,35 +17,36 @@ namespace CryptoScanner.Core.Signal.Bbma;
 public class SignalBbmaOmniShort : SignalBbmaOmniBase
 {
     /// <summary>
-    /// Classify a candle in OmniView terms. Priority (first match wins):
-    ///   Extreme → CSM → CSD → CSAK2 → GapBbEma50 → Cross → CSAA → TPW → RejectedEMA50 → Reentry
-    /// MHV is NOT checked here — requires knowledge of the next bar; call IsMhvSell(cursor, next)
+    /// Computes all sell-side signal buffers for this bar — the direct equivalent of evaluating
+    /// every independent MQL5 buffer (csak_sell[i], csak2_sell[i], ext_sell[i], mmt_sell[i], ...)
+    /// unconditionally. Only Csak2 keeps its source-level gate against Csd (OmniView.mq5 line
+    /// 799: "csak_sell[i]==EMPTY_VALUE") — every other buffer is independent.
+    /// </summary>
+    public OmniBar GetOmniBar(MyData data)
+    {
+        bool csd = IsCsd(data);
+        return new OmniBar
+        {
+            Extreme = IsExtreme(data),
+            Csm = IsCsm(data),
+            Csd = csd,
+            Csak2 = !csd && IsCsak2(data),
+            Csaa = IsCsaa(data),
+            Cross = IsCross(data),
+            Tpw = IsTpw(data),
+            RejectedEma50 = IsRejectedEma50(data),
+            GapBbEma50 = IsGapBbEma50(data),
+            Reentry = IsReentry(data),
+        };
+    }
+
+    /// <summary>
+    /// Derives a single display label from <see cref="GetOmniBar"/> — see
+    /// <see cref="SignalBbmaOmniBase.DeriveLabel"/> for why this must NEVER be used for gating.
+    /// MHV is not included — it requires the next bar (IsMhvSell(cursor, next)), called
     /// explicitly from CheckHtf and the IsSignal LTF walkback.
     /// </summary>
-    public OmniState GetOmniState(MyData data)
-    {
-        if (IsExtreme(data))
-            return OmniState.Extreme;
-        if (IsCsm(data))
-            return OmniState.Csm;
-        if (IsCsd(data))
-            return OmniState.Csd;
-        if (IsCsak2(data))
-            return OmniState.Csak2;
-        if (IsGapBbEma50(data))
-            return OmniState.GapBbEma50;
-        if (IsCross(data))
-            return OmniState.Cross;
-        if (IsCsaa(data))
-            return OmniState.Csaa;
-        if (IsTpw(data))
-            return OmniState.Tpw;
-        if (IsRejectedEma50(data))
-            return OmniState.RejectedEma50;
-        if (IsReentry(data))
-            return OmniState.Reentry;
-        return OmniState.None;
-    }
+    public OmniState GetOmniState(MyData data) => DeriveLabel(GetOmniBar(data));
 
 
     /// <summary>
@@ -151,12 +152,55 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
 
 
     /// <summary>
-    /// Extreme Sell — OmniView lines 811-815.
+    /// Memoization cache for the gated Extreme Sell result, keyed by candle open time.
+    /// See <see cref="SignalBbmaOmniLong"/>'s analogous cache for why this is needed
+    /// (the anti-repeat guard recurses into i-1/i-2 and would otherwise be exponential).
+    /// </summary>
+    private readonly Dictionary<CandleTime, bool> _extremeCache = [];
+
+    /// <summary>
+    /// Extreme Sell — OmniView lines 811-815, INCLUDING the anti-repeat guard
+    /// (ext_sell[i-1]==EMPTY_VALUE && ext_sell[i-2]==EMPTY_VALUE) that the raw conditions
+    /// in <see cref="ComputeExtreme"/> do not enforce on their own.
+    /// </summary>
+    private bool IsExtreme(MyData data)
+    {
+        if (_extremeCache.TryGetValue(data.Candle.OpenTime, out bool cached))
+            return cached;
+
+        bool result = ComputeExtreme(data);
+        _extremeCache[data.Candle.OpenTime] = result;
+        return result;
+    }
+
+    /// <summary>
+    /// Gated Extreme Sell computation — raw condition (<see cref="IsExtremeRaw"/>) plus the
+    /// MQ5 anti-repeat guard: no Extreme Sell already recorded at i-1 or i-2.
+    /// </summary>
+    private bool ComputeExtreme(MyData data)
+    {
+        if (!IsExtremeRaw(data))
+            return false;
+
+        if (!GetPrevCandle(data, out MyData? prev) || prev == null)
+            return false;
+        if (!GetPrevCandle(prev, out MyData? prev2) || prev2 == null)
+            return false;
+
+        // ext_sell[i-1]==EMPTY_VALUE && ext_sell[i-2]==EMPTY_VALUE (OmniView.mq5 line 811)
+        if (IsExtreme(prev) || IsExtreme(prev2))
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Extreme Sell raw condition — OmniView lines 811-815 minus the anti-repeat guard.
     ///   (mahi5 ≥ UB recent[0..2])
     /// AND (current OR prev candle is bearish)
     /// AND (wick rejection of UB current, or prev-wick + current-close-below-UB, or gap-down open-below-UB after prev-close-above-UB)
     /// </summary>
-    private bool IsExtreme(MyData data)
+    private bool IsExtremeRaw(MyData data)
     {
         decimal open = data.Candle.Open;
         decimal close = data.Candle.Close;
@@ -196,14 +240,29 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
 
     /// <summary>
     /// Momentum Sell / CSM — OmniView lines 909-913.
-    ///   close[i] ≤ LowerBand[i]
+    ///   close[i] ≤ LowerBand[i] AND no Extreme-Buy at this candle (ext_buy[i]==EMPTY_VALUE).
+    ///   The opposite-side Extreme check is wired up via <see cref="SignalBbmaOmniBase.OppositeExtremeChecker"/>
+    ///   (set in IsSignal() from an ephemeral SignalBbmaOmniLong instance).
     /// </summary>
     private bool IsCsm(MyData data)
     {
         decimal close = data.Candle.Close;
         decimal lowerB = (decimal)data.CandleData!.BollingerBandsLowerBand!.Value;
-        return close <= lowerB;
+        if (close > lowerB)
+            return false;
+
+        if (OppositeExtremeChecker != null && OppositeExtremeChecker(data))
+            return false;
+
+        return true;
     }
+
+    /// <summary>
+    /// Exposes IsCsm (mmt_sell) so SignalBbmaOmniLong can wire it up as the
+    /// OppositeCsmChecker delegate for its own MHV Buy gate (OmniView.mq5 line 857:
+    /// mmt_sell[i]==EMPTY_VALUE && mmt_sell[i-1]==EMPTY_VALUE).
+    /// </summary>
+    public bool IsCsmSellBar(MyData data) => IsCsm(data);
 
 
     /// <summary>
@@ -246,10 +305,8 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             if (cursor.Candle.Low < lowerBCursor)
                 return false;
 
-            OmniState state = GetOmniState(cursor);
-
             // Found Extreme Sell first → current bar IS the first WMA(low) touch → TPW Sell
-            if (state == OmniState.Extreme)
+            if (IsExtreme(cursor))
                 return true;
 
             // Found another WMA(low) touch before any Extreme → not a fresh TPW
@@ -322,7 +379,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         // Check Extreme Sell exists somewhere after tpwIdx (older bars)
         for (int i = tpwIdx + 1; i < history.Count; i++)
         {
-            if (GetOmniState(history[i]) == OmniState.Extreme)
+            if (IsExtreme(history[i]))
                 return true;
         }
         return false;
@@ -433,8 +490,7 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     ///   1. IsTpwSellPhaseActive(cursor) — tpwsell ≥ 2 in MQ5 terms.
     ///   2. Fractal Up at cursor: prev.High &lt; cursor.High AND next.High &lt; cursor.High  (strict right).
     ///   3. cursor.High &gt; cursor.Mid (high of the fractal bar is above BB-mid).
-    ///   4. No CSM Buy at cursor or next (mmt_buy guard in MQ5).
-    ///      We approximate: GetOmniState(cursor/next) must not be Csm (Csm short = close ≤ LowerBand).
+    ///   4. No CSM Buy (mmt_buy) at cursor or next — via <see cref="SignalBbmaOmniBase.OppositeCsmChecker"/>.
     /// </summary>
     public bool IsMhvSell(MyData cursor, MyData next)
     {
@@ -447,8 +503,16 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         if (cursor.Candle.High <= midCursor)
             return false;
 
-        // No CSM (mmt_buy) at cursor or next
-        if (IsCsm(cursor) || IsCsm(next))
+        // tpw_sell[i]==EMPTY_VALUE && tpw_sell[i-1]==EMPTY_VALUE (OmniView.mq5 line 878):
+        // MHV cannot fire on the same bar TPW just fired, nor on the bar after.
+        if (IsTpw(cursor) || IsTpw(next))
+            return false;
+
+        // No CSM (mmt_buy, the LONG classifier's momentum — close >= UpperBand) at cursor or
+        // next. mmt_buy[i]==EMPTY_VALUE && mmt_buy[i-1]==EMPTY_VALUE (OmniView.mq5 line 878).
+        // IsCsm on THIS (short) class is mmt_sell, the wrong side entirely — must go through
+        // the opposite-side delegate, wired up in IsSignal() from an ephemeral Long instance.
+        if (OppositeCsmChecker != null && (OppositeCsmChecker(cursor) || OppositeCsmChecker(next)))
             return false;
 
         // Fractal Up: need the bar before cursor (prev)
@@ -459,9 +523,12 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         decimal highPrev = prev.Candle.High;
         decimal highNext = next.Candle.High;
 
-        // barsLeft=1: prev.High < cursor.High (strictly)
-        // barsRight=1: next.High < cursor.High (strictly, per OmniView "dynamic fractal")
-        bool fractalUp = highPrev < highCursor && highNext < highCursor;
+        // CalculateDynamicFractals (OmniView.mq5 lines 1067-1105): left check fails only when
+        // current > left (i.e. left <= current is fine — NON-STRICT). Right check fails when
+        // current <= right (i.e. right must be strictly smaller — STRICT).
+        // barsLeft=1: prev.High <= cursor.High (non-strict)
+        // barsRight=1: next.High < cursor.High (strict)
+        bool fractalUp = highPrev <= highCursor && highNext < highCursor;
         return fractalUp;
     }
 
@@ -606,12 +673,13 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             if (!GetPrevCandle(interval, cursor, out cursor) || cursor == null)
                 break;
 
-            OmniState state = GetOmniState(cursor);
-            if (csmIndex < 0 && i < CsmLookback && state == OmniState.Csm) csmIndex = i;
+            // Independent buffer check — mirrors reading csak_sell[i]/csak2_sell[i]/csaa_sell[i]/
+            // CrossEMA50mBB_sell[i]/mmt_sell[i]/tpw_sell[i] directly, not a single derived state.
+            OmniBar bar = GetOmniBar(cursor);
+            if (csmIndex < 0 && i < CsmLookback && bar.Csm) csmIndex = i;
             // CSD, CSAK2, CSAA, and Cross are all treated as "CSD-class" setup signals for HTF validation
-            if (csdIndex < 0 && i < CsdLookback && (state == OmniState.Csd || state == OmniState.Csak2
-                    || state == OmniState.Csaa || state == OmniState.Cross)) csdIndex = i;
-            if (tpwIndex < 0 && i < TpwLookback && state == OmniState.Tpw) tpwIndex = i;
+            if (csdIndex < 0 && i < CsdLookback && bar.CsdClass) csdIndex = i;
+            if (tpwIndex < 0 && i < TpwLookback && bar.Tpw) tpwIndex = i;
 
             if (mhvIndex < 0 && i < MhvLookback && nextCursor != null && IsMhvSell(cursor, nextCursor))
                 mhvIndex = i;
@@ -649,9 +717,26 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
     }
 
 
+    /// <summary>
+    /// Invalidate the setup when a Long Extreme prints on the current candle.
+    ///
+    /// BUGFIX: see <see cref="SignalBbmaOmniLong.GiveUp"/> for the rationale — this used to
+    /// check this (short) class's OWN Extreme (ext_sell, bearish exhaustion), which reinforces
+    /// the short bias rather than invalidating it. The actual invalidation is the opposite-side
+    /// Extreme (ext_buy), via an ephemeral Long instance.
+    /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
-        return GetOmniState(CandleLast) == OmniState.Extreme;
+        var opposite = new SignalBbmaOmniLong
+        {
+            Symbol = Symbol,
+            Interval = Interval,
+            SymbolInterval = SymbolInterval,
+            SignalSide = CryptoTradeSide.Long,
+            SignalStrategy = SignalStrategy,
+            CandleLast = CandleLast,
+        };
+        return opposite.IsExtremeBuyBar(CandleLast);
     }
 
 
@@ -660,9 +745,25 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         ExtraText = "";
         string logPrefix = $"{Symbol.Name} {Interval.Name} bbma.omni {SignalSide} ";
 
-        // Build the forward-pass TPW cache before any GetOmniState calls.
-        // No cross-reset here (no Long classifier available in the scanner path).
-        BuildTpwCache(SymbolInterval);
+        // Ephemeral opposite-side (Long) classifier, used purely to evaluate its Extreme
+        // condition — needed to reproduce the MQ5 CSM gate (mmt_sell requires ext_buy[i]==EMPTY)
+        // and the TPW cross-reset (ext_buy[i-1] resets tpwsell to 0). GetPrevCandle/GetOmniState
+        // only read Symbol/Interval/SymbolInterval, so this instance is safe to share read-only.
+        var opposite = new SignalBbmaOmniLong
+        {
+            Symbol = Symbol,
+            Interval = Interval,
+            SymbolInterval = SymbolInterval,
+            SignalSide = CryptoTradeSide.Long,
+            SignalStrategy = SignalStrategy,
+            CandleLast = CandleLast,
+        };
+        OppositeExtremeChecker = opposite.IsExtremeBuyBar;
+        OppositeCsmChecker = opposite.IsCsmBuyBar;
+
+        // Build the forward-pass TPW cache before any GetOmniState calls, with the
+        // Long-side Extreme as the cross-reset delegate (OmniView.mq5 line 829).
+        BuildTpwCache(SymbolInterval, opposite.IsExtremeBuyBar);
 
         //if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100))
         //{
@@ -670,11 +771,13 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         //    return false;
         //}
 
+        // Checked directly on the buffer — see SignalBbmaOmniLong.IsSignal for the rationale
+        // (GetOmniState would silently miss a true Reentry whenever this candle ALSO qualifies
+        // for a higher-priority buffer, e.g. Csd).
         MyData? candleLtf = CandleLast;
-        OmniState stateLtfNow = GetOmniState(candleLtf);
-        if (stateLtfNow != OmniState.Reentry)
+        if (!GetOmniBar(candleLtf).Reentry)
         {
-            ExtraText = $"LTF not in Reentry ({stateLtfNow})";
+            ExtraText = $"LTF not in Reentry ({GetOmniState(candleLtf)})";
             return false;
         }
 
@@ -706,13 +809,14 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
                 break;
             }
 
-            stateLtfBack = GetOmniState(candleLtf);
-            if (stateLtfBack == OmniState.Extreme || stateLtfBack == OmniState.Tpw
-                || stateLtfBack == OmniState.RejectedEma50 || stateLtfBack == OmniState.GapBbEma50
-                || stateLtfBack == OmniState.Csm || stateLtfBack == OmniState.Csd
-                || stateLtfBack == OmniState.Csak2 || stateLtfBack == OmniState.Csaa
-                || stateLtfBack == OmniState.Cross)
+            // Independent buffer check (AnyTrigger) — not a single derived state.
+            OmniBar barBack = GetOmniBar(candleLtf);
+            if (barBack.AnyTrigger)
+            {
+                stateLtfBack = DeriveLabel(barBack);
                 break;
+            }
+            stateLtfBack = OmniState.None;
         }
 
         if (stateLtfBack == OmniState.None || stateLtfBack == OmniState.Reentry)
@@ -742,9 +846,6 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name}): no data (success={resultHtf.success})");
             return false;
         }
-        OmniState stateHtf = GetOmniState(resultHtf.candle);
-        //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name})={stateHtf}");
-
         // HTF trend filter: EMA50 above mid-BB AND Wma05High above mid-BB → bearish bias
         double ema50Htf = resultHtf.candle.CandleData!.Ema50!.Value;
         double midBbHtf = resultHtf.candle.CandleData!.Sma20!.Value;
@@ -756,12 +857,17 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
             return false;
         }
 
-        if (stateHtf != OmniState.Reentry)
+        // HTF must currently be in Reentry as well — checked on the buffer directly (see
+        // SignalBbmaOmniLong.IsSignal for the rationale).
+        OmniBar htfBar = GetOmniBar(resultHtf.candle);
+        if (!htfBar.Reentry)
         {
-            ExtraText = $"HTF not in Reentry ({stateHtf})";
-            //GlobalData.AddTextToLogTab($"{logPrefix} HTF not Reentry (={stateHtf})");
+            ExtraText = $"HTF not in Reentry ({DeriveLabel(htfBar)})";
+            //GlobalData.AddTextToLogTab($"{logPrefix} HTF not Reentry (={DeriveLabel(htfBar)})");
             return false;
         }
+        OmniState stateHtf = DeriveLabel(htfBar);
+        //GlobalData.AddTextToLogTab($"{logPrefix} HTF ({resultHtf.higherInterval.Interval.Name})={stateHtf}");
 
         if (!CheckHtf(resultHtf.higherInterval.Interval, resultHtf.candle, out string htfSetup))
         {

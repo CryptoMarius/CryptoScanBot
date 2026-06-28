@@ -73,6 +73,25 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     /// </summary>
     protected Dictionary<CandleTime, OmniBarState> TpwStateCache { get; } = [];
 
+    /// <summary>
+    /// Optional check for an Extreme on the OPPOSITE side, used to reproduce the MQ5 CSM gate
+    /// (mmt_buy requires ext_sell[i]==EMPTY, mmt_sell requires ext_buy[i]==EMPTY — OmniView.mq5
+    /// lines 904/909). Wired up in IsSignal() via an ephemeral instance of the other side's
+    /// classifier (IsExtremeBuyBar / IsExtremeSellBar). Left null, Csm falls back to the
+    /// un-gated check (own-side Extreme only, via GetOmniState priority order).
+    /// </summary>
+    protected Func<MyData, bool>? OppositeExtremeChecker;
+
+    /// <summary>
+    /// Optional check for the OPPOSITE-side momentum (CSM), used to reproduce the MQ5 MHV gate
+    /// (MHV Buy requires mmt_sell[i]==EMPTY && mmt_sell[i-1]==EMPTY — OmniView.mq5 line 857;
+    /// MHV Sell requires mmt_buy[i]==EMPTY && mmt_buy[i-1]==EMPTY — line 878). Wired up in
+    /// IsSignal() via an ephemeral instance of the other side's classifier (IsCsmBuyBar /
+    /// IsCsmSellBar). Without this, IsMhvBuy/IsMhvSell would have to check their OWN class's
+    /// momentum, which is the wrong side entirely (mmt_buy is irrelevant to gating MHV Buy).
+    /// </summary>
+    protected Func<MyData, bool>? OppositeCsmChecker;
+
 
     // -----------------------------------------------------------------------
     // OmniState enum and helpers
@@ -152,6 +171,38 @@ public class SignalBbmaOmniBase : SignalBbmaBase
     }
 
     /// <summary>
+    /// Independent per-bar signal buffers — the direct C# equivalent of the MQL5 indicator
+    /// buffers (csak_buy[i], csak2_buy[i], ext_buy[i], mmt_buy[i], csaa_buy[i],
+    /// CrossEMA50mBB_buy[i], tpw_buy[i], rejectedEMA50_buy[i], GAPBBtoEMA50_buy[i], ret_buy[i]
+    /// — or their _sell counterparts). In OmniView.mq5 these are independent arrays: more than
+    /// one can be non-EMPTY on the same bar (only Csak2 has an explicit source-level gate
+    /// against Csd — "csak_buy[i]==EMPTY_VALUE" — see GetOmniBar). Mhv is intentionally NOT a
+    /// field here: it needs the NEXT bar to confirm the fractal, so it stays a two-argument
+    /// call (IsMhvBuy/IsMhvSell(cursor, next)), same as in the MQL5 source (placed at i-1 once
+    /// bar i confirms it).
+    /// </summary>
+    public struct OmniBar
+    {
+        public bool Extreme;
+        public bool Csm;
+        public bool Csd;
+        public bool Csak2;
+        public bool Csaa;
+        public bool Cross;
+        public bool Tpw;
+        public bool RejectedEma50;
+        public bool GapBbEma50;
+        public bool Reentry;
+
+        /// <summary>True when ANY trigger-class buffer fired on this bar (everything except Reentry).</summary>
+        public bool AnyTrigger => Extreme || Csm || Csd || Csak2 || Csaa || Cross || Tpw || RejectedEma50 || GapBbEma50;
+
+        /// <summary>True when any of the "CSD-class" buffers fired — Csd, Csak2, Csaa, Cross are
+        /// all grouped together for HTF-setup validation purposes (see CheckHtf).</summary>
+        public bool CsdClass => Csd || Csak2 || Csaa || Cross;
+    }
+
+    /// <summary>
     /// Maps an OmniState to a single-letter code used in the multi-TF code-match string.
     /// The code-match accepts any 3-char code "R??" where position 0 = 'R' (HTF Reentry)
     /// and position 2 (LTF lookback) is not '-' (a meaningful preceding event was found).
@@ -169,6 +220,30 @@ public class SignalBbmaOmniBase : SignalBbmaBase
         OmniState.Cross => "X",
         _ => "-"   // Csd, Csm → "-": HTF setup states, not code-match components
     };
+
+    /// <summary>
+    /// Derives a single display/code-match label from an <see cref="OmniBar"/> — used ONLY for
+    /// the "[htfSetup]" ExtraText and the 3-TF code-match string (e.g. "RRE"). This priority
+    /// order is an INVENTED hierarchy with no MQL5 equivalent (the source buffers are
+    /// independent and have no precedence between them, except Csak2-vs-Csd). All actual
+    /// pass/fail GATING must read the OmniBar fields directly (see CheckHtf, IsSignal),
+    /// never this derived label — multiple buffers can be true on the same bar and a gate that
+    /// only checks the single highest-priority label would silently miss the others.
+    /// </summary>
+    internal static OmniState DeriveLabel(OmniBar bar)
+    {
+        if (bar.Extreme) return OmniState.Extreme;
+        if (bar.Csm) return OmniState.Csm;
+        if (bar.Csd) return OmniState.Csd;
+        if (bar.Csak2) return OmniState.Csak2;
+        if (bar.GapBbEma50) return OmniState.GapBbEma50;
+        if (bar.Cross) return OmniState.Cross;
+        if (bar.Csaa) return OmniState.Csaa;
+        if (bar.Tpw) return OmniState.Tpw;
+        if (bar.RejectedEma50) return OmniState.RejectedEma50;
+        if (bar.Reentry) return OmniState.Reentry;
+        return OmniState.None;
+    }
 
 
     // -----------------------------------------------------------------------
