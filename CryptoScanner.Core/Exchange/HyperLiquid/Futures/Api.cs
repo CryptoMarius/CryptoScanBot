@@ -29,7 +29,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1);
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Futures", "USDC", 300, false, 1, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>
@@ -103,9 +103,9 @@ public class Api : ExchangeBase
             TradingView = new()
             {
                 Execute = CryptoExternalUrlType.External,
-                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUIDF:{BASE}{QUOTE}&interval={interval}",
+                Url = "https://www.tradingview.com/chart/?symbol=HYPERLIQUID:{BASE}{QUOTE}.P&interval={interval}",
             },
-            ExchangeUrl = new()
+            ExchangeUrl = new()//HYPERLIQUID:0GUSDC.P
             {
                 Execute = CryptoExternalUrlType.External,
                 Url = "https://www.hyperliquid.com/trade/{BASE}/{QUOTE}",

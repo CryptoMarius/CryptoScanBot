@@ -18,7 +18,7 @@ internal class KrakenWeight
 /// <summary>
 /// Deze class verzorgt een vertraging als je teveel aanvragen doet (via de weight van de actie)
 /// JKorf commented on May 1, 2019
-/// Hi, I've added the response headers to the WebCallResult object. I also added a helper method to quickly retrieve the used weight header:
+/// Hi, I've added the response headers to the HttpResult object. I also added a helper method to quickly retrieve the used weight header:
 /// var weight = client.GetAllOrders("ETHBTC").ResponseHeaders.UsedWeight(); (obviously you should check for errors)
 /// </summary>
 public static class LimitRate

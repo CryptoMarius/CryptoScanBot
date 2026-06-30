@@ -17,47 +17,33 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         if (string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (SymbolByExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{symbolNames} Candle {kline.OpenTime.ToLocalTime()} start processing");
+            IncrementTickerCount();
+            //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+            //GlobalData.AddTextToLogTab($"{symbolNames} Candle {kline.OpenTime.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+                kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
 
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new CoinbaseSocketClient();
         var client = (CoinbaseSocketClient)TickerGroup.SocketClient;
         var api = client.AdvancedTradeApi;
-
-        // TODO: quick en dirty code hier, nog eens verbeteren
-        // We verwachten (helaas) slechts 1 symbol per ticker
-        List<string> symbols = [];
-
-        foreach (var symbol in SymbolList)
-        {
-            symbols.Add(symbol.ExchangeName);
-        }
-        string symbolNames = string.Join(",", symbols);
-
 
         //------------------------------------------------------------------------------
         // WTF, Subscribe to kline updates.
         // But the Klines are always at a 5 minute interval, that won't work
         //------------------------------------------------------------------------------
 
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, data =>
         {
             //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} added for processing", data.Data.OpenTime.ToLocalTime(), data.ScannerSymbol));
             foreach (CoinbaseStreamKline kline in data.Data)

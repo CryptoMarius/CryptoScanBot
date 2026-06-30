@@ -79,7 +79,7 @@ public class Symbol() : SymbolBase(), ISymbol
                     try
                     {
                         //BybitSpotSymbol
-                        //WebCallResult<BybitResponse<BybitSpotSymbol>> x;
+                        //HttpResult<BybitResponse<BybitSpotSymbol>> x;
                         foreach (var symbolData in symbols)
                         {
                             SymbolInfo info = ParseSymbol(symbolData.Name, symbolData.BaseAsset, symbolData.QuoteAsset);

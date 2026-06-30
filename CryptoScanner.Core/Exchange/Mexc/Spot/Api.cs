@@ -28,7 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Mexc Spot", "USDT", 500, true, 3, 10);
+        ExchangeOptions.SetDefaultOptions("Mexc Spot", "USDT", 500, true, 3, 10, KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         // Default opties voor deze exchange

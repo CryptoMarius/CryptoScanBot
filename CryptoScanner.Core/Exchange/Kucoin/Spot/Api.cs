@@ -28,7 +28,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kucoin Spot", "USDC", 1500, true, 1, 20);
+        ExchangeOptions.SetDefaultOptions("Kucoin Spot", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
 

@@ -191,7 +191,7 @@ public class Api : ExchangeBase
         {
             case CryptoOrderType.Market:
                 {
-                    WebCallResult<BinanceUsdFuturesOrder> result;
+                    HttpResult<BinanceUsdFuturesOrder> result;
                     result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         FuturesOrderType.Market, quantity);
                     if (!result.Success)
@@ -208,7 +208,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    WebCallResult<BinanceUsdFuturesOrder> result;
+                    HttpResult<BinanceUsdFuturesOrder> result;
                     result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         FuturesOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
                     if (!result.Success)
@@ -225,7 +225,7 @@ public class Api : ExchangeBase
                 }
             //case CryptoOrderType.StopLimit:
             //    {
-            //        WebCallResult<BinanceUsdFuturesOrder> result;
+            //        HttpResult<BinanceUsdFuturesOrder> result;
             //        result = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol.Name, side,
             //            FuturesOrderType.StopLossLimit, quantity, price: price, stopPrice: stop, timeInForce: TimeInForce.GoodTillCanceled);
             //        if (!result.Success)
@@ -242,7 +242,7 @@ public class Api : ExchangeBase
             //    }
             //case CryptoOrderType.Oco:
             //    {
-            //        WebCallResult<BinanceUsdFuturesOrder> result;
+            //        HttpResult<BinanceUsdFuturesOrder> result;
             //        result = await client.UsdFuturesApi.Trading.PlaceOcoOrderAsync(symbol.Name, side,
             //            quantity, price: price, (decimal)stop, limit, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
 

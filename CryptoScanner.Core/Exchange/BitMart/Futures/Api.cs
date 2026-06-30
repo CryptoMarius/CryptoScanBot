@@ -30,7 +30,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 500, false, 1);
+        ExchangeOptions.SetDefaultOptions("BitMart Futures", "USDT", 500, false, 1, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         BitMartRestClient.SetDefaultOptions(options =>

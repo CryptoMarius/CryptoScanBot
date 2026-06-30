@@ -30,25 +30,22 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         if (string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (SymbolByExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
+            IncrementTickerCount();
+            //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+            //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.StartTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.Turnover);
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.StartTime,
+                kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                kline.Turnover);
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
 
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BybitSocketClient();
         var subscriptionResult = await ((BybitSocketClient)TickerGroup.SocketClient).V5SpotApi.SubscribeToKlineUpdatesAsync(

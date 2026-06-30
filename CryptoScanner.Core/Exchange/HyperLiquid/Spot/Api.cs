@@ -32,7 +32,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1);
+        ExchangeOptions.SetDefaultOptions("HyperLiquid Spot", "USDC", 300, false, 1, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         HyperLiquidRestClient.SetDefaultOptions(options =>

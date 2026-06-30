@@ -197,7 +197,7 @@ public class Api : ExchangeBase
         {
             case CryptoOrderType.Market:
                 {
-                    WebCallResult<BinancePlacedOrder> result;
+                    HttpResult<BinancePlacedOrder> result;
                     result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         SpotOrderType.Market, quantity);
                     if (!result.Success)
@@ -214,7 +214,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Limit:
                 {
-                    WebCallResult<BinancePlacedOrder> result;
+                    HttpResult<BinancePlacedOrder> result;
                     result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         SpotOrderType.Limit, quantity, price: price, timeInForce: TimeInForce.GoodTillCanceled);
                     if (!result.Success)
@@ -231,7 +231,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.StopLimit:
                 {
-                    WebCallResult<BinancePlacedOrder> result;
+                    HttpResult<BinancePlacedOrder> result;
                     result = await client.SpotApi.Trading.PlaceOrderAsync(position.Symbol.Name, side,
                         SpotOrderType.StopLossLimit, quantity, price: price, stopPrice: stop, timeInForce: TimeInForce.GoodTillCanceled);
                     if (!result.Success)
@@ -248,7 +248,7 @@ public class Api : ExchangeBase
                 }
             case CryptoOrderType.Oco:
                 {
-                    WebCallResult<BinanceOrderOcoList> result;
+                    HttpResult<BinanceOrderOcoList> result;
                     result = await client.SpotApi.Trading.PlaceOcoOrderAsync(position.Symbol.Name, side,
                         quantity, price: price, stop ?? 0, limit, stopLimitTimeInForce: TimeInForce.GoodTillCanceled);
 

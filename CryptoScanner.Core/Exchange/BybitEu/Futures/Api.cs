@@ -208,7 +208,7 @@ public class Api : ExchangeBase
         }
 
 
-        WebCallResult<BybitOrderId> result;
+        HttpResult<BybitOrderId> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
@@ -264,7 +264,7 @@ public class Api : ExchangeBase
                     // Een OCO is afwijkend ten opzichte van een standaard buy or sell
                     //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
                     //    het had ook andere parameters en results
-                    //WebCallResult<BybitOrderOcoList> result;?????
+                    //HttpResult<BybitOrderOcoList> result;?????
                     //    throw new Exception("${orderType} not supported");
                     throw new Exception("${orderType} not supported");
                 }

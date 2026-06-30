@@ -32,7 +32,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20);
+        ExchangeOptions.SetDefaultOptions("Kucoin Futures", "USDC", 1500, true, 1, 20, KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KucoinRestClient.SetDefaultOptions(options =>
@@ -123,7 +123,7 @@ public class Api : ExchangeBase
         //BinanceWeights.WaitForFairBinanceWeight(1); flauwekul voor die ene tick (geen herhaling toch?)
         using KucoinRestClient client = new();
 
-        WebCallResult<KucoinOrderId> result;
+        HttpResult<KucoinOrderId> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
@@ -170,7 +170,7 @@ public class Api : ExchangeBase
                     // Een OCO is afwijkend ten opzichte van een standaard buy or sell
                     //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
                     //    het had ook andere parameters en results
-                    //WebCallResult<BybitOrderOcoList> result;?????
+                    //HttpResult<BybitOrderOcoList> result;?????
                     //    throw new Exception("${orderType} not supported");
                     throw new Exception("${orderType} not supported");
                 }

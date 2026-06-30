@@ -14,6 +14,12 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
     public int TickerCount = 0;
     public int TickerCountLast = 0;
 
+    protected void IncrementTickerCount()
+    {
+        if (Interlocked.Increment(ref TickerCount) > 999_999_999)
+            Interlocked.Exchange(ref TickerCount, 0);
+    }
+
     public bool NeedsRestart = false;
     public int ConnectionLostCount = 0;
     public bool ErrorDuringStartup = false;
@@ -23,12 +29,18 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
     public TickerGroup? TickerGroup;
     internal UpdateSubscription? _subscription;
 
-    // Deze worden niet gebruikt bij de userticker 
+    // Deze worden niet gebruikt bij de userticker
     public List<string> Symbols = [];
     public List<CryptoSymbol> SymbolList = [];
     public string SymbolOverview = "";
 
-    public abstract Task<CallResult<UpdateSubscription>?> Subscribe();
+    // Lazy lookup from exchange symbol name to CryptoSymbol — avoids the global exchange-dictionary
+    // lookup in socket callbacks. Built on first access from SymbolList.
+    private Dictionary<string, CryptoSymbol>? _symbolByExchangeName;
+    protected IReadOnlyDictionary<string, CryptoSymbol> SymbolByExchangeName
+        => _symbolByExchangeName ??= SymbolList.ToDictionary(s => s.ExchangeName);
+
+    public abstract Task<WebSocketResult<UpdateSubscription>?> Subscribe();
 
 
     public virtual async Task StartAsync()

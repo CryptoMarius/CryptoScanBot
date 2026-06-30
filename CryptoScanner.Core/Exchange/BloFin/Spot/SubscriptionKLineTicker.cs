@@ -1,4 +1,4 @@
-﻿using BloFin.Net.Clients;
+using BloFin.Net.Clients;
 using BloFin.Net.Enums;
 using BloFin.Net.Objects.Models;
 
@@ -17,6 +17,11 @@ namespace CryptoScanner.Core.Exchange.BloFin.Spot;
 /// </summary>
 public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : SubscriptionTicker(exchangeOptions)
 {
+    // BloFin Spot uses api.FormatSymbol() for subscription names, which differ from ExchangeName.
+    // The feed then strips underscores before matching — so we key this dict on the stripped name.
+    private Dictionary<string, CryptoSymbol> _symbolByStrippedName = [];
+
+
     private async Task ProcessCandleAsync(string? symbolName, BloFinKline kline)
     {
         // Aantekeningen
@@ -33,46 +38,40 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             return;
         symbolName = symbolName.Replace("_", "");
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeBase.ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (_symbolByStrippedName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
+            IncrementTickerCount();
+            //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+            //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+                kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                kline.Volume, kline.Volume * 0.5m * (kline.HighPrice + kline.LowPrice));
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
 
-                //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
-                //    GlobalData.AddTextToLogTab($"Debug candle {symbol.Name} 1m {JsonSerializer.Serialize(kline, JsonTools.JsonSerializerNotIndented)}");
-            }
+            //if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
+            //    GlobalData.AddTextToLogTab($"Debug candle {symbol.Name} 1m {JsonSerializer.Serialize(kline, JsonTools.JsonSerializerNotIndented)}");
         }
-
     }
 
 
     public override async Task<CallResult<UpdateSubscription>?> Subscribe()
     {
-        SemaphoreSlim symbolListSemaphore = new(1, 1);
-        TickerGroup!.SocketClient ??= new BitMartSocketClient();
-        var client = (BitMartSocketClient)TickerGroup.SocketClient;
+        TickerGroup!.SocketClient ??= new BloFinSocketClient();
+        var client = (BloFinSocketClient)TickerGroup.SocketClient;
         var api = client.SpotApi;
 
-        // TODO: quick en dirty
-        List<string> symbols = [];
-        string symbolNames = "";
+        // BloFin Spot requires formatted symbol names (e.g. "BTC-USDT") for the subscription,
+        // while the feed strips underscores before matching against our internal symbol names.
+        _symbolByStrippedName = [];
+        List<string> formattedNames = [];
         foreach (var symbol in SymbolList)
         {
-            string symbolName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
-            if (symbolNames == "")
-                symbolNames = symbolName;
-            else
-                symbolNames += "," + symbolName;
-            symbols.Add(symbolNames);
+            string formattedName = api.FormatSymbol(symbol.Base, symbol.Quote, TradingMode.Spot);
+            formattedNames.Add(formattedName);
+            _symbolByStrippedName.TryAdd(formattedName.Replace("_", ""), symbol);
         }
+        string symbolNames = string.Join(",", formattedNames);
 
         var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbolNames, KlineStreamInterval.OneMinute, data =>
         {
@@ -80,11 +79,8 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
             {
                 Task.Run(async () => { await ProcessCandleAsync(kline.Symbol, kline.Kline); });
             }
-
-
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 
         return subscriptionResult;
     }
-
 }

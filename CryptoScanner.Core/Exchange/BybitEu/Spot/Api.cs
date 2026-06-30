@@ -147,7 +147,7 @@ public class Api : ExchangeBase
         // Plaats een order op de exchange *ze lijken op elkaar, maar het is net elke keer anders)
         using BybitRestClient client = new();
 
-        WebCallResult<BybitOrderId> result;
+        HttpResult<BybitOrderId> result;
         switch (orderType)
         {
             case CryptoOrderType.Market:
@@ -234,7 +234,7 @@ public class Api : ExchangeBase
 
 
 
-                    //////Task<WebCallResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
+                    //////Task<HttpResult<BybitOrderId>> PlaceOrderAsync(Category category, string symbol, OrderSide side, NewOrderType type, decimal quantity, decimal? price = null, 
                     //////    bool? isLeverage = null, TriggerDirection? triggerDirection = null, OrderFilter? orderFilter = null, decimal? triggerPrice = null, 
                     //////    TriggerType? triggerBy = null, decimal? orderIv = null, TimeInForce? timeInForce = null, PositionIdx? positionIdx = null, string? clientOrderId = null, 
                     //////    OrderType? takeProfitOrderType = null, decimal? takeProfit = null, decimal? takeProfitLimitPrice = null, OrderType? stopLossOrderType = null, 
@@ -267,7 +267,7 @@ public class Api : ExchangeBase
                     // Een OCO is afwijkend ten opzichte van een standaard buy or sell
                     //    Bij Binance was een OCO totaal afwijkend ten opzichte van een standaard buy or sell
                     //    het had ook andere parameters en results
-                    //WebCallResult<BybitOrderOcoList> result;?????
+                    //HttpResult<BybitOrderOcoList> result;?????
                     //    throw new Exception("${orderType} not supported");
                     throw new Exception($"{orderType} not supported");
                 }

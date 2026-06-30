@@ -1,5 +1,23 @@
 ﻿namespace CryptoScanner.Core.Exchange;
 
+/// <summary>
+/// Describes how an exchange delivers closed 1-minute candles over its WebSocket feed.
+/// Used as documentation and for diagnostics; the actual implementation choice is expressed
+/// by inheriting from <see cref="SubscriptionKLineCachedTicker"/> (Timer) or
+/// <see cref="SubscriptionTicker"/> directly (FinalEvent).
+/// </summary>
+public enum KlineDelivery
+{
+    /// Exchange sends a single definitive "final" event once the candle closes (Binance, BloFin,
+    /// ByBit, OKX, Kucoin, …). No local cache or timer is needed.
+    FinalEvent,
+
+    /// Exchange sends continuous partial updates for the currently open candle and never sends a
+    /// definitive "closed" signal (HyperLiquid, Kraken Futures). A local cache and a minute-boundary
+    /// timer are required to extract the completed candle.
+    TimerFlush,
+}
+
 // An experiment for DI..
 
 //public interface IExchangeOptions
@@ -50,9 +68,13 @@ public class ExchangeOptions // : IExchangeOptions
     // Limit for fetching candles
     public int CandleLimit { get; set; } = 1000;
 
+    // How the exchange delivers completed klines over its WebSocket feed.
+    public KlineDelivery KlineDelivery { get; set; } = KlineDelivery.FinalEvent;
+
 
     public void SetDefaultOptions(string exchangeName, string defaultQuote, int candleLimit, bool limitAmountOfSymbols,
-        int symbolLimitPerSubscription, int subscriptionLimitPerClient = 10)
+        int symbolLimitPerSubscription, int subscriptionLimitPerClient = 10,
+        KlineDelivery klineDelivery = KlineDelivery.FinalEvent)
     {
         ExchangeName = exchangeName;
         DefaultQuote = defaultQuote;
@@ -60,5 +82,6 @@ public class ExchangeOptions // : IExchangeOptions
         LimitAmountOfSymbols = true; // limitAmountOfSymbols; ALWAY's
         SymbolLimitPerSubscription = symbolLimitPerSubscription;
         SubscriptionLimitPerClient = subscriptionLimitPerClient;
+        KlineDelivery = klineDelivery;
     }
 }

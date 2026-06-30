@@ -24,26 +24,23 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         // base volume would be MFN
         // quote volume would be USDT
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (SymbolByExchangeName.TryGetValue(kline.Symbol, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListExchangeName.TryGetValue(kline.Symbol, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.ScannerSymbol, temp.Data.OpenTime.ToLocalTime()));
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Data.OpenTime,
-                    kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice,
-                    kline.Data.QuoteVolume);
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            IncrementTickerCount();
+            //GlobalData.AddTextToLogTab(String.Format("{0} Candle {1} start processing", temp.ScannerSymbol, temp.Data.OpenTime.ToLocalTime()));
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Data.OpenTime,
+                kline.Data.OpenPrice, kline.Data.HighPrice, kline.Data.LowPrice, kline.Data.ClosePrice,
+                kline.Data.QuoteVolume);
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
 
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BinanceSocketClient();
-        CallResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
+        WebSocketResult<UpdateSubscription> subscriptionResult = await ((BinanceSocketClient)TickerGroup.SocketClient).SpotApi.ExchangeData.SubscribeToKlineUpdatesAsync(
             Symbols, KlineInterval.OneMinute, (data) =>
         {
             if (data.Data.Data.Final)

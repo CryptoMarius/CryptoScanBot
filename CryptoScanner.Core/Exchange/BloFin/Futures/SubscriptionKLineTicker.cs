@@ -23,41 +23,28 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         if (!kline.Finished || string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (SymbolByExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
+            IncrementTickerCount();
+            //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+            //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.QuoteVolume);
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.OpenTime,
+                kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                kline.QuoteVolume);
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
 
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new BloFinSocketClient();
         var client = (BloFinSocketClient)TickerGroup.SocketClient;
         var api = client.FuturesApi;
 
-        // TODO: quick en dirty code hier, nog eens verbeteren
-        // We verwachten (helaas) slechts 1 symbol per ticker
-        List<string> symbols = [];
-        foreach (var symbol in SymbolList)
-        {
-            symbols.Add(symbol.ExchangeName);
-        }
-        //string symbolNames = string.Join(",", symbols);
-
-        TickerGroup!.SocketClient ??= new BloFinSocketClient();
-        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(symbols, KlineInterval.OneMinute, data =>
+        var subscriptionResult = await api.SubscribeToKlineUpdatesAsync(Symbols, KlineInterval.OneMinute, data =>
         {
             var kline = data.Data;
             {

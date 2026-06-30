@@ -25,7 +25,7 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                 {
                     if (exchange.SymbolListName.TryGetValue(tick.Symbol, out CryptoSymbol? symbol))
                     {
-                        Interlocked.Increment(ref TickerCount);
+                        IncrementTickerCount();
 
                         if (!GlobalData.IsEmulatorMode)
                         {
@@ -37,8 +37,6 @@ public class SubscriptionPriceTicker(ExchangeOptions exchangeOptions) : Subscrip
                     }
                 }
 
-                if (TickerCount > 999999999)
-                    Interlocked.Exchange(ref TickerCount, 0);
             }
         }, ExchangeBase.CancellationToken).ConfigureAwait(false);
 

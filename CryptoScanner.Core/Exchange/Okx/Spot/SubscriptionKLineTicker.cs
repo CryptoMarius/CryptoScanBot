@@ -30,39 +30,28 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         if (string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        if (SymbolByExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
-                //ScannerLog.Logger.Trace($"kline ticker {topic} process");
-                //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
+            IncrementTickerCount();
+            //ScannerLog.Logger.Trace($"kline ticker {topic} process");
+            //GlobalData.AddTextToLogTab($"{topic} Candle {kline.Timestamp.ToLocalTime()} start processing");
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Time,
-                    kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
-                    kline.VolumeCurrencyQuote);
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            var candle = await CandleTools.Process1mCandleAsync(symbol, kline.Time,
+                kline.OpenPrice, kline.HighPrice, kline.LowPrice, kline.ClosePrice,
+                kline.VolumeCurrencyQuote);
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
 
     }
 
 
-    public override async Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override async Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
         TickerGroup!.SocketClient ??= new OKXSocketClient();
         var client = (OKXSocketClient)TickerGroup!.SocketClient;
         var api = client.UnifiedApi;
 
-        List<string> symbols = [];
-        foreach (var symbol in SymbolList)
-        {
-            symbols.Add(symbol.ExchangeName);
-        }
-        string symbolNames = string.Join(",", symbols);
-
-        TickerGroup!.SocketClient ??= new OKXSocketClient();
-        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(symbolNames, KlineInterval.OneMinute, data =>
+        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(string.Join(",", Symbols), KlineInterval.OneMinute, data =>
         {
             OKXKline kline = data.Data;
             {

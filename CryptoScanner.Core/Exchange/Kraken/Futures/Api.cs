@@ -27,7 +27,7 @@ public class Api : ExchangeBase
 
     public override void ExchangeDefaults()
     {
-        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 720, false, 5);
+        ExchangeOptions.SetDefaultOptions("Kraken Futures", "USD", 720, false, 5, klineDelivery: KlineDelivery.TimerFlush);
         GlobalData.AddTextToLogTab($"{ExchangeOptions.ExchangeName} defaults");
 
         KrakenRestClient.SetDefaultOptions(options =>

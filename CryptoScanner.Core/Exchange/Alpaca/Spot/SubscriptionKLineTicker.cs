@@ -24,17 +24,14 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         if (string.IsNullOrEmpty(symbolName))
             return;
 
-        if (GlobalData.ExchangeListName.TryGetValue(ExchangeOptions.ExchangeName, out Model.CryptoExchange? exchange))
+        // ExchangeName for Alpaca symbols is the plain ticker (e.g. "AAPL")
+        if (SymbolByExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
         {
-            // ExchangeName for Alpaca symbols is the plain ticker (e.g. "AAPL")
-            if (exchange.SymbolListExchangeName.TryGetValue(symbolName, out CryptoSymbol? symbol))
-            {
-                Interlocked.Increment(ref TickerCount);
+            IncrementTickerCount();
 
-                var candle = await CandleTools.Process1mCandleAsync(symbol, bar.TimeUtc,
-                    bar.Open, bar.High, bar.Low, bar.Close, bar.Volume);
-                GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
-            }
+            var candle = await CandleTools.Process1mCandleAsync(symbol, bar.TimeUtc,
+                bar.Open, bar.High, bar.Low, bar.Close, bar.Volume);
+            GlobalData.ThreadMonitorCandle!.AddToQueue(symbol, candle);
         }
     }
 
@@ -43,9 +40,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
     /// Not used: Alpaca streaming does not follow the CryptoExchange.Net subscription pattern.
     /// StartAsync is overridden instead.
     /// </summary>
-    public override Task<CallResult<UpdateSubscription>?> Subscribe()
+    public override Task<WebSocketResult<UpdateSubscription>?> Subscribe()
     {
-        return Task.FromResult<CallResult<UpdateSubscription>?>(null);
+        return Task.FromResult<WebSocketResult<UpdateSubscription>?>(null);
     }
 
 
