@@ -34,6 +34,9 @@ Dependencies
 -Windows: Webview 2 installeren (nog eens doen op een kale pc)
 -Linux: Daar moest ook iets voor de browser (geen idee wat)
 
+Speed:
+-dotnet-trace collect -p PID --duration 00:00:30 --profile dotnet-sampled-thread-time -o run3.nettrace
+
 Testen
 -(browser Aangepast)Compileren voor de osx-arm64 gaf problemen met de browser bestanden, werkt niet!
  Moet nog verder getest worden

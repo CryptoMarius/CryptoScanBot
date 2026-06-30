@@ -30,6 +30,16 @@ public class CryptoSymbolInterval
     // Short = bearish OB (supply) above a swing high.
     public List<CryptoZone> SmcZones { get; internal set; } = [];
 
+    // Incremental zone-calculation cursors: the candle time up to (and including) which the
+    // zone scan has already run. Null means "never run, do a full historical scan". On every
+    // later call only candles after this point need to be scanned — see ZoneFvg/ZoneSmc.
+    public CandleTime? FvgLastProcessedTime { get; set; }
+    public CandleTime? SmcLastProcessedTime { get; set; }
+    // The AverageWindow/BaseMaxCandles settings the SMC cursor above was built with. If the user
+    // changes these mid-run/session, the cached cursor is no longer valid and a full rescan is forced.
+    public int SmcCachedAverageWindow { get; set; } = -1;
+    public int SmcCachedBaseMaxCandles { get; set; } = -1;
+
     // Zone administration (calculation and distances)
     public CryptoSymbolIntervalZoneCalc DlzAdmin { get; internal set; } = new();
 

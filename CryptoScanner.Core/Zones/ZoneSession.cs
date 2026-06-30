@@ -2,8 +2,6 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 
-using System.Text.Json.Serialization;
-
 namespace CryptoScanner.Core.Zones;
 
 public enum TrendLines

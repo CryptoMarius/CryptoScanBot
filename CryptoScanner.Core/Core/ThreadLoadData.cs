@@ -133,7 +133,7 @@ public class ThreadLoadData
     //}
 
 
-    //private static async Task<WebCallResult<BinanceOrder>> OrderInfoAsync(CryptoSymbol symbol, long? orderId)
+    //private static async Task<HttpResult<BinanceOrder>> OrderInfoAsync(CryptoSymbol symbol, long? orderId)
     //{
     //    BinanceWeights.WaitForFairBinanceWeight(1);
 
@@ -142,7 +142,7 @@ public class ThreadLoadData
     //    {
     //        using (var client = new BinanceClient())
     //        {
-    //            WebCallResult<BinanceOrder> result = await client.SpotApi.Trading.GetOrderAsync(symbol.Name, orderId);
+    //            HttpResult<BinanceOrder> result = await client.SpotApi.Trading.GetOrderAsync(symbol.Name, orderId);
     //            if (!result.Success)
     //            {
     //                string text = string.Format("{0} ERROR getorder {1} {2}", symbol.Name, result.ResponseStatusCode, result.Error);

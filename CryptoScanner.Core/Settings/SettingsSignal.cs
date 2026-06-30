@@ -1,7 +1,5 @@
 ﻿using CryptoScanner.Core.Settings.Strategy;
 
-using System.Text.Json.Serialization;
-
 namespace CryptoScanner.Core.Settings;
 
 [Serializable]
@@ -69,7 +67,7 @@ public class SettingsSignal
     public SettingsSignalStrategyWaveTrend WaveTrend = new();
 
     // wtlb.stoch — WT_LB cross + Stoch %K mid-cross combined momentum signal
-    public SettingsSignalStrategyWtLbStoch WtLbStoch = new();
+    //public SettingsSignalStrategyWtLbStoch WtLbStoch = new();
 
     // baba — Baba Bands & Ribbon: macro band break (long on lower, short on upper)
     // JSON key kept as "AtrRb" (the strategy's former name) so previously saved settings keep loading.

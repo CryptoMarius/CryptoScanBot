@@ -1,10 +1,15 @@
 CryptoScanBot release historie:
 
-xx-06-2025 2.5.9
+30-06-2025 2.5.9
 - Memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven
 - De factor bij de dca en de tp is nu een percentage (om het gelijk te houden met Altrady)
-
+- De optie "Copy Data Cells" is nu multiselect (makkelijker met kopieeren van cellen)
+- Versimpeling van websocket Hyperliquid, opvullen niet aangeleverde candles verbeterd
+  Dit ook doorgevoerd voor de andere exchanges die niet de definitieve candles aanleveren.
+- Laatste package updates van JKorf doorgevoerd
+- Diverse aanpassingen voor de emulator waaronder snellere berekeningen.
+  Berekenen van de zones blijft een zware wissel trekken op de cpu.
 
 22-06-2025 2.5.8
 - BABA strategie (nog geen juiste sl%)
@@ -23,7 +28,7 @@ xx-06-2025 2.5.9
 05-06-2025 2.5.5
 - Nieuwe experimentele strategie voor wtlb en de stoch (for my eyes only)
 - Voorbereidingen voor een emulator die als een aparte executable kan draaien (naast de scanner)
-- De stobb/storsi strategien uitgebreid met 3 vinkjes voro zone "rejectie" (dlz, fvg en smc)
+- De stobb/storsi strategien uitgebreid met 3 vinkjes voor zone "rejectie" (dlz, fvg en smc)
 - De stobb/storsi in combinatie met de zones verwijderd (melding op een willekeurige zone is niet handig)
 
 04-06-2025 2.5.4

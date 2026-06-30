@@ -313,28 +313,34 @@ public static class CandleTools
                     var symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
                     CandleTime startFetchUnix = GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
 
-                    // Remove old candle objects
-                    while (symbolInterval.CandleList.Count > 0)
+                    // Remove old candle objects. Both dictionaries are sorted by key, so a single
+                    // forward scan collecting the stale keys (stopping at the first key that's
+                    // still in range) is enough — no need to re-resolve Keys.First() from the root
+                    // of the tree once per removed item.
+                    List<CandleTime> staleCandleKeys = [];
+                    foreach (CandleTime key in symbolInterval.CandleList.Keys)
                     {
-                        CandleTime key = symbolInterval.CandleList.Keys.First();
                         if (key < startFetchUnix)
-                        {
-                            symbolInterval.CandleList.Remove(key);
-                            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
-                        }
-                        else break;
+                            staleCandleKeys.Add(key);
+                        else
+                            break;
                     }
+                    foreach (CandleTime key in staleCandleKeys)
+                        symbolInterval.CandleList.Remove(key);
 
                     // Remove old candle indicator data
-                    while (symbolInterval.Data.Count > 0)
+                    lock (symbolInterval.Data)
                     {
-                        CandleTime key = symbolInterval.Data.Keys.First();
-                        if (key < startFetchUnix)
+                        List<CandleTime> staleDataKeys = [];
+                        foreach (CandleTime key in symbolInterval.Data.Keys)
                         {
-                            symbolInterval.Data.Remove(key);
-                            //GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} candle {c.DateLocal} removed");
+                            if (key < startFetchUnix)
+                                staleDataKeys.Add(key);
+                            else
+                                break;
                         }
-                        else break;
+                        foreach (CandleTime key in staleDataKeys)
+                            symbolInterval.Data.Remove(key);
                     }
 
                     // The cached ZigZag indicators (trend + DLZ) live for the whole run and are fed

@@ -38,6 +38,14 @@ public class CryptoSymbolData
     // preventing concurrent OrderedList corruption.
     public SemaphoreSlim ZoneLock { get; } = new(1, 1);
 
+    // Guards ZoneDlz.LoadZonesForSymbol so it only re-reads the DB and resets the in-memory
+    // FVG/DLZ/SMC lists once per (symbol, run scope) instead of on every zone-queue drain. The
+    // in-memory zones are already kept current via the incremental calculation + ThreadSaveObjects
+    // queue, so reloading from the DB on every tick was pure redundant I/O and also defeated any
+    // incremental zone calculation (it wiped the per-call cursors every time). null = live scope.
+    public bool ZonesLoaded { get; set; }
+    public int? ZonesLoadedRunId { get; set; }
+
     // For display in the symbol grid
     // These are the closest DLZ zones (calculated from all the zones)
     // The closest dlz zones (calculated from all the active interval zones)
@@ -70,6 +78,15 @@ public class CryptoSymbolData
         return SymbolIntervalList[(int)interval.IntervalPeriod];
     }
 
+    // NOTE: these three Reset*Data methods are called from ZoneDlz.LoadZonesForSymbol/LoadAllZones,
+    // which runs every time a chart window opens/changes symbol (to scope the in-memory zones to the
+    // viewed run) — NOT just on a genuine fresh start. They deliberately do NOT touch the incremental
+    // cursors (FvgLastProcessedTime/SmcLastProcessedTime/Dlz*) below: LoadZonesForSymbol always
+    // immediately repopulates the cleared lists from the DB in the same call, so the zone contents
+    // stay correct either way — but nulling the cursors here would force the *live engine* (sharing
+    // the same CryptoSymbolInterval objects) into a full historical rescan on its next tick just
+    // because someone opened a chart on that symbol. Use ResetZoneCalculationCursors() for an actual
+    // forced recalculation (run start, or the chart's "Calculate" force-recalc button).
     public void ResetFvgData()
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
@@ -91,6 +108,26 @@ public class CryptoSymbolData
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
             symbolInterval.SmcZones.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Forces every incremental zone-calculation cursor (FVG/SMC) back to "never run" so the next
+    /// call does a full historical rescan instead of continuing from where it left off. Call this for
+    /// a genuine forced recalculation: a fresh emulator run (<see cref="Emulator.Engine.EmulatorDb.ClearZonesForSymbols"/>)
+    /// or the chart's "Calculate" force-recalc button — NOT from the routine Reset*Data methods above,
+    /// which run on every chart open/symbol switch and must stay cheap for the live engine.
+    /// DLZ has no such cursor: it still fully recalculates from the ZigZag pivot list on every call
+    /// (see ZoneDlz.CalculateZonesAsync) — pivot/zone counts grow much more slowly than candle counts,
+    /// so this was judged not worth the extra complexity/risk (the ZigZag list is mutated in place by
+    /// ZigZagIndicator.OptimizeList, which makes a naive incremental cursor unsafe there).
+    /// </summary>
+    public void ResetZoneCalculationCursors()
+    {
+        foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
+        {
+            symbolInterval.FvgLastProcessedTime = null;
+            symbolInterval.SmcLastProcessedTime = null;
         }
     }
 

@@ -162,7 +162,7 @@ public class AltradyWebhook
                     tp.price_percentage = entry.Percentage;
                 }
             }
-        
+
 
             // DCA body (multiple)
             decimal stopLossPercentage = 0;

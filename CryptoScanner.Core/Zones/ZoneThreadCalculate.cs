@@ -63,7 +63,15 @@ public class ZoneThreadCalculate
                 try
                 {
                     // Scope to the active run (null when live) so a replay only ever sees its own zones.
-                    ZoneDlz.LoadZonesForSymbol(symbol, GlobalData.CurrentEmulatorRunId);
+                    // Only (re)load once per (symbol, run scope) — this resets the in-memory FVG/DLZ/SMC
+                    // lists and re-reads them from the DB, which is needed once at the start of a run/session
+                    // but is pure overhead (and breaks incremental calculation) if repeated on every drain.
+                    if (!symbol.Data.ZonesLoaded || symbol.Data.ZonesLoadedRunId != GlobalData.CurrentEmulatorRunId)
+                    {
+                        ZoneDlz.LoadZonesForSymbol(symbol, GlobalData.CurrentEmulatorRunId);
+                        symbol.Data.ZonesLoaded = true;
+                        symbol.Data.ZonesLoadedRunId = GlobalData.CurrentEmulatorRunId;
+                    }
 
                     int candleFetchCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
                     CandleTime maxDate = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, interval.Duration);

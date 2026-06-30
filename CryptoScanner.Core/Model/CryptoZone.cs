@@ -57,6 +57,19 @@ public class CryptoZone
     [Computed]
     public bool IsMitigated { get; set; }
 
+    // SMC-only, in-memory bookkeeping for ZoneSmc's incremental mitigation pass: true while price is
+    // currently within a CE excursion that has already been counted as a touch, so the next candle
+    // doesn't double-count it. Not used by DLZ/FVG zones. Never persisted.
+    [Computed]
+    public bool InsideExcursion { get; set; }
+
+    // SMC-only, in-memory bookkeeping: the impulse candle's OpenTime, i.e. the point after which
+    // mitigation/touch counting starts for this zone (the base candles and the impulse's own wick
+    // must not count). Lets ZoneSmc's incremental scan resume a zone's bookkeeping across calls
+    // instead of replaying its whole history. Never persisted.
+    [Computed]
+    public CandleTime? MitigationStartTime { get; set; }
+
     public string ZoneText(string action)
     {
         return $"{Symbol.Name} {action} zone #{Id} {Kind} {Side} " +

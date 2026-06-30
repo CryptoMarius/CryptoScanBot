@@ -138,6 +138,18 @@ public class ZoneFvg
             InvalidateRealtime(symbolDataIntervalForInvalidate.FvgZones.ShortOpen,
                 symbolDataIntervalForInvalidate.FvgZones.ShortClosed,
                 candle, interval, maxTouches);
+
+            // Keep CalculateZonesAsync's incremental cursor in sync with what this realtime tick
+            // just covered. Without this, the periodic catch-up (triggered by DLZ's queue, often
+            // drained within the same tick in the emulator — see ZoneThreadCalculate.DrainQueueAsync)
+            // would re-scan and re-invalidate this exact candle a second time: duplicate zone inserts
+            // (ScanForLongFvg/ScanForShortFvg would match the same 3-candle pattern again) and
+            // double-counted TouchCount (ZoneInvalidation.ApplyToCandle is not idempotent — it always
+            // increments on a wick, regardless of whether it already saw this candle).
+            // Only advance if the cursor is already set: null means the first full historical scan
+            // (CalculateZonesAsync's "first run" branch) hasn't happened yet, and must not be skipped.
+            if (symbolDataIntervalForInvalidate.FvgLastProcessedTime != null)
+                symbolDataIntervalForInvalidate.FvgLastProcessedTime = candle.OpenTime;
         }
         finally
         {
@@ -363,6 +375,65 @@ public class ZoneFvg
     }
 
 
+    /// <summary>
+    /// Apply the same per-candle FVG scan + invalidation that <see cref="CreateFvgZones"/> uses, but
+    /// only to the candles strictly after <paramref name="lastProcessed"/> — i.e. the ones that
+    /// arrived since the previous call. A gap can only be formed by the latest 3 candles, so once the
+    /// history up to <paramref name="lastProcessed"/> has been scanned once (see
+    /// <see cref="CalculateZonesAsync"/>'s first-run branch) there is no need to ever replay it again.
+    /// New zones are appended directly to the live open lists and queued for DB persistence, mirroring
+    /// the realtime path in <see cref="ScanForNew"/> (which this duplicates intentionally: ScanForNew
+    /// only fires on its own interval-boundary tick, while this is the periodic catch-up/backfill path —
+    /// running the same per-candle logic here as well keeps both lists in sync if a tick is ever missed).
+    /// </summary>
+    private static void ProcessNewCandlesIncremental(CryptoSymbol symbol, CryptoInterval interval,
+        CryptoSymbolInterval symbolIntervalData, CryptoSymbolIntervalZones zones,
+        CandleTime lastProcessed, CandleTime maxDate)
+    {
+        if (!SignalPrepare.ZoneFvgActive())
+            return;
+
+        CandleTime loop = lastProcessed + interval.Duration;
+        while (loop <= maxDate)
+        {
+            if (symbolIntervalData.CandleList.TryGetValue(loop, out CryptoCandle candle)
+                && symbolIntervalData.CandleList.TryGetValue(loop - interval.Duration, out CryptoCandle prev)
+                && symbolIntervalData.CandleList.TryGetValue(loop - (2 * interval.Duration), out CryptoCandle prev2))
+            {
+                var longZone = ScanForLongFvg(symbol, interval, prev2, prev, candle);
+                if (longZone != null)
+                {
+                    zones.LongOpen.Add(longZone);
+                    GlobalData.ThreadSaveObjects!.AddToQueue(longZone);
+                }
+                InvalidateRealtimeList(zones.LongOpen, zones.LongClosed, candle, interval);
+
+                var shortZone = ScanForShortFvg(symbol, interval, prev2, prev, candle);
+                if (shortZone != null)
+                {
+                    zones.ShortOpen.Add(shortZone);
+                    GlobalData.ThreadSaveObjects!.AddToQueue(shortZone);
+                }
+                InvalidateRealtimeList(zones.ShortOpen, zones.ShortClosed, candle, interval);
+            }
+            loop += interval.Duration;
+        }
+    }
+
+
+    /// <summary>
+    /// Shared by <see cref="ProcessNewCandlesIncremental"/> (periodic catch-up) and
+    /// <see cref="InvalidateRealtime"/> (the live per-tick path): reads MaxTouches itself so callers
+    /// don't need to thread the setting through.
+    /// </summary>
+    private static void InvalidateRealtimeList(OrderedList<CryptoZone> openZones,
+        OrderedList<CryptoZone> closedZones, CryptoCandle candle, CryptoInterval interval)
+    {
+        int maxTouches = GlobalData.Settings.Signal.ZonesFvg.MaxTouches;
+        InvalidateRealtime(openZones, closedZones, candle, interval, maxTouches);
+    }
+
+
     public static async Task CalculateZonesAsync(AddTextEvent? sender, CryptoSymbol symbol, CryptoInterval interval,
         SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
     {
@@ -377,33 +448,50 @@ public class ZoneFvg
                 var symbolIntervalData = symbolData.Get(interval.IntervalPeriod);
                 CryptoSymbolIntervalZones zones = symbolIntervalData.FvgZones;
 
-                //if (symbol.Name == "1000PEPEUSDT")
-                //    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
-                //        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
-                //        $"fvg zones long = {zones.LongOpen.Count} " +
-                //        $"fvg zones short = {zones.ShortOpen.Count} ");
+                if (symbolIntervalData.FvgLastProcessedTime != null && symbolIntervalData.FvgLastProcessedTime.Value >= minDate)
+                {
+                    // Already scanned this window once before: only the candles that arrived since the
+                    // last call can contain a new gap. No DB diff needed — the live lists are already
+                    // the authoritative state (see ZoneThreadCalculate's load-once guard).
+                    ProcessNewCandlesIncremental(symbol, interval, symbolIntervalData, zones,
+                        symbolIntervalData.FvgLastProcessedTime.Value, maxDate);
+                }
+                else
+                {
+                    // First run for this (symbol, interval) — or minDate slid forward past the cursor
+                    // (CandleCount setting shrunk) — fall back to the full historical scan + DB diff,
+                    // same as before.
 
-                // Index old zones for DB merge (must happen before Reset)
-                DatabaseStatistics statistics = new();
-                SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
-                ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
+                    //if (symbol.Name == "1000PEPEUSDT")
+                    //    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                    //        $"{minDate.ToLocalTime():yyyy-MM-dd HH:mm} .. {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                    //        $"fvg zones long = {zones.LongOpen.Count} " +
+                    //        $"fvg zones short = {zones.ShortOpen.Count} ");
 
-                // Compute new zones into local lists (never visible to other threads)
-                OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
-                OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
-                CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
+                    // Index old zones for DB merge (must happen before Reset)
+                    DatabaseStatistics statistics = new();
+                    SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                    ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
 
-                // Merge with DB state into a fresh object, then atomically replace the live reference.
-                // Other threads always see either the old complete object or the new complete one —
-                // never a half-built list (which was the source of null holes in OrderedList).
-                CryptoSymbolIntervalZones freshZones = new();
-                ZoneTools.AddZonesToInternalLists(freshZones, oldZones, longZones, statistics);
-                ZoneTools.AddZonesToInternalLists(freshZones, oldZones, shortZones, statistics);
-                ZoneTools.DeleteRemainingZones(oldZones, statistics);
-                symbolIntervalData.FvgZones = freshZones;
+                    // Compute new zones into local lists (never visible to other threads)
+                    OrderedList<CryptoZone> longZones = new(new CompareZoneDescending());
+                    OrderedList<CryptoZone> shortZones = new(new CompareZoneAscending());
+                    CreateFvgZones(symbol, interval, minDate, symbolIntervalData, longZones, shortZones);
+
+                    // Merge with DB state into a fresh object, then atomically replace the live reference.
+                    // Other threads always see either the old complete object or the new complete one —
+                    // never a half-built list (which was the source of null holes in OrderedList).
+                    CryptoSymbolIntervalZones freshZones = new();
+                    ZoneTools.AddZonesToInternalLists(freshZones, oldZones, longZones, statistics);
+                    ZoneTools.AddZonesToInternalLists(freshZones, oldZones, shortZones, statistics);
+                    ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                    symbolIntervalData.FvgZones = freshZones;
+                }
+
+                symbolIntervalData.FvgLastProcessedTime = maxDate;
             }
             catch (Exception error)
             {

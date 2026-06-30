@@ -115,7 +115,7 @@ public partial class ChartWindowViewModel : ObservableObject
         SymbolSelector.PropertyChanged += OnSymbolChanged;
         TrendSettings.PropertyChanged += TrendSettingsChanged;
         FibSettings.PropertyChanged += FibSettingsChanged;
-        DisplayOptions.PropertyChanged += DisplayOptionsChanged;
+        DisplayOptions.PropertyChanged += (sender, e) => DisplayOptionsChanged(sender, e);
 
         // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
         // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
@@ -407,10 +407,17 @@ public partial class ChartWindowViewModel : ObservableObject
 
     private static void UpdateAxisTicks(Axis axis)
     {
-        // ActualMinimum/ActualMaximum reflect the current visible range (respects zoom and pan),
-        // but are NaN before the first render. Fall back to Minimum/Maximum in that case.
+        // ActualMinimum/ActualMaximum reflect the current visible range (respects zoom and pan).
+        // After Axis.Reset() ActualMinimum/Maximum are set to the full data range (not the zoom
+        // range), so they cannot be trusted here when Minimum/Maximum have just been set
+        // explicitly by ZoomLast. Use the overload with an explicit range in that case.
         double min = double.IsNaN(axis.ActualMinimum) ? axis.Minimum : axis.ActualMinimum;
         double max = double.IsNaN(axis.ActualMaximum) ? axis.Maximum : axis.ActualMaximum;
+        UpdateAxisTicks(axis, min, max);
+    }
+
+    private static void UpdateAxisTicks(Axis axis, double min, double max)
+    {
         double visibleRange = max - min;
         if (double.IsNaN(visibleRange) || visibleRange <= 0)
             return;
@@ -1004,7 +1011,14 @@ public partial class ChartWindowViewModel : ObservableObject
     private DateTime? _previousWindowEnd;
     private int? _previousWindowEmulatorRunId;
 
-    private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    /// <param name="zoneLockAlreadyHeld">True when the caller (SymbolOrIntervalChangedAsync) already
+    /// holds Symbol.Data.ZoneLock for its whole load+calc+draw block — the SMC section below must
+    /// not try to acquire it again itself in that case (not because it would deadlock — Wait(0) never
+    /// blocks — but because a failed Wait(0) there would otherwise be indistinguishable from "the live
+    /// engine is using it right now", incorrectly skipping Detect even though it's already safe to run).
+    /// False when invoked directly as the DisplayOptions.PropertyChanged handler (e.g. the user flips
+    /// the "Show SMC zones" checkbox), where nothing holds the lock yet and it must be taken here.</param>
+    private void DisplayOptionsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e, bool zoneLockAlreadyHeld = false)
     {
         // Display options changed
         if (Symbol == null)
@@ -1038,13 +1052,36 @@ public partial class ChartWindowViewModel : ObservableObject
         // SMC-enabled interval (Settings.Signal.ZonesSmc), results are kept in
         // CryptoSymbolInterval.SmcZones and rendered directly. In the live scanner the same
         // ZoneSmc.Detect is driven by SignalPrepare on the interval boundary.
+        //
+        // Locking: ZoneSmc.Detect's incremental path mutates the live SmcZones list in place
+        // (Add/Sort/RemoveRange), which is not safe if the live engine's SignalPrepare-driven Detect
+        // call (on a background thread) runs at the same time. When zoneLockAlreadyHeld is true
+        // (called from SymbolOrIntervalChangedAsync, which holds the lock for its whole block) that's
+        // already covered — taking it again here is unnecessary (SemaphoreSlim isn't reentrant, so a
+        // second Wait(0) would just always fail, which is harmless but pointless). Otherwise (the
+        // direct DisplayOptions.PropertyChanged handler, e.g. the user flipping the "Show SMC zones"
+        // checkbox) nothing holds the lock yet, so take it non-blocking here — mirrors SignalPrepare's
+        // own Wait(0) guard: if the engine is mid-recalculation for this symbol, skip Detect for this
+        // redraw and show whatever SmcZones already holds; the next toggle/redraw retries.
         group = "smc.zones";
         if (Toggle(model, group, Session.ShowSmcZones))
         {
-            foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+            bool tookLock = !zoneLockAlreadyHeld && Symbol.Data.ZoneLock.Wait(0);
+            if (zoneLockAlreadyHeld || tookLock)
             {
-                if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
-                    Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);
+                try
+                {
+                    foreach (string smcIntervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
+                    {
+                        if (GlobalData.IntervalListPeriodName.TryGetValue(smcIntervalName, out CryptoInterval? smcInterval))
+                            Core.Zones.ZoneSmc.Detect(Symbol, smcInterval);
+                    }
+                }
+                finally
+                {
+                    if (tookLock)
+                        Symbol.Data.ZoneLock.Release();
+                }
             }
             SmcZones.Draw(model, Symbol, Session.MinDate, Session.MaxDate, group);
         }
@@ -1283,9 +1320,11 @@ public partial class ChartWindowViewModel : ObservableObject
             if (Session.ShowFibRetracement)
                 extra = 25;
             // X axis
+            double xMin = xfirst.OpenTime.Minutes - 5 * Interval.Duration;
+            double xMax = xlast.OpenTime.Minutes + extra * Interval.Duration;
             PlotView.ActualModel.Axes[0].Reset();
-            PlotView.ActualModel.Axes[0].Minimum = xfirst.OpenTime.Minutes - 5 * Interval.Duration;
-            PlotView.ActualModel.Axes[0].Maximum = xlast.OpenTime.Minutes + extra * Interval.Duration;
+            PlotView.ActualModel.Axes[0].Minimum = xMin;
+            PlotView.ActualModel.Axes[0].Maximum = xMax;
 
             // Y axis
             l -= 0.02m * l;
@@ -1294,8 +1333,9 @@ public partial class ChartWindowViewModel : ObservableObject
             PlotView.ActualModel.Axes[1].Minimum = (double)l;
             PlotView.ActualModel.Axes[1].Maximum = (double)h;
 
-            // Axis range is now known; UpdateAxisTicks falls back to Minimum/Maximum when ActualMinimum is NaN
-            UpdateAxisTicks(PlotView.ActualModel.Axes[0]);
+            // Pass the explicit zoom range so the tick step is computed from the zoomed window,
+            // not from ActualMinimum/Maximum which Reset() just set to the full data range.
+            UpdateAxisTicks(PlotView.ActualModel.Axes[0], xMin, xMax);
             PlotModel?.InvalidatePlot(true);
             OnPropertyChanged(nameof(PlotModel));
         }
@@ -1793,6 +1833,10 @@ public partial class ChartWindowViewModel : ObservableObject
                 // expensive and not needed just to look at an old trade.
                 if (Session.ForceCalculation && !WindowStart.HasValue)
                 {
+                    // The "Calculate" button means a genuine forced recalculation (e.g. after tweaking
+                    // zone-detection settings) — reset the incremental cursors so the calls below do a
+                    // full historical rescan instead of only picking up candles since the last run.
+                    Symbol.Data.ResetZoneCalculationCursors();
 
                     // Calculate the DLZ zones for the configured intervals
                     foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
@@ -1821,7 +1865,7 @@ public partial class ChartWindowViewModel : ObservableObject
                 BuildWindowCandleList();
 
                 // Draw the indicator layers and candles
-                DisplayOptionsChanged(null, null!);
+                DisplayOptionsChanged(null, null!, zoneLockAlreadyHeld: true);
                 FibSettingsChanged(null, null!);
                 TrendSettingsChanged(null, null!);
 

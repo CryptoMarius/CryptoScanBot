@@ -290,8 +290,16 @@ public class ZoneCandleEngine
 
 
     /// <summary>
-    /// Remove the not needed candles (using a copy because that is quicker)
-    /// There is another clean method which removes the candles 1 by 1, but that is slow with large amounts of candles
+    /// Remove the no-longer-needed candles from the front of the list (everything older than
+    /// <see cref="CandleTools.GetCandleFetchStart"/>).
+    /// CandleList is a <see cref="CryptoCandleList"/> (a <see cref="System.Collections.Generic.SortedDictionary{TKey,TValue}"/>
+    /// under the hood), so <c>Remove(key)</c> is O(log n) regardless of how many stale candles there
+    /// are — removing them one by one is cheap even when there are tens of thousands (e.g. after the
+    /// chart window loads a much larger history than the zone-calculation window needs). The previous
+    /// implementation instead copied every *surviving* candle into a brand new list whenever the first
+    /// key was stale — correct, but it touched the whole kept window on every call just to drop a
+    /// handful of old entries at the front. Mirrors the same one-by-one removal CandleTools.CleanCandleDataAsync
+    /// already uses for the live/signal candle window.
     /// </summary>
     public static async Task CleanLoadedCandlesAsync(CryptoSymbol symbol)
     {
@@ -300,45 +308,18 @@ public class ZoneCandleEngine
         {
             foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
             {
-                //int cleaned = symbolInterval.CandleList.Count;
-                // Remove old candles
-                if (symbolInterval.CandleList.Count > 0)
+                if (symbolInterval.CandleList.Count == 0)
+                    continue;
+
+                CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
+
+                while (symbolInterval.CandleList.Count > 0)
                 {
-                    CandleTime startFetchUnix = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
-
-                    // investigate the first, does it need removal?
                     CandleTime openTime = symbolInterval.CandleList.Keys.First();
-                    if (openTime < startFetchUnix)
-                    {
-                        // It takes forever to delete 100.000 of candles!!
-                        // There is a *huge* amount of candles, just copy them to a new list
-                        // This copies worst case 500 for the higher intervals, a bit more for the 1m
-                        // TODO: Use TakeLast() does not work with sortedlist (investigate)
-                        CryptoCandleList newList = [];
-
-                        CandleTime unix = symbolInterval.CandleList.Keys.Last();
-                        while (unix >= startFetchUnix)
-                        {
-                            if (symbolInterval.CandleList.TryGetValue(unix, out CryptoCandle c))
-                                newList.Add(c.OpenTime, c);
-                            unix -= symbolInterval.Interval.Duration;
-                        }
-
-
-                        //int index = symbolInterval.CandleList.Count - 1;
-                        //while (index > 0)
-                        //{
-                        //    CryptoCandle c = symbolInterval.CandleList.Values[index];
-                        //    if (c.OpenTime < startFetchUnix)
-                        //        break;
-                        //    newList.Add(c.OpenTime, c);
-                        //    index--;
-                        //}
-                        symbolInterval.CandleList = newList;
-                        //symbolInterval.CandleList.TrimExcess();
-                    }
+                    if (openTime >= startFetchUnix)
+                        break;
+                    symbolInterval.CandleList.Remove(openTime);
                 }
-                //GlobalData.AddTextToLogTab($"{symbol.Name} {symbolInterval.Interval!.Name} Cleaning {cleaned - symbolInterval.CandleList.Count} candles");
             }
         }
         finally

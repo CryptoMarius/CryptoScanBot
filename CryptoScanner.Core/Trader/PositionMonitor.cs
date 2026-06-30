@@ -969,7 +969,7 @@ public class PositionMonitor //: IDisposable
     }
 
 
-    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part, 
+    private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part,
         CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing)
     {
         // Controleer de entry
@@ -995,11 +995,11 @@ public class PositionMonitor //: IDisposable
             //        entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
             //    break;
             //case CryptoEntryOrDcaStrategy.FixedPercentage:
-                // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
-                entryOrderType = CryptoOrderType.Limit;
-                if (step == null && part.Quantity == 0) // entry
-                    entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
-                //break;
+            // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
+            entryOrderType = CryptoOrderType.Limit;
+            if (step == null && part.Quantity == 0) // entry
+                entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
+            //break;
             //case CryptoEntryOrDcaStrategy.TrailViaKcPsar:
             //    trailing = CryptoTrailing.Trailing;
             //    entryOrderType = CryptoOrderType.StopLimit;
@@ -1711,19 +1711,19 @@ public class PositionMonitor //: IDisposable
                 //var (success, candleInterval) = await PrepareAsync(position, part);
                 //if (success)
                 //{
-                    //if (candleInterval.OpenTime != 0)
-                    //{
-                        // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
-                        if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
-                            await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryStrategy,
-                                GlobalData.Settings.Trading.EntryOrderPrice);
+                //if (candleInterval.OpenTime != 0)
+                //{
+                // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
+                if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
+                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryStrategy,
+                        GlobalData.Settings.Trading.EntryOrderPrice);
 
-                        // Check DCA - always allowed, even during a TradingRules pause (averaging into an
-                        // existing position is not gated by the market-wide pause, see CheckThePosition)
-                        if (part.Purpose == CryptoPartPurpose.Dca)
-                            await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaStrategy,
-                                GlobalData.Settings.Trading.DcaOrderPrice);
-                    //}
+                // Check DCA - always allowed, even during a TradingRules pause (averaging into an
+                // existing position is not gated by the market-wide pause, see CheckThePosition)
+                if (part.Purpose == CryptoPartPurpose.Dca)
+                    await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaStrategy,
+                        GlobalData.Settings.Trading.DcaOrderPrice);
+                //}
                 //}
 
 

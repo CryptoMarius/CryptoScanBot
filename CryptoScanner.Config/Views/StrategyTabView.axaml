@@ -37,7 +37,7 @@
 		<TabItem Header="WAVETREND" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="false">
 			<settings:StrategyWaveTrendTabView DataContext="{Binding StrategyWaveTrendTabViewModel}" />
 		</TabItem>
-		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="false">
+		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
 		<TabItem Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">

@@ -94,7 +94,8 @@ public static class IndicatorEngine
             {
                 hub.Add(quote);
                 if (quote is CryptoCandle candle)
-                    symbolInterval.Data[candle.OpenTime] = hub.BuildCurrent();
+                    lock (symbolInterval.Data)
+                        symbolInterval.Data[candle.OpenTime] = hub.BuildCurrent();
             }
             symbolInterval.IndicatorHub = hub;
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
@@ -104,7 +105,8 @@ public static class IndicatorEngine
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle candle))
                 return false;
             symbolInterval.IndicatorHub!.Add(candle);
-            symbolInterval.Data[candleOpenTime] = symbolInterval.IndicatorHub.BuildCurrent();
+            lock (symbolInterval.Data)
+                symbolInterval.Data[candleOpenTime] = symbolInterval.IndicatorHub.BuildCurrent();
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
         }
 
@@ -428,7 +430,8 @@ public static class IndicatorEngine
                 candleData.BabaAtrSl = atrBabaSlList[index].Atr;
 
                 if (candle is CryptoCandle x)
-                    symbolInterval.Data[x.OpenTime] = candleData;
+                    lock (symbolInterval.Data)
+                        symbolInterval.Data[x.OpenTime] = candleData;
             }
             catch (Exception error)
             {

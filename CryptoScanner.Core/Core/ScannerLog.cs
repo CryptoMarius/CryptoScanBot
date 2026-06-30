@@ -15,14 +15,15 @@ public class ScannerLog
     // without it, every Logger.Error(exception, ...) call in the codebase silently drops the stacktrace.
     private const string LogLayout = "${longdate}|sim=${simtime}|${level:uppercase=true}|${logger}|${message}${onexception:${newline}${exception:format=ToString}}";
 
-    static private NLog.Targets.FileTarget CreateTarget(string name, string extra)
+    static private NLog.Targets.Target CreateTarget(string name, string extra)
     {
         string logName = GlobalData.LogName == "" ? Constants.AppName : GlobalData.LogName;
         string filename = Path.Combine(GlobalData.AppDataFolder, "Log", logName);
 
-        return new NLog.Targets.FileTarget
+        // Inner synchronous file target (the actual writer).
+        var fileTarget = new NLog.Targets.FileTarget
         {
-            Name = name,
+            Name = name + "_file",
             KeepFileOpen = true,
             MaxArchiveDays = 7,
             FileName = filename + extra + ".log",
@@ -32,11 +33,18 @@ public class ScannerLog
             Layout = LogLayout,
         };
 
+        // Wrap in async so Logger.Info() on the run thread never blocks on disk I/O.
+        // Queue size 50000 is far above the typical run's log volume; Block prevents line loss.
+        return new NLog.Targets.Wrappers.AsyncTargetWrapper(fileTarget, 50000, NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Block)
+        {
+            Name = name,
+        };
     }
 
     // The dynamically attached per-run target/rule (emulator). Held so StopRunLog can detach the
     // exact same instances it added; null when no run log is active.
-    private static NLog.Targets.FileTarget? runFileTarget;
+    // Stored as the outer AsyncTargetWrapper so config.RemoveTarget uses the right name.
+    private static NLog.Targets.Target? runFileTarget;
     private static NLog.Config.LoggingRule? runLoggingRule;
 
     /// <summary>
@@ -57,15 +65,21 @@ public class ScannerLog
         string logName = GlobalData.LogName == "" ? Constants.AppName : GlobalData.LogName;
         string filename = Path.Combine(GlobalData.AppDataFolder, "Log", $"{logName} Run {runId}.log");
 
-        runFileTarget = new NLog.Targets.FileTarget
+        var innerTarget = new NLog.Targets.FileTarget
         {
-            Name = $"run-{runId}",
+            Name = $"run-{runId}_file",
             KeepFileOpen = true,
             // Per-run log files are kept, never deleted: run ids auto-increment and are unique, so each
             // run gets its own file. (After a DB reset the ids restart at 1; NLog then appends to the
             // existing "Run 1.log" rather than deleting it, so earlier content is preserved.)
             FileName = filename,
             Layout = LogLayout,
+        };
+
+        // Async wrapper so Logger.Info() on the TickRunner thread never blocks on disk I/O.
+        runFileTarget = new NLog.Targets.Wrappers.AsyncTargetWrapper(innerTarget, 50000, NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Block)
+        {
+            Name = $"run-{runId}",
         };
 
         var config = LogManager.Configuration;
