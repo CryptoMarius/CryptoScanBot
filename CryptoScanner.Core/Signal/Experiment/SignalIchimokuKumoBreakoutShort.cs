@@ -1,11 +1,16 @@
-﻿namespace CryptoScanner.Core.Signal.Experiment;
+﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Signal.Helpers;
 
-#if EXTRASTRATEGIES
+using Skender.Stock.Indicators;
 
-public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
+namespace CryptoScanner.Core.Signal.Experiment;
+
+#if DEBUG
+
+public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
 {
 
-    public override bool IndicatorsOkay(CryptoCandle candle)
+    public override bool IndicatorsOkay(MyData candle)
     {
         if ((candle == null)
            || (candle.CandleData == null)
@@ -32,7 +37,7 @@ public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
 
         // 52!
         // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
-        List<CryptoCandle> quotes = CandleIndicatorData.CalculateCandles(Symbol, SymbolInterval.Interval, CandleLast.OpenTime, out string _);
+        List<IQuote>? quotes = IndicatorEngine.CollectCandles(Symbol, SymbolInterval.Interval, CandleLast.Candle.OpenTime, out string _);
         if (quotes == null)
         {
             //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
@@ -45,11 +50,11 @@ public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
         int tenkanPeriods = 6;
         int kijunPeriods = 26;
         int senkouBPeriods = 52;
-        IEnumerable<IchimokuResult> results = quotes.GetIchimoku(tenkanPeriods, kijunPeriods, senkouBPeriods);
+        IEnumerable<IchimokuResult> results = quotes.ToIchimoku(tenkanPeriods, kijunPeriods, senkouBPeriods);
         if (results == null || !results.Any())
             return false;
 
-        if (!GetPrevCandle(CandleLast, out CryptoCandle candlePrev))
+        if (!GetPrevCandle(CandleLast, out MyData? candlePrev))
             return false;
 
         // https://www.whselfinvest.com/nl-be/trading-platform/gratis-trading-strategie/tradingsysteem/18-ichimoku-kbo
@@ -67,21 +72,21 @@ public class SignalIchimokuKumoBreakoutShort: SignalCreateBase
 
         // 1: De voorlaatste candle moet onder de bovenste cloud lijn zitten
         IchimokuResult last = results.Last();
-        if (candlePrev.Close < last.SenkouSpanA)
+        if (candlePrev!.Candle.Close < last.SenkouSpanA)
             return false;
-        if (candlePrev.Close < last.SenkouSpanB)
+        if (candlePrev.Candle.Close < last.SenkouSpanB)
             return false;
 
         // 1: De laatste candle moet boven de bovenste cloud lijn zitten
-        if (CandleLast.Close >= last.SenkouSpanA)
+        if (CandleLast.Candle.Close >= last.SenkouSpanA)
             return false;
-        if (CandleLast.Close >= last.SenkouSpanB)
+        if (CandleLast.Candle.Close >= last.SenkouSpanB)
             return false;
 
         // 2: Price sluit boven de Kijun Sen
-        if (CandleLast.Close >= last.KijunSen)
+        if (CandleLast.Candle.Close >= last.KijunSen)
             return false;
-        
+
 
 
         //if (!Candles.TryGetValue(CandleLast.OpenTime - Interval.Duration, out CryptoCandle prevCandle))

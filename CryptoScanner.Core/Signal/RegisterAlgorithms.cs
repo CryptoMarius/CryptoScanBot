@@ -1,8 +1,6 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
-using CryptoScanner.Core.Signal.WaveTrend;
-using CryptoScanner.Core.Signal.WtLbStoch;
 #endif
 using CryptoScanner.Core.Signal.Baba;
 using CryptoScanner.Core.Signal.Choch;
@@ -15,6 +13,8 @@ using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
 using CryptoScanner.Core.Signal.AtrRb;
+using CryptoScanner.Core.Signal.StochDir;
+using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
 
@@ -245,15 +245,25 @@ public static class RegisterAlgorithms
         });
 
 
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "BbRsiEngulf",
-        //            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
-        //            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
-        //            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
-        //        });
-        //#endif
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "BbRsiEngulf",
+            Strategy = CryptoSignalStrategy.BbRsiEngulfing,
+            AnalyzeLongType = typeof(SignalBbRsiEngulfingLong),
+            AnalyzeShortType = typeof(SignalBbRsiEngulfingShort),
+        });
+#endif
+
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "IchimokuKumoBreakout",
+            Strategy = CryptoSignalStrategy.IchimokuKumoBreakout,
+            AnalyzeLongType = typeof(SignalIchimokuKumoBreakoutLong),
+            AnalyzeShortType = typeof(SignalIchimokuKumoBreakoutShort),
+        });
+#endif
 
         Register(new AlgorithmDefinition()
         {
@@ -314,17 +324,17 @@ public static class RegisterAlgorithms
 
         //#endif
 
-        //#if DEBUG
-        //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-        //        // Confirmations from higher timeframe(s)
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "bbma",
-        //            Strategy = CryptoSignalStrategy.Bbma,
-        //            AnalyzeLongType = typeof(SignalBbmaLong),
-        //            AnalyzeShortType = typeof(SignalBbmaShort),
-        //        });
-        //#endif
+#if DEBUG
+        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
+        // Confirmations from higher timeframe(s)
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bbma",
+            Strategy = CryptoSignalStrategy.Bbma,
+            AnalyzeLongType = typeof(SignalBbmaLong),
+            AnalyzeShortType = typeof(SignalBbmaShort),
+        });
+#endif
 
 #if DEBUG
         // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
@@ -338,26 +348,26 @@ public static class RegisterAlgorithms
         });
 #endif
 
-#if DEBUG
-        // WaveTrend Oscillator [LazyBear] — WT_LB. WT1 crosses WT2 inside the OS/OB zone,
-        // with an optional SMA200 trend filter.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "wt.lb",
-            Strategy = CryptoSignalStrategy.WaveTrend,
-            AnalyzeLongType = typeof(SignalWaveTrendLong),
-            AnalyzeShortType = typeof(SignalWaveTrendShort),
-        });
+        //#if DEBUG
+        //        // WaveTrend Oscillator [LazyBear] — WT_LB. WT1 crosses WT2 inside the OS/OB zone,
+        //        // with an optional SMA200 trend filter.
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "wt.lb",
+        //            Strategy = CryptoSignalStrategy.WaveTrend,
+        //            AnalyzeLongType = typeof(SignalWaveTrendLong),
+        //            AnalyzeShortType = typeof(SignalWaveTrendShort),
+        //        });
 
-        // wtlb.stoch — WT_LB recovery cross combined with Stoch %K mid-cross
-        Register(new AlgorithmDefinition()
-        {
-            Name = "wtlb.stoch",
-            Strategy = CryptoSignalStrategy.WtLbStoch,
-            AnalyzeLongType = typeof(SignalWtLbStochLong),
-            AnalyzeShortType = typeof(SignalWtLbStochShort),
-        });
-#endif
+        //        // wtlb.stoch — WT_LB recovery cross combined with Stoch %K mid-cross
+        //        Register(new AlgorithmDefinition()
+        //        {
+        //            Name = "wtlb.stoch",
+        //            Strategy = CryptoSignalStrategy.WtLbStoch,
+        //            AnalyzeLongType = typeof(SignalWtLbStochLong),
+        //            AnalyzeShortType = typeof(SignalWtLbStochShort),
+        //        });
+        //#endif
 
 #if DEBUG
         // Trend reversal (Dow Theory)
@@ -367,6 +377,16 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.Trend,
             AnalyzeLongType = typeof(SignalTrendLong),
             AnalyzeShortType = typeof(SignalTrendShort),
+        });
+#endif
+
+#if DEBUG
+        Register(new AlgorithmDefinition()
+        {
+            Name = "stoch.dir",
+            Strategy = CryptoSignalStrategy.StochDir,
+            AnalyzeLongType = typeof(SignalStochDirLong),
+            AnalyzeShortType = typeof(SignalStochDirShort),
         });
 #endif
 

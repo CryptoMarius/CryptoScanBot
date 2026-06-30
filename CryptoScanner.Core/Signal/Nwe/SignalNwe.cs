@@ -1,11 +1,11 @@
-﻿namespace CryptoScanner.Core.Signal.Nwe;
+﻿//namespace CryptoScanner.Core.Signal.Nwe;
 
-public class SignalNwe : SignalNweBase
-{
+//public class SignalNwe : SignalNweBase
+//{
 
-    public SignalNwe()
-    {
-        SmoothRepainting = true;
-    }
+//    public SignalNwe()
+//    {
+//        SmoothRepainting = true;
+//    }
 
-}
+//}

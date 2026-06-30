@@ -81,8 +81,11 @@ public class SignalTrendShort : SignalCreateBase
 
 
     /// <summary>
-    /// Give up when the primary trend has reverted to Bullish, or when GiveUpCandles have passed
-    /// without a valid pullback + resumption entry.
+    /// Give up when the primary trend has reverted to Bullish, or when the pullback pivot has
+    /// formed but resumption below it still hasn't happened GiveUpCandles candles later.
+    /// While we're still waiting for the pullback pivot itself to form, there is no time limit —
+    /// see SignalTrendLong for the rationale (ZigZag look-right confirmation lag makes a
+    /// fixed budget counted from the signal candle expire before AllowStepIn gets a real chance).
     /// </summary>
     public override bool GiveUp(CryptoSignal signal)
     {
@@ -93,12 +96,20 @@ public class SignalTrendShort : SignalCreateBase
             return true;
         }
 
-        // Time limit exceeded — same fix as SignalCreateBase.GiveUp, count from signal OPEN
-        // with >= comparison so we remove after exactly GiveUpCandles candles instead of +2.
-        long expiryOpenMinutes = CandleTime.FromDateTime(signal.OpenDate).Minutes + GiveUpCandles * Interval.Duration;
-        if (CandleLast.Candle.OpenTime.Minutes >= expiryOpenMinutes)
+        CryptoTrendData trend = SymbolInterval.TrendPrimary;
+        CandleTime signalTime = CandleTime.FromDateTime(signal.CloseDate);
+
+        // Still waiting for the pullback pivot (ZigZag High) to form after the signal — no
+        // time limit here, only the trend-revert check above can cancel the setup.
+        if (trend.LastPivotType != 'H' || trend.LastPivotTime <= signalTime)
+            return false;
+
+        // Pivot has formed — now give up if resumption below it hasn't happened within
+        // GiveUpCandles candles, counted from the pivot itself, not from the original signal.
+        CandleTime expiry = trend.LastPivotTime!.Value + GiveUpCandles * Interval.Duration;
+        if (CandleLast.Candle.OpenTime >= expiry)
         {
-            ExtraText = $"give up after {GiveUpCandles} candles";
+            ExtraText = $"give up {GiveUpCandles} candles after pullback pivot";
             return true;
         }
 

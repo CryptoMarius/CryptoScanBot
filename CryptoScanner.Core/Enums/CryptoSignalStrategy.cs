@@ -39,15 +39,20 @@ public enum CryptoSignalStrategy
 
 
 #if DEBUG
-    NweNp = 26,
+    //NweNp = 26,
+    //NweBb = 27,
     Trend = 31,
 
+    Bbma = 42,
     BbmaOmni = 43,
 
     WaveTrend = 50,
     WtLbStoch = 51,
+
+    StochDir = 52,
+    BbRsiEngulfing = 53,
+    IchimokuKumoBreakout = 54,
 #endif
-    //NweBb = 27,
 
     // Baba Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
