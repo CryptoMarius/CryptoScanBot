@@ -37,7 +37,7 @@ public partial class SymbolSelectionItem : ObservableObject
 
 /// <summary>
 /// Backs the run-parameters dialog (<c>RunConfigWindow</c>) that replaces the old "Open run.json"
-/// button. Edits the same emulator-run.json the engine reads — label, replay period and symbol
+/// button. Edits the same CryptoScanBot-Emulator.json the engine reads — label, replay period and symbol
 /// selection — without the user hand-editing JSON. Strategies/intervals/indicators still come
 /// from the scanner settings (Configure dialog); this only covers the per-run knobs.
 /// </summary>

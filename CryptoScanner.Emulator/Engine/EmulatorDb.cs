@@ -60,6 +60,14 @@ public static class EmulatorDb
             // object must not inherit cached pivots/trend from a previous run, which may have replayed
             // a different period or used different settings (TrendType/UseHighLow/CandleCount).
             symbol.Data.ResetTrendDataAndCaches();
+            // ...and the incremental zone-calculation cursors (FVG/SMC/DLZ) — a fresh run must do a
+            // full historical rescan, not "continue" from a previous run's progress.
+            symbol.Data.ResetZoneCalculationCursors();
+
+            // Force ZoneThreadCalculate.CalculateZones to (re)load this symbol's zones from the DB
+            // on its next drain instead of assuming the previous run's load is still valid.
+            symbol.Data.ZonesLoaded = false;
+            symbol.Data.ZonesLoadedRunId = null;
         }
     }
 
@@ -295,6 +303,51 @@ public static class EmulatorDb
                 database.Connection.Execute(
                     "delete from EmulatorRun where Id = @id", new { id = runId }, transaction);
             }
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+
+    /// <summary>
+    /// Permanently removes EVERY emulator run and everything tagged with one (signals, positions,
+    /// their parts/steps, and zones) — a full reset back to a clean slate. Unlike
+    /// <see cref="DeleteRuns"/>, this does not filter by a specific set of run ids: it deletes every
+    /// row whose EmulatorRunId is not null in one pass per table, which is what makes it fast even
+    /// with many runs (no per-id subselect, no loop).
+    /// </summary>
+    public static void DeleteAllRuns()
+    {
+        using var database = new CryptoDatabase();
+        database.Open();
+        using var transaction = database.BeginTransaction();
+        try
+        {
+            database.Connection.Execute(
+                "delete from PositionStep where PositionId in (select Id from Position where EmulatorRunId is not null)",
+                transaction: transaction);
+            database.Connection.Execute(
+                "delete from PositionPart where PositionId in (select Id from Position where EmulatorRunId is not null)",
+                transaction: transaction);
+            database.Connection.Execute(
+                "delete from Position where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute(
+                "delete from Signal where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute(
+                "delete from Zone where EmulatorRunId is not null", transaction: transaction);
+            database.Connection.Execute("delete from EmulatorRun", transaction: transaction);
+
+            // Reset the auto-increment counters so the next run starts at id 1 again.
+            // sqlite_sequence only contains rows for tables that have had at least one insert,
+            // so the WHERE guards against a no-op on a fresh DB.
+            foreach (string table in new[] { "EmulatorRun" })
+                database.Connection.Execute(
+                    "delete from sqlite_sequence where name = @table",
+                    new { table }, transaction);
             transaction.Commit();
         }
         catch

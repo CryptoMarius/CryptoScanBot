@@ -238,6 +238,70 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private void OnCopyRowsClick(object? sender, RoutedEventArgs e)
+    {
+        List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
+        CopyRowsToClipboard(rows);
+    }
+
+
+    private void OnCopyAllRowsClick(object? sender, RoutedEventArgs e)
+    {
+        List<RunRow> rows = RunsGrid.ItemsSource?.OfType<RunRow>().ToList() ?? [];
+        CopyRowsToClipboard(rows);
+    }
+
+
+    private void CopyRowsToClipboard(List<RunRow> rows)
+    {
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+        if (rows.Count == 0)
+        {
+            viewModel.Status = "Nothing selected to copy.";
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+
+        // Header row — same order and names as the grid columns.
+        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested");
+
+        foreach (RunRow r in rows)
+        {
+            sb.Append(r.Id).Append('\t');
+            sb.Append(r.Label).Append('\t');
+            sb.Append(r.Period).Append('\t');
+            sb.Append(r.StartedLocal).Append('\t');
+            sb.Append(r.FinishedLocal).Append('\t');
+            sb.Append(r.Duration).Append('\t');
+            sb.Append(r.Result).Append('\t');
+            sb.Append(r.SignalCount).Append('\t');
+            sb.Append(r.PositionCount).Append('\t');
+            sb.Append(r.PositionsOpen).Append('\t');
+            sb.Append(r.PositionsWon).Append('\t');
+            sb.Append(r.PositionsLost).Append('\t');
+            sb.Append(r.PositionsTimeout).Append('\t');
+            sb.Append(r.WinPercentage).Append('\t');
+            sb.Append(r.Profit).Append('\t');
+            sb.Append(r.ProfitPercentage).Append('\t');
+            sb.AppendLine(r.Invested.ToString());
+        }
+
+        if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+        {
+            // Fire-and-forget: clipboard SetTextAsync is async but we don't need to await it
+            // in a UI event handler — the data is already built, the call just hands it to the OS.
+            _ = clipboard.SetTextAsync(sb.ToString());
+            viewModel.Status = $"{rows.Count} row(s) copied to clipboard — paste directly into Excel.";
+        }
+        else
+        {
+            viewModel.Status = "Clipboard not available.";
+        }
+    }
+
+
     private async void OnDeleteRunClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
@@ -264,6 +328,26 @@ public partial class RunResultsView : UserControl
             return;
 
         viewModel.DeleteRuns(rows);
+    }
+
+
+    private async void OnDeleteAllRunsClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        if (DataContext is not RunResultsViewModel viewModel)
+            return;
+
+        int count = viewModel.Runs.Count;
+        if (count == 0)
+            return;
+
+        bool confirmed = await ConfirmAsync(owner, "Delete all runs",
+            $"Delete ALL {count} run(s) and all of their signals and positions?\n\nThis cannot be undone.");
+        if (!confirmed)
+            return;
+
+        viewModel.DeleteAllRuns();
     }
 
 

@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="520"
+        Width="360" Height="560"
+        x:Class="CryptoScanner.Emulator.Views.AlgorithmSelectionWindow"
+        x:DataType="vm:AlgorithmSelectionViewModel"
+        Title="Run algorithms"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="12" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="6">
+
+        <TextBlock Grid.Row="0" TextWrapping="Wrap"
+                   Text="Select which algorithms to run, one by one. Each one is run with both long and short, using the symbols/period from CryptoScanBot-Emulator.json."/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+            <Button Content="All" Command="{Binding SelectAllCommand}"/>
+            <Button Content="None" Command="{Binding DeselectAllCommand}"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" BorderBrush="#808080" BorderThickness="1" CornerRadius="3">
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Algorithms}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AlgorithmSelectionItem">
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
+                                      Margin="6,0" Padding="6,0" MinHeight="22"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock Grid.Row="3" Text="{Binding ValidationMessage}" Foreground="#C0392B"
+                   TextWrapping="Wrap" FontSize="11"/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Click="OnCancel" MinWidth="80"/>
+            <Button Content="Run" Click="OnOk" MinWidth="80"
+                    Background="#3A8D3A" Foreground="White"/>
+        </StackPanel>
+
+    </Grid>
+
+</Window>

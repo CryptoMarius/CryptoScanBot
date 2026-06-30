@@ -13,6 +13,7 @@
             <TextBlock FontWeight="Bold" FontSize="13" VerticalAlignment="Center"
                        Text="Emulator runs (double-click for positions)"/>
             <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
+            <Button Content="Delete all runs…" Click="OnDeleteAllRunsClick"/>
         </StackPanel>
 
         <DataGrid Grid.Row="1"
@@ -33,6 +34,10 @@
                     <MenuItem Header="Show settings JSON" Click="OnShowJsonClick"/>
                     <MenuItem Header="Export scanner settings…" Click="OnExportSettingsClick"/>
                     <MenuItem Header="Recalculate stats" Click="OnRecalculateClick"/>
+                    <Separator/>
+                    <MenuItem Header="Copy selected rows (for Excel)" Click="OnCopyRowsClick"/>
+                    <MenuItem Header="Copy all rows (for Excel)"      Click="OnCopyAllRowsClick"/>
+                    <Separator/>
                     <MenuItem Header="Delete run(s)…" Click="OnDeleteRunClick"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
@@ -44,13 +49,13 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="350"/>
+                <DataGridTextColumn Header="Label"       Binding="{Binding Label}" Width="400"/>
                 <DataGridTextColumn Header="Period"      Binding="{Binding Period}" Width="230"/>
                 <DataGridTextColumn Header="Started"     Binding="{Binding StartedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Finished"    Binding="{Binding FinishedLocal}" Width="130"/>
 				<DataGridTextColumn Header="Duration"    Binding="{Binding Duration}" Width="90"/>
-                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="120"/>
-                <DataGridTemplateColumn Header="Signals" Width="70" SortMemberPath="SignalCount">
+                <DataGridTextColumn Header="Result"      Binding="{Binding Result}" Width="90"/>
+                <DataGridTemplateColumn Header="Signals" Width="65" SortMemberPath="SignalCount">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Right" Text="{Binding SignalCount}"/>

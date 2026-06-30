@@ -10,7 +10,7 @@ namespace CryptoScanner.Emulator.Engine;
 /// <summary>
 /// Progress payload emitted by <see cref="TickRunner"/> after each replayed candle.
 /// </summary>
-public readonly record struct TickRunProgress(string SymbolName, int ProcessedBars, int TotalBars);
+public readonly record struct TickRunProgress(int Percent);
 
 
 /// <summary>
@@ -59,6 +59,14 @@ public sealed class TickRunner
     // overhead, logging, the per-tick debug block, etc.).
     private readonly Stopwatch runWall = new();
     private long elapsedWarmup;
+
+    // Coarse outer-loop timer: measures the full body of each non-empty iteration (from after the
+    // ticksThisMinute.Count == 0 guard to the end of the iteration). The difference between this
+    // and the sum of the measured sub-phases (process1m + pipeline + zones + flush) is the overhead
+    // that lives inside the loop but outside the fine-grained stopwatches — Parallel.ForEachAsync
+    // scheduling, NLog writes, etc. Whatever remains after subtracting outerLoop from wall-warmup
+    // is overhead that lives entirely outside the loop (startup/shutdown bookkeeping, etc.).
+    private long elapsedOuterLoop;
 
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
@@ -132,6 +140,7 @@ public sealed class TickRunner
             // the per-symbol CryptoCandleList is the set-aside feed and we index it by candle-time.
             EmulatorClock? emulatorClock = GlobalData.Clock as EmulatorClock;
             int processedBars = 0;
+            int lastReportedPercent = -1;
 
             var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
@@ -155,6 +164,8 @@ public sealed class TickRunner
                 if (ticksThisMinute.Count == 0)
                     continue;
 
+                long iterStart = Stopwatch.GetTimestamp();
+
                 // ── Phase A: per-symbol compute (indicators + signal/trade pipeline) ──────────
                 // Per-symbol state is independent, so this is the part we parallelise. No shared DB
                 // flush or zone drain happens here — those are deferred to Phase B.
@@ -172,20 +183,22 @@ public sealed class TickRunner
                 // ── Phase B: persist + zones (serial, deterministic order) ────────────────────
                 await PersistAndCalculateZonesAsync();
 
-                // Progress, throttled to ~once per 256 bars (reporting every bar floods the UI
-                // dispatcher on a multi-week replay). Done serially here, after the parallel phase.
-                int previousBars = processedBars;
+                // Progress: report only when the integer percentage changes — at most 101 calls
+                // per run (0%..100%). Done serially here, after the parallel phase.
                 processedBars += ticksThisMinute.Count;
-                if (processedBars / 256 != previousBars / 256)
+                int percent = totalBars > 0 ? 100 * processedBars / totalBars : 0;
+                if (percent != lastReportedPercent)
                 {
-                    Progress?.Report(new TickRunProgress(ticksThisMinute[0].Symbol.Name, processedBars, totalBars));
-                    await Task.Yield();
+                    lastReportedPercent = percent;
+                    Progress?.Report(new TickRunProgress(percent));
                 }
+
+                elapsedOuterLoop += Stopwatch.GetTimestamp() - iterStart;
             }
 
             // Final progress report so the bar lands on 100% / the exact processed count even when
             // the last batch didn't hit the 256-bar boundary.
-            Progress?.Report(new TickRunProgress("", processedBars, totalBars));
+            Progress?.Report(new TickRunProgress(100));
         }
         finally
         {
@@ -215,14 +228,23 @@ public sealed class TickRunner
             return;
 
         // Wall-clock of the whole run and the up-front warmup, so the buckets reconcile with the real
-        // duration. "unaccounted" = wall − (measured buckets + warmup): loop overhead, logging, the
-        // per-tick debug block, the end-of-run candle save happens AFTER this so is NOT included here.
+        // duration. The outer-loop timer covers each non-empty iteration in full; its overhead-in-loop
+        // slice (outerLoop − measured sub-phases) is what lives inside the loop but outside the fine
+        // stopwatches (Parallel.ForEachAsync scheduling, NLog writes, etc.). The remainder after
+        // subtracting outerLoop from wall−warmup is overhead outside the loop entirely.
         double wall = runWall.Elapsed.TotalSeconds;
         double warmup = Seconds(elapsedWarmup);
+        double outerLoop = Seconds(elapsedOuterLoop);
+        double overheadInLoop = outerLoop - total;
+        double overheadOutsideLoop = wall - warmup - outerLoop;
         double unaccounted = wall - total - warmup;
         GlobalData.AddTextToLogTab(
             $"Wall-clock — run {wall:F1}s | warmup {warmup:F1}s, measured phases {total:F1}s, " +
             $"unaccounted {unaccounted:F1}s ({(wall > 0 ? unaccounted / wall : 0):P0})");
+        GlobalData.AddTextToLogTab(
+            $"Unaccounted split — outer loop {outerLoop:F1}s total | " +
+            $"overhead-in-loop {overheadInLoop:F1}s (Parallel/NLog/etc), " +
+            $"overhead-outside-loop {overheadOutsideLoop:F1}s (startup/shutdown/bookkeeping)");
 
         GlobalData.AddTextToLogTab(
             $"Timing — measured {total:F1}s | " +
@@ -428,15 +450,6 @@ public sealed class TickRunner
     /// </summary>
     private async Task ProcessComputeAsync(CryptoSymbol symbol, CryptoCandle candle)
     {
-        // keep please for debugging!!!
-        var symbolPeriod = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-        var c = symbolPeriod.CandleList.Count;
-        if (c > 0)
-        {
-        }
-        var first = symbolPeriod.CandleList.FirstOrDefault();
-        var last = symbolPeriod.CandleList.LastOrDefault();
-
         // Reuse the canonical 1m-arrival handler instead of re-deriving it here. Process1mCandleAsync
         // is exactly what the live SubscriptionKLineTicker calls for every incoming 1m candle: it
         // adds the 1m candle to its CandleList, advances UpdateCandleFetched, and synthesises every

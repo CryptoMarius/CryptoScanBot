@@ -293,6 +293,31 @@ public partial class RunResultsViewModel : ObservableObject
 
 
     /// <summary>
+    /// Deletes EVERY emulator run and everything tagged with them (signals, positions, parts/steps,
+    /// zones) so the runs grid ends up empty — a full reset back to a clean slate. The caller (the
+    /// view's button handler) is responsible for the confirmation prompt.
+    /// </summary>
+    public void DeleteAllRuns()
+    {
+        int count = Runs.Count;
+        if (count == 0)
+            return;
+
+        try
+        {
+            EmulatorDb.DeleteAllRuns();
+            Refresh();
+            Status = $"All {count} run(s) deleted.";
+        }
+        catch (Exception ex)
+        {
+            Refresh();
+            Status = $"Failed to delete all runs: {ex.Message}";
+        }
+    }
+
+
+    /// <summary>
     /// Stores a new free-text label (remark) for one run, then reloads the grid so the change shows.
     /// The caller (the view) collects the text via an input dialog; an empty string clears the label.
     /// </summary>

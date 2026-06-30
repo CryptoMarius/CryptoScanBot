@@ -14,7 +14,7 @@ namespace CryptoScanner.Emulator;
 /// </summary>
 public static class RunConfigFile
 {
-    public const string FileName = "emulator-run.json";
+    public const string FileName = "CryptoScanBot-Emulator.json";
 
     public static string FilePath => Path.Combine(GlobalData.AppDataFolder, FileName);
 

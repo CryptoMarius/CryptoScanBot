@@ -79,7 +79,7 @@ public class PositionRow
     // Per-signal stop-loss distance (% from entry) carried over from the signal; blank when not set.
     public string SignalPriceText => SignalPrice.HasValue ? SignalPrice.Value.ToString("N2") : "—";
 
-    
+
 
     // Number of parts (entry + filled DCAs), with a trailing "+" when an open DCA is still pending.
     // Mirrors CryptoPosition.PartCountText() so the emulator overview matches the live open-positions grid.

@@ -8,7 +8,7 @@ namespace CryptoScanner.Emulator.Views;
 
 /// <summary>
 /// Dialog that replaces the old "Open run.json" button: edits the per-run parameters (label,
-/// replay period, symbol selection) and writes them back to emulator-run.json on OK. Closes with
+/// replay period, symbol selection) and writes them back to CryptoScanBot-Emulator.json on OK. Closes with
 /// a bool result (true = saved) so the caller can use <c>ShowDialog&lt;bool&gt;</c>.
 /// </summary>
 public partial class RunConfigWindow : Window

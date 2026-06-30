@@ -1,3 +1,5 @@
+using CryptoScanner.Core.Settings;
+
 namespace CryptoScanner.Emulator.Engine;
 
 /// <summary>
@@ -30,4 +32,29 @@ public class EmulatorRunConfig
     /// reading the full settings snapshot. Optional.
     /// </summary>
     public string Label { get; set; } = "";
+
+    /// <summary>
+    /// Stop-loss percentages to sweep during a parameter sweep run (e.g. [1, 2, 3, 4, 5, 6]).
+    /// Only used by the "Run all algorithms" sweep button.
+    /// </summary>
+    public List<decimal> StopLossPercentages { get; set; } = [1m, 2m, 3m, 4m, 5m, 6m];
+
+    /// <summary>
+    /// DCA variants to sweep during a parameter sweep run. Each entry is a complete DCA ladder
+    /// (list of DCA steps). An empty inner list means "no DCA". Only used by the sweep button.
+    /// </summary>
+    public List<List<CryptoDcaEntry>> DcaVariants { get; set; } =
+    [
+        [], // no DCA
+        [new CryptoDcaEntry { Factor = 200m, Percentage = 3.0m }],
+        [
+            new CryptoDcaEntry { Factor = 200m, Percentage = 3.0m },
+            new CryptoDcaEntry { Factor = 400m, Percentage = 6.0m },
+        ],
+        [new CryptoDcaEntry { Factor = 200m, Percentage = 6.0m }],
+        [
+            new CryptoDcaEntry { Factor = 200m, Percentage = 6.0m },
+            new CryptoDcaEntry { Factor = 400m, Percentage = 12.0m },
+        ],
+    ];
 }

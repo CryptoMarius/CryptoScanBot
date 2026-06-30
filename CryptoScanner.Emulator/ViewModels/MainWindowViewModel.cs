@@ -12,6 +12,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Messages;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Zones;
@@ -50,13 +51,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string _status = "Idle";
 
     [ObservableProperty]
-    private double _progressValue;
-
-    [ObservableProperty]
-    private double _progressMaximum = 1;
-
-    [ObservableProperty]
-    private string _currentSymbol = "";
+    private int _progressValue;
 
     [ObservableProperty]
     private bool _isRunning;
@@ -183,25 +178,16 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// For every symbol listed in emulator-run.json, fetch the candles needed for the backtest
-    /// window, per interval. Reuses the DLZ "inzoomen" routine
-    /// <see cref="Zones.ZoneCandleEngine.FetchFrom"/> exactly the way
-    /// <see cref="Zones.ZoneDlz.LoadHistoricCandles"/> does: we only compute the wanted range
-    /// (a <c>minDate</c> + <c>candleFetchCount</c>) and hand the rest to that routine. It already
-    /// does everything that's needed — materialise what's on disk/candles.db into the in-memory
-    /// CandleList, verify with its <c>IsDataLocal</c> walk how much of <c>minDate..maxDate</c> we
-    /// already have, and then call <see cref="CandleBase.FetchFrom"/> ONLY for the candles still
-    /// missing (from the first gap onward). No hand-rolled coverage logic here — reusing that
-    /// routine IS the point.
+    /// For every symbol listed in CryptoScanBot-Emulator.json, fetch the 1m candles needed for
+    /// the backtest window from the exchange, then derive all higher intervals locally via
+    /// <see cref="CandleTools.BulkCalculateCandles"/>. Only one REST stream per symbol instead of
+    /// one per interval, which is the main driver of fetch time on long windows.
     ///
-    /// Every known interval in <see cref="GlobalData.IntervalList"/> is fetched — not just the
-    /// strategy's active (signal) intervals — so candles.db always has every interval a position
-    /// could be shown on (e.g. a webhook position on 3m/5m), regardless of whether the strategy's
-    /// indicators ever touch it. <see cref="Zones.ZoneCandleEngine.FetchFrom"/> already does the
-    /// right thing per interval: fetch directly if the exchange supports it, otherwise recurse
-    /// into <see cref="CryptoInterval.ConstructFrom"/> and build it via
-    /// <see cref="CandleTools.BulkCalculateCandles"/> — so there is no separate "derive from 1m"
-    /// path here, just one straight loop over every interval.
+    /// The 1m warmup window is the largest of what the indicators need
+    /// (<see cref="IndicatorWarmup.ComputeWarmupMinutes"/>) and what the chart needs
+    /// (WindowMarginCandles + WindowCalcWarmupCandles expressed in minutes). Higher intervals are
+    /// derived in ascending-duration order — IntervalList is already sorted that way — so a 4h
+    /// candle built from 1h finds the 1h list already populated when its turn comes.
     /// </summary>
     [RelayCommand]
     private async Task FetchCandlesAsync()
@@ -225,7 +211,13 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (config.Symbols.Count == 0)
         {
-            Status = "Run config has no symbols — edit emulator-run.json first.";
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
+            return;
+        }
+
+        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
+        {
+            Status = "1m interval not registered — cannot fetch candles.";
             return;
         }
 
@@ -234,9 +226,8 @@ public partial class MainWindowViewModel : ObservableObject
         int symbolIdx = 0;
 
         List<CryptoInterval> intervals = GlobalData.IntervalList;
-        string intervalNames = string.Join(", ", intervals.Select(i => i.Name));
         GlobalData.AddTextToLogTab(
-            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, intervals: {intervalNames}");
+            $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, 1m from exchange + higher derived locally");
 
         try
         {
@@ -266,56 +257,50 @@ public partial class MainWindowViewModel : ObservableObject
                     // step sees the full picture instead of only the bounded startup load.
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
-                    foreach (CryptoInterval interval in intervals)
+                    // ── Step 1: fetch 1m from the exchange ───────────────────────────────────
+                    // The warmup must cover whichever is bigger: what the indicators need
+                    // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
+                    // WindowCalcWarmupCandles). The 1m window is large enough to cover every
+                    // higher interval's warmup as well once BulkCalculateCandles derives them.
+                    uint chartMarginMinutes1m = (uint)((ChartWindowViewModel.WindowMarginCandles
+                        + ChartWindowViewModel.WindowCalcWarmupCandles) * interval1m.Duration);
+                    uint warmupMinutes1m = Math.Max(IndicatorWarmup.ComputeWarmupMinutes(interval1m), chartMarginMinutes1m);
+                    DateTime from1m = config.FromDate.AddMinutes(-warmupMinutes1m);
+
+                    CandleTime minDate1m = IntervalTools.StartOfIntervalCandle(
+                        CandleTime.AlignFromDateTime(from1m, interval1m.Duration), interval1m.Duration);
+                    CandleTime maxDate1m = IntervalTools.StartOfIntervalCandle(
+                        CandleTime.AlignFromDateTime(config.ToDate, interval1m.Duration), interval1m.Duration);
+
+                    if (maxDate1m > minDate1m)
                     {
-                        // Per-interval warmup window — 1m=24h, higher=270×duration — prepended to the
-                        // FULL run window (FromDate..ToDate), in that interval's OWN resolution: a 1w
-                        // warmup is 270 weekly candles (~5y), not 5 years of 1m bars. minDate..maxDate
-                        // is the window we WANT; ZoneCandleEngine.FetchFrom figures out how much of it
-                        // we already have and fetches/synthesizes only the rest. Higher intervals used
-                        // to stop at FromDate (warmup-only) on the assumption that a replay run would
-                        // synthesize the rest from 1m as a side effect — but that synthesis only ever
-                        // gets persisted for the sub-range some past run actually replayed, so anything
-                        // outside that left permanent holes in candles.db. Fetching the full range here
-                        // closes those holes for good.
-                        //
-                        // The warmup must cover whichever is bigger: what the indicators need
-                        // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
-                        // WindowCalcWarmupCandles, the most a position's chart can ever ask for via
-                        // LoadWindowCandlesFromDb). Without this, a position near the start of the run
-                        // window would have plenty of indicator warmup but still run out of candles the
-                        // moment its chart is opened on a higher interval — the chart's margin in bar
-                        // count is fixed, so on a higher interval it reaches further back in calendar
-                        // time than the indicator warmup ever needed to.
-                        uint chartMarginMinutes = (uint)((ChartWindowViewModel.WindowMarginCandles
-                            + ChartWindowViewModel.WindowCalcWarmupCandles) * interval.Duration);
-                        uint warmupMinutes = Math.Max(IndicatorWarmup.ComputeWarmupMinutes(interval), chartMarginMinutes);
-                        DateTime from = config.FromDate.AddMinutes(-warmupMinutes);
-
-                        CandleTime minDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(from, interval.Duration), interval.Duration);
-                        CandleTime maxDate = IntervalTools.StartOfIntervalCandle(
-                            CandleTime.AlignFromDateTime(config.ToDate, interval.Duration), interval.Duration);
-
-                        if (maxDate <= minDate)
-                            continue;
-
-                        // candleFetchCount is the bar-count of the wanted range; ZoneCandleEngine's
-                        // CalculateDates rebuilds maxDate as minDate + count*duration (and caps it
-                        // at "now"), so passing the count keeps us inside the DLZ contract.
-                        int candleFetchCount = (int)((maxDate.Minutes - minDate.Minutes) / interval.Duration);
-
-                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — " +
-                            $"want {minDate.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount} bars)");
-
+                        int candleFetchCount1m = (int)((maxDate1m.Minutes - minDate1m.Minutes) / interval1m.Duration);
+                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} 1m — " +
+                            $"want {minDate1m.ToDateTime():yyyy-MM-dd HH:mm}..{maxDate1m.ToDateTime():yyyy-MM-dd HH:mm} ({candleFetchCount1m} bars)");
                         try
                         {
-                            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval, minDate, candleFetchCount);
+                            await ZoneCandleEngine.FetchFrom(loadedCandlesInMemory, symbol, interval1m, minDate1m, candleFetchCount1m);
                         }
                         catch (Exception sx)
                         {
-                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — FAILED ({sx.Message})");
+                            GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} 1m — FAILED ({sx.Message})");
                         }
+                    }
+
+                    // ── Step 2: derive all higher intervals from their source interval ────────
+                    // IntervalList is sorted ascending by IntervalPeriod, so when a higher interval
+                    // is derived from an intermediate one (e.g. 4h from 1h) its source is always
+                    // already populated by the time we reach it. Intervals without ConstructFrom
+                    // (i.e. 1m itself) are skipped — 1m was fetched in step 1.
+                    CandleTime nowTime = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 0);
+                    foreach (CryptoInterval interval in intervals)
+                    {
+                        if (interval.ConstructFrom == null)
+                            continue;
+
+                        GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} {interval.Name} — calculating from {interval.ConstructFrom.Name}");
+                        CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, nowTime);
+                        loadedCandlesInMemory[interval.IntervalPeriod] = true;
                     }
 
                     GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done");
@@ -357,7 +342,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Opens the run-parameters dialog (label, replay period, symbol selection) instead of making
-    /// the user hand-edit emulator-run.json. The dialog saves to that same file on OK; we only
+    /// the user hand-edit CryptoScanBot-Emulator.json. The dialog saves to that same file on OK; we only
     /// surface the result in the log.
     /// </summary>
     [RelayCommand]
@@ -372,7 +357,7 @@ public partial class MainWindowViewModel : ObservableObject
             window.Show();
 
         if (saved)
-            GlobalData.AddTextToLogTab("Run parameters saved to emulator-run.json.");
+            GlobalData.AddTextToLogTab("Run parameters saved to CryptoScanBot-Emulator.json.");
     }
 
 
@@ -395,7 +380,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (config.Symbols.Count == 0)
         {
-            Status = "Run config has no symbols — edit emulator-run.json first.";
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
             return;
         }
 
@@ -426,18 +411,31 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
-    /// Runs every registered algorithm 1-by-1 with the same symbols/period from emulator-run.json,
-    /// each time as a long+short analyzer/trader run (so a single algorithm's full signal set is
-    /// exercised on its own, without competing with the others for slots/capital). Every algorithm
-    /// gets its own EmulatorRun row; the row's label is "{algorithm name} {rest of the configured
-    /// label}" so the algorithm name is always the run label's first word, per the user's request.
-    /// Stops the whole batch (instead of moving to the next algorithm) if the user hits Stop mid-run.
+    /// Lets the user pick a subset of the registered algorithms (defaults to all selected), then
+    /// runs each of them 1-by-1 with the same symbols/period from CryptoScanBot-Emulator.json, each time as a
+    /// long+short analyzer/trader run (so a single algorithm's full signal set is exercised on its
+    /// own, without competing with the others for slots/capital). Every algorithm gets its own
+    /// EmulatorRun row; the row's label is "{algorithm name} {rest of the configured label}" so the
+    /// algorithm name is always the run label's first word, per the user's request. Stops the whole
+    /// batch (instead of moving to the next algorithm) if the user hits Stop mid-run.
     /// </summary>
     [RelayCommand]
-    private async Task RunAllAlgorithmsAsync()
+    private async Task RunAllAlgorithmsAsync(Window? owner)
     {
         if (IsRunning)
             return;
+
+        var selectionWindow = new AlgorithmSelectionWindow();
+        bool confirmed = owner != null
+            ? await selectionWindow.ShowDialog<bool>(owner)
+            : false;
+
+        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
+            return;
+
+        var selectedAlgorithms = selectedNames
+            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
+            .ToList();
 
         EmulatorRunConfig baseConfig;
         try
@@ -452,7 +450,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (baseConfig.Symbols.Count == 0)
         {
-            Status = "Run config has no symbols — edit emulator-run.json first.";
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
             return;
         }
 
@@ -474,7 +472,7 @@ public partial class MainWindowViewModel : ObservableObject
         IsRunning = true;
         try
         {
-            foreach (AlgorithmDefinition algorithm in RegisterAlgorithms.AlgorithmDefinitionList.Values)
+            foreach (AlgorithmDefinition algorithm in selectedAlgorithms)
             {
                 // Isolate the analyzer and trader to this single algorithm, both sides — so the
                 // batch run measures each algorithm on its own, the same way a manual single-algo
@@ -506,11 +504,121 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
+    /// Overnight parameter sweep: shows the algorithm-selection dialog (same as Run algorithms…),
+    /// then runs every (algorithm × stop-loss % × DCA variant) combination one by one, each as
+    /// its own EmulatorRun row. The arrays below are the only thing to edit when you want a
+    /// different sweep — there is no UI for this on purpose; the scanner already has too many
+    /// parameters to expose all of them per-run. Each run is labelled
+    /// "{algorithm} sl{x}%-dca{n} {rest}", so the Results tab is enough to compare them afterwards.
+    /// </summary>
+    [RelayCommand]
+    private async Task RunParameterSweepAsync(Window? owner)
+    {
+        if (IsRunning)
+            return;
+
+        var selectionWindow = new AlgorithmSelectionWindow();
+        bool confirmed = owner != null
+            ? await selectionWindow.ShowDialog<bool>(owner)
+            : false;
+
+        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
+            return;
+
+        var selectedAlgorithms = selectedNames
+            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
+            .ToList();
+
+        EmulatorRunConfig baseConfig;
+        try
+        {
+            baseConfig = RunConfigFile.Load();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to read run config: {ex.Message}";
+            return;
+        }
+
+        if (baseConfig.Symbols.Count == 0)
+        {
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
+            return;
+        }
+
+        if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
+        {
+            Status = "Run needs an exchange";
+            return;
+        }
+
+        GlobalData.ActiveExchange = exchange;
+        GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
+        GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
+
+        string[] labelParts = baseConfig.Label.Split(' ', 2, StringSplitOptions.None);
+        string labelRest = labelParts.Length > 1 ? labelParts[1] : "";
+
+        IsRunning = true;
+        try
+        {
+            foreach (AlgorithmDefinition algorithm in selectedAlgorithms)
+            {
+                GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
+                GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
+                GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
+                GlobalData.Settings.Trading.Short.Strategy = [algorithm.Name];
+
+                foreach (decimal stopLoss in baseConfig.StopLossPercentages)
+                {
+                    for (int dcaIndex = 0; dcaIndex < baseConfig.DcaVariants.Count; dcaIndex++)
+                    {
+                        List<CryptoDcaEntry> dcaVariant = baseConfig.DcaVariants[dcaIndex];
+
+                        GlobalData.Settings.Trading.StopLossPercentage = stopLoss;
+                        // Clone the variant so each run's settings snapshot has its own list
+                        // instance, never a shared reference into the array above.
+                        GlobalData.Settings.Trading.DcaList = dcaVariant
+                            .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
+                            .ToList();
+
+                        string dcaLabel = dcaVariant.Count == 0
+                            ? "geen dca"
+                            : "dca" + string.Join("_", dcaVariant.Select(e => $"{e.Percentage}%({e.Factor}%)"));
+                        string paramSuffix = $"sl{stopLoss}% {dcaLabel}";
+                        string baseLabel = labelRest.Length > 0
+                            ? $"{algorithm.Name} {labelRest} {paramSuffix}"
+                            : $"{algorithm.Name} {paramSuffix}";
+                        EmulatorRunConfig sweepConfig = new()
+                        {
+                            ExchangeName = baseConfig.ExchangeName,
+                            Symbols = baseConfig.Symbols,
+                            FromDate = baseConfig.FromDate,
+                            ToDate = baseConfig.ToDate,
+                            Label = baseLabel,
+                        };
+
+                        bool completed = await RunOnceAsync(sweepConfig);
+                        if (!completed)
+                            return; // Stop was pressed (or the run failed) — abandon the rest of the sweep.
+                    }
+                }
+            }
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+
+    /// <summary>
     /// Drives a single replay end-to-end: applies the run overrides, opens an EmulatorRun row,
-    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run)
-    /// and <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) — neither touches
-    /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch command
-    /// keeps it true across multiple calls.
+    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run),
+    /// <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) and
+    /// <see cref="RunParameterSweepAsync"/> (one run per SL%/DCA combination) — neither touches
+    /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch commands
+    /// keep it true across multiple calls.
     /// </summary>
     /// <returns>True if the run completed normally; false if it was cancelled or failed.</returns>
     private async Task<bool> RunOnceAsync(EmulatorRunConfig config)
@@ -724,10 +832,8 @@ public partial class MainWindowViewModel : ObservableObject
         // UI thread; the explicit Post is defensive in case this VM ever runs in a worker.
         Dispatcher.UIThread.Post(() =>
         {
-            CurrentSymbol = p.SymbolName;
-            ProgressMaximum = Math.Max(1, p.TotalBars);
-            ProgressValue = p.ProcessedBars;
-            Status = $"{p.SymbolName}: {100 * p.ProcessedBars / p.TotalBars:N0}%";
+            ProgressValue = p.Percent;
+            Status = $"{p.Percent}%";
         });
     }
 }
