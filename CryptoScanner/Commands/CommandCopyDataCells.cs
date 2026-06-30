@@ -36,17 +36,23 @@ public class CommandCopyDataCells : CommandBase
         if (columns.Count == 0)
             return;
 
-        // Active row only — the row the user right-clicked on. Avalonia's DataGrid auto-selects
-        // the row under the cursor when the context menu opens, so SelectedItem is the active one.
-        var row = grid.SelectedItem;
-        if (row == null)
-            return;
+        // All selected rows — SelectedItems contains every row when SelectionMode is Extended.
+        // Falls back to SelectedItem when no multi-selection is active (e.g. single right-click).
+        var selectedRows = grid.SelectedItems?.Cast<object>().ToList();
+        if (selectedRows == null || selectedRows.Count == 0)
+        {
+            if (grid.SelectedItem == null)
+                return;
+            selectedRows = [grid.SelectedItem];
+        }
 
-        var line = string.Join("\t", columns.Select(c => EscapeForTsv(GetCellText(c, row))));
+        var lines = selectedRows.Select(row =>
+            string.Join("\t", columns.Select(c => EscapeForTsv(GetCellText(c, row)))));
+        var text = string.Join(Environment.NewLine, lines);
 
         var clipboard = dto.parentWindow.Clipboard;
         if (clipboard != null)
-            await clipboard.SetTextAsync(line);
+            await clipboard.SetTextAsync(text);
     }
 
 
