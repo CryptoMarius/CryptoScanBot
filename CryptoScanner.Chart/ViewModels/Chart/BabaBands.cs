@@ -1,6 +1,6 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Baba;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -16,7 +16,7 @@ namespace CryptoScanner.ViewModels.Chart;
 ///   basis = VWMA(hlc3, Length)
 ///   band  = Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)
 ///   upper = basis + band,  lower = basis - band
-/// A percentage label (the signal's StopLossAtrFactor * ATR%) is printed when a wick or close breaks a
+/// A percentage label (the signal's SLStdevFactor * vwStdev%) is printed when a wick or close breaks a
 /// band, marking where the long/short alert can fire.
 /// </summary>
 public class BabaBands
@@ -76,11 +76,11 @@ public class BabaBands
             lowerLine.Points.Add(new DataPoint(x, lower));
             basisLine.Points.Add(new DataPoint(x, bands[i].Basis));
 
-            // Break label = the SL distance the signal applies: StopLossAtrFactor * ATR(Length)%
-            // (slow ATR over the band Length, so it stays stable through a volatile rally).
-            if (!slAtrByDate.TryGetValue(candle.Date, out double slAtr))
-                continue;
-            double slPct = baba.StopLossAtrFactor * (slAtr / close * 100);
+            // Break label = the SL distance the signal applies: SLStdevFactor * vwStdev / band%.
+            // vwStdev is stored on BandValue so the chart and signal always agree.
+            double vwStdev = bands[i].VwStdev;
+            double refBand = low < lower ? lower : upper;
+            double slPct = refBand > 0 ? baba.SLStdevFactor * vwStdev / refBand * 100.0 : 0;
 
             if (high > upper || close > upper)
                 AddLabel(chart, x, high, slPct, VerticalAlignment.Bottom, group);
