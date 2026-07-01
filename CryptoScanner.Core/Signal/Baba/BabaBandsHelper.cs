@@ -3,7 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Core.Signal.Helpers;
+namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>
 /// Shared calculations for the "Mean Reversion Bands" construction — volume-weighted VWAP bands:

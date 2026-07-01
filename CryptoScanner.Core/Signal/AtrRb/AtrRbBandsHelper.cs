@@ -3,7 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Core.Signal.Helpers;
+namespace CryptoScanner.Core.Signal.AtrRb;
 
 /// <summary>
 /// Shared parameters and calculations for the "AtrRb Bands &amp; Ribbon" construction
