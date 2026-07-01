@@ -13,7 +13,7 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
            || data.Candle.OpenTime == 0
            || (data.CandleData == null)
             || (data.CandleData.Rsi == null)
-            || (data.CandleData.BollingerBandsLowerBand == null)
+            || (data.CandleData.BollingerBandsUpperBand == null)
             )
             return false;
 
@@ -26,8 +26,8 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
     {
         ExtraText = "";
 
-        // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
+        // BB width must be at least 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 0)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -42,18 +42,18 @@ public class SignalBbRsiEngulfingShort : SignalCreateBase
         //if (!prev!.IsAboveBollingerBands(GlobalData.Settings.Signal.Stobb.UseLowHigh))
         if (prev!.Candle.Close <= (decimal)prev!.CandleData!.BollingerBandsUpperBand!)
         {
-            ExtraText = "not below bb.upper";
+            ExtraText = "not above bb.upper";
             return false;
         }
 
-        // Rsi oversold
+        // Rsi overbought
         if (!prev!.RsiOverbought(4))
         {
             ExtraText = "rsi not overbought";
             return false;
         }
 
-        // Candle last closes above the high of the previous
+        // Candle last closes below the low of the previous
         if (CandleLast.Candle.Close >= prev!.Candle.Low)
         {
             ExtraText = "not engulfing";

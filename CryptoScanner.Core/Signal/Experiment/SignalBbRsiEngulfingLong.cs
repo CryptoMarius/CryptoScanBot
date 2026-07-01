@@ -24,8 +24,8 @@ public class SignalBbRsiEngulfingLong : SignalCreateBase
     {
         ExtraText = "";
 
-        // De breedte van de bb is ten minste 1.5%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 100)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
+        // BB width must be at least 1.5%
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 0)) //GlobalData.Settings.Signal.AnalysisBBMaxPercentage
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
