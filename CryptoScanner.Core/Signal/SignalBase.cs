@@ -242,8 +242,43 @@ public class SignalCreateBase
         // Dont trade against the trend (only check current interval)
         if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
             return false;
+
+        // ********************************************************************
+        // Dont trade against the trend (only check current interval)
         if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
+
+
+        // ********************************************************************
+        // Another "Dont trade against the trend", just via another comparison
+        // Price above/below MA200
+        if (settings.CheckPriceAboveMa200)
+        {
+            var ma200 = CandleLast?.CandleData?.Sma200;
+            if (ma200 == null)
+            {
+                ExtraText = "MA200 not available";
+                return false;
+            }
+
+            switch (SignalSide)
+            {
+                case CryptoTradeSide.Long:
+                    if (CandleLast?.Candle.Close <= (decimal)ma200.Value)
+                    {
+                        ExtraText = $"Price {CandleLast.Candle.Close:N8} not above MA200 {ma200.Value:N8}";
+                        return false;
+                    }
+                    break;
+                case CryptoTradeSide.Short:
+                    if (CandleLast?.Candle.Close >= (decimal)ma200.Value)
+                    {
+                        ExtraText = $"Price {CandleLast.Candle.Close:N8} not below MA200 {ma200.Value:N8}";
+                        return false;
+                    }
+                    break;
+            }
+        }
 
 
         // ********************************************************************
