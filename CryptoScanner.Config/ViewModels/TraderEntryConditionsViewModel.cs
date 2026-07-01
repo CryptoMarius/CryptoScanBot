@@ -32,6 +32,9 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private int _trendSecondaryDirectionCount = 2;
 
     [ObservableProperty]
+    private bool _checkPriceAboveMa200 = false;
+
+    [ObservableProperty]
     private bool _waitForStochRecovery = false;
 
     [ObservableProperty]
@@ -60,6 +63,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
+        CheckPriceAboveMa200 = settings.CheckPriceAboveMa200;
         WaitForStochRecovery = settings.WaitForStochRecovery;
         WaitForRsiRecovery = settings.WaitForRsiRecovery;
 
@@ -79,6 +83,7 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        settings.CheckPriceAboveMa200 = CheckPriceAboveMa200;
         settings.WaitForStochRecovery = WaitForStochRecovery;
         settings.WaitForRsiRecovery = WaitForRsiRecovery;
 

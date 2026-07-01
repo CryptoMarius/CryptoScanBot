@@ -120,6 +120,7 @@ public class SettingsTrading
     public int TrendPrimaryDirectionCount { get; set; } = 2;
     public bool CheckTrendSecondaryDirection { get; set; } = false;
     public int TrendSecondaryDirectionCount { get; set; } = 2;
+    public bool CheckPriceAboveMa200 { get; set; } = false;
 
     // When true, AllowStepIn refuses entries until Stoch %K (blue line) on the current
     // candle has exited the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,

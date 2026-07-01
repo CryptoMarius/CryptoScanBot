@@ -48,6 +48,10 @@
 						 IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
 			</Grid>
 
+			<CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
+					  Content="Price above MA200 (long) / below MA200 (short)"
+					  FontSize="12"/>
+
 			<!-- Wait when stoch %K is in extreme zone -->
 			<CheckBox IsChecked="{Binding WaitForStochRecovery, Mode=TwoWay}"
 					  Content="Wait if stoch %K is OS/OB"
