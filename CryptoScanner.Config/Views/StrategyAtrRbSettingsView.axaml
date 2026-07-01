@@ -78,6 +78,11 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
+            <!-- RSI OS/OB gate -->
+            <CheckBox IsChecked="{Binding RequireRsiOsOb, Mode=TwoWay}"
+                      Content="Require RSI oversold/overbought" FontSize="12"
+                      ToolTip.Tip="When on, a long signal also requires RSI to be oversold and a short signal requires RSI to be overbought (uses the global RSI thresholds)."/>
+
         </StackPanel>
     </HeaderedContentControl>
 

@@ -34,6 +34,12 @@ public class SignalAtrRbShort : SignalCreateBase
             return false;
         }
 
+        if (settings.RequireRsiOsOb && !CandleLast.RsiOverbought())
+        {
+            ExtraText = $"RSI not overbought ({CandleLast.CandleData!.Rsi:N2})";
+            return false;
+        }
+
         if (!AtrRbBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double pctDeviation, out double upperBand))
         {
             ExtraText = "no upper band break";

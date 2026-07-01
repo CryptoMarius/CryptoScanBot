@@ -30,6 +30,9 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
     [ObservableProperty]
     private double _bBMaxPercentage = 0.0;
 
+    [ObservableProperty]
+    private bool _requireRsiOsOb = false;
+
 
     public void LoadConfig(string caption, SettingsSignalStrategyAtrRb settings)
     {
@@ -41,6 +44,7 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         StopLossAtrFactor = settings.StopLossAtrFactor;
         BBMinPercentage = settings.BBMinPercentage;
         BBMaxPercentage = settings.BBMaxPercentage;
+        RequireRsiOsOb = settings.RequireRsiOsOb;
     }
 
     public void SaveConfig(SettingsSignalStrategyAtrRb settings)
@@ -53,5 +57,6 @@ public partial class StrategyAtrRbSettingsViewModel : ObservableObject
         settings.StopLossAtrFactor = StopLossAtrFactor;
         settings.BBMinPercentage = BBMinPercentage;
         settings.BBMaxPercentage = BBMaxPercentage;
+        settings.RequireRsiOsOb = RequireRsiOsOb;
     }
 }

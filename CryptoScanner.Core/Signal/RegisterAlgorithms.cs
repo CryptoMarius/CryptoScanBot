@@ -379,15 +379,15 @@ public static class RegisterAlgorithms
         });
 #endif
 
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "stoch.dir",
-            Strategy = CryptoSignalStrategy.StochDir,
-            AnalyzeLongType = null,
-            AnalyzeShortType = null,
-        });
-#endif
+//#if DEBUG
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "stoch.dir",
+//            Strategy = CryptoSignalStrategy.StochDir,
+//            AnalyzeLongType = null,
+//            AnalyzeShortType = null,
+//        });
+//#endif
 
         //***************************************************
         // Baba Bands — fires when price hits a macro band:

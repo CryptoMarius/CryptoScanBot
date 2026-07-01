@@ -36,6 +36,10 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public double BBMinPercentage { get; set; } = 1.50;
     public double BBMaxPercentage { get; set; } = 0.0;
 
+    // When true a long signal also requires RSI to be oversold, and a short signal requires RSI
+    // to be overbought (uses the global RSI OS/OB thresholds from SettingsRsi).
+    public bool RequireRsiOsOb { get; set; } = false;
+
     public SettingsSignalStrategyAtrRb() : base()
     {
     }
