@@ -28,8 +28,9 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
         ExtraText = "";
 
 
-        // De breedte van de bb is ten minste X%
-        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, GlobalData.Settings.Signal.Stobb.BBMaxPercentage))
+        // BB width filter: only enforce minimum; skip the Stobb maximum (5%) because Kumo Breakout
+        // is a momentum strategy that fires after a breakout — typically at higher volatility.
+        if (!CandleLast.CheckBollingerBandsWidth(GlobalData.Settings.Signal.Stobb.BBMinPercentage, 0))
         {
             ExtraText = $"bb.width too small {CandleLast.CandleData!.BollingerBandsPercentage:N2}";
             return false;
@@ -46,8 +47,8 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
         }
 
 
-        // Geen idee of dit werkt ...
-        int tenkanPeriods = 6;
+        // Standard Ichimoku periods per the strategy definition (tenkan = 9, not 6)
+        int tenkanPeriods = 9;
         int kijunPeriods = 26;
         int senkouBPeriods = 52;
         IEnumerable<IchimokuResult> results = quotes.ToIchimoku(tenkanPeriods, kijunPeriods, senkouBPeriods);
@@ -69,22 +70,29 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
         //3) Een positieve(groene) Kumo future
         //4) Chikou span boven prijs
 
-
-        // 1: De voorlaatste candle moet onder de bovenste cloud lijn zitten
-        IchimokuResult last = results.Last();
-        if (candlePrev!.Candle.Close < last.SenkouSpanA)
+        // Senkou Span A/B are projected 26 periods forward; the cloud values that align with the
+        // current candle sit at index (count - 1 - kijunPeriods), not at results.Last().
+        List<IchimokuResult> resultList = results.ToList();
+        int cloudIndex = resultList.Count - 1 - kijunPeriods;
+        if (cloudIndex < 0)
             return false;
-        if (candlePrev.Candle.Close < last.SenkouSpanB)
-            return false;
-
-        // 1: De laatste candle moet boven de bovenste cloud lijn zitten
-        if (CandleLast.Candle.Close >= last.SenkouSpanA)
-            return false;
-        if (CandleLast.Candle.Close >= last.SenkouSpanB)
+        IchimokuResult cloud = resultList[cloudIndex];
+        if (cloud.SenkouSpanA == null || cloud.SenkouSpanB == null || cloud.KijunSen == null)
             return false;
 
-        // 2: Price sluit boven de Kijun Sen
-        if (CandleLast.Candle.Close >= last.KijunSen)
+        // Bottom of cloud = min(SenkouSpanA, SenkouSpanB) — works for both green and red clouds
+        decimal cloudBottom = Math.Min((decimal)cloud.SenkouSpanA, (decimal)cloud.SenkouSpanB);
+
+        // 1: Previous candle must be above the cloud bottom (not yet broken out downward)
+        if (candlePrev!.Candle.Close < cloudBottom)
+            return false;
+
+        // 1: Current candle must close below the cloud bottom (the breakout)
+        if (CandleLast.Candle.Close >= cloudBottom)
+            return false;
+
+        // 2: Price closes below Kijun Sen
+        if (CandleLast.Candle.Close >= (decimal)cloud.KijunSen)
             return false;
 
 
