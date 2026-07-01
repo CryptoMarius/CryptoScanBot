@@ -65,11 +65,11 @@
                 <!-- Stop-loss -->
                 <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
                           Content="Use stop-loss" FontSize="12"
-                          ToolTip.Tip="When on, the signal passes its own percentage based stop-loss (factor × ATR%) to the trader. When off, the trader uses its default stop-loss."/>
+                          ToolTip.Tip="When on, the signal passes its own percentage based stop-loss (SLStdevFactor × vwStdev) to the trader. When off, the trader uses its default stop-loss."/>
                 <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
-                      ToolTip.Tip="Multiplier on the ATR for the stop-loss distance: SL distance = factor × ATR(ATR length)%.">
-                    <TextBlock Grid.Column="0" Text="Stop-loss ATR factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                    <TextBox Grid.Column="1" Text="{Binding StopLossAtrFactor, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+                      ToolTip.Tip="SL distance = SLStdevFactor × vwStdev below the lower band (long) or above the upper band (short). Factor 1.0 = one full band-width below the break level.">
+                    <TextBlock Grid.Column="0" Text="Stop-loss stdev factor:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                    <TextBox Grid.Column="1" Text="{Binding SLStdevFactor, Mode=TwoWay, StringFormat=N1}" Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
                 </Grid>
 
             </StackPanel>

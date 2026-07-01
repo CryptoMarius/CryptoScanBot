@@ -37,7 +37,11 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
     private bool _useStopLoss = true;
 
     [ObservableProperty]
-    private double _stopLossAtrFactor = 2.0;
+    private double _sLStdevFactor = 1.0;
+
+    // Old ATR-based SL property — replaced by SLStdevFactor above.
+    //[ObservableProperty]
+    //private double _stopLossAtrFactor = 2.0;
 
     [ObservableProperty]
     private bool _useDlzZone = false;
@@ -61,7 +65,7 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         SlideMinEfficiency = settings.SlideMinEfficiency;
         SlideMinMovePercent = settings.SlideMinMovePercent;
         UseStopLoss = settings.UseStopLoss;
-        StopLossAtrFactor = settings.StopLossAtrFactor;
+        SLStdevFactor = settings.SLStdevFactor;
         UseDlzZone = settings.UseDlzZone;
         UseFvgZone = settings.UseFvgZone;
         UseSmcZone = settings.UseSmcZone;
@@ -79,7 +83,7 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
         settings.SlideMinEfficiency = SlideMinEfficiency;
         settings.SlideMinMovePercent = SlideMinMovePercent;
         settings.UseStopLoss = UseStopLoss;
-        settings.StopLossAtrFactor = StopLossAtrFactor;
+        settings.SLStdevFactor = SLStdevFactor;
         settings.UseDlzZone = UseDlzZone;
         settings.UseFvgZone = UseFvgZone;
         settings.UseSmcZone = UseSmcZone;

@@ -27,16 +27,18 @@ public static class BabaBandsHelper
     public readonly struct BandValue
     {
         public readonly bool HasValue;
-        public readonly double Basis;   // VWMA(hlc3, Length)
-        public readonly double Upper;   // basis + Mult * vwStdev + AtrMult * ATR
-        public readonly double Lower;   // basis - Mult * vwStdev - AtrMult * ATR
+        public readonly double Basis;    // VWMA(hlc3, Length)
+        public readonly double Upper;    // basis + Mult * vwStdev + AtrMult * ATR
+        public readonly double Lower;    // basis - Mult * vwStdev - AtrMult * ATR
+        public readonly double VwStdev;  // volume-weighted stdev of hlc3 — used for SL in vwStdev units
 
-        public BandValue(double basis, double upper, double lower)
+        public BandValue(double basis, double upper, double lower, double vwStdev)
         {
             HasValue = true;
             Basis = basis;
             Upper = upper;
             Lower = lower;
+            VwStdev = vwStdev;
         }
     }
 
@@ -83,7 +85,7 @@ public static class BabaBandsHelper
             double variance = second.Value - mean.Value * mean.Value;
             double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
             double pad = settings.Mult * vwStdev + settings.AtrMult * (atrList[i].Atr ?? 0);
-            result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad);
+            result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad, vwStdev);
         }
         return result;
     }

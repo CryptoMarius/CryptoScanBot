@@ -114,9 +114,10 @@ public class IntervalIndicatorHubParityTests
         {
             AtrBaba = atrBabaFast[i].Atr,
             BabaAtrSl = atrBabaSl[i].Atr,
-            BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
-            BabaUpper = babaBands[i].HasValue ? babaBands[i].Upper : null,
-            BabaLower = babaBands[i].HasValue ? babaBands[i].Lower : null,
+            BabaBasis   = babaBands[i].HasValue ? babaBands[i].Basis : null,
+            BabaUpper   = babaBands[i].HasValue ? babaBands[i].Upper : null,
+            BabaLower   = babaBands[i].HasValue ? babaBands[i].Lower : null,
+            BabaVwStdev = babaBands[i].HasValue ? babaBands[i].VwStdev : null,
             Sma20 = bb[i].Sma,
             BollingerBandsDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),
             BollingerBandsPercentage = 100 * (bb[i].UpperBand / bb[i].LowerBand - 1),
@@ -161,6 +162,7 @@ public class IntervalIndicatorHubParityTests
         Eq("BabaBasis", hub.BabaBasis, batch.BabaBasis, maxRel);
         Eq("BabaUpper", hub.BabaUpper, batch.BabaUpper, maxRel);
         Eq("BabaLower", hub.BabaLower, batch.BabaLower, maxRel);
+        Eq("BabaVwStdev", hub.BabaVwStdev, batch.BabaVwStdev, maxRel);
 #if DEBUG
         Eq("Ema50", hub.Ema50, batch.Ema50, maxRel);
         Eq("Atr14", hub.Atr14, batch.Atr14, maxRel);

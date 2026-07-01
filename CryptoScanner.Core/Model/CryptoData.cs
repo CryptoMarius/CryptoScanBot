@@ -115,8 +115,10 @@ public class CryptoData
 
     // Baba VWAP bands — basis = VWMA(hlc3, Length), Upper/Lower = basis +/- (Mult * vwStdev + AtrMult *
     // ATR(AtrLength)). AtrBaba is that fast pad ATR; BabaAtrSl is the SLOW ATR(Length) used for the
-    // stop-loss %. Computed once per candle by IndicatorEngine (hub or batch) and shared by
-    // SignalBabaLong/Short via BabaBandsHelper, so the band itself is never computed twice per candle.
+    // old ATR-based stop-loss %. BabaVwStdev is the volume-weighted stdev of hlc3 used to build the band —
+    // stored so the SL can be expressed in vwStdev units (SLStdevFactor * vwStdev below/above the band).
+    // Computed once per candle by IndicatorEngine (hub or batch) and shared by SignalBabaLong/Short via
+    // BabaBandsHelper, so the band itself is never computed twice per candle.
     [Computed]
     public double? AtrBaba { get; set; }
     [Computed]
@@ -125,6 +127,8 @@ public class CryptoData
     public double? BabaUpper { get; set; }
     [Computed]
     public double? BabaLower { get; set; }
+    [Computed]
+    public double? BabaVwStdev { get; set; }
     [Computed]
     public double? BabaAtrSl { get; set; }
 
@@ -204,6 +208,7 @@ public class CryptoData
         BabaBasis = source.BabaBasis;
         BabaUpper = source.BabaUpper;
         BabaLower = source.BabaLower;
+        BabaVwStdev = source.BabaVwStdev;
         BabaAtrSl = source.BabaAtrSl;
     }
 }

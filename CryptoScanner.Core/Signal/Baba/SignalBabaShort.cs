@@ -7,7 +7,7 @@ namespace CryptoScanner.Core.Signal.Baba;
 /// Mean Reversion Bands — short signal. Fires when price breaks the UPPER band (wick or close) while
 /// RSI is overbought (confluence). Optionally suppressed while the coin is in an UP-slide (don't short a
 /// melt-up). Entry on the band, or on the close when the close itself broke through; stop-loss =
-/// StopLossAtrFactor * ATR%.
+/// SLStdevFactor * vwStdev above the upper band.
 /// </summary>
 public class SignalBabaShort : SignalBabaBase
 {
@@ -60,10 +60,17 @@ public class SignalBabaShort : SignalBabaBase
             return false;
         }
 
-        //Stoploss percentage
-        if (CandleLast.CandleData.BabaAtrSl is not double atr)
+        // Stop-loss: SLStdevFactor * vwStdev above the upper band.
+        // SL price = upperBand + SLStdevFactor * vwStdev; SL% = that distance as % of the band.
+        if (CandleLast.CandleData.BabaVwStdev is not double vwStdev)
             return false;
-        double pctDeviation = GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
+        double slPrice = upperBand + settings.SLStdevFactor * vwStdev;
+        double pctDeviation = upperBand > 0 ? (slPrice - upperBand) / upperBand * 100.0 : 0;
+
+        // Old ATR-based SL: factor * ATR(Length)% — replaced by vwStdev approach above.
+        //if (CandleLast.CandleData.BabaAtrSl is not double atr)
+        //    return false;
+        //double pctDeviation = GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
 
 
         // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
@@ -88,8 +95,7 @@ public class SignalBabaShort : SignalBabaBase
         var candle = CandleLast.Candle;
         decimal band = (decimal)upperBand;
 
-        // Entry = the most extreme (HIGHEST) of the wick (High), the Close and the band.
-        //_entryPrice = Math.Max(candle.High, Math.Max(candle.Close, band));
+        // Entry = the most extreme of the Close and the band.
         _entryPrice = Math.Max(candle.Close, band);
 
         if (settings.UseStopLoss)

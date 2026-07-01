@@ -1,7 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Baba;
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
@@ -422,9 +422,10 @@ public static class IndicatorEngine
 
                 if (babaBands[index].HasValue)
                 {
-                    candleData.BabaBasis = babaBands[index].Basis;
-                    candleData.BabaUpper = babaBands[index].Upper;
-                    candleData.BabaLower = babaBands[index].Lower;
+                    candleData.BabaBasis   = babaBands[index].Basis;
+                    candleData.BabaUpper   = babaBands[index].Upper;
+                    candleData.BabaLower   = babaBands[index].Lower;
+                    candleData.BabaVwStdev = babaBands[index].VwStdev;
                 }
                 candleData.AtrBaba = atrBabaFastList[index].Atr;
                 candleData.BabaAtrSl = atrBabaSlList[index].Atr;

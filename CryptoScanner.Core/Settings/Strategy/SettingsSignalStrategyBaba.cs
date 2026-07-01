@@ -45,8 +45,13 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     // to the default percentage stop-loss from the trading settings.
     public bool UseStopLoss { get; set; } = true;
 
-    // Multiplier applied to the ATR when deriving the stop-loss distance: SL distance = factor * ATR(AtrLength)%.
-    public double StopLossAtrFactor { get; set; } = 2.0;
+    // Stop-loss distance in vwStdev units below the lower band (long) or above the upper band (short).
+    // SL price = band - SLStdevFactor * vwStdev (long) / band + SLStdevFactor * vwStdev (short).
+    // Example: SLStdevFactor=1.0 → SL sits one full band-width below the break level.
+    public double SLStdevFactor { get; set; } = 1.0;
+
+    // Old ATR-based stop-loss: factor * ATR(Length)% — replaced by SLStdevFactor above.
+    //public double StopLossAtrFactor { get; set; } = 2.0;
 
     // Bollinger-band width gate, applied to BollingerBandsPercentage = 100 * (upper/lower - 1).
     // A break is only flagged (signal fires / chart prints a label) when the BB width is inside
