@@ -830,67 +830,60 @@ public class PositionMonitor //: IDisposable
 
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
-        int multiplier;
-        if (position.Side == CryptoTradeSide.Long)
-            multiplier = +1;
-        else
-            multiplier = -1;
+        // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade)
+            return (null, null);
 
         decimal? stop = null;
         decimal? limit = null;
+        int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
 
-        // Stop-loss override (paper-trade only path, same as the default below).
-        // Limit is offset slightly beyond the stop so the stop triggers first (same direction
-        // ratio as the default StopLossPercentage vs StopLossLimitPercentage).
-        //
-        // The signal provides its SL as a distance percentage from the entry; convert it to an absolute
-        // stop relative to the break-even (== entry while PartCount == 0). multiplier = +1 long / -1
-        // short, so a long stop sits below and a short stop above.
-        //
-        // Only valid for the initial entry: once a DCA has actually filled (PartCount > 0) the averaged
-        // break-even has shifted and the signal SL no longer matches the position. In that case we fall
-        // through to the default, DCA-aware percentage SL below (which anchors on the lowest/highest DCA).
-        if (position.SlPercentage is decimal slPct && position.PartCount == 0
-            && GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade)
+
+        // --- Determine which SL source to use ---
+        // Priority 1: signal-provided SL% (e.g. AtrRb/Baba strategy), anchored on SignalPrice.
+        //   Only valid before any DCA activity: once a DCA is pending (ActiveDca) or filled
+        //   (PartCount > 0), the signal SL is anchored too close to the entry and would fire
+        //   before the DCA gets a chance to fill.
+        bool useSignalSl = position.SlPercentage.HasValue && position.PartCount == 0 && !position.ActiveDca;
+
+        // Priority 2: global user-configured SL%, anchored on the lowest/highest DCA step.
+        //   StopLossPercentage must be strictly less than StopLossLimitPercentage so that the
+        //   stop triggers before the limit (both measure distance from the anchor in the same direction).
+        bool useGlobalSl = !useSignalSl && GlobalData.Settings.Trading.StopLossPercentage > 0;
+
+        ScannerLog.Logger.Trace(
+            $"PositionMonitor.CalculateSlPrices {position.Symbol.Name} {position.Side}: " +
+            $"useSignalSl={useSignalSl} (SlPct={position.SlPercentage}) " +
+            $"useGlobalSl={useGlobalSl} (StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage}) " +
+            $"PartCount={position.PartCount} ActiveDca={position.ActiveDca}");
+
+        if (useSignalSl)
         {
-            slPct *= 1.000m;
-            // TODO: Make a decision..
-            // Now calculatd from the original signalprice..
+            // Now calculated from the original signalprice..
             // If price is already below that might be a problem
-            //decimal slStop = (breakEven * (1m - multiplier * slPct / 100m));
-            stop = (position.SignalPrice * (1m - multiplier * slPct / 100m));
+            decimal perc = position.SlPercentage!.Value / 100m;
+            stop = position.SignalPrice - (multiplier * position.SignalPrice * perc);
             stop = stop.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             // 1% buffer for the limit beyond the stop
-            decimal stopToLimitGap = Math.Abs(stop.Value * 0.01m);
-            limit = stop - multiplier * stopToLimitGap;
+            perc = 1m / 100m;
+            limit = stop - (multiplier * stop.Value * perc);
             limit = limit.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-
-            ScannerLog.Logger.Trace($"PositionMonitor.CalculateTpPrices " +
-                $"{position.Symbol.Name} " +
-                $"{position.Interval.Name} " +
-                $"{position.Side} signalprice={position.SignalPrice} stop={stop} perc={slPct:N2}");
         }
-        // Stop-loss is only supported in paper/backtest mode.
-        // Real trading would require OCO orders (or a separate stop-limit order), which are not yet implemented.
-        // The condition StopLossPercentage < StopLossLimitPercentage ensures the stop triggers before the limit.
-        else if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTrade &&
-            GlobalData.Settings.Trading.StopLossPercentage > 0 &&
-            GlobalData.Settings.Trading.StopLossLimitPercentage > 0 &&
-            GlobalData.Settings.Trading.StopLossPercentage < GlobalData.Settings.Trading.StopLossLimitPercentage)
+        else if (useGlobalSl)
         {
-            // Calculate SL price relative to the last (lowest/highest) DCA entry
-            CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
+            if (GlobalData.Settings.Trading.StopLossPercentage >= GlobalData.Settings.Trading.StopLossLimitPercentage)
+                throw new Exception($"StopLossPercentage {GlobalData.Settings.Trading.StopLossPercentage} must be strictly less than StopLoss Limit percentage {GlobalData.Settings.Trading.StopLossLimitPercentage}");
 
-            //////////////////////////////////////////////////////////////////
+            // Anchor on the most extreme DCA step (lowest buy for long, highest sell for short).
+            // Falls back to EntryPrice when no DCA part exists yet.
+            CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
 
             // problem, if the dca has just been closed we use the global BE and risk being stopped out right away
             //CryptoPositionStep? stepDca = PositionTools.FindOpenStep(position, dcaOrderSide, CryptoPartPurpose.Dca);
             //if (stepDca != null)
             //    breakEven = stepDca.Price;
-
-            //////////////////////////////////////////////////////////////////
-            CryptoPositionStep? stepDca = null;
+            CryptoPositionStep? stepDca;
             if (dcaOrderSide == CryptoOrderSide.Buy)
             {
                 // Across all DCA parts: step with the lowest price (long: lowest dca=buy)
@@ -913,20 +906,19 @@ public class PositionMonitor //: IDisposable
                 lastDcaPrice = position.EntryPrice!.Value;
             else
                 lastDcaPrice = stepDca.Price;
-            //////////////////////////////////////////////////////////////////
 
             // We are now using fixed percentages entry=0, dca1=4, dca2=10, stop=12, limit=13
             //breakEven = position.EntryPrice!.Value;
 
             // Stop price
-            decimal perc = Math.Abs(GlobalData.Settings.Trading.StopLossPercentage) / 100;
-            decimal dcaStop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            stop = dcaStop.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            decimal perc = GlobalData.Settings.Trading.StopLossPercentage / 100m;
+            stop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
+            stop = stop.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             // Limit prijs x% lager
-            perc = Math.Abs(GlobalData.Settings.Trading.StopLossLimitPercentage) / 100;
-            decimal dcaLimit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            limit = dcaLimit.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+            perc = GlobalData.Settings.Trading.StopLossLimitPercentage / 100m;
+            limit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
+            limit = limit.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         }
 
         //// This does not work, it sets the sl directly after an entry hitting the sl to quick
