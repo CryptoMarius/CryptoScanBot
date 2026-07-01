@@ -6,8 +6,6 @@ namespace CryptoScanner.Core.Signal.Sbm;
 public class SignalSbm1Long : SignalSbmBase
 {
 
-    // TODO: Stoch cross over %K/%D (in AllowStepIn)
-
     public override bool IsSignal()
     {
         ExtraText = "";
