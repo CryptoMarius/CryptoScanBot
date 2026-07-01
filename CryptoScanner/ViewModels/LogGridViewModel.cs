@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 using Avalonia.Collections;
 using Avalonia.Threading;
 
@@ -13,10 +15,10 @@ public partial class LogGridViewModel : ObservableObject
     private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromMilliseconds(2000) };
 
     /// <summary>
-    /// Queued text for the Log tab
-    /// LogViewModel pulls the text via a timer.
+    /// Queued text for the Log tab — written from background threads, read on the UI thread.
+    /// ConcurrentQueue is used because multiple signal-processing threads call Enqueue simultaneously.
     /// </summary>
-    public static readonly Queue<LogViewModel> LogQueue = new();
+    public static readonly ConcurrentQueue<LogViewModel> LogQueue = new();
 
     /// <summary>
     /// Collection of lines to display in the grid
@@ -30,7 +32,6 @@ public partial class LogGridViewModel : ObservableObject
     public LogGridViewModel()
     {
         System.Diagnostics.Debug.WriteLine("LogGridViewModel constructor called");
-        LogQueue.EnsureCapacity(25000);
         GlobalData.LogToLogTabEvent += new AddTextEvent(AddTextToLogTab);
 
         _updateTimer.Tick += TimerAddLogLinesTick;
@@ -53,12 +54,7 @@ public partial class LogGridViewModel : ObservableObject
             text = text.Trim();
 
             if (text != "")
-            {
-                // Clock.UtcNow returns the emulator's current candle close-time in emulator mode,
-                // wall-clock otherwise — single source so log timestamps follow the active clock.
-                text = GlobalData.Clock.UtcNow.ToLocalTime() + " " + text;
                 LogQueue.Enqueue(new LogViewModel() { Date = DateTime.Now, Text = text, });
-            }
 
         }
         catch (Exception error)
@@ -69,7 +65,7 @@ public partial class LogGridViewModel : ObservableObject
 
     private void TimerAddLogLinesTick(object? sender, EventArgs? e)
     {
-        if (GlobalData.ApplicationIsClosing || LogQueue.Count == 0)
+        if (GlobalData.ApplicationIsClosing || LogQueue.IsEmpty)
             return;
 
         try
@@ -82,16 +78,16 @@ public partial class LogGridViewModel : ObservableObject
                     var selected = SelectedLogLine;
 
                     // Way to much for us to follow..
-                    while (LogQueue.Count > MaxLogLines)
-                        LogQueue.Clear();
+                    if (LogQueue.Count > MaxLogLines)
+                        while (LogQueue.TryDequeue(out _)) { }
 
                     // Add items one at a time — NOT via AddRange. AvaloniaList.AddRange fires a
                     // single CollectionChanged event with Action = Reset, which causes the DataGrid
                     // to invalidate everything: selection, scroll position and keyboard focus are
                     // lost. Individual Add() calls fire fine-grained Add events that the view
                     // handles in-place, preserving the user's reading position.
-                    while (LogQueue.Count > 0 && !GlobalData.ApplicationIsClosing)
-                        LogLines.Add(LogQueue.Dequeue());
+                    while (!GlobalData.ApplicationIsClosing && LogQueue.TryDequeue(out var item))
+                        LogLines.Add(item);
 
                     // Prune oldest entries one at a time for the same reason. Clear() also fires
                     // Reset — we cannot use it here. RemoveAt(0) fires individual Remove events
