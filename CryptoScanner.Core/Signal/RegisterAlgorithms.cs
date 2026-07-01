@@ -13,7 +13,6 @@ using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
 using CryptoScanner.Core.Signal.AtrRb;
-using CryptoScanner.Core.Signal.StochDir;
 using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
@@ -331,8 +330,8 @@ public static class RegisterAlgorithms
         {
             Name = "bbma",
             Strategy = CryptoSignalStrategy.Bbma,
-            AnalyzeLongType = typeof(SignalBbmaLong),
-            AnalyzeShortType = typeof(SignalBbmaShort),
+            AnalyzeLongType = null, //typeof(SignalBbmaLong),
+            AnalyzeShortType = null, //typeof(SignalBbmaShort),
         });
 #endif
 
@@ -385,8 +384,8 @@ public static class RegisterAlgorithms
         {
             Name = "stoch.dir",
             Strategy = CryptoSignalStrategy.StochDir,
-            AnalyzeLongType = typeof(SignalStochDirLong),
-            AnalyzeShortType = typeof(SignalStochDirShort),
+            AnalyzeLongType = null,
+            AnalyzeShortType = null,
         });
 #endif
 
