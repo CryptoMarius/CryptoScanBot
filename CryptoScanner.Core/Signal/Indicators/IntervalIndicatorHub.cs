@@ -162,9 +162,10 @@ public sealed class IntervalIndicatorHub
                 double variance = second.Value - mean.Value * mean.Value;
                 double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
                 double pad = _babaMult * vwStdev + _babaAtrMult * (data.AtrBaba ?? 0);
-                data.BabaBasis = mean.Value;
-                data.BabaUpper = mean.Value + pad;
-                data.BabaLower = mean.Value - pad;
+                data.BabaBasis  = mean.Value;
+                data.BabaUpper  = mean.Value + pad;
+                data.BabaLower  = mean.Value - pad;
+                data.BabaVwStdev = vwStdev;
             }
         }
 #if DEBUG
