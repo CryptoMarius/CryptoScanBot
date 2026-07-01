@@ -1,7 +1,7 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
-using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal.Baba;
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
