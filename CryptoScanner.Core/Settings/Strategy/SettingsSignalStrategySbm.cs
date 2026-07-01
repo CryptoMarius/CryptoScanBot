@@ -4,11 +4,11 @@
 public class SettingsSignalStrategySbm : SettingsSignalStrategyBase
 {
     // SBM1 signals
-    public int Sbm1CandlesLookbackCount { get; set; } = 1;
+    public int Sbm1CandlesLookbackCount { get; set; } = 5;
     public bool UseLowHigh { get; set; } = false;
 
     // SBM2 signals
-    public int Sbm2CandlesLookbackCount { get; set; } = 2;
+    public int Sbm2CandlesLookbackCount { get; set; } = 3;
     public decimal Sbm2BbPercentage { get; set; } = 2.5m;
     public bool Sbm2UseLowHigh { get; set; } = false;
 
