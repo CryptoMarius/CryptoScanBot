@@ -57,7 +57,7 @@ public class Symbol() : SymbolBase(), ISymbol
                 var symbolInfo = await api.ExchangeData.GetExchangeInfoAsync() ?? throw new ExchangeException("No symbol data received");
                 if (!symbolInfo.Success)
                     GlobalData.AddTextToLogTab($"error getting exchangeinfo {symbolInfo.Error}");
-                if (symbolInfo == null)
+                if (symbolInfo == null || symbolInfo.Data == null)
                     throw new ExchangeException("No exchange data received");
                 SaveExchangeInfo(symbolInfo.OriginalData, "symbols.json");
 
