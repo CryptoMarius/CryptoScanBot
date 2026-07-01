@@ -57,8 +57,8 @@ public partial class LogGridViewModel : ObservableObject
                 // Clock.UtcNow returns the emulator's current candle close-time in emulator mode,
                 // wall-clock otherwise — single source so log timestamps follow the active clock.
                 text = GlobalData.Clock.UtcNow.ToLocalTime() + " " + text;
+                LogQueue.Enqueue(new LogViewModel() { Date = DateTime.Now, Text = text, });
             }
-            LogQueue.Enqueue(new LogViewModel() { Date = DateTime.Now, Text = text, });
 
         }
         catch (Exception error)
