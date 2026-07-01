@@ -105,9 +105,11 @@ public partial class LogGridViewModel : ObservableObject
                         {
                             LogLines.RemoveAt(0);
                         }
-                        catch (ArgumentOutOfRangeException)
+                        catch (Exception)
                         {
-                            // Known Avalonia DataGridCollectionView quirk — ignore, item is gone.
+                            // Avalonia DataGridCollectionView throws ArgumentOutOfRangeException or
+                            // NullReferenceException during internal index/selection tracking on Remove.
+                            // The item is already gone from LogLines — safe to ignore.
                         }
                     }
 

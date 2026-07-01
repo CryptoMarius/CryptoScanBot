@@ -16,7 +16,6 @@
                 CanUserReorderColumns="True"
                 CanUserResizeColumns="True"
                 CanUserSortColumns="True"
-                CanUserAddRows="False"
                 GridLinesVisibility="None"
                 SelectedItem="{Binding SelectedLogLine, Mode=TwoWay}"
                   BorderThickness="0" BorderBrush="Transparent"
