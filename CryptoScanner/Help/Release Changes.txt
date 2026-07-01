@@ -1,7 +1,7 @@
 CryptoScanBot release historie:
 
 30-06-2025 2.5.9
-- Memory leaks opgelost
+- Een paar memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven
 - De factor bij de dca en de tp is nu een percentage (om het gelijk te houden met Altrady)
 - De optie "Copy Data Cells" is nu multiselect (makkelijker met kopieeren van cellen)
@@ -9,7 +9,8 @@ CryptoScanBot release historie:
   Dit ook doorgevoerd voor de andere exchanges die niet de definitieve candles aanleveren.
 - Laatste package updates van JKorf doorgevoerd
 - Diverse aanpassingen voor de emulator waaronder snellere berekeningen.
-  Berekenen van de zones blijft een zware wissel trekken op de cpu.
+  Berekenen van de zones blijven echter een zware wissel trekken op de cpu.
+- Lege regels in de log worden nu buitengesloten
 
 22-06-2025 2.5.8
 - BABA strategie (nog geen juiste sl%)
