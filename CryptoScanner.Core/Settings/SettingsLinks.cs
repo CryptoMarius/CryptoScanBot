@@ -48,7 +48,7 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
 
         Remove("Coinbase");
         this.TryAdd("Coinbase Spot", Exchange.Coinbase.Spot.Api.GetExchangeLinks());
-        //this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
+        this.TryAdd("Bybit EU Futures", Exchange.BybitEu.Futures.Api.GetExchangeLinks());
 
         Remove("HyperLiquid");
         this.TryAdd("HyperLiquid Spot", Exchange.HyperLiquid.Spot.Api.GetExchangeLinks());
@@ -59,8 +59,8 @@ public class CryptoExternalUrlList : SortedList<string, CryptoExternalUrls>
         this.TryAdd("Kucoin Futures", Exchange.Kucoin.Futures.Api.GetExchangeLinks());
 
         //Remove("Kraken");
-        //this.TryAdd("Kraken Spot", Exchange.Kraken.Spot.Api.GetExchangeLinks());
-        ////this.TryAdd("Kraken Futures", Exchange.Kraken.Futures.Api.GetExchangeLinks());
+        this.TryAdd("Kraken Spot", Exchange.Kraken.Spot.Api.GetExchangeLinks());
+        this.TryAdd("Kraken Futures", Exchange.Kraken.Futures.Api.GetExchangeLinks());
 
         Remove("Mexc");
         this.TryAdd("Mexc Spot", Exchange.Mexc.Spot.Api.GetExchangeLinks());
