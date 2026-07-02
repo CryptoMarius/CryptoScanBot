@@ -872,9 +872,6 @@ public class PositionMonitor //: IDisposable
         }
         else if (useGlobalSl)
         {
-            if (GlobalData.Settings.Trading.StopLossPercentage >= GlobalData.Settings.Trading.StopLossLimitPercentage)
-                throw new Exception($"StopLossPercentage {GlobalData.Settings.Trading.StopLossPercentage} must be strictly less than StopLoss Limit percentage {GlobalData.Settings.Trading.StopLossLimitPercentage}");
-
             // Anchor on the most extreme DCA step (lowest buy for long, highest sell for short).
             // Falls back to EntryPrice when no DCA part exists yet.
             CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
@@ -916,7 +913,13 @@ public class PositionMonitor //: IDisposable
             stop = stop.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
             // Limit prijs x% lager
-            perc = GlobalData.Settings.Trading.StopLossLimitPercentage / 100m;
+            // The limit percentage must stay strictly greater than the stop percentage so the stop
+            // triggers before the limit. If it is misconfigured (<= stop), fall back to a 1% buffer
+            // beyond the stop (same convention as the signal-SL branch) instead of throwing on every candle.
+            decimal limitPerc = GlobalData.Settings.Trading.StopLossLimitPercentage;
+            if (limitPerc <= GlobalData.Settings.Trading.StopLossPercentage)
+                limitPerc = GlobalData.Settings.Trading.StopLossPercentage + 1m;
+            perc = limitPerc / 100m;
             limit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
             limit = limit.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
         }
