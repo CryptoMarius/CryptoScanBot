@@ -55,20 +55,18 @@ public class Api : ExchangeBase
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
-        HyperLiquidExchange.RateLimiter.RateLimitTriggered += (x) =>
-        {
-            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour} ");
-            //{x.DelayTime.Value.TotalSeconds}
-            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
-            //{
-            //x.DelayTime = 0.1 * x.DelayTime;
-            //int delay = (int)Math.Round(x.DelayTime.Value.TotalSeconds * 10);
-            //Thread.Sleep(delay);
-            //await Task.Delay((int)Math.Round(x.DelayTime.Value.TotalSeconds * 1000));
-            //x.Behaviour = RateLimitingBehaviour.
-            //}
-            //Thread.Sleep(1000);
-        };
+        // Earlier experiment to scale down the HyperLiquid delay time; kept for reference:
+        //{x.DelayTime.Value.TotalSeconds}
+        //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
+        //{
+        //x.DelayTime = 0.1 * x.DelayTime;
+        //int delay = (int)Math.Round(x.DelayTime.Value.TotalSeconds * 10);
+        //Thread.Sleep(delay);
+        //await Task.Delay((int)Math.Round(x.DelayTime.Value.TotalSeconds * 1000));
+        //x.Behaviour = RateLimitingBehaviour.
+        //}
+        //Thread.Sleep(1000);
+        HyperLiquidExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
 
     }
 

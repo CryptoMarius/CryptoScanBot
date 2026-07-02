@@ -67,13 +67,7 @@ public class Api : ExchangeBase
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
 
-        KucoinExchange.RateLimiter.RateLimitTriggered += (x) =>
-        {
-            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            //if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
-            //    Thread.Sleep(x.DelayTime.Value);
-            //Thread.Sleep(1000);
-        };
+        KucoinExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
     }
 
     public override async Task<(bool result, TradeParams? tradeParams)> PlaceOrder(CryptoDatabase database,

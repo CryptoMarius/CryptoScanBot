@@ -62,13 +62,7 @@ public class Api : ExchangeBase
         KLineTicker = new Ticker(ExchangeOptions, typeof(SubscriptionKLineTicker), CryptoTickerType.kline);
         //UserTicker = new Ticker(ExchangeOptions, typeof(SubscriptionUserTicker), CryptoTickerType.user);
 
-        BitMartExchange.RateLimiter.RateLimitTriggered += (x) =>
-        {
-            GlobalData.AddTextToLogTab($"RateLimitTriggered {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour}");
-            if (x.Behaviour == RateLimitingBehaviour.Wait && x.DelayTime.HasValue)
-                Thread.Sleep(x.DelayTime.Value * 1000);
-            Thread.Sleep(1000);
-        };
+        BitMartExchange.RateLimiter.RateLimitTriggered += OnRateLimitTriggered;
     }
 
 

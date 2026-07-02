@@ -141,4 +141,28 @@ public abstract class ExchangeBase
         GlobalData.AddTextToLogTab(text);
         GlobalData.AddTextToTelegram(text, position);
     }
+
+
+    // Throttle timestamps per API limit, so a burst of requests hitting the same
+    // limit only logs once per interval instead of flooding the log tab.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> RateLimitLogThrottle = new();
+
+    /// <summary>
+    /// Shared handler for the RateLimitTriggered event of the CryptoExchange.Net rate limiter.
+    /// The rate limiter already waits internally when the behaviour is Wait, so we must NOT
+    /// sleep here as well (that would double the wait and block a thread). This event is purely
+    /// informational; the logging is throttled per API limit so a burst of (kline) requests
+    /// does not flood the log tab.
+    /// </summary>
+    public static void OnRateLimitTriggered(CryptoExchange.Net.RateLimiting.RateLimitEvent x)
+    {
+        string key = x.ApiLimit ?? "";
+        DateTime now = DateTime.UtcNow;
+        DateTime last = RateLimitLogThrottle.GetValueOrDefault(key);
+        if (now - last >= TimeSpan.FromMinutes(1))
+        {
+            RateLimitLogThrottle[key] = now;
+            GlobalData.AddTextToLogTab($"RateLimitTriggered {ExchangeOptions.ExchangeName} {x.Limit} {x.ApiLimit} {x.LimitDescription} {x.Current} {x.Behaviour} (throttled log)");
+        }
+    }
 }
