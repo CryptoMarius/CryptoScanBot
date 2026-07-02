@@ -1421,7 +1421,7 @@ public class Migration
 
             // Its back, but without a fk
             try { database.Connection.Execute("alter table Position add SignalId Integer null", transaction); } catch { } // ignore
-            database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction);
+            try { database.Connection.Execute("CREATE INDEX IdxPositionSignalId ON Position(SignalId)", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
