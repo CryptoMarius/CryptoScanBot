@@ -155,8 +155,8 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
 
             // Repeated value (flat candle)
             ICellStyle? cellStyle = CellStyleDecimalNormal;
-            if (candle.Open == last.Open && candle.High == last.High &&
-                candle.Low == last.Low && candle.Close == last.Close)
+            if (candle.Open == last.Close && candle.High == last.Close &&
+                candle.Low == last.Close && candle.Close == last.Close)
                 cellStyle = CellStyleDecimalRed;
                 
             WriteCell(sheet, column++, row, candle.Open, cellStyle);

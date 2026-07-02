@@ -79,9 +79,9 @@ public abstract class ExcelBase
 
         CellStyleDecimalRed = Book.CreateCellStyle();
         CellStyleDecimalRed.DataFormat = format.GetFormat("0.0000000000");
-        CellStyleDecimalRed.FillForegroundColor = HSSFColor.Red.Index;
+        CellStyleDecimalRed.FillForegroundColor = HSSFColor.Rose.Index;
         CellStyleDecimalRed.FillPattern = FillPattern.SolidForeground;
-        CellStyleDecimalRed.FillBackgroundColor = HSSFColor.Red.Index;
+        CellStyleDecimalRed.FillBackgroundColor = HSSFColor.Rose.Index;
 
 
         CellStylePercentageNormal = Book.CreateCellStyle();
