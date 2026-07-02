@@ -576,6 +576,10 @@ public partial class MainWindowViewModel : ObservableObject
                         List<CryptoDcaEntry> dcaVariant = baseConfig.DcaVariants[dcaIndex];
 
                         GlobalData.Settings.Trading.StopLossPercentage = stopLoss;
+                        // The limit percentage must stay strictly greater than the stop percentage
+                        // (see PositionMonitor.CalculateSlPrices), otherwise CalculateSlPrices throws
+                        // on every candle. Mirror the 1% buffer the signal-SL branch uses.
+                        GlobalData.Settings.Trading.StopLossLimitPercentage = stopLoss + 1m;
                         // Clone the variant so each run's settings snapshot has its own list
                         // instance, never a shared reference into the array above.
                         GlobalData.Settings.Trading.DcaList = dcaVariant
