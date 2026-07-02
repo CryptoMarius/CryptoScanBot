@@ -194,9 +194,9 @@ public class CryptoDatabase : IDisposable
             new() { Name = "HyperLiquid Spot", IsSupported = false, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Spot },
             new() { Name = "HyperLiquid Futures", IsSupported = true, ExchangeType = CryptoExchangeType.HyperLiquid, TradingType=CryptoTradingType.Futures },
 
-            // Problem: kline streams not working properly for futures -- futures does not support "SubscribeToKlineUpdatesAsync"
+            // Kraken does not have futures, kline via trades
             new() { Name = "Kraken Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Spot },
-            new() { Name = "Kraken Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
+            new() { Name = "Kraken Futures", IsSupported = false, ExchangeType = CryptoExchangeType.Kraken, TradingType=CryptoTradingType.Futures },
 
             new() { Name = "Kucoin Spot", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Spot },
             new() { Name = "Kucoin Futures", IsSupported = true, ExchangeType = CryptoExchangeType.Kucoin, TradingType=CryptoTradingType.Futures },
