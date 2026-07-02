@@ -152,10 +152,17 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             else
                 WriteCell(sheet, column++, row, candle.DateLocal, CellStyleDate);
             WriteCell(sheet, column++, row, candle.DateLocal.AddMinutes(symbolInterval.Interval?.Duration ?? 0), CellStyleDate);
-            WriteCell(sheet, column++, row, candle.Open, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, candle.High, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, candle.Low, CellStyleDecimalNormal);
-            WriteCell(sheet, column++, row, candle.Close, CellStyleDecimalNormal);
+
+            // Repeated value (flat candle)
+            ICellStyle? cellStyle = CellStyleDecimalNormal;
+            if (candle.Open == last.Open && candle.High == last.High &&
+                candle.Low == last.Low && candle.Close == last.Close)
+                cellStyle = CellStyleDecimalRed;
+                
+            WriteCell(sheet, column++, row, candle.Open, cellStyle);
+            WriteCell(sheet, column++, row, candle.High, cellStyle);
+            WriteCell(sheet, column++, row, candle.Low, cellStyle);
+            WriteCell(sheet, column++, row, candle.Close, cellStyle);
 
             if (candle.Volume == 0m && !Symbol.IsBarometerSymbol())
                 WriteCell(sheet, column++, row, candle.Volume, CellStyleDecimalRed);
