@@ -12,7 +12,7 @@ public class ApplicationParams
 
     public string? _AppDataFolder;
     [Option('f', "folder", Required = false, HelpText = "Use this folder a the datafolder for the scanner")]
-    public string? AppDataFolder { get { return _AppDataFolder; } set { _AppDataFolder = value!.Trim(); } }
+    public string? AppDataFolder { get { return _AppDataFolder; } set { _AppDataFolder = value!.Trim().Trim('"'); } }
 
     private string? _ExchangeName;
     [Option('e', "exchange", Required = false, HelpText = "Initialize to exchange (Binance Spot, Binance Futures, Bybit Spot, ByBit Futures, Kucoin Spot or Mexc Spot)")]
