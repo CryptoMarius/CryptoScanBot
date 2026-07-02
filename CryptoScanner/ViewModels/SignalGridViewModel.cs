@@ -136,7 +136,14 @@ public partial class SignalGridViewModel : ObservableObject
         GlobalData.AddTextToLogTab(text);
 
         if (!signal.IsInvalid || (signal.IsInvalid && GlobalData.Settings.General.ShowInvalidSignals))
-            GlobalData.SignalQueue.Enqueue(signal);
+        {
+            // Queue<T> is not thread-safe; enqueue under the same lock the consumer/clear use
+            // to avoid a corrupted internal array ("Source array was not long enough" during resize)
+            lock (GlobalData.SignalQueue)
+            {
+                GlobalData.SignalQueue.Enqueue(signal);
+            }
+        }
 
         if (!signal.IsInvalid)
         {
