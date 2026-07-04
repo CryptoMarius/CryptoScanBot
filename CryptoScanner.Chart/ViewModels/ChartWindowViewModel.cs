@@ -1750,13 +1750,8 @@ public partial class ChartWindowViewModel : ObservableObject
             symbolInterval.CandleList.Lock();
             try
             {
-                symbolInterval.LastCandle = default;
                 foreach (CryptoCandle candle in candles)
-                {
                     symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                    if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-                        symbolInterval.LastCandle = candle;
-                }
             }
             finally
             {

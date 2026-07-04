@@ -107,9 +107,9 @@ public class SmcZones
 
         decimal? best = null;
         CandleTime newest = CandleTime.MinValue;
-        foreach (var si in symbol.Data.SymbolIntervalList)
+        foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            var last = si.LastCandle;
+            var last = symbolInterval.CandleList.LastCandle;
             if (last.OpenTime != 0 && last.OpenTime >= newest)
             {
                 newest = last.OpenTime;

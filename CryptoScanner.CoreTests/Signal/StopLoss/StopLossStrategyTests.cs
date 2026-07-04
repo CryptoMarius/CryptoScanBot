@@ -77,9 +77,9 @@ public class StopLossStrategyTests : TestBase
         CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, int warmup = 260)
     {
         var results = new List<(DateTime, decimal?, string)>();
-        CryptoSymbolInterval si = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoSymbolInterval symbolInterval= symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        foreach (CryptoCandle candle in si.CandleList.Values.Skip(warmup))
+        foreach (CryptoCandle candle in symbolInterval.CandleList.Values.Skip(warmup))
         {
             CandleTime ct = candle.OpenTime;
             if (!IndicatorEngine.PrepareIndicators(symbol, interval, ct))
@@ -92,7 +92,7 @@ public class StopLossStrategyTests : TestBase
                 {
                     Symbol = symbol,
                     Interval = interval,
-                    SymbolInterval = si,
+                    SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Long,
                     SignalStrategy = CryptoSignalStrategy.Baba,
                     CandleLast = data,
@@ -101,7 +101,7 @@ public class StopLossStrategyTests : TestBase
                 {
                     Symbol = symbol,
                     Interval = interval,
-                    SymbolInterval = si,
+                    SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Short,
                     SignalStrategy = CryptoSignalStrategy.Baba,
                     CandleLast = data,
@@ -125,9 +125,9 @@ public class StopLossStrategyTests : TestBase
         CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, int warmup = 260)
     {
         var results = new List<(DateTime, decimal?, string)>();
-        CryptoSymbolInterval si = symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoSymbolInterval symbolInterval= symbol.GetSymbolInterval(interval.IntervalPeriod);
 
-        foreach (CryptoCandle candle in si.CandleList.Values.Skip(warmup))
+        foreach (CryptoCandle candle in symbolInterval.CandleList.Values.Skip(warmup))
         {
             CandleTime ct = candle.OpenTime;
             if (!IndicatorEngine.PrepareIndicators(symbol, interval, ct))
@@ -140,7 +140,7 @@ public class StopLossStrategyTests : TestBase
                 {
                     Symbol = symbol,
                     Interval = interval,
-                    SymbolInterval = si,
+                    SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Long,
                     SignalStrategy = CryptoSignalStrategy.Stobb,
                     CandleLast = data,
@@ -149,7 +149,7 @@ public class StopLossStrategyTests : TestBase
                 {
                     Symbol = symbol,
                     Interval = interval,
-                    SymbolInterval = si,
+                    SymbolInterval = symbolInterval,
                     SignalSide = CryptoTradeSide.Short,
                     SignalStrategy = CryptoSignalStrategy.Stobb,
                     CandleLast = data,

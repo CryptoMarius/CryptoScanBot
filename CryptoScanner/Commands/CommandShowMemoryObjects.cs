@@ -43,7 +43,7 @@ public class CommandShowMemoryObjects : CommandBase
 
                 foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
                 {
-                    log.AppendLine($"      Interval: {symbolInterval.Interval.Name} Candle synchronized: {symbolInterval.LastCandleSynchronized?.ToDateTime()} Candles: {symbolInterval.CandleList.Count} LastCandle: {symbolInterval.LastCandle.Date}");
+                    log.AppendLine($"      Interval: {symbolInterval.Interval.Name} Candle synchronized: {symbolInterval.LastCandleSynchronized?.ToDateTime()} Candles: {symbolInterval.CandleList.Count} LastCandle: {symbolInterval.CandleList.LastCandle.Date}");
                     candleCount += symbolInterval.CandleList.Count;
 
                     //if (symbolInterval.LastCandleSynchronized != null)

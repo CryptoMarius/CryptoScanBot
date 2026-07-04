@@ -196,7 +196,7 @@ public class ThreadCheckFinishedPosition
         var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (symbolPeriod.CandleList.Count > 0)
         {
-            CryptoCandle lastCandle1m = symbolPeriod.LastCandle;
+            CryptoCandle lastCandle1m = symbolPeriod.CandleList.LastCandle;
 
             ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {position.Symbol.Name} CheckThePosition {orderId}");
             using PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);

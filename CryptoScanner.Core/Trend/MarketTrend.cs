@@ -26,9 +26,9 @@ public class MarketTrend
             {
                 // Take the last 1m endtime as timing (
                 CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
-                if (symbolInterval.LastCandle.OpenTime == 0)
+                if (symbolInterval.CandleList.LastCandle.OpenTime == 0)
                     return symbolTrend; // should never happen
-                CandleTime candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
+                CandleTime candleIntervalEnd = symbolInterval.CandleList.LastCandle.OpenTime;
 
                 // the log parameter is only present when called from the CommandShowTrendInfo()
                 if (symbolTrend.Time == null || candleIntervalEnd > symbolTrend.Time || log != null)
@@ -46,11 +46,11 @@ public class MarketTrend
 
                         bool isCached = false;
                         symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
-                        if (symbolInterval.LastCandle.OpenTime == 0)
+                        if (symbolInterval.CandleList.LastCandle.OpenTime == 0)
                             return symbolTrend; // should never happen
                         CryptoTrendData intervalTrend = trend.TrendType == TrendType.Primary ? symbolInterval.TrendPrimary : symbolInterval.TrendSecondary;
                         CryptoTrendData intervalTrendBos = trend.TrendType == TrendType.Primary ? symbolInterval.TrendBosPrimary : symbolInterval.TrendBosSecondary;
-                        candleIntervalEnd = symbolInterval.LastCandle.OpenTime;
+                        candleIntervalEnd = symbolInterval.CandleList.LastCandle.OpenTime;
                         if (intervalTrend.Time == null || candleIntervalEnd > intervalTrend.Time || log != null)
                         {
                             // Do NOT pre-set intervalTrend.Time here. TrendCalculator saves intervalTrend.Time

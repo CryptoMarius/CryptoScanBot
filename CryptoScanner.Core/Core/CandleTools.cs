@@ -67,8 +67,6 @@ public static class CandleTools
         if (GlobalData.Settings.General.DebugKLineReceive && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == ""))
             ScannerLog.Logger.Info($"Create candle {candle.OhlcText(symbol, interval, symbol.PriceDisplayFormat, true, true, true)}");
 
-        if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-            symbolInterval.LastCandle = candle;
         return candle!;
     }
 
@@ -158,7 +156,7 @@ public static class CandleTools
         // the missing minute is back-filled as a flat candle (previous close) by BulkAddMissingCandles.
         // Central chokepoint, so every exchange's SubscriptionKLineTicker is covered by this one check.
         if (open <= 0 || high <= 0 || low <= 0 || close <= 0)
-            return symbol.GetSymbolInterval(GlobalData.IntervalList[0].IntervalPeriod).LastCandle;
+            return symbol.GetSymbolInterval(GlobalData.IntervalList[0].IntervalPeriod).CandleList.LastCandle;
 
         await symbol.Data.CandleLock.WaitAsync();
         try

@@ -52,7 +52,7 @@ public class TrendCalculator
         // end time
         if (maxDate == 0)
         {
-            CryptoCandle lastCandle = symbol.GetSymbolInterval(interval.IntervalPeriod).LastCandle;
+            CryptoCandle lastCandle = symbol.GetSymbolInterval(interval.IntervalPeriod).CandleList.LastCandle;
             if (lastCandle.OpenTime == 0)
                 return false;
             maxDate = lastCandle.OpenTime;

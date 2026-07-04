@@ -624,7 +624,7 @@ public class PositionMonitor : IDisposable
         await position.Symbol.Data.CandleLock.WaitAsync();
         try
         {
-            CryptoCandle lastx = symbolInterval.LastCandle;
+            CryptoCandle lastx = symbolInterval.CandleList.LastCandle;
 
             // Niet zomaar een laatste candle nemen in verband met Backtesting
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))

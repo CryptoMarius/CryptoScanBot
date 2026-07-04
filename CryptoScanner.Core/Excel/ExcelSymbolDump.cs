@@ -81,7 +81,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             else WriteCell(sheet, column++, row, "");
 
             // reference to the last candle system
-            WriteCell(sheet, column++, row, symbolInterval.LastCandle.DateLocal, CellStyleDate);
+            WriteCell(sheet, column++, row, symbolInterval.CandleList.LastCandle.DateLocal, CellStyleDate);
 
             // primary trend
             trend = symbolInterval.TrendPrimary;

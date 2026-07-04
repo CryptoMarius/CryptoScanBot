@@ -15,7 +15,6 @@ public class CryptoSymbolInterval
     public CandleTime? LastCandleSynchronized { get; set; }
 
     // The candles for this interval
-    public CryptoCandle LastCandle { get; set; } = default;
     public CryptoCandleList CandleList { get; set; } = [];
 
     // The signals generated for this interval

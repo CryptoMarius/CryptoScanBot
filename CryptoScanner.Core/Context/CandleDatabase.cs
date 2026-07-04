@@ -299,8 +299,6 @@ public class CandleDatabase : IDisposable
                     };
 
                     symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                    if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-                        symbolInterval.LastCandle = candle;
                 }
             }
             finally
@@ -376,8 +374,6 @@ public class CandleDatabase : IDisposable
                 };
 
                 symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
-                if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
-                    symbolInterval.LastCandle = candle;
             }
         }
         finally
