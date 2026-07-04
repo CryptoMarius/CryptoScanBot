@@ -190,6 +190,103 @@ public class IntervalIndicatorHubParityTests
     private static string Describe(Dictionary<string, double> maxRel) =>
         string.Join(", ", maxRel.Where(m => m.Value > 0).OrderByDescending(m => m.Value).Select(m => $"{m.Key}={m.Value:E2}"));
 
+    [TestMethod]
+    public void Test3_Hub_Lux_Matches_Batch_Lux()
+    {
+        GlobalData.Settings = new SettingsBasic();
+        List<CryptoCandle> candles = MakeCandles5m(400);
+
+        // Hub: feed all candles incrementally.
+        var hub = new IntervalIndicatorHub();
+        var hubLux = new List<short?>(candles.Count);
+        foreach (CryptoCandle candle in candles)
+        {
+            hub.Add(candle);
+            hubLux.Add(hub.BuildCurrent().Lux5mValue);
+        }
+
+        // Batch reference: mirror the LuxIndicator.CalculateNew algorithm over the same series.
+        int mismatches = 0;
+        int compared = 0;
+        for (int t = 100; t < candles.Count; t++)
+        {
+            int startIdx = t - 99;
+            int luxMin = 10, luxMax = 20, luxN = luxMax - luxMin + 1;
+            double[] num = new double[luxN];
+            double[] den = new double[luxN];
+            int overbuy = 0, oversell = 0;
+            double prevClose = 0;
+            bool hasPrev = false;
+
+            for (int j = startIdx; j <= t; j++)
+            {
+                double close = (double)candles[j].Close;
+                if (hasPrev)
+                {
+                    double diff = close - prevClose;
+                    overbuy = 0;
+                    oversell = 0;
+                    for (int k = 0; k < luxN; k++)
+                    {
+                        double alpha = 1.0 / (luxMin + k);
+                        num[k] = alpha * diff + (1.0 - alpha) * num[k];
+                        den[k] = alpha * Math.Abs(diff) + (1.0 - alpha) * den[k];
+                        double rsi = den[k] == 0.0 ? 50.0 : 50.0 * num[k] / den[k] + 50.0;
+                        if (rsi > 70) overbuy++;
+                        if (rsi < 30) oversell++;
+                    }
+                }
+                prevClose = close;
+                hasPrev = true;
+            }
+
+            int batchOversold = (int)(100.0 * oversell / luxN);
+            int batchOverbought = (int)(100.0 * overbuy / luxN);
+            int batchValue = 0;
+            if (batchOverbought > 0) batchValue += batchOverbought;
+            if (batchOversold > 0) batchValue -= batchOversold;
+
+            short hubValue = hubLux[t] ?? 0;
+            if (hubValue != (short)batchValue)
+                mismatches++;
+            compared++;
+        }
+
+        // The hub sees ALL prior candles (continuous RMA), while the batch only sees the last 100.
+        // This means the hub's RMA warmup uses the full history, whereas the batch restarts
+        // from zero each time. For early windows this can cause minor divergence (±1 count at
+        // the 70/30 RSI thresholds). The assertion allows a small mismatch percentage.
+        double mismatchPct = 100.0 * mismatches / compared;
+        Assert.IsTrue(mismatchPct < 5.0,
+            $"Hub Lux should closely match batch Lux. Mismatches: {mismatches}/{compared} ({mismatchPct:F1}%). " +
+            $"Small differences are expected due to RMA warmup divergence (hub sees full history, batch sees 100 candles).");
+    }
+
+    private static List<CryptoCandle> MakeCandles5m(int count)
+    {
+        var list = new List<CryptoCandle>(count);
+        decimal prevClose = 100m;
+        for (int i = 0; i < count; i++)
+        {
+            double mid = 100 + 10 * Math.Sin(i * 0.10) + 3 * Math.Sin(i * 0.37) + (i % 7) * 0.10;
+            decimal close = Math.Round((decimal)mid, 2);
+            decimal high = close + 0.50m + (i % 5) * 0.05m;
+            decimal low = close - 0.50m - (i % 3) * 0.05m;
+            list.Add(new CryptoCandle
+            {
+                TickDecimals = 2,
+                OpenTime = new CandleTime((uint)(i * 5)),
+                Open = prevClose,
+                High = high,
+                Low = low,
+                Close = close,
+                Volume = 1000m + (i % 13) * 50m,
+            });
+            prevClose = close;
+        }
+        return list;
+    }
+
     /// <summary>Deterministic synthetic candle series with enough variation for every indicator.</summary>
     private static List<CryptoCandle> MakeCandles(int count)
     {

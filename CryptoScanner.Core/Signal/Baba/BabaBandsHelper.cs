@@ -197,7 +197,7 @@ public static class BabaBandsHelper
 
         var settings = GlobalData.Settings.Signal.Baba;
         int window = settings.SlideWindow;
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 2);
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(window + 2, symbolInterval.Interval.Duration);
         int idx = candles.FindIndex(c => c.OpenTime == openTime);
         if (idx < window)
             return;

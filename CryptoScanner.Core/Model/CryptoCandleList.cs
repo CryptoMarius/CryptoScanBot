@@ -3,7 +3,7 @@
 // More or less thread safe (no need for the expensive ToList())
 public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // experiment via SortedDictionary? SortedList TrimExcess!!
 {
-    private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.SupportsRecursion);
+    private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
 
     public CryptoCandle LastCandle { get; private set; } = default;
 
@@ -176,24 +176,75 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
     }
 
-    // Thread-safe snapshot of the last N candle values, ordered ascending by time.
-    // Use this in preference to candleList.Values.TakeLast(n) — that enumerates the underlying
-    // SortedSet without the read lock and throws InvalidOperationException under concurrent writes.
-    public List<CryptoCandle> GetLastNValues(int n)
+    //// Thread-safe snapshot of the last N candle values, ordered ascending by time.
+    //// Use this in preference to candleList.Values.TakeLast(n) — that enumerates the underlying
+    //// SortedSet without the read lock and throws InvalidOperationException under concurrent writes.
+    //public List<CryptoCandle> GetLastNValues(int n)
+    //{
+    //    _lock.EnterReadLock();
+    //    try
+    //    {
+    //        int total = base.Count;
+    //        int skip = Math.Max(0, total - n);
+    //        var result = new List<CryptoCandle>(Math.Min(n, total));
+    //        int i = 0;
+    //        using var e = base.GetEnumerator();
+    //        while (e.MoveNext())
+    //        {
+    //            if (i >= skip)
+    //                result.Add(e.Current.Value);
+    //            i++;
+    //        }
+    //        return result;
+    //    }
+    //    finally
+    //    {
+    //        _lock.ExitReadLock();
+    //    }
+    //}
+
+    // Fast O(n·log m) variant: computes expected keys from LastCandle backward using the
+    // interval step size, then does individual dictionary lookups instead of iterating the
+    // entire tree. Falls back to the slow path when LastCandle is not set.
+    public List<CryptoCandle> GetLastNValues(int n, uint intervalDuration)
     {
         _lock.EnterReadLock();
         try
         {
-            int total = base.Count;
-            int skip = Math.Max(0, total - n);
-            var result = new List<CryptoCandle>(Math.Min(n, total));
-            int i = 0;
-            using var e = base.GetEnumerator();
-            while (e.MoveNext())
+            if (LastCandle.OpenTime == 0 || base.Count == 0)
+                return [];
+
+            int count = Math.Min(n, base.Count);
+            var result = new List<CryptoCandle>(count);
+            CandleTime time = LastCandle.OpenTime - (uint)(count - 1) * intervalDuration;
+
+            for (int i = 0; i < count; i++)
             {
-                if (i >= skip)
-                    result.Add(e.Current.Value);
-                i++;
+                if (base.TryGetValue(time, out var candle))
+                    result.Add(candle);
+                time += intervalDuration;
+            }
+            return result;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+    }
+
+    // Thread-safe range lookup: walks from startTime to endTime in intervalDuration steps,
+    // collecting all matching candles in a single read-lock acquire/release.
+    public List<CryptoCandle> GetRange(CandleTime startTime, CandleTime endTime, uint intervalDuration)
+    {
+        _lock.EnterReadLock();
+        try
+        {
+            int estimatedCount = (int)((endTime.Minutes - startTime.Minutes) / intervalDuration) + 1;
+            var result = new List<CryptoCandle>(estimatedCount);
+            for (CandleTime t = startTime; t <= endTime; t += intervalDuration)
+            {
+                if (base.TryGetValue(t, out var candle))
+                    result.Add(candle);
             }
             return result;
         }

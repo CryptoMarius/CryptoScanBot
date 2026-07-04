@@ -36,7 +36,7 @@ public static class AtrRbBandsHelper
         var settings = GlobalData.Settings.Signal.AtrRb;
 
         // Thread-safe ascending snapshot of the most recent candles.
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles, symbolInterval.Interval.Duration);
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 
@@ -91,7 +91,7 @@ public static class AtrRbBandsHelper
         var settings = GlobalData.Settings.Signal.AtrRb;
 
         // Thread-safe ascending snapshot of the most recent candles.
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles, symbolInterval.Interval.Duration);
         if (candles.Count < settings.Length + settings.BreakLookback)
             return false;
 

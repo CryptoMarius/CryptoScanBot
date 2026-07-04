@@ -158,7 +158,7 @@ public static class BreBandsHelper
         var settings = GlobalData.Settings.Signal.Bre;
 
         // Thread-safe ascending snapshot of the most recent candles.
-        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles);
+        List<CryptoCandle> candles = symbolInterval.CandleList.GetLastNValues(CalculationCandles, symbolInterval.Interval.Duration);
         if (candles.Count < settings.BandLength + 1)
         {
             reason = "not enough candles";
