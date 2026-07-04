@@ -40,27 +40,30 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     {
         get
         {
-            _lock.EnterReadLock();
+            bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+            if (ownLock) _lock.EnterReadLock();
             try { return base[key]; }
-            finally { _lock.ExitReadLock(); }
+            finally { if (ownLock) _lock.ExitReadLock(); }
         }
         set
         {
-            _lock.EnterWriteLock();
+            bool ownLock = !_lock.IsWriteLockHeld;
+            if (ownLock) _lock.EnterWriteLock();
             try
             {
                 base[key] = value;
                 if (LastCandle.OpenTime == 0 || value.OpenTime >= LastCandle.OpenTime)
                     LastCandle = value;
             }
-            finally { _lock.ExitWriteLock(); }
+            finally { if (ownLock) _lock.ExitWriteLock(); }
         }
     }
 
     // Thread-safe TryAdd (SortedDictionary does not have a built-in TryAdd)
     public bool TryAdd(CandleTime key, CryptoCandle value)
     {
-        _lock.EnterWriteLock();
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
         try
         {
             if (base.ContainsKey(key))
@@ -72,14 +75,15 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitWriteLock();
+            if (ownLock) _lock.ExitWriteLock();
         }
     }
 
     // Thread-safe Add
     public new void Add(CandleTime key, CryptoCandle value)
     {
-        _lock.EnterWriteLock();
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
         try
         {
             base.Add(key, value);
@@ -88,14 +92,15 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitWriteLock();
+            if (ownLock) _lock.ExitWriteLock();
         }
     }
 
     // Thread-safe Remove
     public new bool Remove(CandleTime key)
     {
-        _lock.EnterWriteLock();
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
         try
         {
             bool removed = base.Remove(key);
@@ -105,28 +110,30 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitWriteLock();
+            if (ownLock) _lock.ExitWriteLock();
         }
     }
 
     // Thread-safe TryGetValue
     public new bool TryGetValue(CandleTime key, out CryptoCandle value)
     {
-        _lock.EnterReadLock();
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
         try
         {
             return base.TryGetValue(key, out value);
         }
         finally
         {
-            _lock.ExitReadLock();
+            if (ownLock) _lock.ExitReadLock();
         }
     }
 
     // Thread-safe clear
     public new void Clear()
     {
-        _lock.EnterWriteLock();
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
         try
         {
             base.Clear();
@@ -134,7 +141,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitWriteLock();
+            if (ownLock) _lock.ExitWriteLock();
         }
     }
 
@@ -142,7 +149,8 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     // Callers must NOT use candleList.Values.First() — that enumerates without the read lock.
     public bool TryGetFirstCandle(out CryptoCandle candle)
     {
-        _lock.EnterReadLock();
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
         try
         {
             using var e = base.GetEnumerator();
@@ -156,7 +164,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitReadLock();
+            if (ownLock) _lock.ExitReadLock();
         }
     }
 
@@ -164,7 +172,8 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
     // O(1) — reads the tracked LastCandle field instead of iterating the tree.
     public bool TryGetLastCandle(out CryptoCandle candle)
     {
-        _lock.EnterReadLock();
+        bool ownLock = !_lock.IsReadLockHeld && !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterReadLock();
         try
         {
             candle = LastCandle;
@@ -172,7 +181,7 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
         finally
         {
-            _lock.ExitReadLock();
+            if (ownLock) _lock.ExitReadLock();
         }
     }
 
