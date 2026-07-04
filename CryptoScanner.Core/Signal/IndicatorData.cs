@@ -466,16 +466,34 @@ public static class IndicatorEngine
 
 
     /// <summary>
-    /// Applies the Lux 5m value to the CryptoData of the latest candle (the non-Skender, recursive indicator
-    /// that the hub does not produce). Mirrors the original tail of CalculateIndicators.
+    /// Applies the Lux 5m value to the CryptoData of the latest candle. When using the hub path and
+    /// the interval IS 5m, BuildCurrent() already set Lux5mValue incrementally — nothing to do.
+    /// For non-5m intervals (or the batch path), reads the value from the 5m Data dictionary.
+    /// Falls back to the full LuxIndicator.Calculate only when the 5m hub value is unavailable.
     /// </summary>
     private static void ApplyLux(CryptoSymbol symbol, CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
     {
         if (!symbolInterval.Data.TryGetValue(candleOpenTime, out CryptoData? data))
             return;
 
+        // 5m hub path: BuildCurrent() already set Lux5mValue incrementally.
+        if (symbolInterval.IntervalPeriod == CryptoIntervalPeriod.interval5m
+            && GlobalData.Settings.Signal.UseIndicatorHub
+            && data.Lux5mValue.HasValue)
+            return;
+
+        // Non-5m intervals: read the pre-computed value from the 5m Data dictionary.
+        CryptoSymbolInterval si5m = symbol.GetSymbolInterval(CryptoIntervalPeriod.interval5m);
+        CandleTime aligned5m = IntervalTools.StartOfIntervalCandle(candleOpenTime, si5m.Interval.Duration);
+        if (si5m.Data.TryGetValue(aligned5m, out CryptoData? data5m) && data5m.Lux5mValue.HasValue)
+        {
+            data.Lux5mValue = data5m.Lux5mValue;
+            return;
+        }
+
+        // Fallback: full recalculation (batch path or 5m data not yet available).
         LuxIndicator.Calculate(symbol, out int luxOverSold, out int luxOverBought,
-            CryptoIntervalPeriod.interval5m, candleOpenTime + 5);
+            CryptoIntervalPeriod.interval5m, candleOpenTime + si5m.Interval.Duration);
 
         int luxValue = 0;
         if (luxOverBought > 0)

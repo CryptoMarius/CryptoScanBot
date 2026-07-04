@@ -43,6 +43,17 @@ public sealed class IntervalIndicatorHub
     private readonly double _babaMult;
     private readonly double _babaAtrMult;
 
+    // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
+    private const int LuxMin = 10;
+    private const int LuxMax = 20;
+    private const int LuxN = LuxMax - LuxMin + 1;
+    private readonly double[] _luxNum = new double[LuxN];
+    private readonly double[] _luxDen = new double[LuxN];
+    private double _luxPrevClose;
+    private bool _luxHasPrev;
+    private int _luxOversold;
+    private int _luxOverbought;
+
 #if DEBUG
     private readonly EmaHub _ema50;
     private readonly AtrHub _atr14;
@@ -98,6 +109,27 @@ public sealed class IntervalIndicatorHub
         decimal hlc3 = (candle.High + candle.Low + candle.Close) / 3m;
         _babaSrcHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3, candle.Volume));
         _babaSqHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, candle.Volume));
+
+        // Incremental Lux Multi-RSI: one RMA step per candle instead of replaying 100 candles.
+        double close = (double)candle.Close;
+        if (_luxHasPrev)
+        {
+            double diff = close - _luxPrevClose;
+            int overbuy = 0, oversell = 0;
+            for (int i = 0; i < LuxN; i++)
+            {
+                double alpha = 1.0 / (LuxMin + i);
+                _luxNum[i] = alpha * diff + (1.0 - alpha) * _luxNum[i];
+                _luxDen[i] = alpha * Math.Abs(diff) + (1.0 - alpha) * _luxDen[i];
+                double rsi = _luxDen[i] == 0.0 ? 50.0 : 50.0 * _luxNum[i] / _luxDen[i] + 50.0;
+                if (rsi > 70) overbuy++;
+                if (rsi < 30) oversell++;
+            }
+            _luxOversold = (int)(100.0 * oversell / LuxN);
+            _luxOverbought = (int)(100.0 * overbuy / LuxN);
+        }
+        _luxPrevClose = close;
+        _luxHasPrev = true;
     }
 
     /// <summary>
@@ -168,6 +200,13 @@ public sealed class IntervalIndicatorHub
                 data.BabaVwStdev = vwStdev;
             }
         }
+
+        // Lux Multi-RSI
+        int luxValue = 0;
+        if (_luxOverbought > 0) luxValue += _luxOverbought;
+        if (_luxOversold > 0) luxValue -= _luxOversold;
+        data.Lux5mValue = (short)luxValue;
+
 #if DEBUG
         if (_ema50.Results.Count > 0)
             data.Ema50 = _ema50.Results[^1].Ema;
