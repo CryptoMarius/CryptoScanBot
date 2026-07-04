@@ -199,6 +199,18 @@
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
 
+        <!-- Decimal-aligned numbers: the whole part is right-aligned and hugs the fraction
+             on the right; the fraction part is left-aligned and hugs the whole on the left.
+             The zero inner margins prevent a gap from the global TextBlock margin. -->
+        <Style Selector="TextBlock.numWhole">
+            <Setter Property="Margin" Value="5,0,0,0" />
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+        <Style Selector="TextBlock.numFrac">
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="TextAlignment" Value="Left" />
+        </Style>
+
         <!-- ============================================ -->
         <!-- DataGrid theming -->
         <!-- ============================================ -->

@@ -51,7 +51,7 @@ public class ZoneSession
     public bool ShowKeltnerChannel { get; set; } = false;
     public bool ShowAtrRbBands { get; set; } = false;
     public bool ShowBabaBands { get; set; } = false; // Baba Bands & Ribbon
-    public bool ShowBabaSignals { get; set; } = false; // stored Baba signals (real triggers)
+    public bool ShowBreBands { get; set; } = false; // Buddy Reversion Engine bands
     public bool ShowSlide { get; set; } = false; // experimental "glijbaan" (slide) detector overlay
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;

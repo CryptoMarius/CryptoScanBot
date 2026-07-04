@@ -27,7 +27,7 @@ public class TrendCalculator
     /// Resolve the [minDate, maxDate] window for this interval's candle list.
     /// Identical to the helpers that used to live in TrendInterval and TrendIntervalBos.
     /// </summary>
-    private static bool ResolveStartAndEndDate(CryptoInterval interval,
+    private static bool ResolveStartAndEndDate(CryptoSymbol symbol, CryptoInterval interval,
         CryptoCandleList candleList, ref CandleTime minDate, ref CandleTime maxDate)
     {
         // start time
@@ -52,9 +52,10 @@ public class TrendCalculator
         // end time
         if (maxDate == 0)
         {
-            if (!candleList.TryGetLastCandle(out var candle))
+            CryptoCandle lastCandle = symbol.GetSymbolInterval(interval.IntervalPeriod).LastCandle;
+            if (lastCandle.OpenTime == 0)
                 return false;
-            maxDate = candle.OpenTime;
+            maxDate = lastCandle.OpenTime;
         }
         else
             maxDate = IntervalTools.StartOfIntervalCandle(maxDate, interval.Duration);
@@ -127,7 +128,7 @@ public class TrendCalculator
 
             CandleTime minDate = CandleTime.MinValue;
             CandleTime maxDate = CandleTime.MinValue;
-            if (!ResolveStartAndEndDate(interval, candleList, ref minDate, ref maxDate))
+            if (!ResolveStartAndEndDate(symbol, interval, candleList, ref minDate, ref maxDate))
             {
                 log?.AppendLine($"{symbol.Name} {interval.Name} (date period problem)");
                 return;

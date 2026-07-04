@@ -51,7 +51,9 @@ public class SubscriptionKLineTicker(ExchangeOptions exchangeOptions) : Subscrip
         var client = (OKXSocketClient)TickerGroup!.SocketClient;
         var api = client.UnifiedApi;
 
-        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(string.Join(",", Symbols), KlineInterval.OneMinute, data =>
+        // OKX expects the hyphenated instrument id (for example "BASED-USDT"), not the scanner name ("BASEDUSDT").
+        // Use ExchangeName so it matches both the REST candle fetch and the SymbolByExchangeName lookup below.
+        var subscriptionResult = await api.ExchangeData.SubscribeToKlineUpdatesAsync(string.Join(",", SymbolList.Select(s => s.ExchangeName)), KlineInterval.OneMinute, data =>
         {
             OKXKline kline = data.Data;
             {

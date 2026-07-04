@@ -425,18 +425,6 @@ public partial class MainWindowViewModel : ObservableObject
         if (IsRunning)
             return;
 
-        var selectionWindow = new AlgorithmSelectionWindow();
-        bool confirmed = owner != null
-            ? await selectionWindow.ShowDialog<bool>(owner)
-            : false;
-
-        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
-            return;
-
-        var selectedAlgorithms = selectedNames
-            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
-            .ToList();
-
         EmulatorRunConfig baseConfig;
         try
         {
@@ -447,6 +435,30 @@ public partial class MainWindowViewModel : ObservableObject
             Status = $"Failed to read run config: {ex.Message}";
             return;
         }
+
+        var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
+        bool confirmed = owner != null
+            ? await selectionWindow.ShowDialog<bool>(owner)
+            : false;
+
+        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
+            return;
+
+        // Persist the chosen subset so the next dialog restores it (only the selection is updated;
+        // symbols/period/label on disk stay untouched).
+        baseConfig.SelectedAlgorithms = selectedNames;
+        try
+        {
+            RunConfigFile.Save(baseConfig);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to save run config: {ex.Message}";
+        }
+
+        var selectedAlgorithms = selectedNames
+            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
+            .ToList();
 
         if (baseConfig.Symbols.Count == 0)
         {
@@ -468,6 +480,15 @@ public partial class MainWindowViewModel : ObservableObject
         // first word (extra notes the user typed) is kept and appended to every algorithm's label.
         string[] labelParts = baseConfig.Label.Split(' ', 2, StringSplitOptions.None);
         string labelRest = labelParts.Length > 1 ? labelParts[1] : "";
+
+        // Snapshot the strategy lists the user configured (Configure dialog / settings.json) so the
+        // per-algorithm overrides below never leak past this batch. Without the restore the in-memory
+        // Settings would keep the LAST algorithm's strategy, which a later plain Start — or a
+        // Configure→Save — would then use/persist instead of the user's real selection.
+        List<string> savedSignalLongStrategy = GlobalData.Settings.Signal.Long.Strategy;
+        List<string> savedSignalShortStrategy = GlobalData.Settings.Signal.Short.Strategy;
+        List<string> savedTradingLongStrategy = GlobalData.Settings.Trading.Long.Strategy;
+        List<string> savedTradingShortStrategy = GlobalData.Settings.Trading.Short.Strategy;
 
         IsRunning = true;
         try
@@ -498,6 +519,11 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            // Restore the user's configured strategy lists — the per-algorithm overrides were transient.
+            GlobalData.Settings.Signal.Long.Strategy = savedSignalLongStrategy;
+            GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
+            GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;
+            GlobalData.Settings.Trading.Short.Strategy = savedTradingShortStrategy;
             IsRunning = false;
         }
     }
@@ -517,18 +543,6 @@ public partial class MainWindowViewModel : ObservableObject
         if (IsRunning)
             return;
 
-        var selectionWindow = new AlgorithmSelectionWindow();
-        bool confirmed = owner != null
-            ? await selectionWindow.ShowDialog<bool>(owner)
-            : false;
-
-        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
-            return;
-
-        var selectedAlgorithms = selectedNames
-            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
-            .ToList();
-
         EmulatorRunConfig baseConfig;
         try
         {
@@ -539,6 +553,30 @@ public partial class MainWindowViewModel : ObservableObject
             Status = $"Failed to read run config: {ex.Message}";
             return;
         }
+
+        var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
+        bool confirmed = owner != null
+            ? await selectionWindow.ShowDialog<bool>(owner)
+            : false;
+
+        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
+            return;
+
+        // Persist the chosen subset so the next dialog restores it (only the selection is updated;
+        // symbols/period/label on disk stay untouched).
+        baseConfig.SelectedAlgorithms = selectedNames;
+        try
+        {
+            RunConfigFile.Save(baseConfig);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to save run config: {ex.Message}";
+        }
+
+        var selectedAlgorithms = selectedNames
+            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
+            .ToList();
 
         if (baseConfig.Symbols.Count == 0)
         {
@@ -558,6 +596,18 @@ public partial class MainWindowViewModel : ObservableObject
 
         string[] labelParts = baseConfig.Label.Split(' ', 2, StringSplitOptions.None);
         string labelRest = labelParts.Length > 1 ? labelParts[1] : "";
+
+        // Snapshot every setting this sweep overrides (strategy lists + SL%/DCA) so the run values
+        // never leak past the batch. Without the restore the in-memory Settings would keep the LAST
+        // combination, which a later plain Start — or a Configure→Save — would then use/persist
+        // instead of the user's real configuration.
+        List<string> savedSignalLongStrategy = GlobalData.Settings.Signal.Long.Strategy;
+        List<string> savedSignalShortStrategy = GlobalData.Settings.Signal.Short.Strategy;
+        List<string> savedTradingLongStrategy = GlobalData.Settings.Trading.Long.Strategy;
+        List<string> savedTradingShortStrategy = GlobalData.Settings.Trading.Short.Strategy;
+        decimal savedStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage;
+        decimal savedStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage;
+        List<CryptoDcaEntry> savedDcaList = GlobalData.Settings.Trading.DcaList;
 
         IsRunning = true;
         try
@@ -611,6 +661,14 @@ public partial class MainWindowViewModel : ObservableObject
         }
         finally
         {
+            // Restore the user's configured strategy lists + SL%/DCA — the sweep overrides were transient.
+            GlobalData.Settings.Signal.Long.Strategy = savedSignalLongStrategy;
+            GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
+            GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;
+            GlobalData.Settings.Trading.Short.Strategy = savedTradingShortStrategy;
+            GlobalData.Settings.Trading.StopLossPercentage = savedStopLossPercentage;
+            GlobalData.Settings.Trading.StopLossLimitPercentage = savedStopLossLimitPercentage;
+            GlobalData.Settings.Trading.DcaList = savedDcaList;
             IsRunning = false;
         }
     }

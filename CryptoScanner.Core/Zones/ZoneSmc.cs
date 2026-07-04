@@ -246,7 +246,8 @@ public static class ZoneSmc
         int averageWindow, decimal baseMaxRangeFactor, decimal expansionMinRangeFactor, decimal expansionBodyFraction,
         decimal strongExpansionFactor, int baseMaxCandles, int maxBlocksPerInterval, bool requireOppositeBaseColor)
     {
-        if (!symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastCandle))
+        CryptoCandle lastCandle = symbolInterval.LastCandle;
+        if (lastCandle.OpenTime == 0)
             return; // no candles at all (yet) — leave the cursor as-is and retry next call
 
         CandleTime latestTime = lastCandle.OpenTime;

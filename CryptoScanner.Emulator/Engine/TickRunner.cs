@@ -466,7 +466,7 @@ public sealed class TickRunner
 
         // Drive the exact same pipeline as the live ThreadMonitorCandle.Execute() loop:
         // SignalPrepare → SignalExecute → PaperTrading → TradingRules → CreateOrExtendPosition.
-        PositionMonitor positionMonitor = new(symbol, candle);
+        using PositionMonitor positionMonitor = new(symbol, candle);
         await positionMonitor.NewCandleArrivedAsync();
         Interlocked.Add(ref elapsedPipeline, Stopwatch.GetTimestamp() - t1);
     }

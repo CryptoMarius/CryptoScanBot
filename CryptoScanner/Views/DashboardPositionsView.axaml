@@ -30,22 +30,36 @@
                 </Grid.RowDefinitions>
                 
                 <Grid.ColumnDefinitions>
+                    <!-- Openstaand -->
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="50"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="25"/>
+                    <!-- Gesloten -->
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="30"/>
+                    <ColumnDefinition Width="25"/>
+                    <!-- Totaal -->
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="30"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Toolbar bovenaan -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="8" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="18" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
                     <ComboBox ItemsSource="{Binding QuoteOptions}" SelectedItem="{Binding SelectedQuote}" MinWidth="120"/>
                     <Button Content="Ververs" Command="{Binding RefreshCommand}"/>
                 </StackPanel>
 
+                <!-- ===== Openstaand ===== -->
                 <!-- Header -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Openstaand" FontWeight="Bold"/>
                 <!-- Open positions - Labels -->
@@ -59,37 +73,81 @@
                 <TextBlock Grid.Row="10" Grid.Column="0" Text="Virtuele opbrengst"/>
                 <TextBlock Grid.Row="11" Grid.Column="0" Text="Virtuele opbrengst"/>
 
-                <!-- Open positions - Values -->
-                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding OpenData.Positions}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding OpenData.InvestedFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding OpenData.ReturnedFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding OpenData.CommissionFormatted}" TextAlignment="Right"/>
+                <!-- Open positions - Values (whole part right-aligned, fraction left-aligned so the comma lines up) -->
+                <TextBlock Grid.Row="3" Grid.Column="2" Classes="numWhole" Text="{Binding OpenData.PositionsWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="2" Classes="numWhole" Text="{Binding OpenData.InvestedWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="3" Classes="numFrac" Text="{Binding OpenData.InvestedFraction}"/>
+                <TextBlock Grid.Row="5" Grid.Column="2" Classes="numWhole" Text="{Binding OpenData.ReturnedWhole}"/>
+                <TextBlock Grid.Row="5" Grid.Column="3" Classes="numFrac" Text="{Binding OpenData.ReturnedFraction}"/>
+                <TextBlock Grid.Row="6" Grid.Column="2" Classes="numWhole" Text="{Binding OpenData.CommissionWhole}"/>
+                <TextBlock Grid.Row="6" Grid.Column="3" Classes="numFrac" Text="{Binding OpenData.CommissionFraction}"/>
 
-                <TextBlock Grid.Row="8" Grid.Column="2" Text="{Binding NettoPnlValue}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="9" Grid.Column="2" Text="{Binding CurrentValue}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="10" Grid.Column="2" Text="{Binding VirtualProfit}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="11" Grid.Column="2" Text="{Binding VirtualProfitPercentage}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="11" Grid.Column="3" Text="%"/>
+                <TextBlock Grid.Row="8" Grid.Column="2" Classes="numWhole" Text="{Binding NettoPnlWhole}"/>
+                <TextBlock Grid.Row="8" Grid.Column="3" Classes="numFrac" Text="{Binding NettoPnlFraction}"/>
+                <TextBlock Grid.Row="9" Grid.Column="2" Classes="numWhole" Text="{Binding CurrentValueWhole}"/>
+                <TextBlock Grid.Row="9" Grid.Column="3" Classes="numFrac" Text="{Binding CurrentValueFraction}"/>
+                <TextBlock Grid.Row="10" Grid.Column="2" Classes="numWhole" Text="{Binding VirtualProfitWhole}"/>
+                <TextBlock Grid.Row="10" Grid.Column="3" Classes="numFrac" Text="{Binding VirtualProfitFraction}"/>
+                <TextBlock Grid.Row="11" Grid.Column="2" Classes="numWhole" Text="{Binding VirtualProfitPercentageWhole}"/>
+                <TextBlock Grid.Row="11" Grid.Column="3" Classes="numFrac" Text="{Binding VirtualProfitPercentageFraction}"/>
+                <TextBlock Grid.Row="11" Grid.Column="4" Text="%"/>
 
+                <!-- ===== Gesloten ===== -->
                 <!-- Header -->
-                <TextBlock Grid.Row="2" Grid.Column="4" Text="Gesloten" FontWeight="Bold"/>
+                <TextBlock Grid.Row="2" Grid.Column="6" Text="Gesloten" FontWeight="Bold"/>
                 <!-- Closed positions - Labels -->
-                <TextBlock Grid.Row="3" Grid.Column="4" Text="Aantal posities"/>
-                <TextBlock Grid.Row="4" Grid.Column="4" Text="Geinvesteerd"/>
-                <TextBlock Grid.Row="5" Grid.Column="4" Text="Geretourneerd"/>
-                <TextBlock Grid.Row="6" Grid.Column="4" Text="Commissie"/>
+                <TextBlock Grid.Row="3" Grid.Column="6" Text="Aantal posities"/>
+                <TextBlock Grid.Row="4" Grid.Column="6" Text="Geinvesteerd"/>
+                <TextBlock Grid.Row="5" Grid.Column="6" Text="Geretourneerd"/>
+                <TextBlock Grid.Row="6" Grid.Column="6" Text="Commissie"/>
                 <!-- Closed profit/losses-->
-                <TextBlock Grid.Row="8" Grid.Column="4" Text="Winst/verlies"/>
-                <TextBlock Grid.Row="9" Grid.Column="4" Text="Opbrengst"/>
+                <TextBlock Grid.Row="8" Grid.Column="6" Text="Winst/verlies"/>
+                <TextBlock Grid.Row="9" Grid.Column="6" Text="Opbrengst"/>
+                <TextBlock Grid.Row="10" Grid.Column="6" Text="Gem. opbrengst/positie"/>
 
                 <!-- Closed positions - Values -->
-                <TextBlock Grid.Row="3" Grid.Column="6" Text="{Binding ClosedData.Positions}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="4" Grid.Column="6" Text="{Binding ClosedData.InvestedFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="5" Grid.Column="6" Text="{Binding ClosedData.ReturnedFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="6" Grid.Column="6" Text="{Binding ClosedData.CommissionFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="8" Grid.Column="6" Text="{Binding ClosedData.TotalProfitFormatted}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="9" Grid.Column="6" Text="{Binding ClosedProfitPercentage}" TextAlignment="Right"/>
-                <TextBlock Grid.Row="9" Grid.Column="7" Text="%"/>
+                <TextBlock Grid.Row="3" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.PositionsWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.InvestedWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedData.InvestedFraction}"/>
+                <TextBlock Grid.Row="5" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.ReturnedWhole}"/>
+                <TextBlock Grid.Row="5" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedData.ReturnedFraction}"/>
+                <TextBlock Grid.Row="6" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.CommissionWhole}"/>
+                <TextBlock Grid.Row="6" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedData.CommissionFraction}"/>
+                <TextBlock Grid.Row="8" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.TotalProfitWhole}"/>
+                <TextBlock Grid.Row="8" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedData.TotalProfitFraction}"/>
+                <TextBlock Grid.Row="9" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedProfitPercentageWhole}"/>
+                <TextBlock Grid.Row="9" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedProfitPercentageFraction}"/>
+                <TextBlock Grid.Row="9" Grid.Column="10" Text="%"/>
+                <TextBlock Grid.Row="10" Grid.Column="8" Classes="numWhole" Text="{Binding ClosedData.AverageProfitWhole}"/>
+                <TextBlock Grid.Row="10" Grid.Column="9" Classes="numFrac" Text="{Binding ClosedData.AverageProfitFraction}"/>
+
+                <!-- ===== Totaal (openstaand + gesloten samengeteld) ===== -->
+                <!-- Header -->
+                <TextBlock Grid.Row="2" Grid.Column="12" Text="Totaal" FontWeight="Bold"/>
+                <!-- Total positions - Labels -->
+                <TextBlock Grid.Row="3" Grid.Column="12" Text="Aantal posities"/>
+                <TextBlock Grid.Row="4" Grid.Column="12" Text="Geinvesteerd"/>
+                <TextBlock Grid.Row="5" Grid.Column="12" Text="Geretourneerd"/>
+                <TextBlock Grid.Row="6" Grid.Column="12" Text="Commissie"/>
+                <TextBlock Grid.Row="8" Grid.Column="12" Text="Winst/verlies"/>
+                <TextBlock Grid.Row="9" Grid.Column="12" Text="Opbrengst"/>
+                <TextBlock Grid.Row="10" Grid.Column="12" Text="Gem. opbrengst/positie"/>
+
+                <!-- Total positions - Values -->
+                <TextBlock Grid.Row="3" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.PositionsWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.InvestedWhole}"/>
+                <TextBlock Grid.Row="4" Grid.Column="15" Classes="numFrac" Text="{Binding TotalData.InvestedFraction}"/>
+                <TextBlock Grid.Row="5" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.ReturnedWhole}"/>
+                <TextBlock Grid.Row="5" Grid.Column="15" Classes="numFrac" Text="{Binding TotalData.ReturnedFraction}"/>
+                <TextBlock Grid.Row="6" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.CommissionWhole}"/>
+                <TextBlock Grid.Row="6" Grid.Column="15" Classes="numFrac" Text="{Binding TotalData.CommissionFraction}"/>
+                <TextBlock Grid.Row="8" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.TotalProfitWhole}"/>
+                <TextBlock Grid.Row="8" Grid.Column="15" Classes="numFrac" Text="{Binding TotalData.TotalProfitFraction}"/>
+                <TextBlock Grid.Row="9" Grid.Column="14" Classes="numWhole" Text="{Binding TotalProfitPercentageWhole}"/>
+                <TextBlock Grid.Row="9" Grid.Column="15" Classes="numFrac" Text="{Binding TotalProfitPercentageFraction}"/>
+                <TextBlock Grid.Row="9" Grid.Column="16" Text="%"/>
+                <TextBlock Grid.Row="10" Grid.Column="14" Classes="numWhole" Text="{Binding TotalData.AverageProfitWhole}"/>
+                <TextBlock Grid.Row="10" Grid.Column="15" Classes="numFrac" Text="{Binding TotalData.AverageProfitFraction}"/>
             </Grid>
         </Border>
 

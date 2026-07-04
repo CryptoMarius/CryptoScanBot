@@ -1,6 +1,13 @@
 CryptoScanBot release historie:
 
 30-06-2025 2.5.9
+$ Kucoin futures werkt niet meer qua tickers
+$ Vanwege die change moet ik alles testen!
+
+$ bybit/spot werkt
+$ mexc/spot werkt
+$ okx spot en futures werkt
+
 - Een paar memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven
 - De factor bij de dca en de tp is nu een percentage (om het gelijk te houden met Altrady)
@@ -11,6 +18,9 @@ CryptoScanBot release historie:
 - Diverse aanpassingen voor de emulator waaronder snellere berekeningen.
   Berekenen van de zones blijven echter een zware wissel trekken op de cpu.
 - Lege regels in de log worden nu buitengesloten
+- Hyperliquid tradingview link aangepast
+- Nieuwe exchange Kraken spot
+- OKX: Fix "Please use the correct URL, channel and parameters referring to API document"
 
 22-06-2025 2.5.8
 - BABA strategie (nog geen juiste sl%)

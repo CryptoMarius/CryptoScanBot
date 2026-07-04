@@ -1265,7 +1265,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table EmulatorRun add SettingsJson Text null", transaction);
+            try { database.Connection.Execute("alter table EmulatorRun add SettingsJson Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1284,12 +1284,12 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table EmulatorRun add FromDate Text null", transaction);
-            database.Connection.Execute("alter table EmulatorRun add ToDate Text null", transaction);
-            database.Connection.Execute("alter table EmulatorRun add PositionsOpen Integer not null default 0", transaction);
-            database.Connection.Execute("alter table EmulatorRun add PositionsWon Integer not null default 0", transaction);
-            database.Connection.Execute("alter table EmulatorRun add PositionsLost Integer not null default 0", transaction);
-            database.Connection.Execute("alter table EmulatorRun add Profit Text null", transaction);
+            try { database.Connection.Execute("alter table EmulatorRun add FromDate Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add ToDate Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsOpen Integer not null default 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsWon Integer not null default 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsLost Integer not null default 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table EmulatorRun add Profit Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1306,7 +1306,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table EmulatorRun add Invested Text null", transaction);
+            try { database.Connection.Execute("alter table EmulatorRun add Invested Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1349,7 +1349,7 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table EmulatorRun add Label Text null", transaction);
+            try { database.Connection.Execute("alter table EmulatorRun add Label Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1369,8 +1369,8 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 66)
         {
             using var transaction = database.BeginTransaction();
-            database.Connection.Execute("alter table Zone add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction);
-            database.Connection.Execute("CREATE INDEX IdxPositionEmulatorRunId ON Position(EmulatorRunId)", transaction);
+            try { database.Connection.Execute("alter table Zone add EmulatorRunId Integer null REFERENCES EmulatorRun(Id)", transaction); } catch { } // ignore
+            try { database.Connection.Execute("CREATE INDEX IdxPositionEmulatorRunId ON Position(EmulatorRunId)", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1417,7 +1417,7 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 69)
         {
             using var transaction = database.BeginTransaction();
-            database.Connection.Execute("alter table EmulatorRun add PositionsTimeout Integer not null default 0", transaction);
+            try { database.Connection.Execute("alter table EmulatorRun add PositionsTimeout Integer not null default 0", transaction); } catch { } // ignore
 
             // Its back, but without a fk
             try { database.Connection.Execute("alter table Position add SignalId Integer null", transaction); } catch { } // ignore

@@ -49,6 +49,33 @@ public partial class DashboardPositionsViewModel : ObservableObject
         public string ReturnedFormatted => Returned.ToString("N2");
         public string CommissionFormatted => Commission.ToString("N2");
         public string TotalProfitFormatted => TotalProfit.ToString("N2");
+
+        // Average profit per position (simple division)
+        public decimal AverageProfit => Positions > 0 ? TotalProfit / Positions : 0m;
+
+        // Decimal-aligned display: the whole part is right-aligned up to the decimal separator,
+        // the fraction part (including the separator) is left-aligned after it. This way a plain
+        // count (no fraction) lines up with the values on the comma.
+        public string PositionsWhole => Positions.ToString("N0");
+        public string InvestedWhole => SplitNumber(Invested, "N2").Whole;
+        public string InvestedFraction => SplitNumber(Invested, "N2").Fraction;
+        public string ReturnedWhole => SplitNumber(Returned, "N2").Whole;
+        public string ReturnedFraction => SplitNumber(Returned, "N2").Fraction;
+        public string CommissionWhole => SplitNumber(Commission, "N2").Whole;
+        public string CommissionFraction => SplitNumber(Commission, "N2").Fraction;
+        public string TotalProfitWhole => SplitNumber(TotalProfit, "N2").Whole;
+        public string TotalProfitFraction => SplitNumber(TotalProfit, "N2").Fraction;
+        public string AverageProfitWhole => SplitNumber(AverageProfit, "N2").Whole;
+        public string AverageProfitFraction => SplitNumber(AverageProfit, "N2").Fraction;
+
+        // Splits a formatted number into a whole part and a fraction part (including the separator).
+        public static (string Whole, string Fraction) SplitNumber(decimal value, string format)
+        {
+            string text = value.ToString(format);
+            string separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+            int index = text.IndexOf(separator, StringComparison.Ordinal);
+            return index < 0 ? (text, "") : (text[..index], text[index..]);
+        }
     }
 
     public class QueryTradeData
@@ -75,19 +102,43 @@ public partial class DashboardPositionsViewModel : ObservableObject
     private QueryPositionData _closedData = new();
 
     [ObservableProperty]
-    private string _nettoPnlValue = "0.00";
+    private QueryPositionData _totalData = new();
 
     [ObservableProperty]
-    private string _currentValue = "0.00";
+    private string _nettoPnlWhole = "0";
 
     [ObservableProperty]
-    private string _virtualProfit = "0.00";
+    private string _nettoPnlFraction = "";
 
     [ObservableProperty]
-    private string _virtualProfitPercentage = "0.00";
+    private string _currentValueWhole = "0";
 
     [ObservableProperty]
-    private string _closedProfitPercentage = "";
+    private string _currentValueFraction = "";
+
+    [ObservableProperty]
+    private string _virtualProfitWhole = "0";
+
+    [ObservableProperty]
+    private string _virtualProfitFraction = "";
+
+    [ObservableProperty]
+    private string _virtualProfitPercentageWhole = "0";
+
+    [ObservableProperty]
+    private string _virtualProfitPercentageFraction = "";
+
+    [ObservableProperty]
+    private string _closedProfitPercentageWhole = "";
+
+    [ObservableProperty]
+    private string _closedProfitPercentageFraction = "";
+
+    [ObservableProperty]
+    private string _totalProfitPercentageWhole = "";
+
+    [ObservableProperty]
+    private string _totalProfitPercentageFraction = "";
 
     [ObservableProperty]
     private PlotModel? _chartPositionsPerDay;
@@ -148,14 +199,22 @@ public partial class DashboardPositionsViewModel : ObservableObject
         QueryPositionDataList.Clear();
         OpenData = new QueryPositionData();
         ClosedData = new QueryPositionData();
+        TotalData = new QueryPositionData();
         QuoteData = null;
 
         // Reset summary labels
-        NettoPnlValue = "0.00";
-        CurrentValue = "0.00";
-        VirtualProfit = "0.00";
-        VirtualProfitPercentage = "0.00";
-        ClosedProfitPercentage = "";
+        NettoPnlWhole = "0";
+        NettoPnlFraction = "";
+        CurrentValueWhole = "0";
+        CurrentValueFraction = "";
+        VirtualProfitWhole = "0";
+        VirtualProfitFraction = "";
+        VirtualProfitPercentageWhole = "0";
+        VirtualProfitPercentageFraction = "";
+        ClosedProfitPercentageWhole = "";
+        ClosedProfitPercentageFraction = "";
+        TotalProfitPercentageWhole = "";
+        TotalProfitPercentageFraction = "";
 
         // Clear charts
         ChartPositionsPerDay = null;
@@ -689,7 +748,7 @@ public partial class DashboardPositionsViewModel : ObservableObject
 
         // Berekeningen voor open posities
         decimal investedInTrades = OpenData.Invested - OpenData.Returned;
-        NettoPnlValue = investedInTrades.ToString(quoteDataDisplayString);
+        (NettoPnlWhole, NettoPnlFraction) = QueryPositionData.SplitNumber(investedInTrades, quoteDataDisplayString);
 
         // Huidige waarde van open posities
         decimal currentValue = 0;
@@ -702,22 +761,62 @@ public partial class DashboardPositionsViewModel : ObservableObject
             }
         }
 
-        CurrentValue = currentValue.ToString(quoteDataDisplayString);
-        VirtualProfit = (currentValue - investedInTrades).ToString(quoteDataDisplayString);
+        (CurrentValueWhole, CurrentValueFraction) = QueryPositionData.SplitNumber(currentValue, quoteDataDisplayString);
+        (VirtualProfitWhole, VirtualProfitFraction) = QueryPositionData.SplitNumber(currentValue - investedInTrades, quoteDataDisplayString);
 
         if (investedInTrades > 0)
-            VirtualProfitPercentage = ((100 * (currentValue / investedInTrades)) - 100).ToString("N2");
+            (VirtualProfitPercentageWhole, VirtualProfitPercentageFraction) = QueryPositionData.SplitNumber((100 * (currentValue / investedInTrades)) - 100, "N2");
         else
-            VirtualProfitPercentage = "0.00";
+        {
+            VirtualProfitPercentageWhole = "0";
+            VirtualProfitPercentageFraction = "";
+        }
 
         // Gesloten posities percentage
         if (ClosedData.Invested > 0)
-            ClosedProfitPercentage = (100 * (ClosedData.TotalProfit / ClosedData.Invested)).ToString("N2");
+        {
+            var (whole, fraction) = QueryPositionData.SplitNumber(100 * (ClosedData.TotalProfit / ClosedData.Invested), "N2");
+            ClosedProfitPercentageWhole = whole;
+            ClosedProfitPercentageFraction = fraction;
+        }
         else
-            ClosedProfitPercentage = "";
+        {
+            ClosedProfitPercentageWhole = "";
+            ClosedProfitPercentageFraction = "";
+        }
+
+        // Totaal (openstaand + gesloten samengeteld).
+        // For the profit we use the realized profit of the closed positions plus the
+        // virtual (unrealized) profit of the still-open positions (currentValue - investedInTrades).
+        // The DB field position.Profit of an open position is not a realistic realized return,
+        // so summing it would heavily overstate the total profit.
+        decimal openVirtualProfit = currentValue - investedInTrades;
+        var totalData = new QueryPositionData
+        {
+            Positions = OpenData.Positions + ClosedData.Positions,
+            Invested = OpenData.Invested + ClosedData.Invested,
+            Returned = OpenData.Returned + ClosedData.Returned,
+            Commission = OpenData.Commission + ClosedData.Commission,
+            TotalProfit = ClosedData.TotalProfit + openVirtualProfit,
+        };
+        TotalData = totalData;
+
+        // Totaal percentage
+        if (totalData.Invested > 0)
+        {
+            var (whole, fraction) = QueryPositionData.SplitNumber(100 * (totalData.TotalProfit / totalData.Invested), "N2");
+            TotalProfitPercentageWhole = whole;
+            TotalProfitPercentageFraction = fraction;
+        }
+        else
+        {
+            TotalProfitPercentageWhole = "";
+            TotalProfitPercentageFraction = "";
+        }
 
         // Trigger property changed voor formatted values
         OnPropertyChanged(nameof(OpenData));
         OnPropertyChanged(nameof(ClosedData));
+        OnPropertyChanged(nameof(TotalData));
     }
 }

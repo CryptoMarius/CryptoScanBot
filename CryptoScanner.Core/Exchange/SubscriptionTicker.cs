@@ -16,7 +16,7 @@ public abstract class SubscriptionTicker(ExchangeOptions exchangeOptions)
 
     protected void IncrementTickerCount()
     {
-        if (Interlocked.Increment(ref TickerCount) > 999_999_999)
+        if (Interlocked.Increment(ref TickerCount) > 999999999)
             Interlocked.Exchange(ref TickerCount, 0);
     }
 

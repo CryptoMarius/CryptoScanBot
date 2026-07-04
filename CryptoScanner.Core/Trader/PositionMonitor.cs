@@ -14,7 +14,7 @@ using System.Diagnostics;
 
 namespace CryptoScanner.Core.Trader;
 
-public class PositionMonitor //: IDisposable
+public class PositionMonitor : IDisposable
 {
     public CryptoSymbol Symbol { get; set; }
     private static readonly SemaphoreSlim Semaphore = new(1);
@@ -39,6 +39,17 @@ public class PositionMonitor //: IDisposable
         LastCandle1mCloseTimeDate = LastCandle1mCloseTime.ToDateTime();
 
         Database.Open();
+    }
+
+    /// <summary>
+    /// A PositionMonitor is created per 1m candle (live) or per tick (emulator) and owns its own
+    /// database connection, so it must be disposed deterministically instead of leaving the SQLite
+    /// connection to the finalizer (a constant stream of leaked handles with hundreds of symbols).
+    /// </summary>
+    public void Dispose()
+    {
+        Database.Dispose();
+        GC.SuppressFinalize(this);
     }
 
 
@@ -613,7 +624,7 @@ public class PositionMonitor //: IDisposable
         await position.Symbol.Data.CandleLock.WaitAsync();
         try
         {
-            symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastx);
+            CryptoCandle lastx = symbolInterval.LastCandle;
 
             // Niet zomaar een laatste candle nemen in verband met Backtesting
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTimeInterval, out candleInterval))

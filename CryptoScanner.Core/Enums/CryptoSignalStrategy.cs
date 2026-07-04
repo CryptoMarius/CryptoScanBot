@@ -60,6 +60,9 @@ public enum CryptoSignalStrategy
     // AtrRb Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
     AtrRb = 29,
+    // BRE (Buddy Reversion Engine) Donchian macro-band break — long on the lower band,
+    // short on the upper band (the same events the chart prints as percentage labels).
+    Bre = 30,
 
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally

@@ -47,6 +47,13 @@ public class ScannerLog
     private static NLog.Targets.Target? runFileTarget;
     private static NLog.Config.LoggingRule? runLoggingRule;
 
+    // The per-run trace target/rule. The shared "* at Trace" trace target (see InitializeLogging)
+    // grows without bound across every run; this splits the Trace-level detail per run into its own
+    // "<base> Run <id> Trace.log" so a single backtest stays readable. Unlike the shared trace target
+    // it is NOT gated on DEBUG, so it also works when the emulator runs in Release.
+    private static NLog.Targets.Target? runTraceTarget;
+    private static NLog.Config.LoggingRule? runTraceRule;
+
     /// <summary>
     /// Attaches a dedicated log file for a single emulator run, named after its run id
     /// (e.g. "&lt;base&gt; Run 42.log") in the same Log folder as the default/error/trace targets.
@@ -86,6 +93,29 @@ public class ScannerLog
         config.AddTarget(runFileTarget);
         runLoggingRule = new NLog.Config.LoggingRule("*", LogLevel.Info, runFileTarget);
         config.LoggingRules.Add(runLoggingRule);
+
+        // Split the (otherwise ever-growing) trace log per run as well: a dedicated Trace-level file
+        // for this run only, named with the run id exactly like the Info file above. Every
+        // Trace-or-above line is written here. Not gated on DEBUG, so it also works in Release.
+        string traceFilename = Path.Combine(GlobalData.AppDataFolder, "Log", $"{logName} Run {runId} Trace.log");
+
+        var innerTraceTarget = new NLog.Targets.FileTarget
+        {
+            Name = $"run-{runId}-trace_file",
+            KeepFileOpen = true,
+            FileName = traceFilename,
+            Layout = LogLayout,
+        };
+
+        runTraceTarget = new NLog.Targets.Wrappers.AsyncTargetWrapper(innerTraceTarget, 50000, NLog.Targets.Wrappers.AsyncTargetWrapperOverflowAction.Block)
+        {
+            Name = $"run-{runId}-trace",
+        };
+
+        config.AddTarget(runTraceTarget);
+        runTraceRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, runTraceTarget);
+        config.LoggingRules.Add(runTraceRule);
+
         LogManager.Configuration = config;
     }
 
@@ -102,10 +132,18 @@ public class ScannerLog
         config.LoggingRules.Remove(runLoggingRule);
         if (runFileTarget != null)
             config.RemoveTarget(runFileTarget.Name);
+
+        if (runTraceRule != null)
+            config.LoggingRules.Remove(runTraceRule);
+        if (runTraceTarget != null)
+            config.RemoveTarget(runTraceTarget.Name);
+
         LogManager.Configuration = config;
 
         runFileTarget = null;
         runLoggingRule = null;
+        runTraceTarget = null;
+        runTraceRule = null;
     }
 
     public static void InitializeLogging()

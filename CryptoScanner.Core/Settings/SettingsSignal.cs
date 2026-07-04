@@ -75,6 +75,9 @@ public class SettingsSignal
     // Old (better version?)
     public SettingsSignalStrategyAtrRb AtrRb = new();
 
+    // bre — Buddy Reversion Engine: Donchian macro-band break (long on lower, short on upper)
+    public SettingsSignalStrategyBre Bre = new();
+
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

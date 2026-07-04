@@ -75,6 +75,9 @@ public class ThreadCheckFinishedPosition
                         foundPosition.status = status;
                     if (orderId != null)
                         foundPosition.orderId = orderId;
+                    // ValueTuple is a struct: TryGetValue returned a copy, so write the merged
+                    // orderId/status back into the queue or the update is silently lost.
+                    Queue[position.Symbol.Name] = foundPosition;
                     ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: Positie {position.Symbol.Name} duplicate {position.Status} check={position.ForceCheckPosition} {position.DelayUntil} {orderId} {status}");
                     return;
                 }
@@ -193,22 +196,10 @@ public class ThreadCheckFinishedPosition
         var symbolPeriod = position.Symbol.GetSymbolInterval(CryptoIntervalPeriod.interval1m);
         if (symbolPeriod.CandleList.Count > 0)
         {
-            CryptoCandle lastCandle1m;
-
-            // Live path takes the most recent candle. The emulator runs in a separate process
-            // with its own DB and clock, so the legacy BackTest branch is no longer needed here.
-            await position.Symbol.Data.CandleLock.WaitAsync();
-            try
-            {
-                lastCandle1m = symbolPeriod.CandleList.Values.Last();
-            }
-            finally
-            {
-                position.Symbol.Data.CandleLock.Release();
-            }
+            CryptoCandle lastCandle1m = symbolPeriod.LastCandle;
 
             ScannerLog.Logger.Trace($"ThreadCheckFinishedPosition.Execute: {position.Symbol.Name} CheckThePosition {orderId}");
-            PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+            using PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
             await positionMonitor.CheckThePosition(position); // CancelOrdersIfClosedOrTimeoutOrReposition?
 
             // Bij nader inzien kan die status hier nooit ready zijn...

@@ -150,7 +150,11 @@ public static class IndicatorWarmup
             {
                 // Guard against look-ahead: only bars that fully close at/before replayFrom.
                 if (candle.OpenTime + interval.Duration <= replayFrom)
+                {
                     symbolInterval.CandleList.TryAdd(candle.OpenTime, candle);
+                    if (symbolInterval.LastCandle.OpenTime == 0 || candle.OpenTime >= symbolInterval.LastCandle.OpenTime)
+                        symbolInterval.LastCandle = candle;
+                }
             }
 
             // Fallback for a chain interval the DB happens not to have (e.g. an intermediate 5m that
@@ -158,9 +162,6 @@ public static class IndicatorWarmup
             // Cheap — it aggregates from the immediate lower interval, never straight from 1m.
             //if (interval.ConstructFrom != null && symbolInterval.CandleList.Count == 0)
             //    CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, replayFrom);
-
-            if (symbolInterval.CandleList.TryGetLastCandle(out CryptoCandle lastCandle))
-                symbolInterval.LastCandle = lastCandle;
         }
 
         // Only the 1m interval is fed candle-by-candle during the replay. Set its window aside,

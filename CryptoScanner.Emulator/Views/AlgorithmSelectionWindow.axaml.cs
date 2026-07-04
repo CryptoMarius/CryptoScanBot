@@ -14,10 +14,18 @@ public partial class AlgorithmSelectionWindow : Window
 {
     public AlgorithmSelectionViewModel ViewModel { get; }
 
-    public AlgorithmSelectionWindow()
+    public AlgorithmSelectionWindow() : this(null)
+    {
+    }
+
+
+    /// <param name="previouslySelected">
+    /// Algorithm names to pre-check (the last persisted choice). Null/empty selects all.
+    /// </param>
+    public AlgorithmSelectionWindow(IReadOnlyCollection<string>? previouslySelected)
     {
         InitializeComponent();
-        ViewModel = new AlgorithmSelectionViewModel();
+        ViewModel = new AlgorithmSelectionViewModel(previouslySelected);
         DataContext = ViewModel;
     }
 

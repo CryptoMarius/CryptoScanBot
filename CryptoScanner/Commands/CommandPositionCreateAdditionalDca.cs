@@ -91,7 +91,7 @@ public class CommandPositionCreateAdditionalDca : CommandBase
                     if (symbolPeriod.CandleList.Count > 0)
                     {
                         var lastCandle1m = symbolPeriod.CandleList.Values.Last();
-                        PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
+                        using PositionMonitor positionMonitor = new(position.Symbol, lastCandle1m);
                         await positionMonitor.HandlePosition(position);
                     }
 
