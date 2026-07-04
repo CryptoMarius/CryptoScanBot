@@ -261,12 +261,7 @@ public static class ZoneSmc
         int lookback = Math.Max(averageWindow, baseMaxCandles) + 1;
         CandleTime windowStart = cursor - (lookback * interval.Duration);
 
-        List<CryptoCandle> window = [];
-        for (CandleTime t = windowStart; t <= latestTime; t += interval.Duration)
-        {
-            if (symbolInterval.CandleList.TryGetValue(t, out CryptoCandle c))
-                window.Add(c);
-        }
+        List<CryptoCandle> window = symbolInterval.CandleList.GetRange(windowStart, latestTime, interval.Duration);
 
         int firstNewIndex = window.FindIndex(c => c.OpenTime.Minutes > cursor.Minutes);
         if (firstNewIndex < 0 || window.Count < averageWindow + 2)

@@ -140,6 +140,9 @@ public partial class CryptoPosition : CryptoData2
     public bool ForceCheckPosition { get; set; } = false;
 
     [Computed]
+    public PendingDcaRequest? PendingDcaSignal { get; set; }
+
+    [Computed]
     public bool HasOrdersAndTradesLoaded { get; set; } = false;
 
     [Computed]

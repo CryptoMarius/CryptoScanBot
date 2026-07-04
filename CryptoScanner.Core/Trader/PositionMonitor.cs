@@ -589,9 +589,9 @@ public class PositionMonitor : IDisposable
                                     return;
                                 }
 
-                                // Extend the position with a new DCA part using the configured DCA strategy.
-                                PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca, signal.Interval, signal.Strategy,
-                                    GlobalData.Settings.Trading.DcaStrategy, dcaPrice, LastCandle1mCloseTimeDate);
+                                // Signal the background thread to create the DCA part (all position
+                                // mutations are serialized on the background thread under the semaphore).
+                                position.PendingDcaSignal = new(signal.Interval, signal.Strategy, dcaPrice, LastCandle1mCloseTimeDate);
                                 return;
                             }
                         }
@@ -1420,6 +1420,22 @@ public class PositionMonitor : IDisposable
     }
 
 
+    private void ProcessPendingDcaSignal(CryptoPosition position)
+    {
+        var request = position.PendingDcaSignal;
+        if (request == null)
+            return;
+        position.PendingDcaSignal = null;
+
+        if (position.Status != CryptoPositionStatus.Trading || position.CloseTime.HasValue)
+            return;
+
+        PositionTools.ExtendPosition(Database, position, CryptoPartPurpose.Dca,
+            request.Interval, request.Strategy,
+            GlobalData.Settings.Trading.DcaStrategy, request.DcaPrice, request.CandleCloseTime);
+    }
+
+
     private async Task CheckAddDcaFixedPercentage(CryptoPosition position)
     {
         // Alle resterende DCA-niveaus in 1x plaatsen zodra de entry gevuld is (in plaats van steeds te
@@ -2025,6 +2041,9 @@ public class PositionMonitor : IDisposable
 
             if (!position.CloseTime.HasValue)
             {
+                // Process any signal-based DCA that the candle thread queued up
+                ProcessPendingDcaSignal(position);
+
                 // Een DCA op een bestaande positie altijd direct toestaan, ook tijdens een
                 // marktbrede TradingRules-pauze (bv. snelle BTC-beweging) - alleen nieuwe
                 // entries worden door die pauze geblokkeerd, niet het bijkopen op een lopende positie.
