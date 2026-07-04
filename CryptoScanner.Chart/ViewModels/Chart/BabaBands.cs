@@ -17,7 +17,8 @@ namespace CryptoScanner.ViewModels.Chart;
 ///   band  = Mult * vwStdev(hlc3, Length) + AtrMult * ATR(AtrLength)
 ///   upper = basis + band,  lower = basis - band
 /// A percentage label (the signal's SLStdevFactor * vwStdev%) is printed when a wick or close breaks a
-/// band, marking where the long/short alert can fire.
+/// band, marking where the long/short alert can fire. When the signal's RSI filter is enabled the label
+/// also requires RSI oversold (lower break) / overbought (upper break), matching SignalBabaLong/Short.
 /// </summary>
 public class BabaBands
 {
@@ -46,7 +47,15 @@ public class BabaBands
                 slAtrByDate[atr.Timestamp] = atr.Atr.Value;
         }
 
-        var bandFill = new AreaSeries { Title = "baba.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
+        // RSI confluence for the break labels (same gate as SignalBabaLong/Short): when the RSI filter
+        // is enabled, only label a lower-band break when RSI is oversold and an upper-band break when
+        // RSI is overbought. Thresholds come from the general RSI settings (Indicators tab).
+        var rsiSettings = GlobalData.Settings.General.SettingsRsi;
+        IReadOnlyList<RsiResult>? rsiList = null;
+        if (baba.UseRsiFilter)
+            rsiList = candles.AsQuotes().ToRsi(rsiSettings.Length);
+
+        //var bandFill = new AreaSeries { Title = "baba.fill", Fill = BandFillColor, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
         var upperLine = new LineSeries { Title = "baba.upper", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
         var lowerLine = new LineSeries { Title = "baba.lower", Color = BandLineColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
         var basisLine = new LineSeries { Title = "baba.basis", Color = BasisColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
@@ -70,8 +79,8 @@ public class BabaBands
             double upper = bands[i].Upper;
             double lower = bands[i].Lower;
 
-            bandFill.Points.Add(new DataPoint(x, upper));
-            bandFill.Points2.Add(new DataPoint(x, lower));
+            //bandFill.Points.Add(new DataPoint(x, upper));
+            //bandFill.Points2.Add(new DataPoint(x, lower));
             upperLine.Points.Add(new DataPoint(x, upper));
             lowerLine.Points.Add(new DataPoint(x, lower));
             basisLine.Points.Add(new DataPoint(x, bands[i].Basis));
@@ -82,13 +91,19 @@ public class BabaBands
             double refBand = low < lower ? lower : upper;
             double slPct = refBand > 0 ? baba.SLStdevFactor * vwStdev / refBand * 100.0 : 0;
 
-            if (high > upper || close > upper)
+            // Same pass criteria as the signal: short needs rsi >= Overbought, long needs rsi <= Oversold.
+            // With the RSI filter disabled every break is labeled, as before.
+            double? rsi = rsiList?[i].Rsi;
+            bool rsiOverbought = rsiList == null || (rsi.HasValue && rsi.Value >= rsiSettings.Overbought);
+            bool rsiOversold = rsiList == null || (rsi.HasValue && rsi.Value <= rsiSettings.Oversold);
+
+            if ((high > upper || close > upper) && rsiOverbought)
                 AddLabel(chart, x, high, slPct, VerticalAlignment.Bottom, group);
-            if (low < lower || close < lower)
+            if ((low < lower || close < lower) && rsiOversold)
                 AddLabel(chart, x, low, slPct, VerticalAlignment.Top, group);
         }
 
-        chart.Series.Add(bandFill);
+        //chart.Series.Add(bandFill);
         chart.Series.Add(upperLine);
         chart.Series.Add(lowerLine);
         chart.Series.Add(basisLine);

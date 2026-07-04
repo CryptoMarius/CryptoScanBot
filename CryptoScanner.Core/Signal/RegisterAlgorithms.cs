@@ -13,6 +13,7 @@ using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
 using CryptoScanner.Core.Signal.AtrRb;
+using CryptoScanner.Core.Signal.Bre;
 using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
@@ -411,6 +412,18 @@ public static class RegisterAlgorithms
             Strategy = CryptoSignalStrategy.AtrRb,
             AnalyzeLongType = typeof(SignalAtrRbLong),
             AnalyzeShortType = typeof(SignalAtrRbShort),
+        });
+
+        //***************************************************
+        // BRE (Buddy Reversion Engine) — fires when price breaks a Donchian macro band:
+        // long on the lower band, short on the upper band (optional trend/RSI/stoch filters).
+        //***************************************************
+        Register(new AlgorithmDefinition()
+        {
+            Name = "bre",
+            Strategy = CryptoSignalStrategy.Bre,
+            AnalyzeLongType = typeof(SignalBreLong),
+            AnalyzeShortType = typeof(SignalBreShort),
         });
 
 #if DEBUG

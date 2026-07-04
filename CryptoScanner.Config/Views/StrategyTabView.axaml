@@ -46,6 +46,9 @@
 		<TabItem Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyAtrRbTabView DataContext="{Binding StrategyAtrRbTabViewModel}" />
 		</TabItem>
+		<TabItem Header="BRE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+			<settings:StrategyBreTabView DataContext="{Binding StrategyBreTabViewModel}" />
+		</TabItem>
 	</TabControl>
 
 </UserControl>

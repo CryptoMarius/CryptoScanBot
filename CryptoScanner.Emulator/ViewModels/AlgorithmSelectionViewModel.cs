@@ -36,11 +36,20 @@ public partial class AlgorithmSelectionViewModel : ObservableObject
 
     public ObservableCollection<AlgorithmSelectionItem> Algorithms { get; } = [];
 
-    public AlgorithmSelectionViewModel()
+    public AlgorithmSelectionViewModel(IReadOnlyCollection<string>? previouslySelected = null)
     {
+        // Restore the previous choice when one was persisted; otherwise (first run or an empty
+        // list) fall back to all-selected so nothing is silently skipped. A newly registered
+        // algorithm that was not part of a saved selection starts unchecked, matching the
+        // "restore exactly what I picked last time" intent.
+        HashSet<string>? selected = previouslySelected is { Count: > 0 }
+            ? new HashSet<string>(previouslySelected, StringComparer.OrdinalIgnoreCase)
+            : null;
+
         foreach (AlgorithmDefinition algorithm in RegisterAlgorithms.AlgorithmDefinitionList.Values
                      .OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase))
-            Algorithms.Add(new AlgorithmSelectionItem(algorithm.Name, isSelected: true));
+            Algorithms.Add(new AlgorithmSelectionItem(
+                algorithm.Name, isSelected: selected == null || selected.Contains(algorithm.Name)));
     }
 
 

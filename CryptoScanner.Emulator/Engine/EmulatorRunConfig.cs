@@ -34,6 +34,13 @@ public class EmulatorRunConfig
     public string Label { get; set; } = "";
 
     /// <summary>
+    /// The algorithm names last picked in the "Run algorithms..." / sweep selection dialog.
+    /// Persisted so the dialog can restore the previous choice instead of defaulting to all
+    /// selected every time. Empty means "no prior choice" — the dialog then selects everything.
+    /// </summary>
+    public List<string> SelectedAlgorithms { get; set; } = [];
+
+    /// <summary>
     /// Stop-loss percentages to sweep during a parameter sweep run (e.g. [1, 2, 3, 4, 5, 6]).
     /// Only used by the "Run all algorithms" sweep button.
     /// </summary>

@@ -1122,11 +1122,10 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowBabaBands))
             BabaBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-        // Draw the ACTUAL stored Baba signals (real triggers from the run) — these match the strategy
-        // exactly, unlike the recomputed band-break labels above.
-        group = "baba.signals";
-        if (Toggle(model, group, Session.ShowBabaSignals))
-            BabaSignals.Draw(model, SignalList, Interval, Session.MinDate, Session.MaxDate, group);
+        // Draw BRE Bands (Buddy Reversion Engine)
+        group = "bre";
+        if (Toggle(model, group, Session.ShowBreBands))
+            BreBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
 
         // Experimental "glijbaan" (slide) detector overlay — additive, nothing else uses it yet.
         group = "slide";

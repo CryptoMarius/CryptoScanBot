@@ -174,15 +174,18 @@ public class AtrRbBands
         }
 
         // Add background fills first, then lines, then the basis on top.
-        chart.Series.Add(macroFill);
-        chart.Series.Add(ribbonFillUp);
-        chart.Series.Add(ribbonFillDown);
+        // Only the outer (macro) bands are drawn. The inner trend-coloured ribbon, the trend colours
+        // and all background fills (macro cloud + ribbon shading) and the basis line are disabled on
+        // request; the series are still built above but no longer added to the chart.
+        //chart.Series.Add(macroFill);
+        //chart.Series.Add(ribbonFillUp);
+        //chart.Series.Add(ribbonFillDown);
         chart.Series.Add(macroUp);
         chart.Series.Add(macroDown);
-        chart.Series.Add(ribbonUpGreen);
-        chart.Series.Add(ribbonUpRed);
-        chart.Series.Add(ribbonDownGreen);
-        chart.Series.Add(ribbonDownRed);
+        //chart.Series.Add(ribbonUpGreen);
+        //chart.Series.Add(ribbonUpRed);
+        //chart.Series.Add(ribbonDownGreen);
+        //chart.Series.Add(ribbonDownRed);
         chart.Series.Add(basisLine);
     }
 
@@ -201,8 +204,12 @@ public class AtrRbBands
             Offset = new ScreenVector(0, offsetY),
             TextHorizontalAlignment = HorizontalAlignment.Center,
             TextVerticalAlignment = vAlign,
-            TextColor = OxyColors.Black,
-            Background = OxyColors.White,
+            TextColor = OxyColors.White,
+            // No background rectangle / border — plain white text so it doesn't block the candles
+            // (same style as the BabaBands labels).
+            Background = OxyColors.Undefined,
+            Stroke = OxyColors.Transparent,
+            StrokeThickness = 0,
             FontSize = 9,
             YAxisKey = "price",
             Tag = group,

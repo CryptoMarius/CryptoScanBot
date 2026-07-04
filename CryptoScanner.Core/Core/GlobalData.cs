@@ -791,6 +791,7 @@ public static class GlobalData
 #if DEBUG
         StrategiesSettings.Add(CryptoSignalStrategy.Baba, (Settings.Signal.Baba, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.AtrRb, (Settings.Signal.AtrRb, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Bre, (Settings.Signal.Bre, DateTime.Today));
         //StrategiesSettings.Add(CryptoSignalStrategy.WtLbStoch, (Settings.Signal.WtLbStoch, DateTime.Today));
         //StrategiesSettings.Add(CryptoSignalStrategy.WaveTrend, (Settings.Signal.WaveTrend, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
