@@ -14,8 +14,8 @@ namespace CryptoScanner.ViewModels.Chart;
 /// chart and the bre signal always agree:
 ///   - Outer bands (gray plateaus): Donchian middle ± halfRange * (OuterMult / 2.5), computed over
 ///     the PREVIOUS BandLength candles.
-///   - DIDO cloud: EMA(DidoLength) basis ± ATR(DidoLength) * DidoMult, trend coloured
-///     (green when close &gt; basis, red below) with a faint fill towards the blue basis line.
+///   - DIDO basis: the blue EMA(DidoLength) middle line. The trend coloured cloud lines and the
+///     background fill from the Pine script are intentionally not drawn (removed on request).
 ///   - WGHM trend line: HMA(HmaLength), only drawn when the trend filter is enabled.
 ///   - White percentage labels at the exact candles where the bre long/short alert fires
 ///     (band break + stacking rule + all enabled filters).
@@ -25,10 +25,6 @@ public class BreBands
     // Colours, translated from the Pine color.new(..., transparency) values.
     // Pine transparency is "percent transparent", so alpha = 255 * (100 - transparency) / 100.
     private static readonly OxyColor OuterBandColor = OxyColor.FromArgb(178, 0xb2, 0xb5, 0xbe); // #b2b5be, 30% transparent
-    private static readonly OxyColor DidoUpColor = OxyColor.FromArgb(166, 0x00, 0xff, 0xaa);    // #00ffaa, 35% transparent
-    private static readonly OxyColor DidoDownColor = OxyColor.FromArgb(166, 0xff, 0x3b, 0x3b);  // #ff3b3b, 35% transparent
-    private static readonly OxyColor DidoUpFill = OxyColor.FromArgb(30, 0x00, 0xff, 0xaa);      // cloud fill, 88% transparent
-    private static readonly OxyColor DidoDownFill = OxyColor.FromArgb(30, 0xff, 0x3b, 0x3b);
     private static readonly OxyColor BasisColor = OxyColor.FromArgb(127, 0x29, 0x62, 0xff);     // #2962ff, 50% transparent
     private static readonly OxyColor HmaUpColor = OxyColors.Green;
     private static readonly OxyColor HmaDownColor = OxyColors.Red;
@@ -49,16 +45,6 @@ public class BreBands
         // Outer Donchian bands (the gray plateaus from the dashboard).
         var outerUp = new LineSeries { Title = "bre.upper", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
         var outerDown = new LineSeries { Title = "bre.lower", Color = OuterBandColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
-
-        // DIDO cloud lines, split per trend so each segment keeps its own colour.
-        var didoUpGreen = new LineSeries { Title = "bre.dido.up", Color = DidoUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var didoUpRed = new LineSeries { Title = "bre.dido.up", Color = DidoDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var didoDownGreen = new LineSeries { Title = "bre.dido.down", Color = DidoUpColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-        var didoDownRed = new LineSeries { Title = "bre.dido.down", Color = DidoDownColor, StrokeThickness = 1, YAxisKey = "price", Tag = group };
-
-        // DIDO cloud shading between the upper and lower band, trend coloured.
-        var didoFillGreen = new AreaSeries { Title = "bre.dido.fill", Fill = DidoUpFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
-        var didoFillRed = new AreaSeries { Title = "bre.dido.fill", Fill = DidoDownFill, Color = OxyColors.Transparent, StrokeThickness = 0, YAxisKey = "price", Tag = group };
 
         // DIDO basis (middle) line.
         var basisLine = new LineSeries { Title = "bre.basis", Color = BasisColor, StrokeThickness = 2, YAxisKey = "price", Tag = group };
@@ -88,37 +74,8 @@ public class BreBands
                 outerDown.Points.Add(new DataPoint(x, value.Lower));
             }
 
-            if (value.DidoBasis.HasValue && value.DidoUpper.HasValue && value.DidoLower.HasValue)
-            {
+            if (value.DidoBasis.HasValue)
                 basisLine.Points.Add(new DataPoint(x, value.DidoBasis.Value));
-
-                // Trend coloured cloud: add the real value on the matching trend, a break on the other.
-                bool isUptrend = close > value.DidoBasis.Value;
-                if (isUptrend)
-                {
-                    didoUpGreen.Points.Add(new DataPoint(x, value.DidoUpper.Value));
-                    didoDownGreen.Points.Add(new DataPoint(x, value.DidoLower.Value));
-                    didoUpRed.Points.Add(breakPoint);
-                    didoDownRed.Points.Add(breakPoint);
-
-                    didoFillGreen.Points.Add(new DataPoint(x, value.DidoUpper.Value));
-                    didoFillGreen.Points2.Add(new DataPoint(x, value.DidoLower.Value));
-                    didoFillRed.Points.Add(breakPoint);
-                    didoFillRed.Points2.Add(breakPoint);
-                }
-                else
-                {
-                    didoUpRed.Points.Add(new DataPoint(x, value.DidoUpper.Value));
-                    didoDownRed.Points.Add(new DataPoint(x, value.DidoLower.Value));
-                    didoUpGreen.Points.Add(breakPoint);
-                    didoDownGreen.Points.Add(breakPoint);
-
-                    didoFillRed.Points.Add(new DataPoint(x, value.DidoUpper.Value));
-                    didoFillRed.Points2.Add(new DataPoint(x, value.DidoLower.Value));
-                    didoFillGreen.Points.Add(breakPoint);
-                    didoFillGreen.Points2.Add(breakPoint);
-                }
-            }
 
             if (settings.UseTrendFilter && value.Hma.HasValue)
             {
@@ -142,15 +99,9 @@ public class BreBands
                 AddLabel(chart, x, (double)candle.Low, pctLong, VerticalAlignment.Top, group);
         }
 
-        // Add background fills first, then lines, then the basis on top.
-        chart.Series.Add(didoFillGreen);
-        chart.Series.Add(didoFillRed);
+        // Add the outer band lines first, then the basis on top.
         chart.Series.Add(outerUp);
         chart.Series.Add(outerDown);
-        chart.Series.Add(didoUpGreen);
-        chart.Series.Add(didoUpRed);
-        chart.Series.Add(didoDownGreen);
-        chart.Series.Add(didoDownRed);
         chart.Series.Add(basisLine);
         if (settings.UseTrendFilter)
         {

@@ -62,17 +62,20 @@ public static class BreBandsHelper
         if (settings.UseTrendFilter)
             hmaList = quotes.ToHma(settings.HmaLength);
 
-        // RSI — only computed when the RSI filter is enabled.
+        // RSI — only computed when the RSI filter is enabled. Uses the standard RSI(14) from general settings.
+        var rsiSettings = GlobalData.Settings.General.SettingsRsi;
         IReadOnlyList<RsiResult>? rsiList = null;
         if (settings.UseRsiFilter)
-            rsiList = quotes.ToRsi(settings.RsiLength);
+            rsiList = quotes.ToRsi(rsiSettings.Length);
 
-        // Stochastic-RSI — computed manually from an RSI(StochLength) series so it matches the
-        // Pine chain exactly: raw = stoch(rsi, StochLength), %K = SMA(raw, K), %D = SMA(%K, D).
+        // Stochastic-RSI — computed manually so it matches the Pine chain exactly:
+        // raw = stoch(rsi, length), %K = SMA(raw, K), %D = SMA(%K, D).
+        // Uses the standard stoch settings (length 14, K 3, D 3) from general settings.
+        var stochSettings = GlobalData.Settings.General.SettingsStoch;
         double?[]? stochK = null;
         double?[]? stochD = null;
         if (settings.UseStochFilter)
-            ComputeStochRsi(quotes, settings.StochLength, settings.StochKLength, settings.StochDLength, out stochK, out stochD);
+            ComputeStochRsi(quotes, stochSettings.Length, stochSettings.SmoothingK, stochSettings.SmoothingD, out stochK, out stochD);
 
         for (int i = 0; i < count; i++)
         {
@@ -224,9 +227,10 @@ public static class BreBandsHelper
             }
         }
 
-        // RSI filter: oversold on this or the previous candle.
+        // RSI filter: oversold on this or the previous candle. OB/OS from general settings.
         if (settings.UseRsiFilter)
         {
+            double rsiOversold = GlobalData.Settings.General.SettingsRsi.Oversold;
             double? rsi = value.Rsi;
             double? rsiPrev = idx > 0 ? bands[idx - 1].Rsi : null;
             if (!rsi.HasValue)
@@ -234,22 +238,23 @@ public static class BreBandsHelper
                 reason = "rsi warming up";
                 return false;
             }
-            if (rsi.Value > settings.RsiOversold && (!rsiPrev.HasValue || rsiPrev.Value > settings.RsiOversold))
+            if (rsi.Value > rsiOversold && (!rsiPrev.HasValue || rsiPrev.Value > rsiOversold))
             {
                 reason = $"rsi not oversold ({rsi.Value:N2})";
                 return false;
             }
         }
 
-        // Stochastic-RSI filter: %K or %D in the oversold zone.
+        // Stochastic-RSI filter: %K or %D in the oversold zone. OB/OS from general settings.
         if (settings.UseStochFilter)
         {
+            double stochOversold = GlobalData.Settings.General.SettingsStoch.Oversold;
             if (!value.StochK.HasValue || !value.StochD.HasValue)
             {
                 reason = "stoch rsi warming up";
                 return false;
             }
-            if (value.StochK.Value > settings.StochOversold && value.StochD.Value > settings.StochOversold)
+            if (value.StochK.Value > stochOversold && value.StochD.Value > stochOversold)
             {
                 reason = $"stoch rsi not oversold (k={value.StochK.Value:N2} d={value.StochD.Value:N2})";
                 return false;
@@ -311,9 +316,10 @@ public static class BreBandsHelper
             }
         }
 
-        // RSI filter: overbought on this or the previous candle.
+        // RSI filter: overbought on this or the previous candle. OB/OS from general settings.
         if (settings.UseRsiFilter)
         {
+            double rsiOverbought = GlobalData.Settings.General.SettingsRsi.Overbought;
             double? rsi = value.Rsi;
             double? rsiPrev = idx > 0 ? bands[idx - 1].Rsi : null;
             if (!rsi.HasValue)
@@ -321,22 +327,23 @@ public static class BreBandsHelper
                 reason = "rsi warming up";
                 return false;
             }
-            if (rsi.Value < settings.RsiOverbought && (!rsiPrev.HasValue || rsiPrev.Value < settings.RsiOverbought))
+            if (rsi.Value < rsiOverbought && (!rsiPrev.HasValue || rsiPrev.Value < rsiOverbought))
             {
                 reason = $"rsi not overbought ({rsi.Value:N2})";
                 return false;
             }
         }
 
-        // Stochastic-RSI filter: %K or %D in the overbought zone.
+        // Stochastic-RSI filter: %K or %D in the overbought zone. OB/OS from general settings.
         if (settings.UseStochFilter)
         {
+            double stochOverbought = GlobalData.Settings.General.SettingsStoch.Overbought;
             if (!value.StochK.HasValue || !value.StochD.HasValue)
             {
                 reason = "stoch rsi warming up";
                 return false;
             }
-            if (value.StochK.Value < settings.StochOverbought && value.StochD.Value < settings.StochOverbought)
+            if (value.StochK.Value < stochOverbought && value.StochD.Value < stochOverbought)
             {
                 reason = $"stoch rsi not overbought (k={value.StochK.Value:N2} d={value.StochD.Value:N2})";
                 return false;

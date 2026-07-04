@@ -59,54 +59,15 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
-            <!-- RSI filter -->
+            <!-- RSI filter (length and OB/OS thresholds come from the general RSI settings) -->
             <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
                       Content="Use RSI filter" FontSize="12"
-                      ToolTip.Tip="When on, a long requires RSI (this or the previous candle) at or below oversold and a short requires RSI at or above overbought."/>
+                      ToolTip.Tip="When on, a long requires RSI (this or the previous candle) at or below oversold and a short requires RSI at or above overbought. Uses the standard RSI length and OB/OS thresholds from the general settings."/>
 
-            <Grid ColumnDefinitions="Auto,80,20,Auto,50,20,Auto,50,*" RowDefinitions="Auto"
-                  ToolTip.Tip="RSI length and the overbought/oversold thresholds (Pine defaults 14 / 70 / 30).">
-                <TextBlock Grid.Column="0" Text="RSI length / OB / OS:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding RsiLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                <TextBox Grid.Column="4"
-                         Text="{Binding RsiOverbought, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                <TextBox Grid.Column="7"
-                         Text="{Binding RsiOversold, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
-            <!-- Stochastic-RSI filter -->
+            <!-- Stochastic-RSI filter (length and OB/OS thresholds come from the general Stoch settings) -->
             <CheckBox IsChecked="{Binding UseStochFilter, Mode=TwoWay}"
                       Content="Use Stochastic RSI filter" FontSize="12"
-                      ToolTip.Tip="When on, a long requires %K or %D at or below oversold and a short requires %K or %D at or above overbought."/>
-
-            <Grid ColumnDefinitions="Auto,50,20,Auto,50,20,Auto,50,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Stochastic RSI length, %K smoothing and %D smoothing (Pine defaults 14 / 3 / 3).">
-                <TextBlock Grid.Column="0" Text="Stoch length / K / D:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding StochLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                <TextBox Grid.Column="4"
-                         Text="{Binding StochKLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                <TextBox Grid.Column="7"
-                         Text="{Binding StochDLength, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
-
-            <Grid ColumnDefinitions="Auto,50,20,Auto,50,*" RowDefinitions="Auto"
-                  ToolTip.Tip="Stochastic RSI overbought/oversold thresholds (Pine defaults 80 / 20).">
-                <TextBlock Grid.Column="0" Text="Stoch OB / OS:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
-                <TextBox Grid.Column="1"
-                         Text="{Binding StochOverbought, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-                <TextBox Grid.Column="4"
-                         Text="{Binding StochOversold, Mode=TwoWay}"
-                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
-            </Grid>
+                      ToolTip.Tip="When on, a long requires %K or %D at or below oversold and a short requires %K or %D at or above overbought. Uses the standard Stochastic length, smoothing and OB/OS thresholds from the general settings."/>
 
             <!-- Stacking rule -->
             <CheckBox IsChecked="{Binding AllowStack, Mode=TwoWay}"

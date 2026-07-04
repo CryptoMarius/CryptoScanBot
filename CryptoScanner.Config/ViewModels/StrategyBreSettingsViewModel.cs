@@ -28,31 +28,7 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     private bool _useRsiFilter = false;
 
     [ObservableProperty]
-    private int _rsiLength = 14;
-
-    [ObservableProperty]
-    private int _rsiOverbought = 70;
-
-    [ObservableProperty]
-    private int _rsiOversold = 30;
-
-    [ObservableProperty]
     private bool _useStochFilter = false;
-
-    [ObservableProperty]
-    private int _stochLength = 14;
-
-    [ObservableProperty]
-    private int _stochKLength = 3;
-
-    [ObservableProperty]
-    private int _stochDLength = 3;
-
-    [ObservableProperty]
-    private int _stochOverbought = 80;
-
-    [ObservableProperty]
-    private int _stochOversold = 20;
 
     [ObservableProperty]
     private bool _allowStack = true;
@@ -70,15 +46,7 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         UseTrendFilter = settings.UseTrendFilter;
         HmaLength = settings.HmaLength;
         UseRsiFilter = settings.UseRsiFilter;
-        RsiLength = settings.RsiLength;
-        RsiOverbought = settings.RsiOverbought;
-        RsiOversold = settings.RsiOversold;
         UseStochFilter = settings.UseStochFilter;
-        StochLength = settings.StochLength;
-        StochKLength = settings.StochKLength;
-        StochDLength = settings.StochDLength;
-        StochOverbought = settings.StochOverbought;
-        StochOversold = settings.StochOversold;
         AllowStack = settings.AllowStack;
         UseStopLoss = settings.UseStopLoss;
     }
@@ -92,15 +60,7 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         settings.UseTrendFilter = UseTrendFilter;
         settings.HmaLength = HmaLength;
         settings.UseRsiFilter = UseRsiFilter;
-        settings.RsiLength = RsiLength;
-        settings.RsiOverbought = RsiOverbought;
-        settings.RsiOversold = RsiOversold;
         settings.UseStochFilter = UseStochFilter;
-        settings.StochLength = StochLength;
-        settings.StochKLength = StochKLength;
-        settings.StochDLength = StochDLength;
-        settings.StochOverbought = StochOverbought;
-        settings.StochOversold = StochOversold;
         settings.AllowStack = AllowStack;
         settings.UseStopLoss = UseStopLoss;
     }

@@ -24,21 +24,13 @@ public class SettingsSignalStrategyBre : SettingsSignalStrategyBase
     public bool UseTrendFilter { get; set; } = false;
     public int HmaLength { get; set; } = 55;
 
-    // Optional RSI filter: a long requires RSI (on this or the previous candle) <= RsiOversold,
-    // a short requires RSI >= RsiOverbought.
+    // Optional RSI filter: a long requires RSI (on this or the previous candle) <= oversold,
+    // a short requires RSI >= overbought. Length and OB/OS thresholds come from Settings.General.SettingsRsi.
     public bool UseRsiFilter { get; set; } = false;
-    public int RsiLength { get; set; } = 14;
-    public int RsiOverbought { get; set; } = 70;
-    public int RsiOversold { get; set; } = 30;
 
-    // Optional Stochastic-RSI filter: a long requires %K or %D <= StochOversold,
-    // a short requires %K or %D >= StochOverbought.
+    // Optional Stochastic-RSI filter: a long requires %K or %D <= oversold,
+    // a short requires %K or %D >= overbought. Length and OB/OS thresholds come from Settings.General.SettingsStoch.
     public bool UseStochFilter { get; set; } = false;
-    public int StochLength { get; set; } = 14;
-    public int StochKLength { get; set; } = 3;
-    public int StochDLength { get; set; } = 3;
-    public int StochOverbought { get; set; } = 80;
-    public int StochOversold { get; set; } = 20;
 
     // Allow consecutive signals while price stretches further beyond the band within one break run
     // (Pine "HYPE-stijl": a new label on every higher High / lower Low). When off only the first
