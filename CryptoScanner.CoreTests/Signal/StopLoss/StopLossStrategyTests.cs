@@ -84,7 +84,7 @@ public class StopLossStrategyTests : TestBase
             CandleTime ct = candle.OpenTime;
             if (!IndicatorEngine.PrepareIndicators(symbol, interval, ct))
                 continue;
-            if (!si.TryGetCandle(ct, out MyData? data) || data == null)
+            if (!symbolInterval.TryGetCandle(ct, out MyData? data) || data == null)
                 continue;
 
             SignalCreateBase algo = side == CryptoTradeSide.Long
@@ -132,7 +132,7 @@ public class StopLossStrategyTests : TestBase
             CandleTime ct = candle.OpenTime;
             if (!IndicatorEngine.PrepareIndicators(symbol, interval, ct))
                 continue;
-            if (!si.TryGetCandle(ct, out MyData? data) || data == null)
+            if (!symbolInterval.TryGetCandle(ct, out MyData? data) || data == null)
                 continue;
 
             SignalCreateBase algo = side == CryptoTradeSide.Long
