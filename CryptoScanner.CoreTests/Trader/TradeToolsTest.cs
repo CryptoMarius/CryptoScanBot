@@ -59,7 +59,7 @@ public class TradeToolsTest : TestBase
         // Dit wordt een rommeltje, in aparte routines afsplitsen?
 
         CryptoPositionPart entryPart = PositionTools.ExtendPosition(database, position, CryptoPartPurpose.Entry, GlobalData.IntervalList[0],
-            CryptoSignalStrategy.Stobb, CryptoEntryOrDcaStrategy.AfterNextSignal, tradeParams.Price, lastCandle1mCloseTimeDate);
+            CryptoSignalStrategy.Stobb, CryptoEntryOrDcaStrategy.FixedPercentage, tradeParams.Price, lastCandle1mCloseTimeDate);
         if (position.PartList.Count != 1)
             Assert.Fail("Geen entry gemaakt");
 
