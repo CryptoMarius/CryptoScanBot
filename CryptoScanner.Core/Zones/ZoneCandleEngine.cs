@@ -390,6 +390,13 @@ public class ZoneCandleEngine
             loadedCandlesInMemory.TryAdd(interval.IntervalPeriod, true); // for now (because of klines)
         }
 
+        // In emulator mode the replay owns the candle timeline — never fetch from the
+        // exchange mid-run; work with whatever is available locally (candles.db + the
+        // replay's own 1m synthesis). API calls during replay cause massive latency and
+        // are not reproducible across runs.
+        if (GlobalData.IsEmulatorMode)
+            return;
+
         (CandleTime min, CandleTime max) = CalculateDates(interval, fetchFrom, fetchCount);
         (CandleTime loop, bool dataAllLocal) = IsDataLocal(min, max, symbol, interval);
         try
