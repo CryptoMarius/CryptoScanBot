@@ -107,11 +107,14 @@ public class ZoneDlz
     }
 
 
-    private static void CreateZonesFromZigZag(CryptoSymbol symbol, CryptoInterval interval,
-        List<ZigZagResult> zigZagList, List<CryptoZone> zones)
+    internal static void CreateZonesFromZigZag(CryptoSymbol symbol, CryptoInterval interval,
+        List<ZigZagResult> zigZagList, List<CryptoZone> zones, CandleTime? afterTime = null)
     {
         foreach (var zigZag in zigZagList)
         {
+            if (afterTime != null && zigZag.Candle.OpenTime <= afterTime)
+                continue;
+
             if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newZones (also the closed ones)
             {
                 CryptoZone zone = new()
@@ -359,7 +362,8 @@ public class ZoneDlz
 
     public static async Task CalculateDlzAsync(AddTextEvent? sender,
         CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator,
-        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory)
+        SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory,
+        CandleTime? processAfter = null)
     {
         //GlobalData.AddTextToLogTab($"{data.Symbol.Name} Calculating newZones");
 
@@ -369,6 +373,15 @@ public class ZoneDlz
         {
             if (previous != null && previous2 != null && !zigZag.Dummy)
             {
+                // In incremental mode skip pivots that were already processed — but always
+                // keep walking to maintain the previous/previous2 sliding window.
+                if (processAfter != null && previous.Candle.OpenTime < processAfter)
+                {
+                    previous2 = previous;
+                    previous = zigZag;
+                    continue;
+                }
+
                 sender?.Invoke($"Calculating dlz zones {symbol.Exchange.Name} {symbol.Name} {interval.Name} {zigZag.Candle.Date}");
 
                 // Check: a dominant Low leading to a new Higher High
@@ -387,7 +400,8 @@ public class ZoneDlz
     }
 
 
-    internal static void CalculateIntroZone(CryptoSymbol symbol, CryptoInterval interval, ZigZagIndicator indicator)
+    internal static void CalculateIntroZone(CryptoSymbol symbol, CryptoInterval interval,
+        ZigZagIndicator indicator, CandleTime? afterTime = null)
     {
         // Determine if a liq. box/zone has an interesting intro
         if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply)
@@ -399,6 +413,13 @@ public class ZoneDlz
             {
                 if (previous != null)
                 {
+                    // In incremental mode only evaluate pivots that are new
+                    if (afterTime != null && zigZag.Candle.OpenTime <= afterTime)
+                    {
+                        previous = zigZag;
+                        continue;
+                    }
+
                     if (zigZag.Dominant && !zigZag.Dummy) //  && zigZag.IsValid all newZones (also the closed ones)
                     {
                         decimal boxLimit;
@@ -511,16 +532,28 @@ public class ZoneDlz
 
     }
 
-    private static void CheckAndMarkBrokenZones(CryptoInterval interval,
-        CryptoCandleList candleList, CryptoSymbolIntervalZones zones)
+    internal static HashSet<CryptoZone> CheckAndMarkBrokenZones(CryptoInterval interval,
+        CryptoCandleList candleList, CryptoSymbolIntervalZones zones,
+        CandleTime? afterTime = null)
     {
-        var oldest1 = zones.LongOpen.MinBy(z => z.OpenTime);
-        var oldest2 = zones.ShortOpen.MinBy(z => z.OpenTime);
+        HashSet<CryptoZone> modified = [];
 
-        CandleTime? startTime = null;
-        if (oldest1 != null) startTime = oldest1.OpenTime;
-        if (oldest2 != null && (startTime == null || oldest2.OpenTime < startTime))
-            startTime = oldest2.OpenTime;
+        CandleTime? startTime;
+        if (afterTime != null)
+        {
+            // Incremental: only check candles we haven't seen yet
+            startTime = afterTime.Value + interval.Duration;
+        }
+        else
+        {
+            // Full historical: start from the oldest open zone
+            var oldest1 = zones.LongOpen.MinBy(z => z.OpenTime);
+            var oldest2 = zones.ShortOpen.MinBy(z => z.OpenTime);
+            startTime = null;
+            if (oldest1 != null) startTime = oldest1.OpenTime;
+            if (oldest2 != null && (startTime == null || oldest2.OpenTime < startTime))
+                startTime = oldest2.OpenTime;
+        }
 
         if (startTime != null && candleList.Count > 0)
         {
@@ -552,10 +585,17 @@ public class ZoneDlz
                                 //    touched.Add(zone);
                                 //if (candle.Low < zone.Top)
                                 //    touched.Add(zone);
+                                int oldTouchCount = zone.TouchCount;
+                                bool oldMitigated = zone.IsMitigated;
                                 if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
                                     && zone.CloseTime == candle.OpenTime + interval.Duration)
                                 {
                                     closed.Add(zone);
+                                    modified.Add(zone);
+                                }
+                                else if (zone.TouchCount != oldTouchCount || zone.IsMitigated != oldMitigated)
+                                {
+                                    modified.Add(zone);
                                 }
                             }
                         }
@@ -576,10 +616,17 @@ public class ZoneDlz
                                 //    touched.Add(zone);
                                 //if (candle.High > zone.Bottom)
                                 //    touched.Add(zone);
+                                int oldTouchCount = zone.TouchCount;
+                                bool oldMitigated = zone.IsMitigated;
                                 if (ZoneInvalidation.ApplyToCandle(zone, candle, interval, maxTouches)
                                     && zone.CloseTime == candle.OpenTime + interval.Duration)
                                 {
                                     closed.Add(zone);
+                                    modified.Add(zone);
+                                }
+                                else if (zone.TouchCount != oldTouchCount || zone.IsMitigated != oldMitigated)
+                                {
+                                    modified.Add(zone);
                                 }
                             }
                         }
@@ -609,6 +656,8 @@ public class ZoneDlz
                 loop += interval.Duration;
             }
         }
+
+        return modified;
     }
 
 
@@ -633,13 +682,12 @@ public class ZoneDlz
                 //        $"dlz zones long = {zones.LongOpen.Count} " +
                 //        $"dlz zones short = {zones.ShortOpen.Count} ");
 
-                // Reuse the cached ZigZag indicator across calls (one per queue-drain) instead of
-                // rebuilding it from the full [minDate, maxDate] window every time — same technique as
-                // TrendCalculator.CalculateBothAsync, but cached separately (DlzZigZagIndicators) because
-                // ZonesDlz.CandleCount can size a wider window than the trend calculation needs.
+                // Reuse the shared cached ZigZag indicator across calls (one per queue-drain) instead of
+                // rebuilding it from the full [minDate, maxDate] window every time — same hub instance
+                // as TrendCalculator.CalculateBothAsync uses.
                 var trend = GlobalData.Settings.Signal.ZonesDlz.ZigZag;
                 var dlzCacheKey = (trend.TrendType, trend.UseHighLow);
-                TrendZigZagIndicatorList trendZigZagIndicatorList = symbolIntervalData.DlzZigZagIndicators;
+                TrendZigZagIndicatorList trendZigZagIndicatorList = symbolIntervalData.ZigZagIndicators;
                 if (!trendZigZagIndicatorList.TryGetValue(dlzCacheKey, out ZigZagIndicator? trendZigZagIndicator)
                     || trendZigZagIndicator.LastFedCandleTime == null)
                 {
@@ -656,49 +704,93 @@ public class ZoneDlz
                 }
                 // else: already up to date — reuse the indicator as is, no feed needed.
 
-                await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
-                CalculateIntroZone(symbol, interval, trendZigZagIndicator);
-
-                // Index old zones for DB merge (must happen before zones are rebuilt)
-                DatabaseStatistics statistics = new();
-                SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
-                ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
-                ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
-
-                // Create new zones from the zigzag (local list, never visible to other threads)
-                List<CryptoZone> newZones = [];
-                CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
-
-                // Sorted temp object for broken-zone detection — still local, not the live reference
-                CryptoSymbolIntervalZones tempZones = new();
-                foreach (var zone in newZones)
-                    tempZones.Add(zone);
-
-                // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
-                CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
-
-                // Merge with DB state into a fresh object, then atomically replace the live reference.
-                // Other threads always see either the old complete object or the new complete one —
-                // never a half-built list (which was the source of null holes in OrderedList).
-                CryptoSymbolIntervalZones finalZones = new();
-                ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
-                ZoneTools.DeleteRemainingZones(oldZones, statistics);
-                symbolIntervalData.DlzZones = finalZones;
-
-                if (statistics.Untouched != statistics.Total)
+                if (symbolIntervalData.DlzLastProcessedTime != null && symbolIntervalData.DlzLastProcessedTime.Value >= minDate)
                 {
-                    var count = symbol.GetSymbolInterval(interval).CandleList.Count;
-                    GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
-                        $"mindate = {minDate.ToLocalTime():yyyy-MM-dd HH:mm}, " +
-                        $"maxdate = {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
-                        $"Candles = {count}," +
-                        $"Zones calculated ({trend.TrendType}, {trend.UseHighLow}), " +
-                        $"inserted={statistics.Inserted} " +
-                        $"modified={statistics.Modified} deleted={statistics.Deleted} " +
-                        $"untouched={statistics.Untouched} total={statistics.Total}");
+                    // ── Incremental path: only process new pivots since the cursor ──
+                    var cursor = symbolIntervalData.DlzLastProcessedTime;
+                    await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory,
+                        processAfter: cursor);
+                    CalculateIntroZone(symbol, interval, trendZigZagIndicator, afterTime: cursor);
+
+                    // Build zones only from the newly dominant pivots and merge them into existing zones
+                    List<CryptoZone> newZones = [];
+                    CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones,
+                        afterTime: cursor);
+
+                    if (newZones.Count > 0)
+                    {
+                        DatabaseStatistics statistics = new();
+                        SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                        ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
+                        ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
+                        ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
+                        ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
+
+                        CryptoSymbolIntervalZones finalZones = new();
+                        ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
+                        ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                        symbolIntervalData.DlzZones = finalZones;
+                    }
+
+                    // Incremental broken-zone check: only scan candles after the cursor
+                    // to avoid double-counting touches (TouchCount is not idempotent)
+                    var modifiedZones = CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList,
+                        symbolIntervalData.DlzZones, afterTime: cursor);
+                    foreach (var zone in modifiedZones)
+                    {
+                        if (zone.Id > 0)
+                            GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                    }
                 }
+                else
+                {
+                    // ── Full historical scan (first run or cursor invalidated) ──
+                    await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory);
+                    CalculateIntroZone(symbol, interval, trendZigZagIndicator);
+
+                    // Index old zones for DB merge (must happen before zones are rebuilt)
+                    DatabaseStatistics statistics = new();
+                    SortedList<(CryptoTradeSide, CandleTime?, decimal, decimal), CryptoZone> oldZones = [];
+                    ZoneTools.CreateZoneIndex(zones.LongOpen, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.ShortOpen, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.LongClosed, oldZones, statistics);
+                    ZoneTools.CreateZoneIndex(zones.ShortClosed, oldZones, statistics);
+
+                    // Create new zones from the zigzag (local list, never visible to other threads)
+                    List<CryptoZone> newZones = [];
+                    CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
+
+                    // Sorted temp object for broken-zone detection — still local, not the live reference
+                    CryptoSymbolIntervalZones tempZones = new();
+                    foreach (var zone in newZones)
+                        tempZones.Add(zone);
+
+                    // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
+                    CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
+
+                    // Merge with DB state into a fresh object, then atomically replace the live reference.
+                    // Other threads always see either the old complete object or the new complete one —
+                    // never a half-built list (which was the source of null holes in OrderedList).
+                    CryptoSymbolIntervalZones finalZones = new();
+                    ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
+                    ZoneTools.DeleteRemainingZones(oldZones, statistics);
+                    symbolIntervalData.DlzZones = finalZones;
+
+                    if (statistics.Untouched != statistics.Total)
+                    {
+                        var count = symbol.GetSymbolInterval(interval).CandleList.Count;
+                        GlobalData.AddTextToLogTab($"{symbol.Name} {interval.Name} " +
+                            $"mindate = {minDate.ToLocalTime():yyyy-MM-dd HH:mm}, " +
+                            $"maxdate = {maxDate.ToLocalTime():yyyy-MM-dd HH:mm} " +
+                            $"Candles = {count}," +
+                            $"Zones calculated ({trend.TrendType}, {trend.UseHighLow}), " +
+                            $"inserted={statistics.Inserted} " +
+                            $"modified={statistics.Modified} deleted={statistics.Deleted} " +
+                            $"untouched={statistics.Untouched} total={statistics.Total}");
+                    }
+                }
+
+                symbolIntervalData.DlzLastProcessedTime = maxDate;
             }
 
 

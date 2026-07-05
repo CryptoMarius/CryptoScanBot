@@ -414,8 +414,6 @@ public class ZigZagIndicator
     public void Calculate(CryptoCandle candle, bool batchProcess)
     {
         CandleCount++;
-        //if (candle!.Time >= new DateTime(2024, 11, 15, 5+2, 00, 0, DateTimeKind.Utc))
-        //    candle = candle; // debug
 
         // we need buffer of 8 candles to detect a low or high point
         if (ZigZagLanceBeggs.Add(candle))

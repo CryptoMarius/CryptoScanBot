@@ -341,13 +341,11 @@ public static class CandleTools
                             symbolInterval.Data.Remove(key);
                     }
 
-                    // The cached ZigZag indicators (trend + DLZ) live for the whole run and are fed
+                    // The cached ZigZag indicators live for the whole run and are fed
                     // incrementally, so without this their PivotList/ZigZagList keep referencing
                     // CryptoCandle objects forever — keeping candles alive even after they are removed
                     // from CandleList/Data above. Trim them to the same window.
                     foreach (ZigZagIndicator indicator in symbolInterval.ZigZagIndicators.Values)
-                        indicator.TrimBefore(startFetchUnix);
-                    foreach (ZigZagIndicator indicator in symbolInterval.DlzZigZagIndicators.Values)
                         indicator.TrimBefore(startFetchUnix);
                 }
                 finally
@@ -446,6 +444,34 @@ public static class CandleTools
                 startTime -= 500 * interval.Duration;
         }
         return startTime;
+    }
+
+
+    /// <summary>
+    /// Like GetCandleFetchStart but takes zone-depth into account: if this interval is
+    /// configured for DLZ the window is max(500, ZonesDlz.CandleCount) candles deep.
+    /// Used by the DB cleanup to avoid deleting candles that the zone calculator still needs.
+    /// </summary>
+    public static CandleTime GetCandleFetchStartForZones(CryptoSymbol symbol, CryptoInterval interval, DateTime currentTime)
+    {
+        CandleTime baseline = GetCandleFetchStart(symbol, interval, currentTime);
+
+        if (symbol.IsBarometerSymbol() || interval.IntervalPeriod == CryptoIntervalPeriod.interval1m)
+            return baseline;
+
+        bool isZoneInterval = GlobalData.Settings.Signal.ZonesDlz.IntervalList.Contains(interval.Name)
+            || GlobalData.Settings.Signal.ZonesFvg.IntervalList.Contains(interval.Name)
+            || GlobalData.Settings.Signal.ZonesSmc.IntervalList.Contains(interval.Name);
+
+        int zoneCandleCount = GlobalData.Settings.Signal.ZonesDlz.CandleCount;
+        if (isZoneInterval && zoneCandleCount > 500)
+        {
+            CandleTime zoneStart = CandleTime.AlignFromDateTime(currentTime, 1) - zoneCandleCount * interval.Duration;
+            if (zoneStart.Minutes < baseline.Minutes)
+                return zoneStart;
+        }
+
+        return baseline;
     }
 
 }

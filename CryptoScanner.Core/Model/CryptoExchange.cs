@@ -20,6 +20,11 @@ public class CryptoExchange
     public CryptoExchangeType ExchangeType { get; set; }
     public CryptoTradingType TradingType { get; set; }
 
+    // Last candle time up to which zone invalidation (break/touch checks for DLZ/FVG/SMC)
+    // and position hit checks have been performed. On scanner restart this tells us how far
+    // back we need to replay candles to catch up. Null = full historical scan required.
+    public CandleTime? LastZoneCheckTime { get; set; }
+
     // Coins indexed on id
     [Computed]
     public SortedList<int, CryptoSymbol> SymbolListId { get; } = [];

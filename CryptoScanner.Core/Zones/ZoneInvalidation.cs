@@ -15,9 +15,9 @@ namespace CryptoScanner.Core.Zones;
 ///     liquidity is depleted and the zone is no longer a high-probability reversal area.
 ///   - ICT: consequent encroachment (CE, 50% midpoint) marks the FVG as mitigated.
 ///
-/// Touch counting and mitigation flags are stored on the in-memory <see cref="CryptoZone"/>
-/// instance (marked Computed in the DB schema) and are rebuilt deterministically from
-/// candle history on every full recalculation cycle.
+/// Touch counting and mitigation flags are persisted to the DB on <see cref="CryptoZone"/>
+/// so they survive scanner restarts. On restart, only candles after LastZoneCheckTime
+/// are replayed to catch up on missed touches and breaks.
 /// </summary>
 public static class ZoneInvalidation
 {

@@ -8,6 +8,10 @@
     <Configurations>Debug;Release;MaxOS-X-Debug</Configurations>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CryptoScanner.CoreTests" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

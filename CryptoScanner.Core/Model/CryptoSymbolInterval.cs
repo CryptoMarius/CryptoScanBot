@@ -32,6 +32,7 @@ public class CryptoSymbolInterval
     // Incremental zone-calculation cursors: the candle time up to (and including) which the
     // zone scan has already run. Null means "never run, do a full historical scan". On every
     // later call only candles after this point need to be scanned — see ZoneFvg/ZoneSmc.
+    public CandleTime? DlzLastProcessedTime { get; set; }
     public CandleTime? FvgLastProcessedTime { get; set; }
     public CandleTime? SmcLastProcessedTime { get; set; }
     // The AverageWindow/BaseMaxCandles settings the SMC cursor above was built with. If the user
@@ -57,16 +58,10 @@ public class CryptoSymbolInterval
     public CryptoTrendData TrendBosPrimary = new();
     public CryptoTrendData TrendBosSecondary = new();
 
-    // Cached ZigZag indicators, keyed by (TrendType, UseHighLow), shared across repeated calls to
-    // TrendCalculator.CalculateBothAsync so candles are fed once instead of being replayed from
-    // scratch on every stale-interval check (see ZigZagIndicator.LastFedCandleTime).
+    // Cached ZigZag indicators, keyed by (TrendType, UseHighLow), shared across both trend
+    // calculation (TrendCalculator) and zone calculation (ZoneDlz). Candles are fed once
+    // incrementally instead of being replayed from scratch (see ZigZagIndicator.LastFedCandleTime).
     public TrendZigZagIndicatorList ZigZagIndicators { get; } = [];
-
-    // Cached ZigZag indicators used by ZoneDlz, keyed the same way as ZigZagIndicators above but
-    // kept in a separate dictionary because DLZ's candle window (Settings.Signal.ZonesDlz.CandleCount)
-    // can be larger than the trend window — sharing one cache entry between the two would either
-    // shortchange DLZ's depth or force the trend calculation to carry history it doesn't need.
-    public TrendZigZagIndicatorList DlzZigZagIndicators { get; } = [];
 
     public void ResetTrendData()
     {
@@ -75,7 +70,6 @@ public class CryptoSymbolInterval
         TrendBosPrimary.Reset();
         TrendBosSecondary.Reset();
         ZigZagIndicators.Clear();
-        DlzZigZagIndicators.Clear();
     }
 
     // **** experiment ****

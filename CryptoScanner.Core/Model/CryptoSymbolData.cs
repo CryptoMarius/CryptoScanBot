@@ -81,7 +81,7 @@ public class CryptoSymbolData
     // NOTE: these three Reset*Data methods are called from ZoneDlz.LoadZonesForSymbol/LoadAllZones,
     // which runs every time a chart window opens/changes symbol (to scope the in-memory zones to the
     // viewed run) — NOT just on a genuine fresh start. They deliberately do NOT touch the incremental
-    // cursors (FvgLastProcessedTime/SmcLastProcessedTime/Dlz*) below: LoadZonesForSymbol always
+    // cursors (DlzLastProcessedTime/FvgLastProcessedTime/SmcLastProcessedTime) below: LoadZonesForSymbol always
     // immediately repopulates the cleared lists from the DB in the same call, so the zone contents
     // stay correct either way — but nulling the cursors here would force the *live engine* (sharing
     // the same CryptoSymbolInterval objects) into a full historical rescan on its next tick just
@@ -112,20 +112,18 @@ public class CryptoSymbolData
     }
 
     /// <summary>
-    /// Forces every incremental zone-calculation cursor (FVG/SMC) back to "never run" so the next
-    /// call does a full historical rescan instead of continuing from where it left off. Call this for
-    /// a genuine forced recalculation: a fresh emulator run (<see cref="Emulator.Engine.EmulatorDb.ClearZonesForSymbols"/>)
-    /// or the chart's "Calculate" force-recalc button — NOT from the routine Reset*Data methods above,
-    /// which run on every chart open/symbol switch and must stay cheap for the live engine.
-    /// DLZ has no such cursor: it still fully recalculates from the ZigZag pivot list on every call
-    /// (see ZoneDlz.CalculateZonesAsync) — pivot/zone counts grow much more slowly than candle counts,
-    /// so this was judged not worth the extra complexity/risk (the ZigZag list is mutated in place by
-    /// ZigZagIndicator.OptimizeList, which makes a naive incremental cursor unsafe there).
+    /// Forces every incremental zone-calculation cursor (DLZ/FVG/SMC) back to "never run" so the
+    /// next call does a full historical rescan instead of continuing from where it left off. Call
+    /// this for a genuine forced recalculation: a fresh emulator run
+    /// (<see cref="Emulator.Engine.EmulatorDb.ClearZonesForSymbols"/>) or the chart's "Calculate"
+    /// force-recalc button — NOT from the routine Reset*Data methods above, which run on every
+    /// chart open/symbol switch and must stay cheap for the live engine.
     /// </summary>
     public void ResetZoneCalculationCursors()
     {
         foreach (CryptoSymbolInterval symbolInterval in SymbolIntervalList)
         {
+            symbolInterval.DlzLastProcessedTime = null;
             symbolInterval.FvgLastProcessedTime = null;
             symbolInterval.SmcLastProcessedTime = null;
         }

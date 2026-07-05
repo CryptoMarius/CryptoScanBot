@@ -79,62 +79,20 @@ public class SignalPrepare
                     {
                         Add(SignalPrepareKind.Indicator, intervalName);
                     }
-
-                    //// Combined DLZ strategies: also schedule zone recalculation on the DLZ intervals.
-                    //// Without this, StoRsiDlz / StobbDlz (values < DominantLevel) would fall through
-                    //// the plain-indicator branch and the zone worker would never be queued per candle.
-                    //if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiDlz ||
-                    //    strategyDef.Strategy == CryptoSignalStrategy.StobbDlz)
-                    //{
-                    //    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                    //    //{
-                    //    //    Add(SignalPrepareKind.Dlz, intervalName);
-                    //    //    Add(SignalPrepareKind.Indicator, "1m");
-                    //    //}
-                    //    Add(SignalPrepareKind.Indicator, "1m");
-                    //}
-
-                    //// Combined FVG strategies: same reasoning as above for FVG zones.
-                    //if (strategyDef.Strategy == CryptoSignalStrategy.StoRsiFvg ||
-                    //    strategyDef.Strategy == CryptoSignalStrategy.StobbFvg)
-                    //{
-                    //    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
-                    //    //{
-                    //    //    Add(SignalPrepareKind.Fvg, intervalName);
-                    //    //    Add(SignalPrepareKind.Indicator, "1m");
-                    //    //}
-                    //    Add(SignalPrepareKind.Indicator, "1m");
-                    //}
                 }
                 else if (strategyDef.Strategy == CryptoSignalStrategy.FairValueGap)
                 {
-                    // These are seperate intervals on which the FVG is calculated
-                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesFvg.IntervalList)
-                    //{
-                    //    Add(SignalPrepareKind.Fvg, intervalName);
-                    //    Add(SignalPrepareKind.Indicator, "1m");
-                    //}
                     Add(SignalPrepareKind.Indicator, "1m");
                 }
                 else if (strategyDef.Strategy == CryptoSignalStrategy.DominantLevel
                     || strategyDef.Strategy == CryptoSignalStrategy.DominantLevelNear)
                 {
-                    // These are seperate intervals on which the DLZ is calculated
-                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList)
-                    //{
-                    //    //Add(SignalPrepareKind.Dlz, intervalName);
-                    //}
                     Add(SignalPrepareKind.Indicator, "1m");
                 }
                 else if (strategyDef.Strategy == CryptoSignalStrategy.OrderBlock
                     || strategyDef.Strategy == CryptoSignalStrategy.OrderBlockRejection)
                 {
-                    // Separate intervals on which the SMC order blocks are calculated.
-                    //foreach (string intervalName in GlobalData.Settings.Signal.ZonesSmc.IntervalList)
-                    //{
-                    //    Add(SignalPrepareKind.Smc, intervalName);
                     Add(SignalPrepareKind.Indicator, "1m");
-                    //}
                 }
             }
         }
@@ -168,8 +126,7 @@ public class SignalPrepare
 
 
 
-    public static void Execute(CryptoSymbol symbol,
-        CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
+    public static void Execute(CryptoSymbol symbol, CryptoCandle lastCandle1m, CandleTime lastCandle1mCloseTime)
     {
         // Prepare all the indicators on the requested intervals
         // The indexList contains only the checked intervals for the normal strategies
@@ -225,7 +182,7 @@ public class SignalPrepare
                 if (lastCandle1mCloseTime % interval.Duration == 0)
                 {
                     long profFvgStart = Stopwatch.GetTimestamp();
-                    ZoneFvg.ScanForNew(symbol, interval, lastCandle1mCloseTime);
+                    ZoneFvg.Detect(symbol, interval, lastCandle1mCloseTime);
                     PipelineProfiler.RecordFvgInline(Stopwatch.GetTimestamp() - profFvgStart);
                 }
             }

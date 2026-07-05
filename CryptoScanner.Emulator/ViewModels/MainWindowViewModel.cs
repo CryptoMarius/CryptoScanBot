@@ -262,6 +262,8 @@ public partial class MainWindowViewModel : ObservableObject
                     // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
                     // WindowCalcWarmupCandles). The 1m window is large enough to cover every
                     // higher interval's warmup as well once BulkCalculateCandles derives them.
+                    // Zone depth (DLZ CandleCount) is NOT included here — PrepareSymbol loads
+                    // those candles per interval directly from the DB at their own resolution.
                     uint chartMarginMinutes1m = (uint)((ChartWindowViewModel.WindowMarginCandles
                         + ChartWindowViewModel.WindowCalcWarmupCandles) * interval1m.Duration);
                     uint warmupMinutes1m = Math.Max(IndicatorWarmup.ComputeWarmupMinutes(interval1m), chartMarginMinutes1m);

@@ -6,7 +6,7 @@ namespace CryptoScanner.Core.Context;
 public class Migration
 {
     // Latest and greatest database version
-    public readonly static int CurrentDatabaseVersion = 71;
+    public readonly static int CurrentDatabaseVersion = 72;
 
 
     private static void UpdateExchanges(CryptoDatabase database)
@@ -1439,6 +1439,26 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
             try { database.Connection.Execute("alter table Position add TpGridAnchorPrice Text null", transaction); } catch { } // ignore
+
+            // update version
+            version.Version += 1;
+            database.Connection.Update(version, transaction);
+            transaction.Commit();
+        }
+
+
+        //***********************************************************
+        // 05-07-2026 Persist zone touch/mitigation state and exchange-level zone checkpoint
+        // - Zone.TouchCount / IsMitigated: survive scanner restarts so the count is not lost
+        // - Exchange.LastZoneCheckTime: resume zone invalidation from this point instead of
+        //   doing a full historical rescan after restart
+        if (CurrentVersion > version.Version && version.Version == 71)
+        {
+            using var transaction = database.BeginTransaction();
+
+            try { database.Connection.Execute("alter table Exchange add LastZoneCheckTime TEXT NULL", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone add TouchCount INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Zone add IsMitigated INTEGER NOT NULL DEFAULT 0", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;

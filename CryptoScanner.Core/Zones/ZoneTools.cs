@@ -52,7 +52,8 @@ public class ZoneTools
 
                 // nothing important has changed, do not change the zone, skip..
                 if (zoneInDb.CloseTime == zone.CloseTime && zoneInDb.Description == zone.Description &&
-                    zoneInDb.IsValid == zone.IsValid && zoneInDb.Strength == zone.Strength)
+                    zoneInDb.IsValid == zone.IsValid && zoneInDb.Strength == zone.Strength &&
+                    zoneInDb.TouchCount == zone.TouchCount && zoneInDb.IsMitigated == zone.IsMitigated)
                 {
                     oldZones.Remove((zone.Side, zone.OpenTime, zone.Bottom, zone.Top));
                     dbStats.Untouched++;

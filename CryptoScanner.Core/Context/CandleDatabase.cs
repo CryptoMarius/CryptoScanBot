@@ -830,16 +830,17 @@ public class CandleDatabase : IDisposable
         CandleTime earliest = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
         bool any = false;
 
-        // Union of DLZ + FVG enabled intervals — these are the only ones the zone recalc
+        // Union of DLZ + FVG + SMC enabled intervals — these are the only ones the zone recalc
         // scans, so anything that opened before the earliest of their windows can never be
         // rediscovered as a pivot.
         foreach (var intervalName in GlobalData.Settings.Signal.ZonesDlz.IntervalList
-            .Concat(GlobalData.Settings.Signal.ZonesFvg.IntervalList))
+            .Concat(GlobalData.Settings.Signal.ZonesFvg.IntervalList)
+            .Concat(GlobalData.Settings.Signal.ZonesSmc.IntervalList))
         {
             if (!GlobalData.IntervalListPeriodName.TryGetValue(intervalName, out var interval))
                 continue;
 
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, interval, GlobalData.Clock.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStartForZones(symbol, interval, GlobalData.Clock.UtcNow);
             if (!any || start.Minutes < earliest.Minutes)
             {
                 earliest = start;
@@ -943,7 +944,7 @@ public class CandleDatabase : IDisposable
         //    buffer that candle still falls just outside on every midnight rollover.
         foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            CandleTime start = CandleTools.GetCandleFetchStart(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
+            CandleTime start = CandleTools.GetCandleFetchStartForZones(symbol, symbolInterval.Interval, GlobalData.Clock.UtcNow);
             uint duration = symbolInterval.Interval.Duration;
             if (duration > 1)
             {

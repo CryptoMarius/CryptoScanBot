@@ -77,6 +77,7 @@ public class CryptoDatabase : IDisposable
     }
 
 
+
     private static void CreateTableVersion(CryptoDatabase connection)
     {
         if (MissingTable(connection, "Version"))
@@ -228,7 +229,8 @@ public class CryptoDatabase : IDisposable
                  "Name TEXT not NULL," +
                  "FeeRate TEXT not NULL," +
                  "ExchangeType INTEGER not NULL," +
-                 "TradingType INTEGER not NULL" +
+                 "TradingType INTEGER not NULL," +
+                 "LastZoneCheckTime TEXT NULL" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxExchangeId ON Exchange(Id)");
             connection.Connection.Execute("CREATE INDEX IdxExchangeName ON Exchange(Name)");
@@ -779,6 +781,8 @@ public class CryptoDatabase : IDisposable
                 "CloseTime TEXT NULL," +
                 "Description TEXT NULL," +
                 "IsValid INTEGER not null," +
+                "TouchCount INTEGER NOT NULL DEFAULT 0," +
+                "IsMitigated INTEGER NOT NULL DEFAULT 0," +
                 "EmulatorRunId INTEGER NULL," +
                 "FOREIGN KEY(ExchangeId) REFERENCES Exchange(Id)," +
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)," +

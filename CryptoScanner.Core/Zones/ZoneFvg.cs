@@ -81,7 +81,7 @@ public class ZoneFvg
 
 
     // FVG (just a quick approach)
-    public static void ScanForNew(CryptoSymbol symbol, CryptoInterval interval, CandleTime lastCandle1mCloseTime)
+    public static void Detect(CryptoSymbol symbol, CryptoInterval interval, CandleTime lastCandle1mCloseTime)
     {
         // Non-blocking: skip if a full recalculation currently holds ZoneLock.
         // This prevents concurrent writes to the non-thread-safe OrderedList.
@@ -89,7 +89,7 @@ public class ZoneFvg
             return;
         try
         {
-            // GetSymbolData the last 3 candles
+            // We need the last 3 candles
             CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
             if (!symbolInterval.CandleList.TryGetValue(lastCandle1mCloseTime - 1 * interval.Duration, out CryptoCandle candle))

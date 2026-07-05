@@ -83,6 +83,18 @@ public class ZoneThreadCalculate
                     if (runFvg)
                         await ZoneFvg.CalculateZonesAsync(null, symbol, interval, loadedCandlesInMemory);
 
+                    // Advance the exchange-level zone checkpoint so restarts
+                    // only replay candles from this point forward.
+                    if (!GlobalData.IsEmulatorMode)
+                    {
+                        var exchange = symbol.Exchange;
+                        if (exchange.LastZoneCheckTime == null || maxDate > exchange.LastZoneCheckTime.Value)
+                        {
+                            exchange.LastZoneCheckTime = maxDate;
+                            GlobalData.ThreadSaveObjects!.AddToQueue(exchange);
+                        }
+                    }
+
                     // Notify the symbol grid so the Distance column for this row is re-read
                     // immediately, instead of waiting for the 15-second refresh tick.
                     // SendMvvmMessage posts to the UI thread internally, so calling it from

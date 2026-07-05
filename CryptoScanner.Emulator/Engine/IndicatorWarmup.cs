@@ -135,11 +135,17 @@ public static class IndicatorWarmup
 
         // Ascending order so an interval's ConstructFrom is already warmed when (rarely) we have to
         // synthesise a chain interval the DB does not contain.
+        var dlzSettings = GlobalData.Settings.Signal.ZonesDlz;
+
         foreach (CryptoInterval interval in GlobalData.IntervalList)
         {
             // Candles of EACH interval's own resolution to load before replayFrom: enough for SMA200
             // (200) plus a safety margin, and enough history to make a day/week bar meaningful.
-            CandleTime from = new(replayFrom.Minutes - 270 * interval.Duration);
+            // For DLZ-enabled intervals the zone depth (CandleCount) can be much larger.
+            int depth = 270;
+            if (dlzSettings.IntervalList.Contains(interval.Name) && dlzSettings.CandleCount > depth)
+                depth = dlzSettings.CandleCount;
+            CandleTime from = new(replayFrom.Minutes - (uint)depth * interval.Duration);
 
             //CandleTime lastWarmup = new(replayTo.Minutes);
             //if (interval.IntervalPeriod > CryptoIntervalPeriod.interval1m)
