@@ -39,12 +39,6 @@ public partial class MainWindowViewModel : ObservableObject
     private string _title = $"{Constants.AppName} {GlobalData.AppVersion} {GlobalData.ActiveExchange?.Name} — Emulator".Trim();
 
     [ObservableProperty]
-    private string _appVersion = GlobalData.AppVersion;
-
-    [ObservableProperty]
-    private string _appPath = GlobalData.AppPath;
-
-    [ObservableProperty]
     private string _dataFolder = GlobalData.AppDataFolder;
 
     [ObservableProperty]
@@ -52,6 +46,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private int _progressValue;
+
+    public string ProgressLabel => ProgressValue > 0 ? $"Progress: {ProgressValue}%" : "Progress:";
+
+    partial void OnProgressValueChanged(int value) => OnPropertyChanged(nameof(ProgressLabel));
 
     [ObservableProperty]
     private bool _isRunning;
@@ -894,10 +892,6 @@ public partial class MainWindowViewModel : ObservableObject
     {
         // The Progress<T> callback already marshals to the UI thread when constructed on the
         // UI thread; the explicit Post is defensive in case this VM ever runs in a worker.
-        Dispatcher.UIThread.Post(() =>
-        {
-            ProgressValue = p.Percent;
-            Status = $"{p.Percent}%";
-        });
+        Dispatcher.UIThread.Post(() => ProgressValue = p.Percent);
     }
 }

@@ -122,30 +122,21 @@
                                Text="Backtest replay over a dedicated data folder. Edit settings.json via Configure; symbols and dates via Run parameters."/>
                 </StackPanel>
 
-                <!-- ─── Paths (Version / App / Data folder) ───────────────────────────────── -->
-                <Grid Grid.Row="2" Margin="4,0,0,0" ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AppVersion}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="App path:"/>
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AppPath}" TextWrapping="Wrap"/>
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Data folder:"/>
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DataFolder}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                <!-- ─── Paths (Data folder) ────────────────────────────────────────────── -->
+                <Grid Grid.Row="2" Margin="4,0,0,0" ColumnDefinitions="120,*" RowDefinitions="Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Data folder:"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding DataFolder}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                 </Grid>
 
-                <!-- ─── Status panel (progress / symbol / status text) ────────────────────── -->
+                <!-- ─── Status panel (progress) ───────────────────────────────────────────── -->
                 <Border Grid.Row="3" BorderBrush="#808080" BorderThickness="1" Padding="10" CornerRadius="3">
-                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="100,*" RowSpacing="4">
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Progress:"/>
+                    <Grid RowDefinitions="Auto" ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding ProgressLabel}"/>
                         <ProgressBar Grid.Row="0" Grid.Column="1"
                                      Value="{Binding ProgressValue}"
                                      Maximum="100"
                                      Minimum="0"
                                      Height="14"/>
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Status:"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Status}" TextWrapping="Wrap"/>
                     </Grid>
                 </Border>
 
