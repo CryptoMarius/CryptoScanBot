@@ -1328,11 +1328,11 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            database.Connection.Execute("alter table Signal add TpPercentage Text null", transaction);
-            database.Connection.Execute("alter table Signal add SlPercentage Text null", transaction);
+            try { database.Connection.Execute("alter table Signal add TpPercentage Text null", transaction); }  catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlPercentage Text null", transaction); }  catch { } // ignore
 
-            database.Connection.Execute("alter table Position add TpPercentage Text null", transaction);
-            database.Connection.Execute("alter table Position add SlPercentage Text null", transaction);
+            try { database.Connection.Execute("alter table Position add TpPercentage Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Position add SlPercentage Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
@@ -1438,7 +1438,7 @@ public class Migration
         if (CurrentVersion > version.Version && version.Version == 70)
         {
             using var transaction = database.BeginTransaction();
-            database.Connection.Execute("alter table Position add TpGridAnchorPrice Text null", transaction);
+            try { database.Connection.Execute("alter table Position add TpGridAnchorPrice Text null", transaction); } catch { } // ignore
 
             // update version
             version.Version += 1;
