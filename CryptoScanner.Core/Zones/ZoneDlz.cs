@@ -708,6 +708,8 @@ public class ZoneDlz
                 {
                     // ── Incremental path: only process new pivots since the cursor ──
                     var cursor = symbolIntervalData.DlzLastProcessedTime;
+                    int openLongBefore = symbolIntervalData.DlzZones.LongOpen.Count;
+                    int openShortBefore = symbolIntervalData.DlzZones.ShortOpen.Count;
                     await CalculateDlzAsync(sender, symbol, interval, trendZigZagIndicator, loadedCandlesInMemory,
                         processAfter: cursor);
                     CalculateIntroZone(symbol, interval, trendZigZagIndicator, afterTime: cursor);
@@ -717,6 +719,7 @@ public class ZoneDlz
                     CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones,
                         afterTime: cursor);
 
+                    int weakNew = newZones.Count(z => z.Strength == CryptoZoneStrength.Weak);
                     if (newZones.Count > 0)
                     {
                         DatabaseStatistics statistics = new();
@@ -741,6 +744,12 @@ public class ZoneDlz
                         if (zone.Id > 0)
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
                     }
+
+                    int brokenCount = modifiedZones.Count(z => z.CloseTime != null);
+                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} incremental: " +
+                        $"pivots={trendZigZagIndicator.ZigZagList.Count}, newZones={newZones.Count} (weak={weakNew}), " +
+                        $"broken={brokenCount}, open long {openLongBefore}→{symbolIntervalData.DlzZones.LongOpen.Count}, " +
+                        $"open short {openShortBefore}→{symbolIntervalData.DlzZones.ShortOpen.Count}");
                 }
                 else
                 {
@@ -760,6 +769,12 @@ public class ZoneDlz
                     List<CryptoZone> newZones = [];
                     CreateZonesFromZigZag(symbol, interval, trendZigZagIndicator.ZigZagList, newZones);
 
+                    int dominantPivots = trendZigZagIndicator.ZigZagList.Count(z => z.Dominant && !z.Dummy);
+                    int totalCreated = newZones.Count;
+                    int weakCreated = newZones.Count(z => z.Strength == CryptoZoneStrength.Weak);
+                    int openLongCreated = newZones.Count(z => z.Side == CryptoTradeSide.Long && z.CloseTime == null);
+                    int openShortCreated = newZones.Count(z => z.Side == CryptoTradeSide.Short && z.CloseTime == null);
+
                     // Sorted temp object for broken-zone detection — still local, not the live reference
                     CryptoSymbolIntervalZones tempZones = new();
                     foreach (var zone in newZones)
@@ -768,6 +783,9 @@ public class ZoneDlz
                     // Check broken zones before DB comparison so CloseTime is set correctly on zone objects
                     CheckAndMarkBrokenZones(interval, symbolIntervalData.CandleList, tempZones);
 
+                    int survivedLong = tempZones.LongOpen.Count;
+                    int survivedShort = tempZones.ShortOpen.Count;
+
                     // Merge with DB state into a fresh object, then atomically replace the live reference.
                     // Other threads always see either the old complete object or the new complete one —
                     // never a half-built list (which was the source of null holes in OrderedList).
@@ -775,6 +793,13 @@ public class ZoneDlz
                     ZoneTools.AddZonesToInternalLists(finalZones, oldZones, newZones, statistics);
                     ZoneTools.DeleteRemainingZones(oldZones, statistics);
                     symbolIntervalData.DlzZones = finalZones;
+
+                    GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} full scan: " +
+                        $"zigzag pivots={trendZigZagIndicator.ZigZagList.Count}, dominant={dominantPivots}, " +
+                        $"zones created={totalCreated} (weak={weakCreated}), " +
+                        $"open created long={openLongCreated} short={openShortCreated}, " +
+                        $"survived broken-check long={survivedLong} short={survivedShort}, " +
+                        $"final open long={finalZones.LongOpen.Count} short={finalZones.ShortOpen.Count}");
 
                     if (statistics.Untouched != statistics.Total)
                     {

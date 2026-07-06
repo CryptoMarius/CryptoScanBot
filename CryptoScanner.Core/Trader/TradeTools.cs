@@ -761,22 +761,31 @@ public class TradeTools
         {
             if (!position.HasOrdersAndTradesLoaded)
             {
-                //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
-                //ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
+                // In emulator/paper mode all orders+trades are added in-memory by CreatePaperTrade,
+                // so skip the expensive DB round-trip (queries all orders for the symbol — up to 20k rows).
+                if (GlobalData.IsEmulatorMode)
+                {
+                    position.HasOrdersAndTradesLoaded = true;
+                }
+                else
+                {
+                    //GlobalData.AddTextToLogTab($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
+                    //ScannerLog.Logger.Trace($"TradeTools.LoadOrdersFromDatabaseAndExchangeAsync: Position {position.Symbol.Name} loading orders and trades from database {position.CreateTime}");
 
-                // Vanwege tijd afrondingen (msec)
-                DateTime from = position.CreateTime.AddMinutes(-1);
+                    // Vanwege tijd afrondingen (msec)
+                    DateTime from = position.CreateTime.AddMinutes(-1);
 
-                // Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
-                string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate order by CreateTime";
-                foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from }))
-                    position.OrderList.AddOrder(order, false);
+                    // Bij het laden zijn niet alle trades in het geheugen ingelezen, dus deze alsnog inladen (of verversen)
+                    string sql = "select * from [order] where SymbolId=@symbolId and CreateTime >= @fromDate order by CreateTime";
+                    foreach (CryptoOrder order in database.Connection.Query<CryptoOrder>(sql, new { symbolId = position.SymbolId, fromDate = from }))
+                        position.OrderList.AddOrder(order, false);
 
-                sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate order by TradeTime";
-                foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from }))
-                    position.TradeList.AddTrade(trade, false);
+                    sql = "select * from [trade] where SymbolId=@symbolId and TradeTime >= @fromDate order by TradeTime";
+                    foreach (CryptoTrade trade in database.Connection.Query<CryptoTrade>(sql, new { symbolId = position.SymbolId, fromDate = from }))
+                        position.TradeList.AddTrade(trade, false);
 
-                position.HasOrdersAndTradesLoaded = true;
+                    position.HasOrdersAndTradesLoaded = true;
+                }
             }
 
             // Daarna de "nieuwe" orders van deze coin ophalen en die toegevoegen aan dezelfde orderlist

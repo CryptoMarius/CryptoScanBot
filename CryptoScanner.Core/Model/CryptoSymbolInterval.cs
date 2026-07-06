@@ -77,6 +77,7 @@ public class CryptoSymbolInterval
     // For the new QuoteHub from Dave Skender — incremental indicator state (see IntervalIndicatorHub).
     public IntervalIndicatorHub? IndicatorHub = null;
     public CandleTime? IndicatorHubLastAdded = null;
+    public int IndicatorHubAddCount = 0;
     public SortedDictionary<CandleTime, CryptoData> Data = [];
 
 

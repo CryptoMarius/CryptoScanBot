@@ -37,6 +37,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                         {
                             zone.CloseTime = CandleLast.Candle.OpenTime;
                             GlobalData.ThreadSaveObjects!.AddToQueue(zone);
+                            GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone BROKEN (price below): {zone.Description} {zone.Bottom}..{zone.Top}");
                             GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                         }
                         else
@@ -47,7 +48,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                                 zone.CloseTime = CandleLast.Candle.OpenTime;
                                 if (GlobalData.Settings.Signal.ZonesDlz.ZoneStartApply && zone.Strength == CryptoZoneStrength.Weak)
                                 {
-                                    // nothing
+                                    GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone TOUCHED but WEAK (no signal): {zone.Description} {zone.Bottom}..{zone.Top}");
                                 }
                                 else
                                 {
@@ -55,6 +56,7 @@ public class SignalDominantLevelLong : SignalCreateBase
                                     Interval = interval; // Report different interval back
                                     zone.AlarmDate = CandleLast.Candle.OpenTime;
                                     ExtraText = $"{zone.Description} {zone.Bottom} .. {zone.Top}";
+                                    GlobalData.AddTextToLogTab($"DLZ diag {Symbol.Name} long zone SIGNAL: {zone.Description} {zone.Bottom}..{zone.Top}, price low={CandleLast.Candle.Low}");
                                     GlobalData.AddTextToLogTab($"{zone.ZoneText("Closed dlz zone")}");
                                 }
                                 GlobalData.ThreadSaveObjects!.AddToQueue(zone);

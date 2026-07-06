@@ -64,6 +64,13 @@ public static class PipelineProfiler
     public static long FvgInlineTicks;
     public static long SmcInlineTicks;
 
+    // Sub-breakdown of the hub incremental path (PrepareViaHub non-warmup).
+    public static long HubAddTicks;
+    public static long HubBuildTicks;
+    public static long HubDataInsertTicks;
+    public static long HubApplyLuxTicks;
+    public static long HubIncrementalCalls;
+
     // Sub-breakdown of the TrendTicks carve-out, accumulated inside MarketTrend.CalculateMarketTrendAsync
     // / TrendCalculator.CalculateBothAsync / TrendTools.AddCandlesToIndicatorsAsync. Tells us whether the
     // dominant trend cost is the per-symbol lock wait, the candle ingestion into the ZigZag indicator
@@ -153,6 +160,12 @@ public static class PipelineProfiler
         SeEvaluations = 0;
         SeSignals = 0;
 
+        HubAddTicks = 0;
+        HubBuildTicks = 0;
+        HubDataInsertTicks = 0;
+        HubApplyLuxTicks = 0;
+        HubIncrementalCalls = 0;
+
         TrendTicks = 0;
         TrendCalls = 0;
         FvgInlineTicks = 0;
@@ -219,6 +232,18 @@ public static class PipelineProfiler
         if (!Enabled)
             return;
         Interlocked.Add(ref PrepCollectTicks, collect);
+    }
+
+    /// <summary>Adds one hub incremental call's sub-phase ticks.</summary>
+    public static void RecordHubIncremental(long hubAdd, long hubBuild, long dataInsert, long applyLux)
+    {
+        if (!Enabled)
+            return;
+        Interlocked.Add(ref HubAddTicks, hubAdd);
+        Interlocked.Add(ref HubBuildTicks, hubBuild);
+        Interlocked.Add(ref HubDataInsertTicks, dataInsert);
+        Interlocked.Add(ref HubApplyLuxTicks, applyLux);
+        Interlocked.Increment(ref HubIncrementalCalls);
     }
 
     /// <summary>Adds the Skender / fill-loop / Lux sub-buckets of the indicator phase.</summary>

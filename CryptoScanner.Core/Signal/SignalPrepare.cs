@@ -162,6 +162,11 @@ public class SignalPrepare
                     if (symbolInterval.DlzAdmin.LastSwingLow == null || valueLow < symbolInterval.DlzAdmin.LastSwingLow ||
                        symbolInterval.DlzAdmin.LastSwingHigh == null || valueHigh > symbolInterval.DlzAdmin.LastSwingHigh)
                     {
+                        var dlzZones = symbolInterval.DlzZones;
+                        GlobalData.AddTextToLogTab($"DLZ diag {symbol.Name} {interval.Name} recalc triggered " +
+                            $"(swingLow {symbolInterval.DlzAdmin.LastSwingLow}→{valueLow}, " +
+                            $"swingHigh {symbolInterval.DlzAdmin.LastSwingHigh}→{valueHigh}) " +
+                            $"open zones before: long={dlzZones.LongOpen.Count} short={dlzZones.ShortOpen.Count}");
                         // avoid duplicate calculation (kind of a weak attemp)
                         symbolInterval.DlzAdmin.LastSwingLow = valueLow;
                         symbolInterval.DlzAdmin.LastSwingHigh = valueHigh;

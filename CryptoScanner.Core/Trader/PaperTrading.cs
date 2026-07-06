@@ -129,6 +129,10 @@ public class PaperTrading
         database.Connection.Insert<CryptoTrade>(trade);
         position.TradeList.AddTrade(trade);
 
+        // In paper/emulator mode all orders+trades are created in-memory above, so
+        // skip the expensive DB reload in CalculatePositionResultsViaOrders.
+        position.HasOrdersAndTradesLoaded = true;
+
         ScannerLog.Logger.Trace($"{position.Symbol.Name} created papertrade order id={order.Id} and trade={trade.Id} for orderid={order.OrderId}");
         //ScannerLog.Logger.Debug($"{position.Symbol.Name} Debug candle {lastCandle1m.OhlcText(position.Symbol, GlobalData.IntervalList[0], position.Symbol.PriceDisplayFormat, true, true, true)}");
 

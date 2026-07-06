@@ -77,6 +77,15 @@ public static class IndicatorEngine
     private static bool PrepareViaHub(CryptoSymbol symbol, CryptoInterval interval,
         CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
     {
+        // Force periodic re-warmup before Skender cache hits MaxCacheSize (100k).
+        // preview.3.1 uses List<T>.RemoveRange(0,1) = O(n) once pruning starts → O(n²) cascade.
+        const int maxHubAddsBeforeRewarmup = 80_000;
+        if (symbolInterval.IndicatorHubAddCount >= maxHubAddsBeforeRewarmup)
+        {
+            symbolInterval.IndicatorHub = null;
+            symbolInterval.IndicatorHubAddCount = 0;
+        }
+
         bool warmup = symbolInterval.IndicatorHub == null
             || symbolInterval.IndicatorHubLastAdded == null
             || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime;
@@ -99,15 +108,29 @@ public static class IndicatorEngine
             }
             symbolInterval.IndicatorHub = hub;
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
+            symbolInterval.IndicatorHubAddCount = history.Count;
         }
         else
         {
             if (!symbolInterval.CandleList.TryGetValue(candleOpenTime, out CryptoCandle candle))
                 return false;
+
+            long t0 = Stopwatch.GetTimestamp();
             symbolInterval.IndicatorHub!.Add(candle);
+            long t1 = Stopwatch.GetTimestamp();
+            CryptoData built = symbolInterval.IndicatorHub.BuildCurrent();
+            long t2 = Stopwatch.GetTimestamp();
             lock (symbolInterval.Data)
-                symbolInterval.Data[candleOpenTime] = symbolInterval.IndicatorHub.BuildCurrent();
+                symbolInterval.Data[candleOpenTime] = built;
+            long t3 = Stopwatch.GetTimestamp();
             symbolInterval.IndicatorHubLastAdded = candleOpenTime;
+            symbolInterval.IndicatorHubAddCount++;
+
+            ApplyLux(symbol, symbolInterval, candleOpenTime);
+            long t4 = Stopwatch.GetTimestamp();
+
+            PipelineProfiler.RecordHubIncremental(t1 - t0, t2 - t1, t3 - t2, t4 - t3);
+            return true;
         }
 
         ApplyLux(symbol, symbolInterval, candleOpenTime);
