@@ -211,6 +211,25 @@ public partial class RunResultsView : UserControl
     }
 
 
+    private async void OnShowEmulatorConfigClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+
+        string path = RunConfigFile.FilePath;
+        if (!System.IO.File.Exists(path))
+        {
+            if (DataContext is RunResultsViewModel vm)
+                vm.Status = $"{RunConfigFile.FileName} not found.";
+            return;
+        }
+
+        string json = System.IO.File.ReadAllText(path);
+        var window = new RunJsonWindow(RunConfigFile.FileName, json);
+        await window.ShowDialog(owner);
+    }
+
+
     private void OnExportSettingsClick(object? sender, RoutedEventArgs e)
     {
         List<RunRow> rows = RunsGrid.SelectedItems.OfType<RunRow>().ToList();
@@ -265,7 +284,7 @@ public partial class RunResultsView : UserControl
         var sb = new System.Text.StringBuilder();
 
         // Header row — same order and names as the grid columns.
-        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested");
+        sb.AppendLine("Id\tLabel\tPeriod\tStarted\tFinished\tDuration\tResult\tSignals\tPositions\tOpen\tWon\tLost\tTimeout\tWin%\tProfit\tProfit%\tInvested\tAvg dur.\tMin dur.\tMax dur.");
 
         foreach (RunRow r in rows)
         {
@@ -285,7 +304,10 @@ public partial class RunResultsView : UserControl
             sb.Append(r.WinPercentage).Append('\t');
             sb.Append(r.Profit).Append('\t');
             sb.Append(r.ProfitPercentage).Append('\t');
-            sb.AppendLine(r.Invested.ToString());
+            sb.Append(r.Invested).Append('\t');
+            sb.Append(r.AvgDurationText).Append('\t');
+            sb.Append(r.MinDurationText).Append('\t');
+            sb.AppendLine(r.MaxDurationText);
         }
 
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)

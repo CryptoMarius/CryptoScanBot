@@ -51,8 +51,8 @@
                                       Command="{Binding RunAllAlgorithmsCommand}"
                                       CommandParameter="{Binding $parent[Window]}"
                                       IsEnabled="{Binding !IsRunning}"/>
-                            <MenuItem Header="Run SL/DCA sweep"
-                                      Command="{Binding RunParameterSweepCommand}"
+                            <MenuItem Header="Run queue..."
+                                      Command="{Binding RunQueueCommand}"
                                       CommandParameter="{Binding $parent[Window]}"
                                       IsEnabled="{Binding !IsRunning}"/>
                             <MenuItem Header="Stop"
@@ -103,11 +103,11 @@
                                 CommandParameter="{Binding $parent[Window]}"
                                 IsVisible="{Binding !IsRunning}"
                                 ToolTip.Tip="Pick which algorithms to run, one by one (long+short) with the symbols/period from CryptoScanBot-Emulator.json. Each algorithm gets its own EmulatorRun row labelled with its name."/>
-                        <Button Content="Run SL/DCA sweep"
-                                Command="{Binding RunParameterSweepCommand}"
+                        <Button Content="Run queue..."
+                                Command="{Binding RunQueueCommand}"
                                 CommandParameter="{Binding $parent[Window]}"
                                 IsVisible="{Binding !IsRunning}"
-                                ToolTip.Tip="Pick algorithms, then runs every (algorithm x SL% x DCA) combination unattended. Each combination gets its own EmulatorRun row, labelled e.g. 'NWE sl3%-dca1'."/>
+                                ToolTip.Tip="Pick algorithms, then runs each entry from CryptoScanBot-Emulator-Queue.json per algorithm. Each entry has its own SL%, TP and DCA — no matrix. Symbols and period come from the regular run config."/>
                         <Button Content="Stop"
                                 Command="{Binding StopCommand}"
                                 IsVisible="{Binding IsRunning}"

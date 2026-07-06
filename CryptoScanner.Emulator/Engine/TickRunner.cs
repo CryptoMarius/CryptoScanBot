@@ -68,6 +68,11 @@ public sealed class TickRunner
     // is overhead that lives entirely outside the loop (startup/shutdown bookkeeping, etc.).
     private long elapsedOuterLoop;
 
+    // Per-decile (0-9% .. 90-99%) wall-clock buckets to pinpoint where the run slows down.
+    private readonly long[] decileWallTicks = new long[10];
+    private int lastDecile = -1;
+    private long decileStart;
+
 
     private static void ReceivedCreatedSignals(CryptoSignal signal)
     {
@@ -193,12 +198,27 @@ public sealed class TickRunner
                     Progress?.Report(new TickRunProgress(percent));
                 }
 
+                // Track wall-clock per decile (0-9%, 10-19%, ... 90-99%)
+                int decile = Math.Min(percent / 10, 9);
+                if (decile != lastDecile)
+                {
+                    long now = Stopwatch.GetTimestamp();
+                    if (lastDecile >= 0)
+                        decileWallTicks[lastDecile] += now - decileStart;
+                    lastDecile = decile;
+                    decileStart = now;
+                }
+
                 elapsedOuterLoop += Stopwatch.GetTimestamp() - iterStart;
             }
 
             // Final progress report so the bar lands on 100% / the exact processed count even when
             // the last batch didn't hit the 256-bar boundary.
             Progress?.Report(new TickRunProgress(100));
+
+            // Close out the last decile bucket
+            if (lastDecile >= 0)
+                decileWallTicks[lastDecile] += Stopwatch.GetTimestamp() - decileStart;
         }
         finally
         {
@@ -437,6 +457,28 @@ public sealed class TickRunner
                 $"Database total — {dbTotal:F1}s across the run | " +
                 $"flush {dbFlushMeasured:F1}s, loadOrders {posLoad:F1}s, persist {posPersist:F1}s");
         }
+
+        // Hub incremental sub-breakdown (the part of SignalPrepare that runs every candle in hub mode)
+        double hubAdd = Seconds(PipelineProfiler.HubAddTicks);
+        double hubBuild = Seconds(PipelineProfiler.HubBuildTicks);
+        double hubDataInsert = Seconds(PipelineProfiler.HubDataInsertTicks);
+        double hubApplyLux = Seconds(PipelineProfiler.HubApplyLuxTicks);
+        double hubTotal = hubAdd + hubBuild + hubDataInsert + hubApplyLux;
+        if (hubTotal > 0)
+        {
+            GlobalData.AddTextToLogTab(
+                $"Hub incremental — {hubTotal:F1}s over {PipelineProfiler.HubIncrementalCalls} call(s) | " +
+                $"hubAdd {hubAdd:F1}s ({hubAdd / hubTotal:P0}), " +
+                $"buildCurrent {hubBuild:F1}s ({hubBuild / hubTotal:P0}), " +
+                $"dataInsert {hubDataInsert:F1}s ({hubDataInsert / hubTotal:P0}), " +
+                $"applyLux {hubApplyLux:F1}s ({hubApplyLux / hubTotal:P0})");
+        }
+
+        // Per-decile wall-clock breakdown — shows where the run slows down
+        var decileParts = new string[10];
+        for (int i = 0; i < 10; i++)
+            decileParts[i] = $"{i * 10}-{i * 10 + 9}%:{Seconds(decileWallTicks[i]):F1}s";
+        GlobalData.AddTextToLogTab($"Decile wall-clock — {string.Join(", ", decileParts)}");
     }
 
 

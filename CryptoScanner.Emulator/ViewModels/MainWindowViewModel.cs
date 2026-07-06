@@ -529,16 +529,17 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
+
+
     /// <summary>
-    /// Overnight parameter sweep: shows the algorithm-selection dialog (same as Run algorithms…),
-    /// then runs every (algorithm × stop-loss % × DCA variant) combination one by one, each as
-    /// its own EmulatorRun row. The arrays below are the only thing to edit when you want a
-    /// different sweep — there is no UI for this on purpose; the scanner already has too many
-    /// parameters to expose all of them per-run. Each run is labelled
-    /// "{algorithm} sl{x}%-dca{n} {rest}", so the Results tab is enough to compare them afterwards.
+    /// Runs every entry in the queue file (<c>CryptoScanBot-Emulator-Queue.json</c>) as a separate
+    /// emulator run, per selected algorithm. Each entry supplies its own SL%, TP list and DCA ladder
+    /// — no matrix explosion. Symbols, period and exchange come from the regular
+    /// <c>CryptoScanBot-Emulator.json</c>. The algorithm selection dialog is shown up front so
+    /// the user picks once and the full (algorithm × queue) batch runs unattended.
     /// </summary>
     [RelayCommand]
-    private async Task RunParameterSweepAsync(Window? owner)
+    private async Task RunQueueAsync(Window? owner)
     {
         if (IsRunning)
             return;
@@ -554,6 +555,29 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
+        if (baseConfig.Symbols.Count == 0)
+        {
+            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
+            return;
+        }
+
+        List<EmulatorQueueEntry> queue;
+        try
+        {
+            queue = EmulatorQueueFile.Load();
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed to read queue file: {ex.Message}";
+            return;
+        }
+
+        if (queue.Count == 0)
+        {
+            Status = $"Queue is empty — add entries to {EmulatorQueueFile.FileName}.";
+            return;
+        }
+
         var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
         bool confirmed = owner != null
             ? await selectionWindow.ShowDialog<bool>(owner)
@@ -562,8 +586,6 @@ public partial class MainWindowViewModel : ObservableObject
         if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
             return;
 
-        // Persist the chosen subset so the next dialog restores it (only the selection is updated;
-        // symbols/period/label on disk stay untouched).
         baseConfig.SelectedAlgorithms = selectedNames;
         try
         {
@@ -578,12 +600,6 @@ public partial class MainWindowViewModel : ObservableObject
             .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
             .ToList();
 
-        if (baseConfig.Symbols.Count == 0)
-        {
-            Status = "Run config has no symbols — edit CryptoScanBot-Emulator.json first.";
-            return;
-        }
-
         if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
         {
             Status = "Run needs an exchange";
@@ -594,20 +610,17 @@ public partial class MainWindowViewModel : ObservableObject
         GlobalData.Settings.General.ExchangeName = baseConfig.ExchangeName;
         GlobalData.Settings.General.ActivateExchangeName = baseConfig.ExchangeName;
 
-        string[] labelParts = baseConfig.Label.Split(' ', 2, StringSplitOptions.None);
-        string labelRest = labelParts.Length > 1 ? labelParts[1] : "";
-
-        // Snapshot every setting this sweep overrides (strategy lists + SL%/DCA) so the run values
-        // never leak past the batch. Without the restore the in-memory Settings would keep the LAST
-        // combination, which a later plain Start — or a Configure→Save — would then use/persist
-        // instead of the user's real configuration.
         List<string> savedSignalLongStrategy = GlobalData.Settings.Signal.Long.Strategy;
         List<string> savedSignalShortStrategy = GlobalData.Settings.Signal.Short.Strategy;
         List<string> savedTradingLongStrategy = GlobalData.Settings.Trading.Long.Strategy;
         List<string> savedTradingShortStrategy = GlobalData.Settings.Trading.Short.Strategy;
         decimal savedStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage;
         decimal savedStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage;
+        List<CryptoTpEntry> savedTpList = GlobalData.Settings.Trading.TpList;
         List<CryptoDcaEntry> savedDcaList = GlobalData.Settings.Trading.DcaList;
+
+        int totalRuns = selectedAlgorithms.Count * queue.Count;
+        int runIndex = 0;
 
         IsRunning = true;
         try
@@ -619,55 +632,51 @@ public partial class MainWindowViewModel : ObservableObject
                 GlobalData.Settings.Trading.Long.Strategy = [algorithm.Name];
                 GlobalData.Settings.Trading.Short.Strategy = [algorithm.Name];
 
-                foreach (decimal stopLoss in baseConfig.StopLossPercentages)
+                for (int i = 0; i < queue.Count; i++)
                 {
-                    for (int dcaIndex = 0; dcaIndex < baseConfig.DcaVariants.Count; dcaIndex++)
-                    {
-                        List<CryptoDcaEntry> dcaVariant = baseConfig.DcaVariants[dcaIndex];
+                    runIndex++;
+                    EmulatorQueueEntry entry = queue[i];
 
-                        GlobalData.Settings.Trading.StopLossPercentage = stopLoss;
-                        // The limit percentage must stay strictly greater than the stop percentage
-                        // (see PositionMonitor.CalculateSlPrices), otherwise CalculateSlPrices throws
-                        // on every candle. Mirror the 1% buffer the signal-SL branch uses.
-                        GlobalData.Settings.Trading.StopLossLimitPercentage = stopLoss + 1m;
-                        // Clone the variant so each run's settings snapshot has its own list
-                        // instance, never a shared reference into the array above.
-                        GlobalData.Settings.Trading.DcaList = dcaVariant
-                            .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
+                    GlobalData.Settings.Trading.StopLossPercentage = entry.StopLossPercentage;
+                    GlobalData.Settings.Trading.StopLossLimitPercentage = entry.StopLossPercentage + 1m;
+
+                    if (entry.TpList.Count > 0)
+                        GlobalData.Settings.Trading.TpList = entry.TpList
+                            .Select(e => new CryptoTpEntry { Factor = e.Factor, Percentage = e.Percentage })
                             .ToList();
 
-                        string dcaLabel = dcaVariant.Count == 0
-                            ? "geen dca"
-                            : "dca" + string.Join("_", dcaVariant.Select(e => $"{e.Percentage}%({e.Factor}%)"));
-                        string paramSuffix = $"sl{stopLoss}% {dcaLabel}";
-                        string baseLabel = labelRest.Length > 0
-                            ? $"{algorithm.Name} {labelRest} {paramSuffix}"
-                            : $"{algorithm.Name} {paramSuffix}";
-                        EmulatorRunConfig sweepConfig = new()
-                        {
-                            ExchangeName = baseConfig.ExchangeName,
-                            Symbols = baseConfig.Symbols,
-                            FromDate = baseConfig.FromDate,
-                            ToDate = baseConfig.ToDate,
-                            Label = baseLabel,
-                        };
+                    GlobalData.Settings.Trading.DcaList = entry.DcaList
+                        .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
+                        .ToList();
 
-                        bool completed = await RunOnceAsync(sweepConfig);
-                        if (!completed)
-                            return; // Stop was pressed (or the run failed) — abandon the rest of the sweep.
-                    }
+                    string entryLabel = !string.IsNullOrWhiteSpace(entry.Label) ? entry.Label : $"queue-{i + 1}";
+                    string runLabel = $"{algorithm.Name} {entryLabel}";
+
+                    EmulatorRunConfig runConfig = new()
+                    {
+                        ExchangeName = baseConfig.ExchangeName,
+                        Symbols = baseConfig.Symbols,
+                        FromDate = baseConfig.FromDate,
+                        ToDate = baseConfig.ToDate,
+                        Label = runLabel,
+                    };
+
+                    Status = $"Queue {runIndex}/{totalRuns}: {algorithm.Name} — {entryLabel}";
+                    bool completed = await RunOnceAsync(runConfig);
+                    if (!completed)
+                        return;
                 }
             }
         }
         finally
         {
-            // Restore the user's configured strategy lists + SL%/DCA — the sweep overrides were transient.
             GlobalData.Settings.Signal.Long.Strategy = savedSignalLongStrategy;
             GlobalData.Settings.Signal.Short.Strategy = savedSignalShortStrategy;
             GlobalData.Settings.Trading.Long.Strategy = savedTradingLongStrategy;
             GlobalData.Settings.Trading.Short.Strategy = savedTradingShortStrategy;
             GlobalData.Settings.Trading.StopLossPercentage = savedStopLossPercentage;
             GlobalData.Settings.Trading.StopLossLimitPercentage = savedStopLossLimitPercentage;
+            GlobalData.Settings.Trading.TpList = savedTpList;
             GlobalData.Settings.Trading.DcaList = savedDcaList;
             IsRunning = false;
         }
@@ -676,9 +685,8 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Drives a single replay end-to-end: applies the run overrides, opens an EmulatorRun row,
-    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run),
-    /// <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) and
-    /// <see cref="RunParameterSweepAsync"/> (one run per SL%/DCA combination) — neither touches
+    /// runs the TickRunner and records the outcome. Shared by <see cref="StartAsync"/> (one run)
+    /// and <see cref="RunAllAlgorithmsAsync"/> (one run per algorithm) — neither touches
     /// <see cref="IsRunning"/> here, that's the caller's responsibility since the batch commands
     /// keep it true across multiple calls.
     /// </summary>

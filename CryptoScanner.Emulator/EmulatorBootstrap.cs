@@ -29,6 +29,12 @@ public static class EmulatorBootstrap
         GlobalData.LoadConfiguration();          // settings.json + telegram + altrady + weblinks
         PickupExchangeFromParameter();
 
+        // Wire the persistence queue early so it is available from the very first signal or zone
+        // operation. ApplyRunOverrides also does ??= but that runs only once the user starts a run;
+        // code that fires earlier (e.g. zone calculation triggered during candle load) would see null
+        // and silently swallow the NullReferenceException inside the per-signal try/catch.
+        GlobalData.ThreadSaveObjects ??= new ThreadSaveObjects();
+
         // Setup dialog override wins over everything (settings.json AND -e argument), because
         // the user explicitly picked this exchange for this session in the wizard.
         if (!string.IsNullOrEmpty(exchangeOverride))

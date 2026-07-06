@@ -50,6 +50,12 @@ public class RunRow
     // written before this column existed; Dapper maps a NULL to 0 for a non-nullable decimal.
     public decimal Invested { get; set; }
 
+    // Position duration stats (in seconds) computed via subquery on the Position table. Nullable
+    // because a run with zero closed positions has no durations to aggregate.
+    public double? AvgDurationSec { get; set; }
+    public double? MinDurationSec { get; set; }
+    public double? MaxDurationSec { get; set; }
+
     /// <summary>
     /// Total return as a percentage of the invested capital (100 * Profit / Invested). Returns 0
     /// when nothing was invested (e.g. a run with no closed positions, or a legacy run without the
@@ -79,6 +85,20 @@ public class RunRow
     public string ProfitPercentageText => ProfitPercentage.ToString("N2") + "%";
     public string WinPercentageText => WinPercentage.ToString("N2") + "%";
     public string InvestedText => Invested.ToString("N2");
+
+    public string AvgDurationText => FormatDuration(AvgDurationSec);
+    public string MinDurationText => FormatDuration(MinDurationSec);
+    public string MaxDurationText => FormatDuration(MaxDurationSec);
+
+    private static string FormatDuration(double? seconds)
+    {
+        if (seconds == null)
+            return "—";
+        var span = TimeSpan.FromSeconds(seconds.Value);
+        return span.Days > 0
+            ? span.ToString(@"d\.hh\:mm\:ss")
+            : span.ToString(@"hh\:mm\:ss");
+    }
 
     // StartedAt/FinishedAt are stored as UTC (DateTime.UtcNow in EmulatorDb), but SQLite/Dapper
     // hands them back with Kind=Unspecified. SpecifyKind(..., Utc) tags them correctly so
@@ -218,9 +238,16 @@ public partial class RunResultsViewModel : ObservableObject
         using var database = new CryptoDatabase();
         database.Open();
         return database.Connection.QueryFirstOrDefault<RunRow>(
-            "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
-            "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, PositionsTimeout, Profit, Invested " +
-            "FROM EmulatorRun WHERE Id = @runId",
+            "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
+            "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
+            "       d.AvgDurationSec, d.MinDurationSec, d.MaxDurationSec " +
+            "FROM EmulatorRun r " +
+            "LEFT JOIN (SELECT EmulatorRunId, " +
+            "           AVG((julianday(CloseTime) - julianday(CreateTime)) * 86400) as AvgDurationSec, " +
+            "           MIN((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MinDurationSec, " +
+            "           MAX((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MaxDurationSec " +
+            "           FROM Position WHERE CloseTime IS NOT NULL GROUP BY EmulatorRunId) d ON d.EmulatorRunId = r.Id " +
+            "WHERE r.Id = @runId",
             new { runId });
     }
 
@@ -241,9 +268,16 @@ public partial class RunResultsViewModel : ObservableObject
             database.Open();
 
             var rows = database.Connection.Query<RunRow>(
-                "SELECT Id, StartedAt, FinishedAt, Label, FromDate, ToDate, Result, " +
-                "       SignalCount, PositionCount, PositionsOpen, PositionsWon, PositionsLost, PositionsTimeout, Profit, Invested " +
-                "FROM EmulatorRun ORDER BY StartedAt DESC");
+                "SELECT r.Id, r.StartedAt, r.FinishedAt, r.Label, r.FromDate, r.ToDate, r.Result, " +
+                "       r.SignalCount, r.PositionCount, r.PositionsOpen, r.PositionsWon, r.PositionsLost, r.PositionsTimeout, r.Profit, r.Invested, " +
+                "       d.AvgDurationSec, d.MinDurationSec, d.MaxDurationSec " +
+                "FROM EmulatorRun r " +
+                "LEFT JOIN (SELECT EmulatorRunId, " +
+                "           AVG((julianday(CloseTime) - julianday(CreateTime)) * 86400) as AvgDurationSec, " +
+                "           MIN((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MinDurationSec, " +
+                "           MAX((julianday(CloseTime) - julianday(CreateTime)) * 86400) as MaxDurationSec " +
+                "           FROM Position WHERE CloseTime IS NOT NULL GROUP BY EmulatorRunId) d ON d.EmulatorRunId = r.Id " +
+                "ORDER BY r.StartedAt DESC");
 
             foreach (var row in rows)
             {
