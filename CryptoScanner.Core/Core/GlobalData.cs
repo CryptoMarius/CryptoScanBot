@@ -293,39 +293,42 @@ public static class GlobalData
     {
         List<CryptoSignal> list = [];
 
-        // Single codepath now that the live scanner and the emulator each have their own
-        // database — there is no need to filter on a per-row BackTest flag anymore.
-        string sql;
-        using var database = new CryptoDatabase();
-        if (string.IsNullOrEmpty(filterText))
-            sql = "select * from signal where exchangeid=@exchangeid and ExpirationDate >= @FromDate order by OpenDate";
-        else
+        if (GlobalData.ActiveExchange != null)
         {
-            sql = "select * from signal " +
-                "inner join symbol on signal.symbolid=symbol.id " +
-                "where signal.exchangeid=@exchangeid and signal.ExpirationDate >= @FromDate " +
-                $"and symbol.name like '%{filterText}%' " +
-                "order by signal.OpenDate ";
-        }
-
-        foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
-            new { FromDate = Clock.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
-        {
-            if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
-                continue;
-
-            if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
+            // Single codepath now that the live scanner and the emulator each have their own
+            // database — there is no need to filter on a per-row BackTest flag anymore.
+            string sql;
+            using var database = new CryptoDatabase();
+            if (string.IsNullOrEmpty(filterText))
+                sql = "select * from signal where exchangeid=@exchangeid and ExpirationDate >= @FromDate order by OpenDate";
+            else
             {
-                signal.Exchange = exchange2;
+                sql = "select * from signal " +
+                    "inner join symbol on signal.symbolid=symbol.id " +
+                    "where signal.exchangeid=@exchangeid and signal.ExpirationDate >= @FromDate " +
+                    $"and symbol.name like '%{filterText}%' " +
+                    "order by signal.OpenDate ";
+            }
 
-                if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
+            foreach (CryptoSignal signal in database.Connection.Query<CryptoSignal>(sql,
+                new { FromDate = Clock.UtcNow, exchangeid = GlobalData.ActiveExchange!.Id }))
+            {
+                if (signal.IsInvalid && !GlobalData.Settings.General.ShowInvalidSignals)
+                    continue;
+
+                if (ExchangeListId.TryGetValue(signal.ExchangeId, out Model.CryptoExchange? exchange2))
                 {
-                    signal.Symbol = symbol;
+                    signal.Exchange = exchange2;
 
-                    if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
-                        signal.Interval = interval;
+                    if (exchange2.SymbolListId.TryGetValue(signal.SymbolId, out CryptoSymbol? symbol))
+                    {
+                        signal.Symbol = symbol;
 
-                    list.Add(signal);
+                        if (IntervalListId.TryGetValue(signal.IntervalId, out CryptoInterval? interval))
+                            signal.Interval = interval;
+
+                        list.Add(signal);
+                    }
                 }
             }
         }
