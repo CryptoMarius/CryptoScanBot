@@ -845,95 +845,34 @@ public class PositionMonitor : IDisposable
         if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade)
             return (null, null);
 
-        decimal? stop = null;
-        decimal? limit = null;
-        int multiplier = position.Side == CryptoTradeSide.Long ? +1 : -1;
+        // Find the most extreme DCA step price (lowest buy for long, highest sell for short)
+        decimal? extremeDcaPrice = FindExtremeDcaPrice(position);
 
+        var input = new StopLossCalculator.SlInput
+        {
+            Side = position.Side,
+            SlPercentage = position.SlPercentage,
+            PartCount = position.PartCount,
+            ActiveDca = position.ActiveDca,
+            SignalPrice = position.SignalPrice,
+            EntryPrice = position.EntryPrice!.Value,
+            ExtremeDcaPrice = extremeDcaPrice,
+            GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
+            GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
+        };
 
-        // --- Determine which SL source to use ---
-        // Priority 1: signal-provided SL% (e.g. AtrRb/Baba strategy), anchored on SignalPrice.
-        //   Only valid before any DCA activity: once a DCA is pending (ActiveDca) or filled
-        //   (PartCount > 0), the signal SL is anchored too close to the entry and would fire
-        //   before the DCA gets a chance to fill.
-        bool useSignalSl = position.SlPercentage.HasValue && position.PartCount == 0 && !position.ActiveDca;
-
-        // Priority 2: global user-configured SL%, anchored on the lowest/highest DCA step.
-        //   StopLossPercentage must be strictly less than StopLossLimitPercentage so that the
-        //   stop triggers before the limit (both measure distance from the anchor in the same direction).
-        bool useGlobalSl = !useSignalSl && GlobalData.Settings.Trading.StopLossPercentage > 0;
+        var result = StopLossCalculator.Calculate(input);
 
         ScannerLog.Logger.Trace(
             $"PositionMonitor.CalculateSlPrices {position.Symbol.Name} {position.Side}: " +
-            $"useSignalSl={useSignalSl} (SlPct={position.SlPercentage}) " +
-            $"useGlobalSl={useGlobalSl} (StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage}) " +
+            $"source={result.Source} (SlPct={position.SlPercentage}) " +
+            $"stop={result.Stop} limit={result.Limit} " +
+            $"(StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage}) " +
             $"PartCount={position.PartCount} ActiveDca={position.ActiveDca}");
 
-        if (useSignalSl)
-        {
-            // Now calculated from the original signalprice..
-            // If price is already below that might be a problem
-            decimal perc = position.SlPercentage!.Value / 100m;
-            stop = position.SignalPrice - (multiplier * position.SignalPrice * perc);
-            stop = stop.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-
-            // 1% buffer for the limit beyond the stop
-            perc = 1m / 100m;
-            limit = stop - (multiplier * stop.Value * perc);
-            limit = limit.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-        }
-        else if (useGlobalSl)
-        {
-            // Anchor on the most extreme DCA step (lowest buy for long, highest sell for short).
-            // Falls back to EntryPrice when no DCA part exists yet.
-            CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
-
-            // problem, if the dca has just been closed we use the global BE and risk being stopped out right away
-            //CryptoPositionStep? stepDca = PositionTools.FindOpenStep(position, dcaOrderSide, CryptoPartPurpose.Dca);
-            //if (stepDca != null)
-            //    breakEven = stepDca.Price;
-            CryptoPositionStep? stepDca;
-            if (dcaOrderSide == CryptoOrderSide.Buy)
-            {
-                // Across all DCA parts: step with the lowest price (long: lowest dca=buy)
-                stepDca = position.PartList.Values
-                    .Where(p => p.Purpose == CryptoPartPurpose.Dca)
-                    .SelectMany(p => p.StepList.Values)
-                    .MinBy(s => s.Price);
-            }
-            else
-            {
-                // Across all DCA parts: step with the highest price (short: highest dca sell)
-                stepDca = position.PartList.Values
-                    .Where(p => p.Purpose == CryptoPartPurpose.Dca)
-                    .SelectMany(p => p.StepList.Values)
-                    .MaxBy(s => s.Price);
-            }
-
-            decimal lastDcaPrice;
-            if (stepDca == null)
-                lastDcaPrice = position.EntryPrice!.Value;
-            else
-                lastDcaPrice = stepDca.Price;
-
-            // We are now using fixed percentages entry=0, dca1=4, dca2=10, stop=12, limit=13
-            //breakEven = position.EntryPrice!.Value;
-
-            // Stop price
-            decimal perc = GlobalData.Settings.Trading.StopLossPercentage / 100m;
-            stop = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            stop = stop.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-
-            // Limit prijs x% lager
-            // The limit percentage must stay strictly greater than the stop percentage so the stop
-            // triggers before the limit. If it is misconfigured (<= stop), fall back to a 1% buffer
-            // beyond the stop (same convention as the signal-SL branch) instead of throwing on every candle.
-            decimal limitPerc = GlobalData.Settings.Trading.StopLossLimitPercentage;
-            if (limitPerc <= GlobalData.Settings.Trading.StopLossPercentage)
-                limitPerc = GlobalData.Settings.Trading.StopLossPercentage + 1m;
-            perc = limitPerc / 100m;
-            limit = lastDcaPrice - (multiplier * lastDcaPrice * perc);
-            limit = limit.Value.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
-        }
+        // Clamp to symbol tick/min/max
+        decimal? stop = result.Stop?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
+        decimal? limit = result.Limit?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
 
         //// This does not work, it sets the sl directly after an entry hitting the sl to quick
         //// SL protection (break-even): once the position has reached MoveSlToBreakEvenPercentage in profit,
@@ -975,8 +914,38 @@ public class PositionMonitor : IDisposable
     }
 
 
+    private static decimal? FindExtremeDcaPrice(CryptoPosition position)
+    {
+        CryptoOrderSide dcaOrderSide = position.GetEntryOrderSide();
+
+        // problem, if the dca has just been closed we use the global BE and risk being stopped out right away
+        //CryptoPositionStep? stepDca = PositionTools.FindOpenStep(position, dcaOrderSide, CryptoPartPurpose.Dca);
+        //if (stepDca != null)
+        //    breakEven = stepDca.Price;
+        CryptoPositionStep? stepDca;
+        if (dcaOrderSide == CryptoOrderSide.Buy)
+        {
+            // Across all DCA parts: step with the lowest price (long: lowest dca=buy)
+            stepDca = position.PartList.Values
+                .Where(p => p.Purpose == CryptoPartPurpose.Dca)
+                .SelectMany(p => p.StepList.Values)
+                .MinBy(s => s.Price);
+        }
+        else
+        {
+            // Across all DCA parts: step with the highest price (short: highest dca sell)
+            stepDca = position.PartList.Values
+                .Where(p => p.Purpose == CryptoPartPurpose.Dca)
+                .SelectMany(p => p.StepList.Values)
+                .MaxBy(s => s.Price);
+        }
+
+        return stepDca?.Price;
+    }
+
+
     private async Task HandleEntryPart(CryptoPosition position, CryptoPositionPart part,
-        CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing)
+        CryptoEntryOrDcaStrategy strategy, CryptoEntryOrDcaPricing orderPricing, CryptoOrderType orderType)
     {
         // Controleer de entry
         CryptoOrderSide entryOrderSide = position.GetEntryOrderSide();
@@ -986,7 +955,7 @@ public class PositionMonitor : IDisposable
         // defaults
         string logText = "placing";
         decimal? entryPrice = null;
-        CryptoOrderType entryOrderType; // = orderType;
+        CryptoOrderType entryOrderType = orderType;
         CryptoTrailing trailing = CryptoTrailing.None;
 
         //switch (strategy)
@@ -1002,7 +971,7 @@ public class PositionMonitor : IDisposable
             //    break;
             //case CryptoEntryOrDcaStrategy.FixedPercentage:
             // Afspraak= niet bijplaatsen indien de BM te laag is (anders jojo=weghalen+bijplaatsen)
-            entryOrderType = CryptoOrderType.Limit;
+            //entryOrderType = CryptoOrderType.Limit;
             if (step == null && part.Quantity == 0) // entry
                 entryPrice = CalculateEntryOrDcaPrice(position, part, orderPricing, part.SignalPrice);
             //break;
@@ -1738,13 +1707,13 @@ public class PositionMonitor : IDisposable
                 // Check entry - blocked during a market-wide TradingRules pause (no new positions during a fast move)
                 if (!PauseBecauseOfTradingRules && part.Purpose == CryptoPartPurpose.Entry)
                     await HandleEntryPart(position, part, GlobalData.Settings.Trading.EntryStrategy,
-                        GlobalData.Settings.Trading.EntryOrderPrice);
+                        GlobalData.Settings.Trading.EntryOrderPrice, GlobalData.Settings.Trading.EntryOrderType);
 
                 // Check DCA - always allowed, even during a TradingRules pause (averaging into an
                 // existing position is not gated by the market-wide pause, see CheckThePosition)
                 if (part.Purpose == CryptoPartPurpose.Dca)
                     await HandleEntryPart(position, part, GlobalData.Settings.Trading.DcaStrategy,
-                        GlobalData.Settings.Trading.DcaOrderPrice);
+                        GlobalData.Settings.Trading.DcaOrderPrice, GlobalData.Settings.Trading.DcaOrderType);
                 //}
                 //}
 
