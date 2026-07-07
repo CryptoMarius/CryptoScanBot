@@ -8,8 +8,11 @@
              x:DataType="vm:StrategyBbmaTabViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyBbmaTabView">
 
-    <Grid>
-        <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
+    </ScrollViewer>
 
 </UserControl>

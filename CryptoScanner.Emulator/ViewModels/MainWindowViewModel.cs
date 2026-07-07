@@ -72,6 +72,19 @@ public partial class MainWindowViewModel : ObservableObject
 
 
     /// <summary>
+    /// Re-opens the SetupWindow so the user can pick a different data folder or exchange.
+    /// Delegates the heavy lifting (re-bootstrap, window swap) to <see cref="App.SwitchDatabaseAsync"/>.
+    /// </summary>
+    [RelayCommand]
+    private async Task ChangeDatabaseAsync(Window? owner)
+    {
+        if (owner == null)
+            return;
+        await App.SwitchDatabaseAsync(owner);
+    }
+
+
+    /// <summary>
     /// Opens the scanner ConfigurationWindow as a modal dialog rooted at this window. The
     /// dialog reads from and writes back to GlobalData.Settings; the settings.json the
     /// emulator just loaded is the one being edited. The dialog itself only updates the

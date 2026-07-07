@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
@@ -110,6 +111,42 @@ public partial class App : Application
         // Signal readiness. Logged AFTER the MainWindow exists so the LogTabViewModel (which
         // subscribes in its constructor) is already hooked and shows it; the file log captures
         // it too. Tells the user bootstrap finished and the app is ready for input.
+        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}");
+    }
+
+
+    /// <summary>
+    /// Re-shows the SetupWindow from the running MainWindow so the user can pick a different
+    /// data folder / exchange without restarting the application. On OK the current MainWindow
+    /// is replaced by a fresh one backed by a new bootstrap; on Cancel nothing changes.
+    /// Called from <see cref="ViewModels.MainWindowViewModel.ChangeDatabaseCommand"/>.
+    /// </summary>
+    public static async Task SwitchDatabaseAsync(Window currentMainWindow)
+    {
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        var setup = new SetupWindow();
+        await setup.ShowDialog(currentMainWindow);
+
+        if (!setup.ViewModel.Confirmed)
+            return;
+
+        // Apply the new folder + exchange exactly like the first-time startup path.
+        GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
+        Directory.CreateDirectory(GlobalData.AppDataFolder);
+
+        BootstrapFromLiveScanner();
+        await EmulatorBootstrap.InitializeAsync(setup.ViewModel.SelectedExchange);
+        ApplyThemeFromSettings();
+
+        // Swap the MainWindow: create the new one first, assign it as the lifetime's
+        // MainWindow, show it, then close the old one.
+        var main = new MainWindow();
+        desktop.MainWindow = main;
+        main.Show();
+        currentMainWindow.Close();
+
         GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}");
     }
 

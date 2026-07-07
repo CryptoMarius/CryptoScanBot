@@ -15,6 +15,7 @@
                 <settings:StrategySbmSettingsView Grid.Row="0" Grid.Column="0" DataContext="{Binding StrategySbmSettingsViewModel}" />
                 <settings:StrategySbmSettingsMethodsView Grid.Row="0" Grid.Column="1" DataContext="{Binding StrategySbmSettingsMethodsViewModel}" />
             </Grid>
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
         </StackPanel>
     </ScrollViewer>
 

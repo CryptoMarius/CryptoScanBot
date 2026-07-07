@@ -12,10 +12,14 @@ public partial class StrategyBreTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyBreSettingsViewModel _strategyBreSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyBreTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyBreSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -23,11 +27,13 @@ public partial class StrategyBreTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyBreSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyBre settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyBreSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

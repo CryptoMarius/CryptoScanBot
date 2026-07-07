@@ -16,11 +16,15 @@ public partial class StrategySmcTabViewModel : ObservableObject
     [ObservableProperty]
     private IntervalViewModel _intervalViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategySmcTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategySmcSettingsViewModel = new();
         _intervalViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -29,6 +33,7 @@ public partial class StrategySmcTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategySmcSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval10m);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategySmc settings)
@@ -36,5 +41,6 @@ public partial class StrategySmcTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategySmcSettingsViewModel.SaveConfig(settings);
         IntervalViewModel.SaveConfig(settings.IntervalList);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

@@ -16,11 +16,15 @@ public partial class StrategySbmTabViewModel : ObservableObject
     [ObservableProperty]
     StrategySbmSettingsMethodsViewModel _strategySbmSettingsMethodsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategySbmTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategySbmSettingsViewModel = new();
         _strategySbmSettingsMethodsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -29,6 +33,7 @@ public partial class StrategySbmTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategySbmSettingsViewModel.LoadConfig(settings);
         StrategySbmSettingsMethodsViewModel.LoadConfig(settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategySbm settings)
@@ -36,5 +41,6 @@ public partial class StrategySbmTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategySbmSettingsViewModel.SaveConfig(settings);
         StrategySbmSettingsMethodsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

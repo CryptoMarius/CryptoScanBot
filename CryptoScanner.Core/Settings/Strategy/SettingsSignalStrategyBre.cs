@@ -24,13 +24,13 @@ public class SettingsSignalStrategyBre : SettingsSignalStrategyBase
     public bool UseTrendFilter { get; set; } = false;
     public int HmaLength { get; set; } = 55;
 
-    // Optional RSI filter: a long requires RSI (on this or the previous candle) <= oversold,
-    // a short requires RSI >= overbought. Length and OB/OS thresholds come from Settings.General.SettingsRsi.
+    // When true a long signal also requires RSI to be oversold, and a short signal requires RSI
+    // to be overbought (uses the global RSI OS/OB thresholds from SettingsRsi).
     public bool UseRsiFilter { get; set; } = false;
 
-    // Optional Stochastic-RSI filter: a long requires %K or %D <= oversold,
-    // a short requires %K or %D >= overbought. Length and OB/OS thresholds come from Settings.General.SettingsStoch.
-    public bool UseStochFilter { get; set; } = false;
+    // When true a long signal also requires Stochastic to be oversold, and a short signal requires
+    // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
+    public bool RequireStochOsOb { get; set; } = false;
 
     // Allow consecutive signals while price stretches further beyond the band within one break run
     // (Pine "HYPE-stijl": a new label on every higher High / lower Low). When off only the first
@@ -41,6 +41,24 @@ public class SettingsSignalStrategyBre : SettingsSignalStrategyBase
     // chart label) to the trader via OverrideSlPercentage. When false the signal returns null,
     // so the trader falls back to the default percentage stop-loss from the trading settings.
     public bool UseStopLoss { get; set; } = true;
+
+    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
+    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
+    public int TimeframeConsensusCount { get; set; } = 0;
+
+    public bool OnlyIfLux5m { get; set; } = false;
+    public int Lux5mPercentage { get; set; } = 50;
+
+    public bool CheckTrendPrimaryDirection { get; set; } = false;
+    public int TrendPrimaryDirectionCount { get; set; } = 2;
+    public bool CheckTrendSecondaryDirection { get; set; } = false;
+    public int TrendSecondaryDirectionCount { get; set; } = 2;
+
+    // Zone confirmations — when any of these is enabled, at least one of the enabled
+    // zone rejections must match (OR). All disabled = no zone filter.
+    public bool UseDlzZone { get; set; } = false;
+    public bool UseFvgZone { get; set; } = false;
+    public bool UseSmcZone { get; set; } = false;
 
     public SettingsSignalStrategyBre() : base()
     {

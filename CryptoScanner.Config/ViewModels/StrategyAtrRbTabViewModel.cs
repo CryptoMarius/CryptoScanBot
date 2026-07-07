@@ -12,10 +12,14 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyAtrRbSettingsViewModel _strategyAtrRbSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyAtrRbTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyAtrRbSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -23,11 +27,13 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyAtrRbSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyAtrRb settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyAtrRbSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

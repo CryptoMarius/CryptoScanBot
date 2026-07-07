@@ -8,9 +8,12 @@
              x:DataType="vm:StrategyStorsiTabViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyStorsiTabView">
 
-    <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5">
-        <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
-        <settings:StrategyStorsiSettingsView Grid.Row="1" DataContext="{Binding StrategyStorsiSettingsViewModel}" />
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <settings:StrategyStorsiSettingsView DataContext="{Binding StrategyStorsiSettingsViewModel}" />
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
+    </ScrollViewer>
 
 </UserControl>

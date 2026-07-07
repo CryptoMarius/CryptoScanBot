@@ -229,9 +229,10 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         if (!bearishCandle)
             return false;
 
+        // MQ5 line 811: second condition uses UpperBand[i] (current bar), not UpperBand[i-1]
         bool wickRejection =
               (high >= upperB && close < upperB)
-           || (highPrev >= upperBPrev && close < upperB)
+           || (highPrev >= upperB && close < upperB)
            || (open <= upperB && closePrev >= upperBPrev);
 
         return wickRejection;

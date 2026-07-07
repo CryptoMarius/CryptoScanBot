@@ -1,4 +1,7 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
+using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Bre;
 
@@ -12,6 +15,10 @@ namespace CryptoScanner.Core.Signal.Bre;
 ///   - wick only touches the band  -> entry on the band
 ///   - body breaks through the band -> entry on the close
 /// Stop-loss: the band-width percentage shown in the label, placed above the entry.
+///
+/// When TimeframeConsensusCount > 0, higher timeframes must also confirm the band break
+/// (multi-timeframe consensus). Additional filters (RSI, Stoch, Lux5m, trend, zones) are
+/// applied only on the lowest (primary) timeframe.
 /// </summary>
 public class SignalBreShort : SignalCreateBase
 {
@@ -28,9 +35,69 @@ public class SignalBreShort : SignalCreateBase
         _slPercentage = null;
 
         var settings = GlobalData.Settings.Signal.Bre;
+
+        if (settings.UseRsiFilter && !CandleLast.RsiOverbought())
+        {
+            ExtraText = $"rsi not overbought ({CandleLast.CandleData?.Rsi:N2})";
+            return false;
+        }
+
+        if (settings.RequireStochOsOb && !CandleLast.StochOverbought())
+        {
+            ExtraText = "stoch not overbought";
+            return false;
+        }
+
+        if (settings.OnlyIfLux5m)
+        {
+            int needed = settings.Lux5mPercentage;
+            if (CandleLast.CandleData!.Lux5mValue < needed)
+            {
+                ExtraText = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
+                return false;
+            }
+        }
+
         if (!BreBandsHelper.IsUpperBandBreak(SymbolInterval, CandleLast.Candle.OpenTime, out double bandWidthPct, out double upperBand, out string reason))
         {
             ExtraText = reason;
+            return false;
+        }
+
+        // Multi-timeframe consensus: higher timeframes must also show a band break.
+        if (settings.TimeframeConsensusCount > 0)
+        {
+            int confirmed = 0;
+            CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
+            for (int i = 0; i < settings.TimeframeConsensusCount; i++)
+            {
+                if (higherPeriod == CryptoIntervalPeriod.interval1w)
+                    break;
+                higherPeriod++;
+
+                CryptoSymbolInterval higherSI = Symbol.GetSymbolInterval(higherPeriod);
+                if (!BreBandsHelper.IsUpperBandBreak(higherSI, CandleLast.Candle.OpenTime, out _, out _, out string htfReason))
+                {
+                    ExtraText = $"no upper band break on {higherSI.Interval.Name}: {htfReason}";
+                    return false;
+                }
+                confirmed++;
+            }
+            if (confirmed < settings.TimeframeConsensusCount)
+            {
+                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{settings.TimeframeConsensusCount})";
+                return false;
+            }
+        }
+
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+            return false;
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+            return false;
+
+        if (!CheckEnabledZoneRejections(out string zoneInfo))
+        {
+            ExtraText = zoneInfo;
             return false;
         }
 
@@ -48,7 +115,36 @@ public class SignalBreShort : SignalCreateBase
         if (settings.UseStopLoss)
             _slPercentage = (decimal)bandWidthPct;
 
-        ExtraText = $"hit upper band {bandWidthPct:N2}%";
+        ExtraText = $"hit upper band {bandWidthPct:N2}%{(zoneInfo.Length > 0 ? " @ " + zoneInfo : "")}";
         return true;
+    }
+
+    private bool CheckEnabledZoneRejections(out string zoneInfo)
+    {
+        var settings = GlobalData.Settings.Signal.Bre;
+        if (!settings.UseDlzZone && !settings.UseFvgZone && !settings.UseSmcZone)
+        {
+            zoneInfo = "";
+            return true;
+        }
+
+        if (settings.UseDlzZone && this.WasRejectedAtDlzZone(out string dlzInfo))
+        {
+            zoneInfo = dlzInfo;
+            return true;
+        }
+        if (settings.UseFvgZone && this.WasRejectedAtFvgZone(out string fvgInfo))
+        {
+            zoneInfo = fvgInfo;
+            return true;
+        }
+        if (settings.UseSmcZone && this.WasRejectedAtSmcZone(out string smcInfo))
+        {
+            zoneInfo = smcInfo;
+            return true;
+        }
+
+        zoneInfo = "no zone rejection (dlz/fvg/smc)";
+        return false;
     }
 }

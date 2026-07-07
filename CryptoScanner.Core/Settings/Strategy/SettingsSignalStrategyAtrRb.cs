@@ -40,6 +40,28 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     // to be overbought (uses the global RSI OS/OB thresholds from SettingsRsi).
     public bool RequireRsiOsOb { get; set; } = false;
 
+    // When true a long signal also requires Stochastic to be oversold, and a short signal requires
+    // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
+    public bool RequireStochOsOb { get; set; } = false;
+
+    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
+    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
+    public int TimeframeConsensusCount { get; set; } = 0;
+
+    public bool OnlyIfLux5m { get; set; } = false;
+    public int Lux5mPercentage { get; set; } = 50;
+
+    public bool CheckTrendPrimaryDirection { get; set; } = false;
+    public int TrendPrimaryDirectionCount { get; set; } = 2;
+    public bool CheckTrendSecondaryDirection { get; set; } = false;
+    public int TrendSecondaryDirectionCount { get; set; } = 2;
+
+    // Zone confirmations — when any of these is enabled, at least one of the enabled
+    // zone rejections must match (OR). All disabled = no zone filter.
+    public bool UseDlzZone { get; set; } = false;
+    public bool UseFvgZone { get; set; } = false;
+    public bool UseSmcZone { get; set; } = false;
+
     public SettingsSignalStrategyAtrRb() : base()
     {
     }

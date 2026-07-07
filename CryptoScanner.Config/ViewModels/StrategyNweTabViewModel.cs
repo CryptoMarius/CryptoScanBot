@@ -16,11 +16,15 @@ public partial class StrategyNweTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyNweSettingsNweViewModel _strategyNweSettingsNweViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyNweTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyNweSettingsViewModel = new();
         _strategyNweSettingsNweViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -29,6 +33,7 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyNweSettingsViewModel.LoadConfig(settings);
         StrategyNweSettingsNweViewModel.LoadConfig(settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyNwe settings)
@@ -36,5 +41,6 @@ public partial class StrategyNweTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyNweSettingsViewModel.SaveConfig(settings);
         StrategyNweSettingsNweViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

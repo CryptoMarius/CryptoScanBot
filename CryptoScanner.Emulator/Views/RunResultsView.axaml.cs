@@ -10,8 +10,10 @@ using Avalonia.VisualTree;
 using CryptoScanner.Config.Views;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Settings;
+using CryptoScanner.Emulator.Engine;
 using CryptoScanner.Emulator.ViewModels;
 
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace CryptoScanner.Emulator.Views;
@@ -48,12 +50,83 @@ public partial class RunResultsView : UserControl
         // tree because this control lives inside MainWindow's TabControl, not its own Window.
         RunsGrid.DoubleTapped += OnRunDoubleTapped;
 
+        // Capture the user's sort choice and persist it in the emulator config file.
+        RunsGrid.Sorting += OnGridSorting;
+
+        // Restore the column sort indicator from the saved preference once the grid is shown.
+        AttachedToVisualTree += (_, _) => RestoreSortIndicator();
+
         // Select the row under the cursor on right-click BEFORE the context menu opens. The
         // DataGrid only updates its selection on a LEFT click, so without this a right-click on a
         // different row would leave SelectedItem pointing at the previously selected run and the
         // Delete action would hit the wrong one. Tunnelling so we see the press before the
         // ContextMenu's own handling consumes it.
         RunsGrid.AddHandler(PointerPressedEvent, OnGridPointerPressed, RoutingStrategies.Tunnel);
+    }
+
+
+    /// <summary>
+    /// Captures the column + direction the user just sorted by and persists it in the emulator
+    /// config file so the next Refresh (and next app launch) restores the same order.
+    /// Uses <see cref="DataGridColumn.SortMemberPath"/> as the stable key (Header text is
+    /// localisation-fragile; SortMemberPath maps 1:1 to the RunRow property).
+    /// </summary>
+    private void OnGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        string? sortPath = e.Column.SortMemberPath;
+        if (string.IsNullOrEmpty(sortPath))
+            return;
+
+        var direction = (_currentSortColumn == sortPath && _currentSortDirection == ListSortDirection.Ascending)
+            ? ListSortDirection.Descending
+            : ListSortDirection.Ascending;
+
+        _currentSortColumn = sortPath;
+        _currentSortDirection = direction;
+
+        try
+        {
+            EmulatorRunConfig config = RunConfigFile.Load();
+            config.SortColumn = sortPath;
+            config.SortDescending = direction == ListSortDirection.Descending;
+            RunConfigFile.Save(config);
+        }
+        catch
+        {
+            // Non-fatal: losing the sort preference is cosmetic.
+        }
+    }
+
+    private string? _currentSortColumn;
+    private ListSortDirection _currentSortDirection = ListSortDirection.Ascending;
+
+
+    /// <summary>
+    /// Programmatically sorts the grid by the persisted column + direction. Uses
+    /// <see cref="DataGridColumn.Sort"/> — the same mechanism the scanner's grids use.
+    /// Called once when the grid is first shown; subsequent user clicks are handled by the
+    /// DataGrid itself (and captured by <see cref="OnGridSorting"/>).
+    /// </summary>
+    private void RestoreSortIndicator()
+    {
+        try
+        {
+            EmulatorRunConfig config = RunConfigFile.Load();
+            if (string.IsNullOrEmpty(config.SortColumn))
+                return;
+
+            _currentSortColumn = config.SortColumn;
+            _currentSortDirection = config.SortDescending
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+
+            var column = RunsGrid.Columns.FirstOrDefault(c => c.SortMemberPath == config.SortColumn);
+            column?.Sort(_currentSortDirection);
+        }
+        catch
+        {
+            // Non-fatal.
+        }
     }
 
 

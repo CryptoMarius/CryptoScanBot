@@ -38,4 +38,13 @@ public class EmulatorRunConfig
     /// </summary>
     public List<string> SelectedAlgorithms { get; set; } = [];
 
+    /// <summary>
+    /// Column header text of the last user-chosen sort in the Results grid.
+    /// Null/empty means default sort (StartedAt descending).
+    /// </summary>
+    public string? SortColumn { get; set; }
+
+    /// <summary>True when the saved sort is descending.</summary>
+    public bool SortDescending { get; set; }
+
 }

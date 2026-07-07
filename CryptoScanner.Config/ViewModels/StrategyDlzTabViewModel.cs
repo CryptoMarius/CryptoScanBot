@@ -29,6 +29,9 @@ public partial class StrategyDlzTabViewModel : ObservableObject
     [ObservableProperty]
     private IntervalViewModel _intervalViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyDlzTabViewModel()
     {
         _soundAndColorsViewModel = new();
@@ -38,6 +41,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         _strategyDlzSettingsUnzoomedBoxViewModel = new();
         _strategyDlzSettingsZoneFilterViewModel = new();
         _indicatorZigZagViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -50,6 +54,7 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         StrategyDlzSettingsZoneFilterViewModel.LoadConfig(settings);
         IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
         IndicatorZigZagViewModel.LoadConfig(settings.ZigZag);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
 
@@ -62,5 +67,6 @@ public partial class StrategyDlzTabViewModel : ObservableObject
         StrategyDlzSettingsZoneFilterViewModel.SaveConfig(settings);
         IntervalViewModel.SaveConfig(settings.IntervalList);
         IndicatorZigZagViewModel.SaveConfig(settings.ZigZag);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

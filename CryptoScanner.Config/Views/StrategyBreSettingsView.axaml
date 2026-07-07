@@ -59,15 +59,15 @@
                          Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
             </Grid>
 
-            <!-- RSI filter (length and OB/OS thresholds come from the general RSI settings) -->
+            <!-- RSI confluence (overbought/oversold LEVELS come from the Indicators tab → RSI) -->
             <CheckBox IsChecked="{Binding UseRsiFilter, Mode=TwoWay}"
-                      Content="Use RSI filter" FontSize="12"
-                      ToolTip.Tip="When on, a long requires RSI (this or the previous candle) at or below oversold and a short requires RSI at or above overbought. Uses the standard RSI length and OB/OS thresholds from the general settings."/>
+                      Content="Require RSI overbought/oversold" FontSize="12"
+                      ToolTip.Tip="Only fire a short on an upper-band break when RSI ≥ overbought, and a long on a lower-band break when RSI ≤ oversold. The overbought/oversold levels are taken from the Indicators tab (RSI settings)."/>
 
-            <!-- Stochastic-RSI filter (length and OB/OS thresholds come from the general Stoch settings) -->
-            <CheckBox IsChecked="{Binding UseStochFilter, Mode=TwoWay}"
-                      Content="Use Stochastic RSI filter" FontSize="12"
-                      ToolTip.Tip="When on, a long requires %K or %D at or below oversold and a short requires %K or %D at or above overbought. Uses the standard Stochastic length, smoothing and OB/OS thresholds from the general settings."/>
+            <!-- Stochastic OS/OB gate -->
+            <CheckBox IsChecked="{Binding RequireStochOsOb, Mode=TwoWay}"
+                      Content="Require Stochastic oversold/overbought" FontSize="12"
+                      ToolTip.Tip="When on, a long signal also requires Stochastic to be oversold and a short signal requires Stochastic to be overbought (uses the global Stoch thresholds)."/>
 
             <!-- Stacking rule -->
             <CheckBox IsChecked="{Binding AllowStack, Mode=TwoWay}"
@@ -78,6 +78,64 @@
             <CheckBox IsChecked="{Binding UseStopLoss, Mode=TwoWay}"
                       Content="Use stop-loss" FontSize="12"
                       ToolTip.Tip="When on, the signal passes the band-width percentage (the chart label) as stop-loss to the trader. When off, no stop-loss is handed over (null) and the trader uses its default percentage stop-loss."/>
+
+            <!-- Multi-timeframe consensus count -->
+            <Grid ColumnDefinitions="Auto,80,*" RowDefinitions="Auto"
+                  ToolTip.Tip="Number of consecutive higher timeframes that must also confirm a band break. 0 = single-timeframe (normal). Example: 1 means the next higher TF must also show a break.">
+                <TextBlock Grid.Column="0" Text="TF consensus count:" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="12"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding TimeframeConsensusCount, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"/>
+            </Grid>
+
+            <!-- Only if lux 5m at the configured threshold -->
+            <Grid ColumnDefinitions="Auto,*,80,Auto" RowDefinitions="Auto"
+                  ToolTip.Tip="Long needs Lux5mValue ≤ -threshold; short needs Lux5mValue ≥ +threshold. 50 = previous default; raise toward 100 for stricter signals.">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding OnlyIfLux5m, Mode=TwoWay}"
+                          Content="Only if lux 5m at"
+                          VerticalAlignment="Center"
+                          FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding Lux5mPercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4" Margin="8,0,4,0"
+                         IsEnabled="{Binding OnlyIfLux5m}"/>
+                <TextBlock Grid.Column="3" Text="%" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                <CheckBox IsChecked="{Binding CheckTrendPrimaryDirection, Mode=TwoWay}"
+                          Content="Trade with the primary trend"
+                          FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding TrendPrimaryDirectionCount, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding CheckTrendPrimaryDirection}"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*,100" RowDefinitions="Auto">
+                <CheckBox IsChecked="{Binding CheckTrendSecondaryDirection, Mode=TwoWay}"
+                          Content="Trade with the secondary trend"
+                          FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding TrendSecondaryDirectionCount, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
+            </Grid>
+
+            <!-- Zone confirmation (OR over enabled types) -->
+            <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
+                      Content="Require DLZ zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the candle was rejected at a DLZ zone."/>
+            <CheckBox IsChecked="{Binding UseFvgZone, Mode=TwoWay}"
+                      Content="Require FVG zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the candle was rejected at an FVG zone."/>
+            <CheckBox IsChecked="{Binding UseSmcZone, Mode=TwoWay}"
+                      Content="Require SMC zone rejection"
+                      FontSize="12"
+                      ToolTip.Tip="Only fire when the candle was rejected at an SMC order block."/>
 
         </StackPanel>
     </HeaderedContentControl>

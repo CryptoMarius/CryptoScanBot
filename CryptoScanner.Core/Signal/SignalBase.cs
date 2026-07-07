@@ -1,6 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Trader;
 using CryptoScanner.Core.Trend;
@@ -117,7 +118,7 @@ public class SignalCreateBase
         if (!GetPrevCandle(CandleLast!, out MyData? candlePrev) || candlePrev == null)
             return false;
 
-        var settings = GlobalData.Settings.Trading;
+        var settings = ResolveEntryConditions();
 
 
         // ********************************************************************
@@ -310,9 +311,9 @@ public class SignalCreateBase
         }
 
         // ********************************************************************
-        // Stoch OS/OB strength gates — verify the move into OS/OB was substantial enough
+        // Stoch OS/OB strength — verify the move into OS/OB was substantial enough
         // to be a real exhaustion, not a 1-candle wick. Ordered cheapest to most expensive
-        // (persistence < AUC < z-score) so we bail early when the cheap gate fails.
+        // (persistence < AUC < z-score) so we bail early when the cheap check fails.
         if (settings.StochMinExtremeBars > 0 ||
             settings.StochMinExtremeArea > 0m ||
             settings.StochMinExtremeZScore > 0m)
@@ -393,6 +394,21 @@ public class SignalCreateBase
         }
 
         return true;
+    }
+
+
+    /// <summary>
+    /// Resolves the effective entry conditions for this signal's strategy.
+    /// When the strategy has its own EntryConditions they take precedence;
+    /// otherwise the global SettingsTrading values are used.
+    /// </summary>
+    private SettingsEntryConditions ResolveEntryConditions()
+    {
+        if (GlobalData.StrategiesSettings.TryGetValue(SignalStrategy, out var entry)
+            && entry.strategySettings.EntryConditions != null)
+            return entry.strategySettings.EntryConditions;
+
+        return GlobalData.Settings.Trading.EntryConditions;
     }
 
 

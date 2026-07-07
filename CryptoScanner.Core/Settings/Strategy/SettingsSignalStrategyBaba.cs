@@ -60,6 +60,22 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     public double BBMinPercentage { get; set; } = 1.50;
     public double BBMaxPercentage { get; set; } = 0.0;
 
+    // When true a long signal also requires Stochastic to be oversold, and a short signal requires
+    // Stochastic to be overbought (uses the global Stoch OS/OB thresholds from SettingsStoch).
+    public bool RequireStochOsOb { get; set; } = false;
+
+    // Multi-timeframe consensus: when > 0 the signal also requires this many consecutive higher
+    // timeframes to confirm the same band break condition. 0 = single-timeframe (normal behavior).
+    public int TimeframeConsensusCount { get; set; } = 0;
+
+    public bool OnlyIfLux5m { get; set; } = false;
+    public int Lux5mPercentage { get; set; } = 50;
+
+    public bool CheckTrendPrimaryDirection { get; set; } = false;
+    public int TrendPrimaryDirectionCount { get; set; } = 2;
+    public bool CheckTrendSecondaryDirection { get; set; } = false;
+    public int TrendSecondaryDirectionCount { get; set; } = 2;
+
     // Zone confirmations — when any of these is enabled, the band break must ALSO be a rejection at
     // one of the enabled zone types (OR). All disabled = no zone filter. Same logic/extensions as the
     // StoRsi zone checkboxes (WasRejectedAtDlz/Fvg/SmcZone).

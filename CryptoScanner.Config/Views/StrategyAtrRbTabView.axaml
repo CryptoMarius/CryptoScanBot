@@ -8,9 +8,12 @@
              x:DataType="vm:StrategyAtrRbTabViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyAtrRbTabView">
 
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
-        <settings:SoundAndColorsView Grid.Row="0" DataContext="{Binding SoundAndColorsViewModel}" />
-        <settings:StrategyAtrRbSettingsView Grid.Row="1" DataContext="{Binding StrategyAtrRbSettingsViewModel}" />
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="5">
+            <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
+            <settings:StrategyAtrRbSettingsView DataContext="{Binding StrategyAtrRbSettingsViewModel}" />
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
+    </ScrollViewer>
 
 </UserControl>

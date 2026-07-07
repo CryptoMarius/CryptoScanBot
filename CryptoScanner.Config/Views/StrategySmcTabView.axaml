@@ -9,11 +9,14 @@
              x:Class="CryptoScanner.Config.Views.StrategySmcTabView">
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="5" HorizontalAlignment="Left">
-            <settings:SoundAndColorsView Grid.Row="0" Grid.Column="0" DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategySmcSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategySmcSettingsViewModel}" />
-            <settings:IntervalView Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" VerticalAlignment="Top" HorizontalAlignment="Left"/>
-        </Grid>
+        <StackPanel Spacing="5">
+            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="5" HorizontalAlignment="Left">
+                <settings:SoundAndColorsView Grid.Row="0" Grid.Column="0" DataContext="{Binding SoundAndColorsViewModel}" />
+                <settings:StrategySmcSettingsView Grid.Row="1" Grid.Column="0" DataContext="{Binding StrategySmcSettingsViewModel}" />
+                <settings:IntervalView Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+            </Grid>
+            <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
+        </StackPanel>
     </ScrollViewer>
 
 </UserControl>

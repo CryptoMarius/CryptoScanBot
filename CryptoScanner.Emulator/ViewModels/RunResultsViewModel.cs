@@ -279,7 +279,8 @@ public partial class RunResultsViewModel : ObservableObject
                 "           FROM Position WHERE CloseTime IS NOT NULL GROUP BY EmulatorRunId) d ON d.EmulatorRunId = r.Id " +
                 "ORDER BY r.StartedAt DESC");
 
-            foreach (var row in rows)
+            var sortedRows = ApplyConfigSort(rows);
+            foreach (var row in sortedRows)
             {
                 Runs.Add(row);
             }
@@ -392,6 +393,57 @@ public partial class RunResultsViewModel : ObservableObject
             Refresh();
             Status = $"Failed to recalculate run(s): {ex.Message}";
         }
+    }
+
+
+    /// <summary>
+    /// Sorts the loaded rows according to the SortColumn / SortDescending saved in the emulator
+    /// config file. Returns the rows in default order (StartedAt DESC) when no preference is stored.
+    /// </summary>
+    private static IEnumerable<RunRow> ApplyConfigSort(IEnumerable<RunRow> rows)
+    {
+        EmulatorRunConfig config;
+        try { config = RunConfigFile.Load(); } catch { return rows; }
+
+        if (string.IsNullOrEmpty(config.SortColumn))
+            return rows;
+
+        return SortRows(rows, config.SortColumn, config.SortDescending);
+    }
+
+
+    /// <summary>
+    /// Sorts <paramref name="rows"/> by the property that matches the given SortMemberPath
+    /// (<paramref name="sortMemberPath"/>). The paths match the DataGrid column definitions.
+    /// </summary>
+    public static IOrderedEnumerable<RunRow> SortRows(IEnumerable<RunRow> rows, string sortMemberPath, bool descending)
+    {
+        Func<RunRow, object?> key = sortMemberPath switch
+        {
+            "Id"                => r => r.Id,
+            "Label"             => r => r.Label,
+            "Period"            => r => r.FromDate,
+            "StartedLocal"      => r => r.StartedAt,
+            "FinishedLocal"     => r => r.FinishedAt,
+            "Duration"          => r => (r.FinishedAt ?? DateTime.UtcNow) - r.StartedAt,
+            "Result"            => r => r.Result,
+            "SignalCount"       => r => r.SignalCount,
+            "PositionCount"     => r => r.PositionCount,
+            "PositionsOpen"     => r => r.PositionsOpen,
+            "PositionsWon"      => r => r.PositionsWon,
+            "PositionsLost"     => r => r.PositionsLost,
+            "PositionsTimeout"  => r => r.PositionsTimeout,
+            "WinPercentage"     => r => r.WinPercentage,
+            "Profit"            => r => r.Profit,
+            "ProfitPercentage"  => r => r.ProfitPercentage,
+            "Invested"          => r => r.Invested,
+            "AvgDurationText"   => r => r.AvgDurationSec,
+            "MinDurationText"   => r => r.MinDurationSec,
+            "MaxDurationText"   => r => r.MaxDurationSec,
+            _                   => r => r.StartedAt,
+        };
+
+        return descending ? rows.OrderByDescending(key) : rows.OrderBy(key);
     }
 
 

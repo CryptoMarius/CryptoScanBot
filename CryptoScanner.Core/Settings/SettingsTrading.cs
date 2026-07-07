@@ -112,45 +112,7 @@ public class SettingsTrading
 
     //***************************
     // Entry conditions
-    public bool CheckIncreasingRsi { get; set; } = false;
-    public bool CheckIncreasingMacd { get; set; } = false;
-    public bool CheckIncreasingStoch { get; set; } = false;
-    public bool CheckFurtherPriceMove { get; set; } = false;
-    public bool CheckTrendPrimaryDirection { get; set; } = false;
-    public int TrendPrimaryDirectionCount { get; set; } = 2;
-    public bool CheckTrendSecondaryDirection { get; set; } = false;
-    public int TrendSecondaryDirectionCount { get; set; } = 2;
-    public bool CheckPriceAboveMa200 { get; set; } = false;
-
-    // When true, AllowStepIn refuses entries until Stoch %K (blue line) on the current
-    // candle has exited the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,
-    // so any strategy that does not override AllowStepIn inherits the behavior.
-    public bool WaitForStochRecovery { get; set; } = false;
-    // When true, AllowStepIn refuses entries until RSI on the current candle has exited
-    // the OS/OB zone. Cross-strategy gate — applies via SignalBase.AllowStepIn,
-    // so any strategy that does not override AllowStepIn inherits the behavior.
-    public bool WaitForRsiRecovery { get; set; } = false;
-
-    // ********************************************************************
-    // Stoch OS/OB strength gates — applied AFTER WaitForStochRecovery. Each gate is off
-    // when its threshold is 0. Together they prevent stepping in after a 1-candle wick into
-    // OS that doesn't represent real exhaustion. See research notes (Connors UpDown,
-    // mean-reversion z-score, multi-timeframe stoch).
-    //
-    // Window (in signal-interval bars) used for searching the most-recent OS run AND
-    // for the Z-score mean/stdev computation.
-    public int StochExtremeLookback { get; set; } = 20;
-    // Persistence gate: minimum number of consecutive bars stoch %K must have been in
-    // OS (long) / OB (short) in the most-recent run. 0 = off.
-    public int StochMinExtremeBars { get; set; } = 0;
-    // Cumulative-depth ("area-under-curve") gate: Σ max(0, OS - %K) (long) or
-    // Σ max(0, %K - OB) (short) measured over StochExtremeLookback bars. 0 = off.
-    // Units = %K-percent × bars; typical 20-80 for stoch(14,3,3).
-    public decimal StochMinExtremeArea { get; set; } = 0m;
-    // Statistical-depth gate: magnitude (in stdev) of the most extreme %K within the
-    // lookback. Long requires z(min %K) <= -threshold; short requires z(max %K) >= threshold.
-    // 0 = off. Typical 1.5 — 2.5.
-    public decimal StochMinExtremeZScore { get; set; } = 0m;
+    public SettingsEntryConditions EntryConditions { get; set; } = new();
 
 
     //***************************

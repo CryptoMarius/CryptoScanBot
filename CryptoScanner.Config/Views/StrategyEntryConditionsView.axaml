@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="400"
+             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:settings="using:CryptoScanner.Config.Views"
+             x:DataType="vm:StrategyEntryConditionsViewModel"
+             x:Class="CryptoScanner.Config.Views.StrategyEntryConditionsView"
+             >
+
+    <HeaderedContentControl Classes="groupbox" Header="Entry conditions">
+        <StackPanel Margin="4" Spacing="4">
+
+            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto">
+                <CheckBox Grid.Column="0"
+                          IsChecked="{Binding UseCustomEntryConditions, Mode=TwoWay}"
+                          Content="Use custom entry conditions for this strategy"
+                          FontSize="12"/>
+                <Button Grid.Column="2"
+                        Content="Reset to global"
+                        Command="{Binding ResetToGlobalCommand}"
+                        IsEnabled="{Binding UseCustomEntryConditions}"
+                        FontSize="11"
+                        Padding="8,3"
+                        VerticalAlignment="Center"/>
+            </Grid>
+
+            <Border IsEnabled="{Binding UseCustomEntryConditions}">
+                <settings:TraderEntryConditionsView DataContext="{Binding EntryConditionsViewModel}" />
+            </Border>
+
+        </StackPanel>
+    </HeaderedContentControl>
+
+</UserControl>

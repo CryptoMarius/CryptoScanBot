@@ -26,6 +26,7 @@
 
             <settings:IntervalView Grid.Row="0" Grid.Column="3" Grid.RowSpan="2" DataContext="{Binding IntervalViewModel}" />
         </Grid>
+        <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
     </StackPanel>
     </ScrollViewer>
 

@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Core.Signal.Baba;
@@ -8,6 +9,10 @@ namespace CryptoScanner.Core.Signal.Baba;
 /// RSI is overbought (confluence). Optionally suppressed while the coin is in an UP-slide (don't short a
 /// melt-up). Entry on the band, or on the close when the close itself broke through; stop-loss =
 /// SLStdevFactor * vwStdev above the upper band.
+///
+/// When TimeframeConsensusCount > 0, higher timeframes must also confirm the band break
+/// (multi-timeframe consensus). Additional filters (RSI, Stoch, Lux5m, trend, zones) are
+/// applied only on the lowest (primary) timeframe.
 /// </summary>
 public class SignalBabaShort : SignalBabaBase
 {
@@ -50,6 +55,22 @@ public class SignalBabaShort : SignalBabaBase
             }
         }
 
+        if (settings.RequireStochOsOb && !CandleLast.StochOverbought())
+        {
+            ExtraText = "stoch not overbought";
+            return false;
+        }
+
+        if (settings.OnlyIfLux5m)
+        {
+            int needed = settings.Lux5mPercentage;
+            if (CandleLast.CandleData!.Lux5mValue < needed)
+            {
+                ExtraText = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
+                return false;
+            }
+        }
+
         //// The (rarer, more expensive) upper-band break.
         if (!CandleLast.CandleData!.BabaUpper.HasValue)
             return false;
@@ -72,6 +93,39 @@ public class SignalBabaShort : SignalBabaBase
         //    return false;
         //double pctDeviation = GlobalData.Settings.Signal.Baba.StopLossAtrFactor * (atr / (double)CandleLast.Candle.Close * 100);
 
+        // Multi-timeframe consensus: higher timeframes must also show a band break.
+        if (settings.TimeframeConsensusCount > 0)
+        {
+            int confirmed = 0;
+            CryptoIntervalPeriod higherPeriod = Interval.IntervalPeriod;
+            for (int i = 0; i < settings.TimeframeConsensusCount; i++)
+            {
+                if (higherPeriod == CryptoIntervalPeriod.interval1w)
+                    break;
+                higherPeriod++;
+
+                var result = IndicatorEngine.CalculateIndicatorsForInterval(Symbol, Interval, CandleLast.Candle.OpenTime, higherPeriod);
+                if (!result.success || result.candle?.CandleData?.BabaUpper == null)
+                {
+                    ExtraText = $"no baba data on {higherPeriod}";
+                    return false;
+                }
+                double htfUpper = result.candle.CandleData.BabaUpper.Value;
+                double htfHigh = (double)result.candle.Candle.High;
+                double htfClose = (double)result.candle.Candle.Close;
+                if (htfHigh <= htfUpper && htfClose <= htfUpper)
+                {
+                    ExtraText = $"no upper band break on {result.higherInterval.Interval.Name}";
+                    return false;
+                }
+                confirmed++;
+            }
+            if (confirmed < settings.TimeframeConsensusCount)
+            {
+                ExtraText = $"not enough higher TFs confirmed ({confirmed}/{settings.TimeframeConsensusCount})";
+                return false;
+            }
+        }
 
         // Symmetric slide filter: don't go short into an ongoing efficient UP-slide (melt-up).
         if (settings.UseSlideFilter)
@@ -83,6 +137,11 @@ public class SignalBabaShort : SignalBabaBase
                 return false;
             }
         }
+
+        if (settings.CheckTrendPrimaryDirection && !CheckTrendPrimary(settings.TrendPrimaryDirectionCount))
+            return false;
+        if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
+            return false;
 
         // Optional DLZ/FVG/SMC zone confluence (settings checkboxes). Checked only after the rare band
         // break, so the zone lookup runs sparingly.

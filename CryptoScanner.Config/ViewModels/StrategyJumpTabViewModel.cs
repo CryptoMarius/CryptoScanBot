@@ -13,10 +13,14 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyJumpSettingsViewModel _strategyJumpSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyJumpTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyJumpSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -24,11 +28,13 @@ public partial class StrategyJumpTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyJumpSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyJump settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyJumpSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

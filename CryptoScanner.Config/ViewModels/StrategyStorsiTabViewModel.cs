@@ -13,10 +13,14 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyStorsiSettingsViewModel _strategyStorsiSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyStorsiTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyStorsiSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -24,11 +28,13 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyStorsiSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyStoRsi settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStorsiSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

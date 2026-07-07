@@ -16,11 +16,15 @@ public partial class StrategyFvgTabViewModel : ObservableObject
     [ObservableProperty]
     private IntervalViewModel _intervalViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyFvgTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyFvgSettingsViewModel = new();
         _intervalViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -29,6 +33,7 @@ public partial class StrategyFvgTabViewModel : ObservableObject
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyFvgSettingsViewModel.LoadConfig(settings);
         IntervalViewModel.LoadConfig(settings.IntervalList, CryptoIntervalPeriod.interval1h);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyFvg settings)
@@ -36,5 +41,6 @@ public partial class StrategyFvgTabViewModel : ObservableObject
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyFvgSettingsViewModel.SaveConfig(settings);
         IntervalViewModel.SaveConfig(settings.IntervalList);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

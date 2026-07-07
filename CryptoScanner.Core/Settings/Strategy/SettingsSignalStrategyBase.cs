@@ -7,6 +7,10 @@ namespace CryptoScanner.Core.Settings.Strategy;
 [Serializable]
 public class SettingsSignalStrategyBase
 {
+    // Per-strategy entry condition overrides. When null the global entry
+    // conditions from SettingsTrading apply; when set these take precedence.
+    public SettingsEntryConditions? EntryConditions { get; set; } = null;
+
     public bool PlaySound { get; set; } = false;
     public bool PlaySpeech { get; set; } = false;
 

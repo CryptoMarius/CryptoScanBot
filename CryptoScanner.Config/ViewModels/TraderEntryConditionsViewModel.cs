@@ -55,41 +55,51 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
 
     public void LoadConfig(SettingsTrading settings)
     {
-        CheckIncreasingRsi = settings.CheckIncreasingRsi;
-        CheckIncreasingMacd = settings.CheckIncreasingMacd;
-        CheckIncreasingStoch = settings.CheckIncreasingStoch;
-        CheckFurtherPriceMove = settings.CheckFurtherPriceMove;
-        CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
-        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
-        CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
-        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
-        CheckPriceAboveMa200 = settings.CheckPriceAboveMa200;
-        WaitForStochRecovery = settings.WaitForStochRecovery;
-        WaitForRsiRecovery = settings.WaitForRsiRecovery;
+        LoadConfig(settings.EntryConditions);
+    }
 
-        StochExtremeLookback = settings.StochExtremeLookback;
-        StochMinExtremeBars = settings.StochMinExtremeBars;
-        StochMinExtremeArea = settings.StochMinExtremeArea;
-        StochMinExtremeZScore = settings.StochMinExtremeZScore;
+    public void LoadConfig(SettingsEntryConditions ec)
+    {
+        CheckIncreasingRsi = ec.CheckIncreasingRsi;
+        CheckIncreasingMacd = ec.CheckIncreasingMacd;
+        CheckIncreasingStoch = ec.CheckIncreasingStoch;
+        CheckFurtherPriceMove = ec.CheckFurtherPriceMove;
+        CheckTrendPrimaryDirection = ec.CheckTrendPrimaryDirection;
+        TrendPrimaryDirectionCount = ec.TrendPrimaryDirectionCount;
+        CheckTrendSecondaryDirection = ec.CheckTrendSecondaryDirection;
+        TrendSecondaryDirectionCount = ec.TrendSecondaryDirectionCount;
+        CheckPriceAboveMa200 = ec.CheckPriceAboveMa200;
+        WaitForStochRecovery = ec.WaitForStochRecovery;
+        WaitForRsiRecovery = ec.WaitForRsiRecovery;
+
+        StochExtremeLookback = ec.StochExtremeLookback;
+        StochMinExtremeBars = ec.StochMinExtremeBars;
+        StochMinExtremeArea = ec.StochMinExtremeArea;
+        StochMinExtremeZScore = ec.StochMinExtremeZScore;
     }
 
     public void SaveConfig(SettingsTrading settings)
     {
-        settings.CheckIncreasingRsi = CheckIncreasingRsi;
-        settings.CheckIncreasingMacd = CheckIncreasingMacd;
-        settings.CheckIncreasingStoch = CheckIncreasingStoch;
-        settings.CheckFurtherPriceMove = CheckFurtherPriceMove;
-        settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
-        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
-        settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
-        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
-        settings.CheckPriceAboveMa200 = CheckPriceAboveMa200;
-        settings.WaitForStochRecovery = WaitForStochRecovery;
-        settings.WaitForRsiRecovery = WaitForRsiRecovery;
+        SaveConfig(settings.EntryConditions);
+    }
 
-        settings.StochExtremeLookback = StochExtremeLookback;
-        settings.StochMinExtremeBars = StochMinExtremeBars;
-        settings.StochMinExtremeArea = StochMinExtremeArea;
-        settings.StochMinExtremeZScore = StochMinExtremeZScore;
+    public void SaveConfig(SettingsEntryConditions ec)
+    {
+        ec.CheckIncreasingRsi = CheckIncreasingRsi;
+        ec.CheckIncreasingMacd = CheckIncreasingMacd;
+        ec.CheckIncreasingStoch = CheckIncreasingStoch;
+        ec.CheckFurtherPriceMove = CheckFurtherPriceMove;
+        ec.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
+        ec.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
+        ec.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
+        ec.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        ec.CheckPriceAboveMa200 = CheckPriceAboveMa200;
+        ec.WaitForStochRecovery = WaitForStochRecovery;
+        ec.WaitForRsiRecovery = WaitForRsiRecovery;
+
+        ec.StochExtremeLookback = StochExtremeLookback;
+        ec.StochMinExtremeBars = StochMinExtremeBars;
+        ec.StochMinExtremeArea = StochMinExtremeArea;
+        ec.StochMinExtremeZScore = StochMinExtremeZScore;
     }
 }

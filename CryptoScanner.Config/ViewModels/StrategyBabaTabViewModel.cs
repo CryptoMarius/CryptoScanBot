@@ -12,10 +12,14 @@ public partial class StrategyBabaTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyBabaSettingsViewModel _strategyBabaSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyBabaTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyBabaSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -23,11 +27,13 @@ public partial class StrategyBabaTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyBabaSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyBaba settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyBabaSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

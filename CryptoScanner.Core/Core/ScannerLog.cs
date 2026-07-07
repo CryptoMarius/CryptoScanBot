@@ -41,6 +41,12 @@ public class ScannerLog
         };
     }
 
+    // The shared trace target/rule created by InitializeLogging (DEBUG builds only).
+    // StartRunLog detaches it so the global Trace.log does not grow during emulator runs
+    // (per-run trace files capture the same data); StopRunLog reattaches it.
+    private static NLog.Targets.Target? sharedTraceTarget;
+    private static NLog.Config.LoggingRule? sharedTraceRule;
+
     // The dynamically attached per-run target/rule (emulator). Held so StopRunLog can detach the
     // exact same instances it added; null when no run log is active.
     // Stored as the outer AsyncTargetWrapper so config.RemoveTarget uses the right name.
@@ -116,6 +122,12 @@ public class ScannerLog
         runTraceRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, runTraceTarget);
         config.LoggingRules.Add(runTraceRule);
 
+        // Detach the shared trace target so the global Trace.log does not grow during emulator runs.
+        if (sharedTraceRule != null)
+            config.LoggingRules.Remove(sharedTraceRule);
+        if (sharedTraceTarget != null)
+            config.RemoveTarget(sharedTraceTarget.Name);
+
         LogManager.Configuration = config;
     }
 
@@ -137,6 +149,13 @@ public class ScannerLog
             config.LoggingRules.Remove(runTraceRule);
         if (runTraceTarget != null)
             config.RemoveTarget(runTraceTarget.Name);
+
+        // Reattach the shared trace target so the scanner keeps writing to the global Trace.log.
+        if (sharedTraceTarget != null && sharedTraceRule != null)
+        {
+            config.AddTarget(sharedTraceTarget);
+            config.LoggingRules.Add(sharedTraceRule);
+        }
 
         LogManager.Configuration = config;
 
@@ -168,9 +187,11 @@ public class ScannerLog
         config.LoggingRules.Add(rule);
 
 #if DEBUG
-        fileTarget = CreateTarget("trace", " Trace");
-        rule = new NLog.Config.LoggingRule("*", LogLevel.Trace, fileTarget);
-        config.LoggingRules.Add(rule);
+        // Shared trace target for the live scanner. During emulator runs StartRunLog detaches
+        // this (per-run trace files capture the same data); StopRunLog reattaches it.
+        sharedTraceTarget = CreateTarget("trace", " Trace");
+        sharedTraceRule = new NLog.Config.LoggingRule("*", LogLevel.Trace, sharedTraceTarget);
+        config.LoggingRules.Add(sharedTraceRule);
 
         //fileTarget = CreateTarget("debug", " Debug");
         //rule = new NLog.Config.LoggingRule("*", LogLevel.Debug, fileTarget);

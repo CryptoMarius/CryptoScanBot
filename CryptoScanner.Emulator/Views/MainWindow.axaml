@@ -28,6 +28,11 @@
                     <!-- Menu with the same actions as the command-bar buttons -->
                     <Menu Grid.Column="0" VerticalAlignment="Center" Background="Transparent" FontSize="12">
                         <MenuItem Header="_Run">
+                            <MenuItem Header="Change database..."
+                                      Command="{Binding ChangeDatabaseCommand}"
+                                      CommandParameter="{Binding $parent[Window]}"
+                                      IsEnabled="{Binding !IsRunning}"/>
+                            <Separator/>
                             <MenuItem Header="Fetch symbols"
                                       Command="{Binding FetchSymbolsCommand}"
                                       IsEnabled="{Binding !IsRunning}"/>
@@ -77,10 +82,20 @@
                 <!-- ─── Command bar (knoppen) ─────────────────────────────────────────────── -->
                 <Border Grid.Row="0" Padding="8" BorderBrush="#606060" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Change database..."
+                                Command="{Binding ChangeDatabaseCommand}"
+                                CommandParameter="{Binding $parent[Window]}"
+                                IsEnabled="{Binding !IsRunning}"
+                                ToolTip.Tip="Re-open the setup dialog to pick a different data folder or exchange."/>
                         <Button Content="Fetch symbols"
                                 Command="{Binding FetchSymbolsCommand}"
                                 IsEnabled="{Binding !IsRunning}"
                                 ToolTip.Tip="Pulls the symbol list from the exchange (REST). Needed before Configure can show quotes and before runs can find any symbol."/>
+                        <Button Content="Fetch candles"
+                                Command="{Binding FetchCandlesCommand}"
+                                IsEnabled="{Binding !IsRunning}"
+                                ToolTip.Tip="Pulls candles for every symbol in CryptoScanBot-Emulator.json and persists them. May take a while; only needs doing once per symbol/range."/>
+                        <Border Width="1" Background="#606060" Margin="4,2"/>
                         <Button Content="Configure scanner..."
                                 Command="{Binding ConfigureScannerCommand}"
                                 CommandParameter="{Binding $parent[Window]}"
@@ -90,10 +105,7 @@
                                 CommandParameter="{Binding $parent[Window]}"
                                 IsEnabled="{Binding !IsRunning}"
                                 ToolTip.Tip="Set the replay period, the symbols to run and a label (saved to CryptoScanBot-Emulator.json)."/>
-                        <Button Content="Fetch candles"
-                                Command="{Binding FetchCandlesCommand}"
-                                IsEnabled="{Binding !IsRunning}"
-                                ToolTip.Tip="Pulls candles for every symbol in CryptoScanBot-Emulator.json and persists them. May take a while; only needs doing once per symbol/range."/>
+                        <Border Width="1" Background="#606060" Margin="4,2"/>
                         <Button Content="Start"
                                 Command="{Binding StartCommand}"
                                 IsVisible="{Binding !IsRunning}"

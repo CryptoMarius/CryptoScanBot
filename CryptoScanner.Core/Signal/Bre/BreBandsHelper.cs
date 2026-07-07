@@ -74,7 +74,7 @@ public static class BreBandsHelper
         var stochSettings = GlobalData.Settings.General.SettingsStoch;
         double?[]? stochK = null;
         double?[]? stochD = null;
-        if (settings.UseStochFilter)
+        if (settings.RequireStochOsOb)
             ComputeStochRsi(quotes, stochSettings.Length, stochSettings.SmoothingK, stochSettings.SmoothingD, out stochK, out stochD);
 
         for (int i = 0; i < count; i++)
@@ -227,39 +227,9 @@ public static class BreBandsHelper
             }
         }
 
-        // RSI filter: oversold on this or the previous candle. OB/OS from general settings.
-        if (settings.UseRsiFilter)
-        {
-            double rsiOversold = GlobalData.Settings.General.SettingsRsi.Oversold;
-            double? rsi = value.Rsi;
-            double? rsiPrev = idx > 0 ? bands[idx - 1].Rsi : null;
-            if (!rsi.HasValue)
-            {
-                reason = "rsi warming up";
-                return false;
-            }
-            if (rsi.Value > rsiOversold && (!rsiPrev.HasValue || rsiPrev.Value > rsiOversold))
-            {
-                reason = $"rsi not oversold ({rsi.Value:N2})";
-                return false;
-            }
-        }
-
-        // Stochastic-RSI filter: %K or %D in the oversold zone. OB/OS from general settings.
-        if (settings.UseStochFilter)
-        {
-            double stochOversold = GlobalData.Settings.General.SettingsStoch.Oversold;
-            if (!value.StochK.HasValue || !value.StochD.HasValue)
-            {
-                reason = "stoch rsi warming up";
-                return false;
-            }
-            if (value.StochK.Value > stochOversold && value.StochD.Value > stochOversold)
-            {
-                reason = $"stoch rsi not oversold (k={value.StochK.Value:N2} d={value.StochD.Value:N2})";
-                return false;
-            }
-        }
+        // RSI and Stochastic OS/OB filters have been moved to the signal class (SignalBreLong/Short)
+        // so they use the standard precomputed indicators (consistent with BABA/ATRRB) and are only
+        // applied on the primary (lowest) timeframe in multi-TF consensus mode.
 
         reason = "";
         return true;
@@ -267,7 +237,7 @@ public static class BreBandsHelper
 
     /// <summary>
     /// Full short-signal check on index <paramref name="idx"/>: upper-band break + stacking rule +
-    /// the enabled trend/RSI/stoch filters. Also used by the chart drawer for the break labels.
+    /// the enabled trend filter. Also used by the chart drawer for the break labels.
     /// </summary>
     public static bool IsShortBreak(List<CryptoCandle> candles, BreBandValue[] bands, int idx,
         out double bandWidthPct, out double bandPrice, out string reason)
@@ -316,39 +286,9 @@ public static class BreBandsHelper
             }
         }
 
-        // RSI filter: overbought on this or the previous candle. OB/OS from general settings.
-        if (settings.UseRsiFilter)
-        {
-            double rsiOverbought = GlobalData.Settings.General.SettingsRsi.Overbought;
-            double? rsi = value.Rsi;
-            double? rsiPrev = idx > 0 ? bands[idx - 1].Rsi : null;
-            if (!rsi.HasValue)
-            {
-                reason = "rsi warming up";
-                return false;
-            }
-            if (rsi.Value < rsiOverbought && (!rsiPrev.HasValue || rsiPrev.Value < rsiOverbought))
-            {
-                reason = $"rsi not overbought ({rsi.Value:N2})";
-                return false;
-            }
-        }
-
-        // Stochastic-RSI filter: %K or %D in the overbought zone. OB/OS from general settings.
-        if (settings.UseStochFilter)
-        {
-            double stochOverbought = GlobalData.Settings.General.SettingsStoch.Overbought;
-            if (!value.StochK.HasValue || !value.StochD.HasValue)
-            {
-                reason = "stoch rsi warming up";
-                return false;
-            }
-            if (value.StochK.Value < stochOverbought && value.StochD.Value < stochOverbought)
-            {
-                reason = $"stoch rsi not overbought (k={value.StochK.Value:N2} d={value.StochD.Value:N2})";
-                return false;
-            }
-        }
+        // RSI and Stochastic OS/OB filters have been moved to the signal class (SignalBreLong/Short)
+        // so they use the standard precomputed indicators (consistent with BABA/ATRRB) and are only
+        // applied on the primary (lowest) timeframe in multi-TF consensus mode.
 
         reason = "";
         return true;

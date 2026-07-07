@@ -12,10 +12,14 @@ public partial class StrategyWaveTrendTabViewModel : ObservableObject
     [ObservableProperty]
     StrategyWaveTrendSettingsViewModel _strategyWaveTrendSettingsViewModel;
 
+    [ObservableProperty]
+    StrategyEntryConditionsViewModel _strategyEntryConditionsViewModel;
+
     public StrategyWaveTrendTabViewModel()
     {
         _soundAndColorsViewModel = new();
         _strategyWaveTrendSettingsViewModel = new();
+        _strategyEntryConditionsViewModel = new();
     }
 
 
@@ -23,11 +27,13 @@ public partial class StrategyWaveTrendTabViewModel : ObservableObject
     {
         SoundAndColorsViewModel.LoadConfig(caption, settings);
         StrategyWaveTrendSettingsViewModel.LoadConfig(caption, settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
     internal void SaveConfig(SettingsSignalStrategyWaveTrend settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyWaveTrendSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }
