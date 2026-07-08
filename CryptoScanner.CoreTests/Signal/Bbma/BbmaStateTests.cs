@@ -100,19 +100,20 @@ public class BbmaStateTests
     }
 
     [TestMethod]
-    public void StateLong_MagicExtreme_WhenBothWmasBelowLowerBand()
+    public void StateLong_MagicExtreme_MergedIntoExtreme_WhenBothWmasBelowLowerBand()
     {
         // WMA5Low (94) < Lower (95) AND WMA10Low (94.5) < Lower (95)
+        // MagicExtreme was merged into Extreme in production (no downstream code uses the distinction).
         var data = MakeData(100, 101, 99, 100, wma5Low: 94, wma10Low: 94.5, wma5High: 103, wma10High: 103);
-        Assert.AreEqual(BbmaState.MagicExtreme, SignalBbmaLong.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.Extreme, SignalBbmaLong.GetBbmaState(data));
     }
 
     [TestMethod]
-    public void StateLong_MagicExtreme_TakesPriorityOver_Extreme()
+    public void StateLong_MagicExtreme_MergedIntoExtreme_TakesPriorityOver_PlainExtreme()
     {
-        // Both MAs below lower band → MagicExtreme wins over plain Extreme
+        // Both MAs below lower band → returns Extreme (MagicExtreme merged into Extreme)
         var data = MakeData(100, 101, 94, 100, wma5Low: 94, wma10Low: 94, wma5High: 103, wma10High: 103);
-        Assert.AreEqual(BbmaState.MagicExtreme, SignalBbmaLong.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.Extreme, SignalBbmaLong.GetBbmaState(data));
     }
 
     [TestMethod]
@@ -134,13 +135,13 @@ public class BbmaStateTests
     }
 
     [TestMethod]
-    public void StateLong_Extreme_Advance_WickBelowEma50()
+    public void StateLong_Extreme_Advance_Disabled_ReturnsNone()
     {
-        // Ema50 = 98. Low (97.5) < 98, Close (99) > 98, Open (99) > 98 → Advance Extreme.
-        // WMAs at 97 — no MA-outside-band. Low (97.5) > WMA5Low (97) — no Reentry conflict before Advance.
+        // Advance Extreme is currently disabled in production (if (false && ...)).
+        // When re-enabled: Ema50=98, Low(97.5)<98, Close(99)>98, Open(99)>98 → Advance Extreme.
         var data = MakeData(99, 100, 97.5m, 99,
             wma5Low: 97, wma10Low: 97, wma5High: 103, wma10High: 103, ema50: 98.0);
-        Assert.AreEqual(BbmaState.Extreme, SignalBbmaLong.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.None, SignalBbmaLong.GetBbmaState(data));
     }
 
     [TestMethod]
@@ -156,16 +157,16 @@ public class BbmaStateTests
     [TestMethod]
     public void StateLong_Reentry_WhenLowExactlyAtWma5()
     {
-        // Low (97) = WMA5Low (97). Ema50 = EmaFarBelow to avoid Advance interference.
-        var data = MakeData(99, 101, 97, 99, wma5Low: 97, wma10Low: 98, wma5High: 103, wma10High: 103);
+        // Low (97) = WMA5Low (97). Close (101) >= middleBand (100) and > ema50 (85) for uptrend.
+        var data = MakeData(101, 102, 97, 101, wma5Low: 97, wma10Low: 98, wma5High: 103, wma10High: 103);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaLong.GetBbmaState(data));
     }
 
     [TestMethod]
     public void StateLong_Reentry_WhenLowBelowWma5()
     {
-        // Low (96.5) < WMA5Low (97). No MA-outside-band (WMA5Low >= Lower 95). Ema50 far below.
-        var data = MakeData(99, 101, 96.5m, 99, wma5Low: 97, wma10Low: 98, wma5High: 103, wma10High: 103);
+        // Low (96.5) < WMA5Low (97). Close (101) >= middleBand (100). No MA-outside-band.
+        var data = MakeData(101, 102, 96.5m, 101, wma5Low: 97, wma10Low: 98, wma5High: 103, wma10High: 103);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaLong.GetBbmaState(data));
     }
 
@@ -173,18 +174,17 @@ public class BbmaStateTests
     public void StateLong_Reentry_WhenLowBelowWma10ButAboveWma5()
     {
         // WMA5Low (96), WMA10Low (97.5). Low (97) > WMA5Low (96) but Low (97) <= WMA10Low (97.5).
-        // Ema50 = EmaFarBelow to avoid Advance interference.
-        var data = MakeData(99, 101, 97, 99, wma5Low: 96, wma10Low: 97.5, wma5High: 103, wma10High: 103);
+        // Close (101) >= middleBand (100).
+        var data = MakeData(101, 102, 97, 101, wma5Low: 96, wma10Low: 97.5, wma5High: 103, wma10High: 103);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaLong.GetBbmaState(data));
     }
 
     [TestMethod]
     public void StateLong_Reentry_TakesPriorityOver_Mlv()
     {
-        // WMA5Low (96) >= Lower (95) AND WMA5Low (96) < WMA10Low (97) → Mlv condition true.
-        // But Low (96.5) <= WMA10Low (97) → Reentry is checked first and wins.
-        // Ema50 = EmaFarBelow, Close/Open < EmaFarBelow is irrelevant; Advance won't fire anyway.
-        var data = MakeData(99, 101, 96.5m, 97, wma5Low: 96, wma10Low: 97, wma5High: 103, wma10High: 103);
+        // Low (96.5) <= WMA10Low (97) → Reentry. Low (96.5) > bbLower (95) → no Mlv (wick-based).
+        // Close (101) >= middleBand (100), close > ema50 (85) for uptrend.
+        var data = MakeData(101, 102, 96.5m, 101, wma5Low: 96, wma10Low: 97, wma5High: 103, wma10High: 103);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaLong.GetBbmaState(data));
     }
 
@@ -250,21 +250,22 @@ public class BbmaStateTests
     }
 
     [TestMethod]
-    public void StateShort_MagicExtreme_WhenBothWmasAboveUpperBand()
+    public void StateShort_MagicExtreme_MergedIntoExtreme_WhenBothWmasAboveUpperBand()
     {
         // WMA5High (106) > Upper (105) AND WMA10High (106.5) > Upper (105)
+        // MagicExtreme was merged into Extreme in production.
         var data = MakeData(100, 101, 99, 100,
             wma5Low: 97, wma10Low: 97, wma5High: 106, wma10High: 106.5, ema50: EmaFarAbove);
-        Assert.AreEqual(BbmaState.MagicExtreme, SignalBbmaShort.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.Extreme, SignalBbmaShort.GetBbmaState(data));
     }
 
     [TestMethod]
-    public void StateShort_MagicExtreme_TakesPriorityOver_Extreme()
+    public void StateShort_MagicExtreme_MergedIntoExtreme_TakesPriorityOver_PlainExtreme()
     {
-        // Both MAs above upper band → MagicExtreme wins over plain Extreme
+        // Both MAs above upper band → returns Extreme (MagicExtreme merged into Extreme)
         var data = MakeData(100, 106, 99, 100,
             wma5Low: 97, wma10Low: 97, wma5High: 106, wma10High: 106, ema50: EmaFarAbove);
-        Assert.AreEqual(BbmaState.MagicExtreme, SignalBbmaShort.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.Extreme, SignalBbmaShort.GetBbmaState(data));
     }
 
     [TestMethod]
@@ -288,13 +289,13 @@ public class BbmaStateTests
     }
 
     [TestMethod]
-    public void StateShort_Extreme_Advance_WickAboveEma50()
+    public void StateShort_Extreme_Advance_Disabled_ReturnsNone()
     {
-        // Ema50 = 102. High (102.5) > 102, Close (101) < 102, Open (101.5) < 102 → Advance Extreme.
-        // WMAs at 103 → High (102.5) < WMA5High (103) → no Reentry conflict before Advance.
+        // Advance Extreme is currently disabled in production (if (false && ...)).
+        // When re-enabled: Ema50=102, High(102.5)>102, Close(101)<102, Open(101.5)<102 → Advance Extreme.
         var data = MakeData(101.5m, 102.5m, 100, 101,
             wma5Low: 97, wma10Low: 97, wma5High: 103, wma10High: 103, ema50: 102.0);
-        Assert.AreEqual(BbmaState.Extreme, SignalBbmaShort.GetBbmaState(data));
+        Assert.AreEqual(BbmaState.None, SignalBbmaShort.GetBbmaState(data));
     }
 
     [TestMethod]
@@ -310,8 +311,8 @@ public class BbmaStateTests
     [TestMethod]
     public void StateShort_Reentry_WhenHighExactlyAtWma5()
     {
-        // High (103) = WMA5High (103). Ema50 = EmaFarAbove to avoid Advance interference.
-        var data = MakeData(101, 103, 100, 101,
+        // High (103) = WMA5High (103). Close (99) <= middleBand (100) and < ema50 (115) for downtrend.
+        var data = MakeData(99, 103, 98, 99,
             wma5Low: 97, wma10Low: 97, wma5High: 103, wma10High: 103.5, ema50: EmaFarAbove);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaShort.GetBbmaState(data));
     }
@@ -319,8 +320,8 @@ public class BbmaStateTests
     [TestMethod]
     public void StateShort_Reentry_WhenHighAboveWma5()
     {
-        // High (103.5) > WMA5High (103). No MA-outside-band (WMA5High <= Upper 105). Ema50 far above.
-        var data = MakeData(101, 103.5m, 100, 101,
+        // High (103.5) > WMA5High (103). Close (99) <= middleBand (100). No MA-outside-band.
+        var data = MakeData(99, 103.5m, 98, 99,
             wma5Low: 97, wma10Low: 97, wma5High: 103, wma10High: 103.5, ema50: EmaFarAbove);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaShort.GetBbmaState(data));
     }
@@ -329,8 +330,8 @@ public class BbmaStateTests
     public void StateShort_Reentry_WhenHighAboveWma10ButBelowWma5()
     {
         // WMA5High (104), WMA10High (102.5). High (103) > WMA10High (102.5) but < WMA5High (104).
-        // Ema50 = EmaFarAbove to avoid Advance interference.
-        var data = MakeData(101, 103, 100, 101,
+        // Close (99) <= middleBand (100).
+        var data = MakeData(99, 103, 98, 99,
             wma5Low: 97, wma10Low: 97, wma5High: 104, wma10High: 102.5, ema50: EmaFarAbove);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaShort.GetBbmaState(data));
     }
@@ -338,10 +339,9 @@ public class BbmaStateTests
     [TestMethod]
     public void StateShort_Reentry_TakesPriorityOver_Mlv()
     {
-        // WMA5High (104) > WMA10High (103) → Mlv condition true.
-        // High (103.5) >= WMA10High (103) → Reentry is checked first and wins.
-        // Ema50 = EmaFarAbove to prevent Advance interference.
-        var data = MakeData(101, 103.5m, 100, 101,
+        // High (103.5) >= WMA10High (103) → Reentry. High (103.5) < bbUpper (105) → no Mlv (wick-based).
+        // Close (99) <= middleBand (100), close < ema50 (115) for downtrend.
+        var data = MakeData(99, 103.5m, 98, 99,
             wma5Low: 97, wma10Low: 97, wma5High: 104, wma10High: 103, ema50: EmaFarAbove);
         Assert.AreEqual(BbmaState.Reentry, SignalBbmaShort.GetBbmaState(data));
     }
