@@ -36,8 +36,8 @@ public sealed class IntervalIndicatorHub
     // Baba VWAP band basis/variance — hlc3 and hlc3^2 fed into their OWN quote hubs (Close = hlc3 / hlc3^2,
     // not the real OHLC) because GetVwma only reads Close+Volume. Mirrors BabaBandsHelper.ComputeBands so
     // the hub and batch paths agree, and so SignalBabaLong/Short share one calculation instead of two.
-    private readonly QuoteHub _babaSrcHub = new();   // Close = hlc3
-    private readonly QuoteHub _babaSqHub = new();    // Close = hlc3^2
+    private readonly QuoteHub _babaSrcHub = new(maxCacheSize: HubCacheSize);   // Close = hlc3
+    private readonly QuoteHub _babaSqHub = new(maxCacheSize: HubCacheSize);    // Close = hlc3^2
     private readonly VwmaHub _babaVwmaSrc;
     private readonly VwmaHub _babaVwmaSq;
     private readonly double _babaMult;
@@ -64,10 +64,14 @@ public sealed class IntervalIndicatorHub
 #endif
 
 
+    // SMA(200) is the longest lookback; 300 gives comfortable headroom.
+    // Keeps Skender's internal cache small so pruning stays O(300) instead of O(100k).
+    private const int HubCacheSize = 300;
+
     public IntervalIndicatorHub()
     {
         var settings = GlobalData.Settings.General;
-        _quoteHub = new QuoteHub();
+        _quoteHub = new QuoteHub(maxCacheSize: HubCacheSize);
 
         // Parameters identical to IndicatorData.CalculateIndicators.
         _bb = _quoteHub.ToBollingerBandsHub(settings.SettingsBb.Length, settings.SettingsBb.Deviation);
