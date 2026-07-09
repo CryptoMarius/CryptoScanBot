@@ -106,6 +106,18 @@ public class TestBase
     }
 
 
+    public static void ResetIndicatorState(CryptoSymbol symbol)
+    {
+        foreach (var si in symbol.Data.SymbolIntervalList)
+        {
+            si.IndicatorHub = null;
+            si.IndicatorHubLastAdded = null;
+            si.IndicatorHubAddCount = 0;
+            si.Data.Clear();
+            si.ResetTrendData();
+        }
+    }
+
     public static CryptoCandle GenerateCandles(CryptoSymbol symbol, ref DateTime startTime, int count, decimal price)
     {
         CryptoCandle candle = default;
@@ -165,20 +177,57 @@ public class TestBase
         if (!File.Exists(fileName))
             throw new Exception($"File {fileName} not found");
 
+        // CryptoCandle is a struct that stores prices as integer ticks. The tick
+        // precision depends on TickDecimals, which defaults to 0. Normal
+        // deserialization would convert decimal prices using TickSize=1.0,
+        // truncating everything < 1.0 to 0. Parse the raw JSON to preserve
+        // the original decimal values and auto-detect TickDecimals.
         string text = File.ReadAllText(fileName);
-        var list = JsonSerializer.Deserialize<CryptoCandleList>(text, JsonTools.DeSerializerOptions)
-            ?? throw new Exception($"Unable to load candles from {fileName}");
+        using JsonDocument doc = JsonDocument.Parse(text);
 
-        // Clear list so we not have unexpected stuff..
         candleList.Clear();
 
-        // Add the candles
-        foreach (var c in list.Values)
-            candleList.TryAdd(c.OpenTime, c);
+        byte tickDecimals = 0;
+        foreach (JsonProperty entry in doc.RootElement.EnumerateObject())
+        {
+            JsonElement e = entry.Value;
+            decimal open = e.GetProperty("Open").GetDecimal();
+            decimal high = e.GetProperty("High").GetDecimal();
+            decimal low = e.GetProperty("Low").GetDecimal();
+            decimal close = e.GetProperty("Close").GetDecimal();
+            decimal volume = e.GetProperty("Volume").GetDecimal();
+            uint openTime = e.GetProperty("OpenTime").GetUInt32();
 
-        // We expect at least 1..
+            if (tickDecimals == 0 && close != 0)
+                tickDecimals = DetectTickDecimals(close);
+
+            var candle = new CryptoCandle
+            {
+                TickDecimals = tickDecimals,
+                OpenTime = new CandleTime(openTime),
+                Open = open,
+                High = high,
+                Low = low,
+                Close = close,
+                Volume = volume,
+            };
+            candleList.TryAdd(candle.OpenTime, candle);
+        }
+
         if (candleList.Count == 0)
             throw new Exception("Error loading candles");
+    }
+
+    private static byte DetectTickDecimals(decimal value)
+    {
+        // Count how many decimal places the value has to determine TickDecimals.
+        for (int d = 0; d <= 8; d++)
+        {
+            decimal scaled = value * (decimal)Math.Pow(10, d);
+            if (scaled == Math.Floor(scaled))
+                return (byte)d;
+        }
+        return 8;
     }
 
 }

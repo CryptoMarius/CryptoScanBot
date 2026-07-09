@@ -46,6 +46,7 @@ namespace CryptoScanner.CoreTests.Signal.Bbma;
 /// 3. Run checkpoint tests as regression guard after code changes.
 /// </summary>
 [TestClass]
+[DoNotParallelize]
 public class BbmaSignalSimulationTests : TestBase
 {
     // ─── timeframe pair for the 5m LTF BBMA setup ────────────────────────────
@@ -76,10 +77,12 @@ public class BbmaSignalSimulationTests : TestBase
         LoadTestData(string symbolName)
     {
         InitTestSession();
+        GlobalData.Settings.Signal.UseIndicatorHub = true;
         using CryptoDatabase database = new();
         database.Open();
 
         CryptoSymbol symbol = CreateTestSymbol(database);
+        ResetIndicatorState(symbol);
 
         CryptoInterval ltf = GlobalData.IntervalListPeriod[LtfPeriod];
         CryptoInterval mtf = GlobalData.IntervalListPeriod[MtfPeriod];
@@ -305,7 +308,6 @@ public class BbmaSignalSimulationTests : TestBase
     /// Remove [Ignore] once the JSON files are in place and expectedTimes is filled.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs data files in Signal\\Bbma\\ADAUSDT\\ and known expected timestamps")]
     public void CheckpointTest_Long_ADAUSDT_KnownSignals()
     {
         const string symbol = "ADAUSDT";
@@ -313,21 +315,30 @@ public class BbmaSignalSimulationTests : TestBase
 
         List<SignalHit> hits = RunSimulation(sym, ltf, CryptoTradeSide.Long);
 
-        // Fill these in after running DiscoverSignals_Long.
-        // Use LOCAL time (same as what DiscoverSignals prints).
-        DateTime[] expectedTimes =
-        [
-            // new DateTime(2025, 1, 15, 14, 35, 0),
-            // new DateTime(2025, 1, 16, 09, 20, 0),
-        ];
+        // DiscoverSignals_Long found 0 signals in this dataset.
+        Assert.AreEqual(0, hits.Count, "Unexpected Long signals appeared — regression?");
+    }
 
+    [TestMethod]
+    public void CheckpointTest_Short_ADAUSDT_KnownSignals()
+    {
+        const string symbol = "ADAUSDT";
+        var (sym, ltf, _, _) = LoadTestData(symbol);
+
+        List<SignalHit> hits = RunSimulation(sym, ltf, CryptoTradeSide.Short);
+
+        Console.WriteLine($"Short signals found: {hits.Count}");
+        foreach (var hit in hits)
+            Console.WriteLine($"  {hit.CandleTimeLocal:yyyy-MM-dd HH:mm:ss}  {hit.ExtraText}");
+
+        // Verify at least 1 signal fires in this dataset.
+        Assert.IsTrue(hits.Count >= 1, "Expected at least 1 Short signal in ADAUSDT dataset");
+
+        // Known signal from DiscoverSignals_Short (local time).
+        DateTime expected = new(2026, 2, 1, 20, 10, 0);
         var hitTimes = hits.Select(h => h.CandleTimeLocal).ToHashSet();
-
-        foreach (DateTime expected in expectedTimes)
-            Assert.IsTrue(hitTimes.Contains(expected),
-                $"Expected Long signal at {expected:yyyy-MM-dd HH:mm:ss} but it was not found.");
-
-        // Optionally assert total count to catch regressions in both directions:
-        // Assert.AreEqual(expectedTimes.Length, hits.Count, "Unexpected number of Long signals");
+        Assert.IsTrue(hitTimes.Contains(expected),
+            $"Expected Short signal at {expected:yyyy-MM-dd HH:mm:ss} but it was not found. " +
+            $"Found: {string.Join(", ", hitTimes.Select(t => t.ToString("yyyy-MM-dd HH:mm:ss")))}");
     }
 }

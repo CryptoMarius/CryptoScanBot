@@ -36,6 +36,7 @@ namespace CryptoScanner.CoreTests.Signal.StopLoss;
 /// the JSON files are in place.
 /// </summary>
 [TestClass]
+[DoNotParallelize]
 public class StopLossStrategyTests : TestBase
 {
     private static readonly CryptoIntervalPeriod SignalPeriod = CryptoIntervalPeriod.interval15m;
@@ -48,23 +49,25 @@ public class StopLossStrategyTests : TestBase
         return Path.Combine(baseDir, relative);
     }
 
-    private static CryptoSymbol LoadSymbolCandles(string symbolName, CryptoIntervalPeriod period)
+    private static (CryptoSymbol symbol, CryptoInterval interval) LoadSymbolCandles(string symbolName, CryptoIntervalPeriod period)
     {
         InitTestSession();
+        GlobalData.Settings.Signal.UseIndicatorHub = true;
         using CryptoDatabase database = new();
         database.Open();
 
         CryptoSymbol symbol = CreateTestSymbol(database);
+        ResetIndicatorState(symbol);
+        CryptoInterval interval = GlobalData.IntervalListPeriod[period];
 
-        string periodName = GlobalData.IntervalListPeriod[period].Name;
         string folder = $"Signal\\StopLoss\\{symbolName}";
         LoadCandleDataFromDisk(
             symbol.GetSymbolInterval(period).CandleList,
-            TestDataPath($"{folder}\\{symbolName}-{periodName}.json"));
+            TestDataPath($"{folder}\\{symbolName}-{interval.Name}.json"));
 
         int count = symbol.GetSymbolInterval(period).CandleList.Count;
-        Console.WriteLine($"Loaded {count} candles for {symbolName} {periodName}");
-        return symbol;
+        Console.WriteLine($"Loaded {count} candles for {symbolName} {interval.Name}");
+        return (symbol, interval);
     }
 
     // ─── BABA simulation ─────────────────────────────────────────────────────
@@ -171,15 +174,14 @@ public class StopLossStrategyTests : TestBase
     /// this ATR-derived value instead of the global setting.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void BabaLong_UsesStrategyStopLoss_NotNull()
     {
         // UseStopLoss=true (default) → OverrideSlPercentage must be populated for every fired signal.
         GlobalData.Settings.Signal.Baba.UseStopLoss = true;
 
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunBabaSimulation(sym, interval, CryptoTradeSide.Long);
 
@@ -203,15 +205,14 @@ public class StopLossStrategyTests : TestBase
     /// causing the trader to fall back to the global stop-loss setting.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void BabaLong_UseStopLossDisabled_ReturnsNull()
     {
         // UseStopLoss=false → OverrideSlPercentage must be null (global fallback).
         GlobalData.Settings.Signal.Baba.UseStopLoss = false;
 
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunBabaSimulation(sym, interval, CryptoTradeSide.Long);
 
@@ -233,14 +234,13 @@ public class StopLossStrategyTests : TestBase
     /// (OverrideSlPercentage is not null) when UseStopLoss is enabled.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void BabaShort_UsesStrategyStopLoss_NotNull()
     {
         GlobalData.Settings.Signal.Baba.UseStopLoss = true;
 
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunBabaSimulation(sym, interval, CryptoTradeSide.Short);
 
@@ -267,12 +267,11 @@ public class StopLossStrategyTests : TestBase
     /// stop-loss percentage configured in the trading settings.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void StobbLong_UsesGlobalStopLoss_OverrideIsNull()
     {
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunStobbSimulation(sym, interval, CryptoTradeSide.Long);
 
@@ -294,12 +293,11 @@ public class StopLossStrategyTests : TestBase
     /// (global stop-loss fallback, same as Long).
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void StobbShort_UsesGlobalStopLoss_OverrideIsNull()
     {
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunStobbSimulation(sym, interval, CryptoTradeSide.Short);
 
@@ -323,14 +321,13 @@ public class StopLossStrategyTests : TestBase
     /// No assertions — use this to verify signal output before removing [Ignore] from the tests above.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void Discover_BabaLong_SlPercentages()
     {
         GlobalData.Settings.Signal.Baba.UseStopLoss = true;
 
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunBabaSimulation(sym, interval, CryptoTradeSide.Long);
 
@@ -346,12 +343,11 @@ public class StopLossStrategyTests : TestBase
     /// No assertions.
     /// </summary>
     [TestMethod]
-    [Ignore("Needs Signal\\StopLoss\\SOLUSDT\\SOLUSDT-15m.json — export from the running scanner")]
+
     public void Discover_StobbLong_SlPercentages()
     {
         const string symbol = "SOLUSDT";
-        CryptoInterval interval = GlobalData.IntervalListPeriod[SignalPeriod];
-        CryptoSymbol sym = LoadSymbolCandles(symbol, SignalPeriod);
+        var (sym, interval) = LoadSymbolCandles(symbol, SignalPeriod);
 
         var hits = RunStobbSimulation(sym, interval, CryptoTradeSide.Long);
 

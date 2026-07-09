@@ -925,18 +925,20 @@ public class PositionMonitor : IDisposable
         CryptoPositionStep? stepDca;
         if (dcaOrderSide == CryptoOrderSide.Buy)
         {
-            // Across all DCA parts: step with the lowest price (long: lowest dca=buy)
+            // Across all DCA parts: entry step with the lowest price (long: lowest dca=buy)
             stepDca = position.PartList.Values
                 .Where(p => p.Purpose == CryptoPartPurpose.Dca)
                 .SelectMany(p => p.StepList.Values)
+                .Where(s => s.Side == dcaOrderSide)
                 .MinBy(s => s.Price);
         }
         else
         {
-            // Across all DCA parts: step with the highest price (short: highest dca sell)
+            // Across all DCA parts: entry step with the highest price (short: highest dca sell)
             stepDca = position.PartList.Values
                 .Where(p => p.Purpose == CryptoPartPurpose.Dca)
                 .SelectMany(p => p.StepList.Values)
+                .Where(s => s.Side == dcaOrderSide)
                 .MaxBy(s => s.Price);
         }
 

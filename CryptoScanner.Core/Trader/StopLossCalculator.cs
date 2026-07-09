@@ -67,47 +67,68 @@ public static class StopLossCalculator
     ///
     /// Priority:
     ///   1. Signal-provided SL% — only when <c>PartCount == 0</c> (no DCA filled yet).
-    ///      Anchored on <see cref="SlInput.SignalPrice"/>.
     ///   2. Global SL% — when signal SL does not apply and <c>GlobalStopLossPercentage &gt; 0</c>.
-    ///      Anchored on the most extreme DCA step price, or <see cref="SlInput.EntryPrice"/> when
-    ///      no DCA step exists.
     ///   3. None — no SL.
+    ///
+    /// Anchor selection (applies to both sources):
+    ///   When <see cref="SlInput.ExtremeDcaPrice"/> is set (DCA orders exist), it is always used
+    ///   as anchor so the SL is placed beyond all DCA levels — never between entry and a DCA.
+    ///   Otherwise the anchor falls back to <see cref="SlInput.SignalPrice"/> (signal source) or
+    ///   <see cref="SlInput.EntryPrice"/> (global source).
     /// </summary>
     public static SlResult Calculate(in SlInput input)
     {
         int multiplier = input.Side == CryptoTradeSide.Long ? +1 : -1;
 
-        // Priority 1: signal-provided SL
+        // Determine which SL source and percentage to use
+        decimal slPercent;
+        SlSource source;
+
         if (input.SlPercentage.HasValue && input.PartCount == 0)
         {
-            decimal perc = input.SlPercentage.Value / 100m;
-            decimal stop = input.SignalPrice - (multiplier * input.SignalPrice * perc);
-
-            // 1% buffer for the limit beyond the stop
-            decimal limitPerc = 1m / 100m;
-            decimal limit = stop - (multiplier * stop * limitPerc);
-
-            return new SlResult { Stop = stop, Limit = limit, Source = SlSource.Signal };
+            slPercent = input.SlPercentage.Value;
+            source = SlSource.Signal;
+        }
+        else if (input.GlobalStopLossPercentage > 0)
+        {
+            slPercent = input.GlobalStopLossPercentage;
+            source = SlSource.Global;
+        }
+        else
+        {
+            return new SlResult { Stop = null, Limit = null, Source = SlSource.None };
         }
 
-        // Priority 2: global SL
-        if (input.GlobalStopLossPercentage > 0)
+        // Anchor: always use the most extreme DCA price when available so the SL
+        // sits beyond all placed DCA levels, never between entry and a DCA.
+        decimal anchor;
+        if (input.ExtremeDcaPrice.HasValue)
+            anchor = input.ExtremeDcaPrice.Value;
+        else if (source == SlSource.Signal)
+            anchor = input.SignalPrice;
+        else
+            anchor = input.EntryPrice;
+
+        decimal perc = slPercent / 100m;
+        decimal stop = anchor - (multiplier * anchor * perc);
+
+        // Limit: signal source uses a 1% buffer beyond the stop; global source uses
+        // the configured limit percentage from the same anchor.
+        decimal limit;
+        if (source == SlSource.Signal)
         {
-            decimal anchor = input.ExtremeDcaPrice ?? input.EntryPrice;
-
-            decimal perc = input.GlobalStopLossPercentage / 100m;
-            decimal stop = anchor - (multiplier * anchor * perc);
-
-            // Limit must be beyond the stop; fall back to stop + 1% if misconfigured
+            decimal limitPerc = 1m / 100m;
+            limit = stop - (multiplier * stop * limitPerc);
+        }
+        else
+        {
             decimal limitPctValue = input.GlobalStopLossLimitPercentage;
             if (limitPctValue <= input.GlobalStopLossPercentage)
                 limitPctValue = input.GlobalStopLossPercentage + 1m;
             perc = limitPctValue / 100m;
-            decimal limit = anchor - (multiplier * anchor * perc);
-
-            return new SlResult { Stop = stop, Limit = limit, Source = SlSource.Global };
+            limit = anchor - (multiplier * anchor * perc);
         }
 
-        return new SlResult { Stop = null, Limit = null, Source = SlSource.None };
+        return new SlResult { Stop = stop, Limit = limit, Source = source };
     }
 }

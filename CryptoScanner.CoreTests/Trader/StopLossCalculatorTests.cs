@@ -265,4 +265,183 @@ public class StopLossCalculatorTests
 
         Assert.AreEqual(SlSource.Global, result.Source);
     }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  SL must NEVER be between entry and DCA
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [TestMethod]
+    public void SignalSl_Long_AnchorsOnDcaWhenPresent()
+    {
+        var input = LongBase() with { ExtremeDcaPrice = 95m };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 3% from DCA anchor 95 → stop = 95 - 95*0.03 = 92.15
+        Assert.AreEqual(92.15m, result.Stop);
+        Assert.IsTrue(result.Stop < 95m,
+            $"Long SL ({result.Stop}) must be below the most extreme DCA (95)");
+    }
+
+    [TestMethod]
+    public void SignalSl_Short_AnchorsOnDcaWhenPresent()
+    {
+        var input = ShortBase() with { ExtremeDcaPrice = 105m };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 3% from DCA anchor 105 → stop = 105 + 105*0.03 = 108.15
+        Assert.AreEqual(108.15m, result.Stop);
+        Assert.IsTrue(result.Stop > 105m,
+            $"Short SL ({result.Stop}) must be above the most extreme DCA (105)");
+    }
+
+    /// <summary>
+    /// Core regression: small signal SL% with large DCA distance. Without the fix the SL
+    /// would sit at 98.5 (between entry 100 and DCA 95) — a guaranteed early stop-out that
+    /// defeats the purpose of the DCA.
+    /// </summary>
+    [TestMethod]
+    public void SignalSl_Long_NeverBetweenEntryAndDca()
+    {
+        var input = LongBase() with
+        {
+            SlPercentage = 1.5m,
+            ExtremeDcaPrice = 95m,
+        };
+        var result = Calculate(input);
+
+        // stop = 95 - 95*0.015 = 93.575
+        Assert.AreEqual(93.575m, result.Stop);
+        Assert.IsTrue(result.Stop < 95m,
+            $"Long SL ({result.Stop}) must be below DCA (95), not between entry (100) and DCA");
+    }
+
+    [TestMethod]
+    public void SignalSl_Short_NeverBetweenEntryAndDca()
+    {
+        var input = ShortBase() with
+        {
+            SlPercentage = 1.5m,
+            ExtremeDcaPrice = 105m,
+        };
+        var result = Calculate(input);
+
+        // stop = 105 + 105*0.015 = 106.575
+        Assert.AreEqual(106.575m, result.Stop);
+        Assert.IsTrue(result.Stop > 105m,
+            $"Short SL ({result.Stop}) must be above DCA (105), not between entry (100) and DCA");
+    }
+
+    [TestMethod]
+    public void GlobalSl_Long_NeverBetweenEntryAndDca()
+    {
+        var input = LongBase() with
+        {
+            SlPercentage = null,
+            PartCount = 1,
+            ExtremeDcaPrice = 95m,
+            GlobalStopLossPercentage = 1.5m,
+            GlobalStopLossLimitPercentage = 2.5m,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Global, result.Source);
+        // stop = 95 - 95*0.015 = 93.575
+        Assert.AreEqual(93.575m, result.Stop);
+        Assert.IsTrue(result.Stop < 95m,
+            $"Long global SL ({result.Stop}) must be below DCA (95)");
+    }
+
+    [TestMethod]
+    public void GlobalSl_Short_NeverBetweenEntryAndDca()
+    {
+        var input = ShortBase() with
+        {
+            SlPercentage = null,
+            PartCount = 1,
+            ExtremeDcaPrice = 105m,
+            GlobalStopLossPercentage = 1.5m,
+            GlobalStopLossLimitPercentage = 2.5m,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Global, result.Source);
+        // stop = 105 + 105*0.015 = 106.575
+        Assert.AreEqual(106.575m, result.Stop);
+        Assert.IsTrue(result.Stop > 105m,
+            $"Short global SL ({result.Stop}) must be above DCA (105)");
+    }
+
+    /// <summary>
+    /// Multiple DCA levels: 98.5, 97, 95 — ExtremeDcaPrice is the most extreme (95).
+    /// SL must always be beyond the deepest DCA, regardless of how many levels exist.
+    /// </summary>
+    [TestMethod]
+    public void SignalSl_Long_BeyondDeepestDcaLevel()
+    {
+        var input = LongBase() with
+        {
+            SlPercentage = 3m,
+            ExtremeDcaPrice = 95m,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 3% from 95 → stop = 95 - 2.85 = 92.15
+        Assert.AreEqual(92.15m, result.Stop);
+        Assert.IsTrue(result.Stop < 95m,
+            $"Long SL ({result.Stop}) must be below the deepest DCA level (95)");
+    }
+
+    /// <summary>
+    /// DCA pending (ActiveDca=true, PartCount=0) with DCA order placed at 95.
+    /// Signal SL must anchor on the DCA price, not on SignalPrice.
+    /// </summary>
+    [TestMethod]
+    public void Regression_ActiveDca_SignalSlAnchorsOnDca()
+    {
+        var input = LongBase() with
+        {
+            ActiveDca = true,
+            PartCount = 0,
+            ExtremeDcaPrice = 95m,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 3% from 95 → stop = 92.15
+        Assert.AreEqual(92.15m, result.Stop);
+        Assert.IsTrue(result.Stop < 95m,
+            "Signal SL must be below DCA even when DCA is pending (not yet filled)");
+    }
+
+    /// <summary>
+    /// Transition from signal to global SL after DCA fill: both must anchor on
+    /// the extreme DCA price, so the SL does not jump closer to entry.
+    /// </summary>
+    [TestMethod]
+    public void SlTransition_AfterDcaFill_StaysBeyondDca()
+    {
+        // Before DCA fill: signal SL
+        var beforeFill = LongBase() with
+        {
+            PartCount = 0,
+            SlPercentage = 2m,
+            ExtremeDcaPrice = 95m,
+            GlobalStopLossPercentage = 2m,
+        };
+        var resultBefore = Calculate(beforeFill);
+
+        // After DCA fill: global SL takes over
+        var afterFill = beforeFill with { PartCount = 1, SlPercentage = 2m };
+        var resultAfter = Calculate(afterFill);
+
+        // Both must be below the DCA at 95
+        Assert.IsTrue(resultBefore.Stop < 95m,
+            $"Pre-fill SL ({resultBefore.Stop}) must be below DCA (95)");
+        Assert.IsTrue(resultAfter.Stop < 95m,
+            $"Post-fill SL ({resultAfter.Stop}) must be below DCA (95)");
+    }
 }
