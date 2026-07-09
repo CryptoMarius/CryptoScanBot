@@ -19,6 +19,9 @@ public static class SmaHelper
         // -sma 20 (green)
         // -psar
 
+        if (data.CandleData?.PSar == null || data.CandleData?.Sma20 == null)
+            return false;
+
         // Wait until psar is below the sma20
         if (data.CandleData?.PSar > data.CandleData?.Sma20)
             return false;
@@ -94,12 +97,15 @@ public static class SmaHelper
         // -psar
         // -sma 20 (green)
 
+        if (data.CandleData?.PSar == null || data.CandleData?.Sma20 == null)
+            return false;
+
         // wait at least until it is above the sma20
         if (data.CandleData?.PSar < data.CandleData?.Sma20)
             return false;
 
         // psar switched to the opposite side
-        if ((decimal)data.CandleData?.PSar! >= data.Candle.Close)
+        if ((decimal)data.CandleData.PSar! >= data.Candle.Close)
             return false;
         return true;
     }
