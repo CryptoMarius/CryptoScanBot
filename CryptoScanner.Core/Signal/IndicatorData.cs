@@ -77,15 +77,6 @@ public static class IndicatorEngine
     private static bool PrepareViaHub(CryptoSymbol symbol, CryptoInterval interval,
         CryptoSymbolInterval symbolInterval, CandleTime candleOpenTime)
     {
-        // Force periodic re-warmup before Skender cache hits MaxCacheSize (100k).
-        // preview.3.1 uses List<T>.RemoveRange(0,1) = O(n) once pruning starts → O(n²) cascade.
-        const int maxHubAddsBeforeRewarmup = 80_000;
-        if (symbolInterval.IndicatorHubAddCount >= maxHubAddsBeforeRewarmup)
-        {
-            symbolInterval.IndicatorHub = null;
-            symbolInterval.IndicatorHubAddCount = 0;
-        }
-
         bool warmup = symbolInterval.IndicatorHub == null
             || symbolInterval.IndicatorHubLastAdded == null
             || symbolInterval.IndicatorHubLastAdded.Value + interval.Duration != candleOpenTime;
