@@ -105,6 +105,15 @@ public sealed class TickRunner
             CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, 1);
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, 1);
 
+            // Advance the emulator clock to the END of the replay window before loading candles.
+            // LoadCandlesInRange applies an "OpenTime <= Clock.UtcNow" filter when
+            // CurrentEmulatorRunId is set (which StartRun already did). Without this, a stale
+            // clock left over from a cancelled previous run (or a fresh app start) would clip the
+            // warmup and replay candle loads to whatever date the clock happened to be frozen at.
+            // The replay loop resets the clock minute-by-minute anyway once it starts.
+            if (GlobalData.Clock is EmulatorClock preClock)
+                preClock.UtcNow = replayTo.ToDateTime();
+
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             // PrepareSymbol loads ~270 candles of EACH interval (1m + higher) before replayFrom
             // straight from the candles.db, so every timeframe has real history for its indicators.
