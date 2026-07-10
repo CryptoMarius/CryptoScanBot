@@ -7,7 +7,8 @@ public static class RsiHelper
 {
     public static bool RsiOversold(this MyData data, int correction = 0)
     {
-        if (data.CandleData?.Rsi > GlobalData.Settings.General.SettingsRsi.Oversold - correction)
+        double? rsi = data.CandleData?.Rsi;
+        if (!rsi.HasValue || rsi.Value > GlobalData.Settings.General.SettingsRsi.Oversold - correction)
             return false;
         return true;
     }
@@ -15,7 +16,8 @@ public static class RsiHelper
 
     public static bool RsiOverbought(this MyData data, int correction = 0)
     {
-        if (data.CandleData?.Rsi < GlobalData.Settings.General.SettingsRsi.Overbought + correction)
+        double? rsi = data.CandleData?.Rsi;
+        if (!rsi.HasValue || rsi.Value < GlobalData.Settings.General.SettingsRsi.Overbought + correction)
             return false;
         return true;
     }
