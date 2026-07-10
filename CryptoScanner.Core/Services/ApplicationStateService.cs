@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 
 using System.ComponentModel;

@@ -436,9 +436,9 @@ public static class IndicatorEngine
 
                 if (babaBands[index].HasValue)
                 {
-                    candleData.BabaBasis   = babaBands[index].Basis;
-                    candleData.BabaUpper   = babaBands[index].Upper;
-                    candleData.BabaLower   = babaBands[index].Lower;
+                    candleData.BabaBasis = babaBands[index].Basis;
+                    candleData.BabaUpper = babaBands[index].Upper;
+                    candleData.BabaLower = babaBands[index].Lower;
                     candleData.BabaVwStdev = babaBands[index].VwStdev;
                 }
                 candleData.AtrBaba = atrBabaFastList[index].Atr;

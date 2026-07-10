@@ -4,10 +4,6 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Trader;
 
-using Dapper.Contrib.Extensions;
-
-using Exchange = CryptoScanner.Core.Model.CryptoExchange;
-
 namespace CryptoScanner.CoreTests.Trader;
 
 /// <summary>

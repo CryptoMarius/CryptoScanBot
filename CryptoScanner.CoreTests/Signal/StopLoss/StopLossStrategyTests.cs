@@ -80,7 +80,7 @@ public class StopLossStrategyTests : TestBase
         CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, int warmup = 260)
     {
         var results = new List<(DateTime, decimal?, string)>();
-        CryptoSymbolInterval symbolInterval= symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.Skip(warmup))
         {
@@ -128,7 +128,7 @@ public class StopLossStrategyTests : TestBase
         CryptoSymbol symbol, CryptoInterval interval, CryptoTradeSide side, int warmup = 260)
     {
         var results = new List<(DateTime, decimal?, string)>();
-        CryptoSymbolInterval symbolInterval= symbol.GetSymbolInterval(interval.IntervalPeriod);
+        CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
 
         foreach (CryptoCandle candle in symbolInterval.CandleList.Values.Skip(warmup))
         {

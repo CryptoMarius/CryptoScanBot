@@ -2,7 +2,6 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
 using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
 
 using System.Globalization;
 using System.Net.WebSockets;

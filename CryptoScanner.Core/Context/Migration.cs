@@ -1328,8 +1328,8 @@ public class Migration
         {
             using var transaction = database.BeginTransaction();
 
-            try { database.Connection.Execute("alter table Signal add TpPercentage Text null", transaction); }  catch { } // ignore
-            try { database.Connection.Execute("alter table Signal add SlPercentage Text null", transaction); }  catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add TpPercentage Text null", transaction); } catch { } // ignore
+            try { database.Connection.Execute("alter table Signal add SlPercentage Text null", transaction); } catch { } // ignore
 
             try { database.Connection.Execute("alter table Position add TpPercentage Text null", transaction); } catch { } // ignore
             try { database.Connection.Execute("alter table Position add SlPercentage Text null", transaction); } catch { } // ignore

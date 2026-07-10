@@ -1,11 +1,11 @@
-using System.Collections.Concurrent;
-
 using Avalonia.Collections;
 using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using CryptoScanner.Core.Core;
+
+using System.Collections.Concurrent;
 
 namespace CryptoScanner.ViewModels;
 

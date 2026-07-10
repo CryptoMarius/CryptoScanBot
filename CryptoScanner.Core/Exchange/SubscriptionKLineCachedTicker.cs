@@ -124,7 +124,7 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
             {
                 if (price > candle.High)
                     candle.High = price;
-                if (price < candle.Low) 
+                if (price < candle.Low)
                     candle.Low = price;
                 candle.Close = price;
                 candle.Volume += quoteVolume;
@@ -136,10 +136,10 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                 {
                     TickDecimals = symbol.PriceDecimals,
                     OpenTime = candleOpen,
-                    Open = price, 
-                    High = price, 
-                    Low = price, 
-                    Close = price, 
+                    Open = price,
+                    High = price,
+                    Low = price,
+                    Close = price,
                     Volume = quoteVolume,
                 });
             }
@@ -163,9 +163,9 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
         if (!GlobalData.IntervalListPeriod.TryGetValue(CryptoIntervalPeriod.interval1m, out CryptoInterval? interval))
             throw new Exception("interval1m not found");
 
-        System.Timers.Timer timer = new() 
-        { 
-            AutoReset = false 
+        System.Timers.Timer timer = new()
+        {
+            AutoReset = false
         };
         timer.Elapsed += async (sender, _) =>
         {
@@ -213,9 +213,9 @@ public abstract class SubscriptionKLineCachedTicker(ExchangeOptions exchangeOpti
                             {
                                 TickDecimals = symbol.PriceDecimals,
                                 OpenTime = expectedUpto,
-                                Open = lastPrice, 
-                                High = lastPrice, 
-                                Low = lastPrice, 
+                                Open = lastPrice,
+                                High = lastPrice,
+                                Low = lastPrice,
                                 Close = lastPrice,
                                 Volume = 0,
                             };

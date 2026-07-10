@@ -335,7 +335,9 @@ public class ZoneDlzTests : TestBase
             p.Open, p.High, p.Low, p.Close);
         indicator.ZigZagList.Add(new ZigZagResult
         {
-            PointType = p.Type, Value = p.Value, Candle = candle,
+            PointType = p.Type,
+            Value = p.Value,
+            Candle = candle,
         });
 
         await ZoneDlz.CalculateDlzAsync(null, symbol, interval, indicator, loaded, processAfter: cursor);
@@ -374,7 +376,10 @@ public class ZoneDlzTests : TestBase
         candles.TryAdd(breakTime, new CryptoCandle
         {
             OpenTime = breakTime,
-            Open = 92m, High = 93m, Low = 88m, Close = 89m,
+            Open = 92m,
+            High = 93m,
+            Low = 88m,
+            Close = 89m,
             Volume = 1000m,
         });
 
@@ -409,7 +414,10 @@ public class ZoneDlzTests : TestBase
         candles.TryAdd(breakTime, new CryptoCandle
         {
             OpenTime = breakTime,
-            Open = 108m, High = 112m, Low = 107m, Close = 111m,
+            Open = 108m,
+            High = 112m,
+            Low = 107m,
+            Close = 111m,
             Volume = 1000m,
         });
 
@@ -443,7 +451,10 @@ public class ZoneDlzTests : TestBase
         candles.TryAdd(touchTime, new CryptoCandle
         {
             OpenTime = touchTime,
-            Open = 96m, High = 98m, Low = 93m, Close = 97m,
+            Open = 96m,
+            High = 98m,
+            Low = 93m,
+            Close = 97m,
             Volume = 1000m,
         });
 
@@ -479,7 +490,10 @@ public class ZoneDlzTests : TestBase
             candles.TryAdd(time, new CryptoCandle
             {
                 OpenTime = time,
-                Open = 96m, High = 98m, Low = 93m, Close = 97m,
+                Open = 96m,
+                High = 98m,
+                Low = 93m,
+                Close = 97m,
                 Volume = 1000m,
             });
         }
@@ -514,7 +528,10 @@ public class ZoneDlzTests : TestBase
         candles.TryAdd(earlyTime, new CryptoCandle
         {
             OpenTime = earlyTime,
-            Open = 92m, High = 93m, Low = 88m, Close = 89m,
+            Open = 92m,
+            High = 93m,
+            Low = 88m,
+            Close = 89m,
             Volume = 1000m,
         });
 
@@ -548,7 +565,10 @@ public class ZoneDlzTests : TestBase
         candles.TryAdd(touchTime, new CryptoCandle
         {
             OpenTime = touchTime,
-            Open = 101m, High = 102m, Low = 94m, Close = 101m,
+            Open = 101m,
+            High = 102m,
+            Low = 94m,
+            Close = 101m,
             Volume = 1000m,
         });
 
@@ -577,7 +597,10 @@ public class ZoneDlzTests : TestBase
         CryptoCandle candle = new()
         {
             OpenTime = zone.OpenTime + interval.Duration,
-            Open = 91m, High = 94m, Low = 89m, Close = 91m,
+            Open = 91m,
+            High = 94m,
+            Low = 89m,
+            Close = 91m,
             Volume = 1000m,
         };
 
@@ -602,7 +625,10 @@ public class ZoneDlzTests : TestBase
         CryptoCandle candle = new()
         {
             OpenTime = zone.OpenTime + interval.Duration,
-            Open = 91m, High = 94m, Low = 88m, Close = 89m,
+            Open = 91m,
+            High = 94m,
+            Low = 88m,
+            Close = 89m,
             Volume = 1000m,
         };
 
@@ -627,7 +653,10 @@ public class ZoneDlzTests : TestBase
         CryptoCandle candle = new()
         {
             OpenTime = zone.OpenTime + interval.Duration,
-            Open = 108m, High = 112m, Low = 107m, Close = 111m,
+            Open = 108m,
+            High = 112m,
+            Low = 107m,
+            Close = 111m,
             Volume = 1000m,
         };
 

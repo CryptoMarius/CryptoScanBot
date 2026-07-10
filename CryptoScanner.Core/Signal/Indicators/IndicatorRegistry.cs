@@ -34,14 +34,14 @@ public readonly record struct IndicatorKey(
     IndicatorKind Kind,
     double P1 = 0, double P2 = 0, double P3 = 0, double P4 = 0)
 {
-    public static IndicatorKey Sma(int length)                                     => new(IndicatorKind.Sma, length);
-    public static IndicatorKey Ema(int length)                                     => new(IndicatorKind.Ema, length);
-    public static IndicatorKey Bb(int length, double dev)                          => new(IndicatorKind.BollingerBands, length, dev);
-    public static IndicatorKey Rsi(int length)                                     => new(IndicatorKind.Rsi, length);
+    public static IndicatorKey Sma(int length) => new(IndicatorKind.Sma, length);
+    public static IndicatorKey Ema(int length) => new(IndicatorKind.Ema, length);
+    public static IndicatorKey Bb(int length, double dev) => new(IndicatorKind.BollingerBands, length, dev);
+    public static IndicatorKey Rsi(int length) => new(IndicatorKind.Rsi, length);
     public static IndicatorKey Macd(int fast = 12, int slow = 26, int signal = 9) => new(IndicatorKind.Macd, fast, slow, signal);
-    public static IndicatorKey Stoch(int length, int smoothD, int smoothK)        => new(IndicatorKind.Stoch, length, smoothD, smoothK);
-    public static IndicatorKey Psar(double step = 0.02, double max = 0.2)         => new(IndicatorKind.ParabolicSar, step, max);
-    public static IndicatorKey Atr(int length)                                     => new(IndicatorKind.Atr, length);
+    public static IndicatorKey Stoch(int length, int smoothD, int smoothK) => new(IndicatorKind.Stoch, length, smoothD, smoothK);
+    public static IndicatorKey Psar(double step = 0.02, double max = 0.2) => new(IndicatorKind.ParabolicSar, step, max);
+    public static IndicatorKey Atr(int length) => new(IndicatorKind.Atr, length);
     public static IndicatorKey BabaVwap(int length, int atrLength, double mult, double atrMult)
                                                                                    => new(IndicatorKind.BabaVwap, length, atrLength, mult, atrMult);
 }
@@ -53,10 +53,10 @@ public readonly record struct IndicatorKey(
 public sealed record BabaVwapState(
     VwmaHub VwmaSrc,   // VWMA of hlc3
     VwmaHub VwmaSq,    // VWMA of hlc3^2  (for variance)
-    AtrHub  AtrFast,   // ATR(AtrLength)  — pad term
-    AtrHub  AtrSl,     // ATR(Length)     — stop-loss %
-    double  Mult,
-    double  AtrMult);
+    AtrHub AtrFast,   // ATR(AtrLength)  — pad term
+    AtrHub AtrSl,     // ATR(Length)     — stop-loss %
+    double Mult,
+    double AtrMult);
 
 // ---------------------------------------------------------------------------
 // Interface: strategy declares its required indicators once
@@ -111,7 +111,7 @@ public sealed class IndicatorRegistry
         if (_babaSrcHub != null)
         {
             decimal hlc3 = (c.High + c.Low + c.Close) / 3m;
-            _babaSrcHub.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3,         c.Volume));
+            _babaSrcHub.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3, c.Volume));
             _babaSqHub!.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, c.Volume));
         }
     }
@@ -175,26 +175,26 @@ public sealed class IndicatorRegistry
     // Typed accessors — strategies can also call these directly for one-off needs
     // -----------------------------------------------------------------------
 
-    public SmaHub           Sma(int length)                                     => GetOrAdd(IndicatorKey.Sma(length),  () => _quoteHub.ToSmaHub(length));
-    public EmaHub           Ema(int length)                                     => GetOrAdd(IndicatorKey.Ema(length),  () => _quoteHub.ToEmaHub(length));
-    public BollingerBandsHub Bb(int length, double dev)                         => GetOrAdd(IndicatorKey.Bb(length, dev), () => _quoteHub.ToBollingerBandsHub(length, dev));
-    public RsiHub           Rsi(int length)                                     => GetOrAdd(IndicatorKey.Rsi(length), () => _quoteHub.ToRsiHub(length));
-    public MacdHub          Macd(int fast = 12, int slow = 26, int signal = 9) => GetOrAdd(IndicatorKey.Macd(fast, slow, signal), () => _quoteHub.ToMacdHub(fast, slow, signal));
-    public StochHub         Stoch(int length, int smoothD, int smoothK)        => GetOrAdd(IndicatorKey.Stoch(length, smoothD, smoothK), () => _quoteHub.ToStochHub(length, smoothD, smoothK));
-    public ParabolicSarHub  Psar(double step = 0.02, double max = 0.2)         => GetOrAdd(IndicatorKey.Psar(step, max), () => _quoteHub.ToParabolicSarHub(step, max));
-    public AtrHub           Atr(int length)                                     => GetOrAdd(IndicatorKey.Atr(length),  () => _quoteHub.ToAtrHub(length));
+    public SmaHub Sma(int length) => GetOrAdd(IndicatorKey.Sma(length), () => _quoteHub.ToSmaHub(length));
+    public EmaHub Ema(int length) => GetOrAdd(IndicatorKey.Ema(length), () => _quoteHub.ToEmaHub(length));
+    public BollingerBandsHub Bb(int length, double dev) => GetOrAdd(IndicatorKey.Bb(length, dev), () => _quoteHub.ToBollingerBandsHub(length, dev));
+    public RsiHub Rsi(int length) => GetOrAdd(IndicatorKey.Rsi(length), () => _quoteHub.ToRsiHub(length));
+    public MacdHub Macd(int fast = 12, int slow = 26, int signal = 9) => GetOrAdd(IndicatorKey.Macd(fast, slow, signal), () => _quoteHub.ToMacdHub(fast, slow, signal));
+    public StochHub Stoch(int length, int smoothD, int smoothK) => GetOrAdd(IndicatorKey.Stoch(length, smoothD, smoothK), () => _quoteHub.ToStochHub(length, smoothD, smoothK));
+    public ParabolicSarHub Psar(double step = 0.02, double max = 0.2) => GetOrAdd(IndicatorKey.Psar(step, max), () => _quoteHub.ToParabolicSarHub(step, max));
+    public AtrHub Atr(int length) => GetOrAdd(IndicatorKey.Atr(length), () => _quoteHub.ToAtrHub(length));
 
     public BabaVwapState BabaVwap(int length, int atrLength, double mult, double atrMult)
         => GetOrAdd(IndicatorKey.BabaVwap(length, atrLength, mult, atrMult), () =>
         {
             _babaSrcHub ??= new QuoteHub();
-            _babaSqHub  ??= new QuoteHub();
+            _babaSqHub ??= new QuoteHub();
             return new BabaVwapState(
                 VwmaSrc: _babaSrcHub.ToVwmaHub(length),
-                VwmaSq:  _babaSqHub.ToVwmaHub(length),
+                VwmaSq: _babaSqHub.ToVwmaHub(length),
                 AtrFast: Atr(atrLength),   // reuses an existing Atr hub if already registered
-                AtrSl:   Atr(length),
-                Mult:    mult,
+                AtrSl: Atr(length),
+                Mult: mult,
                 AtrMult: atrMult);
         });
 
@@ -227,94 +227,94 @@ public sealed class IndicatorRegistry
             switch (key.Kind)
             {
                 case IndicatorKind.Sma:
-                {
-                    var h = (SmaHub)hub;
-                    if (h.Results.Count == 0) break;
-                    double? v = h.Results[^1].Sma;
-                    // Map the period to the fixed named field on CryptoData.
-                    switch ((int)key.P1)
                     {
-                        case 20:  data.Sma20  = v; break;
-                        case 50:  data.Sma50  = v; break;
-                        case 100: data.Sma100 = v; break;
-                        case 200: data.Sma200 = v; break;
-                        // Non-standard periods have no field in CryptoData yet.
-                    }
-                    break;
-                }
-                case IndicatorKind.BollingerBands:
-                {
-                    var h = (BollingerBandsHub)hub;
-                    if (h.Results.Count == 0) break;
-                    var r = h.Results[^1];
-                    data.Sma20 = r.Sma;   // BB basis == Sma20; avoids a separate Sma(20) hub
-                    data.BollingerBandsDeviation   = 0.5 * (r.UpperBand - r.LowerBand);
-                    data.BollingerBandsPercentage  = 100 * (r.UpperBand / r.LowerBand - 1);
-                    break;
-                }
-                case IndicatorKind.Rsi:
-                {
-                    var h = (RsiHub)hub;
-                    if (h.Results.Count > 0)
-                        data.Rsi = h.Results[^1].Rsi;
-                    break;
-                }
-                case IndicatorKind.Macd:
-                {
-                    var h = (MacdHub)hub;
-                    if (h.Results.Count == 0) break;
-                    var r = h.Results[^1];
-                    data.MacdValue     = r.Macd;
-                    data.MacdSignal    = r.Signal;
-                    data.MacdHistogram = r.Histogram;
-                    break;
-                }
-                case IndicatorKind.Stoch:
-                {
-                    var h = (StochHub)hub;
-                    if (h.Results.Count == 0) break;
-                    var r = h.Results[^1];
-                    data.StochOscillator = r.Oscillator;
-                    data.StochSignal     = r.Signal;
-                    break;
-                }
-                case IndicatorKind.ParabolicSar:
-                {
-                    var h = (ParabolicSarHub)hub;
-                    if (h.Results.Count > 0 && h.Results[^1].Sar != null)
-                        data.PSar = h.Results[^1].Sar;
-                    break;
-                }
-                case IndicatorKind.BabaVwap:
-                {
-                    var st = (BabaVwapState)hub;
-                    if (st.AtrFast.Results.Count > 0 && st.AtrFast.Results[^1].Atr != null)
-                        data.AtrBaba = st.AtrFast.Results[^1].Atr;
-                    if (st.AtrSl.Results.Count > 0 && st.AtrSl.Results[^1].Atr != null)
-                        data.BabaAtrSl = st.AtrSl.Results[^1].Atr;
-
-                    var src = st.VwmaSrc.Results;
-                    var sq  = st.VwmaSq.Results;
-                    if (src.Count > 0 && sq.Count > 0)
-                    {
-                        double? mean   = src[^1].Vwma;
-                        double? second = sq[^1].Vwma;
-                        if (mean.HasValue && second.HasValue)
+                        var h = (SmaHub)hub;
+                        if (h.Results.Count == 0) break;
+                        double? v = h.Results[^1].Sma;
+                        // Map the period to the fixed named field on CryptoData.
+                        switch ((int)key.P1)
                         {
-                            double variance = second.Value - mean.Value * mean.Value;
-                            double vwStdev  = variance > 0 ? Math.Sqrt(variance) : 0;
-                            double pad      = st.Mult * vwStdev + st.AtrMult * (data.AtrBaba ?? 0);
-                            data.BabaBasis   = mean.Value;
-                            data.BabaUpper   = mean.Value + pad;
-                            data.BabaLower   = mean.Value - pad;
-                            data.BabaVwStdev = vwStdev;
+                            case 20: data.Sma20 = v; break;
+                            case 50: data.Sma50 = v; break;
+                            case 100: data.Sma100 = v; break;
+                            case 200: data.Sma200 = v; break;
+                                // Non-standard periods have no field in CryptoData yet.
                         }
+                        break;
                     }
-                    break;
-                }
-                // Ema and Atr have no fixed CryptoData field in the base set;
-                // they are used as sub-components (Atr inside BabaVwap) or for
-                // DEBUG-only fields. Extend here when a strategy needs them in CryptoData.
+                case IndicatorKind.BollingerBands:
+                    {
+                        var h = (BollingerBandsHub)hub;
+                        if (h.Results.Count == 0) break;
+                        var r = h.Results[^1];
+                        data.Sma20 = r.Sma;   // BB basis == Sma20; avoids a separate Sma(20) hub
+                        data.BollingerBandsDeviation = 0.5 * (r.UpperBand - r.LowerBand);
+                        data.BollingerBandsPercentage = 100 * (r.UpperBand / r.LowerBand - 1);
+                        break;
+                    }
+                case IndicatorKind.Rsi:
+                    {
+                        var h = (RsiHub)hub;
+                        if (h.Results.Count > 0)
+                            data.Rsi = h.Results[^1].Rsi;
+                        break;
+                    }
+                case IndicatorKind.Macd:
+                    {
+                        var h = (MacdHub)hub;
+                        if (h.Results.Count == 0) break;
+                        var r = h.Results[^1];
+                        data.MacdValue = r.Macd;
+                        data.MacdSignal = r.Signal;
+                        data.MacdHistogram = r.Histogram;
+                        break;
+                    }
+                case IndicatorKind.Stoch:
+                    {
+                        var h = (StochHub)hub;
+                        if (h.Results.Count == 0) break;
+                        var r = h.Results[^1];
+                        data.StochOscillator = r.Oscillator;
+                        data.StochSignal = r.Signal;
+                        break;
+                    }
+                case IndicatorKind.ParabolicSar:
+                    {
+                        var h = (ParabolicSarHub)hub;
+                        if (h.Results.Count > 0 && h.Results[^1].Sar != null)
+                            data.PSar = h.Results[^1].Sar;
+                        break;
+                    }
+                case IndicatorKind.BabaVwap:
+                    {
+                        var st = (BabaVwapState)hub;
+                        if (st.AtrFast.Results.Count > 0 && st.AtrFast.Results[^1].Atr != null)
+                            data.AtrBaba = st.AtrFast.Results[^1].Atr;
+                        if (st.AtrSl.Results.Count > 0 && st.AtrSl.Results[^1].Atr != null)
+                            data.BabaAtrSl = st.AtrSl.Results[^1].Atr;
+
+                        var src = st.VwmaSrc.Results;
+                        var sq = st.VwmaSq.Results;
+                        if (src.Count > 0 && sq.Count > 0)
+                        {
+                            double? mean = src[^1].Vwma;
+                            double? second = sq[^1].Vwma;
+                            if (mean.HasValue && second.HasValue)
+                            {
+                                double variance = second.Value - mean.Value * mean.Value;
+                                double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
+                                double pad = st.Mult * vwStdev + st.AtrMult * (data.AtrBaba ?? 0);
+                                data.BabaBasis = mean.Value;
+                                data.BabaUpper = mean.Value + pad;
+                                data.BabaLower = mean.Value - pad;
+                                data.BabaVwStdev = vwStdev;
+                            }
+                        }
+                        break;
+                    }
+                    // Ema and Atr have no fixed CryptoData field in the base set;
+                    // they are used as sub-components (Atr inside BabaVwap) or for
+                    // DEBUG-only fields. Extend here when a strategy needs them in CryptoData.
             }
         }
 

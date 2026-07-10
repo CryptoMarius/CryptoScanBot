@@ -158,7 +158,7 @@ public class ExcelSymbolDump(CryptoSymbol Symbol) : ExcelBase(Symbol.Name)
             if (candle.Open == last.Close && candle.High == last.Close &&
                 candle.Low == last.Close && candle.Close == last.Close)
                 cellStyle = CellStyleDecimalRed;
-                
+
             WriteCell(sheet, column++, row, candle.Open, cellStyle);
             WriteCell(sheet, column++, row, candle.High, cellStyle);
             WriteCell(sheet, column++, row, candle.Low, cellStyle);

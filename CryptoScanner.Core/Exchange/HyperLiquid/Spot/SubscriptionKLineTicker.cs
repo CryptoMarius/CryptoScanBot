@@ -1,9 +1,6 @@
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
-
 using HyperLiquid.Net.Clients;
 using HyperLiquid.Net.Enums;
 using HyperLiquid.Net.Objects.Models;

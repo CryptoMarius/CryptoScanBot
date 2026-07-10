@@ -4,9 +4,6 @@ using BitMart.Net.Enums;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
-
 
 namespace CryptoScanner.Core.Exchange.BitMart.Futures;
 

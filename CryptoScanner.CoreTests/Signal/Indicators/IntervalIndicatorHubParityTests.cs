@@ -114,9 +114,9 @@ public class IntervalIndicatorHubParityTests
         {
             AtrBaba = atrBabaFast[i].Atr,
             BabaAtrSl = atrBabaSl[i].Atr,
-            BabaBasis   = babaBands[i].HasValue ? babaBands[i].Basis : null,
-            BabaUpper   = babaBands[i].HasValue ? babaBands[i].Upper : null,
-            BabaLower   = babaBands[i].HasValue ? babaBands[i].Lower : null,
+            BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
+            BabaUpper = babaBands[i].HasValue ? babaBands[i].Upper : null,
+            BabaLower = babaBands[i].HasValue ? babaBands[i].Lower : null,
             BabaVwStdev = babaBands[i].HasValue ? babaBands[i].VwStdev : null,
             Sma20 = bb[i].Sma,
             BollingerBandsDeviation = 0.5 * (bb[i].UpperBand - bb[i].LowerBand),

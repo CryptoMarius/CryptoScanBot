@@ -1,9 +1,6 @@
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Objects.Sockets;
 
-using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Model;
-
 using Mexc.Net.Clients;
 using Mexc.Net.Enums;
 using Mexc.Net.Objects.Models.Spot;

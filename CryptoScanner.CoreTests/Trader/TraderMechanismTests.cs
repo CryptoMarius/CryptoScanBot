@@ -4,8 +4,9 @@ using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Trader;
 
-using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 using static CryptoScanner.Core.Trader.StopLossCalculator;
+
+using Exchange = CryptoScanner.Core.Model.CryptoExchange;
 
 namespace CryptoScanner.CoreTests.Trader;
 
