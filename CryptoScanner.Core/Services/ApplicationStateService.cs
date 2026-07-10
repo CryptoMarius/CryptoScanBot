@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Core;
 
 using System.ComponentModel;
@@ -64,6 +65,7 @@ public class ApplicationStateService
 {
     private ApplicationState _states;
     private readonly string _filePath;
+    private readonly string _windowStatePath;
     private readonly object _lock = new();
     private readonly IPlatformService? _platformService;
     private readonly IJsonSerializerService? _jsonService;
@@ -83,8 +85,16 @@ public class ApplicationStateService
 
         _filePath = Path.Combine(directory, "CryptoScanBot-user.json");
 
+        // Window positions are stored in a shared (exchange-independent) location so they
+        // persist when the user switches to a different database/exchange folder.
+        string sharedDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Const.Constants.AppName);
+        if (!Directory.Exists(sharedDir))
+            Directory.CreateDirectory(sharedDir);
+        _windowStatePath = Path.Combine(sharedDir, "CryptoScanBot-window.json");
+
         // Load states on initialization
         _states = LoadFromFile();
+        MergeWindowStates();
     }
 
     public string BarometerQuote { get { return _states.BarometerState.Quote; } set { _states.BarometerState.Quote = value; } }
@@ -262,6 +272,55 @@ public class ApplicationStateService
         }
     }
 
+
+    /// <summary>
+    /// Merges window positions from the shared (exchange-independent) file into the
+    /// current in-memory state, so positions saved in one database folder carry over.
+    /// </summary>
+    private void MergeWindowStates()
+    {
+        if (!File.Exists(_windowStatePath))
+            return;
+
+        try
+        {
+            var json = File.ReadAllText(_windowStatePath);
+            var shared = JsonSerializer.Deserialize<Dictionary<string, WindowState>>(json);
+            if (shared == null)
+                return;
+
+            foreach (var (name, state) in shared)
+            {
+                _states.WindowStates[name] = state;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load shared window state: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Persists window positions to the shared (exchange-independent) file so they
+    /// survive database/exchange folder switches.
+    /// </summary>
+    private void FlushWindowStateToDisk()
+    {
+        try
+        {
+            string? dir = Path.GetDirectoryName(_windowStatePath);
+            if (dir != null && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            var json = JsonSerializer.Serialize(_states.WindowStates, _jsonService!.IndentedOptions);
+            File.WriteAllText(_windowStatePath, json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save shared window state: {ex.Message}");
+        }
+    }
+
     private static GridState? GetGridStateProperty(ApplicationState states, string gridName)
     {
         if (states.GridStates.TryGetValue(gridName, out var state))
@@ -332,6 +391,7 @@ public class ApplicationStateService
                 state.State = window.WindowState.ToString();
 
                 FlushToDisk();
+                FlushWindowStateToDisk();
             }
         }
     }
