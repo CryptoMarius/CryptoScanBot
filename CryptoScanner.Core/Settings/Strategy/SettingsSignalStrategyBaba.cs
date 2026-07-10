@@ -24,6 +24,7 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     // RSI confluence: only fire a sell on an upper-band break when RSI is overbought, and a buy on a
     // lower-band break when RSI is oversold. The overbought/oversold LEVELS are taken from the general
     // RSI settings (Indicators tab: GlobalData.Settings.General.SettingsRsi), so all strategies share them.
+    // TODO: Rename to RequireRsiOsOb
     public bool UseRsiFilter { get; set; } = true;
 
     // Symmetric slide ("glijbaan") filter — Kaufman efficiency ratio over SlideWindow bars.

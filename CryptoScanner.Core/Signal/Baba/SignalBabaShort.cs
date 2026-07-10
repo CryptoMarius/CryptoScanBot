@@ -43,16 +43,10 @@ public class SignalBabaShort : SignalBabaBase
         //    return false;
         //}
 
-        // Cheap RSI confluence first (precomputed lookup): a sell needs overbought. The OB/OS levels come
-        // from the general RSI settings (Indicators tab), so all strategies share the same thresholds.
-        if (settings.UseRsiFilter)
+        if (settings.UseRsiFilter && !CandleLast.RsiOverbought())
         {
-            double? rsi = CandleLast.CandleData?.Rsi;
-            if (!rsi.HasValue || rsi.Value < GlobalData.Settings.General.SettingsRsi.Overbought)
-            {
-                ExtraText = $"rsi not overbought ({rsi:N0})";
-                return false;
-            }
+            ExtraText = $"rsi not overbought ({CandleLast.CandleData?.Rsi:N0})";
+            return false;
         }
 
         if (settings.RequireStochOsOb && !CandleLast.StochOverbought())
