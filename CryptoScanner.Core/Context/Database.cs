@@ -947,9 +947,14 @@ public class CryptoDatabase : IDisposable
         CleanUpDatabase();
 
         // Only works during startup (because of exclusive acces)
-        using var command = connection.Connection.CreateCommand();
-        command.CommandText = "vacuum;";
-        command.ExecuteNonQuery();
+        // Skip in emulator mode: the emulator DB can be >1 GB and VACUUM rewrites the
+        // entire file, adding 30-40s to every startup for no practical benefit.
+        if (!GlobalData.IsEmulatorMode)
+        {
+            using var command = connection.Connection.CreateCommand();
+            command.CommandText = "vacuum;";
+            command.ExecuteNonQuery();
+        }
     }
 
 }
