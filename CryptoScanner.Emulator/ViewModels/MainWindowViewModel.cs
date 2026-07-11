@@ -588,16 +588,38 @@ public partial class MainWindowViewModel : ObservableObject
         if (queue.Count == 0)
         {
             Status = $"Queue is empty — add entries to {EmulatorQueueFile.FileName}.";
+            GlobalData.AddTextToLogTab($"Queue: file loaded from {EmulatorQueueFile.FilePath} but contains 0 entries");
             return;
         }
 
-        var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
-        bool confirmed = owner != null
-            ? await selectionWindow.ShowDialog<bool>(owner)
-            : false;
+        GlobalData.AddTextToLogTab($"Queue: loaded {queue.Count} entries from {EmulatorQueueFile.FilePath}");
 
-        if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out List<string> selectedNames))
-            return;
+        // Collect the distinct algorithm names present in the queue so we can skip the
+        // selection dialog when every entry already specifies its algorithm.
+        var queueAlgorithmNames = queue
+            .Where(e => !string.IsNullOrEmpty(e.Algorithm))
+            .Select(e => e.Algorithm!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        List<string> selectedNames;
+        if (queueAlgorithmNames.Count > 0 && queue.All(e => !string.IsNullOrEmpty(e.Algorithm)))
+        {
+            // Every entry has an Algorithm — no need for the selection dialog, just use the
+            // algorithms present in the queue.
+            selectedNames = queueAlgorithmNames;
+            GlobalData.AddTextToLogTab($"Queue: all entries have Algorithm set, skipping selection dialog ({string.Join(", ", selectedNames)})");
+        }
+        else
+        {
+            var selectionWindow = new AlgorithmSelectionWindow(baseConfig.SelectedAlgorithms);
+            bool confirmed = owner != null
+                ? await selectionWindow.ShowDialog<bool>(owner)
+                : false;
+
+            if (!confirmed || !selectionWindow.ViewModel.TryGetSelection(out selectedNames))
+                return;
+        }
 
         baseConfig.SelectedAlgorithms = selectedNames;
         try
@@ -610,8 +632,16 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         var selectedAlgorithms = selectedNames
-            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.First(a => a.Name == name))
-            .ToList();
+            .Select(name => RegisterAlgorithms.AlgorithmDefinitionList.Values.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            .Where(a => a != null)
+            .ToList()!;
+
+        if (selectedAlgorithms.Count == 0)
+        {
+            Status = $"No matching registered algorithms found for: {string.Join(", ", selectedNames)}";
+            GlobalData.AddTextToLogTab($"Queue: none of the selected algorithms ({string.Join(", ", selectedNames)}) are registered");
+            return;
+        }
 
         if (!GlobalData.ExchangeListName.TryGetValue(GlobalData.Settings.General.ExchangeName, out var exchange))
         {
@@ -632,13 +662,16 @@ public partial class MainWindowViewModel : ObservableObject
         List<CryptoTpEntry> savedTpList = GlobalData.Settings.Trading.TpList;
         List<CryptoDcaEntry> savedDcaList = GlobalData.Settings.Trading.DcaList;
 
-        int totalRuns = selectedAlgorithms.Count * queue.Count;
+        int totalRuns = selectedAlgorithms.Sum(a =>
+            queue.Count(e => string.IsNullOrEmpty(e.Algorithm) || e.Algorithm.Equals(a!.Name, StringComparison.OrdinalIgnoreCase)));
         int runIndex = 0;
+
+        GlobalData.AddTextToLogTab($"Queue: starting {totalRuns} runs across {selectedAlgorithms.Count} algorithm(s)");
 
         IsRunning = true;
         try
         {
-            foreach (AlgorithmDefinition algorithm in selectedAlgorithms)
+            foreach (AlgorithmDefinition algorithm in selectedAlgorithms!)
             {
                 GlobalData.Settings.Signal.Long.Strategy = [algorithm.Name];
                 GlobalData.Settings.Signal.Short.Strategy = [algorithm.Name];
@@ -647,8 +680,13 @@ public partial class MainWindowViewModel : ObservableObject
 
                 for (int i = 0; i < queue.Count; i++)
                 {
-                    runIndex++;
                     EmulatorQueueEntry entry = queue[i];
+
+                    if (!string.IsNullOrEmpty(entry.Algorithm)
+                        && !entry.Algorithm.Equals(algorithm.Name, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    runIndex++;
 
                     GlobalData.Settings.Trading.StopLossPercentage = entry.StopLossPercentage;
                     GlobalData.Settings.Trading.StopLossLimitPercentage = entry.StopLossPercentage + 1m;
@@ -662,22 +700,31 @@ public partial class MainWindowViewModel : ObservableObject
                         .Select(e => new CryptoDcaEntry { Factor = e.Factor, Percentage = e.Percentage })
                         .ToList();
 
-                    string entryLabel = !string.IsNullOrWhiteSpace(entry.Label) ? entry.Label : $"queue-{i + 1}";
-                    string runLabel = $"{algorithm.Name} {entryLabel}";
-
-                    EmulatorRunConfig runConfig = new()
+                    List<SignalGridExpander.Override> overrides = SignalGridExpander.Apply(entry);
+                    try
                     {
-                        ExchangeName = baseConfig.ExchangeName,
-                        Symbols = baseConfig.Symbols,
-                        FromDate = baseConfig.FromDate,
-                        ToDate = baseConfig.ToDate,
-                        Label = runLabel,
-                    };
+                        string entryLabel = !string.IsNullOrWhiteSpace(entry.Label) ? entry.Label : $"queue-{i + 1}";
+                        string algoName = !string.IsNullOrEmpty(entry.Algorithm) ? entry.Algorithm : algorithm.Name;
+                        string runLabel = $"{algoName} {entryLabel}";
 
-                    Status = $"Queue {runIndex}/{totalRuns}: {algorithm.Name} — {entryLabel}";
-                    bool completed = await RunOnceAsync(runConfig);
-                    if (!completed)
-                        return;
+                        EmulatorRunConfig runConfig = new()
+                        {
+                            ExchangeName = baseConfig.ExchangeName,
+                            Symbols = baseConfig.Symbols,
+                            FromDate = baseConfig.FromDate,
+                            ToDate = baseConfig.ToDate,
+                            Label = runLabel,
+                        };
+
+                        Status = $"Queue {runIndex}/{totalRuns}: {algoName} — {entryLabel}";
+                        bool completed = await RunOnceAsync(runConfig);
+                        if (!completed)
+                            return;
+                    }
+                    finally
+                    {
+                        SignalGridExpander.Revert(overrides);
+                    }
                 }
             }
         }

@@ -35,7 +35,7 @@ public static class EmulatorQueueFile
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"EmulatorQueueFile.Load: {ex.Message} — returning empty queue");
+            GlobalData.AddTextToLogTab($"EmulatorQueueFile.Load FAILED: {ex.Message} — returning empty queue");
             return [];
         }
     }
@@ -76,5 +76,7 @@ public static class EmulatorQueueFile
     private static readonly JsonSerializerOptions ReadOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
     };
 }
