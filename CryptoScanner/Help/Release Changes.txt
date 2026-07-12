@@ -21,6 +21,7 @@ $ okx spot en futures werkt
 - Hyperliquid tradingview link aangepast
 - Nieuwe exchange Kraken spot
 - OKX: Fix "Please use the correct URL, channel and parameters referring to API document"
+- Expiratie tijd en prijs meegeven naar Altrady + d Quote amount meegeven ipv base amount
 
 22-06-2025 2.5.8
 - BABA strategie (nog geen juiste sl%)

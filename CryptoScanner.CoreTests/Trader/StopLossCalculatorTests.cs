@@ -9,16 +9,9 @@ namespace CryptoScanner.CoreTests.Trader;
 /// Unit tests for <see cref="StopLossCalculator"/>, the pure stop-loss price calculator
 /// extracted from PositionMonitor.CalculateSlPrices.
 ///
-/// Why these tests exist
-/// ─────────────────────
-/// In July 2026 a refactoring added an <c>!ActiveDca</c> guard to the signal-SL branch,
-/// which silently changed the SL source from Signal to Global whenever a DCA was pending
-/// but not yet filled. This caused emulator results to diverge drastically (run 640 = +84.50
-/// vs run 18 = -14.16 with identical settings). The regression went undetected because the
-/// SL logic had no test coverage.
-///
-/// These tests pin the expected behavior for each SL priority branch so that future
-/// refactorings trigger an immediate, obvious test failure.
+/// Signal SL is always preferred when present (regardless of DCA state). Global SL is the
+/// fallback when no signal SL is available. The anchor is always ExtremeDcaPrice when set,
+/// ensuring the SL sits beyond all DCA levels.
 /// </summary>
 [TestClass]
 public class StopLossCalculatorTests
@@ -29,9 +22,6 @@ public class StopLossCalculatorTests
     {
         Side = CryptoTradeSide.Long,
         SlPercentage = 3m,       // 3% signal SL
-        PartCount = 0,
-        ActiveDca = false,
-        SignalPrice = 100m,
         EntryPrice = 100m,
         ExtremeDcaPrice = null,
         GlobalStopLossPercentage = 5m,
@@ -42,9 +32,6 @@ public class StopLossCalculatorTests
     {
         Side = CryptoTradeSide.Short,
         SlPercentage = 3m,
-        PartCount = 0,
-        ActiveDca = false,
-        SignalPrice = 100m,
         EntryPrice = 100m,
         ExtremeDcaPrice = null,
         GlobalStopLossPercentage = 5m,
@@ -97,6 +84,16 @@ public class StopLossCalculatorTests
         Assert.AreEqual(expectedLimit, result.Limit);
     }
 
+    [TestMethod]
+    public void SignalSl_AlwaysUsedWhenPresent()
+    {
+        // Signal SL is always preferred regardless of DCA state
+        var input = LongBase() with { ExtremeDcaPrice = 95m };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+    }
+
 
     // ═══════════════════════════════════════════════════════════════════════
     //  Priority 2: Global SL (signal SL not available)
@@ -111,16 +108,6 @@ public class StopLossCalculatorTests
         Assert.AreEqual(SlSource.Global, result.Source);
         // Anchor = EntryPrice = 100, 5% SL → stop = 100 - 100*0.05 = 95
         Assert.AreEqual(95m, result.Stop);
-    }
-
-    [TestMethod]
-    public void GlobalSl_UsedWhenDcaFilled()
-    {
-        // Once a DCA has filled (PartCount > 0), signal SL no longer applies
-        var input = LongBase() with { PartCount = 1 };
-        var result = Calculate(input);
-
-        Assert.AreEqual(SlSource.Global, result.Source);
     }
 
     [TestMethod]
@@ -214,60 +201,6 @@ public class StopLossCalculatorTests
 
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  REGRESSION: ActiveDca must NOT block signal SL
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Regression test for the July 2026 bug: when a DCA is pending (ActiveDca=true) but
-    /// not yet filled (PartCount==0), the signal SL must still apply. The refactoring that
-    /// added <c>!ActiveDca</c> to the guard caused the signal SL to be abandoned prematurely,
-    /// falling back to the global SL. This changed the stop anchor from SignalPrice to
-    /// EntryPrice and shifted the SL distance from the strategy-specific value to the global
-    /// percentage — a drastic behavioral change that caused emulator profit to drop from
-    /// +84.50 to -14.16.
-    /// </summary>
-    [TestMethod]
-    public void Regression_ActiveDca_DoesNotBlockSignalSl()
-    {
-        var input = LongBase() with { ActiveDca = true, PartCount = 0 };
-        var result = Calculate(input);
-
-        Assert.AreEqual(SlSource.Signal, result.Source,
-            "Signal SL must remain active when ActiveDca=true but PartCount==0. " +
-            "The DCA is pending (not filled), so the signal anchor is still valid.");
-        Assert.AreEqual(97m, result.Stop);
-    }
-
-    /// <summary>
-    /// Counterpart: once the DCA has actually filled (PartCount > 0), the signal SL must
-    /// yield to the global SL because the average entry has shifted.
-    /// </summary>
-    [TestMethod]
-    public void SignalSl_YieldsToGlobal_WhenDcaFilled()
-    {
-        var input = LongBase() with { ActiveDca = false, PartCount = 1 };
-        var result = Calculate(input);
-
-        Assert.AreEqual(SlSource.Global, result.Source,
-            "Once a DCA has filled (PartCount > 0), the signal SL anchor is stale and " +
-            "the global SL (anchored on DCA price) must take over.");
-    }
-
-    /// <summary>
-    /// Verifies that DCA filled + ActiveDca=true (a second DCA pending after the first
-    /// filled) also uses global SL.
-    /// </summary>
-    [TestMethod]
-    public void GlobalSl_WhenDcaFilledAndAnotherPending()
-    {
-        var input = LongBase() with { ActiveDca = true, PartCount = 1 };
-        var result = Calculate(input);
-
-        Assert.AreEqual(SlSource.Global, result.Source);
-    }
-
-
-    // ═══════════════════════════════════════════════════════════════════════
     //  SL must NEVER be between entry and DCA
     // ═══════════════════════════════════════════════════════════════════════
 
@@ -340,7 +273,6 @@ public class StopLossCalculatorTests
         var input = LongBase() with
         {
             SlPercentage = null,
-            PartCount = 1,
             ExtremeDcaPrice = 95m,
             GlobalStopLossPercentage = 1.5m,
             GlobalStopLossLimitPercentage = 2.5m,
@@ -360,7 +292,6 @@ public class StopLossCalculatorTests
         var input = ShortBase() with
         {
             SlPercentage = null,
-            PartCount = 1,
             ExtremeDcaPrice = 105m,
             GlobalStopLossPercentage = 1.5m,
             GlobalStopLossLimitPercentage = 2.5m,
@@ -395,53 +326,37 @@ public class StopLossCalculatorTests
             $"Long SL ({result.Stop}) must be below the deepest DCA level (95)");
     }
 
-    /// <summary>
-    /// DCA pending (ActiveDca=true, PartCount=0) with DCA order placed at 95.
-    /// Signal SL must anchor on the DCA price, not on SignalPrice.
-    /// </summary>
     [TestMethod]
-    public void Regression_ActiveDca_SignalSlAnchorsOnDca()
+    public void SignalSl_AnchorsOnDcaEvenWithExtremeDcaPrice()
     {
-        var input = LongBase() with
-        {
-            ActiveDca = true,
-            PartCount = 0,
-            ExtremeDcaPrice = 95m,
-        };
+        var input = LongBase() with { ExtremeDcaPrice = 95m };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
         // 3% from 95 → stop = 92.15
         Assert.AreEqual(92.15m, result.Stop);
         Assert.IsTrue(result.Stop < 95m,
-            "Signal SL must be below DCA even when DCA is pending (not yet filled)");
+            "Signal SL must be below DCA even when DCA orders are pending");
     }
 
     /// <summary>
-    /// Transition from signal to global SL after DCA fill: both must anchor on
-    /// the extreme DCA price, so the SL does not jump closer to entry.
+    /// Signal SL always takes precedence. With both signal and global available, signal wins.
+    /// The anchor still moves to ExtremeDcaPrice so the SL is beyond all DCA levels.
     /// </summary>
     [TestMethod]
-    public void SlTransition_AfterDcaFill_StaysBeyondDca()
+    public void SignalSl_AlwaysPreferredOverGlobal()
     {
-        // Before DCA fill: signal SL
-        var beforeFill = LongBase() with
+        var input = LongBase() with
         {
-            PartCount = 0,
             SlPercentage = 2m,
             ExtremeDcaPrice = 95m,
             GlobalStopLossPercentage = 2m,
         };
-        var resultBefore = Calculate(beforeFill);
+        var result = Calculate(input);
 
-        // After DCA fill: global SL takes over
-        var afterFill = beforeFill with { PartCount = 1, SlPercentage = 2m };
-        var resultAfter = Calculate(afterFill);
-
+        Assert.AreEqual(SlSource.Signal, result.Source);
         // Both must be below the DCA at 95
-        Assert.IsTrue(resultBefore.Stop < 95m,
-            $"Pre-fill SL ({resultBefore.Stop}) must be below DCA (95)");
-        Assert.IsTrue(resultAfter.Stop < 95m,
-            $"Post-fill SL ({resultAfter.Stop}) must be below DCA (95)");
+        Assert.IsTrue(result.Stop < 95m,
+            $"SL ({result.Stop}) must be below DCA (95)");
     }
 }

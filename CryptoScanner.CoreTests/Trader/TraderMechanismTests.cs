@@ -171,9 +171,6 @@ public class TraderMechanismTests
         {
             Side = position.Side,
             SlPercentage = position.SlPercentage,
-            PartCount = position.PartCount,
-            ActiveDca = position.ActiveDca,
-            SignalPrice = position.SignalPrice,
             EntryPrice = position.EntryPrice ?? position.BreakEvenPrice,
             ExtremeDcaPrice = extremeDca,
             GlobalStopLossPercentage = GlobalSlPct,
@@ -325,9 +322,9 @@ public class TraderMechanismTests
         var sl = RecalcAndGetSl(position);
 
         Assert.AreEqual(1, position.PartCount, "1 DCA filled");
-        Assert.AreEqual(SlSource.Global, sl.Source, "After DCA fill, SL switches to global");
-        // Global SL anchored on extreme DCA price (95), 5% below = 90.25
-        Assert.AreEqual(95m - 95m * 0.05m, sl.Stop, "Global SL = 95 - 5% = 90.25");
+        Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after DCA fill");
+        // Signal SL anchored on extreme DCA price (95), 3% below = 92.15
+        Assert.AreEqual(95m - 95m * 0.03m, sl.Stop, "Signal SL = 95 - 3% = 92.15");
     }
 
     [TestMethod]
@@ -350,9 +347,9 @@ public class TraderMechanismTests
         var sl = RecalcAndGetSl(position);
 
         Assert.AreEqual(1, position.PartCount);
-        Assert.AreEqual(SlSource.Global, sl.Source);
-        // Short: stop above extreme DCA price (105) + 5% = 110.25
-        Assert.AreEqual(105m + 105m * 0.05m, sl.Stop, "Short global SL = 105 + 5% = 110.25");
+        Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after DCA fill");
+        // Short: signal SL anchored on extreme DCA price (105) + 3% = 108.15
+        Assert.AreEqual(105m + 105m * 0.03m, sl.Stop, "Signal SL = 105 + 3% = 108.15");
     }
 
     [TestMethod]
@@ -412,9 +409,9 @@ public class TraderMechanismTests
         var sl = RecalcAndGetSl(position);
 
         Assert.AreEqual(2, position.PartCount, "2 DCAs filled");
-        Assert.AreEqual(SlSource.Global, sl.Source);
-        // Anchored on lowest DCA = 88, global 5% below = 83.6
-        Assert.AreEqual(88m - 88m * 0.05m, sl.Stop, "Global SL anchors on lowest DCA price (88)");
+        Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after multiple DCA fills");
+        // Signal SL anchored on lowest DCA = 88, 3% below = 85.36
+        Assert.AreEqual(88m - 88m * 0.03m, sl.Stop, "Signal SL anchors on lowest DCA price (88)");
     }
 
     [TestMethod]
@@ -441,9 +438,9 @@ public class TraderMechanismTests
         var sl = RecalcAndGetSl(position);
 
         Assert.AreEqual(2, position.PartCount);
-        Assert.AreEqual(SlSource.Global, sl.Source);
-        // Short: anchored on highest DCA = 112, 5% above = 117.6
-        Assert.AreEqual(112m + 112m * 0.05m, sl.Stop, "Short global SL anchors on highest DCA price (112)");
+        Assert.AreEqual(SlSource.Signal, sl.Source, "Signal SL stays active after multiple DCA fills");
+        // Short: signal SL anchored on highest DCA = 112, 3% above = 115.36
+        Assert.AreEqual(112m + 112m * 0.03m, sl.Stop, "Signal SL anchors on highest DCA price (112)");
     }
 
 
@@ -760,9 +757,9 @@ public class TraderMechanismTests
         AddFilledStep(dca1, CryptoOrderSide.Buy, 95m, 2m, FeeRate);
 
         var sl2 = RecalcAndGetSl(position);
-        Assert.AreEqual(SlSource.Global, sl2.Source, "Phase 2: global SL after DCA fill");
+        Assert.AreEqual(SlSource.Signal, sl2.Source, "Phase 2: signal SL stays active after DCA fill");
         Assert.AreEqual(1, position.PartCount, "Phase 2: 1 DCA filled");
-        Assert.AreEqual(95m - 95m * 0.05m, sl2.Stop, "Phase 2: global SL from DCA1 price (95)");
+        Assert.AreEqual(95m - 95m * 0.02m, sl2.Stop, "Phase 2: signal SL from DCA1 price (95) = 93.1");
         Assert.IsTrue(position.BreakEvenPrice < 100m, "Phase 2: BE below 100 after DCA at 95");
 
         decimal beAfterDca1 = position.BreakEvenPrice;
@@ -772,9 +769,9 @@ public class TraderMechanismTests
         AddFilledStep(dca2, CryptoOrderSide.Buy, 88m, 4m, FeeRate);
 
         var sl3 = RecalcAndGetSl(position);
-        Assert.AreEqual(SlSource.Global, sl3.Source, "Phase 3: still global SL");
+        Assert.AreEqual(SlSource.Signal, sl3.Source, "Phase 3: signal SL still active");
         Assert.AreEqual(2, position.PartCount, "Phase 3: 2 DCAs filled");
-        Assert.AreEqual(88m - 88m * 0.05m, sl3.Stop, "Phase 3: global SL moves to DCA2 price (88)");
+        Assert.AreEqual(88m - 88m * 0.02m, sl3.Stop, "Phase 3: signal SL moves to DCA2 price (88) = 86.24");
         Assert.IsTrue(position.BreakEvenPrice < beAfterDca1, "Phase 3: BE further reduced after DCA2");
 
         // Verify SL is progressively lower (long: stop moves down with each DCA)

@@ -141,11 +141,13 @@ public class AltradyWebhook
                 request.order_type = "limit"; // ['limit', 'market']
                 request.signal_price = position.EntryPrice;
                 //request.quote_amount = position.EntryAmount; // Specifies quote amount of the entry order, if left blank, the signal bot setting will be used.
-                request.base_amount = position.EntryAmount; // Specifies base amount of the entry order, if left blank, the signal bot setting will be used.
+                //request.base_amount = position.EntryAmount; // Specifies base amount of the entry order, if left blank, the signal bot setting will be used.
             }
             //leverage (integer, optional): The leverage for a futures position ,
             //quote_amount(number, optional): Specifies quote amount of the entry order, if left blank, the signal bot setting will be used. ,
             //base_amount(number, optional): Specifies base amount of the entry order, if left blank, the signal bot setting will be used. ,
+
+            request.quote_amount = position.EntryAmount;
 
             // TP body (multiple)
             if (GlobalData.Settings.Trading.TpList.Count > 0)
@@ -204,17 +206,27 @@ public class AltradyWebhook
                 request.stop_loss_percentage = stopLossPercentage + GlobalData.Settings.Trading.StopLossPercentage;
             }
 
+            // Expiration time in minutes
+            if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
+            {
+                request.expiry_minutes = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
+            }
+
+            // Expiration price (our calculated tp)
+            if (position.ProfitPrice.HasValue)
+                request.expiry_price = position.ProfitPrice.Value;
 
             // Send request using HttpClient
             string json = request.ToString();
-            GlobalData.AddTextToLogTab(json);
+            string jsonFlat = request.ToString(Newtonsoft.Json.Formatting.None);
+            GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {jsonFlat}");
             ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook request {json}");
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _httpClient.PostAsync(url, content);
 
             string result = await response.Content.ReadAsStringAsync();
-            ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
+            //ScannerLog.Logger.Trace($"{position.Symbol.Name} {position.Interval!.Name} Altrady webhook response {result}");
             //GlobalData.AddTextToLogTab($"{position.Symbol.Name} {position.Interval!.Name} send to Altrady webhook");
 
             string info = "";

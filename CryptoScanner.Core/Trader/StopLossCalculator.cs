@@ -8,16 +8,14 @@ namespace CryptoScanner.Core.Trader;
 ///
 /// Why this exists
 /// ───────────────
-/// In July 2026 a refactoring of CalculateSlPrices added an <c>!ActiveDca</c> guard to the
-/// signal-SL branch. The change was functionally correct in theory (a pending DCA invalidates
-/// the signal anchor) but caused a severe regression: the signal SL was abandoned too early,
-/// falling back to the global SL and dramatically shifting trade outcomes. The bug went
-/// undetected because CalculateSlPrices was a private method buried inside PositionMonitor
-/// with no unit-test coverage.
-///
 /// By extracting the decision logic into a pure function with explicit inputs and no
 /// dependency on GlobalData or CryptoPosition internals, every branch — signal SL, global SL,
 /// fallback, and edge cases — can be covered by fast, deterministic unit tests.
+///
+/// The signal-SL is always preferred when present, regardless of how many DCA levels have
+/// been filled. All DCA orders are placed at once when the entry fills, so the PartCount
+/// has no bearing on which SL source to use. The anchor (ExtremeDcaPrice) already ensures
+/// the SL sits beyond all DCA levels.
 ///
 /// The calculator does NOT clamp to tick-size or min/max price; the caller is responsible for
 /// that (keeps the pure function free of symbol-specific concerns).
@@ -34,13 +32,7 @@ public static class StopLossCalculator
         public CryptoTradeSide Side { get; init; }
         /// <summary>Signal-provided SL distance in percent (e.g. 2.5 = 2.5%). Null when the strategy does not provide one.</summary>
         public decimal? SlPercentage { get; init; }
-        /// <summary>Number of DCA parts that have been filled (Invested > 0).</summary>
-        public int PartCount { get; init; }
-        /// <summary>True when a DCA order has been placed but not yet filled.</summary>
-        public bool ActiveDca { get; init; }
-        /// <summary>Price at which the signal fired (anchor for signal-SL).</summary>
-        public decimal SignalPrice { get; init; }
-        /// <summary>Average entry price of the position (anchor when no DCA step exists).</summary>
+        /// <summary>Actual entry fill price of the position (anchor when no DCA step exists).</summary>
         public decimal EntryPrice { get; init; }
         /// <summary>Price of the most extreme DCA step: lowest buy for long, highest sell for short. Null when no DCA step exists.</summary>
         public decimal? ExtremeDcaPrice { get; init; }
@@ -66,8 +58,8 @@ public static class StopLossCalculator
     /// Determines which SL source applies and computes stop + limit prices.
     ///
     /// Priority:
-    ///   1. Signal-provided SL% — only when <c>PartCount == 0</c> (no DCA filled yet).
-    ///   2. Global SL% — when signal SL does not apply and <c>GlobalStopLossPercentage &gt; 0</c>.
+    ///   1. Signal-provided SL% — always preferred when present.
+    ///   2. Global SL% — when signal SL is not available and <c>GlobalStopLossPercentage &gt; 0</c>.
     ///   3. None — no SL.
     ///
     /// Anchor selection (applies to both sources):
@@ -81,31 +73,36 @@ public static class StopLossCalculator
         int multiplier = input.Side == CryptoTradeSide.Long ? +1 : -1;
 
         // Determine which SL source and percentage to use
-        decimal slPercent;
         SlSource source;
+        decimal slPercent;
 
-        if (input.SlPercentage.HasValue && input.PartCount == 0)
+        if (input.SlPercentage.HasValue)
         {
-            slPercent = input.SlPercentage.Value;
             source = SlSource.Signal;
+            slPercent = input.SlPercentage.Value;
         }
         else if (input.GlobalStopLossPercentage > 0)
         {
-            slPercent = input.GlobalStopLossPercentage;
             source = SlSource.Global;
+            slPercent = input.GlobalStopLossPercentage;
         }
         else
         {
-            return new SlResult { Stop = null, Limit = null, Source = SlSource.None };
+            return new SlResult { 
+                Stop = null, 
+                Limit = null, 
+                Source = SlSource.None 
+            };
         }
 
         // Anchor: always use the most extreme DCA price when available so the SL
         // sits beyond all placed DCA levels, never between entry and a DCA.
+        // When no DCA exists, always anchor on EntryPrice (the actual fill price) —
+        // never on SignalPrice, which could differ due to slippage/market orders and
+        // cause the SL to trigger immediately after entry.
         decimal anchor;
         if (input.ExtremeDcaPrice.HasValue)
             anchor = input.ExtremeDcaPrice.Value;
-        else if (source == SlSource.Signal)
-            anchor = input.SignalPrice;
         else
             anchor = input.EntryPrice;
 
@@ -129,6 +126,10 @@ public static class StopLossCalculator
             limit = anchor - (multiplier * anchor * perc);
         }
 
-        return new SlResult { Stop = stop, Limit = limit, Source = source };
+        return new SlResult { 
+            Stop = stop, 
+            Limit = limit, 
+            Source = source 
+        };
     }
 }

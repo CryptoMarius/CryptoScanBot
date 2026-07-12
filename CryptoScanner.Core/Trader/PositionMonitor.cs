@@ -852,23 +852,18 @@ public class PositionMonitor : IDisposable
         {
             Side = position.Side,
             SlPercentage = position.SlPercentage,
-            PartCount = position.PartCount,
-            ActiveDca = position.ActiveDca,
-            SignalPrice = position.SignalPrice,
             EntryPrice = position.EntryPrice!.Value,
             ExtremeDcaPrice = extremeDcaPrice,
             GlobalStopLossPercentage = GlobalData.Settings.Trading.StopLossPercentage,
             GlobalStopLossLimitPercentage = GlobalData.Settings.Trading.StopLossLimitPercentage,
         };
-
         var result = StopLossCalculator.Calculate(input);
 
         ScannerLog.Logger.Trace(
             $"PositionMonitor.CalculateSlPrices {position.Symbol.Name} {position.Side}: " +
             $"source={result.Source} (SlPct={position.SlPercentage}) " +
             $"stop={result.Stop} limit={result.Limit} " +
-            $"(StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage}) " +
-            $"PartCount={position.PartCount} ActiveDca={position.ActiveDca}");
+            $"(StopPct={GlobalData.Settings.Trading.StopLossPercentage} LimitPct={GlobalData.Settings.Trading.StopLossLimitPercentage})");
 
         // Clamp to symbol tick/min/max
         decimal? stop = result.Stop?.Clamp(position.Symbol.PriceMinimum, position.Symbol.PriceMaximum, position.Symbol.PriceTickSize);
@@ -1795,7 +1790,8 @@ public class PositionMonitor : IDisposable
             List<int> openLevelIndexes = [];
             for (int i = 0; i < levels.Count; i++)
             {
-                bool closed = takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? existing) && existing.CloseTime.HasValue;
+                bool closed = takeProfitPartsByLevel.TryGetValue(i, out CryptoPositionPart? existing) 
+                    && existing.CloseTime.HasValue;
                 if (!closed)
                     openLevelIndexes.Add(i);
             }
