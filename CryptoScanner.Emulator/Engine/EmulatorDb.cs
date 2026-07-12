@@ -288,6 +288,14 @@ public static class EmulatorDb
         {
             foreach (int runId in runIds)
             {
+                // Orders and Trades are linked via PositionStep.OrderId (the exchange order id).
+                // They must be removed before the steps themselves are deleted.
+                database.Connection.Execute(
+                    "delete from [Trade] where OrderId in (select OrderId from PositionStep where PositionId in (select Id from Position where EmulatorRunId = @id) union select Order2Id from PositionStep where Order2Id is not null and PositionId in (select Id from Position where EmulatorRunId = @id))",
+                    new { id = runId }, transaction);
+                database.Connection.Execute(
+                    "delete from [Order] where OrderId in (select OrderId from PositionStep where PositionId in (select Id from Position where EmulatorRunId = @id) union select Order2Id from PositionStep where Order2Id is not null and PositionId in (select Id from Position where EmulatorRunId = @id))",
+                    new { id = runId }, transaction);
                 database.Connection.Execute(
                     "delete from PositionStep where PositionId in (select Id from Position where EmulatorRunId = @id)",
                     new { id = runId }, transaction);
@@ -327,6 +335,13 @@ public static class EmulatorDb
         using var transaction = database.BeginTransaction();
         try
         {
+            // Orders and Trades are linked via PositionStep.OrderId; delete them before the steps.
+            database.Connection.Execute(
+                "delete from [Trade] where OrderId in (select OrderId from PositionStep where PositionId in (select Id from Position where EmulatorRunId is not null) union select Order2Id from PositionStep where Order2Id is not null and PositionId in (select Id from Position where EmulatorRunId is not null))",
+                transaction: transaction);
+            database.Connection.Execute(
+                "delete from [Order] where OrderId in (select OrderId from PositionStep where PositionId in (select Id from Position where EmulatorRunId is not null) union select Order2Id from PositionStep where Order2Id is not null and PositionId in (select Id from Position where EmulatorRunId is not null))",
+                transaction: transaction);
             database.Connection.Execute(
                 "delete from PositionStep where PositionId in (select Id from Position where EmulatorRunId is not null)",
                 transaction: transaction);

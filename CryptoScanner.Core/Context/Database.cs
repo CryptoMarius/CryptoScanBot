@@ -690,6 +690,7 @@ public class CryptoDatabase : IDisposable
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxOrderId ON [Order](Id)");
+            connection.Connection.Execute("CREATE INDEX IdxOrderOrderId ON [Order](OrderId)");
             connection.Connection.Execute("CREATE INDEX IdxOrderExchangeId ON [Order](ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxOrderSymbolId ON [Order](SymbolId)");
             connection.Connection.Execute("CREATE INDEX IdxOrderCreateTime ON [Order](CreateTime)");
@@ -721,6 +722,7 @@ public class CryptoDatabase : IDisposable
                 "FOREIGN KEY(SymbolId) REFERENCES Symbol(Id)" +
             ")");
             connection.Connection.Execute("CREATE INDEX IdxTradeId ON [Trade](Id)");
+            connection.Connection.Execute("CREATE INDEX IdxTradeOrderId ON [Trade](OrderId)");
             connection.Connection.Execute("CREATE INDEX IdxTradeExchangeId ON [Trade](ExchangeId)");
             connection.Connection.Execute("CREATE INDEX IdxTradeSymbolId ON [Trade](SymbolId)");
             connection.Connection.Execute("CREATE INDEX IdxTradeTradeTime ON [Trade](TradeTime)");
