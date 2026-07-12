@@ -842,7 +842,7 @@ public class PositionMonitor : IDisposable
     private (decimal? stop, decimal? limit) CalculateSlPrices(CryptoPosition position)
     {
         // Only paper-trade mode supports SL orders (real trading would need OCO, not yet implemented).
-        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade)
+        if (GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTrade && GlobalData.Settings.Trading.TradeVia != CryptoTradeVia.PaperTradingAndAltrady)
             return (null, null);
 
         // Find the most extreme DCA step price (lowest buy for long, highest sell for short)
@@ -1170,6 +1170,50 @@ public class PositionMonitor : IDisposable
 
                 AltradyWebhook.DelegateControlToAltrady(position);
                 Database.Connection.Update(position);
+            }
+            else if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
+            {
+                // Place the paper-trade order locally
+                var exchangeApi = GlobalData.ActiveExchange!.GetApiInstance();
+                (bool result, TradeParams? tradeParams) result = await exchangeApi.PlaceOrder(Database,
+                    position, part, LastCandle1mCloseTimeDate,
+                    entryOrderType, entryOrderSide, entryQuantity, price, stop, limit);
+                if (result.tradeParams is not null)
+                {
+                    if (result.result)
+                    {
+                        part.EntryMethod = strategy;
+                        if (part.Purpose == CryptoPartPurpose.Entry)
+                        {
+                            position.EntryPrice = result.tradeParams.Price;
+                            position.EntryAmount = result.tradeParams.QuoteQuantity;
+                        }
+                        step = PositionTools.CreatePositionStep(position, part, result.tradeParams, trailing);
+                        Database.Connection.Insert(step);
+                        PositionTools.AddPositionPartStep(part, step);
+                        Database.Connection.Update(part);
+                        Database.Connection.Update(position);
+
+                        ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
+
+                        PaperAssets.Change(GlobalData.ActiveExchange!, position.Symbol, position.Side, result.tradeParams.OrderSide,
+                            step.Status, result.tradeParams.Quantity, result.tradeParams.QuoteQuantity, "HandleEntryPart.PaperAndAltrady");
+
+                        if (step.OrderType == CryptoOrderType.Market)
+                        {
+                            await PaperTrading.CreatePaperTrade(Database, position, part, step, LastCandle1m.Close, LastCandle1m.OpenTime);
+                            position.Reposition = false;
+                        }
+
+                        // Also delegate control to Altrady
+                        AltradyWebhook.DelegateControlToAltrady(position);
+                        Database.Connection.Update(position);
+                    }
+                    else
+                    {
+                        ExchangeBase.Dump(position, result.result, result.tradeParams, logText);
+                    }
+                }
             }
             else
             {

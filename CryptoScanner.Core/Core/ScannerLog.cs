@@ -44,8 +44,8 @@ public class ScannerLog
     // The shared trace target/rule created by InitializeLogging (DEBUG builds only).
     // StartRunLog detaches it so the global Trace.log does not grow during emulator runs
     // (per-run trace files capture the same data); StopRunLog reattaches it.
-    private static NLog.Targets.Target? sharedTraceTarget;
-    private static NLog.Config.LoggingRule? sharedTraceRule;
+    private static NLog.Targets.Target? sharedTraceTarget = null;
+    private static NLog.Config.LoggingRule? sharedTraceRule = null;
 
     // The dynamically attached per-run target/rule (emulator). Held so StopRunLog can detach the
     // exact same instances it added; null when no run log is active.

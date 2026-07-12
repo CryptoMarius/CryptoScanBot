@@ -105,7 +105,7 @@ public static class SmaHelper
             return false;
 
         // psar switched to the opposite side
-        if ((decimal)data.CandleData.PSar! >= data.Candle.Close)
+        if ((decimal)data.CandleData!.PSar! >= data.Candle.Close)
             return false;
         return true;
     }

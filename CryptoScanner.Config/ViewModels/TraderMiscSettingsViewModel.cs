@@ -11,7 +11,8 @@ public partial class TraderMiscSettingsViewModel : ObservableObject
     private readonly Dictionary<string, CryptoTradeVia> _tradeViaList = new()
     {
         { "Papertrading", CryptoTradeVia.PaperTrade },
-        { "Altrady webhook", CryptoTradeVia.Altrady }
+        { "Altrady webhook", CryptoTradeVia.Altrady },
+        { "Papertrading + Altrady", CryptoTradeVia.PaperTradingAndAltrady }
     };
 
     [ObservableProperty]
