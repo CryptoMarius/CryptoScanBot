@@ -75,6 +75,9 @@ public class SettingsSignal
     // Old (better version?)
     public SettingsSignalStrategyAtrRb AtrRb = new();
 
+    // CHoCH (Change of Character) — ZigZag structure reversal signals
+    public SettingsSignalStrategyChoch Choch = new();
+
     // bre — Buddy Reversion Engine: Donchian macro-band break (long on lower, short on upper)
     public SettingsSignalStrategyBre Bre = new();
 

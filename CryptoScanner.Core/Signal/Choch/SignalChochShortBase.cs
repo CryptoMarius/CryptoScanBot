@@ -43,11 +43,27 @@ public abstract class SignalChochShortBase : SignalCreateBase
 
         CryptoTrendData data = GetBosTrend();
 
-        if (data.LastStructureEvent != CryptoStructureEvent.ChoCh ||
-            data.LastStructureEventTime == null)
+        // Pullback+BOS variant accepts both CHoCH and a subsequent BOS (the CHoCH initiated
+        // the reversal, the BOS confirms it). Direct and plain-pullback variants require CHoCH.
+        bool requireBos = RequirePullback && GlobalData.Settings.Signal.Choch.RequireBosConfirmation;
+        if (requireBos)
         {
-            ExtraText = "no CHoCH";
-            return false;
+            if ((data.LastStructureEvent != CryptoStructureEvent.ChoCh &&
+                 data.LastStructureEvent != CryptoStructureEvent.Bos) ||
+                data.LastStructureEventTime == null)
+            {
+                ExtraText = "no CHoCH/BOS";
+                return false;
+            }
+        }
+        else
+        {
+            if (data.LastStructureEvent != CryptoStructureEvent.ChoCh ||
+                data.LastStructureEventTime == null)
+            {
+                ExtraText = "no CHoCH";
+                return false;
+            }
         }
 
         if (data.Trend != CryptoTrendIndicator.Bearish)
@@ -64,7 +80,7 @@ public abstract class SignalChochShortBase : SignalCreateBase
             return false;
         }
 
-        // Fire only once per CHoCH event per strategy — see SignalChochLongBase for rationale.
+        // Fire only once per structure event per strategy — see SignalChochLongBase for rationale.
         if (data.LastFiredStructureEventTimes.TryGetValue(SignalStrategy, out var firedAt) &&
             firedAt == data.LastStructureEventTime.Value)
         {
@@ -81,6 +97,14 @@ public abstract class SignalChochShortBase : SignalCreateBase
                 data.LastPivotTime <= data.LastStructureEventTime.Value)
             {
                 ExtraText = "waiting for pullback pivot (ZigZag High after CHoCH)";
+                return false;
+            }
+
+            // Optional BOS confirmation: after the CHoCH a Break of Structure must confirm
+            // the new bearish trend before we accept the pullback entry.
+            if (requireBos && data.LastStructureEvent != CryptoStructureEvent.Bos)
+            {
+                ExtraText = "waiting for BOS confirmation after CHoCH";
                 return false;
             }
 
