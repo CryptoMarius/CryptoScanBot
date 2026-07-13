@@ -206,15 +206,42 @@ public class AltradyWebhook
                 request.stop_loss_percentage = stopLossPercentage + GlobalData.Settings.Trading.StopLossPercentage;
             }
 
-            // Expiration time in minutes
-            if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
+            //// Expiration time in minutes
+            //if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
+            //{
+            //    request.expiry_minutes = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
+            //}
+
+            //// Expiration price (our calculated tp)
+            //if (position.ProfitPrice.HasValue)
+            //    request.expiry_price = position.ProfitPrice.Value;
+
+
+            // Entry expiration: cancel unfilled entry when time OR price condition is met (whichever comes first)
+            // Use the first TP percentage to calculate the expiry price (ProfitPrice is not yet available at open time)
+            decimal? expiryPrice = null;
+            if (position.EntryPrice.HasValue && GlobalData.Settings.Trading.TpList.Count > 0)
             {
-                request.expiry_minutes = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
+                decimal tpPercentage = GlobalData.Settings.Trading.TpList[0].Percentage;
+                if (position.Side == Enums.CryptoTradeSide.Long)
+                    expiryPrice = position.EntryPrice.Value * (1 + tpPercentage / 100m);
+                else
+                    expiryPrice = position.EntryPrice.Value * (1 - tpPercentage / 100m);
             }
 
-            // Expiration price (our calculated tp)
-            if (position.ProfitPrice.HasValue)
-                request.expiry_price = position.ProfitPrice.Value;
+            if (GlobalData.Settings.Trading.EntryRemoveTime > 0 || expiryPrice.HasValue)
+            {
+                dynamic entry_expiration = new JObject();
+                request.entry_expiration = entry_expiration;
+
+                if (GlobalData.Settings.Trading.EntryRemoveTime > 0)
+                    entry_expiration.time = GlobalData.Settings.Trading.EntryRemoveTime * (int)position.Interval!.Duration;
+
+                if (expiryPrice.HasValue)
+                    entry_expiration.price = expiryPrice.Value;
+            }
+
+
 
             // Send request using HttpClient
             string json = request.ToString();
