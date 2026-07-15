@@ -53,9 +53,9 @@
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="4.0.732401" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
-		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.9" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+		<PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.10" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
 		<PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
 		<PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
 	</ItemGroup>
