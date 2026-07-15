@@ -3,6 +3,7 @@ using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal.Choch;
 
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -69,6 +70,8 @@ public static class EmulatorDb
             symbol.Data.ZonesLoaded = false;
             symbol.Data.ZonesLoadedRunId = null;
         }
+
+        SignalChochLongBase.ResetDiagnosticLog();
     }
 
 

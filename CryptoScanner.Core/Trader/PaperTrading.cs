@@ -9,16 +9,32 @@ namespace CryptoScanner.Core.Trader;
 
 public class PaperTrading
 {
+
+
     public static async Task CreatePaperTrade(
+        CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
+        CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime)
+    {
+        CryptoOrder? order = CreatePaperTradeOrder(database, position, part, step, price, lastCandle1mOpenTime);
+        if (order != null)
+            await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
+    }
+
+
+    /// <summary>
+    /// Create the order+trade records without triggering the HandleTradeAsync cascade.
+    /// Returns the order so the caller can decide when to call HandleTradeAsync.
+    /// </summary>
+    internal static CryptoOrder? CreatePaperTradeOrder(
         CryptoDatabase database, CryptoPosition position, CryptoPositionPart part,
         CryptoPositionStep step, decimal price, CandleTime lastCandle1mOpenTime)
     {
         // We have a stupid bug which adds duplicate orders (and trades)
         // This leads to all kind of troubles, balances and wrong fees
         if (step.OrderId == null)
-            return;
+            return null;
         if (position.OrderList.Find(step.OrderId) != null)
-            return;
+            return null;
 
         // Als een surrogaat van de exchange...
         var symbol = position.Symbol;
@@ -136,89 +152,123 @@ public class PaperTrading
         ScannerLog.Logger.Trace($"{position.Symbol.Name} created papertrade order id={order.Id} and trade={trade.Id} for orderid={order.OrderId}");
         //ScannerLog.Logger.Debug($"{position.Symbol.Name} Debug candle {lastCandle1m.OhlcText(position.Symbol, GlobalData.IntervalList[0], position.Symbol.PriceDisplayFormat, true, true, true)}");
 
-        await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
+        return order;
     }
 
 
 
     /// <summary>
-    /// Controle van alle posities na het opnieuw opstarten
+    /// Controle van alle posities na het opnieuw opstarten.
+    /// Walks all 1m candles since the earliest open step and checks every step per candle.
+    /// Fills are collected first (order+trade only), then HandleTradeAsync is called
+    /// in chronological order so the cascade does not interfere with the scan.
     /// </summary>
     public static async Task CheckPositionsAfterRestart(Model.CryptoExchange activeExchange)
     {
-        // Positions - Parts - Steps 1 voor 1 bij langs om te zien of de prijs ooit boven of beneden de prijs is geweest
+        if (activeExchange.Data.PositionList.Count == 0)
+            return;
 
-        if (activeExchange.Data.PositionList.Count != 0)
+        using CryptoDatabase database = new();
+        database.Open();
+
+        foreach (var position in activeExchange.Data.PositionList.Values.ToList())
         {
-            CryptoDatabase database = new();
-            database.Open();
-
-            foreach (var position in activeExchange.Data.PositionList.Values.ToList())
+            // Collect open steps and determine the earliest CreateTime
+            List<(CryptoPositionPart part, CryptoPositionStep step)> openSteps = [];
+            DateTime earliest = DateTime.MaxValue;
+            foreach (var part in position.PartList.Values.ToList())
             {
-                SortedList<DateTime, (CryptoPositionPart part, CryptoPositionStep step)> indexList = [];
-
-                // Verzamel de open steps
-                foreach (var part in position.PartList.Values.ToList())
+                if (!part.CloseTime.HasValue)
                 {
-                    if (!part.CloseTime.HasValue)
+                    foreach (var step in part.StepList.Values.ToList())
                     {
-                        foreach (var step in part.StepList.Values.ToList())
+                        if (step.Status == CryptoOrderStatus.New)
                         {
-                            if (step.Status == CryptoOrderStatus.New)
-                                indexList.TryAdd(step.CreateTime, (part, step));
+                            openSteps.Add((part, step));
+                            if (step.CreateTime < earliest)
+                                earliest = step.CreateTime;
                         }
                     }
                 }
-
-
-                // controleer vanaf de openstaande step, en het kan vast veel optimaler
-                // als we de hogere intervallen inzetten (of een combinatie indien nodig)
-                // (maar zoveel posities staan niet open. dus voorlopig is dit prima)
-                foreach (var (part, step) in indexList.Values)
-                {
-                    CandleTime from = CandleTime.AlignFromDateTime(step.CreateTime, 1) + 1;
-                    CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
-                    while (from < limit)
-                    {
-                        // Eventueel missende candles hebben op deze manier geen impact
-                        CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
-                        if (symbolInterval.CandleList.TryGetValue(from, out CryptoCandle candle))
-                        {
-                            await PaperTradingCheckStep(database, position, part, step, candle);
-                        }
-                        from += 1;
-                    }
-                }
-
-                await TradeTools.CalculatePositionResultsViaOrders(database, position);
             }
+            if (earliest == DateTime.MaxValue)
+                continue;
+
+            // Walk every 1m candle; per candle check all open steps.
+            // Filled steps are recorded without triggering HandleTradeAsync.
+            List<CryptoOrder> orderList = [];
+            CryptoSymbolInterval symbolInterval = position.Symbol.GetSymbolInterval(Enums.CryptoIntervalPeriod.interval1m);
+            CandleTime from = CandleTime.AlignFromDateTime(earliest, 1) + 1;
+            CandleTime limit = CandleTime.AlignFromDateTime(GlobalData.Clock.UtcNow, 1);
+
+            while (from < limit)
+            {
+                if (symbolInterval.CandleList.TryGetValue(from, out CryptoCandle candle))
+                {
+                    foreach (var (part, step) in openSteps)
+                    {
+                        CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, candle);
+                        if (order != null)
+                        {
+                            orderList.Add(order);
+                            break;
+                        }
+                    }
+                }
+                from += 1;
+            }
+
+            // Process all collected fills in chronological order
+            if (orderList.Count > 0)
+            {
+                ScannerLog.Logger.Info($"{position.Symbol.Name} catch-up detected {orderList.Count} fills");
+                foreach (var order in orderList)
+                    await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
+            }
+
+            await TradeTools.CalculatePositionResultsViaOrders(database, position);
         }
     }
 
 
-    public static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m)
+    /// <summary>
+    /// Check a single step against a candle and create the paper trade if filled.
+    /// Returns the order when filled, null otherwise.
+    /// </summary>
+    private static CryptoOrder? CheckStepAgainstCandle(CryptoDatabase database, 
+        CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle candle)
     {
-        if (step.Status == CryptoOrderStatus.New)
+        if (step.Status != CryptoOrderStatus.New)
+            return null;
+
+        if (step.Side == CryptoOrderSide.Buy)
         {
-            if (step.Side == CryptoOrderSide.Buy)
-            {
-                if (step.OrderType == CryptoOrderType.Market)
-                    await CreatePaperTrade(database, position, part, step, lastCandle1m.Close, lastCandle1m.OpenTime);
-                else if (step.StopPrice.HasValue && lastCandle1m.High >= step.StopPrice)
-                    await CreatePaperTrade(database, position, part, step, step.StopPrice.Value, lastCandle1m.OpenTime);
-                else if (lastCandle1m.Low < step.Price)
-                    await CreatePaperTrade(database, position, part, step, step.Price, lastCandle1m.OpenTime);
-            }
-            else if (step.Side == CryptoOrderSide.Sell)
-            {
-                if (step.OrderType == CryptoOrderType.Market)
-                    await CreatePaperTrade(database, position, part, step, lastCandle1m.Close, lastCandle1m.OpenTime);
-                else if (step.StopPrice.HasValue && lastCandle1m.Low <= step.StopPrice)
-                    await CreatePaperTrade(database, position, part, step, step.StopPrice.Value, lastCandle1m.OpenTime);
-                else if (lastCandle1m.High > step.Price)
-                    await CreatePaperTrade(database, position, part, step, step.Price, lastCandle1m.OpenTime);
-            }
+            if (step.OrderType == CryptoOrderType.Market)
+                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime);
+            if (step.StopPrice.HasValue && candle.High >= step.StopPrice)
+                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime);
+            if (candle.Low < step.Price)
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime);
         }
+        else if (step.Side == CryptoOrderSide.Sell)
+        {
+            if (step.OrderType == CryptoOrderType.Market)
+                return CreatePaperTradeOrder(database, position, part, step, candle.Close, candle.OpenTime);
+            if (step.StopPrice.HasValue && candle.Low <= step.StopPrice)
+                return CreatePaperTradeOrder(database, position, part, step, step.StopPrice.Value, candle.OpenTime);
+            if (candle.High > step.Price)
+                return CreatePaperTradeOrder(database, position, part, step, step.Price, candle.OpenTime);
+        }
+
+        return null;
+    }
+
+
+    internal static async Task PaperTradingCheckStep(CryptoDatabase database, CryptoPosition position, CryptoPositionPart part, CryptoPositionStep step, CryptoCandle lastCandle1m)
+    {
+        CryptoOrder? order = CheckStepAgainstCandle(database, position, part, step, lastCandle1m);
+        if (order != null)
+            await TradeHandler.HandleTradeAsync(position.Symbol, CryptoOrderStatus.Filled, order);
     }
 
 

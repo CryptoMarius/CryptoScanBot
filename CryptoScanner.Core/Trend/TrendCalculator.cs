@@ -98,11 +98,11 @@ public class TrendCalculator
 
 
     /// <summary>
-    /// Calculate both the Dow-theory trend (<paramref name="dowTrend"/>) and the BOS/CHoCH
-    /// trend (<paramref name="bosTrend"/>) for this symbol/interval, sharing one ZigZag pass.
+    /// Calculate both the Dow-theory trend (<paramref name="dowTrendData"/>) and the BOS/CHoCH
+    /// trend (<paramref name="bosTrendData"/>) for this symbol/interval, sharing one ZigZag pass.
     /// </summary>
     public static async Task CalculateBothAsync(CryptoSymbol symbol, CryptoInterval interval,
-        CryptoCandleList candleList, CryptoTrendData dowTrend, CryptoTrendData bosTrend,
+        CryptoCandleList candleList, CryptoTrendData dowTrendData, CryptoTrendData bosTrendData,
         SettingsZigZag trendSettings, StringBuilder? log = null)
     {
         //return;
@@ -121,8 +121,8 @@ public class TrendCalculator
             // separate CalculateAsync methods.
             if (candleList.Count == 0)
             {
-                dowTrend.Reset();
-                bosTrend.Reset();
+                dowTrendData.Reset();
+                bosTrendData.Reset();
                 return;
             }
 
@@ -182,31 +182,30 @@ public class TrendCalculator
             long profDowStart = Stopwatch.GetTimestamp();
             CryptoTrendIndicator dowIndicator = TrendInterval.InterpretZigZagPoints(indicator, log);
             PipelineProfiler.RecordTrendDow(Stopwatch.GetTimestamp() - profDowStart);
-            dowTrend.PrevTrend = dowTrend.Trend;
-            dowTrend.PrevTime = dowTrend.Time;
-            dowTrend.Trend = dowIndicator;
-            dowTrend.Time = maxDate;
-            WritePivotData(indicator, dowTrend);
+            dowTrendData.PrevTrend = dowTrendData.Trend;
+            dowTrendData.PrevTime = dowTrendData.Time;
+            dowTrendData.Trend = dowIndicator;
+            dowTrendData.Time = maxDate;
+            WritePivotData(indicator, dowTrendData);
 
             // --- BOS/CHoCH interpretation --------------------------------------------------
             long profBosStart = Stopwatch.GetTimestamp();
             CryptoTrendIndicator bosIndicator = TrendIntervalBos.InterpretZigZagPoints(indicator, log,
-                out var lastEvent, out var lastEventTime, out var lastEventPrice);
+                out var structureEvents);
             PipelineProfiler.RecordTrendBos(Stopwatch.GetTimestamp() - profBosStart);
-            bosTrend.PrevTrend = bosTrend.Trend;
-            bosTrend.PrevTime = bosTrend.Time;
-            bosTrend.Trend = bosIndicator;
-            bosTrend.Time = maxDate;
-            bosTrend.LastStructureEvent = lastEvent;
-            bosTrend.LastStructureEventTime = lastEventTime;
-            bosTrend.LastStructureEventPrice = lastEventPrice;
-            WritePivotData(indicator, bosTrend);
+            bosTrendData.PrevTrend = bosTrendData.Trend;
+            bosTrendData.PrevTime = bosTrendData.Time;
+            bosTrendData.Trend = bosIndicator;
+            bosTrendData.Time = maxDate;
+            bosTrendData.StructureEvents.Clear();
+            bosTrendData.StructureEvents.AddRange(structureEvents);
+            WritePivotData(indicator, bosTrendData);
 
             if (GlobalData.Settings.General.DebugTrendCalculation)
             {
                 string text = $"{symbol.Name} {interval.Name} [Dow+BOS] candles={candleList.Count} " +
-                    $"calculated at {dowTrend.Time?.ToDateTime()} " +
-                    $"zigzagcount={indicator.ZigZagList.Count} dow={dowTrend.Trend} bos={bosTrend.Trend}";
+                    $"calculated at {dowTrendData.Time?.ToDateTime()} " +
+                    $"zigzagcount={indicator.ZigZagList.Count} dow={dowTrendData.Trend} bos={bosTrendData.Trend}";
                 log?.AppendLine(text);
                 ScannerLog.Logger.Debug("TrendCalculator.CalculateBoth " + text);
             }

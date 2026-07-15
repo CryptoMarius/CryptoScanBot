@@ -107,13 +107,13 @@ public class TestBase
 
     public static void ResetIndicatorState(CryptoSymbol symbol)
     {
-        foreach (var si in symbol.Data.SymbolIntervalList)
+        foreach (var symbolInterval in symbol.Data.SymbolIntervalList)
         {
-            si.IndicatorHub = null;
-            si.IndicatorHubLastAdded = null;
-            si.IndicatorHubAddCount = 0;
-            si.Data.Clear();
-            si.ResetTrendData();
+            symbolInterval.IndicatorHub = null;
+            symbolInterval.IndicatorHubLastAdded = null;
+            symbolInterval.IndicatorHubAddCount = 0;
+            symbolInterval.Data.Clear();
+            symbolInterval.ResetTrendData();
         }
     }
 

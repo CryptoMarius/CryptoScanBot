@@ -38,93 +38,88 @@ public abstract class SignalChochLongBase : SignalCreateBase
     public override decimal? OverrideSignalPrice => _overrideSignalPrice;
 
 
+    // Tracks (symbol, interval, strategy) combos that already logged "no CHoCH" so we
+    // don't flood the log with the same message every candle.
+    private static readonly HashSet<(string, string, CryptoSignalStrategy)> _loggedNoChoch = [];
+
+    public static void ResetDiagnosticLog()
+    {
+        _loggedNoChoch.Clear();
+        SignalChochShortBase.ResetDiagnosticLog();
+    }
+
     public override bool IsSignal()
     {
         // Skip the very noisy lower timeframes — mirrors SignalTrend
-        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval10m)
+        if (Interval.IntervalPeriod < CryptoIntervalPeriod.interval5m)
             return false;
 
         _ = MarketTrend.CalculateMarketTrendAsync(Symbol, TrendSettings).Result;
 
-        CryptoTrendData data = GetBosTrend();
+        CryptoTrendData trendData = GetBosTrend();
+        bool debugLog = GlobalData.Settings.General.DebugSignalCreate;
 
-        // Pullback+BOS variant accepts both CHoCH and a subsequent BOS (the CHoCH initiated
-        // the reversal, the BOS confirms it). Direct and plain-pullback variants require CHoCH.
         bool requireBos = RequirePullback && GlobalData.Settings.Signal.Choch.RequireBosConfirmation;
-        if (requireBos)
+        var lastChoCh = trendData.LastChoCh();
+        if (lastChoCh == null)
         {
-            if ((data.LastStructureEvent != CryptoStructureEvent.ChoCh &&
-                 data.LastStructureEvent != CryptoStructureEvent.Bos) ||
-                data.LastStructureEventTime == null)
-            {
-                ExtraText = "no CHoCH/BOS";
-                return false;
-            }
-        }
-        else
-        {
-            if (data.LastStructureEvent != CryptoStructureEvent.ChoCh ||
-                data.LastStructureEventTime == null)
-            {
-                ExtraText = "no CHoCH";
-                return false;
-            }
-        }
-
-        // The reversal must point in our direction
-        if (data.Trend != CryptoTrendIndicator.Bullish)
-        {
-            ExtraText = $"CHoCH but trend={data.Trend}";
+            ExtraText = "no CHoCH";
+            if (debugLog && _loggedNoChoch.Add((Symbol.Name, Interval.Name, SignalStrategy)))
+                ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (events={trendData.StructureEvents.Count}, trend={trendData.Trend})");
             return false;
         }
 
-        // Warm-start guard: on the very first evaluation of this strategy after a scanner
-        // restart, LastFiredStructureEventTimes is empty (it's in-memory only). Without this
-        // check the scanner would re-emit historical CHoCH events that the user already saw
-        // before the restart. Adopt the current event silently and let only NEW CHoCH events
-        // (with a later LastStructureEventTime) fire from this point on.
-        if (!data.LastFiredStructureEventTimes.ContainsKey(SignalStrategy))
+        if (trendData.Trend != CryptoTrendIndicator.Bullish)
         {
-            data.LastFiredStructureEventTimes[SignalStrategy] = data.LastStructureEventTime.Value;
+            ExtraText = $"CHoCH but trend={trendData.Trend}";
+            if (debugLog)
+                ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()})");
+            return false;
+        }
+
+        // Warm-start guard: on the very first evaluation after a restart,
+        // adopt the current event silently so only NEW events fire.
+        if (!trendData.LastFiredStructureEventTimes.ContainsKey(SignalStrategy))
+        {
+            trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
             ExtraText = "warm start: existing CHoCH adopted silently";
+            if (debugLog)
+                ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: {ExtraText} (eventTime={lastChoCh.Time.ToDateTime()}, trend={trendData.Trend})");
             return false;
         }
 
-        // Fire only once per structure event per strategy. Direct and pullback variants share
-        // this trend-data slot, but each tracks its own fire-time so they don't block
-        // each other.
-        if (data.LastFiredStructureEventTimes.TryGetValue(SignalStrategy, out var firedAt) &&
-            firedAt == data.LastStructureEventTime.Value)
+        if (trendData.LastFiredStructureEventTimes.TryGetValue(SignalStrategy, out var firedAt) &&
+            firedAt == lastChoCh.Time)
         {
             ExtraText = "CHoCH already fired";
             return false;
         }
 
+        if (debugLog)
+            ScannerLog.Logger.Info($"CHoCH diag {Symbol.Name} {Interval.Name} {SignalStrategy} long: NEW event! firedAt={firedAt.ToDateTime()} new={lastChoCh.Time.ToDateTime()} trend={trendData.Trend}");
+
         if (RequirePullback)
         {
-            // Pullback variant — wait for a NEW ZigZag Low to form AFTER the CHoCH event
-            // and for the current candle to close back above that pullback pivot. This
-            // mirrors the SMC "CHoCH then retest" play: take the entry on the confirmed
-            // break of the pullback's high, not on the CHoCH itself.
-            if (data.LastPivotType != 'L' ||
-                data.LastPivotTime == null ||
-                data.LastPivotTime <= data.LastStructureEventTime.Value)
+            CandleTime pivotAfter = requireBos
+                ? firedAt
+                : lastChoCh.Time;
+            if (trendData.LastPivotType != 'L' ||
+                trendData.LastPivotTime == null ||
+                trendData.LastPivotTime <= pivotAfter)
             {
                 ExtraText = "waiting for pullback pivot (ZigZag Low after CHoCH)";
                 return false;
             }
 
-            // Optional BOS confirmation: after the CHoCH a Break of Structure must confirm
-            // the new bullish trend before we accept the pullback entry.
-            if (requireBos && data.LastStructureEvent != CryptoStructureEvent.Bos)
+            if (requireBos && !trendData.HasBosAfterLastChoCh())
             {
                 ExtraText = "waiting for BOS confirmation after CHoCH";
                 return false;
             }
 
-            if (CandleLast.Candle.Close <= data.LastPivotValue)
+            if (CandleLast.Candle.Close <= trendData.LastPivotValue)
             {
-                ExtraText = $"price {CandleLast.Candle.Close:N8} not above pullback low {data.LastPivotValue:N8}";
+                ExtraText = $"price {CandleLast.Candle.Close:N8} not above pullback low {trendData.LastPivotValue:N8}";
                 return false;
             }
 
@@ -134,17 +129,15 @@ public abstract class SignalChochLongBase : SignalCreateBase
                 return false;
             }
 
-            data.LastFiredStructureEventTimes[SignalStrategy] = data.LastStructureEventTime.Value;
-            // Pullback variant: signal price = current candle close (the breakthrough),
-            // NOT the original CHoCH swing price — those are several candles apart now.
+            trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
             _overrideSignalPrice = null;
             ExtraText = $"CHoCH pullback → Bullish ({TrendType})";
             return true;
         }
 
         // Direct variant — fire immediately on the CHoCH event
-        data.LastFiredStructureEventTimes[SignalStrategy] = data.LastStructureEventTime.Value;
-        _overrideSignalPrice = data.LastStructureEventPrice;
+        trendData.LastFiredStructureEventTimes[SignalStrategy] = lastChoCh.Time;
+        _overrideSignalPrice = lastChoCh.Price;
         ExtraText = $"CHoCH → Bullish ({TrendType})";
         return true;
     }

@@ -16,12 +16,18 @@ public class CryptoTrendData
     public CryptoTrendIndicator LastTrend { get; set; } = CryptoTrendIndicator.Unknown;
     public CryptoTrendIndicator PrevTrend { get; set; }
 
-    // Last BOS/CHoCH structure event detected by TrendIntervalBos.
+    // Chronological list of BOS/CHoCH structure events detected by TrendIntervalBos.
     // Time and Price refer to the swing-point candle at which the break occurred,
     // NOT the candle on which the calculation was last run.
-    public CryptoStructureEvent LastStructureEvent { get; set; }
-    public CandleTime? LastStructureEventTime { get; set; }
-    public decimal? LastStructureEventPrice { get; set; }
+    public List<StructureEvent> StructureEvents { get; } = [];
+
+    public StructureEvent? LastChoCh()
+    {
+        for (int i = StructureEvents.Count - 1; i >= 0; i--)
+            if (StructureEvents[i].Type == CryptoStructureEvent.ChoCh)
+                return StructureEvents[i];
+        return null;
+    }
     // Tracks the event time of the last fired signal PER STRATEGY — prevents re-firing on the
     // same event. Indexed per strategy because multiple strategies share this trend-data slot
     // (e.g. choch.primary and choch.primary.pullback both read TrendBosPrimary); if they
@@ -43,6 +49,18 @@ public class CryptoTrendData
     public CandleTime? PrevPivotTime { get; set; }
 
 
+    public bool HasBosAfterLastChoCh()
+    {
+        for (int i = StructureEvents.Count - 1; i >= 0; i--)
+        {
+            if (StructureEvents[i].Type == CryptoStructureEvent.Bos)
+                return true;
+            if (StructureEvents[i].Type == CryptoStructureEvent.ChoCh)
+                return false;
+        }
+        return false;
+    }
+
     public void Reset()
     {
         Time = null;
@@ -54,9 +72,7 @@ public class CryptoTrendData
         LastTrend = CryptoTrendIndicator.Unknown;
         PrevTrend = CryptoTrendIndicator.Unknown;
 
-        LastStructureEvent = CryptoStructureEvent.None;
-        LastStructureEventTime = null;
-        LastStructureEventPrice = null;
+        StructureEvents.Clear();
         LastFiredStructureEventTimes.Clear();
 
         LastPivotType = null;

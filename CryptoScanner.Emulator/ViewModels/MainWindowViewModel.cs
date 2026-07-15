@@ -47,7 +47,19 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private int _progressValue;
 
-    public string ProgressLabel => ProgressValue > 0 ? $"Progress: {ProgressValue}%" : "Progress:";
+    private string _queueProgress = "";
+
+    public string ProgressLabel
+    {
+        get
+        {
+            if (_queueProgress.Length > 0)
+                return ProgressValue > 0
+                    ? $"[{_queueProgress}] {ProgressValue}%"
+                    : $"[{_queueProgress}]";
+            return ProgressValue > 0 ? $"{ProgressValue}%" : "";
+        }
+    }
 
     partial void OnProgressValueChanged(int value) => OnPropertyChanged(nameof(ProgressLabel));
 
@@ -717,6 +729,8 @@ public partial class MainWindowViewModel : ObservableObject
                         };
 
                         Status = $"Queue {runIndex}/{totalRuns}: {algoName} — {entryLabel}";
+                        _queueProgress = $"{runIndex}/{totalRuns}";
+                        OnPropertyChanged(nameof(ProgressLabel));
                         bool completed = await RunOnceAsync(runConfig);
                         if (!completed)
                             return;
@@ -738,6 +752,8 @@ public partial class MainWindowViewModel : ObservableObject
             GlobalData.Settings.Trading.StopLossLimitPercentage = savedStopLossLimitPercentage;
             GlobalData.Settings.Trading.TpList = savedTpList;
             GlobalData.Settings.Trading.DcaList = savedDcaList;
+            _queueProgress = "";
+            OnPropertyChanged(nameof(ProgressLabel));
             IsRunning = false;
         }
     }

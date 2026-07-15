@@ -30,7 +30,7 @@ public class TrendIntervalBos
     /// break-candle price instead of the close of the latest candle.
     /// </summary>
     public static CryptoTrendIndicator InterpretZigZagPoints(ZigZagIndicator indicator, StringBuilder? log,
-        out CryptoStructureEvent lastEvent, out CandleTime? lastEventTime, out decimal? lastEventPrice)
+        out List<StructureEvent> structureEvents)
     {
         // Skip dummy pivots — these are provisional points added by TryAddDummyPoints when
         // price has ALREADY broken the last swing high/low but the underlying pivot candle
@@ -43,9 +43,7 @@ public class TrendIntervalBos
         // that buffer and flips on a single break, so dummies must be excluded here.
         var zigZagList = indicator.ZigZagList.Where(z => !z.Dummy).ToList();
         CryptoTrendIndicator trend = CryptoTrendIndicator.Unknown;
-        lastEvent = CryptoStructureEvent.None;
-        lastEventTime = null;
-        lastEventPrice = null;
+        structureEvents = [];
 
         if (log != null)
         {
@@ -143,15 +141,9 @@ public class TrendIntervalBos
                 recentLow = zigZag.Value;
             }
 
-            // Only record CHoCH events. A later BOS (continuation in the same direction) must NOT
-            // overwrite the CHoCH, otherwise the SignalChoch filter
-            // "LastStructureEvent == ChoCh" will fail to see the reversal that just happened.
-            // The break occurred at this pivot, not at the candle on which this calculation runs.
-            if (structureEvent == CryptoStructureEvent.ChoCh)
+            if (structureEvent != CryptoStructureEvent.None)
             {
-                lastEvent = structureEvent;
-                lastEventTime = zigZag.Candle!.OpenTime;
-                lastEventPrice = zigZag.Value;
+                structureEvents.Add(new StructureEvent(zigZag.Candle!.OpenTime, structureEvent, zigZag.Value, trend));
             }
 
             if (log != null)
