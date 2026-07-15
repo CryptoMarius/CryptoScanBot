@@ -137,6 +137,9 @@ public class SignalBabaShort : SignalBabaBase
         if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
+        if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
+            return false;
+
         // Optional DLZ/FVG/SMC zone confluence (settings checkboxes). Checked only after the rare band
         // break, so the zone lookup runs sparingly.
         if (!CheckEnabledZoneRejections(out string zoneInfo))

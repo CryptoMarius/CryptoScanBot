@@ -77,6 +77,10 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     public bool CheckTrendSecondaryDirection { get; set; } = false;
     public int TrendSecondaryDirectionCount { get; set; } = 2;
 
+    public bool CheckPriceAboveMa200 { get; set; } = false;
+    public decimal Ma200MinDistancePercentage { get; set; } = 0m;
+    public int Ma200ConfirmationCandles { get; set; } = 0;
+
     // Zone confirmations — when any of these is enabled, the band break must ALSO be a rejection at
     // one of the enabled zone types (OR). All disabled = no zone filter. Same logic/extensions as the
     // StoRsi zone checkboxes (WasRejectedAtDlz/Fvg/SmcZone).

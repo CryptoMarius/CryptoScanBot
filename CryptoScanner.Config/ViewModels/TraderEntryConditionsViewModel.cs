@@ -35,6 +35,12 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
     private bool _checkPriceAboveMa200 = false;
 
     [ObservableProperty]
+    private decimal _ma200MinDistancePercentage = 0m;
+
+    [ObservableProperty]
+    private int _ma200ConfirmationCandles = 0;
+
+    [ObservableProperty]
     private bool _waitForStochRecovery = false;
 
     [ObservableProperty]
@@ -69,6 +75,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         CheckTrendSecondaryDirection = ec.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = ec.TrendSecondaryDirectionCount;
         CheckPriceAboveMa200 = ec.CheckPriceAboveMa200;
+        Ma200MinDistancePercentage = ec.Ma200MinDistancePercentage;
+        Ma200ConfirmationCandles = ec.Ma200ConfirmationCandles;
         WaitForStochRecovery = ec.WaitForStochRecovery;
         WaitForRsiRecovery = ec.WaitForRsiRecovery;
 
@@ -94,6 +102,8 @@ public partial class TraderEntryConditionsViewModel : ObservableObject
         ec.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         ec.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
         ec.CheckPriceAboveMa200 = CheckPriceAboveMa200;
+        ec.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
+        ec.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
         ec.WaitForStochRecovery = WaitForStochRecovery;
         ec.WaitForRsiRecovery = WaitForRsiRecovery;
 

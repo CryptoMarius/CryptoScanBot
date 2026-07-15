@@ -58,6 +58,15 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
     private int _trendSecondaryDirectionCount = 2;
 
     [ObservableProperty]
+    private bool _checkPriceAboveMa200 = false;
+
+    [ObservableProperty]
+    private decimal _ma200MinDistancePercentage = 0m;
+
+    [ObservableProperty]
+    private int _ma200ConfirmationCandles = 0;
+
+    [ObservableProperty]
     private bool _useDlzZone = false;
 
     [ObservableProperty]
@@ -86,6 +95,9 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
         CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
         TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
+        CheckPriceAboveMa200 = settings.CheckPriceAboveMa200;
+        Ma200MinDistancePercentage = settings.Ma200MinDistancePercentage;
+        Ma200ConfirmationCandles = settings.Ma200ConfirmationCandles;
         UseDlzZone = settings.UseDlzZone;
         UseFvgZone = settings.UseFvgZone;
         UseSmcZone = settings.UseSmcZone;
@@ -110,6 +122,9 @@ public partial class StrategyBreSettingsViewModel : ObservableObject
         settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
         settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
         settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
+        settings.CheckPriceAboveMa200 = CheckPriceAboveMa200;
+        settings.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
+        settings.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
         settings.UseDlzZone = UseDlzZone;
         settings.UseFvgZone = UseFvgZone;
         settings.UseSmcZone = UseSmcZone;

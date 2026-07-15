@@ -110,6 +110,21 @@ public class SignalCreateBase
         return false;
     }
 
+
+    /// <summary>
+    /// Resolves the effective entry conditions for this signal's strategy.
+    /// When the strategy has its own EntryConditions they take precedence;
+    /// otherwise the global SettingsTrading values are used.
+    /// </summary>
+    private SettingsEntryConditions ResolveEntryConditions()
+    {
+        if (GlobalData.StrategiesSettings.TryGetValue(SignalStrategy, out var entry)
+            && entry.strategySettings.EntryConditions != null)
+            return entry.strategySettings.EntryConditions;
+
+        return GlobalData.Settings.Trading.EntryConditions;
+    }
+    
     /// <summary>
     /// Extra controles nadat we het accepteren
     /// </summary>
@@ -253,33 +268,8 @@ public class SignalCreateBase
         // ********************************************************************
         // Another "Dont trade against the trend", just via another comparison
         // Price above/below MA200
-        if (settings.CheckPriceAboveMa200)
-        {
-            var ma200 = CandleLast?.CandleData?.Sma200;
-            if (ma200 == null)
-            {
-                ExtraText = "MA200 not available";
-                return false;
-            }
-
-            switch (SignalSide)
-            {
-                case CryptoTradeSide.Long:
-                    if (CandleLast?.Candle.Close <= (decimal)ma200.Value)
-                    {
-                        ExtraText = $"Price {CandleLast.Candle.Close:N8} not above MA200 {ma200.Value:N8}";
-                        return false;
-                    }
-                    break;
-                case CryptoTradeSide.Short:
-                    if (CandleLast?.Candle.Close >= (decimal)ma200.Value)
-                    {
-                        ExtraText = $"Price {CandleLast.Candle.Close:N8} not below MA200 {ma200.Value:N8}";
-                        return false;
-                    }
-                    break;
-            }
-        }
+        if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
+            return false;
 
 
         // ********************************************************************
@@ -395,22 +385,6 @@ public class SignalCreateBase
 
         return true;
     }
-
-
-    /// <summary>
-    /// Resolves the effective entry conditions for this signal's strategy.
-    /// When the strategy has its own EntryConditions they take precedence;
-    /// otherwise the global SettingsTrading values are used.
-    /// </summary>
-    private SettingsEntryConditions ResolveEntryConditions()
-    {
-        if (GlobalData.StrategiesSettings.TryGetValue(SignalStrategy, out var entry)
-            && entry.strategySettings.EntryConditions != null)
-            return entry.strategySettings.EntryConditions;
-
-        return GlobalData.Settings.Trading.EntryConditions;
-    }
-
 
 
     // Get the candle and indicator data from the signal interval
@@ -616,6 +590,83 @@ public class SignalCreateBase
         }
 
         return false;
+    }
+
+
+    protected bool CheckMa200Filter(bool enabled, decimal minDistancePercentage, int confirmationCandles)
+    {
+        if (!enabled)
+            return true;
+
+        var ma200 = CandleLast?.CandleData?.Sma200;
+        if (ma200 == null)
+        {
+            ExtraText = "MA200 not available";
+            return false;
+        }
+
+        decimal ma200Value = (decimal)ma200.Value;
+        decimal buffer = ma200Value * minDistancePercentage / 100m;
+
+        switch (SignalSide)
+        {
+            case CryptoTradeSide.Long:
+                if (CandleLast?.Candle.Close <= ma200Value + buffer)
+                {
+                    ExtraText = $"Price {CandleLast.Candle.Close:N8} not above MA200+buffer {ma200Value + buffer:N8} (MA200={ma200Value:N8}, buffer={minDistancePercentage}%)";
+                    return false;
+                }
+                break;
+            case CryptoTradeSide.Short:
+                if (CandleLast?.Candle.Close >= ma200Value - buffer)
+                {
+                    ExtraText = $"Price {CandleLast.Candle.Close:N8} not below MA200-buffer {ma200Value - buffer:N8} (MA200={ma200Value:N8}, buffer={minDistancePercentage}%)";
+                    return false;
+                }
+                break;
+        }
+
+        if (confirmationCandles > 0)
+        {
+            MyData? candle = CandleLast;
+            for (int i = 0; i < confirmationCandles; i++)
+            {
+                if (!GetPrevCandle(candle!, out candle) || candle == null)
+                {
+                    ExtraText = $"Not enough candles for MA200 confirmation ({i}/{confirmationCandles})";
+                    return false;
+                }
+
+                var prevMa200 = candle.CandleData?.Sma200;
+                if (prevMa200 == null)
+                {
+                    ExtraText = $"MA200 not available for confirmation candle {i + 1}";
+                    return false;
+                }
+
+                decimal prevMa200Value = (decimal)prevMa200.Value;
+
+                switch (SignalSide)
+                {
+                    case CryptoTradeSide.Long:
+                        if (candle.Candle.Close <= prevMa200Value)
+                        {
+                            ExtraText = $"MA200 confirmation failed: candle {i + 1} close {candle.Candle.Close:N8} not above MA200 {prevMa200Value:N8}";
+                            return false;
+                        }
+                        break;
+                    case CryptoTradeSide.Short:
+                        if (candle.Candle.Close >= prevMa200Value)
+                        {
+                            ExtraText = $"MA200 confirmation failed: candle {i + 1} close {candle.Candle.Close:N8} not below MA200 {prevMa200Value:N8}";
+                            return false;
+                        }
+                        break;
+                }
+            }
+        }
+
+        return true;
     }
 
 

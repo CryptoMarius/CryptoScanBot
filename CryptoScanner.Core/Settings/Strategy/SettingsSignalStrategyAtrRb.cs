@@ -56,6 +56,10 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public bool CheckTrendSecondaryDirection { get; set; } = false;
     public int TrendSecondaryDirectionCount { get; set; } = 2;
 
+    public bool CheckPriceAboveMa200 { get; set; } = false;
+    public decimal Ma200MinDistancePercentage { get; set; } = 0m;
+    public int Ma200ConfirmationCandles { get; set; } = 0;
+
     // Zone confirmations — when any of these is enabled, at least one of the enabled
     // zone rejections must match (OR). All disabled = no zone filter.
     public bool UseDlzZone { get; set; } = false;

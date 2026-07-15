@@ -99,6 +99,9 @@ public class SignalAtrRbLong : SignalCreateBase
         if (settings.CheckTrendSecondaryDirection && !CheckTrendSecondary(settings.TrendSecondaryDirectionCount))
             return false;
 
+        if (!CheckMa200Filter(settings.CheckPriceAboveMa200, settings.Ma200MinDistancePercentage, settings.Ma200ConfirmationCandles))
+            return false;
+
         if (!CheckEnabledZoneRejections(out string zoneInfo))
         {
             ExtraText = zoneInfo;

@@ -132,6 +132,26 @@
                          IsEnabled="{Binding CheckTrendSecondaryDirection}"/>
             </Grid>
 
+            <CheckBox IsChecked="{Binding CheckPriceAboveMa200, Mode=TwoWay}"
+                      Content="Check price above/below MA200"
+                      FontSize="12"
+                      ToolTip.Tip="Long: only fire when price is above MA200. Short: only fire when price is below MA200."/>
+            <Grid ColumnDefinitions="Auto,8,80,16,Auto,8,80" Margin="24,0,0,0"
+                  IsEnabled="{Binding CheckPriceAboveMa200}">
+                <TextBlock Grid.Column="0" Text="Min distance %"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="2"
+                         Text="{Binding Ma200MinDistancePercentage, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         ToolTip.Tip="Minimum distance from MA200 as percentage (0 = disabled)."/>
+                <TextBlock Grid.Column="4" Text="Confirm candles"
+                           VerticalAlignment="Center" FontSize="12"/>
+                <TextBox Grid.Column="6"
+                         Text="{Binding Ma200ConfirmationCandles, Mode=TwoWay}"
+                         Height="26" FontSize="12" Padding="6,2" CornerRadius="4"
+                         ToolTip.Tip="Number of preceding candles that must also close on the correct side of MA200 (0 = disabled)."/>
+            </Grid>
+
             <!-- Zone confirmation (OR over enabled types) -->
             <CheckBox IsChecked="{Binding UseDlzZone, Mode=TwoWay}"
                       Content="Require DLZ zone rejection"

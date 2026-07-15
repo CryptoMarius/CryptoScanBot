@@ -14,6 +14,8 @@ public class SettingsEntryConditions
     public int TrendSecondaryDirectionCount { get; set; } = 2;
 
     public bool CheckPriceAboveMa200 { get; set; } = false;
+    public decimal Ma200MinDistancePercentage { get; set; } = 0m;
+    public int Ma200ConfirmationCandles { get; set; } = 0;
 
     public bool WaitForStochRecovery { get; set; } = false;
     public bool WaitForRsiRecovery { get; set; } = false;
