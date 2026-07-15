@@ -1,3 +1,4 @@
+#if EXPERIMENTAL
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Bre;
@@ -137,3 +138,4 @@ public class BreBands
         });
     }
 }
+#endif

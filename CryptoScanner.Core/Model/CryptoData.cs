@@ -119,6 +119,8 @@ public class CryptoData
     // stored so the SL can be expressed in vwStdev units (SLStdevFactor * vwStdev below/above the band).
     // Computed once per candle by IndicatorEngine (hub or batch) and shared by SignalBabaLong/Short via
     // BabaBandsHelper, so the band itself is never computed twice per candle.
+#if EXPERIMENTAL
+
     [Computed]
     public double? AtrBaba { get; set; }
     [Computed]
@@ -131,6 +133,7 @@ public class CryptoData
     public double? BabaVwStdev { get; set; }
     [Computed]
     public double? BabaAtrSl { get; set; }
+#endif
 
     /// <summary>
     /// Copy common indicator values
@@ -204,12 +207,14 @@ public class CryptoData
         PSar = source.PSar;
 
         Lux5mValue = source.Lux5mValue;
+#if EXPERIMENTAL
         AtrBaba = source.AtrBaba;
         BabaBasis = source.BabaBasis;
         BabaUpper = source.BabaUpper;
         BabaLower = source.BabaLower;
         BabaVwStdev = source.BabaVwStdev;
         BabaAtrSl = source.BabaAtrSl;
+#endif
     }
 }
 

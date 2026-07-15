@@ -19,4 +19,19 @@
     <Copyright>Copyright © 2026 Marius</Copyright>
   </PropertyGroup>
 
+  <!--
+    EXPERIMENTAL define: enables experimental strategies (Baba, AtrRb, BRE, ...) that are
+    hidden from end-user Release builds but available for testers.
+
+    - Debug builds:   always on (DEBUG implies EXPERIMENTAL).
+    - Release builds: off by default. Pass -p:IncludeExperimental=true on the command line
+                      (or set the property in a "Beta" build configuration) to include them.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);EXPERIMENTAL</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IncludeExperimental)' == 'true'">
+    <DefineConstants>$(DefineConstants);EXPERIMENTAL</DefineConstants>
+  </PropertyGroup>
+
 </Project>

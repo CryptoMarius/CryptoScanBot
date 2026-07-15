@@ -3,6 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
+#if EXPERIMENTAL
 namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>
@@ -220,3 +221,4 @@ public static class BabaBandsHelper
         slidingUp = qualifies && change > 0;
     }
 }
+#endif

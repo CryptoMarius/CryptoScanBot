@@ -1112,6 +1112,7 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
+#if EXPERIMENTAL
         // Draw AtrRb Bands & Ribbon
         group = "atrrb";
         if (Toggle(model, group, Session.ShowAtrRbBands))
@@ -1131,6 +1132,7 @@ public partial class ChartWindowViewModel : ObservableObject
         group = "slide";
         if (Toggle(model, group, Session.ShowSlide))
             Slide.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+#endif
 
         // Draw PSar
         group = "psar";
@@ -1146,10 +1148,12 @@ public partial class ChartWindowViewModel : ObservableObject
             Sma.Draw(model, Symbol, Interval, WindowCandleList, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
         }
 
+#if DEBUG
         // Draw BBMA
         group = "bbma";
         if (Toggle(model, group, Session.ShowBbma))
             Bbma.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+#endif
 
 
         // Draw Stochastic lines (%K / %D)

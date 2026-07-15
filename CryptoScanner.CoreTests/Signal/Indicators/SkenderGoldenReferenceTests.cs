@@ -3,7 +3,9 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
+#if EXPERIMENTAL
 using CryptoScanner.Core.Signal.Baba;
+#endif
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
@@ -61,12 +63,14 @@ public class SkenderReferenceRegressionTests
         public double? PSar { get; set; }
         public double? BbDeviation { get; set; }
         public double? BbPercentage { get; set; }
+#if EXPERIMENTAL
         public double? AtrBaba { get; set; }
         public double? BabaAtrSl { get; set; }
         public double? BabaBasis { get; set; }
         public double? BabaUpper { get; set; }
         public double? BabaLower { get; set; }
         public double? BabaVwStdev { get; set; }
+#endif
 #if DEBUG
         public double? Ema50 { get; set; }
         public double? Wma05Low { get; set; }
@@ -119,8 +123,9 @@ public class SkenderReferenceRegressionTests
     {
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
         var g = GlobalData.Settings.General;
+#if EXPERIMENTAL
         var baba = GlobalData.Settings.Signal.Baba;
-
+#endif
         var bb = quotes.ToBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
         var sma50 = quotes.ToSma(50).ToList();
         var sma100 = quotes.ToSma(100).ToList();
@@ -131,7 +136,9 @@ public class SkenderReferenceRegressionTests
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
         var atrBabaFast = quotes.ToAtr(baba.AtrLength).ToList();
         var atrBabaSl = quotes.ToAtr(baba.Length).ToList();
+#if EXPERIMENTAL
         BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(candles);
+#endif
 
 #if DEBUG
         var ema50 = quotes.ToEma(50).ToList();
@@ -165,12 +172,14 @@ public class SkenderReferenceRegressionTests
                 StochOscillator = stoch[i].Oscillator,
                 StochSignal = stoch[i].Signal,
                 PSar = psar[i].Sar,
+#if EXPERIMENTAL
                 AtrBaba = atrBabaFast[i].Atr,
                 BabaAtrSl = atrBabaSl[i].Atr,
                 BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
                 BabaUpper = babaBands[i].HasValue ? babaBands[i].Upper : null,
                 BabaLower = babaBands[i].HasValue ? babaBands[i].Lower : null,
                 BabaVwStdev = babaBands[i].HasValue ? babaBands[i].VwStdev : null,
+#endif
 #if DEBUG
                 Ema50 = ema50[i].Ema,
                 Wma05Low = wma05Low[i].Wma,

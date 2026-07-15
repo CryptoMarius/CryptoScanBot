@@ -2,8 +2,9 @@
 #if DEBUG
 using CryptoScanner.Core.Signal.Bbma;
 #endif
-using CryptoScanner.Core.Signal.Baba;
+#if DEBUG
 using CryptoScanner.Core.Signal.Choch;
+#endif
 using CryptoScanner.Core.Signal.Dlz;
 using CryptoScanner.Core.Signal.Fvg;
 using CryptoScanner.Core.Signal.Jump;
@@ -12,8 +13,11 @@ using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
+#if EXPERIMENTAL
 using CryptoScanner.Core.Signal.AtrRb;
+using CryptoScanner.Core.Signal.Baba;
 using CryptoScanner.Core.Signal.Bre;
+#endif
 using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
@@ -97,31 +101,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStobbShort),
         });
 
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.dlz",
-        //    Strategy = CryptoSignalStrategy.StobbDlz,
-        //    AnalyzeLongType = typeof(SignalStobbDlzLong),
-        //    AnalyzeShortType = typeof(SignalStobbDlzShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.fvg",
-        //    Strategy = CryptoSignalStrategy.StobbFvg,
-        //    AnalyzeLongType = typeof(SignalStobbFvgLong),
-        //    AnalyzeShortType = typeof(SignalStobbFvgShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.smc",
-        //    Strategy = CryptoSignalStrategy.StobbSmc,
-        //    AnalyzeLongType = typeof(SignalStobbSmcLong),
-        //    AnalyzeShortType = typeof(SignalStobbSmcShort),
-        //});
-
-
         Register(new AlgorithmDefinition()
         {
             Name = "stobb.multi",
@@ -130,29 +109,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStobbMultiShort),
         });
 
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.multi.dlz",
-        //    Strategy = CryptoSignalStrategy.StobbMultiDlz,
-        //    AnalyzeLongType = typeof(SignalStobbMultiDlzLong),
-        //    AnalyzeShortType = typeof(SignalStobbMultiDlzShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.multi.fvg",
-        //    Strategy = CryptoSignalStrategy.StobbMultiFvg,
-        //    AnalyzeLongType = typeof(SignalStobbMultiFvgLong),
-        //    AnalyzeShortType = typeof(SignalStobbMultiFvgShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "stobb.multi.smc",
-        //    Strategy = CryptoSignalStrategy.StobbMultiSmc,
-        //    AnalyzeLongType = typeof(SignalStobbMultiSmcLong),
-        //    AnalyzeShortType = typeof(SignalStobbMultiSmcShort),
-        //});
 
         //***************************************************
         // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
@@ -166,30 +122,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiShort),
         });
 
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.dlz",
-        //    Strategy = CryptoSignalStrategy.StoRsiDlz,
-        //    AnalyzeLongType = typeof(SignalStoRsiDlzLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiDlzShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.fvg",
-        //    Strategy = CryptoSignalStrategy.StoRsiFvg,
-        //    AnalyzeLongType = typeof(SignalStoRsiFvgLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiFvgShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.smc",
-        //    Strategy = CryptoSignalStrategy.StoRsiSmc,
-        //    AnalyzeLongType = typeof(SignalStoRsiSmcLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiSmcShort),
-        //});
-
 
         // another combined with a higher timeframe
         Register(new AlgorithmDefinition()
@@ -200,29 +132,6 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalStoRsiMultiShort),
         });
 
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.multi.dlz",
-        //    Strategy = CryptoSignalStrategy.StoRsiMultiDlz,
-        //    AnalyzeLongType = typeof(SignalStoRsiMultiDlzLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiMultiDlzShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.multi.fvg",
-        //    Strategy = CryptoSignalStrategy.StoRsiMultiFvg,
-        //    AnalyzeLongType = typeof(SignalStoRsiMultiFvgLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiMultiFvgShort),
-        //});
-
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.multi.smc",
-        //    Strategy = CryptoSignalStrategy.StoRsiMultiSmc,
-        //    AnalyzeLongType = typeof(SignalStoRsiMultiSmcLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiMultiSmcShort),
-        //});
 
 
         //***************************************************
@@ -349,26 +258,6 @@ public static class RegisterAlgorithms
         });
 #endif
 
-        //#if DEBUG
-        //        // WaveTrend Oscillator [LazyBear] — WT_LB. WT1 crosses WT2 inside the OS/OB zone,
-        //        // with an optional SMA200 trend filter.
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "wt.lb",
-        //            Strategy = CryptoSignalStrategy.WaveTrend,
-        //            AnalyzeLongType = typeof(SignalWaveTrendLong),
-        //            AnalyzeShortType = typeof(SignalWaveTrendShort),
-        //        });
-
-        //        // wtlb.stoch — WT_LB recovery cross combined with Stoch %K mid-cross
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "wtlb.stoch",
-        //            Strategy = CryptoSignalStrategy.WtLbStoch,
-        //            AnalyzeLongType = typeof(SignalWtLbStochLong),
-        //            AnalyzeShortType = typeof(SignalWtLbStochShort),
-        //        });
-        //#endif
 
 #if DEBUG
         // Trend reversal (Dow Theory)
@@ -381,16 +270,8 @@ public static class RegisterAlgorithms
         });
 #endif
 
-        //#if DEBUG
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "stoch.dir",
-        //            Strategy = CryptoSignalStrategy.StochDir,
-        //            AnalyzeLongType = null,
-        //            AnalyzeShortType = null,
-        //        });
-        //#endif
 
+#if EXPERIMENTAL
         //***************************************************
         // Baba Bands — fires when price hits a macro band:
         // long on the lower band, short on the upper band.
@@ -426,6 +307,7 @@ public static class RegisterAlgorithms
             AnalyzeLongType = typeof(SignalBreLong),
             AnalyzeShortType = typeof(SignalBreShort),
         });
+#endif
 
 #if DEBUG
         //***************************************************

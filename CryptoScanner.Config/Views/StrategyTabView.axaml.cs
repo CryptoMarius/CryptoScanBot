@@ -16,6 +16,15 @@ public partial class StrategyTabView : UserControl
         {
             DataContext = new StrategyTabViewModel();
         }
+
+#if !DEBUG
+        BbmaTab.IsVisible = false;
+#endif
+#if !EXPERIMENTAL
+        BabaTab.IsVisible = false;
+        AtrRbTab.IsVisible = false;
+        BreTab.IsVisible = false;
+#endif
     }
 
     private void InitializeComponent()

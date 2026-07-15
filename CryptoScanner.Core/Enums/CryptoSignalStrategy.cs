@@ -13,20 +13,7 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
     Nwe = 25,
 
-#if DEBUG
-    Trend = 31,
-
-    Bbma = 42,
-    BbmaOmni = 43,
-
-    WaveTrend = 50,
-    WtLbStoch = 51,
-
-    StochDir = 52,
-    BbRsiEngulfing = 53,
-    IchimokuKumoBreakout = 54,
-#endif
-
+#if EXPERIMENTAL
     // Baba Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
     Baba = 28,
@@ -36,8 +23,18 @@ public enum CryptoSignalStrategy
     // BRE (Buddy Reversion Engine) Donchian macro-band break — long on the lower band,
     // short on the upper band (the same events the chart prints as percentage labels).
     Bre = 30,
+#endif
 
 #if DEBUG
+    Trend = 31,
+
+    Bbma = 42,
+    BbmaOmni = 43,
+
+    StochDir = 52,
+    BbRsiEngulfing = 53,
+    IchimokuKumoBreakout = 54,
+    
     // CHoCH (Change of Character) — fires when the ZigZag-derived structure makes a Change
     // of Character on the primary or secondary trend. The .pullback variants additionally
     // wait for an opposite zigzag pivot + breakthrough before allowing the trader to step in.

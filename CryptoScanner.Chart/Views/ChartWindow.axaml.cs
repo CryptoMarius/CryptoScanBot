@@ -48,6 +48,16 @@ public partial class ChartWindow : Window
             }
         };
 
+#if !DEBUG
+        ShowBbmaCheckBox.IsVisible = false;
+#endif
+#if !EXPERIMENTAL
+        ShowAtrRbCheckBox.IsVisible = false;
+        ShowBabaCheckBox.IsVisible = false;
+        ShowSlideCheckBox.IsVisible = false;
+        ShowBreCheckBox.IsVisible = false;
+#endif
+
         if (DataContext == null)
         {
             DataContext = new ChartWindowViewModel();

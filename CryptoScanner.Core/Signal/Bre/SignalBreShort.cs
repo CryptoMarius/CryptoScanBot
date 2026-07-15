@@ -3,6 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
 
+#if EXPERIMENTAL
 namespace CryptoScanner.Core.Signal.Bre;
 
 /// <summary>
@@ -151,3 +152,4 @@ public class SignalBreShort : SignalCreateBase
         return false;
     }
 }
+#endif

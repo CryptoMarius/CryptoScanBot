@@ -3,6 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
+#if EXPERIMENTAL
 namespace CryptoScanner.Core.Signal.Bre;
 
 /// <summary>
@@ -363,3 +364,4 @@ public static class BreBandsHelper
         return result;
     }
 }
+#endif

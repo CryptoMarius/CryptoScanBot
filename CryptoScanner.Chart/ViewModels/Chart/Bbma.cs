@@ -1,10 +1,9 @@
+#if DEBUG
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-#if DEBUG
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Bbma;
-#endif
 
 using OxyPlot;
 using OxyPlot.Series;
@@ -509,3 +508,4 @@ public class Bbma
     }
 
 }
+#endif

@@ -25,8 +25,6 @@ public partial class StrategyTabViewModel : ObservableObject
     [ObservableProperty]
     private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
     [ObservableProperty]
-    private StrategyWaveTrendTabViewModel _strategyWaveTrendTabViewModel;
-    [ObservableProperty]
     private StrategyBabaTabViewModel _strategyBabaTabViewModel;
     [ObservableProperty]
     private StrategyAtrRbTabViewModel _strategyAtrRbTabViewModel;
@@ -45,7 +43,6 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategySmcTabViewModel = new();
         _strategyNweTabViewModel = new();
         _strategyBbmaTabViewModel = new();
-        _strategyWaveTrendTabViewModel = new();
         _strategyBabaTabViewModel = new();
         _strategyAtrRbTabViewModel = new();
         _strategyBreTabViewModel = new();
@@ -61,11 +58,14 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyFvgTabViewModel.LoadConfig("Fvg", settings.ZonesFvg);
         StrategySmcTabViewModel.LoadConfig("Smc", settings.ZonesSmc);
         StrategyNweTabViewModel.LoadConfig("Nwe", settings.Nwe);
+#if DEBUG
         StrategyBbmaTabViewModel.LoadConfig("BBMA", settings.Bbma);
-        StrategyWaveTrendTabViewModel.LoadConfig("WaveTrend", settings.WaveTrend);
+#endif
+#if EXPERIMENTAL
         StrategyBabaTabViewModel.LoadConfig("Baba", settings.Baba);
         StrategyAtrRbTabViewModel.LoadConfig("AtrRb", settings.AtrRb);
         StrategyBreTabViewModel.LoadConfig("Bre", settings.Bre);
+#endif
     }
 
     internal void SaveConfig(SettingsSignal settings)
@@ -78,10 +78,13 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyFvgTabViewModel.SaveConfig(settings.ZonesFvg);
         StrategySmcTabViewModel.SaveConfig(settings.ZonesSmc);
         StrategyNweTabViewModel.SaveConfig(settings.Nwe);
+#if DEBUG
         StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
-        StrategyWaveTrendTabViewModel.SaveConfig(settings.WaveTrend);
+#endif
+#if EXPERIMENTAL
         StrategyBabaTabViewModel.SaveConfig(settings.Baba);
         StrategyAtrRbTabViewModel.SaveConfig(settings.AtrRb);
         StrategyBreTabViewModel.SaveConfig(settings.Bre);
+#endif
     }
 }

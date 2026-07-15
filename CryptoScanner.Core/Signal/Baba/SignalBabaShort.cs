@@ -2,6 +2,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 
+#if EXPERIMENTAL
 namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>
@@ -162,3 +163,4 @@ public class SignalBabaShort : SignalBabaBase
         return true;
     }
 }
+#endif

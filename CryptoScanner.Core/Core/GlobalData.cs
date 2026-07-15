@@ -779,30 +779,31 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
+
+        // Not sure what to do with the NWE
         StrategiesSettings.Add(CryptoSignalStrategy.Nwe, (Settings.Signal.Nwe, DateTime.Today));
-        //#if DEBUG
-        //StrategiesSettings.Add(CryptoSignalStrategy.NweNp, (Settings.Signal.Nwe, DateTime.Today));
-        //#endif
+
+        // DLZ, FVG and SMC
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevel, (Settings.Signal.ZonesDlz, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.DominantLevelNear, (Settings.Signal.ZonesDlz, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StobbDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsiDlz, (Settings.Signal.ZonesDlz, DateTime.Today));
-
         StrategiesSettings.Add(CryptoSignalStrategy.FairValueGap, (Settings.Signal.ZonesFvg, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StobbFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsiFvg, (Settings.Signal.ZonesFvg, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Baba, (Settings.Signal.Baba, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.AtrRb, (Settings.Signal.AtrRb, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Bre, (Settings.Signal.Bre, DateTime.Today));
-#if DEBUG
-        //StrategiesSettings.Add(CryptoSignalStrategy.WtLbStoch, (Settings.Signal.WtLbStoch, DateTime.Today));
-        //StrategiesSettings.Add(CryptoSignalStrategy.WaveTrend, (Settings.Signal.WaveTrend, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
-#endif
-
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
 
+#if EXPERIMENTAL
+        StrategiesSettings.Add(CryptoSignalStrategy.Baba, (Settings.Signal.Baba, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.AtrRb, (Settings.Signal.AtrRb, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.Bre, (Settings.Signal.Bre, DateTime.Today));
+#endif
+#if DEBUG
+        // ChOCh strategy with different options
+        StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimary, (Settings.Signal.Choch, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimaryPullback, (Settings.Signal.Choch, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondary, (Settings.Signal.Choch, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondaryPullback, (Settings.Signal.Choch, DateTime.Today));
+
+        StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
+        StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
+#endif
     }
 }

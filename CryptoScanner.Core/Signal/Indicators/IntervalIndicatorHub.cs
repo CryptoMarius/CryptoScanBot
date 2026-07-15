@@ -30,6 +30,7 @@ public sealed class IntervalIndicatorHub
     private readonly StochHub _stoch;
     private readonly ParabolicSarHub _psar;
 
+#if EXPERIMENTAL
     private readonly AtrHub _atrBaba;     // ATR(AtrLength) — the band's fast pad term
     private readonly AtrHub _atrBabaSl;   // ATR(Length) — the stop-loss %, stays stable through a rally
 
@@ -42,6 +43,7 @@ public sealed class IntervalIndicatorHub
     private readonly VwmaHub _babaVwmaSq;
     private readonly double _babaMult;
     private readonly double _babaAtrMult;
+#endif
 
     // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
     private const int LuxMin = 10;
@@ -83,6 +85,7 @@ public sealed class IntervalIndicatorHub
         _stoch = _quoteHub.ToStochHub(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
         _psar = _quoteHub.ToParabolicSarHub(0.02, 0.2);
 
+#if EXPERIMENTAL
         var baba = GlobalData.Settings.Signal.Baba;
         _atrBaba = _quoteHub.ToAtrHub(baba.AtrLength);
         _atrBabaSl = _quoteHub.ToAtrHub(baba.Length);
@@ -90,6 +93,7 @@ public sealed class IntervalIndicatorHub
         _babaVwmaSq = _babaSqHub.ToVwmaHub(baba.Length);
         _babaMult = baba.Mult;
         _babaAtrMult = baba.AtrMult;
+#endif
 
 #if DEBUG
         _ema50 = _quoteHub.ToEmaHub(50);
@@ -110,9 +114,11 @@ public sealed class IntervalIndicatorHub
     {
         _quoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
 
+#if EXPERIMENTAL
         decimal hlc3 = (candle.High + candle.Low + candle.Close) / 3m;
         _babaSrcHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3, candle.Volume));
         _babaSqHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, candle.Volume));
+#endif
 
         // Incremental Lux Multi-RSI: one RMA step per candle instead of replaying 100 candles.
         double close = (double)candle.Close;
@@ -181,6 +187,7 @@ public sealed class IntervalIndicatorHub
         if (_psar.Results.Count > 0 && _psar.Results[^1].Sar != null)
             data.PSar = _psar.Results[^1].Sar;
 
+#if EXPERIMENTAL
         if (_atrBaba.Results.Count > 0 && _atrBaba.Results[^1].Atr != null)
             data.AtrBaba = _atrBaba.Results[^1].Atr;
         if (_atrBabaSl.Results.Count > 0 && _atrBabaSl.Results[^1].Atr != null)
@@ -204,6 +211,7 @@ public sealed class IntervalIndicatorHub
                 data.BabaVwStdev = vwStdev;
             }
         }
+#endif
 
         // Lux Multi-RSI
         int luxValue = 0;

@@ -3,6 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
+#if EXPERIMENTAL
 namespace CryptoScanner.Core.Signal.AtrRb;
 
 /// <summary>
@@ -129,3 +130,4 @@ public static class AtrRbBandsHelper
         return true;
     }
 }
+#endif

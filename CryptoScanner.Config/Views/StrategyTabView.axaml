@@ -34,19 +34,16 @@
 		<TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <settings:StrategyStorsiTabView DataContext="{Binding StrategyStorsiTabViewModel}" />
 		</TabItem>
-		<TabItem Header="WAVETREND" FontSize="15" FontWeight="Bold" Margin="0,0,0,2" IsVisible="false">
-			<settings:StrategyWaveTrendTabView DataContext="{Binding StrategyWaveTrendTabViewModel}" />
-		</TabItem>
-		<TabItem Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+<TabItem x:Name="BbmaTab" Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
-		<TabItem Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem x:Name="BabaTab" Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBabaTabView DataContext="{Binding StrategyBabaTabViewModel}" />
 		</TabItem>
-		<TabItem Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem x:Name="AtrRbTab" Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyAtrRbTabView DataContext="{Binding StrategyAtrRbTabViewModel}" />
 		</TabItem>
-		<TabItem Header="BRE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem x:Name="BreTab" Header="BRE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBreTabView DataContext="{Binding StrategyBreTabViewModel}" />
 		</TabItem>
 	</TabControl>

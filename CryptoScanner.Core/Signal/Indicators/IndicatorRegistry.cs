@@ -23,7 +23,9 @@ public enum IndicatorKind
     Stoch,
     ParabolicSar,
     Atr,
+#if EXPERIMENTAL
     BabaVwap,   // compound: synthetic hlc3 QuoteHubs + VwmaHubs + Atr pair
+#endif
 }
 
 /// <summary>
@@ -42,10 +44,13 @@ public readonly record struct IndicatorKey(
     public static IndicatorKey Stoch(int length, int smoothD, int smoothK) => new(IndicatorKind.Stoch, length, smoothD, smoothK);
     public static IndicatorKey Psar(double step = 0.02, double max = 0.2) => new(IndicatorKind.ParabolicSar, step, max);
     public static IndicatorKey Atr(int length) => new(IndicatorKind.Atr, length);
+#if EXPERIMENTAL
     public static IndicatorKey BabaVwap(int length, int atrLength, double mult, double atrMult)
                                                                                    => new(IndicatorKind.BabaVwap, length, atrLength, mult, atrMult);
+#endif
 }
 
+#if EXPERIMENTAL
 /// <summary>
 /// The four Skender hubs + scalar params that together compute one Baba VWAP band.
 /// Stored as a single dictionary entry so BabaVwap is one logical indicator in the registry.
@@ -57,6 +62,7 @@ public sealed record BabaVwapState(
     AtrHub AtrSl,     // ATR(Length)     — stop-loss %
     double Mult,
     double AtrMult);
+#endif
 
 // ---------------------------------------------------------------------------
 // Interface: strategy declares its required indicators once
@@ -93,9 +99,11 @@ public sealed class IndicatorRegistry
     private readonly QuoteHub _quoteHub = new();
     private readonly Dictionary<IndicatorKey, object> _hubs = [];
 
+#if EXPERIMENTAL
     // Lazy synthetic hubs for Baba VWAP — only created when BabaVwap(...) is first requested.
     private QuoteHub? _babaSrcHub;   // Close = hlc3
     private QuoteHub? _babaSqHub;    // Close = hlc3^2
+#endif
 
 
     // -----------------------------------------------------------------------
@@ -107,6 +115,7 @@ public sealed class IndicatorRegistry
     {
         _quoteHub.Add(new Quote(c.Timestamp, c.Open, c.High, c.Low, c.Close, c.Volume));
 
+#if EXPERIMENTAL
         // Synthetic Baba hubs only exist when BabaVwap(...) was registered.
         if (_babaSrcHub != null)
         {
@@ -114,6 +123,7 @@ public sealed class IndicatorRegistry
             _babaSrcHub.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3, c.Volume));
             _babaSqHub!.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, c.Volume));
         }
+#endif
     }
 
 
@@ -164,9 +174,11 @@ public sealed class IndicatorRegistry
             case IndicatorKind.Atr:
                 Atr((int)key.P1);
                 break;
+#if EXPERIMENTAL
             case IndicatorKind.BabaVwap:
                 BabaVwap((int)key.P1, (int)key.P2, key.P3, key.P4);
                 break;
+#endif
         }
     }
 
@@ -184,6 +196,7 @@ public sealed class IndicatorRegistry
     public ParabolicSarHub Psar(double step = 0.02, double max = 0.2) => GetOrAdd(IndicatorKey.Psar(step, max), () => _quoteHub.ToParabolicSarHub(step, max));
     public AtrHub Atr(int length) => GetOrAdd(IndicatorKey.Atr(length), () => _quoteHub.ToAtrHub(length));
 
+#if EXPERIMENTAL
     public BabaVwapState BabaVwap(int length, int atrLength, double mult, double atrMult)
         => GetOrAdd(IndicatorKey.BabaVwap(length, atrLength, mult, atrMult), () =>
         {
@@ -197,6 +210,7 @@ public sealed class IndicatorRegistry
                 Mult: mult,
                 AtrMult: atrMult);
         });
+#endif
 
 
     private TResult GetOrAdd<TResult>(IndicatorKey key, Func<TResult> factory) where TResult : class
@@ -285,6 +299,7 @@ public sealed class IndicatorRegistry
                             data.PSar = h.Results[^1].Sar;
                         break;
                     }
+#if EXPERIMENTAL
                 case IndicatorKind.BabaVwap:
                     {
                         var st = (BabaVwapState)hub;
@@ -312,6 +327,7 @@ public sealed class IndicatorRegistry
                         }
                         break;
                     }
+#endif
                     // Ema and Atr have no fixed CryptoData field in the base set;
                     // they are used as sub-components (Atr inside BabaVwap) or for
                     // DEBUG-only fields. Extend here when a strategy needs them in CryptoData.

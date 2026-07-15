@@ -1,3 +1,4 @@
+#if EXPERIMENTAL
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -251,3 +252,4 @@ public class AtrRbBands
         return true;
     }
 }
+#endif

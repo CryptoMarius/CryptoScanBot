@@ -60,27 +60,24 @@ public class SettingsSignal
     // Nadaraya Watson Envelope
     public SettingsSignalStrategyNwe Nwe = new();
 
+#if DEBUG
     // BBMA (Oma Ally)
     public SettingsSignalStrategyBbma Bbma = new();
 
-    // WaveTrend [LazyBear] — WT_LB cross in OS/OB zone with optional trend filter
-    public SettingsSignalStrategyWaveTrend WaveTrend = new();
+    // CHoCH (Change of Character) — ZigZag structure reversal signals
+    public SettingsSignalStrategyChoch Choch = new();
+#endif
 
-    // wtlb.stoch — WT_LB cross + Stoch %K mid-cross combined momentum signal
-    //public SettingsSignalStrategyWtLbStoch WtLbStoch = new();
-
+#if EXPERIMENTAL
     // baba — Baba Bands & Ribbon: macro band break (long on lower, short on upper)
     // JSON key kept as "AtrRb" (the strategy's former name) so previously saved settings keep loading.
     public SettingsSignalStrategyBaba Baba = new();
     // Old (better version?)
     public SettingsSignalStrategyAtrRb AtrRb = new();
 
-    // CHoCH (Change of Character) — ZigZag structure reversal signals
-    public SettingsSignalStrategyChoch Choch = new();
-
     // bre — Buddy Reversion Engine: Donchian macro-band break (long on lower, short on upper)
     public SettingsSignalStrategyBre Bre = new();
-
+#endif
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;
