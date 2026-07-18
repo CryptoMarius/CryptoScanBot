@@ -167,6 +167,8 @@ public class AltradyWebhook
 
 
             // DCA body (multiple)
+            // When the strategy provides a signal SL, skip DCA levels that fall beyond it — those
+            // would never fill because the SL triggers first.
             decimal stopLossPercentage = 0;
             if (GlobalData.Settings.Trading.DcaList.Count > 0)
             {
@@ -175,6 +177,9 @@ public class AltradyWebhook
 
                 foreach (var dcaItem in GlobalData.Settings.Trading.DcaList)
                 {
+                    if (position.SlPercentage.HasValue && dcaItem.Percentage >= position.SlPercentage.Value)
+                        continue;
+
                     dynamic dca = new JObject();
                     dca_orders.Add(dca);
 
@@ -188,10 +193,9 @@ public class AltradyWebhook
             }
 
             // SL body
-            // Prefer the strategy-computed SL distance (position.SlPercentage) when present: it is already
-            // the percentage Altrady expects (distance from the entry; Altrady applies the direction based
-            // on the side). No price inversion needed, so this also works for market orders. Otherwise fall
-            // back to the configured percentage (deepest DCA + StopLossPercentage).
+            // When the strategy provides its own SL percentage, use it directly (measured from entry).
+            // DCAs beyond this SL are already filtered out of the dca_orders array above, so the SL
+            // is always on the correct side of all placed DCAs.
             if (position.SlPercentage is decimal slPercentage)
             {
                 request.stop_loss_percentage = slPercentage;

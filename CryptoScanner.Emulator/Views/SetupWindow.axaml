@@ -4,14 +4,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:CryptoScanner.Emulator.ViewModels"
         mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="280"
-        Width="900" Height="300"
+        Width="900" Height="350"
         x:Class="CryptoScanner.Emulator.Views.SetupWindow"
         x:DataType="vm:SetupWindowViewModel"
         Title="Emulator Setup"
         WindowStartupLocation="CenterScreen"
         CanResize="False">
 
-    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
 
         <TextBlock Grid.Row="0" FontSize="18" FontWeight="Bold" Text="Emulator setup"/>
 
@@ -27,18 +27,27 @@
                     CommandParameter="{Binding $parent[Window]}"/>
         </Grid>
 
+        <!-- Candle folder row -->
+        <Grid Grid.Row="3" ColumnDefinitions="100,*,Auto" ColumnSpacing="8">
+            <TextBlock Grid.Column="0" Text="Candle folder:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding CandleFolder}" Watermark="(same as data folder)"/>
+            <Button Grid.Column="2" Content="Browse..."
+                    Command="{Binding BrowseCandleFolderCommand}"
+                    CommandParameter="{Binding $parent[Window]}"/>
+        </Grid>
+
         <!-- Exchange row -->
-        <Grid Grid.Row="3" ColumnDefinitions="100,*" ColumnSpacing="8">
+        <Grid Grid.Row="4" ColumnDefinitions="100,*" ColumnSpacing="8">
             <TextBlock Grid.Column="0" Text="Exchange:" VerticalAlignment="Center"/>
             <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
                       ItemsSource="{Binding Exchanges}"
                       SelectedItem="{Binding SelectedExchange}"/>
         </Grid>
 
-        <!-- Spacer row 4 (*) -->
+        <!-- Spacer row 5 (*) -->
 
         <!-- OK / Cancel -->
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button Content="Cancel"
                     Command="{Binding CancelCommand}"
                     CommandParameter="{Binding $parent[Window]}"

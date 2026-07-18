@@ -9,7 +9,7 @@
              x:DataType="vm:StrategyTabViewModel"
              x:Class="CryptoScanner.Config.Views.StrategyTabView">
 
-    <TabControl Grid.Row="2" Margin="0" >
+    <TabControl x:Name="StrategyTabControl" Grid.Row="2" Margin="0" >
 		<TabItem Header="DLZ" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyDlzTabView DataContext="{Binding StrategyDlzTabViewModel}" />
 		</TabItem>
@@ -34,7 +34,7 @@
 		<TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <settings:StrategyStorsiTabView DataContext="{Binding StrategyStorsiTabViewModel}" />
 		</TabItem>
-<TabItem x:Name="BbmaTab" Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
+		<TabItem x:Name="BbmaTab" Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
 		<TabItem x:Name="BabaTab" Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">

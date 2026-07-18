@@ -68,16 +68,11 @@ public class SettingsSignal
     public SettingsSignalStrategyChoch Choch = new();
 #endif
 
-#if EXPERIMENTAL
-    // baba — Baba Bands & Ribbon: macro band break (long on lower, short on upper)
-    // JSON key kept as "AtrRb" (the strategy's former name) so previously saved settings keep loading.
-    public SettingsSignalStrategyBaba Baba = new();
-    // Old (better version?)
-    public SettingsSignalStrategyAtrRb AtrRb = new();
+    // Baba, AtrRb and Bre settings have been migrated to the Analyzers plugin architecture
+    // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings).
 
-    // bre — Buddy Reversion Engine: Donchian macro-band break (long on lower, short on upper)
-    public SettingsSignalStrategyBre Bre = new();
-#endif
+    // Analyzer plugin settings (keyed by plugin name, e.g. "demo")
+    public Dictionary<string, SettingsSignalStrategyBase> AnalyzerSettings { get; set; } = [];
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

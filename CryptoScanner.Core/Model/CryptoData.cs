@@ -110,6 +110,13 @@ public class CryptoData
     // Parabolic Sar indicator
     public double? PSar { get; set; }
 
+    // Plugin-owned indicator values, keyed by plugin-defined names (e.g. "demo_rsi").
+    // Not persisted to DB; filled per candle by IIndicatorExtension.FillData().
+    [Computed]
+    public Dictionary<string, double?> Custom { get; } = [];
+    public double? GetCustom(string key) => Custom.GetValueOrDefault(key);
+    public void SetCustom(string key, double? value) => Custom[key] = value;
+
     [Computed]
     public short? Lux5mValue { get; set; }
 

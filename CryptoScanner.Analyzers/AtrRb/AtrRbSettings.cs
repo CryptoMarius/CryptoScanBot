@@ -1,11 +1,13 @@
-namespace CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Settings.Strategy;
+
+namespace CryptoScanner.Analyzers.AtrRb;
 
 // "atrrb" — AtrRb Bands & Ribbon: a Keltner-style EMA basis with ATR-based bands.
 // A long alert fires when price breaks the macro LOWER band; a short on the macro UPPER band.
 // These parameters drive BOTH the chart drawer (AtrRbBands) and the atrrb signal (AtrRbBandsHelper),
 // so the chart and the alert always stay in sync. Defaults match the original Pine inputs.
 [Serializable]
-public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
+public class AtrRbSettings : SettingsSignalStrategyBase
 {
     // EMA/ATR length used for the band basis (Pine default 20).
     public int Length { get; set; } = 20;
@@ -66,7 +68,7 @@ public class SettingsSignalStrategyAtrRb : SettingsSignalStrategyBase
     public bool UseFvgZone { get; set; } = false;
     public bool UseSmcZone { get; set; } = false;
 
-    public SettingsSignalStrategyAtrRb() : base()
+    public AtrRbSettings() : base()
     {
     }
 }

@@ -129,6 +129,36 @@ public class CryptoCandleList : SortedDictionary<CandleTime, CryptoCandle> // ex
         }
     }
 
+    /// <summary>
+    /// Thread-safe removal of all entries with a key strictly before <paramref name="cutoff"/>.
+    /// Used by the emulator's chunked replay to keep memory bounded between chunks.
+    /// </summary>
+    public int RemoveBefore(CandleTime cutoff)
+    {
+        bool ownLock = !_lock.IsWriteLockHeld;
+        if (ownLock) _lock.EnterWriteLock();
+        try
+        {
+            var toRemove = new List<CandleTime>();
+            using var e = base.GetEnumerator();
+            while (e.MoveNext())
+            {
+                if (e.Current.Key < cutoff)
+                    toRemove.Add(e.Current.Key);
+                else
+                    break;
+            }
+            foreach (var key in toRemove)
+                base.Remove(key);
+            return toRemove.Count;
+        }
+        finally
+        {
+            if (ownLock) _lock.ExitWriteLock();
+        }
+    }
+
+
     // Thread-safe clear
     public new void Clear()
     {

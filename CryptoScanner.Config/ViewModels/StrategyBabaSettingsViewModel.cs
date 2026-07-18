@@ -1,7 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Core.Settings.Strategy;
-
 namespace CryptoScanner.Config.ViewModels;
 
 public partial class StrategyBabaSettingsViewModel : ObservableObject
@@ -85,62 +83,4 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _useSmcZone = false;
 
-
-    public void LoadConfig(string caption, SettingsSignalStrategyBaba settings)
-    {
-        Length = settings.Length;
-        Mult = settings.Mult;
-        AtrLength = settings.AtrLength;
-        AtrMult = settings.AtrMult;
-        UseRsiFilter = settings.UseRsiFilter;
-        UseSlideFilter = settings.UseSlideFilter;
-        SlideWindow = settings.SlideWindow;
-        SlideMinEfficiency = settings.SlideMinEfficiency;
-        SlideMinMovePercent = settings.SlideMinMovePercent;
-        UseStopLoss = settings.UseStopLoss;
-        SLStdevFactor = settings.SLStdevFactor;
-        RequireStochOsOb = settings.RequireStochOsOb;
-        TimeframeConsensusCount = settings.TimeframeConsensusCount;
-        OnlyIfLux5m = settings.OnlyIfLux5m;
-        Lux5mPercentage = settings.Lux5mPercentage;
-        CheckTrendPrimaryDirection = settings.CheckTrendPrimaryDirection;
-        TrendPrimaryDirectionCount = settings.TrendPrimaryDirectionCount;
-        CheckTrendSecondaryDirection = settings.CheckTrendSecondaryDirection;
-        TrendSecondaryDirectionCount = settings.TrendSecondaryDirectionCount;
-        CheckPriceAboveMa200 = settings.CheckPriceAboveMa200;
-        Ma200MinDistancePercentage = settings.Ma200MinDistancePercentage;
-        Ma200ConfirmationCandles = settings.Ma200ConfirmationCandles;
-        UseDlzZone = settings.UseDlzZone;
-        UseFvgZone = settings.UseFvgZone;
-        UseSmcZone = settings.UseSmcZone;
-    }
-
-    public void SaveConfig(SettingsSignalStrategyBaba settings)
-    {
-        settings.Length = Length;
-        settings.Mult = Mult;
-        settings.AtrLength = AtrLength;
-        settings.AtrMult = AtrMult;
-        settings.UseRsiFilter = UseRsiFilter;
-        settings.UseSlideFilter = UseSlideFilter;
-        settings.SlideWindow = SlideWindow;
-        settings.SlideMinEfficiency = SlideMinEfficiency;
-        settings.SlideMinMovePercent = SlideMinMovePercent;
-        settings.UseStopLoss = UseStopLoss;
-        settings.SLStdevFactor = SLStdevFactor;
-        settings.RequireStochOsOb = RequireStochOsOb;
-        settings.TimeframeConsensusCount = TimeframeConsensusCount;
-        settings.OnlyIfLux5m = OnlyIfLux5m;
-        settings.Lux5mPercentage = Lux5mPercentage;
-        settings.CheckTrendPrimaryDirection = CheckTrendPrimaryDirection;
-        settings.TrendPrimaryDirectionCount = TrendPrimaryDirectionCount;
-        settings.CheckTrendSecondaryDirection = CheckTrendSecondaryDirection;
-        settings.TrendSecondaryDirectionCount = TrendSecondaryDirectionCount;
-        settings.CheckPriceAboveMa200 = CheckPriceAboveMa200;
-        settings.Ma200MinDistancePercentage = Ma200MinDistancePercentage;
-        settings.Ma200ConfirmationCandles = Ma200ConfirmationCandles;
-        settings.UseDlzZone = UseDlzZone;
-        settings.UseFvgZone = UseFvgZone;
-        settings.UseSmcZone = UseSmcZone;
-    }
 }

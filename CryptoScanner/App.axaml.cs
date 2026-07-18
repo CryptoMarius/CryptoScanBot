@@ -131,6 +131,8 @@ public partial class App : Application
 
             _powerMonitor.PowerModeChanged += DoWhenPowerModeChanged;
 
+            Analyzers.AnalyzerRegistration.RegisterAll();
+
             var scannerSession = GlobalData.GetService<IScannerSession>()
                 ?? throw new InvalidOperationException("ScannerSession not registered");
             scannerSession.AfterStartup();

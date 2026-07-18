@@ -1,3 +1,4 @@
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
@@ -30,20 +31,7 @@ public sealed class IntervalIndicatorHub
     private readonly StochHub _stoch;
     private readonly ParabolicSarHub _psar;
 
-#if EXPERIMENTAL
-    private readonly AtrHub _atrBaba;     // ATR(AtrLength) — the band's fast pad term
-    private readonly AtrHub _atrBabaSl;   // ATR(Length) — the stop-loss %, stays stable through a rally
-
-    // Baba VWAP band basis/variance — hlc3 and hlc3^2 fed into their OWN quote hubs (Close = hlc3 / hlc3^2,
-    // not the real OHLC) because GetVwma only reads Close+Volume. Mirrors BabaBandsHelper.ComputeBands so
-    // the hub and batch paths agree, and so SignalBabaLong/Short share one calculation instead of two.
-    private readonly QuoteHub _babaSrcHub = new(maxCacheSize: HubCacheSize);   // Close = hlc3
-    private readonly QuoteHub _babaSqHub = new(maxCacheSize: HubCacheSize);    // Close = hlc3^2
-    private readonly VwmaHub _babaVwmaSrc;
-    private readonly VwmaHub _babaVwmaSq;
-    private readonly double _babaMult;
-    private readonly double _babaAtrMult;
-#endif
+    // Baba VWAP band indicators have been migrated to BabaIndicatorExtension (Analyzers plugin).
 
     // Lux Multi-RSI incremental state (mirrors LuxIndicator.CalculateNew)
     private const int LuxMin = 10;
@@ -65,6 +53,7 @@ public sealed class IntervalIndicatorHub
     private readonly WmaHub _wma10High;
 #endif
 
+    private readonly List<IIndicatorExtension> _pluginExtensions = [];
 
     // SMA(200) is the longest lookback; 300 gives comfortable headroom.
     // Keeps Skender's internal cache small so pruning stays O(300) instead of O(100k).
@@ -85,15 +74,7 @@ public sealed class IntervalIndicatorHub
         _stoch = _quoteHub.ToStochHub(settings.SettingsStoch.Length, settings.SettingsStoch.SmoothingD, settings.SettingsStoch.SmoothingK);
         _psar = _quoteHub.ToParabolicSarHub(0.02, 0.2);
 
-#if EXPERIMENTAL
-        var baba = GlobalData.Settings.Signal.Baba;
-        _atrBaba = _quoteHub.ToAtrHub(baba.AtrLength);
-        _atrBabaSl = _quoteHub.ToAtrHub(baba.Length);
-        _babaVwmaSrc = _babaSrcHub.ToVwmaHub(baba.Length);
-        _babaVwmaSq = _babaSqHub.ToVwmaHub(baba.Length);
-        _babaMult = baba.Mult;
-        _babaAtrMult = baba.AtrMult;
-#endif
+        // Baba VWAP band init has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 #if DEBUG
         _ema50 = _quoteHub.ToEmaHub(50);
@@ -106,6 +87,16 @@ public sealed class IntervalIndicatorHub
         _wma10Low = low.ToWmaHub(10);
         _wma10High = high.ToWmaHub(10);
 #endif
+
+        foreach (var plugin in PluginManager.LoadedPlugins.Values)
+        {
+            var ext = plugin.CreateIndicatorExtension();
+            if (ext != null)
+            {
+                ext.Init(_quoteHub);
+                _pluginExtensions.Add(ext);
+            }
+        }
     }
 
     /// <summary>Feeds one candle and advances every indicator. Call in ascending candle-open-time order.
@@ -114,11 +105,7 @@ public sealed class IntervalIndicatorHub
     {
         _quoteHub.Add(new Quote(candle.Timestamp, candle.Open, candle.High, candle.Low, candle.Close, candle.Volume));
 
-#if EXPERIMENTAL
-        decimal hlc3 = (candle.High + candle.Low + candle.Close) / 3m;
-        _babaSrcHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3, candle.Volume));
-        _babaSqHub.Add(new Quote(candle.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, candle.Volume));
-#endif
+        // Baba hlc3 hub feeds have been migrated to BabaIndicatorExtension (Analyzers plugin).
 
         // Incremental Lux Multi-RSI: one RMA step per candle instead of replaying 100 candles.
         double close = (double)candle.Close;
@@ -140,6 +127,9 @@ public sealed class IntervalIndicatorHub
         }
         _luxPrevClose = close;
         _luxHasPrev = true;
+
+        foreach (var ext in _pluginExtensions)
+            ext.OnCandleAdded(candle);
     }
 
     /// <summary>
@@ -187,31 +177,7 @@ public sealed class IntervalIndicatorHub
         if (_psar.Results.Count > 0 && _psar.Results[^1].Sar != null)
             data.PSar = _psar.Results[^1].Sar;
 
-#if EXPERIMENTAL
-        if (_atrBaba.Results.Count > 0 && _atrBaba.Results[^1].Atr != null)
-            data.AtrBaba = _atrBaba.Results[^1].Atr;
-        if (_atrBabaSl.Results.Count > 0 && _atrBabaSl.Results[^1].Atr != null)
-            data.BabaAtrSl = _atrBabaSl.Results[^1].Atr;
-
-        // Baba VWAP band — identical math to BabaBandsHelper.ComputeBands: variance = E_w[hlc3^2] - E_w[hlc3]^2.
-        var babaSrc = _babaVwmaSrc.Results;
-        var babaSq = _babaVwmaSq.Results;
-        if (babaSrc.Count > 0 && babaSq.Count > 0)
-        {
-            double? mean = babaSrc[^1].Vwma;
-            double? second = babaSq[^1].Vwma;
-            if (mean.HasValue && second.HasValue)
-            {
-                double variance = second.Value - mean.Value * mean.Value;
-                double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
-                double pad = _babaMult * vwStdev + _babaAtrMult * (data.AtrBaba ?? 0);
-                data.BabaBasis = mean.Value;
-                data.BabaUpper = mean.Value + pad;
-                data.BabaLower = mean.Value - pad;
-                data.BabaVwStdev = vwStdev;
-            }
-        }
-#endif
+        // Baba VWAP band fill has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
         // Lux Multi-RSI
         int luxValue = 0;
@@ -233,6 +199,9 @@ public sealed class IntervalIndicatorHub
         if (_wma10High.Results.Count > 0)
             data.Wma10High = _wma10High.Results[^1].Wma;
 #endif
+
+        foreach (var ext in _pluginExtensions)
+            ext.FillData(data);
 
         return data;
     }

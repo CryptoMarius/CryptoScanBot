@@ -2,6 +2,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -136,6 +137,7 @@ public class ScannerSession : IScannerSession
         //    dashBoardControl1.Font = Font;
         //}
 
+        PluginManager.RestoreSettings(GlobalData.Settings.Signal.AnalyzerSettings);
         GlobalData.IndexStrategySettings();
         TradingConfig.IndexStrategyInternally();
         TradingConfig.InitWhiteAndBlackListSettings();

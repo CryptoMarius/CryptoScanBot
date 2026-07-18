@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 
 using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Json;
@@ -50,6 +51,7 @@ public static class GlobalData
     public static string LogName { get; set; } = "";
     public static string AppVersion { get; set; } = "";
     public static string AppDataFolder { get; set; } = ""; // depends on startup parameters (also in platformService)
+    public static string CandleDataFolder { get; set; } = ""; // separate folder for per-exchange candle DBs (falls back to AppDataFolder when empty)
 
     public static bool ApplicationIsClosing { get; set; } = false;
 
@@ -649,6 +651,8 @@ public static class GlobalData
         string baseFolder = AppDataFolder;
         Directory.CreateDirectory(baseFolder);
 
+        Contracts.PluginManager.CollectSettings(Settings.Signal.AnalyzerSettings);
+
         string filename = Path.Combine(baseFolder, $"{Constants.AppName}-settings.json");
         string text = JsonSerializer.Serialize(Settings, JsonTools.JsonSerializerIndented);
         File.WriteAllText(filename, text);
@@ -777,8 +781,8 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm1, (Settings.Signal.Sbm, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm2, (Settings.Signal.Sbm, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.Sbm3, (Settings.Signal.Sbm, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
+        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsi, (Settings.Signal.StoRsi, DateTime.Today));
+        //StrategiesSettings.Add(CryptoSignalStrategy.StoRsiMulti, (Settings.Signal.StoRsi, DateTime.Today));
 
         // Not sure what to do with the NWE
         StrategiesSettings.Add(CryptoSignalStrategy.Nwe, (Settings.Signal.Nwe, DateTime.Today));
@@ -790,11 +794,7 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
 
-#if EXPERIMENTAL
-        StrategiesSettings.Add(CryptoSignalStrategy.Baba, (Settings.Signal.Baba, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.AtrRb, (Settings.Signal.AtrRb, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.Bre, (Settings.Signal.Bre, DateTime.Today));
-#endif
+        // Baba, AtrRb and Bre are now registered dynamically via PluginManager below.
 #if DEBUG
         // ChOCh strategy with different options
         StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimary, (Settings.Signal.Choch, DateTime.Today));
@@ -805,5 +805,11 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
 #endif
+
+        // Merge settings from dynamically loaded strategy plugins
+        foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
+        {
+            StrategiesSettings.Add(strategy, (plugin.SettingsBase, DateTime.Today));
+        }
     }
 }

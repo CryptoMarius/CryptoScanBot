@@ -2,7 +2,7 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Signal.Helpers;
 
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.Baba
 namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>

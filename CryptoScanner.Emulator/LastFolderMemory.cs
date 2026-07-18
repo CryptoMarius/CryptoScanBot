@@ -11,6 +11,7 @@ namespace CryptoScanner.Emulator;
 public static class LastFolderMemory
 {
     private const string FolderFileName = "emulator-last-folder.txt";
+    private const string CandleFolderFileName = "emulator-last-candle-folder.txt";
     private const string ExchangeFileName = "emulator-last-exchange.txt";
 
 
@@ -59,6 +60,11 @@ public static class LastFolderMemory
     public static string? Load() => Read(FolderFileName);
 
     public static void Save(string folder) => Write(FolderFileName, folder);
+
+
+    public static string? LoadCandleFolder() => Read(CandleFolderFileName);
+
+    public static void SaveCandleFolder(string folder) => Write(CandleFolderFileName, folder);
 
 
     public static string? LoadExchange() => Read(ExchangeFileName);

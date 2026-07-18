@@ -23,9 +23,7 @@ public enum IndicatorKind
     Stoch,
     ParabolicSar,
     Atr,
-#if EXPERIMENTAL
-    BabaVwap,   // compound: synthetic hlc3 QuoteHubs + VwmaHubs + Atr pair
-#endif
+    // BabaVwap has been migrated to BabaIndicatorExtension (Analyzers plugin).
 }
 
 /// <summary>
@@ -44,25 +42,10 @@ public readonly record struct IndicatorKey(
     public static IndicatorKey Stoch(int length, int smoothD, int smoothK) => new(IndicatorKind.Stoch, length, smoothD, smoothK);
     public static IndicatorKey Psar(double step = 0.02, double max = 0.2) => new(IndicatorKind.ParabolicSar, step, max);
     public static IndicatorKey Atr(int length) => new(IndicatorKind.Atr, length);
-#if EXPERIMENTAL
-    public static IndicatorKey BabaVwap(int length, int atrLength, double mult, double atrMult)
-                                                                                   => new(IndicatorKind.BabaVwap, length, atrLength, mult, atrMult);
-#endif
+    // BabaVwap key factory has been migrated to BabaIndicatorExtension (Analyzers plugin).
 }
 
-#if EXPERIMENTAL
-/// <summary>
-/// The four Skender hubs + scalar params that together compute one Baba VWAP band.
-/// Stored as a single dictionary entry so BabaVwap is one logical indicator in the registry.
-/// </summary>
-public sealed record BabaVwapState(
-    VwmaHub VwmaSrc,   // VWMA of hlc3
-    VwmaHub VwmaSq,    // VWMA of hlc3^2  (for variance)
-    AtrHub AtrFast,   // ATR(AtrLength)  — pad term
-    AtrHub AtrSl,     // ATR(Length)     — stop-loss %
-    double Mult,
-    double AtrMult);
-#endif
+// BabaVwapState record has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 // ---------------------------------------------------------------------------
 // Interface: strategy declares its required indicators once
@@ -99,11 +82,7 @@ public sealed class IndicatorRegistry
     private readonly QuoteHub _quoteHub = new();
     private readonly Dictionary<IndicatorKey, object> _hubs = [];
 
-#if EXPERIMENTAL
-    // Lazy synthetic hubs for Baba VWAP — only created when BabaVwap(...) is first requested.
-    private QuoteHub? _babaSrcHub;   // Close = hlc3
-    private QuoteHub? _babaSqHub;    // Close = hlc3^2
-#endif
+    // Baba VWAP synthetic hubs have been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 
     // -----------------------------------------------------------------------
@@ -115,15 +94,7 @@ public sealed class IndicatorRegistry
     {
         _quoteHub.Add(new Quote(c.Timestamp, c.Open, c.High, c.Low, c.Close, c.Volume));
 
-#if EXPERIMENTAL
-        // Synthetic Baba hubs only exist when BabaVwap(...) was registered.
-        if (_babaSrcHub != null)
-        {
-            decimal hlc3 = (c.High + c.Low + c.Close) / 3m;
-            _babaSrcHub.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3, c.Volume));
-            _babaSqHub!.Add(new Quote(c.Timestamp, 0m, 0m, 0m, hlc3 * hlc3, c.Volume));
-        }
-#endif
+        // Baba hlc3 synthetic feeds have been migrated to BabaIndicatorExtension (Analyzers plugin).
     }
 
 
@@ -174,11 +145,7 @@ public sealed class IndicatorRegistry
             case IndicatorKind.Atr:
                 Atr((int)key.P1);
                 break;
-#if EXPERIMENTAL
-            case IndicatorKind.BabaVwap:
-                BabaVwap((int)key.P1, (int)key.P2, key.P3, key.P4);
-                break;
-#endif
+            // BabaVwap case has been migrated to BabaIndicatorExtension (Analyzers plugin).
         }
     }
 
@@ -196,21 +163,7 @@ public sealed class IndicatorRegistry
     public ParabolicSarHub Psar(double step = 0.02, double max = 0.2) => GetOrAdd(IndicatorKey.Psar(step, max), () => _quoteHub.ToParabolicSarHub(step, max));
     public AtrHub Atr(int length) => GetOrAdd(IndicatorKey.Atr(length), () => _quoteHub.ToAtrHub(length));
 
-#if EXPERIMENTAL
-    public BabaVwapState BabaVwap(int length, int atrLength, double mult, double atrMult)
-        => GetOrAdd(IndicatorKey.BabaVwap(length, atrLength, mult, atrMult), () =>
-        {
-            _babaSrcHub ??= new QuoteHub();
-            _babaSqHub ??= new QuoteHub();
-            return new BabaVwapState(
-                VwmaSrc: _babaSrcHub.ToVwmaHub(length),
-                VwmaSq: _babaSqHub.ToVwmaHub(length),
-                AtrFast: Atr(atrLength),   // reuses an existing Atr hub if already registered
-                AtrSl: Atr(length),
-                Mult: mult,
-                AtrMult: atrMult);
-        });
-#endif
+    // BabaVwap accessor has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
 
     private TResult GetOrAdd<TResult>(IndicatorKey key, Func<TResult> factory) where TResult : class
@@ -299,35 +252,7 @@ public sealed class IndicatorRegistry
                             data.PSar = h.Results[^1].Sar;
                         break;
                     }
-#if EXPERIMENTAL
-                case IndicatorKind.BabaVwap:
-                    {
-                        var st = (BabaVwapState)hub;
-                        if (st.AtrFast.Results.Count > 0 && st.AtrFast.Results[^1].Atr != null)
-                            data.AtrBaba = st.AtrFast.Results[^1].Atr;
-                        if (st.AtrSl.Results.Count > 0 && st.AtrSl.Results[^1].Atr != null)
-                            data.BabaAtrSl = st.AtrSl.Results[^1].Atr;
-
-                        var src = st.VwmaSrc.Results;
-                        var sq = st.VwmaSq.Results;
-                        if (src.Count > 0 && sq.Count > 0)
-                        {
-                            double? mean = src[^1].Vwma;
-                            double? second = sq[^1].Vwma;
-                            if (mean.HasValue && second.HasValue)
-                            {
-                                double variance = second.Value - mean.Value * mean.Value;
-                                double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
-                                double pad = st.Mult * vwStdev + st.AtrMult * (data.AtrBaba ?? 0);
-                                data.BabaBasis = mean.Value;
-                                data.BabaUpper = mean.Value + pad;
-                                data.BabaLower = mean.Value - pad;
-                                data.BabaVwStdev = vwStdev;
-                            }
-                        }
-                        break;
-                    }
-#endif
+                // BabaVwap BuildCurrent case has been migrated to BabaIndicatorExtension (Analyzers plugin).
                     // Ema and Atr have no fixed CryptoData field in the base set;
                     // they are used as sub-components (Atr inside BabaVwap) or for
                     // DEBUG-only fields. Extend here when a strategy needs them in CryptoData.

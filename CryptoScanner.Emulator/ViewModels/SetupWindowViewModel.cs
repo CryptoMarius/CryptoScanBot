@@ -27,6 +27,9 @@ public partial class SetupWindowViewModel : ObservableObject
     private string _dataFolder;
 
     [ObservableProperty]
+    private string _candleFolder;
+
+    [ObservableProperty]
     private ObservableCollection<string> _exchanges = [];
 
     [ObservableProperty]
@@ -41,6 +44,7 @@ public partial class SetupWindowViewModel : ObservableObject
         // + optional --folder argument). The user can still pick a different one in the
         // dialog; we just provide a sensible starting point.
         _dataFolder = LastFolderMemory.Load() ?? ResolveDefaultDataFolder();
+        _candleFolder = LastFolderMemory.LoadCandleFolder() ?? "";
 
         // Populate the exchange combo from the static seed list. Only the supported ones —
         // CreateTableExchange persists all of them in the DB but the unsupported ones cannot
@@ -77,6 +81,23 @@ public partial class SetupWindowViewModel : ObservableObject
 
 
     [RelayCommand]
+    private async Task BrowseCandleFolderAsync(Window? owner)
+    {
+        if (owner == null)
+            return;
+
+        IStorageProvider provider = owner.StorageProvider;
+        var folder = await provider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select candle data folder",
+            AllowMultiple = false,
+        });
+        if (folder.Count > 0)
+            CandleFolder = folder[0].Path.LocalPath;
+    }
+
+
+    [RelayCommand]
     private void Ok(Window? owner)
     {
         if (string.IsNullOrWhiteSpace(DataFolder) || string.IsNullOrWhiteSpace(SelectedExchange))
@@ -85,6 +106,7 @@ public partial class SetupWindowViewModel : ObservableObject
         // Remember the picked folder and exchange so next launch pre-fills both without forcing
         // the user through the picker/combo again.
         LastFolderMemory.Save(DataFolder);
+        LastFolderMemory.SaveCandleFolder(CandleFolder);
         LastFolderMemory.SaveExchange(SelectedExchange);
 
         Confirmed = true;

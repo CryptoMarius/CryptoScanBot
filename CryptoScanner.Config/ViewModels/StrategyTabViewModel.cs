@@ -1,6 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Const;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Settings;
+
+using System.Reflection.Metadata;
 
 namespace CryptoScanner.Config.ViewModels;
 
@@ -24,12 +28,7 @@ public partial class StrategyTabViewModel : ObservableObject
     private StrategyNweTabViewModel _strategyNweTabViewModel;
     [ObservableProperty]
     private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
-    [ObservableProperty]
-    private StrategyBabaTabViewModel _strategyBabaTabViewModel;
-    [ObservableProperty]
-    private StrategyAtrRbTabViewModel _strategyAtrRbTabViewModel;
-    [ObservableProperty]
-    private StrategyBreTabViewModel _strategyBreTabViewModel;
+    // Baba, AtrRb and Bre tab view models are now managed by their respective plugin ConfigViews.
 
 
     public StrategyTabViewModel()
@@ -43,29 +42,28 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategySmcTabViewModel = new();
         _strategyNweTabViewModel = new();
         _strategyBbmaTabViewModel = new();
-        _strategyBabaTabViewModel = new();
-        _strategyAtrRbTabViewModel = new();
-        _strategyBreTabViewModel = new();
+        // Baba, AtrRb and Bre tab view models are now created by plugin ConfigViews.
     }
 
     internal void LoadConfig(SettingsSignal settings)
     {
-        StrategyStobbTabViewModel.LoadConfig("Stobb", settings.Stobb);
-        StrategySbmTabViewModel.LoadConfig("Sbm", settings.Sbm);
-        StrategyStorsiTabViewModel.LoadConfig("Storsi", settings.StoRsi);
-        StrategyJumpTabViewModel.LoadConfig("Jump", settings.Jump);
-        StrategyDlzTabViewModel.LoadConfig("Dlz", settings.ZonesDlz);
-        StrategyFvgTabViewModel.LoadConfig("Fvg", settings.ZonesFvg);
-        StrategySmcTabViewModel.LoadConfig("Smc", settings.ZonesSmc);
-        StrategyNweTabViewModel.LoadConfig("Nwe", settings.Nwe);
+        StrategyStobbTabViewModel.LoadConfig(Constants.StrategyStobb, settings.Stobb);
+        StrategySbmTabViewModel.LoadConfig(Constants.StrategySbm, settings.Sbm);
+        StrategyStorsiTabViewModel.LoadConfig(Constants.StrategyStorsi, settings.StoRsi);
+        StrategyJumpTabViewModel.LoadConfig(Constants.StrategyJump, settings.Jump);
+        StrategyDlzTabViewModel.LoadConfig(Constants.StrategyDlz, settings.ZonesDlz);
+        StrategyFvgTabViewModel.LoadConfig(Constants.StrategyFvg, settings.ZonesFvg);
+        StrategySmcTabViewModel.LoadConfig(Constants.StrategySmc, settings.ZonesSmc);
+        StrategyNweTabViewModel.LoadConfig(Constants.StrategyNwe, settings.Nwe);
 #if DEBUG
-        StrategyBbmaTabViewModel.LoadConfig("BBMA", settings.Bbma);
+        StrategyBbmaTabViewModel.LoadConfig(Constants.StrategyBbma, settings.Bbma);
 #endif
-#if EXPERIMENTAL
-        StrategyBabaTabViewModel.LoadConfig("Baba", settings.Baba);
-        StrategyAtrRbTabViewModel.LoadConfig("AtrRb", settings.AtrRb);
-        StrategyBreTabViewModel.LoadConfig("Bre", settings.Bre);
-#endif
+        // Baba, AtrRb and Bre settings are now loaded by their plugin ConfigViews via PluginManager.
+
+        foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
+        {
+            plugin.ConfigView?.LoadConfig();
+        }
     }
 
     internal void SaveConfig(SettingsSignal settings)
@@ -81,10 +79,11 @@ public partial class StrategyTabViewModel : ObservableObject
 #if DEBUG
         StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
 #endif
-#if EXPERIMENTAL
-        StrategyBabaTabViewModel.SaveConfig(settings.Baba);
-        StrategyAtrRbTabViewModel.SaveConfig(settings.AtrRb);
-        StrategyBreTabViewModel.SaveConfig(settings.Bre);
-#endif
+        // Baba, AtrRb and Bre settings are now saved by their plugin ConfigViews via PluginManager.
+
+        foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
+        {
+            plugin.ConfigView?.SaveConfig();
+        }
     }
 }

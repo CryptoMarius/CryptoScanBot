@@ -1,4 +1,4 @@
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.Bre.Chart
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Bre;

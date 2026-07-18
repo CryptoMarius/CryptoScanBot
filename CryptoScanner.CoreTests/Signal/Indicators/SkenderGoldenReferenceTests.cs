@@ -3,7 +3,7 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
 using CryptoScanner.Core.Signal;
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
 using CryptoScanner.Core.Signal.Baba;
 #endif
 using CryptoScanner.Core.Signal.Indicators;
@@ -63,7 +63,7 @@ public class SkenderReferenceRegressionTests
         public double? PSar { get; set; }
         public double? BbDeviation { get; set; }
         public double? BbPercentage { get; set; }
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
         public double? AtrBaba { get; set; }
         public double? BabaAtrSl { get; set; }
         public double? BabaBasis { get; set; }
@@ -123,7 +123,7 @@ public class SkenderReferenceRegressionTests
     {
         IReadOnlyList<IQuote> quotes = candles.AsQuotes();
         var g = GlobalData.Settings.General;
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
         var baba = GlobalData.Settings.Signal.Baba;
 #endif
         var bb = quotes.ToBollingerBands(g.SettingsBb.Length, g.SettingsBb.Deviation).ToList();
@@ -134,9 +134,9 @@ public class SkenderReferenceRegressionTests
         var macd = quotes.ToMacd(12, 26, 9).ToList();
         var stoch = quotes.ToStoch(g.SettingsStoch.Length, g.SettingsStoch.SmoothingD, g.SettingsStoch.SmoothingK).ToList();
         var psar = quotes.ToParabolicSar(0.02, 0.2).ToList();
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
         var atrBabaFast = quotes.ToAtr(baba.AtrLength).ToList();
         var atrBabaSl = quotes.ToAtr(baba.Length).ToList();
-#if EXPERIMENTAL
         BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(candles);
 #endif
 
@@ -172,7 +172,7 @@ public class SkenderReferenceRegressionTests
                 StochOscillator = stoch[i].Oscillator,
                 StochSignal = stoch[i].Signal,
                 PSar = psar[i].Sar,
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
                 AtrBaba = atrBabaFast[i].Atr,
                 BabaAtrSl = atrBabaSl[i].Atr,
                 BabaBasis = babaBands[i].HasValue ? babaBands[i].Basis : null,
@@ -213,12 +213,14 @@ public class SkenderReferenceRegressionTests
             PSar = data.PSar,
             BbDeviation = data.BollingerBandsDeviation,
             BbPercentage = data.BollingerBandsPercentage,
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
             AtrBaba = data.AtrBaba,
             BabaAtrSl = data.BabaAtrSl,
             BabaBasis = data.BabaBasis,
             BabaUpper = data.BabaUpper,
             BabaLower = data.BabaLower,
             BabaVwStdev = data.BabaVwStdev,
+#endif
 #if DEBUG
             Ema50 = data.Ema50,
             Wma05Low = data.Wma05Low,
@@ -285,12 +287,14 @@ public class SkenderReferenceRegressionTests
         Cmp("PSar", expected.PSar, actual.PSar, tolerance, maxDiffs);
         Cmp("BbDeviation", expected.BbDeviation, actual.BbDeviation, tolerance, maxDiffs);
         Cmp("BbPercentage", expected.BbPercentage, actual.BbPercentage, tolerance, maxDiffs);
+#if MOVED_TO_ANALYZERS // Baba migrated to Analyzers
         Cmp("AtrBaba", expected.AtrBaba, actual.AtrBaba, tolerance, maxDiffs);
         Cmp("BabaAtrSl", expected.BabaAtrSl, actual.BabaAtrSl, tolerance, maxDiffs);
         Cmp("BabaBasis", expected.BabaBasis, actual.BabaBasis, tolerance, maxDiffs);
         Cmp("BabaUpper", expected.BabaUpper, actual.BabaUpper, tolerance, maxDiffs);
         Cmp("BabaLower", expected.BabaLower, actual.BabaLower, tolerance, maxDiffs);
         Cmp("BabaVwStdev", expected.BabaVwStdev, actual.BabaVwStdev, tolerance, maxDiffs);
+#endif
 #if DEBUG
         Cmp("Ema50", expected.Ema50, actual.Ema50, tolerance, maxDiffs);
         Cmp("Wma05Low", expected.Wma05Low, actual.Wma05Low, tolerance, maxDiffs);

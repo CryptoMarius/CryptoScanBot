@@ -1,9 +1,7 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-#if EXPERIMENTAL
-using CryptoScanner.Core.Signal.Baba;
-#endif
+// Baba imports have been migrated to BabaIndicatorExtension (Analyzers plugin).
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
@@ -331,14 +329,7 @@ public static class IndicatorEngine
             lookbackPeriods: GlobalData.Settings.General.SettingsBb.Length,
             standardDeviations: GlobalData.Settings.General.SettingsBb.Deviation);
 
-#if EXPERIMENTAL
-        // Baba VWAP bands — same BabaBandsHelper.ComputeBands the chart and IntervalIndicatorHub use, so
-        // the batch path and the hub path (UseIndicatorHub) agree field-for-field.
-        var baba = GlobalData.Settings.Signal.Baba;
-        BabaBandsHelper.BandValue[] babaBands = BabaBandsHelper.ComputeBands(quotes.Cast<CryptoCandle>().ToList());
-        IReadOnlyList<AtrResult> atrBabaFastList = quotes.ToAtr(baba.AtrLength);
-        IReadOnlyList<AtrResult> atrBabaSlList = quotes.ToAtr(baba.Length);
-#endif
+        // Baba VWAP band batch computation has been migrated to BabaIndicatorExtension (Analyzers plugin).
 
         //AccountSymbolData symbolData = GlobalData.ActiveAccount!.Data.GetSymbolData(symbol.Name);
         //AccountSymbolIntervalData symbolIntervalData = symbolData.GetSymbolData(interval.IntervalPeriod);
@@ -438,17 +429,7 @@ public static class IndicatorEngine
                 if (psarList[index].Sar != null)
                     candleData.PSar = psarList[index].Sar;
 
-#if EXPERIMENTAL
-                if (babaBands[index].HasValue)
-                {
-                    candleData.BabaBasis = babaBands[index].Basis;
-                    candleData.BabaUpper = babaBands[index].Upper;
-                    candleData.BabaLower = babaBands[index].Lower;
-                    candleData.BabaVwStdev = babaBands[index].VwStdev;
-                }
-                candleData.AtrBaba = atrBabaFastList[index].Atr;
-                candleData.BabaAtrSl = atrBabaSlList[index].Atr;
-#endif
+                // Baba band fill loop has been migrated to BabaIndicatorExtension (Analyzers plugin).
                 if (candle is CryptoCandle x)
                     lock (symbolInterval.Data)
                         symbolInterval.Data[x.OpenTime] = candleData;

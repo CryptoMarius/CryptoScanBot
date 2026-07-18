@@ -77,9 +77,14 @@ public partial class App : Application
         }
 
         // 1. Apply the chosen data folder. Everything that reads GlobalData.AppDataFolder
-        //    after this point — DB connection, settings.json, candle DBs — points here.
+        //    after this point — DB connection, settings.json — points here.
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);
+
+        // 1b. Apply the candle folder. When left empty, CandleDatabase falls back to AppDataFolder.
+        GlobalData.CandleDataFolder = setup.ViewModel.CandleFolder;
+        if (!string.IsNullOrWhiteSpace(GlobalData.CandleDataFolder))
+            Directory.CreateDirectory(GlobalData.CandleDataFolder);
 
         // 2. Logging must be initialised AFTER AppDataFolder is known (the NLog files land in that
         //    folder's Log subdirectory) but BEFORE Bootstrap runs so its first AddTextToLogTab
@@ -111,7 +116,9 @@ public partial class App : Application
         // Signal readiness. Logged AFTER the MainWindow exists so the LogTabViewModel (which
         // subscribes in its constructor) is already hooked and shows it; the file log captures
         // it too. Tells the user bootstrap finished and the app is ready for input.
-        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}");
+        string candleInfo = string.IsNullOrWhiteSpace(GlobalData.CandleDataFolder)
+            ? "" : $", candle folder {GlobalData.CandleDataFolder}";
+        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}{candleInfo}");
     }
 
 
@@ -136,6 +143,10 @@ public partial class App : Application
         GlobalData.AppDataFolder = setup.ViewModel.DataFolder;
         Directory.CreateDirectory(GlobalData.AppDataFolder);
 
+        GlobalData.CandleDataFolder = setup.ViewModel.CandleFolder;
+        if (!string.IsNullOrWhiteSpace(GlobalData.CandleDataFolder))
+            Directory.CreateDirectory(GlobalData.CandleDataFolder);
+
         BootstrapFromLiveScanner();
         await EmulatorBootstrap.InitializeAsync(setup.ViewModel.SelectedExchange);
         ApplyThemeFromSettings();
@@ -147,7 +158,9 @@ public partial class App : Application
         main.Show();
         currentMainWindow.Close();
 
-        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}");
+        string candleInfo2 = string.IsNullOrWhiteSpace(GlobalData.CandleDataFolder)
+            ? "" : $", candle folder {GlobalData.CandleDataFolder}";
+        GlobalData.AddTextToLogTab($"Emulator ready — exchange {GlobalData.ActiveExchange?.Name}, data folder {GlobalData.AppDataFolder}{candleInfo2}");
     }
 
 

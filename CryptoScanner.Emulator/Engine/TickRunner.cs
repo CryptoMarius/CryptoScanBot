@@ -40,6 +40,14 @@ public sealed class TickRunner
     /// </summary>
     public bool RunParallel { get; init; } = true;
 
+    /// <summary>
+    /// Number of days per chunk for the chunked replay loop. When the replay window exceeds this
+    /// duration, candles are loaded and replayed one chunk at a time, keeping memory bounded for
+    /// runs with many symbols. Set to 0 to disable chunking (load everything up front — original
+    /// behaviour). Default is 7 days.
+    /// </summary>
+    public int ChunkDays { get; init; } = 7;
+
     // ───── Per-phase profiling accumulators ─────────────────────────────────────────
     // Raw Stopwatch ticks spent in each hot-loop phase, summed across every processed tick.
     // GetTimestamp() is a static QueryPerformanceCounter read (no allocation), so accumulating
@@ -98,9 +106,6 @@ public sealed class TickRunner
             if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
                 throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName.");
 
-            // The higher-timeframe synthesis is now done inside CandleTools.Process1mCandleAsync
-            // (the live 1m handler) per tick, so the TickRunner no longer needs its own list of
-            // higher intervals here — only the 1m driving interval to merge the per-symbol feeds.
             CandleTime replayFrom = CandleTime.AlignFromDateTime(config.FromDate, 1);
             CandleTime replayTo = CandleTime.AlignFromDateTime(config.ToDate, 1);
 
@@ -113,118 +118,157 @@ public sealed class TickRunner
             if (GlobalData.Clock is EmulatorClock preClock)
                 preClock.UtcNow = replayTo.ToDateTime();
 
-            // ───── Warmup all symbols up-front ──────────────────────────────────────
-            // PrepareSymbol loads ~270 candles of EACH interval (1m + higher) before replayFrom
-            // straight from the candles.db, so every timeframe has real history for its indicators.
-            // It hands back ONLY the 1m replay window as a CryptoCandleList keyed by OpenTime; the
-            // higher intervals are extended by Process1mCandleAsync as the replay progresses.
-            var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
-            int totalBars = 0;
-            long warmupStart = Stopwatch.GetTimestamp();
+            // ───── Resolve symbols ──────────────────────────────────────────────────
+            var symbols = new List<CryptoSymbol>();
             foreach (string symbolName in config.Symbols)
             {
                 ct.ThrowIfCancellationRequested();
-
                 if (!exchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     throw new InvalidOperationException($"Symbol '{symbolName}' not found on exchange '{config.ExchangeName}'.");
+                symbols.Add(symbol);
+            }
 
-                CryptoCandleList replayCandles = IndicatorWarmup.PrepareSymbol(symbol, replayFrom, replayTo);
-                replays.Add((symbol, replayCandles));
-                totalBars += replayCandles.Count;
+            // ───── Warmup all symbols up-front ──────────────────────────────────────
+            long warmupStart = Stopwatch.GetTimestamp();
+            foreach (var symbol in symbols)
+            {
+                ct.ThrowIfCancellationRequested();
+                IndicatorWarmup.WarmupSymbol(symbol, replayFrom);
 
-                // Reset trade data
                 symbol.LastPrice = null;
                 symbol.LastTradeDate = null;
                 symbol.LastTradeFetched = null;
                 symbol.LastTradeIdFetched = null;
             }
             elapsedWarmup = Stopwatch.GetTimestamp() - warmupStart;
-            GlobalData.AddTextToLogTab($"Warmup (load candles for {replays.Count} symbol(s)): " +
+            GlobalData.AddTextToLogTab($"Warmup ({symbols.Count} symbol(s)): " +
                 $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s");
 
+            // ───── Determine chunks ─────────────────────────────────────────────────
+            uint chunkMinutes = ChunkDays > 0 ? (uint)ChunkDays * 24 * 60 : 0;
+            bool useChunks = chunkMinutes > 0 && (replayTo.Minutes - replayFrom.Minutes) > chunkMinutes;
 
-
-            // ───── Time-merged replay loop ──────────────────────────────────────────
-            // Walk the replay window minute by minute (the exchange's own clock). For each minute:
-            //   1. Advance the EmulatorClock to that minute's close-time once, so any "now" read
-            //      inside SignalPrepare/SignalExecute points at the end of the current bar.
-            //   2. For every symbol that HAS a 1m candle at this minute (TryGetValue), process it.
-            // Symbols without a candle at this minute simply don't tick. No queue / peek / pop —
-            // the per-symbol CryptoCandleList is the set-aside feed and we index it by candle-time.
             EmulatorClock? emulatorClock = GlobalData.Clock as EmulatorClock;
             int processedBars = 0;
             int lastReportedPercent = -1;
-
             var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 
-            for (CandleTime openTime = replayFrom; openTime <= replayTo; openTime += interval1m.Duration)
+            // Estimate total bars for progress: replay minutes × symbols (refined per chunk)
+            int totalBars = (int)((replayTo.Minutes - replayFrom.Minutes) / interval1m.Duration) * symbols.Count;
+
+            // ───── Chunk loop (or single pass when chunking is off) ──────────────────
+            CandleTime windowFrom = replayFrom;
+            int chunkIndex = 0;
+            while (windowFrom < replayTo)
             {
                 if (ct.IsCancellationRequested)
                     break;
 
-                // Clock advances to the close-time of the current minute BEFORE the symbols process.
-                CandleTime closeTime = openTime + interval1m.Duration;
-                if (emulatorClock != null)
-                    emulatorClock.UtcNow = closeTime.ToDateTime();
+                CandleTime windowTo = useChunks
+                    ? new CandleTime(Math.Min(windowFrom.Minutes + chunkMinutes, replayTo.Minutes))
+                    : replayTo;
 
-                // Collect the symbols that have a candle this minute.
-                List<(CryptoSymbol Symbol, CryptoCandle Candle)> ticksThisMinute = [];
-                foreach (var (symbol, replay) in replays)
+                // Load replay candles for this chunk
+                var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();
+                int chunkBars = 0;
+                long loadStart = Stopwatch.GetTimestamp();
+                foreach (var symbol in symbols)
                 {
-                    if (replay.TryGetValue(openTime, out CryptoCandle candle))
-                        ticksThisMinute.Add((symbol, candle));
+                    CryptoCandleList replayCandles = IndicatorWarmup.LoadReplayCandles(symbol, windowFrom, windowTo);
+                    replays.Add((symbol, replayCandles));
+                    chunkBars += replayCandles.Count;
                 }
-                if (ticksThisMinute.Count == 0)
-                    continue;
+                long loadElapsed = Stopwatch.GetTimestamp() - loadStart;
 
-                long iterStart = Stopwatch.GetTimestamp();
-
-                // ── Phase A: per-symbol compute (indicators + signal/trade pipeline) ──────────
-                // Per-symbol state is independent, so this is the part we parallelise. No shared DB
-                // flush or zone drain happens here — those are deferred to Phase B.
-                if (RunParallel && ticksThisMinute.Count > 1)
+                if (useChunks)
                 {
-                    await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
-                        async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle));
-                }
-                else
-                {
-                    foreach (var item in ticksThisMinute)
-                        await ProcessComputeAsync(item.Symbol, item.Candle);
+                    chunkIndex++;
+                    GlobalData.AddTextToLogTab(
+                        $"Chunk {chunkIndex}: {windowFrom.ToDateTime():yyyy-MM-dd} → {windowTo.ToDateTime():yyyy-MM-dd}, " +
+                        $"{chunkBars} bars loaded in {(double)loadElapsed / Stopwatch.Frequency:F1}s");
                 }
 
-                // ── Phase B: persist + zones (serial, deterministic order) ────────────────────
-                await PersistAndCalculateZonesAsync();
-
-                // Progress: report only when the integer percentage changes — at most 101 calls
-                // per run (0%..100%). Done serially here, after the parallel phase.
-                processedBars += ticksThisMinute.Count;
-                int percent = totalBars > 0 ? 100 * processedBars / totalBars : 0;
-                if (percent != lastReportedPercent)
+                // ───── Time-merged replay loop for this chunk ────────────────────────
+                for (CandleTime openTime = windowFrom; openTime <= windowTo; openTime += interval1m.Duration)
                 {
-                    lastReportedPercent = percent;
-                    Progress?.Report(new TickRunProgress(percent));
+                    if (ct.IsCancellationRequested)
+                        break;
+
+                    CandleTime closeTime = openTime + interval1m.Duration;
+                    if (emulatorClock != null)
+                        emulatorClock.UtcNow = closeTime.ToDateTime();
+
+                    List<(CryptoSymbol Symbol, CryptoCandle Candle)> ticksThisMinute = [];
+                    foreach (var (symbol, replay) in replays)
+                    {
+                        if (replay.TryGetValue(openTime, out CryptoCandle candle))
+                            ticksThisMinute.Add((symbol, candle));
+                    }
+                    if (ticksThisMinute.Count == 0)
+                        continue;
+
+                    long iterStart = Stopwatch.GetTimestamp();
+
+                    // ── Phase A: per-symbol compute (indicators + signal/trade pipeline) ──────
+                    if (RunParallel && ticksThisMinute.Count > 1)
+                    {
+                        await Parallel.ForEachAsync(ticksThisMinute, parallelOptions,
+                            async (item, _) => await ProcessComputeAsync(item.Symbol, item.Candle));
+                    }
+                    else
+                    {
+                        foreach (var item in ticksThisMinute)
+                            await ProcessComputeAsync(item.Symbol, item.Candle);
+                    }
+
+                    // ── Phase B: persist + zones (serial, deterministic order) ────────────────
+                    await PersistAndCalculateZonesAsync();
+
+                    processedBars += ticksThisMinute.Count;
+                    int percent = totalBars > 0 ? Math.Min(100, 100 * processedBars / totalBars) : 0;
+                    if (percent != lastReportedPercent)
+                    {
+                        lastReportedPercent = percent;
+                        Progress?.Report(new TickRunProgress(percent));
+                    }
+
+                    int decile = Math.Min(percent / 10, 9);
+                    if (decile != lastDecile)
+                    {
+                        long now = Stopwatch.GetTimestamp();
+                        if (lastDecile >= 0)
+                            decileWallTicks[lastDecile] += now - decileStart;
+                        lastDecile = decile;
+                        decileStart = now;
+                    }
+
+                    elapsedOuterLoop += Stopwatch.GetTimestamp() - iterStart;
                 }
 
-                // Track wall-clock per decile (0-9%, 10-19%, ... 90-99%)
-                int decile = Math.Min(percent / 10, 9);
-                if (decile != lastDecile)
+                // ───── Between chunks: prune old candles to keep memory bounded ──────
+                if (useChunks && windowTo < replayTo)
                 {
-                    long now = Stopwatch.GetTimestamp();
-                    if (lastDecile >= 0)
-                        decileWallTicks[lastDecile] += now - decileStart;
-                    lastDecile = decile;
-                    decileStart = now;
+                    int pruned = 0;
+                    foreach (var symbol in symbols)
+                    {
+                        foreach (CryptoInterval interval in GlobalData.IntervalList)
+                        {
+                            int keepDepth = IndicatorWarmup.WarmupDepth(interval);
+                            CandleTime cutoff = new(windowTo.Minutes - (uint)keepDepth * interval.Duration);
+
+                            CryptoSymbolInterval symbolInterval = symbol.GetSymbolInterval(interval.IntervalPeriod);
+                            pruned += symbolInterval.CandleList.RemoveBefore(cutoff);
+                        }
+                    }
+                    GlobalData.AddTextToLogTab($"Chunk {chunkIndex}: pruned {pruned} old candles from memory");
                 }
 
-                elapsedOuterLoop += Stopwatch.GetTimestamp() - iterStart;
+                // Advance to next chunk
+                windowFrom = useChunks ? new CandleTime(windowTo.Minutes + interval1m.Duration) : replayTo;
             }
 
-            // Final progress report so the bar lands on 100% / the exact processed count even when
-            // the last batch didn't hit the 256-bar boundary.
             Progress?.Report(new TickRunProgress(100));
 
-            // Close out the last decile bucket
             if (lastDecile >= 0)
                 decileWallTicks[lastDecile] += Stopwatch.GetTimestamp() - decileStart;
         }

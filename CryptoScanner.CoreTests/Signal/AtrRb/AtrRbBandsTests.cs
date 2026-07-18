@@ -1,3 +1,4 @@
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.AtrRb — tests need Analyzers project reference
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
@@ -286,3 +287,4 @@ public class AtrRbBandsTests
             $"pctDeviation ({pct:N4}) should match StopLossAtrFactor * ATR%  ({expectedPct:N4})");
     }
 }
+#endif

@@ -1,4 +1,4 @@
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.AtrRb.Chart
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 

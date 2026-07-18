@@ -1,11 +1,17 @@
+using System.Collections.ObjectModel;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Zones;
 
 namespace CryptoScanner.ViewModels;
 
 public partial class ChartOptionsViewModel : ObservableObject
 {
+    /// <summary>Dynamic toggle items for plugin chart overlays.</summary>
+    public ObservableCollection<PluginOverlayToggle> PluginOverlays { get; } = [];
+
 
     [ObservableProperty]
     private bool _showBbma = false;
@@ -40,17 +46,8 @@ public partial class ChartOptionsViewModel : ObservableObject
     [ObservableProperty]
     private bool _showKeltnerChannel = false;
 
-    [ObservableProperty]
-    private bool _showAtrRbBands = false;
-
-    [ObservableProperty]
-    private bool _showBabaBands = false;
-
-    [ObservableProperty]
-    private bool _showBreBands = false;
-
-    [ObservableProperty]
-    private bool _showSlide = false;
+    // ShowAtrRbBands, ShowBabaBands, ShowBreBands and ShowSlide are now handled
+    // dynamically via PluginOverlays (plugin chart overlays).
 
     [ObservableProperty]
     private bool _showPSar = false;
@@ -97,10 +94,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         ShowPSar = session.ShowPSar;
         ShowBollingerBand = session.ShowBollingerBand;
         ShowKeltnerChannel = session.ShowKeltnerChannel;
-        ShowAtrRbBands = session.ShowAtrRbBands;
-        ShowBabaBands = session.ShowBabaBands;
-        ShowBreBands = session.ShowBreBands;
-        ShowSlide = session.ShowSlide;
+        // AtrRb, Baba, BRE and Slide toggles are now loaded via PluginOverlays below.
         ShowDlzZones = session.ShowDlzZones;
         ShowFvgZones = session.ShowFvgZones;
         ShowSmcZones = session.ShowSmcZones;
@@ -112,6 +106,14 @@ public partial class ChartOptionsViewModel : ObservableObject
 
         // misc
         Transparent = session.Transparent;
+
+        // Plugin overlays
+        PluginOverlays.Clear();
+        foreach (var overlay in PluginManager.ChartOverlays)
+        {
+            bool isOn = session.PluginOverlayStates.TryGetValue(overlay.GroupKey, out bool v) && v;
+            PluginOverlays.Add(new PluginOverlayToggle(overlay.GroupKey, overlay.Label, isOn));
+        }
     }
 
     public void SaveToSession(ZoneSession session)
@@ -129,10 +131,7 @@ public partial class ChartOptionsViewModel : ObservableObject
         session.ShowPSar = ShowPSar;
         session.ShowBollingerBand = ShowBollingerBand;
         session.ShowKeltnerChannel = ShowKeltnerChannel;
-        session.ShowAtrRbBands = ShowAtrRbBands;
-        session.ShowBabaBands = ShowBabaBands;
-        session.ShowBreBands = ShowBreBands;
-        session.ShowSlide = ShowSlide;
+        // AtrRb, Baba, BRE and Slide toggles are now saved via PluginOverlays below.
         session.ShowDlzZones = ShowDlzZones;
         session.ShowFvgZones = ShowFvgZones;
         session.ShowSmcZones = ShowSmcZones;
@@ -144,6 +143,27 @@ public partial class ChartOptionsViewModel : ObservableObject
 
         // misc
         session.Transparent = Transparent;
+
+        // Plugin overlays
+        foreach (var toggle in PluginOverlays)
+            session.PluginOverlayStates[toggle.GroupKey] = toggle.IsEnabled;
     }
 
+}
+
+/// <summary>Bindable toggle item for a plugin chart overlay checkbox.</summary>
+public partial class PluginOverlayToggle : ObservableObject
+{
+    public string GroupKey { get; }
+    public string Label { get; }
+
+    [ObservableProperty]
+    private bool _isEnabled;
+
+    public PluginOverlayToggle(string groupKey, string label, bool isEnabled)
+    {
+        GroupKey = groupKey;
+        Label = label;
+        _isEnabled = isEnabled;
+    }
 }

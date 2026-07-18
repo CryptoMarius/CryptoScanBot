@@ -44,13 +44,13 @@ public class StopLossCalculatorTests
     // ═══════════════════════════════════════════════════════════════════════
 
     [TestMethod]
-    public void SignalSl_Long_StopBelowSignalPrice()
+    public void SignalSl_Long_StopBelowEntryPrice()
     {
         var input = LongBase();
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // Long 3% SL from 100 → stop = 100 - 1*100*0.03 = 97
+        // Long 3% SL from entry 100 → stop = 100 - 1*100*0.03 = 97
         Assert.AreEqual(97m, result.Stop);
         Assert.IsNotNull(result.Limit);
         // Limit should be below the stop (further from entry for a long)
@@ -87,11 +87,13 @@ public class StopLossCalculatorTests
     [TestMethod]
     public void SignalSl_AlwaysUsedWhenPresent()
     {
-        // Signal SL is always preferred regardless of DCA state
+        // Signal SL is always preferred regardless of DCA state, anchored on entry
         var input = LongBase() with { ExtremeDcaPrice = 95m };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
+        // Signal SL anchors on entry (100), not on DCA (95)
+        Assert.AreEqual(97m, result.Stop, "Signal SL must anchor on entry, not DCA");
     }
 
 
@@ -205,54 +207,51 @@ public class StopLossCalculatorTests
     // ═══════════════════════════════════════════════════════════════════════
 
     [TestMethod]
-    public void SignalSl_Long_AnchorsOnDcaWhenPresent()
+    public void SignalSl_Long_AnchorsOnEntryNotDca()
     {
         var input = LongBase() with { ExtremeDcaPrice = 95m };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // 3% from DCA anchor 95 → stop = 95 - 95*0.03 = 92.15
-        Assert.AreEqual(92.15m, result.Stop);
-        Assert.IsTrue(result.Stop < 95m,
-            $"Long SL ({result.Stop}) must be below the most extreme DCA (95)");
+        // Signal SL anchors on entry (100), not DCA (95): stop = 100 - 100*0.03 = 97
+        Assert.AreEqual(97m, result.Stop,
+            "Signal SL must anchor on entry, ignoring ExtremeDcaPrice");
     }
 
     [TestMethod]
-    public void SignalSl_Short_AnchorsOnDcaWhenPresent()
+    public void SignalSl_Short_AnchorsOnEntryNotDca()
     {
         var input = ShortBase() with { ExtremeDcaPrice = 105m };
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // 3% from DCA anchor 105 → stop = 105 + 105*0.03 = 108.15
-        Assert.AreEqual(108.15m, result.Stop);
-        Assert.IsTrue(result.Stop > 105m,
-            $"Short SL ({result.Stop}) must be above the most extreme DCA (105)");
+        // Signal SL anchors on entry (100), not DCA (105): stop = 100 + 100*0.03 = 103
+        Assert.AreEqual(103m, result.Stop,
+            "Signal SL must anchor on entry, ignoring ExtremeDcaPrice");
     }
 
     /// <summary>
-    /// Core regression: small signal SL% with large DCA distance. Without the fix the SL
-    /// would sit at 98.5 (between entry 100 and DCA 95) — a guaranteed early stop-out that
-    /// defeats the purpose of the DCA.
+    /// Signal SL is tighter than the DCA distance. The caller must not place
+    /// DCAs beyond the SL — they would never fill. The SL stays at the strategy
+    /// percentage from entry, unchanged.
     /// </summary>
     [TestMethod]
-    public void SignalSl_Long_NeverBetweenEntryAndDca()
+    public void SignalSl_Long_TighterThanDca_StaysAtEntry()
     {
         var input = LongBase() with
         {
             SlPercentage = 1.5m,
-            ExtremeDcaPrice = 95m,
+            ExtremeDcaPrice = 95m,  // DCA beyond the 1.5% SL — should not exist in practice
         };
         var result = Calculate(input);
 
-        // stop = 95 - 95*0.015 = 93.575
-        Assert.AreEqual(93.575m, result.Stop);
-        Assert.IsTrue(result.Stop < 95m,
-            $"Long SL ({result.Stop}) must be below DCA (95), not between entry (100) and DCA");
+        // stop = 100 - 100*0.015 = 98.5 (from entry, not DCA)
+        Assert.AreEqual(98.5m, result.Stop,
+            "Signal SL anchors on entry even when DCA exists beyond it");
     }
 
     [TestMethod]
-    public void SignalSl_Short_NeverBetweenEntryAndDca()
+    public void SignalSl_Short_TighterThanDca_StaysAtEntry()
     {
         var input = ShortBase() with
         {
@@ -261,10 +260,9 @@ public class StopLossCalculatorTests
         };
         var result = Calculate(input);
 
-        // stop = 105 + 105*0.015 = 106.575
-        Assert.AreEqual(106.575m, result.Stop);
-        Assert.IsTrue(result.Stop > 105m,
-            $"Short SL ({result.Stop}) must be above DCA (105), not between entry (100) and DCA");
+        // stop = 100 + 100*0.015 = 101.5
+        Assert.AreEqual(101.5m, result.Stop,
+            "Signal SL anchors on entry even when DCA exists beyond it");
     }
 
     [TestMethod]
@@ -306,11 +304,11 @@ public class StopLossCalculatorTests
     }
 
     /// <summary>
-    /// Multiple DCA levels: 98.5, 97, 95 — ExtremeDcaPrice is the most extreme (95).
-    /// SL must always be beyond the deepest DCA, regardless of how many levels exist.
+    /// Signal SL anchors on entry, not on DCA. DCA filtering is the caller's
+    /// responsibility (PositionMonitor / AltradyWebhook skip DCAs beyond the SL).
     /// </summary>
     [TestMethod]
-    public void SignalSl_Long_BeyondDeepestDcaLevel()
+    public void SignalSl_Long_AlwaysAnchorsOnEntry()
     {
         var input = LongBase() with
         {
@@ -320,28 +318,12 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // 3% from 95 → stop = 95 - 2.85 = 92.15
-        Assert.AreEqual(92.15m, result.Stop);
-        Assert.IsTrue(result.Stop < 95m,
-            $"Long SL ({result.Stop}) must be below the deepest DCA level (95)");
-    }
-
-    [TestMethod]
-    public void SignalSl_AnchorsOnDcaEvenWithExtremeDcaPrice()
-    {
-        var input = LongBase() with { ExtremeDcaPrice = 95m };
-        var result = Calculate(input);
-
-        Assert.AreEqual(SlSource.Signal, result.Source);
-        // 3% from 95 → stop = 92.15
-        Assert.AreEqual(92.15m, result.Stop);
-        Assert.IsTrue(result.Stop < 95m,
-            "Signal SL must be below DCA even when DCA orders are pending");
+        // 3% from entry 100 → stop = 97
+        Assert.AreEqual(97m, result.Stop);
     }
 
     /// <summary>
-    /// Signal SL always takes precedence. With both signal and global available, signal wins.
-    /// The anchor still moves to ExtremeDcaPrice so the SL is beyond all DCA levels.
+    /// Signal SL always takes precedence over global SL. Both use entry as anchor.
     /// </summary>
     [TestMethod]
     public void SignalSl_AlwaysPreferredOverGlobal()
@@ -355,8 +337,78 @@ public class StopLossCalculatorTests
         var result = Calculate(input);
 
         Assert.AreEqual(SlSource.Signal, result.Source);
-        // Both must be below the DCA at 95
-        Assert.IsTrue(result.Stop < 95m,
-            $"SL ({result.Stop}) must be below DCA (95)");
+        // Signal SL: 2% from entry 100 → stop = 98
+        Assert.AreEqual(98m, result.Stop);
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  BRE-specific: band-width percentage as signal SL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// BRE typically produces small band-width percentages (1-5%). Signal SL anchors on
+    /// entry. DCAs beyond the SL are not placed (caller responsibility), so the SL is
+    /// always correct at the strategy-computed distance from entry.
+    /// </summary>
+    [TestMethod]
+    public void Bre_Long_SmallBandWidth_AnchorsOnEntry()
+    {
+        decimal entry = 150m;
+        var input = LongBase() with
+        {
+            SlPercentage = 1.8m,
+            EntryPrice = entry,
+            ExtremeDcaPrice = null,  // DCAs beyond 1.8% are not placed
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 1.8% from entry 150 → stop = 150 - 2.7 = 147.3
+        decimal expected = entry - entry * 1.8m / 100m;
+        Assert.AreEqual(expected, result.Stop);
+    }
+
+    [TestMethod]
+    public void Bre_Short_SmallBandWidth_AnchorsOnEntry()
+    {
+        decimal entry = 150m;
+        var input = ShortBase() with
+        {
+            SlPercentage = 1.8m,
+            EntryPrice = entry,
+            ExtremeDcaPrice = null,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Signal, result.Source);
+        // 1.8% from entry 150 → stop = 150 + 2.7 = 152.7
+        decimal expected = entry + entry * 1.8m / 100m;
+        Assert.AreEqual(expected, result.Stop);
+    }
+
+    /// <summary>
+    /// BRE with UseStopLoss=false: SlPercentage is null, falls back to global SL.
+    /// Global SL anchors on ExtremeDcaPrice (all DCAs are placed when no signal SL).
+    /// </summary>
+    [TestMethod]
+    public void Bre_Long_UseStopLossDisabled_FallsBackToGlobal()
+    {
+        decimal entry = 100m;
+        decimal deepestDca = 95.5m;
+        var input = LongBase() with
+        {
+            SlPercentage = null,  // BRE UseStopLoss=false
+            EntryPrice = entry,
+            ExtremeDcaPrice = deepestDca,
+            GlobalStopLossPercentage = 5m,
+        };
+        var result = Calculate(input);
+
+        Assert.AreEqual(SlSource.Global, result.Source);
+        // Global SL anchors on DCA: 5% from 95.5 → stop = 95.5 - 4.775 = 90.725
+        Assert.AreEqual(95.5m - 95.5m * 5m / 100m, result.Stop);
+        Assert.IsTrue(result.Stop < deepestDca,
+            $"Global SL ({result.Stop}) must be below deepest DCA ({deepestDca})");
     }
 }

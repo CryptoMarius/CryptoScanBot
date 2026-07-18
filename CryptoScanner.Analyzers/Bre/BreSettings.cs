@@ -1,4 +1,6 @@
-namespace CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Settings.Strategy;
+
+namespace CryptoScanner.Analyzers.Bre;
 
 // "bre" — Buddy Reversion Engine (BRE): Donchian-based outer bands (the gray "plateaus") with an
 // EMA+ATR middle cloud (DIDO). A long alert fires when the Low breaks the macro LOWER band; a short
@@ -6,7 +8,7 @@ namespace CryptoScanner.Core.Settings.Strategy;
 // These parameters drive BOTH the chart drawer (BreBands) and the bre signal (BreBandsHelper),
 // so the chart and the alert always stay in sync. Defaults match the original Pine inputs.
 [Serializable]
-public class SettingsSignalStrategyBre : SettingsSignalStrategyBase
+public class BreSettings : SettingsSignalStrategyBase
 {
     // Donchian lookback for the outer bands, computed over the PREVIOUS BandLength candles
     // (Pine: ta.highest(high[1], len) / ta.lowest(low[1], len); default 20).
@@ -64,7 +66,7 @@ public class SettingsSignalStrategyBre : SettingsSignalStrategyBase
     public bool UseFvgZone { get; set; } = false;
     public bool UseSmcZone { get; set; } = false;
 
-    public SettingsSignalStrategyBre() : base()
+    public BreSettings() : base()
     {
     }
 }

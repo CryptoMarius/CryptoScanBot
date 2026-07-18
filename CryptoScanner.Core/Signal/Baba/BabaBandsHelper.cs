@@ -3,7 +3,7 @@ using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;
 
-#if EXPERIMENTAL
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.Baba
 namespace CryptoScanner.Core.Signal.Baba;
 
 /// <summary>

@@ -71,6 +71,21 @@ public static class IndicatorWarmup
 
 
     /// <summary>
+    /// How many candles of history to keep per interval when pruning between chunks. Uses the same
+    /// depth as the warmup (270 or DLZ CandleCount, whichever is larger) so indicators always have
+    /// enough lookback after pruning.
+    /// </summary>
+    public static int WarmupDepth(CryptoInterval interval)
+    {
+        int depth = MinCandlesPerInterval + SafetyExtraBars;
+        var dlzSettings = GlobalData.Settings.Signal.ZonesDlz;
+        if (dlzSettings.IntervalList.Contains(interval.Name) && dlzSettings.CandleCount > depth)
+            depth = dlzSettings.CandleCount;
+        return depth;
+    }
+
+
+    /// <summary>
     /// How much history (in <em>that interval's own units, expressed in minutes</em>) the
     /// fetch routine should ensure is available before the replay window starts. The fetcher
     /// pulls candles per interval directly, so we no longer over-fetch 1m candles to cover
@@ -127,10 +142,20 @@ public static class IndicatorWarmup
     public static CryptoCandleList PrepareSymbol(CryptoSymbol symbol,
         CandleTime replayFrom, CandleTime replayTo)
     {
+        WarmupSymbol(symbol, replayFrom);
+        return LoadReplayCandles(symbol, replayFrom, replayTo);
+    }
 
+
+    /// <summary>
+    /// Warmup only: clears candle state and loads indicator history for all intervals from the DB.
+    /// Does NOT load replay candles — call <see cref="LoadReplayCandles"/> separately.
+    /// </summary>
+    public static void WarmupSymbol(CryptoSymbol symbol, CandleTime replayFrom)
+    {
         symbol.ClearCandles();
 
-        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
+        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? _))
             throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName");
 
         // Ascending order so an interval's ConstructFrom is already warmed when (rarely) we have to
@@ -165,9 +190,20 @@ public static class IndicatorWarmup
             //if (interval.ConstructFrom != null && symbolInterval.CandleList.Count == 0)
             //    CandleTools.BulkCalculateCandles(symbol, interval.ConstructFrom, interval, replayFrom);
         }
+    }
 
-        // Only the 1m interval is fed candle-by-candle during the replay. Set its window aside,
-        // keyed by OpenTime, so the TickRunner can look each minute up by candle-time.
+
+    /// <summary>
+    /// Loads the 1m replay candles for the given window from the DB. The returned list is keyed by
+    /// OpenTime so the TickRunner can look each minute up by candle-time. Only candles at or after
+    /// <paramref name="replayFrom"/> are included.
+    /// </summary>
+    public static CryptoCandleList LoadReplayCandles(CryptoSymbol symbol,
+        CandleTime replayFrom, CandleTime replayTo)
+    {
+        if (!GlobalData.IntervalListPeriodName.TryGetValue("1m", out CryptoInterval? interval1m))
+            throw new InvalidOperationException("1m interval not registered in GlobalData.IntervalListPeriodName");
+
         CryptoCandleList replayCandles = [];
         foreach (CryptoCandle candle in CandleSource.Load(symbol, interval1m, replayFrom, replayTo))
         {

@@ -1,5 +1,7 @@
 ﻿namespace CryptoScanner.Core.Enums;
 
+// TODO: Remove this enumeration
+// Address by name instead of by number
 public enum CryptoSignalStrategy
 {
     Jump = 0,
@@ -13,7 +15,6 @@ public enum CryptoSignalStrategy
     StoRsiMulti = 11, // WGHM - STOSCH en RSI momentum indicator
     Nwe = 25,
 
-#if EXPERIMENTAL
     // Baba Bands macro-band hit — long on the lower band, short on the upper band
     // (the same events the chart prints as percentage labels).
     Baba = 28,
@@ -23,7 +24,6 @@ public enum CryptoSignalStrategy
     // BRE (Buddy Reversion Engine) Donchian macro-band break — long on the lower band,
     // short on the upper band (the same events the chart prints as percentage labels).
     Bre = 30,
-#endif
 
 #if DEBUG
     Trend = 31,

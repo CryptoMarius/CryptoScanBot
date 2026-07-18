@@ -1,4 +1,6 @@
-namespace CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Core.Settings.Strategy;
+
+namespace CryptoScanner.Analyzers.Baba;
 
 // "baba" — Mean Reversion Bands (volume-weighted VWAP bands), reverse-engineered from the trading-course
 // chart. The band is a rolling VWAP basis with a volume-weighted stdev envelope, plus an optional fast-ATR
@@ -7,7 +9,7 @@ namespace CryptoScanner.Core.Settings.Strategy;
 // while RSI is oversold; a short on the UPPER band while RSI is overbought. These parameters drive BOTH the
 // chart drawer (BabaBands) and the signal (BabaBandsHelper), so the chart and the alert always stay in sync.
 [Serializable]
-public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
+public class BabaSettings : SettingsSignalStrategyBase
 {
     // VWMA / volume-weighted-stdev window for the VWAP basis (fit against the reference: 50).
     public int Length { get; set; } = 50;
@@ -88,7 +90,7 @@ public class SettingsSignalStrategyBaba : SettingsSignalStrategyBase
     public bool UseFvgZone { get; set; } = false;
     public bool UseSmcZone { get; set; } = false;
 
-    public SettingsSignalStrategyBaba() : base()
+    public BabaSettings() : base()
     {
     }
 }

@@ -13,11 +13,7 @@ using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
 using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
-#if EXPERIMENTAL
-using CryptoScanner.Core.Signal.AtrRb;
-using CryptoScanner.Core.Signal.Baba;
-using CryptoScanner.Core.Signal.Bre;
-#endif
+// AtrRb, Baba and Bre usings removed — migrated to CryptoScanner.Analyzers.
 using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
@@ -271,43 +267,8 @@ public static class RegisterAlgorithms
 #endif
 
 
-#if EXPERIMENTAL
-        //***************************************************
-        // Baba Bands — fires when price hits a macro band:
-        // long on the lower band, short on the upper band.
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "baba",
-            Strategy = CryptoSignalStrategy.Baba,
-            AnalyzeLongType = typeof(SignalBabaLong),
-            AnalyzeShortType = typeof(SignalBabaShort),
-        });
-
-        //***************************************************
-        // AtrRb Bands — fires when price hits a macro band:
-        // long on the lower band, short on the upper band.
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "atrrb",
-            Strategy = CryptoSignalStrategy.AtrRb,
-            AnalyzeLongType = typeof(SignalAtrRbLong),
-            AnalyzeShortType = typeof(SignalAtrRbShort),
-        });
-
-        //***************************************************
-        // BRE (Buddy Reversion Engine) — fires when price breaks a Donchian macro band:
-        // long on the lower band, short on the upper band (optional trend/RSI/stoch filters).
-        //***************************************************
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bre",
-            Strategy = CryptoSignalStrategy.Bre,
-            AnalyzeLongType = typeof(SignalBreLong),
-            AnalyzeShortType = typeof(SignalBreShort),
-        });
-#endif
+        // Baba, AtrRb and Bre strategies have been migrated to the Analyzers plugin architecture
+        // and are now registered dynamically via PluginManager.
 
 #if DEBUG
         //***************************************************

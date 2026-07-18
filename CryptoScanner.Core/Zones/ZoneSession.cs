@@ -49,10 +49,8 @@ public class ZoneSession
     public bool ShowPSar { get; set; } = false;
     public bool ShowBollingerBand { get; set; } = true;
     public bool ShowKeltnerChannel { get; set; } = false;
-    public bool ShowAtrRbBands { get; set; } = false;
-    public bool ShowBabaBands { get; set; } = false; // Baba Bands & Ribbon
-    public bool ShowBreBands { get; set; } = false; // Buddy Reversion Engine bands
-    public bool ShowSlide { get; set; } = false; // experimental "glijbaan" (slide) detector overlay
+    // ShowAtrRbBands, ShowBabaBands, ShowBreBands and ShowSlide have been migrated to
+    // PluginOverlayStates (plugin chart overlays managed by PluginManager).
     public bool ShowSmaLinesSbm { get; set; } = false;
     public bool ShowBbma { get; set; } = false;
     public bool ShowStoch { get; set; } = false;
@@ -60,6 +58,9 @@ public class ZoneSession
     public bool ShowLux { get; set; } = false; // RSI Multi Length [LuxAlgo], 5m
     public bool ShowMacd { get; set; } = false;
     public bool ShowVolume { get; set; } = false;
+
+    // Plugin overlay toggles (keyed by IChartOverlay.GroupKey)
+    public Dictionary<string, bool> PluginOverlayStates { get; set; } = [];
 
     // options
     public bool ShowCandles { get; set; } = true; // focus on other stuff then candles

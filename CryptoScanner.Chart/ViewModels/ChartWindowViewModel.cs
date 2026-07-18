@@ -1112,27 +1112,16 @@ public partial class ChartWindowViewModel : ObservableObject
         if (Toggle(model, group, Session.ShowKeltnerChannel))
             KeltnerChannel.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
 
-#if EXPERIMENTAL
-        // Draw AtrRb Bands & Ribbon
-        group = "atrrb";
-        if (Toggle(model, group, Session.ShowAtrRbBands))
-            AtrRbBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
+        // AtrRb, Baba, BRE and Slide overlays are now drawn dynamically via PluginManager.ChartOverlays below.
 
-        // Draw Baba Bands & Ribbon
-        group = "baba";
-        if (Toggle(model, group, Session.ShowBabaBands))
-            BabaBands.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
-
-        // Draw BRE Bands (Buddy Reversion Engine)
-        group = "bre";
-        if (Toggle(model, group, Session.ShowBreBands))
-            BreBands.Draw(model, Symbol, Interval, Session.MinDate, Session.MaxDate, group);
-
-        // Experimental "glijbaan" (slide) detector overlay — additive, nothing else uses it yet.
-        group = "slide";
-        if (Toggle(model, group, Session.ShowSlide))
-            Slide.Draw(model, WindowCandleList, Session.MinDate, Session.MaxDate, group);
-#endif
+        // Draw plugin overlays
+        foreach (var overlay in CryptoScanner.Core.Contracts.PluginManager.ChartOverlays)
+        {
+            group = overlay.GroupKey;
+            bool isOn = Session.PluginOverlayStates.TryGetValue(group, out bool v) && v;
+            if (Toggle(model, group, isOn))
+                overlay.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
+        }
 
         // Draw PSar
         group = "psar";

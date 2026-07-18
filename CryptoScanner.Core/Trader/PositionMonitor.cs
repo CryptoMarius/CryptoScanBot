@@ -1423,6 +1423,12 @@ public class PositionMonitor : IDisposable
         for (int i = existingDcaParts; i < GlobalData.Settings.Trading.DcaList.Count; i++)
         {
             var dcaEntry = GlobalData.Settings.Trading.DcaList[i];
+
+            // When the strategy provides a signal SL, skip DCA levels that fall beyond it —
+            // those would never fill because the SL triggers first.
+            if (position.SlPercentage.HasValue && dcaEntry.Percentage >= position.SlPercentage.Value)
+                continue;
+
             decimal diffPrice = entryPrice * Math.Abs(dcaEntry.Percentage) / 100m;
             prices.Add(position.Side == CryptoTradeSide.Long ? entryPrice - diffPrice : entryPrice + diffPrice);
         }

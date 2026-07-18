@@ -24,14 +24,14 @@
     hidden from end-user Release builds but available for testers.
 
     - Debug builds:   always on (DEBUG implies EXPERIMENTAL).
-    - Release builds: off by default. Pass -p:IncludeExperimental=true on the command line
-                      (or set the property in a "Beta" build configuration) to include them.
+    - Release builds: off by default. Use  -c Experimental  on the command line.
   -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' Or '$(Configuration)' == 'Experimental'">
     <DefineConstants>$(DefineConstants);EXPERIMENTAL</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(IncludeExperimental)' == 'true'">
-    <DefineConstants>$(DefineConstants);EXPERIMENTAL</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
 
 </Project>

@@ -15,6 +15,7 @@ namespace CryptoScanner.Core.Context;
 
 public class CryptoDatabase : IDisposable
 {
+
     public static void SetDatabaseDefaults()
     {
         SqlMapper.Settings.CommandTimeout = 180;
@@ -31,7 +32,20 @@ public class CryptoDatabase : IDisposable
 
     public SqliteTransaction BeginTransaction()
     {
-        return Connection.BeginTransaction();
+        // Retry transient SQLITE_ERROR (rc 1) that can occur under heavy concurrent WAL writes
+        // (multiple emulator threads opening transactions on the same database file).
+        const int maxAttempts = 4;
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return Connection.BeginTransaction();
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1 && attempt < maxAttempts)
+            {
+                Thread.Sleep(attempt * 25);
+            }
+        }
     }
 
     public void Dispose()

@@ -95,13 +95,15 @@ public static class StopLossCalculator
             };
         }
 
-        // Anchor: always use the most extreme DCA price when available so the SL
-        // sits beyond all placed DCA levels, never between entry and a DCA.
-        // When no DCA exists, always anchor on EntryPrice (the actual fill price) —
-        // never on SignalPrice, which could differ due to slippage/market orders and
-        // cause the SL to trigger immediately after entry.
+        // Anchor selection:
+        //   Signal SL → always anchor on EntryPrice. The strategy computed the SL relative to
+        //     the entry; DCAs beyond that SL are not placed, so no conflict is possible.
+        //   Global SL → anchor on ExtremeDcaPrice when available, so the SL sits beyond all
+        //     placed DCA levels (the user did not express a specific SL distance from entry).
         decimal anchor;
-        if (input.ExtremeDcaPrice.HasValue)
+        if (source == SlSource.Signal)
+            anchor = input.EntryPrice;
+        else if (input.ExtremeDcaPrice.HasValue)
             anchor = input.ExtremeDcaPrice.Value;
         else
             anchor = input.EntryPrice;

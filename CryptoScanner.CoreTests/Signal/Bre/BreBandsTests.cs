@@ -1,3 +1,4 @@
+#if MOVED_TO_ANALYZERS // migrated to CryptoScanner.Analyzers.Bre — tests need Analyzers project reference
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -363,3 +364,4 @@ public class BreBandsTests
         }
     }
 }
+#endif

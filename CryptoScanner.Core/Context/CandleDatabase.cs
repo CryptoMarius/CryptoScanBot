@@ -47,13 +47,26 @@ public class CandleDatabase : IDisposable
 
 
     /// <summary>
+    /// Resolves the base folder for candle DB files: CandleDataFolder when set, otherwise AppDataFolder.
+    /// </summary>
+    public static string ResolveCandleFolder()
+    {
+        return string.IsNullOrWhiteSpace(GlobalData.CandleDataFolder)
+            ? GlobalData.AppDataFolder
+            : GlobalData.CandleDataFolder;
+    }
+
+
+    /// <summary>
     /// Open (or create) the candle DB for the given exchange. The DB file lives at
-    /// {AppDataFolder}/{exchange.Name.ToLower()}/candles.db. The exchange folder is
-    /// created if missing so the SQLite file can be written.
+    /// {CandleDataFolder}/{exchange.Name}.db (or {AppDataFolder} when no separate candle folder
+    /// is configured). The folder is created if missing so the SQLite file can be written.
     /// </summary>
     public CandleDatabase(Model.CryptoExchange exchange)
     {
-        string dbFile = Path.Combine(GlobalData.AppDataFolder, exchange.Name + ".db");
+        string baseFolder = ResolveCandleFolder();
+        Directory.CreateDirectory(baseFolder);
+        string dbFile = Path.Combine(baseFolder, exchange.Name + ".db");
         Connection = new SqliteConnection($"Filename={dbFile};Mode=ReadWriteCreate;");
         //string folder = Path.Combine(GlobalData.AppDataFolder, exchange.Name.ToLower());
         //Directory.CreateDirectory(folder);

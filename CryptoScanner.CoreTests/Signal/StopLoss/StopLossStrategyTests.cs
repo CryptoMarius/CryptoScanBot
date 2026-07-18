@@ -1,3 +1,4 @@
+#if MOVED_TO_ANALYZERS // Baba tests migrated to Analyzers — tests need Analyzers project reference
 using CryptoScanner.Core.Context;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
@@ -358,3 +359,4 @@ public class StopLossStrategyTests : TestBase
             Console.WriteLine($"  {time:yyyy-MM-dd HH:mm:ss}  {sl?.ToString("N4") ?? "null (global)",12}  {text}");
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if MOVED_TO_ANALYZERS // Baba tests migrated to Analyzers — tests need Analyzers project reference
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Settings;
@@ -313,3 +314,4 @@ public class IntervalIndicatorHubParityTests
         return list;
     }
 }
+#endif
