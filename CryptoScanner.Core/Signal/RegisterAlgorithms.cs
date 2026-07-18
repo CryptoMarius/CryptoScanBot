@@ -11,9 +11,7 @@ using CryptoScanner.Core.Signal.Jump;
 using CryptoScanner.Core.Signal.Sbm;
 using CryptoScanner.Core.Signal.Smc;
 using CryptoScanner.Core.Signal.Stobb;
-using CryptoScanner.Core.Signal.Storsi;
 using CryptoScanner.Core.Signal.Trend;
-// AtrRb, Baba and Bre usings removed — migrated to CryptoScanner.Analyzers.
 using CryptoScanner.Core.Signal.Experiment;
 
 namespace CryptoScanner.Core.Signal;
@@ -106,27 +104,27 @@ public static class RegisterAlgorithms
         });
 
 
-        //***************************************************
-        // WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
-        //***************************************************
-        // https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi", // was WGHM = We Gaan Het Meemaken..
-            Strategy = CryptoSignalStrategy.StoRsi,
-            AnalyzeLongType = typeof(SignalStoRsiLong),
-            AnalyzeShortType = typeof(SignalStoRsiShort),
-        });
+        ////***************************************************
+        //// WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
+        ////***************************************************
+        //// https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi", // was WGHM = We Gaan Het Meemaken..
+        //    Strategy = CryptoSignalStrategy.StoRsi,
+        //    AnalyzeLongType = typeof(SignalStoRsiLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiShort),
+        //});
 
 
-        // another combined with a higher timeframe
-        Register(new AlgorithmDefinition()
-        {
-            Name = "storsi.multi",
-            Strategy = CryptoSignalStrategy.StoRsiMulti,
-            AnalyzeLongType = typeof(SignalStoRsiMultiLong),
-            AnalyzeShortType = typeof(SignalStoRsiMultiShort),
-        });
+        //// another combined with a higher timeframe
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "storsi.multi",
+        //    Strategy = CryptoSignalStrategy.StoRsiMulti,
+        //    AnalyzeLongType = typeof(SignalStoRsiMultiLong),
+        //    AnalyzeShortType = typeof(SignalStoRsiMultiShort),
+        //});
 
 
 

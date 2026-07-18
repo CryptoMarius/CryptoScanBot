@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 
+using CryptoScanner.Commands;
 using CryptoScanner.Model;
 using CryptoScanner.ViewModels;
 
@@ -30,6 +33,19 @@ public partial class PositionClosedGridView : UserControlWithGrid<PositionViewMo
 
         // Register a custom comparer for each column based on its SortMemberPath
         InitializeGrid<PositionColumnEnum, PositionColumnComparer>("CloseTime", ListSortDirection.Descending);
+
+        // Delete key removes the selected position from the database (same as the "Position delete from database" context menu item)
+        _dataGrid.AddHandler(KeyDownEvent, OnDataGridKeyDown, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
 
+    private void OnDataGridKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Delete && e.KeyModifiers == KeyModifiers.None && _dataGrid.SelectedItem != null)
+        {
+            var parentWindow = this.FindAncestorOfType<Window>();
+            var command = new CommandPositionDelete();
+            command.Execute((_dataGrid, _dataGrid.SelectedItem, parentWindow));
+            e.Handled = true;
+        }
+    }
 }

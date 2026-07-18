@@ -42,9 +42,6 @@ public class SettingsSignal
     // SBM signals
     public SettingsSignalStrategySbm Sbm = new();
 
-    // STORSI
-    public SettingsSignalStrategyStoRsi StoRsi = new();
-
     // JUMP
     public SettingsSignalStrategyJump Jump = new();
 

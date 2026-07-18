@@ -23,6 +23,17 @@ public class BabaSettings : SettingsSignalStrategyBase
     // Multiplier on the fast ATR term: band = Mult * vwStdev + AtrMult * ATR(AtrLength). 0 = pure VWAP bands.
     public double AtrMult { get; set; } = 0.0;
 
+    // Optional "volume surge" widening, reverse-engineered from TradingBuddy's served bands: after a
+    // recent volume spike the band widens. surge = max(volume over the last VolumeSurgeLength bars) /
+    // SMA(volume, Length). The effective multiplier becomes Mult + VolumeSurgeFactor * max(0, surge -
+    // VolumeSurgeThreshold), so normal volume (surge <= threshold) leaves the pure VWAP band untouched.
+    // Off by default; enabling it brings the bands ~closer to TradingBuddy's (explains ~45-48% of their
+    // widening, not bit-exact). Defaults (5 / 1.05 / 0.031) were fit on BTC/ETH/SOL/RUNE/XRP/DOGE 1h+4h.
+    public bool UseVolumeSurge { get; set; } = false;
+    public int VolumeSurgeLength { get; set; } = 5;
+    public double VolumeSurgeThreshold { get; set; } = 1.05;
+    public double VolumeSurgeFactor { get; set; } = 0.031;
+
     // RSI confluence: only fire a sell on an upper-band break when RSI is overbought, and a buy on a
     // lower-band break when RSI is oversold. The overbought/oversold LEVELS are taken from the general
     // RSI settings (Indicators tab: GlobalData.Settings.General.SettingsRsi), so all strategies share them.

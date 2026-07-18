@@ -13,9 +13,10 @@ public class StoRsiShort : StoRsiBase
 {
     public override bool AdditionalChecks(MyData data, out string response)
     {
-        if (GlobalData.Settings.Signal.StoRsi.OnlyIfLux5m)
+        var settings = StoRsiPlugin.Settings;
+        if (settings.OnlyIfLux5m)
         {
-            int needed = GlobalData.Settings.Signal.StoRsi.Lux5mPercentage;
+            int needed = settings.Lux5mPercentage;
             if (CandleLast.CandleData!.Lux5mValue < needed)
             {
                 response = $"lux 5m not overbought enough ({CandleLast.CandleData!.Lux5mValue}%, need >= {needed}%)";
@@ -23,7 +24,7 @@ public class StoRsiShort : StoRsiBase
             }
         }
 
-        if (GlobalData.Settings.Signal.StoRsi.CheckBollingerBandsCondition)
+        if (settings.CheckBollingerBandsCondition)
         {
             if (!InUpperPartOfBollingerBands(3, 5.0m))
             {
@@ -32,7 +33,7 @@ public class StoRsiShort : StoRsiBase
             }
         }
 
-        if (GlobalData.Settings.Signal.StoRsi.SkipFirstSignal)
+        if (settings.SkipFirstSignal)
         {
             if (HadStorsiInThelastXCandles(SignalSide, 1, 3) == null)
             {
@@ -49,7 +50,7 @@ public class StoRsiShort : StoRsiBase
     public override bool IsSignal()
     {
         ExtraText = "";
-        var settings = GlobalData.Settings.Signal.StoRsi;
+        var settings = StoRsiPlugin.Settings;
 
         if (!CandleLast.CheckBollingerBandsWidth(settings.BBMinPercentage, settings.BBMaxPercentage))
         {

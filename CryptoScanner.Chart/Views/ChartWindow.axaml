@@ -111,7 +111,12 @@
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowLux, Mode=TwoWay}" Content="Lux" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowMacd, Mode=TwoWay}" Content="MACD" FontSize="12"/>
 						<CheckBox IsChecked="{Binding DisplayOptions.ShowVolume, Mode=TwoWay}" Content="Volume" FontSize="12"/>
-						<ItemsControl ItemsSource="{Binding DisplayOptions.PluginOverlays}">
+						<ItemsControl ItemsSource="{Binding DisplayOptions.PluginOverlays}" Margin="0">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<StackPanel Spacing="-7"/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
 							<ItemsControl.ItemTemplate>
 								<DataTemplate>
 									<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" Content="{Binding Label}" FontSize="12"/>

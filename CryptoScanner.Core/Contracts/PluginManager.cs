@@ -25,31 +25,44 @@ public static class PluginManager
     public static IReadOnlyList<IChartOverlay> ChartOverlays => _overlays;
     private static readonly List<IChartOverlay> _overlays = [];
 
+    /// <summary>
+    /// Register a stand-alone chart overlay that is not tied to a strategy plugin (e.g. the
+    /// TradingBuddy band overlay). It shows up as its own checkbox in the chart's overlay list.
+    /// </summary>
+    public static void RegisterOverlay(IChartOverlay overlay)
+    {
+        if (!_overlays.Contains(overlay))
+            _overlays.Add(overlay);
+    }
+
     /// <summary>Config view providers from registered plugins.</summary>
     public static IReadOnlyList<IConfigView> ConfigViews => _configViews;
     private static readonly List<IConfigView> _configViews = [];
 
     /// <summary>
-    /// Register a single strategy plugin. Called at startup from the Analyzers
-    /// project's AnalyzerRegistration.RegisterAll().
+    /// Register a strategy plugin (may contain multiple sub-strategies).
+    /// Called at startup from the Analyzers project's AnalyzerRegistration.RegisterAll().
     /// </summary>
     public static void Register(IStrategyPlugin plugin)
     {
-        if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(plugin.Strategy))
+        foreach (var reg in plugin.Strategies)
         {
-            Logger.Warn($"Strategy {plugin.Strategy} ({plugin.Name}) already registered, skipping");
-            return;
+            if (RegisterAlgorithms.AlgorithmDefinitionList.ContainsKey(reg.Strategy))
+            {
+                Logger.Warn($"Strategy {reg.Strategy} ({reg.Name}) already registered, skipping");
+                continue;
+            }
+
+            RegisterAlgorithms.Register(new AlgorithmDefinition()
+            {
+                Name = reg.Name,
+                Strategy = reg.Strategy,
+                AnalyzeLongType = reg.AnalyzeLongType,
+                AnalyzeShortType = reg.AnalyzeShortType,
+            });
+
+            _plugins[reg.Strategy] = plugin;
         }
-
-        RegisterAlgorithms.Register(new AlgorithmDefinition()
-        {
-            Name = plugin.Name,
-            Strategy = plugin.Strategy,
-            AnalyzeLongType = plugin.AnalyzeLongType,
-            AnalyzeShortType = plugin.AnalyzeShortType,
-        });
-
-        _plugins[plugin.Strategy] = plugin;
 
         if (plugin.ChartOverlay != null)
             _overlays.Add(plugin.ChartOverlay);
@@ -57,7 +70,7 @@ public static class PluginManager
         if (plugin.ConfigView != null)
             _configViews.Add(plugin.ConfigView);
 
-        Logger.Info($"Registered analyzer \"{plugin.Name}\" (strategy={plugin.Strategy})");
+        Logger.Info($"Registered analyzer \"{plugin.Name}\" ({plugin.Strategies.Count} strategy/strategies)");
     }
 
     /// <summary>
@@ -69,7 +82,7 @@ public static class PluginManager
     /// </summary>
     public static void RestoreSettings(Dictionary<string, SettingsSignalStrategyBase> stored)
     {
-        foreach (var (_, plugin) in _plugins)
+        foreach (var plugin in _plugins.Values.Distinct())
         {
             if (stored.TryGetValue(plugin.Name, out var loaded) && loaded != null)
             {
@@ -104,7 +117,7 @@ public static class PluginManager
     public static void CollectSettings(Dictionary<string, SettingsSignalStrategyBase> target)
     {
         target.Clear();
-        foreach (var (_, plugin) in _plugins)
+        foreach (var plugin in _plugins.Values.Distinct())
         {
             target[plugin.Name] = plugin.SettingsBase;
         }

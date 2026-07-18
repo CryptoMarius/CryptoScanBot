@@ -17,6 +17,18 @@ public partial class StrategyBabaSettingsViewModel : ObservableObject
     private double _atrMult = 1.0;
 
     [ObservableProperty]
+    private bool _useVolumeSurge = false;
+
+    [ObservableProperty]
+    private int _volumeSurgeLength = 5;
+
+    [ObservableProperty]
+    private double _volumeSurgeThreshold = 1.05;
+
+    [ObservableProperty]
+    private double _volumeSurgeFactor = 0.031;
+
+    [ObservableProperty]
     private bool _useRsiFilter = true;
 
     [ObservableProperty]

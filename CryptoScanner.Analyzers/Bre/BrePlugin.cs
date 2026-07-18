@@ -11,11 +11,19 @@ namespace CryptoScanner.Analyzers.Bre;
 public class BrePlugin : IStrategyPlugin
 {
     public string Name => Constants.StrategyBre.ToLower();
-    public CryptoSignalStrategy Strategy => CryptoSignalStrategy.Bre;
-    public Type? AnalyzeLongType => typeof(BreSignalLong);
-    public Type? AnalyzeShortType => typeof(BreSignalShort);
+
+    public IReadOnlyList<StrategyRegistration> Strategies { get; } =
+    [
+        new(CryptoSignalStrategy.Bre, Constants.StrategyBre.ToLower(), typeof(BreSignalLong), typeof(BreSignalShort)),
+    ];
 
     public static BreSettings Settings { get; internal set; } = new();
+
+    public static SettingsSignalStrategyBase CreateSettings()
+    {
+        Settings = new BreSettings();
+        return Settings;
+    }
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
@@ -25,12 +33,6 @@ public class BrePlugin : IStrategyPlugin
                 throw new NotImplementedException();
             Settings = s;
         }
-    }
-
-    public static SettingsSignalStrategyBase CreateSettings()
-    {
-        Settings = new BreSettings();
-        return Settings;
     }
 
     public IChartOverlay? ChartOverlay { get; } = new BreChartOverlay();

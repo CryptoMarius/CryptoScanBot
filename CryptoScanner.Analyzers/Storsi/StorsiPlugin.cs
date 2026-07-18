@@ -1,5 +1,4 @@
 using CryptoScanner.Analyzers.Storsi.Signal;
-using CryptoScanner.Analyzers.StoRsi.Config;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -9,9 +8,12 @@ namespace CryptoScanner.Analyzers.Storsi;
 public class StoRsiPlugin : IStrategyPlugin
 {
     public string Name => "storsi";
-    public CryptoSignalStrategy Strategy => CryptoSignalStrategy.StoRsi;
-    public Type? AnalyzeLongType => typeof(StoRsiLong);
-    public Type? AnalyzeShortType => typeof(StoRsiShort);
+
+    public IReadOnlyList<StrategyRegistration> Strategies { get; } =
+    [
+        new(CryptoSignalStrategy.StoRsi, "storsi", typeof(StoRsiLong), typeof(StoRsiShort)),
+        new(CryptoSignalStrategy.StoRsiMulti, "storsi.multi", typeof(StoRsiMultiLong), typeof(StoRsiMultiShort)),
+    ];
 
     public static StorsiSettings Settings { get; internal set; } = new();
     public SettingsSignalStrategyBase SettingsBase
@@ -32,5 +34,6 @@ public class StoRsiPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    public IConfigView? ConfigView { get; } = new StorsiConfigView();
+    // ConfigView is WIP — StorsiConfigView is guarded by #if STORSI_CONFIG_WIP
+    public IConfigView? ConfigView => null;
 }

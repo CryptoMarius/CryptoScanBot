@@ -65,6 +65,7 @@ public class TraderMechanismTests
         ? GlobalData.IntervalListPeriod[CryptoIntervalPeriod.interval15m]
         : new CryptoInterval { Id = 6, Name = "15m", Duration = 900 };
 
+    // Why? There is a PositionTools.CreatePosition? Why duplicate this many code?
     private static CryptoPosition MakePosition(Exchange exchange, CryptoSymbol symbol,
         CryptoInterval interval, CryptoTradeSide side, decimal? slPercentage = null)
     {

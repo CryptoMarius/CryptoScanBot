@@ -35,7 +35,7 @@ public class StorsiSettings : SettingsSignalStrategyBase
     public bool UseFvgZone { get; set; } = false;
     public bool UseSmcZone { get; set; } = false;
 
-    public SettingsSignalStrategyStoRsi() : base()
+    public StorsiSettings() : base()
     {
         SoundFileLong = "sound-storsi-oversold.wav";
         SoundFileShort = "sound-storsi-overbought.wav";

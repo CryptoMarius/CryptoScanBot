@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
@@ -38,7 +39,7 @@ public class StoRsiBase : SignalCreateBase
     /// </summary>
     protected bool CheckEnabledZoneRejections(out string zoneInfo)
     {
-        var settings = GlobalData.Settings.Signal.StoRsi;
+        var settings = StoRsiPlugin.Settings;
         if (!settings.UseDlzZone && !settings.UseFvgZone && !settings.UseSmcZone)
         {
             zoneInfo = "";
@@ -72,14 +73,14 @@ public class StoRsiBase : SignalCreateBase
 
         switch (SignalSide)
         {
-            case Enums.CryptoTradeSide.Long:
+            case CryptoTradeSide.Long:
                 if (CandleLast?.Candle.Close > (decimal?)CandleLast?.CandleData?.Sma20)
                 {
                     ExtraText = "Close above sma20";
                     return true;
                 }
                 break;
-            case Enums.CryptoTradeSide.Short:
+            case CryptoTradeSide.Short:
                 if (CandleLast!.Candle.Close < (decimal?)CandleLast!.CandleData?.Sma20)
                 {
                     ExtraText = "Close below sma20";

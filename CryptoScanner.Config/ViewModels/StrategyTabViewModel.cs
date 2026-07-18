@@ -49,7 +49,7 @@ public partial class StrategyTabViewModel : ObservableObject
     {
         StrategyStobbTabViewModel.LoadConfig(Constants.StrategyStobb, settings.Stobb);
         StrategySbmTabViewModel.LoadConfig(Constants.StrategySbm, settings.Sbm);
-        StrategyStorsiTabViewModel.LoadConfig(Constants.StrategyStorsi, settings.StoRsi);
+        //StrategyStorsiTabViewModel.LoadConfig(Constants.StrategyStorsi, settings.StoRsi);
         StrategyJumpTabViewModel.LoadConfig(Constants.StrategyJump, settings.Jump);
         StrategyDlzTabViewModel.LoadConfig(Constants.StrategyDlz, settings.ZonesDlz);
         StrategyFvgTabViewModel.LoadConfig(Constants.StrategyFvg, settings.ZonesFvg);
@@ -60,9 +60,9 @@ public partial class StrategyTabViewModel : ObservableObject
 #endif
         // Baba, AtrRb and Bre settings are now loaded by their plugin ConfigViews via PluginManager.
 
-        foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
+        foreach (var configView in PluginManager.ConfigViews)
         {
-            plugin.ConfigView?.LoadConfig();
+            configView.LoadConfig();
         }
     }
 
@@ -70,7 +70,7 @@ public partial class StrategyTabViewModel : ObservableObject
     {
         StrategyStobbTabViewModel.SaveConfig(settings.Stobb);
         StrategySbmTabViewModel.SaveConfig(settings.Sbm);
-        StrategyStorsiTabViewModel.SaveConfig(settings.StoRsi);
+        //StrategyStorsiTabViewModel.SaveConfig(settings.StoRsi);
         StrategyJumpTabViewModel.SaveConfig(settings.Jump);
         StrategyDlzTabViewModel.SaveConfig(settings.ZonesDlz);
         StrategyFvgTabViewModel.SaveConfig(settings.ZonesFvg);
@@ -81,9 +81,9 @@ public partial class StrategyTabViewModel : ObservableObject
 #endif
         // Baba, AtrRb and Bre settings are now saved by their plugin ConfigViews via PluginManager.
 
-        foreach (var (strategy, plugin) in PluginManager.LoadedPlugins)
+        foreach (var configView in PluginManager.ConfigViews)
         {
-            plugin.ConfigView?.SaveConfig();
+            configView.SaveConfig();
         }
     }
 }

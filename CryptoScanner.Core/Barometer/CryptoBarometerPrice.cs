@@ -45,10 +45,10 @@ internal class CryptoBarometerPrice
                         // Sometimes even 700...900 times higher than x hours ago, what is the base problem?
                         if (Math.Abs(perc) > OutlierThreshold)
                         {
-                            GlobalData.AddTextToLogTab($"BAROMETER ANOMALY {symbol.Name} {interval.Name} " +
-                                $"prev={candlePrev.Close} ({unixCandlePrev.ToLocalTime()}) " +
-                                $"last={candleLast.Close} ({unixCandleLast.ToLocalTime()}) " +
-                                $"perc={perc:F2}% (skipped)");
+                            //GlobalData.AddTextToLogTab($"BAROMETER ANOMALY {symbol.Name} {interval.Name} " +
+                            //    $"prev={candlePrev.Close} ({unixCandlePrev.ToLocalTime()}) " +
+                            //    $"last={candleLast.Close} ({unixCandleLast.ToLocalTime()}) " +
+                            //    $"perc={perc:F2}% (skipped)");
                             continue; // Skip outlier
                         }
 

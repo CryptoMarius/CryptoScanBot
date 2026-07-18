@@ -1,20 +1,20 @@
-using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
 using CryptoScanner.Core.Signal;
 
 namespace CryptoScanner.Core.Contracts;
 
 /// <summary>
-/// Contract that every strategy plugin must implement. The host discovers
-/// implementations via assembly scanning and registers them automatically
-/// into the signal pipeline — no hardcoded references needed.
+/// Contract that every strategy plugin must implement. A single plugin can
+/// register one or more sub-strategies (e.g. StoRsi + StoRsi.Multi) that
+/// all share the same settings, config view and indicator extension.
 /// </summary>
 public interface IStrategyPlugin
 {
+    /// <summary>Plugin name used as the settings key in JSON persistence.</summary>
     string Name { get; }
-    CryptoSignalStrategy Strategy { get; }
-    Type? AnalyzeLongType { get; }
-    Type? AnalyzeShortType { get; }
+
+    /// <summary>One or more sub-strategies this plugin provides.</summary>
+    IReadOnlyList<StrategyRegistration> Strategies { get; }
 
     /// <summary>Base-typed accessor for the plugin's settings (sound, color, entry conditions).
     /// The concrete type is internal to the plugin.</summary>

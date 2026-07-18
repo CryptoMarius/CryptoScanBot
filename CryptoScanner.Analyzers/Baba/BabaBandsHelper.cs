@@ -75,6 +75,23 @@ public static class BabaBandsHelper
         var vwmaSq = (IReadOnlyList<VwmaResult>)sqQuotes.ToVwma(settings.Length);
         var atrList = (IReadOnlyList<AtrResult>)candles.AsQuotes().ToAtr(settings.AtrLength);
 
+        // Rolling SMA of volume over the band Length, used by the optional volume-surge widening below.
+        // Prefix sum keeps it O(n); surge itself only looks back a few (VolumeSurgeLength) bars.
+        double[]? volAvg = null;
+        if (settings.UseVolumeSurge)
+        {
+            volAvg = new double[n];
+            double sum = 0;
+            for (int i = 0; i < n; i++)
+            {
+                sum += (double)candles[i].Volume;
+                if (i >= settings.Length)
+                    sum -= (double)candles[i - settings.Length].Volume;
+                int count = Math.Min(i + 1, settings.Length);
+                volAvg[i] = count > 0 ? sum / count : 0;
+            }
+        }
+
         for (int i = 0; i < n; i++)
         {
             double? mean = vwmaSrc[i].Vwma;
@@ -84,7 +101,22 @@ public static class BabaBandsHelper
 
             double variance = second.Value - mean.Value * mean.Value;
             double vwStdev = variance > 0 ? Math.Sqrt(variance) : 0;
-            double pad = settings.Mult * vwStdev + settings.AtrMult * (atrList[i].Atr ?? 0);
+
+            // Effective sigma-multiplier: Mult, plus the optional volume-surge widening. surge = max
+            // volume over the last VolumeSurgeLength bars / SMA(volume, Length). Normal volume
+            // (surge <= threshold) contributes nothing, so the pure VWAP band is unchanged.
+            double mult = settings.Mult;
+            if (settings.UseVolumeSurge && volAvg![i] > 0)
+            {
+                double maxVol = 0;
+                int back = Math.Min(settings.VolumeSurgeLength, i + 1);
+                for (int j = 0; j < back; j++)
+                    maxVol = Math.Max(maxVol, (double)candles[i - j].Volume);
+                double surge = maxVol / volAvg[i];
+                mult += settings.VolumeSurgeFactor * Math.Max(0, surge - settings.VolumeSurgeThreshold);
+            }
+
+            double pad = mult * vwStdev + settings.AtrMult * (atrList[i].Atr ?? 0);
             result[i] = new BandValue(mean.Value, mean.Value + pad, mean.Value - pad, vwStdev);
         }
         return result;

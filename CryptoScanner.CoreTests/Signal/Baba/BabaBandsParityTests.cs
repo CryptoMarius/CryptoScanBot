@@ -227,6 +227,67 @@ public class BabaBandsParityTests
     }
 
     [TestMethod]
+    public void VolumeSurge_MovesBandsCloserToTradingBuddy()
+    {
+        // Verifies the optional volume-surge widening actually reduces the gap to TradingBuddy's bands.
+        var settings = BabaPlugin.Settings;
+        settings.UseVolumeSurge = false;
+
+        double offErr = 0, onErr = 0;
+        int symbols = 0;
+        try
+        {
+            foreach (string symbol in Symbols)
+            {
+                Fixture fx = LoadFixture(symbol);
+                List<CryptoCandle> candles = BuildCandles(fx);
+
+                settings.UseVolumeSurge = false;
+                double rmsOff = RmsBandError(fx, BabaBandsHelper.ComputeBands(candles));
+                settings.UseVolumeSurge = true;
+                double rmsOn = RmsBandError(fx, BabaBandsHelper.ComputeBands(candles));
+
+                TestContext.WriteLine($"{symbol}: RMS band error  surge-off={rmsOff * 100:F3}%  surge-on={rmsOn * 100:F3}%");
+                offErr += rmsOff;
+                onErr += rmsOn;
+                symbols++;
+            }
+        }
+        finally
+        {
+            settings.UseVolumeSurge = false;
+        }
+
+        TestContext.WriteLine($"mean RMS error  off={offErr / symbols * 100:F3}%  on={onErr / symbols * 100:F3}%");
+        Assert.IsTrue(onErr < offErr,
+            $"Volume-surge should reduce the aggregate RMS band error (off={offErr:F4}, on={onErr:F4}).");
+    }
+
+    // RMS relative error of the half-width vs TradingBuddy over the fixture's band rows (the metric the
+    // surge coefficients were fit to). The median bar is already exact without the surge, so the surge's
+    // value shows up in the tail of widened bars, not the median.
+    private static double RmsBandError(Fixture fx, BabaBandsHelper.BandValue[] bands)
+    {
+        double sse = 0;
+        int count = 0;
+        for (int i = 0; i < fx.Rows.Length; i++)
+        {
+            Row r = fx.Rows[i];
+            if (r.Upper is not double eUpper || r.Basis is not double eBasis || !bands[i].HasValue)
+                continue;
+            double eHalf = eUpper - eBasis;
+            double cHalf = bands[i].Upper - bands[i].Basis;
+            if (eHalf > 0)
+            {
+                double rel = (cHalf - eHalf) / eHalf;
+                sse += rel * rel;
+                count++;
+            }
+        }
+        return count > 0 ? Math.Sqrt(sse / count) : 0;
+    }
+
+    [TestMethod]
     public void DefaultSettings_ArePureVwapBands()
     {
         // Guards the reverse-engineered result: the shipped defaults are what matched TradingBuddy.

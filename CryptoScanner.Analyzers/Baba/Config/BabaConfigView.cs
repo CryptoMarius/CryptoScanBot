@@ -29,6 +29,10 @@ public class BabaConfigView : IConfigView
         vm.Mult = s.Mult;
         vm.AtrLength = s.AtrLength;
         vm.AtrMult = s.AtrMult;
+        vm.UseVolumeSurge = s.UseVolumeSurge;
+        vm.VolumeSurgeLength = s.VolumeSurgeLength;
+        vm.VolumeSurgeThreshold = s.VolumeSurgeThreshold;
+        vm.VolumeSurgeFactor = s.VolumeSurgeFactor;
         vm.UseRsiFilter = s.UseRsiFilter;
         vm.UseSlideFilter = s.UseSlideFilter;
         vm.SlideWindow = s.SlideWindow;
@@ -64,6 +68,10 @@ public class BabaConfigView : IConfigView
         s.Mult = vm.Mult;
         s.AtrLength = vm.AtrLength;
         s.AtrMult = vm.AtrMult;
+        s.UseVolumeSurge = vm.UseVolumeSurge;
+        s.VolumeSurgeLength = vm.VolumeSurgeLength;
+        s.VolumeSurgeThreshold = vm.VolumeSurgeThreshold;
+        s.VolumeSurgeFactor = vm.VolumeSurgeFactor;
         s.UseRsiFilter = vm.UseRsiFilter;
         s.UseSlideFilter = vm.UseSlideFilter;
         s.SlideWindow = vm.SlideWindow;

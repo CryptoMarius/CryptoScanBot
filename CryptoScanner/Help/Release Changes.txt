@@ -9,9 +9,7 @@ $ mexc/spot werkt
 $ okx spot en futures werkt
 
 
-todo: uitzetten
-BAROMETER ANOMALY AKEUSDT 1d prev=0.0001906 (2026-07-14 15:28:00) last=0.0007186 (2026-07-15 15:28:00) perc=277.02% (skipped)
-
+- Intern is er geschoven met de strategien waardoor deze opnieuw ingesteld moeten worden
 - De papertrader ziet niet dat meerdere dca's en sl op "hetzelfde moment" geraakt kunnen zijn.
 - Een paar memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven

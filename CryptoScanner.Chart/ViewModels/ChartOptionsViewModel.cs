@@ -107,12 +107,14 @@ public partial class ChartOptionsViewModel : ObservableObject
         // misc
         Transparent = session.Transparent;
 
-        // Plugin overlays
+        // Plugin overlays — subscribe to each toggle so a flip triggers a chart redraw
         PluginOverlays.Clear();
         foreach (var overlay in PluginManager.ChartOverlays)
         {
             bool isOn = session.PluginOverlayStates.TryGetValue(overlay.GroupKey, out bool v) && v;
-            PluginOverlays.Add(new PluginOverlayToggle(overlay.GroupKey, overlay.Label, isOn));
+            var toggle = new PluginOverlayToggle(overlay.GroupKey, overlay.Label, isOn);
+            toggle.PropertyChanged += (_, _) => OnPropertyChanged(nameof(PluginOverlays));
+            PluginOverlays.Add(toggle);
         }
     }
 

@@ -12,11 +12,19 @@ namespace CryptoScanner.Analyzers.Baba;
 public class BabaPlugin : IStrategyPlugin
 {
     public string Name => Constants.StrategyBaba.ToLower();
-    public CryptoSignalStrategy Strategy => CryptoSignalStrategy.Baba;
-    public Type? AnalyzeLongType => typeof(BabaSignalLong);
-    public Type? AnalyzeShortType => typeof(BabaSignalShort);
+
+    public IReadOnlyList<StrategyRegistration> Strategies { get; } =
+    [
+        new(CryptoSignalStrategy.Baba, Constants.StrategyBaba.ToLower(), typeof(BabaSignalLong), typeof(BabaSignalShort)),
+    ];
 
     public static BabaSettings Settings { get; internal set; } = new();
+
+    public static SettingsSignalStrategyBase CreateSettings()
+    {
+        Settings = new BabaSettings();
+        return Settings;
+    }
     public SettingsSignalStrategyBase SettingsBase
     {
         get => Settings;
@@ -26,12 +34,6 @@ public class BabaPlugin : IStrategyPlugin
                 throw new NotImplementedException();
             Settings = s;
         }
-    }
-
-    public static SettingsSignalStrategyBase CreateSettings()
-    {
-        Settings = new BabaSettings();
-        return Settings;
     }
 
     public IIndicatorExtension? CreateIndicatorExtension() => new BabaIndicatorExtension();
