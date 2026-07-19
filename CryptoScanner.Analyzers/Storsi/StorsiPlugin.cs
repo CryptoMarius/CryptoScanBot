@@ -34,6 +34,5 @@ public class StoRsiPlugin : IStrategyPlugin
     }
 
     public IChartOverlay? ChartOverlay { get; } = null;
-    // ConfigView is WIP — StorsiConfigView is guarded by #if STORSI_CONFIG_WIP
-    public IConfigView? ConfigView => null;
+    public IConfigView? ConfigView { get; } = new Config.StorsiConfigView();
 }

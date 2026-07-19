@@ -1,8 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Core.Settings.Strategy;
-
-namespace CryptoScanner.Config.ViewModels;
+namespace CryptoScanner.Analyzers.Storsi.Config;
 
 public partial class StrategyStorsiSettingsViewModel : ObservableObject
 {
@@ -52,7 +50,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
     private bool _useSmcZone = false;
 
 
-    public void LoadConfig(string caption, SettingsSignalStrategyStoRsi settings)
+    public void LoadConfig(StorsiSettings settings)
     {
         BbMinPercentage = settings.BBMinPercentage;
         BbMaxPercentage = settings.BBMaxPercentage;
@@ -71,7 +69,7 @@ public partial class StrategyStorsiSettingsViewModel : ObservableObject
         UseSmcZone = settings.UseSmcZone;
     }
 
-    public void SaveConfig(SettingsSignalStrategyStoRsi settings)
+    public void SaveConfig(StorsiSettings settings)
     {
         settings.BBMinPercentage = BbMinPercentage;
         settings.BBMaxPercentage = BbMaxPercentage;

@@ -39,5 +39,9 @@
 		<ProjectReference Include="..\CryptoScanner.Core\CryptoScanner.Core.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Config\CryptoScanner.Config.csproj" />
 		<ProjectReference Include="..\CryptoScanner.Chart\CryptoScanner.Chart.csproj" />
+		<!-- Analyzer strategy plugins (Baba, Bre, StoRsi). Without this reference the emulator
+		     cannot register the plugins: their strategies would be missing from the run dialog,
+		     their Configure tabs absent, and SaveConfiguration would persist nothing for them. -->
+		<ProjectReference Include="..\CryptoScanner.Analyzers\CryptoScanner.Analyzers.csproj" />
 	</ItemGroup>
 </Project>

@@ -51,6 +51,12 @@ public partial class App : Application
         // System.Text.Json type-info pipeline.
         GlobalData.Services = EmulatorServices.Build();
 
+        // Register the analyzer strategy plugins (Baba, Bre, StoRsi) exactly like the live
+        // scanner does in its App.axaml.cs. Must happen once, before EmulatorBootstrap runs:
+        // the bootstrap restores the plugin settings from settings.json and builds the
+        // strategy index from PluginManager.LoadedPlugins.
+        Analyzers.AnalyzerRegistration.RegisterAll();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Two-stage startup:

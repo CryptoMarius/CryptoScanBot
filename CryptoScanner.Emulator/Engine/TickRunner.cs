@@ -92,7 +92,6 @@ public sealed class TickRunner
     {
         var exchange = GlobalData.ActiveExchange!;
         GlobalData.Settings.Signal.UseIndicatorHub = true;
-
         GlobalData.AnalyzeSignalCreated = ReceivedCreatedSignals;
 
         // Enable the per-candle pipeline profiler for this run (off in the live scanner). It breaks
@@ -128,6 +127,7 @@ public sealed class TickRunner
                 symbols.Add(symbol);
             }
 
+
             // ───── Warmup all symbols up-front ──────────────────────────────────────
             long warmupStart = Stopwatch.GetTimestamp();
             foreach (var symbol in symbols)
@@ -144,6 +144,7 @@ public sealed class TickRunner
             GlobalData.AddTextToLogTab($"Warmup ({symbols.Count} symbol(s)): " +
                 $"{(double)elapsedWarmup / Stopwatch.Frequency:F1}s");
 
+
             // ───── Determine chunks ─────────────────────────────────────────────────
             uint chunkMinutes = ChunkDays > 0 ? (uint)ChunkDays * 24 * 60 : 0;
             bool useChunks = chunkMinutes > 0 && (replayTo.Minutes - replayFrom.Minutes) > chunkMinutes;
@@ -157,8 +158,8 @@ public sealed class TickRunner
             int totalBars = (int)((replayTo.Minutes - replayFrom.Minutes) / interval1m.Duration) * symbols.Count;
 
             // ───── Chunk loop (or single pass when chunking is off) ──────────────────
-            CandleTime windowFrom = replayFrom;
             int chunkIndex = 0;
+            CandleTime windowFrom = replayFrom;
             while (windowFrom < replayTo)
             {
                 if (ct.IsCancellationRequested)
@@ -167,6 +168,15 @@ public sealed class TickRunner
                 CandleTime windowTo = useChunks
                     ? new CandleTime(Math.Min(windowFrom.Minutes + chunkMinutes, replayTo.Minutes))
                     : replayTo;
+
+                // Advance the clock to the end of this chunk BEFORE loading its candles.
+                // LoadCandlesInRange clips every read to "OpenTime <= Clock.UtcNow" while a run is
+                // active, and after the previous chunk the clock is parked at that chunk's last
+                // replayed minute — which would clip the entire new chunk to (almost) nothing and
+                // starve the replay from chunk 2 onwards. The replay loop below resets the clock
+                // minute-by-minute anyway once it starts.
+                if (emulatorClock != null)
+                    emulatorClock.UtcNow = windowTo.ToDateTime();
 
                 // Load replay candles for this chunk
                 var replays = new List<(CryptoSymbol Symbol, CryptoCandleList Replay)>();

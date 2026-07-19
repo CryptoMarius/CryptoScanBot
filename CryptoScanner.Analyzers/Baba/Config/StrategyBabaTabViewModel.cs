@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace CryptoScanner.Config.ViewModels;
+using CryptoScanner.Config.ViewModels;
+
+namespace CryptoScanner.Analyzers.Baba.Config;
 
 public partial class StrategyBabaTabViewModel : ObservableObject
 {
@@ -18,5 +20,19 @@ public partial class StrategyBabaTabViewModel : ObservableObject
         _soundAndColorsViewModel = new();
         _strategyBabaSettingsViewModel = new();
         _strategyEntryConditionsViewModel = new();
+    }
+
+    public void LoadConfig(BabaSettings settings)
+    {
+        SoundAndColorsViewModel.LoadConfig("Baba", settings);
+        StrategyBabaSettingsViewModel.LoadConfig(settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
+    }
+
+    public void SaveConfig(BabaSettings settings)
+    {
+        SoundAndColorsViewModel.SaveConfig(settings);
+        StrategyBabaSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

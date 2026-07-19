@@ -1,4 +1,5 @@
 using CryptoScanner.Core.Context;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Exchange;
 using CryptoScanner.Core.Signal;
@@ -74,6 +75,12 @@ public static class EmulatorBootstrap
 
             GlobalData.AddTextToLogTab($"Active exchange: {activeExchange.Name} ({activeExchange.SymbolListName.Count} symbols loaded)");
         }
+
+        // Restore the analyzer plugin settings (Baba, Bre, StoRsi) from the AnalyzerSettings
+        // JSON blocks that LoadConfiguration just deserialized — same call and same order as
+        // ScannerSession.ApplyConfigurationAsync. Without this the plugins keep their defaults
+        // and IndexStrategySettings below indexes those defaults.
+        PluginManager.RestoreSettings(GlobalData.Settings.Signal.AnalyzerSettings);
 
         // Build the per-strategy index, white/blacklist lookup, indicator/signal preparation —
         // exact same calls as the live ApplyConfigurationAsync. Cheap, no side effects.

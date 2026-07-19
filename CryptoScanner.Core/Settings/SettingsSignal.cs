@@ -1,4 +1,6 @@
-﻿using CryptoScanner.Core.Settings.Strategy;
+﻿using System.Text.Json;
+
+using CryptoScanner.Core.Settings.Strategy;
 
 namespace CryptoScanner.Core.Settings;
 
@@ -68,8 +70,12 @@ public class SettingsSignal
     // Baba, AtrRb and Bre settings have been migrated to the Analyzers plugin architecture
     // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings).
 
-    // Analyzer plugin settings (keyed by plugin name, e.g. "demo")
-    public Dictionary<string, SettingsSignalStrategyBase> AnalyzerSettings { get; set; } = [];
+    // Analyzer plugin settings (keyed by plugin name, e.g. "demo").
+    // Stored as raw JSON per plugin: Core does not know the concrete settings types
+    // (they live in the Analyzers project), so serializing them here as the base type
+    // would silently drop all derived properties. Only the plugin itself knows its
+    // concrete type; PluginManager converts to/from these JSON blocks on save/load.
+    public Dictionary<string, JsonElement> AnalyzerSettings { get; set; } = [];
 
     // Logging
     public bool LogMinimalVolume { get; set; } = false;

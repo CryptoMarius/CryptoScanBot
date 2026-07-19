@@ -14,8 +14,7 @@ public partial class StrategyTabViewModel : ObservableObject
     private StrategyStobbTabViewModel _strategyStobbTabViewModel;
     [ObservableProperty]
     private StrategySbmTabViewModel _strategySbmTabViewModel;
-    [ObservableProperty]
-    private StrategyStorsiTabViewModel _strategyStorsiTabViewModel;
+    // StrategyStorsiTabViewModel moved to the Analyzers project (Storsi plugin ConfigView).
     [ObservableProperty]
     private StrategyJumpTabViewModel _strategyJumpTabViewModel;
     [ObservableProperty]
@@ -35,7 +34,6 @@ public partial class StrategyTabViewModel : ObservableObject
     {
         _strategyStobbTabViewModel = new();
         _strategySbmTabViewModel = new();
-        _strategyStorsiTabViewModel = new();
         _strategyJumpTabViewModel = new();
         _strategyDlzTabViewModel = new();
         _strategyFvgTabViewModel = new();

@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using CryptoScanner.Config.ViewModels;
 
-using CryptoScanner.Core.Settings.Strategy;
-
-namespace CryptoScanner.Config.ViewModels;
+namespace CryptoScanner.Analyzers.Storsi.Config;
 
 public partial class StrategyStorsiTabViewModel : ObservableObject
 {
@@ -24,14 +23,14 @@ public partial class StrategyStorsiTabViewModel : ObservableObject
     }
 
 
-    internal void LoadConfig(string caption, SettingsSignalStrategyStoRsi settings)
+    public void LoadConfig(StorsiSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig(caption, settings);
-        StrategyStorsiSettingsViewModel.LoadConfig(caption, settings);
+        SoundAndColorsViewModel.LoadConfig("StoRsi", settings);
+        StrategyStorsiSettingsViewModel.LoadConfig(settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(SettingsSignalStrategyStoRsi settings)
+    public void SaveConfig(StorsiSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyStorsiSettingsViewModel.SaveConfig(settings);

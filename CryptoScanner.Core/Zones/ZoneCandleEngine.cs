@@ -394,7 +394,10 @@ public class ZoneCandleEngine
         // exchange mid-run; work with whatever is available locally (candles.db + the
         // replay's own 1m synthesis). API calls during replay cause massive latency and
         // are not reproducible across runs.
-        if (GlobalData.IsEmulatorMode)
+        // Only guarded while a run is actually active (CurrentEmulatorRunId is set at run
+        // start and cleared at run end), so the pre-flight "Fetch candles" step can still
+        // pull missing history from the exchange.
+        if (GlobalData.IsEmulatorMode && GlobalData.CurrentEmulatorRunId.HasValue)
             return;
 
         (CandleTime min, CandleTime max) = CalculateDates(interval, fetchFrom, fetchCount);

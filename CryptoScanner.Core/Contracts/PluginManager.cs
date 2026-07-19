@@ -76,50 +76,45 @@ public static class PluginManager
     /// <summary>
     /// Restore plugin settings from the deserialized SettingsSignal.AnalyzerSettings
     /// dictionary. Called after settings JSON has been loaded.
-    /// Because the dictionary is typed as SettingsSignalStrategyBase, System.Text.Json
-    /// only populates base-class properties. We round-trip through JSON to rehydrate
-    /// the concrete plugin settings type so derived properties are preserved.
+    /// Each entry is a raw JSON block; only the plugin knows its concrete settings
+    /// type, so we deserialize the block directly into that type here.
     /// </summary>
-    public static void RestoreSettings(Dictionary<string, SettingsSignalStrategyBase> stored)
+    public static void RestoreSettings(Dictionary<string, JsonElement> stored)
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {
-            if (stored.TryGetValue(plugin.Name, out var loaded) && loaded != null)
+            if (!stored.TryGetValue(plugin.Name, out var element))
+                continue;
+
+            try
             {
-                plugin.SettingsBase = RehydrateAsConcrete(plugin, loaded);
+                var concreteType = plugin.SettingsBase.GetType();
+                if (element.Deserialize(concreteType, JsonTools.DeSerializerOptions) is SettingsSignalStrategyBase settings)
+                    plugin.SettingsBase = settings;
             }
-        }
-    }
-
-    private static SettingsSignalStrategyBase RehydrateAsConcrete(IStrategyPlugin plugin, SettingsSignalStrategyBase deserialized)
-    {
-        var concreteType = plugin.SettingsBase.GetType();
-        if (deserialized.GetType() == concreteType)
-            return deserialized;
-
-        try
-        {
-            var json = JsonSerializer.Serialize(deserialized, deserialized.GetType(), JsonTools.JsonSerializerIndented);
-            var result = JsonSerializer.Deserialize(json, concreteType, JsonTools.DeSerializerOptions) as SettingsSignalStrategyBase;
-            return result ?? deserialized;
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn(ex, $"Failed to rehydrate settings for {plugin.Name}, using defaults");
-            return deserialized;
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, $"Failed to restore settings for {plugin.Name}, using defaults");
+            }
         }
     }
 
     /// <summary>
     /// Collect current plugin settings into the provided dictionary, ready
     /// for serialization as part of the normal settings JSON.
+    /// Serialized with the runtime type so derived properties are included
+    /// (the declared base type would only write the base-class properties).
+    /// Upserts only the entries of currently registered plugins; entries of
+    /// plugins that are not loaded in this host (disabled, DEBUG-only, or a
+    /// host without the Analyzers project) are left untouched so their stored
+    /// settings are never wiped by a save.
     /// </summary>
-    public static void CollectSettings(Dictionary<string, SettingsSignalStrategyBase> target)
+    public static void CollectSettings(Dictionary<string, JsonElement> target)
     {
-        target.Clear();
         foreach (var plugin in _plugins.Values.Distinct())
         {
-            target[plugin.Name] = plugin.SettingsBase;
+            target[plugin.Name] = JsonSerializer.SerializeToElement(
+                plugin.SettingsBase, plugin.SettingsBase.GetType(), JsonTools.JsonSerializerIndented);
         }
     }
 }

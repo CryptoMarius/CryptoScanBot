@@ -265,7 +265,13 @@ public partial class RunResultsView : UserControl
         // the dialog, then restore the originals in the finally. We never call SaveConfiguration, so
         // whatever the user pokes at is discarded — no need to make every control read-only.
         SettingsBasic original = GlobalData.Settings;
+        // The plugin tabs (Baba/Bre/StoRsi) do not read GlobalData.Settings but the static plugin
+        // settings, so those have to be swapped along: snapshot the current plugin values, load the
+        // run's AnalyzerSettings blocks into the plugins, and restore the snapshot in the finally.
+        Dictionary<string, System.Text.Json.JsonElement> pluginSnapshot = [];
+        CryptoScanner.Core.Contracts.PluginManager.CollectSettings(pluginSnapshot);
         GlobalData.Settings = runSettings;
+        CryptoScanner.Core.Contracts.PluginManager.RestoreSettings(runSettings.Signal.AnalyzerSettings);
         try
         {
             var window = new ConfigurationWindow
@@ -277,6 +283,7 @@ public partial class RunResultsView : UserControl
         finally
         {
             GlobalData.Settings = original;
+            CryptoScanner.Core.Contracts.PluginManager.RestoreSettings(pluginSnapshot);
             // Undo any live theme change the dialog may have applied while showing the run's settings.
             App.ApplyThemeFromSettings();
             viewModel.Status = $"Viewed settings of run #{row.Id} (no changes saved).";

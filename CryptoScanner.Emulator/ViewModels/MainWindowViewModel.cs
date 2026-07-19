@@ -248,6 +248,13 @@ public partial class MainWindowViewModel : ObservableObject
         int total = config.Symbols.Count;
         int symbolIdx = 0;
 
+        // Same cancellation source the replay run uses, so the Stop button works during a fetch
+        // too. Checked at the top of the per-symbol loop: a Stop finishes the symbol in progress
+        // (partial candle data for a symbol is useless) and then abandons the rest.
+        _cts = new CancellationTokenSource();
+        CancellationToken cancellationToken = _cts.Token;
+        bool cancelled = false;
+
         List<CryptoInterval> intervals = GlobalData.IntervalList;
         GlobalData.AddTextToLogTab(
             $"Fetch candles: {total} symbol(s), window {config.FromDate:yyyy-MM-dd HH:mm}..{config.ToDate:yyyy-MM-dd HH:mm} UTC, 1m from exchange + higher derived locally");
@@ -262,8 +269,22 @@ public partial class MainWindowViewModel : ObservableObject
             // UI thread; AddTextToLogTab already marshals itself via the Log tab.
             await Task.Run(async () =>
             {
+                // One connection for the whole fetch; each symbol is persisted (and its memory
+                // released) as soon as it is complete, see step 3 below. InitializeSchema is
+                // normally done by the bootstrap but is cheap and covers a fresh candle folder.
+                CandleDatabase.InitializeSchema(GlobalData.ActiveExchange);
+                using var candleDb = new CandleDatabase(GlobalData.ActiveExchange);
+                candleDb.Open();
+
                 foreach (string symbolName in config.Symbols)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        cancelled = true;
+                        GlobalData.AddTextToLogTab($"Fetch candles: stopped by user after {symbolIdx}/{total} symbol(s)");
+                        break;
+                    }
+
                     symbolIdx++;
                     if (!GlobalData.ActiveExchange.SymbolListName.TryGetValue(symbolName, out CryptoSymbol? symbol))
                     {
@@ -283,13 +304,24 @@ public partial class MainWindowViewModel : ObservableObject
                     // ── Step 1: fetch 1m from the exchange ───────────────────────────────────
                     // The warmup must cover whichever is bigger: what the indicators need
                     // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
-                    // WindowCalcWarmupCandles). The 1m window is large enough to cover every
-                    // higher interval's warmup as well once BulkCalculateCandles derives them.
+                    // WindowCalcWarmupCandles). Because every higher interval is DERIVED from
+                    // this single 1m stream (step 2), the 1m window must span the warmup of the
+                    // LONGEST maintained interval — 270 bars of 15m needs ~2.8 days of 1m, 270
+                    // bars of 1h needs ~11 days. Taking only ComputeWarmupMinutes(1m) (24 h)
+                    // here left the 15m/30m CandleLists far below the 260-candle minimum that
+                    // CollectCandles requires ("Error collecting history" at the start of a run).
                     // Zone depth (DLZ CandleCount) is NOT included here — PrepareSymbol loads
                     // those candles per interval directly from the DB at their own resolution.
                     uint chartMarginMinutes1m = (uint)((ChartWindowViewModel.WindowMarginCandles
                         + ChartWindowViewModel.WindowCalcWarmupCandles) * interval1m.Duration);
-                    uint warmupMinutes1m = Math.Max(IndicatorWarmup.ComputeWarmupMinutes(interval1m), chartMarginMinutes1m);
+                    uint indicatorWarmupMinutes = IndicatorWarmup.ComputeWarmupMinutes(interval1m);
+                    foreach (CryptoInterval maintained in IndicatorWarmup.ResolveMaintainedIntervals())
+                    {
+                        uint intervalWarmup = IndicatorWarmup.ComputeWarmupMinutes(maintained);
+                        if (intervalWarmup > indicatorWarmupMinutes)
+                            indicatorWarmupMinutes = intervalWarmup;
+                    }
+                    uint warmupMinutes1m = Math.Max(indicatorWarmupMinutes, chartMarginMinutes1m);
                     DateTime from1m = config.FromDate.AddMinutes(-warmupMinutes1m);
 
                     CandleTime minDate1m = IntervalTools.StartOfIntervalCandle(
@@ -328,22 +360,35 @@ public partial class MainWindowViewModel : ObservableObject
                         loadedCandlesInMemory[interval.IntervalPeriod] = true;
                     }
 
-                    GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done");
-                }
+                    // ── Step 3: persist this symbol to {Exchange}.db and release its memory ──
+                    // Per symbol instead of one SaveCandlesAsync at the end: with the full
+                    // interval ladder a symbol-year is ~1.2M in-memory candles (~100 MB), so a
+                    // fetch of many symbols over a long window would otherwise accumulate
+                    // gigabytes. The replay never needs these lists — TickRunner reloads per
+                    // chunk from candles.db — and ClearCandles leaves LastCandleSynchronized
+                    // intact, so a next fetch still resumes where this one ended. Bonus: a Stop
+                    // (or crash) loses at most the symbol in progress, everything before it is
+                    // already on disk.
+                    SetStatus($"Saving {symbol.Name} to database ({symbolIdx}/{total})…");
+                    CandleDatabase.SaveCandlesForSymbol(candleDb.Connection, symbol);
+                    symbol.ClearCandles();
 
-                // Persist the in-memory CandleLists to {Exchange}.db. Without this, everything
-                // the REST fetch just pulled lives only in memory and is gone on the next start
-                // — so each launch would have to refetch from the exchange. SaveCandlesAsync is
-                // the same call the live scanner makes during ScannerSession shutdown; bulk
-                // upserts via SQLite transactions, so calling it once at the end of the fetch is
-                // far cheaper than after every symbol.
-                SetStatus("Saving candles to database…");
-                GlobalData.AddTextToLogTab("Fetch candles: persisting to database");
-                await CandleDatabase.SaveCandlesAsync();
+                    GlobalData.AddTextToLogTab($"Fetch candles: {symbol.Name} — done (saved, memory released)");
+                }
             });
 
-            Status = $"Fetch candles: completed for {total} symbol(s).";
-            GlobalData.AddTextToLogTab($"Fetch candles: completed ({total} symbol(s))");
+            // On a Stop the candles fetched so far are already persisted (each symbol is saved
+            // right after its fetch), so a re-run of the fetch resumes where it left off.
+            if (cancelled)
+            {
+                Status = $"Fetch candles: stopped after {symbolIdx}/{total} symbol(s), fetched data saved.";
+                GlobalData.AddTextToLogTab($"Fetch candles: stopped ({symbolIdx}/{total} symbol(s) done)");
+            }
+            else
+            {
+                Status = $"Fetch candles: completed for {total} symbol(s).";
+                GlobalData.AddTextToLogTab($"Fetch candles: completed ({total} symbol(s))");
+            }
         }
         catch (Exception ex)
         {
@@ -353,6 +398,8 @@ public partial class MainWindowViewModel : ObservableObject
         finally
         {
             IsRunning = false;
+            _cts?.Dispose();
+            _cts = null;
         }
     }
 
@@ -791,25 +838,21 @@ public partial class MainWindowViewModel : ObservableObject
             // the live SaveConfiguration uses — so the exact configuration behind a run can be
             // inspected and the "best" one restored later.
             string configJson = System.Text.Json.JsonSerializer.Serialize(config);
+            // Sync the analyzer plugin settings into the AnalyzerSettings blocks first (same as
+            // SaveConfiguration does) so the snapshot contains the plugin values of THIS run.
+            Core.Contracts.PluginManager.CollectSettings(GlobalData.Settings.Signal.AnalyzerSettings);
             string settingsJson = System.Text.Json.JsonSerializer.Serialize(
-                GlobalData.Settings, CryptoScanner.Core.Json.JsonTools.JsonSerializerIndented);
+                GlobalData.Settings, Core.Json.JsonTools.JsonSerializerIndented);
             run = EmulatorDb.StartRun(configJson, config.FromDate, config.ToDate, config.Label, settingsJson);
             GlobalData.AddTextToLogTab($"Run #{run.Id} \"{config.Label}\" started: {config.Symbols.Count} symbol(s) {config.FromDate:yyyy-MM-dd} → {config.ToDate:yyyy-MM-dd}");
 
             var runner = new TickRunner
             {
-                Progress = new Progress<TickRunProgress>(OnTickProgress),
-                // Temporarily serial: testing whether the parallel symbol order (under slot/capital
-                // contention) is what makes the emulator diverge from the serial live scanner.
                 RunParallel = true,
+                Progress = new Progress<TickRunProgress>(OnTickProgress),
             };
 
-            // Run the replay on a background thread. Previously RunAsync was awaited directly on
-            // the UI thread; even with periodic Task.Yield the engine work saturated the
-            // dispatcher, so the Stop button's click (and thus _cts.Cancel()) was starved and the
-            // run "couldn't be stopped". Offloading frees the UI thread to process Stop instantly;
-            // the loop then sees the cancelled token at its next iteration. Progress<T> still
-            // marshals OnTickProgress back to the UI thread (it captured the UI context here).
+            // Run the replay on a background thread. 
             await Task.Run(() => runner.RunAsync(config, _cts.Token), _cts.Token);
 
             // The TickRunner's replay loop breaks out cleanly on cancellation (it checks the token

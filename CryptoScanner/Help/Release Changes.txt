@@ -8,8 +8,16 @@ $ bybit/spot werkt
 $ mexc/spot werkt
 $ okx spot en futures werkt
 
+TODO:
+- De ATR RB kan weg
+- Instellingen zijn niet persistent momenteel, bah!!
+- Instellingen zijn allemaal pleitte en leeg!!!
+- Hoe krijg ik de instelling schermen dynamisch (en gesorteerd) naar de config UI?
+- Defaults voor de strategien (zodat je terug kan naar de fabrieksinstellingen)
+- De stop knop onderbreekt de fetch van de emulator niet
 
-- Intern is er geschoven met de strategien waardoor deze opnieuw ingesteld moeten worden
+*****
+- Intern is er versimpeld en geschoven met strategien waardoor deze opnieuw ingesteld moeten worden
 - De papertrader ziet niet dat meerdere dca's en sl op "hetzelfde moment" geraakt kunnen zijn.
 - Een paar memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven

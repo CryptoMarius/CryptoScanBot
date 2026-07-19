@@ -22,11 +22,6 @@ public partial class StrategyTabView : UserControl
 #if !DEBUG
         this.FindControl<TabItem>("BbmaTab")!.IsVisible = false;
 #endif
-#if !EXPERIMENTAL
-        this.FindControl<TabItem>("BabaTab")!.IsVisible = false;
-        this.FindControl<TabItem>("AtrRbTab")!.IsVisible = false;
-        this.FindControl<TabItem>("BreTab")!.IsVisible = false;
-#endif
 
         foreach (var configView in PluginManager.ConfigViews)
         {

@@ -31,21 +31,12 @@
 		<TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <settings:StrategyStobbTabView DataContext="{Binding StrategyStobbTabViewModel}" />
         </TabItem>
-		<TabItem Header="STORSI" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-            <settings:StrategyStorsiTabView DataContext="{Binding StrategyStorsiTabViewModel}" />
-		</TabItem>
 		<TabItem x:Name="BbmaTab" Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
 			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
 		</TabItem>
-		<TabItem x:Name="BabaTab" Header="BABA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyBabaTabView DataContext="{Binding StrategyBabaTabViewModel}" />
-		</TabItem>
-		<TabItem x:Name="AtrRbTab" Header="ATR RB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyAtrRbTabView DataContext="{Binding StrategyAtrRbTabViewModel}" />
-		</TabItem>
-		<TabItem x:Name="BreTab" Header="BRE" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyBreTabView DataContext="{Binding StrategyBreTabViewModel}" />
-		</TabItem>
+		<!-- The StoRsi, Baba, AtrRb and Bre tabs are added dynamically from the plugin
+		     ConfigViews (see the code-behind); hardcoded TabItems for them would show
+		     detached viewmodels whose values are never loaded or saved. -->
 	</TabControl>
 
 </UserControl>

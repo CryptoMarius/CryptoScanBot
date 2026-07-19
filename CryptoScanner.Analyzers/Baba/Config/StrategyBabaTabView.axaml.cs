@@ -1,19 +1,18 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-using CryptoScanner.Config.ViewModels;
 
-namespace CryptoScanner.Config.Views;
+namespace CryptoScanner.Analyzers.Baba.Config;
 
-public partial class StrategyBreTabView : UserControl
+public partial class StrategyBabaTabView : UserControl
 {
-    public StrategyBreTabView()
+    public StrategyBabaTabView()
     {
         InitializeComponent();
 
         if (DataContext == null)
         {
-            DataContext = new StrategyBreTabViewModel();
+            DataContext = new StrategyBabaTabViewModel();
         }
     }
 

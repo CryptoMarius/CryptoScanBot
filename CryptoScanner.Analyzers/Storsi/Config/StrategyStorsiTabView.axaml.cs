@@ -1,9 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-using CryptoScanner.Config.ViewModels;
 
-namespace CryptoScanner.Config.Views;
+namespace CryptoScanner.Analyzers.Storsi.Config;
 
 public partial class StrategyStorsiTabView : UserControl
 {

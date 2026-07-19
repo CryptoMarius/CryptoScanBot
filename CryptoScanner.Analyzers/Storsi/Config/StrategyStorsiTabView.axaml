@@ -3,15 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
-             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:vm="using:CryptoScanner.Analyzers.Storsi.Config"
              xmlns:settings="using:CryptoScanner.Config.Views"
              x:DataType="vm:StrategyStorsiTabViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyStorsiTabView">
+             x:Class="CryptoScanner.Analyzers.Storsi.Config.StrategyStorsiTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
             <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategyStorsiSettingsView DataContext="{Binding StrategyStorsiSettingsViewModel}" />
+            <vm:StrategyStorsiSettingsView DataContext="{Binding StrategyStorsiSettingsViewModel}" />
             <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
         </StackPanel>
     </ScrollViewer>
