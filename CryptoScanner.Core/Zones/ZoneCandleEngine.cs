@@ -408,7 +408,9 @@ public class ZoneCandleEngine
             {
                 if (symbol.Exchange.IsIntervalSupported(interval.IntervalPeriod))
                 {
-                    // Load the candles from the exchange
+                    // Load the candles from the exchange. For a symbol that was listed after
+                    // `loop` this costs a single call: the exchange request has no endTime, so
+                    // it returns the first candles that DO exist and the loop skips ahead.
                     bool debug = GlobalData.Settings.General.DebugZoneCandles && (GlobalData.Settings.General.DebugSymbol == symbol.Name || GlobalData.Settings.General.DebugSymbol == "");
                     if (debug)
                         ScannerLog.Logger.Info($"CandleEngine.FetchFrom({symbol.Name}, {interval!.Name}, " +

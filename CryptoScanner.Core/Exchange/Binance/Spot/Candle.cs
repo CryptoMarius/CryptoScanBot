@@ -34,9 +34,16 @@ public class Candle(ExchangeBase api) : CandleBase(api), ICandle
         LimitRate.WaitForFairWeight(1);
         string prefix = $"{ExchangeBase.ExchangeOptions.ExchangeName} {symbol.Name} {interval!.Name}";
 
+        // No endTime: ask for "the next CandleLimit candles at or after startTime". With an
+        // endTime the request is a bounded window, and a window that lies before the symbol's
+        // listing date (or inside an inactive period) comes back EMPTY — forcing the caller to
+        // crawl through the gap window-by-window with empty responses (hitting rate limits).
+        // Without endTime Binance skips the gap itself and returns the first candles that do
+        // exist, so a gap costs one call instead of hundreds. The limit already caps the
+        // response at CandleLimit candles, endTime added nothing for contiguous data.
         CandleTime maxTime = fetchFrom + (Api.ExchangeOptions.CandleLimit - 1) * interval.Duration;
         var result = await api.ExchangeData.GetKlinesAsync(symbol.ExchangeName, (KlineInterval)exchangeInterval,
-            startTime: fetchFrom.ToDateTime(), endTime: maxTime.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
+            startTime: fetchFrom.ToDateTime(), limit: Api.ExchangeOptions.CandleLimit);
         if (!result.Success)
         {
             GlobalData.AddTextToLogTab($"{prefix} fetch from {fetchFrom.ToLocalTime()} error getting klines {result.Error}");
