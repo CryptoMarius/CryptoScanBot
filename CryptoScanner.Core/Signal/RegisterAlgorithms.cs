@@ -101,30 +101,6 @@ public static class RegisterAlgorithms
         });
 
 
-        ////***************************************************
-        //// WGHBM - Momentum indicator that shows arrows when the Stochastic and the RSI are at the same time in the oversold or overbought area.
-        ////***************************************************
-        //// https://www.tradingview.com/script/0F1sNM49-WGHBM/ (not available anymore)
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi", // was WGHM = We Gaan Het Meemaken..
-        //    Strategy = CryptoSignalStrategy.StoRsi,
-        //    AnalyzeLongType = typeof(SignalStoRsiLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiShort),
-        //});
-
-
-        //// another combined with a higher timeframe
-        //Register(new AlgorithmDefinition()
-        //{
-        //    Name = "storsi.multi",
-        //    Strategy = CryptoSignalStrategy.StoRsiMulti,
-        //    AnalyzeLongType = typeof(SignalStoRsiMultiLong),
-        //    AnalyzeShortType = typeof(SignalStoRsiMultiShort),
-        //});
-
-
-
         //***************************************************
         // Level approaching
         //***************************************************
@@ -192,62 +168,38 @@ public static class RegisterAlgorithms
             AnalyzeShortType = typeof(SignalOrderBlockRejectionShort),
         });
 
-        //        // NWE Repaining
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "nwe",
-        //            Strategy = CryptoSignalStrategy.Nwe,
-        //            AnalyzeLongType = typeof(SignalNwe),
-        //            AnalyzeShortType = typeof(SignalNwe),
-        //        });
+        //// NWE Repaining
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "nwe",
+        //    Strategy = CryptoSignalStrategy.Nwe,
+        //    AnalyzeLongType = typeof(SignalNwe),
+        //    AnalyzeShortType = typeof(SignalNwe),
+        //});
 
         //#if DEBUG
-        //        // NWE not repainting
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "nwe.np",
-        //            Strategy = CryptoSignalStrategy.NweNp,
-        //            AnalyzeLongType = typeof(SignalNweNp),
-        //            AnalyzeShortType = typeof(SignalNweNp),
-        //        });
+        //// NWE not repainting
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "nwe.np",
+        //    Strategy = CryptoSignalStrategy.NweNp,
+        //    AnalyzeLongType = typeof(SignalNweNp),
+        //    AnalyzeShortType = typeof(SignalNweNp),
+        //});
         //#endif
 
         //#if DEBUG
-        //        // NWE × BB crossover: NWE curls through the BB band after extending beyond it
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "nwe.bb",
-        //            Strategy = CryptoSignalStrategy.NweBb,
-        //            AnalyzeLongType = typeof(SignalNweBbLong),
-        //            AnalyzeShortType = typeof(SignalNweBbShort),
-        //        });
+        //// NWE × BB crossover: NWE curls through the BB band after extending beyond it
+        //Register(new AlgorithmDefinition()
+        //{
+        //    Name = "nwe.bb",
+        //    Strategy = CryptoSignalStrategy.NweBb,
+        //    AnalyzeLongType = typeof(SignalNweBbLong),
+        //    AnalyzeShortType = typeof(SignalNweBbShort),
+        //});
 
         //#endif
 
-        // no signals at all
-        //#if DEBUG
-        //        // BBMA - Oma Ally: price returns to the 510 zone after a CSD crossover
-        //        // Confirmations from higher timeframe(s)
-        //        Register(new AlgorithmDefinition()
-        //        {
-        //            Name = "bbma",
-        //            Strategy = CryptoSignalStrategy.Bbma,
-        //            AnalyzeLongType = null, //typeof(SignalBbmaLong),
-        //            AnalyzeShortType = null, //typeof(SignalBbmaShort),
-        //        });
-        //#endif
-
-//#if DEBUG
-//        // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
-//        // (Extreme / CSD / CSM / MLV / Reentry). Reuses the multi-TF setup from SignalBbma.
-//        Register(new AlgorithmDefinition()
-//        {
-//            Name = "bbma.omni",
-//            Strategy = CryptoSignalStrategy.BbmaOmni,
-//            AnalyzeLongType = typeof(SignalBbmaOmniLong),
-//            AnalyzeShortType = typeof(SignalBbmaOmniShort),
-//        });
-//#endif
 
 
 #if DEBUG
