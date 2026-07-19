@@ -1,7 +1,6 @@
 ﻿using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-// Baba imports have been migrated to BabaIndicatorExtension (Analyzers plugin).
 using CryptoScanner.Core.Signal.Indicators;
 
 using Skender.Stock.Indicators;
@@ -12,9 +11,6 @@ namespace CryptoScanner.Core.Signal;
 
 public static class IndicatorEngine
 {
-    // How many candles of CryptoData to keep per symbol+interval (≈ the old 260 calculation window).
-    private const int CacheCandles = 300;
-
     /// <summary>
     /// Ensures indicator data exists for <paramref name="openTime"/> in the requested higher interval and
     /// returns it as a MyData (candle + indicator data). Used for the multi-timeframe (MTF/HTF) strategies.

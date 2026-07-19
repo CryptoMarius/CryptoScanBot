@@ -22,6 +22,6 @@ public static class Constants
     public const string StrategyNwe = "Nwe";
     public const string StrategySbm = "Sbm";
     public const string StrategyStobb = "Stobb";
-    public const string StrategyStorsi = "StoRsi";
+    public const string StrategyStoRsi = "StoRsi";
 
 }

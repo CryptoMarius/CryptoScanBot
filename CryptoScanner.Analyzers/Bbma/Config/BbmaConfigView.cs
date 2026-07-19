@@ -2,6 +2,7 @@
 #if DEBUG
 using Avalonia.Controls;
 
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers.Bbma.Config;
@@ -10,7 +11,7 @@ public class BbmaConfigView : IConfigView
 {
     private readonly StrategyBbmaTabViewModel _viewModel = new();
 
-    public string TabHeader => "Bbma";
+    public string TabHeader => Constants.StrategyBbma.ToUpper();
 
     public Control CreateSettingsView()
     {

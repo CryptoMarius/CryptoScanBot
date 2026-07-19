@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 
+using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers.Storsi.Config;
@@ -8,7 +9,7 @@ public class StorsiConfigView : IConfigView
 {
     private readonly StrategyStorsiTabViewModel _viewModel = new();
 
-    public string TabHeader => "StoRsi";
+    public string TabHeader => Constants.StrategyStoRsi.ToUpper();
 
     public Control CreateSettingsView()
     {
