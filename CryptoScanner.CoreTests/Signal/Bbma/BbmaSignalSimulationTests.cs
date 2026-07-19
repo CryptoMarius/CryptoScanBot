@@ -3,13 +3,13 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.Signal.Bbma;
+using CryptoScanner.Analyzers.Bbma.Signal;
 
 using System.Reflection;
 using System.Text;
 
 // BbmaState enum lives in SignalBbmaBase; GetBbmaState/Short are in the derived classes.
-using static CryptoScanner.Core.Signal.Bbma.SignalBbmaBase;
+using static CryptoScanner.Analyzers.Bbma.Signal.SignalBbmaBase;
 
 namespace CryptoScanner.CoreTests.Signal.Bbma;
 

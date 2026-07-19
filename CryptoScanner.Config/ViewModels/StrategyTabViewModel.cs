@@ -25,9 +25,7 @@ public partial class StrategyTabViewModel : ObservableObject
     private StrategySmcTabViewModel _strategySmcTabViewModel;
     [ObservableProperty]
     private StrategyNweTabViewModel _strategyNweTabViewModel;
-    [ObservableProperty]
-    private StrategyBbmaTabViewModel _strategyBbmaTabViewModel;
-    // Baba, AtrRb and Bre tab view models are now managed by their respective plugin ConfigViews.
+    // Baba, AtrRb, Bre and Bbma tab view models are now managed by their respective plugin ConfigViews.
 
 
     public StrategyTabViewModel()
@@ -39,8 +37,7 @@ public partial class StrategyTabViewModel : ObservableObject
         _strategyFvgTabViewModel = new();
         _strategySmcTabViewModel = new();
         _strategyNweTabViewModel = new();
-        _strategyBbmaTabViewModel = new();
-        // Baba, AtrRb and Bre tab view models are now created by plugin ConfigViews.
+        // Baba, AtrRb, Bre and Bbma tab view models are now created by plugin ConfigViews.
     }
 
     internal void LoadConfig(SettingsSignal settings)
@@ -53,10 +50,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyFvgTabViewModel.LoadConfig(Constants.StrategyFvg, settings.ZonesFvg);
         StrategySmcTabViewModel.LoadConfig(Constants.StrategySmc, settings.ZonesSmc);
         StrategyNweTabViewModel.LoadConfig(Constants.StrategyNwe, settings.Nwe);
-#if DEBUG
-        StrategyBbmaTabViewModel.LoadConfig(Constants.StrategyBbma, settings.Bbma);
-#endif
-        // Baba, AtrRb and Bre settings are now loaded by their plugin ConfigViews via PluginManager.
+        // Baba, AtrRb, Bre and Bbma settings are now loaded by their plugin ConfigViews via PluginManager.
 
         foreach (var configView in PluginManager.ConfigViews)
         {
@@ -74,10 +68,7 @@ public partial class StrategyTabViewModel : ObservableObject
         StrategyFvgTabViewModel.SaveConfig(settings.ZonesFvg);
         StrategySmcTabViewModel.SaveConfig(settings.ZonesSmc);
         StrategyNweTabViewModel.SaveConfig(settings.Nwe);
-#if DEBUG
-        StrategyBbmaTabViewModel.SaveConfig(settings.Bbma);
-#endif
-        // Baba, AtrRb and Bre settings are now saved by their plugin ConfigViews via PluginManager.
+        // Baba, AtrRb, Bre and Bbma settings are now saved by their plugin ConfigViews via PluginManager.
 
         foreach (var configView in PluginManager.ConfigViews)
         {

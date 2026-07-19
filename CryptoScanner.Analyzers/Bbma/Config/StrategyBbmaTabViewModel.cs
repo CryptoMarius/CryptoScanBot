@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using CryptoScanner.Core.Settings.Strategy;
+using CryptoScanner.Config.ViewModels;
 
-namespace CryptoScanner.Config.ViewModels;
+namespace CryptoScanner.Analyzers.Bbma.Config;
 
 public partial class StrategyBbmaTabViewModel : ObservableObject
 {
@@ -18,13 +18,13 @@ public partial class StrategyBbmaTabViewModel : ObservableObject
         _strategyEntryConditionsViewModel = new();
     }
 
-    internal void LoadConfig(string caption, SettingsSignalStrategyBbma settings)
+    public void LoadConfig(BbmaSettings settings)
     {
-        SoundAndColorsViewModel.LoadConfig(caption, settings);
+        SoundAndColorsViewModel.LoadConfig("Bbma", settings);
         StrategyEntryConditionsViewModel.LoadConfig(settings);
     }
 
-    internal void SaveConfig(SettingsSignalStrategyBbma settings)
+    public void SaveConfig(BbmaSettings settings)
     {
         SoundAndColorsViewModel.SaveConfig(settings);
         StrategyEntryConditionsViewModel.SaveConfig(settings);

@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="260"
-             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:vm="using:CryptoScanner.Analyzers.AtrRb.Config"
              x:DataType="vm:StrategyAtrRbSettingsViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyAtrRbSettingsView">
+             x:Class="CryptoScanner.Analyzers.AtrRb.Config.StrategyAtrRbSettingsView">
 
     <HeaderedContentControl Classes="groupbox" Header="Settings">
         <StackPanel Margin="4" Spacing="4">

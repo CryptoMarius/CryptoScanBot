@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace CryptoScanner.Config.ViewModels;
+using CryptoScanner.Config.ViewModels;
+
+namespace CryptoScanner.Analyzers.AtrRb.Config;
 
 public partial class StrategyAtrRbTabViewModel : ObservableObject
 {
@@ -18,5 +20,19 @@ public partial class StrategyAtrRbTabViewModel : ObservableObject
         _soundAndColorsViewModel = new();
         _strategyAtrRbSettingsViewModel = new();
         _strategyEntryConditionsViewModel = new();
+    }
+
+    public void LoadConfig(AtrRbSettings settings)
+    {
+        SoundAndColorsViewModel.LoadConfig("AtrRb", settings);
+        StrategyAtrRbSettingsViewModel.LoadConfig(settings);
+        StrategyEntryConditionsViewModel.LoadConfig(settings);
+    }
+
+    public void SaveConfig(AtrRbSettings settings)
+    {
+        SoundAndColorsViewModel.SaveConfig(settings);
+        StrategyAtrRbSettingsViewModel.SaveConfig(settings);
+        StrategyEntryConditionsViewModel.SaveConfig(settings);
     }
 }

@@ -31,10 +31,7 @@
 		<TabItem Header="STOBB" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
             <settings:StrategyStobbTabView DataContext="{Binding StrategyStobbTabViewModel}" />
         </TabItem>
-		<TabItem x:Name="BbmaTab" Header="BBMA" FontSize="15" FontWeight="Bold" Margin="0,0,0,2">
-			<settings:StrategyBbmaTabView DataContext="{Binding StrategyBbmaTabViewModel}" />
-		</TabItem>
-		<!-- The StoRsi, Baba, AtrRb and Bre tabs are added dynamically from the plugin
+		<!-- The StoRsi, Baba, AtrRb, Bre and Bbma tabs are added dynamically from the plugin
 		     ConfigViews (see the code-behind); hardcoded TabItems for them would show
 		     detached viewmodels whose values are never loaded or saved. -->
 	</TabControl>

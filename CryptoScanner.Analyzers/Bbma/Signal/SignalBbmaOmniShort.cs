@@ -1,8 +1,9 @@
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 #if DEBUG
-namespace CryptoScanner.Core.Signal.Bbma;
+namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 /// <summary>
 /// Short variant of the BBMA Omni strategy. Mirror of <see cref="SignalBbmaOmniLong"/> —

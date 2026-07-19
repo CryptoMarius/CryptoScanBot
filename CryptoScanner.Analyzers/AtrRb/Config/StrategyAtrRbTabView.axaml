@@ -3,15 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
-             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:vm="using:CryptoScanner.Analyzers.AtrRb.Config"
              xmlns:settings="using:CryptoScanner.Config.Views"
              x:DataType="vm:StrategyAtrRbTabViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyAtrRbTabView">
+             x:Class="CryptoScanner.Analyzers.AtrRb.Config.StrategyAtrRbTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">
             <settings:SoundAndColorsView DataContext="{Binding SoundAndColorsViewModel}" />
-            <settings:StrategyAtrRbSettingsView DataContext="{Binding StrategyAtrRbSettingsViewModel}" />
+            <vm:StrategyAtrRbSettingsView DataContext="{Binding StrategyAtrRbSettingsViewModel}" />
             <settings:StrategyEntryConditionsView DataContext="{Binding StrategyEntryConditionsViewModel}" />
         </StackPanel>
     </ScrollViewer>

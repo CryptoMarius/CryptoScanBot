@@ -1,8 +1,7 @@
 using Avalonia.Controls;
 
-using CryptoScanner.Config.ViewModels;
 
-namespace CryptoScanner.Config.Views;
+namespace CryptoScanner.Analyzers.AtrRb.Config;
 
 public partial class StrategyAtrRbSettingsView : UserControl
 {

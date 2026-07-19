@@ -1,6 +1,9 @@
 using CryptoScanner.Analyzers.AtrRb;
 using CryptoScanner.Analyzers.Baba;
 using CryptoScanner.Analyzers.Baba.Chart;
+#if DEBUG
+using CryptoScanner.Analyzers.Bbma;
+#endif
 using CryptoScanner.Analyzers.Bre;
 using CryptoScanner.Analyzers.Storsi;
 using CryptoScanner.Core.Contracts;
@@ -20,6 +23,11 @@ public static class AnalyzerRegistration
         PluginManager.Register(new BrePlugin());
 
         PluginManager.Register(new StoRsiPlugin());
+
+#if DEBUG
+        // BBMA is DEBUG-only (the signal classes are guarded with #if DEBUG).
+        PluginManager.Register(new BbmaPlugin());
+#endif
 
         // Stand-alone overlay (not a strategy): TradingBuddy's own served BABA bands, so they can be
         // toggled independently and compared with the scanner's "Baba Bands" overlay.

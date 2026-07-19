@@ -2,8 +2,9 @@ using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal.Helpers;
+using CryptoScanner.Core.Signal;
 
-namespace CryptoScanner.Core.Signal.Bbma;
+namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 /* https://share.google/aimode/cb5CF0MrCDCKw2JCS
 

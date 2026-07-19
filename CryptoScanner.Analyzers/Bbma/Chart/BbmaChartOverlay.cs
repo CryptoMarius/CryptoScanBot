@@ -1,19 +1,32 @@
 #if DEBUG
+using CryptoScanner.Analyzers.Bbma.Signal;
+using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Enums;
-using CryptoScanner.Core.Signal.Bbma;
 
 using OxyPlot;
 using OxyPlot.Series;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.ViewModels.Chart;
+namespace CryptoScanner.Analyzers.Bbma.Chart;
 
-public class Bbma
+// Moved from CryptoScanner.Chart (ViewModels/Chart/Bbma.cs) into the Bbma plugin as an
+// IChartOverlay, so the chart host no longer references the BBMA signal classes directly
+// and the overlay gets its own checkbox in the chart's overlay list.
+public class BbmaChartOverlay : IChartOverlay
 {
+    public string Label => "BBMA";
+    public string GroupKey => "bbma";
+
+    public void Draw(object plotModel, CryptoSymbol symbol, CryptoInterval interval,
+        List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
+    {
+        Draw((PlotModel)plotModel, symbol, interval, candles, minDate, maxDate, group);
+    }
+
     internal static void Draw(PlotModel chart, CryptoSymbol symbol, CryptoInterval interval,
         List<CryptoCandle> candles, CandleTime minDate, CandleTime maxDate, string group)
     {

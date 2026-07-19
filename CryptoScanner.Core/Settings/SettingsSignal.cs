@@ -60,15 +60,13 @@ public class SettingsSignal
     public SettingsSignalStrategyNwe Nwe = new();
 
 #if DEBUG
-    // BBMA (Oma Ally)
-    public SettingsSignalStrategyBbma Bbma = new();
-
     // CHoCH (Change of Character) — ZigZag structure reversal signals
     public SettingsSignalStrategyChoch Choch = new();
 #endif
 
-    // Baba, AtrRb and Bre settings have been migrated to the Analyzers plugin architecture
-    // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings).
+    // Baba, AtrRb, Bre and Bbma settings have been migrated to the Analyzers plugin architecture
+    // and are now managed by PluginManager (BabaPlugin.Settings, AtrRbPlugin.Settings, BrePlugin.Settings,
+    // BbmaPlugin.Settings).
 
     // Analyzer plugin settings (keyed by plugin name, e.g. "demo").
     // Stored as raw JSON per plugin: Core does not know the concrete settings types

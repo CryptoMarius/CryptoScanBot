@@ -13,9 +13,7 @@ public partial class ChartOptionsViewModel : ObservableObject
     public ObservableCollection<PluginOverlayToggle> PluginOverlays { get; } = [];
 
 
-    [ObservableProperty]
-    private bool _showBbma = false;
-
+    // ShowBbma is now a plugin chart overlay (PluginOverlays).
     [ObservableProperty]
     private bool _showStoch = false;
 
@@ -82,7 +80,6 @@ public partial class ChartOptionsViewModel : ObservableObject
     public void LoadFromSession(ZoneSession session)
     {
         // Options
-        ShowBbma = session.ShowBbma;
         ShowStoch = session.ShowStoch;
         ShowRsi = session.ShowRsi;
         ShowLux = session.ShowLux;
@@ -121,7 +118,6 @@ public partial class ChartOptionsViewModel : ObservableObject
     public void SaveToSession(ZoneSession session)
     {
         // Options
-        session.ShowBbma = ShowBbma;
         session.ShowStoch = ShowStoch;
         session.ShowRsi = ShowRsi;
         session.ShowLux = ShowLux;

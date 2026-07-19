@@ -1,8 +1,5 @@
 ﻿using CryptoScanner.Core.Enums;
 #if DEBUG
-using CryptoScanner.Core.Signal.Bbma;
-#endif
-#if DEBUG
 using CryptoScanner.Core.Signal.Choch;
 #endif
 using CryptoScanner.Core.Signal.Dlz;
@@ -240,17 +237,17 @@ public static class RegisterAlgorithms
         //        });
         //#endif
 
-#if DEBUG
-        // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
-        // (Extreme / CSD / CSM / MLV / Reentry). Reuses the multi-TF setup from SignalBbma.
-        Register(new AlgorithmDefinition()
-        {
-            Name = "bbma.omni",
-            Strategy = CryptoSignalStrategy.BbmaOmni,
-            AnalyzeLongType = typeof(SignalBbmaOmniLong),
-            AnalyzeShortType = typeof(SignalBbmaOmniShort),
-        });
-#endif
+//#if DEBUG
+//        // BBMA Omni - direct port of the OmniView MQL5 indicator state definitions
+//        // (Extreme / CSD / CSM / MLV / Reentry). Reuses the multi-TF setup from SignalBbma.
+//        Register(new AlgorithmDefinition()
+//        {
+//            Name = "bbma.omni",
+//            Strategy = CryptoSignalStrategy.BbmaOmni,
+//            AnalyzeLongType = typeof(SignalBbmaOmniLong),
+//            AnalyzeShortType = typeof(SignalBbmaOmniShort),
+//        });
+//#endif
 
 
 #if DEBUG

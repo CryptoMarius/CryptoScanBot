@@ -1,7 +1,8 @@
 using CryptoScanner.Core.Model;
+using CryptoScanner.Core.Signal;
 
 #if DEBUG
-namespace CryptoScanner.Core.Signal.Bbma;
+namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 /// <summary>
 /// Base class for the BBMA Omni strategy. State classification is a direct port of the

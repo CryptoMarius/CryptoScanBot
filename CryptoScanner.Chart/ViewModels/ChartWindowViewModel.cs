@@ -117,6 +117,10 @@ public partial class ChartWindowViewModel : ObservableObject
         FibSettings.PropertyChanged += FibSettingsChanged;
         DisplayOptions.PropertyChanged += (sender, e) => DisplayOptionsChanged(sender, e);
 
+        // Redraw the chart once TradingBuddy's bands have been fetched in the background (the Baba
+        // overlay draws them when the "Show TradingBuddy bands" option is on). Unsubscribed in OnClosing.
+        CryptoScanner.Core.Exchange.TradingBuddy.TradingBuddyBands.BandsUpdated += OnTradingBuddyBandsUpdated;
+
         // NOTE: do NOT start RefreshCommand here. Starting it in the ctor causes a race
         // with Window.Show()'s ExecuteInitialLayoutPass — the async refresh mutates
         // PlotView.Model.Series while OxyPlot's Render is iterating it, throwing NRE in
@@ -1137,12 +1141,7 @@ public partial class ChartWindowViewModel : ObservableObject
             Sma.Draw(model, Symbol, Interval, WindowCandleList, 20, OxyColors.Green, Session.MinDate, Session.MaxDate, group);
         }
 
-#if DEBUG
-        // Draw BBMA
-        group = "bbma";
-        if (Toggle(model, group, Session.ShowBbma))
-            Bbma.Draw(model, Symbol, Interval, WindowCandleList, Session.MinDate, Session.MaxDate, group);
-#endif
+        // BBMA is now drawn dynamically via PluginManager.ChartOverlays below (Bbma plugin).
 
 
         // Draw Stochastic lines (%K / %D)
@@ -1530,8 +1529,13 @@ public partial class ChartWindowViewModel : ObservableObject
 
     public void OnClosing()
     {
+        CryptoScanner.Core.Exchange.TradingBuddy.TradingBuddyBands.BandsUpdated -= OnTradingBuddyBandsUpdated;
         SaveSessionSettings();
     }
+
+    // Fired (on a background thread) when a TradingBuddy band fetch completes; RequestRefresh marshals
+    // the redraw onto the UI thread itself.
+    private void OnTradingBuddyBandsUpdated() => RequestRefresh();
 
 
     // Candles of context drawn on each side of the position's lifetime when opening from a position.

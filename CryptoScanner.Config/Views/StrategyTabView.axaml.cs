@@ -19,10 +19,6 @@ public partial class StrategyTabView : UserControl
             DataContext = new StrategyTabViewModel();
         }
 
-#if !DEBUG
-        this.FindControl<TabItem>("BbmaTab")!.IsVisible = false;
-#endif
-
         foreach (var configView in PluginManager.ConfigViews)
         {
             var tab = new TabItem

@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
-             xmlns:vm="using:CryptoScanner.Config.ViewModels"
+             xmlns:vm="using:CryptoScanner.Analyzers.Bbma.Config"
              xmlns:settings="using:CryptoScanner.Config.Views"
              x:DataType="vm:StrategyBbmaTabViewModel"
-             x:Class="CryptoScanner.Config.Views.StrategyBbmaTabView">
+             x:Class="CryptoScanner.Analyzers.Bbma.Config.StrategyBbmaTabView">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="5">

@@ -48,10 +48,7 @@ public partial class ChartWindow : Window
             }
         };
 
-#if !DEBUG
-        ShowBbmaCheckBox.IsVisible = false;
-#endif
-        // AtrRb, Baba, Slide and BRE checkboxes are generated dynamically via
+        // AtrRb, Baba, Slide, BRE and BBMA checkboxes are generated dynamically via
         // PluginOverlays, so they no longer need to be hidden here.
 
         if (DataContext == null)

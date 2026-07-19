@@ -794,16 +794,13 @@ public static class GlobalData
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlock, (Settings.Signal.ZonesSmc, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.OrderBlockRejection, (Settings.Signal.ZonesSmc, DateTime.Today));
 
-        // Baba, AtrRb and Bre are now registered dynamically via PluginManager below.
+        // Baba, AtrRb, Bre and Bbma are now registered dynamically via PluginManager below.
 #if DEBUG
         // ChOCh strategy with different options
         StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimary, (Settings.Signal.Choch, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.ChochPrimaryPullback, (Settings.Signal.Choch, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondary, (Settings.Signal.Choch, DateTime.Today));
         StrategiesSettings.Add(CryptoSignalStrategy.ChochSecondaryPullback, (Settings.Signal.Choch, DateTime.Today));
-
-        StrategiesSettings.Add(CryptoSignalStrategy.Bbma, (Settings.Signal.Bbma, DateTime.Today));
-        StrategiesSettings.Add(CryptoSignalStrategy.BbmaOmni, (Settings.Signal.Bbma, DateTime.Today));
 #endif
 
         // Merge settings from dynamically loaded strategy plugins
