@@ -240,6 +240,9 @@ public class PaperTrading
     {
         if (step.Status != CryptoOrderStatus.New)
             return null;
+        // Fix: A step/order cannot be closed if it is not yet created.
+        if (step.CreateTime > candle.Date)
+            return null;
 
         if (step.Side == CryptoOrderSide.Buy)
         {
