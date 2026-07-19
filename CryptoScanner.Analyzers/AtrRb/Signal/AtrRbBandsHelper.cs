@@ -1,4 +1,3 @@
-using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;
 
 using Skender.Stock.Indicators;

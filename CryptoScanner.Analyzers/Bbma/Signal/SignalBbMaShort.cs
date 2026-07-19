@@ -1,8 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 

@@ -1,5 +1,4 @@
-﻿using CryptoScanner.Core.Core;
-using CryptoScanner.Core.Signal;
+﻿using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.Storsi.Signal;

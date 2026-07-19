@@ -1,4 +1,3 @@
-using CryptoScanner.Analyzers.AtrRb.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Model;

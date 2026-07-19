@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers.AtrRb.Config;
@@ -9,7 +8,7 @@ public class AtrRbConfigView : IConfigView
 {
     private readonly StrategyAtrRbTabViewModel _viewModel = new();
 
-    public string TabHeader => Constants.StrategyAtrRb.ToUpper();
+    public string TabHeader => AtrRbPlugin.StrategyInternal.ToUpper();
 
     public Control CreateSettingsView()
     {

@@ -1,13 +1,12 @@
 ﻿using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Signal;
 using CryptoScanner.Core.Signal.Helpers;
 
 using Skender.Stock.Indicators;
 
-namespace CryptoScanner.Core.Signal.Experiment;
+namespace CryptoScanner.Analyzers.IChimokuKumoBreakout.Signal;
 
-#if DEBUG
-
-public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
+public class IchimokuKumoBreakoutLong : SignalCreateBase
 {
 
     public override bool IndicatorsOkay(MyData candle)
@@ -38,7 +37,9 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
 
         // 52!
         // De 1m candle is nu definitief, doe een herberekening van de relevante intervallen
+        //List<CryptoCandle> quotes = CandleIndicatorData.CalculateCandles(Symbol, SymbolInterval.Interval, CandleLast.Candle.OpenTime, out string _);
         List<IQuote>? quotes = IndicatorEngine.CollectCandles(Symbol, SymbolInterval.Interval, CandleLast.Candle.OpenTime, out string _);
+
         if (quotes == null)
         {
             //GlobalData.AddTextToLogTab(signal.DisplayText + " " + reaction + " (removed)");
@@ -80,19 +81,19 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
         if (cloud.SenkouSpanA == null || cloud.SenkouSpanB == null || cloud.KijunSen == null)
             return false;
 
-        // Bottom of cloud = min(SenkouSpanA, SenkouSpanB) — works for both green and red clouds
-        decimal cloudBottom = Math.Min((decimal)cloud.SenkouSpanA, (decimal)cloud.SenkouSpanB);
+        // Top of cloud = max(SenkouSpanA, SenkouSpanB) — works for both green and red clouds
+        decimal cloudTop = Math.Max((decimal)cloud.SenkouSpanA, (decimal)cloud.SenkouSpanB);
 
-        // 1: Previous candle must be above the cloud bottom (not yet broken out downward)
-        if (candlePrev!.Candle.Close < cloudBottom)
+        // 1: Previous candle must be below the cloud top (not yet broken out)
+        if (candlePrev!.Candle.Close > cloudTop)
             return false;
 
-        // 1: Current candle must close below the cloud bottom (the breakout)
-        if (CandleLast.Candle.Close >= cloudBottom)
+        // 1: Current candle must close above the cloud top (the breakout)
+        if (CandleLast.Candle.Close <= cloudTop)
             return false;
 
-        // 2: Price closes below Kijun Sen
-        if (CandleLast.Candle.Close >= (decimal)cloud.KijunSen)
+        // 2: Price closes above Kijun Sen
+        if (CandleLast.Candle.Close <= (decimal)cloud.KijunSen)
             return false;
 
 
@@ -116,5 +117,3 @@ public class SignalIchimokuKumoBreakoutShort : SignalCreateBase
     }
 
 }
-
-#endif

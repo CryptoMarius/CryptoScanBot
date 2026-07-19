@@ -1,8 +1,8 @@
 using CryptoScanner.Core.Core;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
-using CryptoScanner.Core.Signal.Helpers;
 using CryptoScanner.Core.Signal;
+using CryptoScanner.Core.Signal.Helpers;
 
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
@@ -26,7 +26,6 @@ en biedt daartussen verschillende instapmomenten.
     Re-entry(na CSM) : Na een momentum - uitbraak keert de prijs vaak terug naar de MA5/10 voor een tweede instapkans.
 */
 
-#if DEBUG
 public class SignalBbmaLong : SignalBbmaBase
 {
     /// <summary>
@@ -401,4 +400,3 @@ public class SignalBbmaLong : SignalBbmaBase
         return false;
     }
 }
-#endif

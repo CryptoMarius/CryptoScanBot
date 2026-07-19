@@ -9,15 +9,20 @@ $ mexc/spot werkt
 $ okx spot en futures werkt
 
 TODO:
-- De ATR RB kan weg
-- Instellingen zijn niet persistent momenteel, bah!!
-- Instellingen zijn allemaal pleitte en leeg!!!
 - Hoe krijg ik de instelling schermen dynamisch (en gesorteerd) naar de config UI?
 - Defaults voor de strategien (zodat je terug kan naar de fabrieksinstellingen)
-- De stop knop onderbreekt de fetch van de emulator niet
+
+- Emulator blijft candles ophalen terwijl ze in de database zitten (voor zover ik dat weet)
+ (lijkt nu eventjes goed, maar mwel meerdere keren gezien!)
+
+- Beslissing maken over de zogenaamde entry conditions (wat ook signal conditions zou kunnen heten)
+  Wanneer worden ze nu toegepast? Pas bij de entry of zijn ze in principe gelijk??
+
 
 *****
+- Bij het toevoegen van een DCA komen we in een deadlock situatie.
 - Intern is er versimpeld en geschoven met strategien waardoor deze opnieuw ingesteld moeten worden
+- Aanvullend: De papertrading vult ook orders die qua datum tijd niet eens gevuld kunnen worden
 - De papertrader ziet niet dat meerdere dca's en sl op "hetzelfde moment" geraakt kunnen zijn.
 - Een paar memory leaks opgelost
 - Meerdere take profits in de trader kunnen opgeven

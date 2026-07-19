@@ -1,7 +1,6 @@
 using CryptoScanner.Analyzers.AtrRb.Chart;
 using CryptoScanner.Analyzers.AtrRb.Config;
 using CryptoScanner.Analyzers.AtrRb.Signal;
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -10,11 +9,18 @@ namespace CryptoScanner.Analyzers.AtrRb;
 
 public class AtrRbPlugin : IStrategyPlugin
 {
-    public string Name => Constants.StrategyAtrRb.ToLower();
+    public const string StrategyInternal = "AtrRb";
+    public string StrategyName => StrategyInternal.ToLower();
+    public string StrategyNameCamelCase => StrategyInternal;
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.AtrRb, Constants.StrategyAtrRb.ToLower(), typeof(AtrRbSignalLong), typeof(AtrRbSignalShort)),
+        new(
+            CryptoSignalStrategy.AtrRb,
+            StrategyInternal.ToLower(),
+            typeof(AtrRbSignalLong),
+            typeof(AtrRbSignalShort)
+        ),
     ];
 
     public static AtrRbSettings Settings { get; internal set; } = new();
@@ -37,4 +43,5 @@ public class AtrRbPlugin : IStrategyPlugin
 
     public IChartOverlay? ChartOverlay { get; } = new AtrRbChartOverlay();
     public IConfigView? ConfigView { get; } = new AtrRbConfigView();
+
 }

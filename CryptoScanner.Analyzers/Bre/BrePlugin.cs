@@ -1,7 +1,6 @@
 using CryptoScanner.Analyzers.Bre.Chart;
 using CryptoScanner.Analyzers.Bre.Config;
 using CryptoScanner.Analyzers.Bre.Signal;
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Settings.Strategy;
@@ -10,11 +9,18 @@ namespace CryptoScanner.Analyzers.Bre;
 
 public class BrePlugin : IStrategyPlugin
 {
-    public string Name => Constants.StrategyBre.ToLower();
+    public const string StrategyInternal = "Bre";
+    public string StrategyName => StrategyInternal.ToLower();
+    public string StrategyNameCamelCase => StrategyInternal;
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.Bre, Constants.StrategyBre.ToLower(), typeof(BreSignalLong), typeof(BreSignalShort)),
+        new(
+            CryptoSignalStrategy.Bre,
+            StrategyInternal.ToLower(),
+            typeof(BreSignalLong),
+            typeof(BreSignalShort)
+        ),
     ];
 
     public static BreSettings Settings { get; internal set; } = new();

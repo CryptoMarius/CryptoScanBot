@@ -1,7 +1,6 @@
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
-#if DEBUG
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 /// <summary>
@@ -321,4 +320,3 @@ public class SignalBbmaOmniBase : SignalBbmaBase
         return 9999;
     }
 }
-#endif

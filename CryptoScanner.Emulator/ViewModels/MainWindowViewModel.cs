@@ -301,7 +301,10 @@ public partial class MainWindowViewModel : ObservableObject
                     // step sees the full picture instead of only the bounded startup load.
                     SortedList<CryptoIntervalPeriod, bool> loadedCandlesInMemory = [];
 
+
                     // ── Step 1: fetch 1m from the exchange ───────────────────────────────────
+                    // Fetch enough 1m candles to calculate the higher timeframes?
+
                     // The warmup must cover whichever is bigger: what the indicators need
                     // (ComputeWarmupMinutes) or what the chart needs (WindowMarginCandles +
                     // WindowCalcWarmupCandles). Because every higher interval is DERIVED from

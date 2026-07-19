@@ -11,7 +11,8 @@ namespace CryptoScanner.Core.Contracts;
 public interface IStrategyPlugin
 {
     /// <summary>Plugin name used as the settings key in JSON persistence.</summary>
-    string Name { get; }
+    string StrategyName { get; }
+    string StrategyNameCamelCase { get; }
 
     /// <summary>One or more sub-strategies this plugin provides.</summary>
     IReadOnlyList<StrategyRegistration> Strategies { get; }

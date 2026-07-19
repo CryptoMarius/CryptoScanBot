@@ -1163,7 +1163,7 @@ public class PositionMonitor : IDisposable
                 position.Status = CryptoPositionStatus.Altrady;
                 Database.Connection.Update(position);
 
-                AltradyWebhook.DelegateControlToAltrady(position);
+                await AltradyWebhook.DelegateControlToAltradyAsync(position);
                 Database.Connection.Update(position);
             }
             else if (GlobalData.Settings.Trading.TradeVia == CryptoTradeVia.PaperTradingAndAltrady)
@@ -1201,7 +1201,7 @@ public class PositionMonitor : IDisposable
                         }
 
                         // Also delegate control to Altrady
-                        AltradyWebhook.DelegateControlToAltrady(position);
+                        await AltradyWebhook.DelegateControlToAltradyAsync(position);
                         Database.Connection.Update(position);
                     }
                     else

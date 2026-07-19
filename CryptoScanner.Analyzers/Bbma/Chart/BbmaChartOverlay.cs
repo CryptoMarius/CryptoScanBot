@@ -2,9 +2,9 @@
 using CryptoScanner.Analyzers.Bbma.Signal;
 using CryptoScanner.Core.Contracts;
 using CryptoScanner.Core.Core;
+using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
-using CryptoScanner.Core.Enums;
 
 using OxyPlot;
 using OxyPlot.Series;

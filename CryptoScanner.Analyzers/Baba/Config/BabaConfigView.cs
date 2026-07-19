@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers.Baba.Config;
@@ -9,7 +8,7 @@ public class BabaConfigView : IConfigView
 {
     private readonly StrategyBabaTabViewModel _viewModel = new();
 
-    public string TabHeader => Constants.StrategyBaba.ToUpper();
+    public string TabHeader => BabaPlugin.StrategyInternal.ToUpper();
 
     public Control CreateSettingsView()
     {

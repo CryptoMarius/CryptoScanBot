@@ -7,12 +7,24 @@ namespace CryptoScanner.Analyzers.Storsi;
 
 public class StoRsiPlugin : IStrategyPlugin
 {
-    public string Name => "storsi";
+    public const string StrategyInternal = "StoRsi";
+    public string StrategyName => StrategyInternal.ToLower();
+    public string StrategyNameCamelCase => StrategyInternal;
+
+    private const string StrategyInternalMulti = "StoRsi.Multi";
 
     public IReadOnlyList<StrategyRegistration> Strategies { get; } =
     [
-        new(CryptoSignalStrategy.StoRsi, "storsi", typeof(StoRsiLong), typeof(StoRsiShort)),
-        new(CryptoSignalStrategy.StoRsiMulti, "storsi.multi", typeof(StoRsiMultiLong), typeof(StoRsiMultiShort)),
+        new(CryptoSignalStrategy.StoRsi,
+            StrategyInternal.ToLower(),
+            typeof(StoRsiLong),
+            typeof(StoRsiShort)
+        ),
+        new(CryptoSignalStrategy.StoRsiMulti,
+            StrategyInternalMulti.ToLower(),
+            typeof(StoRsiMultiLong),
+            typeof(StoRsiMultiShort)
+        ),
     ];
 
     public static StorsiSettings Settings { get; internal set; } = new();

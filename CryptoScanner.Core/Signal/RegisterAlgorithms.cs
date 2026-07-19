@@ -131,15 +131,6 @@ public static class RegisterAlgorithms
         });
 #endif
 
-#if DEBUG
-        Register(new AlgorithmDefinition()
-        {
-            Name = "IchimokuKumoBreakout",
-            Strategy = CryptoSignalStrategy.IchimokuKumoBreakout,
-            AnalyzeLongType = typeof(SignalIchimokuKumoBreakoutLong),
-            AnalyzeShortType = typeof(SignalIchimokuKumoBreakoutShort),
-        });
-#endif
 
         Register(new AlgorithmDefinition()
         {

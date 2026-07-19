@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 
-using CryptoScanner.Core.Const;
 using CryptoScanner.Core.Contracts;
 
 namespace CryptoScanner.Analyzers.Bre.Config;
@@ -9,7 +8,7 @@ public class BreConfigView : IConfigView
 {
     private readonly StrategyBreTabViewModel _viewModel = new();
 
-    public string TabHeader => Constants.StrategyBre.ToUpper();
+    public string TabHeader => BrePlugin.StrategyInternal.ToUpper();
 
     public Control CreateSettingsView()
     {

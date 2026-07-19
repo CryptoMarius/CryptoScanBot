@@ -70,7 +70,7 @@ public static class PluginManager
         if (plugin.ConfigView != null)
             _configViews.Add(plugin.ConfigView);
 
-        Logger.Info($"Registered analyzer \"{plugin.Name}\" ({plugin.Strategies.Count} strategy/strategies)");
+        Logger.Info($"Registered analyzer \"{plugin.StrategyName}\" ({plugin.Strategies.Count} strategy/strategies)");
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public static class PluginManager
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {
-            if (!stored.TryGetValue(plugin.Name, out var element))
+            if (!stored.TryGetValue(plugin.StrategyName, out var element))
                 continue;
 
             try
@@ -94,7 +94,7 @@ public static class PluginManager
             }
             catch (Exception ex)
             {
-                Logger.Warn(ex, $"Failed to restore settings for {plugin.Name}, using defaults");
+                Logger.Warn(ex, $"Failed to restore settings for {plugin.StrategyName}, using defaults");
             }
         }
     }
@@ -113,7 +113,7 @@ public static class PluginManager
     {
         foreach (var plugin in _plugins.Values.Distinct())
         {
-            target[plugin.Name] = JsonSerializer.SerializeToElement(
+            target[plugin.StrategyName] = JsonSerializer.SerializeToElement(
                 plugin.SettingsBase, plugin.SettingsBase.GetType(), JsonTools.JsonSerializerIndented);
         }
     }

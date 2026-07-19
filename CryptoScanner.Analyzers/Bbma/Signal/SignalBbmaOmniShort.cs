@@ -2,7 +2,6 @@ using CryptoScanner.Core.Enums;
 using CryptoScanner.Core.Model;
 using CryptoScanner.Core.Signal;
 
-#if DEBUG
 namespace CryptoScanner.Analyzers.Bbma.Signal;
 
 /// <summary>
@@ -894,4 +893,3 @@ public class SignalBbmaOmniShort : SignalBbmaOmniBase
         return false;
     }
 }
-#endif

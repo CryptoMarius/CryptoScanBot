@@ -100,9 +100,8 @@ public static class IndicatorWarmup
     /// </summary>
     public static uint ComputeWarmupMinutes(CryptoInterval interval)
     {
-        const uint OneMinuteWarmupMinutes = 24 * 60;  // 24 hours of 1m history
         if (interval.Duration <= 1)
-            return OneMinuteWarmupMinutes;
+            return 24 * 60;  // 24 hours of 1m history
         return (uint)((MinCandlesPerInterval + SafetyExtraBars) * interval.Duration);
     }
 
